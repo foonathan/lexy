@@ -52,6 +52,30 @@ using add_rvalue_ref = T&&;
 #    define LEXY_CONSTEVAL constexpr
 #endif
 
+//=== char8_t ===//
+#ifndef LEXY_HAS_CHAR8_T
+#    if __cpp_char8_t
+#        define LEXY_HAS_CHAR8_T 1
+#    else
+#        define LEXY_HAS_CHAR8_T 0
+#    endif
+#endif
+
+#if LEXY_HAS_CHAR8_T
+
+#    define LEXY_CHAR8_T char8_t
+
+#else
+
+namespace lexy
+{
+using _char8_t = unsigned char;
+} // namespace lexy
+
+#    define LEXY_CHAR8_T ::lexy::_char8_t
+
+#endif
+
 //=== force inline ===//
 #ifndef LEXY_FORCE_INLINE
 #    if defined(__has_cpp_attribute) && __has_cpp_attribute(gnu::always_inline)
