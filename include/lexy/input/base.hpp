@@ -41,9 +41,8 @@ public:
 
 namespace lexy
 {
-template <typename Encoding, typename CharT>
-using _require_secondary_char_type
-    = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
+template <typename Input>
+using input_iterator_type = typename std::decay_t<Input>::iterator;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BASE_HPP_INCLUDED

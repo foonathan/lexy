@@ -9,6 +9,9 @@
 
 namespace lexy
 {
+template <typename View>
+using _string_view_char_type = std::decay_t<decltype(*LEXY_DECLVAL(View).data())>;
+
 template <typename Encoding = default_encoding>
 class string_input
 {
@@ -36,17 +39,17 @@ public:
     string_input(const CharT* data, std::size_t size) noexcept : string_input(data, data + size)
     {}
 
-    template <typename View, typename = decltype(LEXY_DECLVAL(View).data())>
+    template <typename View, typename CharT = _string_view_char_type<View>>
     constexpr explicit string_input(const View& view) noexcept
     {
-        if constexpr (std::is_same_v<typename View::char_type, char_type>)
+        if constexpr (std::is_same_v<CharT, char_type>)
         {
             _cur = view.data();
             _end = _cur + view.size();
         }
         else
         {
-            static_assert(Encoding::template is_secondary_char_type<typename View::char_type>);
+            static_assert(Encoding::template is_secondary_char_type<CharT>);
             _cur = reinterpret_cast<iterator>(view.data());
             _end = _cur + view.size();
         }
@@ -80,7 +83,7 @@ string_input(const CharT* begin, const CharT* end) -> string_input<deduce_encodi
 template <typename CharT>
 string_input(const CharT* data, std::size_t size) -> string_input<deduce_encoding<CharT>>;
 template <typename View>
-string_input(const View&) -> string_input<deduce_encoding<typename View::char_type>>;
+string_input(const View&) -> string_input<deduce_encoding<_string_view_char_type<View>>>;
 
 template <typename Encoding, typename CharT>
 constexpr string_input<Encoding> zstring_input(const CharT* str) noexcept

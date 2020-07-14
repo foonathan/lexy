@@ -134,4 +134,11 @@ struct _deduce_encoding<unsigned char>
 };
 } // namespace lexy
 
+namespace lexy
+{
+template <typename Encoding, typename CharT>
+using _require_secondary_char_type
+    = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
+} // namespace lexy
+
 #endif // LEXY_ENCODING_HPP_INCLUDED

@@ -11,8 +11,6 @@ TEST_CASE("string_input")
     static const char str[] = {'a', 'b', 'c', '\0'};
     struct view
     {
-        using char_type = char;
-
         auto data() const
         {
             return str;
