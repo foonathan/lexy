@@ -85,5 +85,16 @@ using _char8_t = unsigned char;
 #    endif
 #endif
 
+//=== empty_member ===//
+#ifndef LEXY_EMPTY_MEMBER
+#    if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address)
+#        define LEXY_HAS_EMPTY_MEMBER 1
+#        define LEXY_EMPTY_MEMBER [[no_unique_address]]
+#    else
+#        define LEXY_HAS_EMPTY_MEMBER 0
+#        define LEXY_EMPTY_MEMBER
+#    endif
+#endif
+
 #endif // LEXY_DETAIL_CONFIG_HPP_INCLUDED
 
