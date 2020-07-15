@@ -5,6 +5,7 @@
 #ifndef LEXY_ENCODING_HPP_INCLUDED
 #define LEXY_ENCODING_HPP_INCLUDED
 
+#include <cstdint>
 #include <lexy/_detail/config.hpp>
 
 namespace lexy
@@ -83,6 +84,48 @@ struct utf8_encoding
 template <>
 constexpr bool utf8_encoding::is_secondary_char_type<char> = true;
 
+/// An encoding where the input is assumed to be valid UTF-16.
+struct utf16_encoding
+{
+    using char_type = char16_t;
+    using int_type  = std::int_least32_t;
+
+    template <typename OtherCharType>
+    static constexpr bool is_secondary_char_type = false;
+
+    static LEXY_CONSTEVAL int_type eof()
+    {
+        // Every value of char16_t is valid UTF16.
+        return int_type(-1);
+    }
+
+    static constexpr int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(c);
+    }
+};
+
+/// An encoding where the input is assumed to be valid UTF-32.
+struct utf32_encoding
+{
+    using char_type = char32_t;
+    using int_type  = char32_t;
+
+    template <typename OtherCharType>
+    static constexpr bool is_secondary_char_type = false;
+
+    static LEXY_CONSTEVAL int_type eof()
+    {
+        // The highest unicode code point is U+10'FFFF, so this is never a valid code point.
+        return int_type(0xFFFF'FFFF);
+    }
+
+    static constexpr int_type to_int_type(char_type c) noexcept
+    {
+        return c;
+    }
+};
+
 /// An encoding where the input is just raw bytes, not characters.
 struct raw_encoding
 {
@@ -123,9 +166,19 @@ struct _deduce_encoding<char>
 template <>
 struct _deduce_encoding<LEXY_CHAR8_T>
 {
-    using type = encoding_utf8;
+    using type = utf8_encoding;
 };
 #endif
+template <>
+struct _deduce_encoding<char16_t>
+{
+    using type = utf16_encoding;
+};
+template <>
+struct _deduce_encoding<char32_t>
+{
+    using type = utf32_encoding;
+};
 
 template <>
 struct _deduce_encoding<unsigned char>
