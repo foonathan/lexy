@@ -39,10 +39,32 @@ public:
 };
 #endif
 
+namespace lexy::_detail
+{
+template <typename I>
+constexpr auto range_size(I begin, I end) -> decltype(std::size_t(end - begin))
+{
+    return std::size_t(end - begin);
+}
+template <typename I, typename I2> // always worse match because two different params
+constexpr auto range_size(I begin, I2 end)
+{
+    std::size_t result = 0;
+    while (begin++ != end)
+        ++result;
+    return result;
+}
+} // namespace lexy::_detail
+
 namespace lexy
 {
 template <typename Input>
 using input_iterator_type = typename std::decay_t<Input>::iterator;
+
+template <typename Input, typename CharT>
+constexpr bool char_type_compatible_with_input
+    = (std::is_same_v<CharT, typename Input::char_type>)
+      || Input::encoding::template is_secondary_char_type<CharT>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BASE_HPP_INCLUDED
