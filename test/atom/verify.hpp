@@ -35,10 +35,10 @@ struct atom_match_result
 };
 
 template <typename Atom>
-constexpr auto atom_matches(Atom, const char* str)
+constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
 {
-    auto input       = lexy::zstring_input(str);
-    auto pos         = input.cur();
+    auto input = size == std::size_t(-1) ? lexy::zstring_input(str) : lexy::string_input(str, size);
+    auto pos   = input.cur();
     using error_type = decltype(Atom::error(input, pos));
 
     if (Atom::match(input))
