@@ -9,6 +9,54 @@
 #include <lexy/atom/base.hpp>
 #include <lexy/input/string_input.hpp>
 
+struct test_encoding
+{
+    using char_type = char;
+    struct int_type
+    {
+        int value;
+
+        friend constexpr bool operator==(int_type a, int_type b) noexcept
+        {
+            return a.value == b.value;
+        }
+        friend constexpr bool operator!=(int_type a, int_type b) noexcept
+        {
+            return a.value != b.value;
+        }
+
+        friend constexpr bool operator<(int_type a, int_type b) noexcept
+        {
+            return a.value < b.value;
+        }
+        friend constexpr bool operator<=(int_type a, int_type b) noexcept
+        {
+            return a.value <= b.value;
+        }
+        friend constexpr bool operator>(int_type a, int_type b) noexcept
+        {
+            return a.value > b.value;
+        }
+        friend constexpr bool operator>=(int_type a, int_type b) noexcept
+        {
+            return a.value >= b.value;
+        }
+    };
+
+    template <typename OtherCharType>
+    static constexpr bool is_secondary_char_type = false;
+
+    static LEXY_CONSTEVAL int_type eof()
+    {
+        return {lexy::default_encoding::eof()};
+    }
+
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c) noexcept
+    {
+        return {lexy::default_encoding::to_int_type(c)};
+    }
+};
+
 template <typename Error>
 struct atom_match_result
 {
@@ -37,8 +85,9 @@ struct atom_match_result
 template <typename Atom>
 constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
 {
-    auto input = size == std::size_t(-1) ? lexy::zstring_input(str) : lexy::string_input(str, size);
-    auto pos   = input.cur();
+    auto input = size == std::size_t(-1) ? lexy::zstring_input<test_encoding>(str)
+                                         : lexy::string_input<test_encoding>(str, size);
+    auto pos         = input.cur();
     using error_type = decltype(Atom::error(input, pos));
 
     if (Atom::match(input))

@@ -44,7 +44,7 @@ struct _ascii : atom_base
     template <typename Input>
     LEXY_ATOM_FUNC bool match(Input& input)
     {
-        if (!Predicate::match(input.peek()))
+        if (!Predicate::template match<typename Input::encoding>(input.peek()))
             return false;
         input.bump();
         return true;
@@ -65,10 +65,12 @@ struct _control
         return "ASCII.control";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return (0x0 <= c && c <= 0x8) || (0xE <= c && c <= 0x1F) || c == 0x7F;
+        return (Encoding::to_int_type(0x0) <= c && c <= Encoding::to_int_type(0x8))
+               || (Encoding::to_int_type(0xE) <= c && c <= Encoding::to_int_type(0x1F))
+               || c == Encoding::to_int_type(0x7F);
     }
 };
 inline constexpr auto control = _ascii<_control>{};
@@ -81,10 +83,10 @@ struct _blank
         return "ASCII.blank";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c == ' ' || c == '\t';
+        return c == Encoding::to_int_type(' ') || c == Encoding::to_int_type('\t');
     }
 };
 inline constexpr auto blank = _ascii<_blank>{};
@@ -96,10 +98,11 @@ struct _newline
         return "ASCII.newline";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c == '\n' || c == '\r' || c == '\f' || c == '\v';
+        return c == Encoding::to_int_type('\n') || c == Encoding::to_int_type('\r')
+               || c == Encoding::to_int_type('\f') || c == Encoding::to_int_type('\v');
     }
 };
 inline constexpr auto newline = _ascii<_newline>{};
@@ -111,10 +114,10 @@ struct _space
         return "ASCII.space";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return _blank::match(c) || _newline::match(c);
+        return _blank::template match<Encoding>(c) || _newline::template match<Encoding>(c);
     }
 };
 inline constexpr auto space = _ascii<_space>{};
@@ -127,10 +130,10 @@ struct _lower
         return "ASCII.lower";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c >= 'a' && c <= 'z';
+        return c >= Encoding::to_int_type('a') && c <= Encoding::to_int_type('z');
     }
 };
 inline constexpr auto lower = _ascii<_lower>{};
@@ -142,10 +145,10 @@ struct _upper
         return "ASCII.upper";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c >= 'A' && c <= 'Z';
+        return c >= Encoding::to_int_type('A') && c <= Encoding::to_int_type('Z');
     }
 };
 inline constexpr auto upper = _ascii<_upper>{};
@@ -157,10 +160,10 @@ struct _alpha
         return "ASCII.alpha";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return _lower::match(c) || _upper::match(c);
+        return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c);
     }
 };
 inline constexpr auto alpha = _ascii<_alpha>{};
@@ -173,10 +176,10 @@ struct _digit
         return "ASCII.digit";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c >= '0' && c <= '9';
+        return c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9');
     }
 };
 inline constexpr auto digit = _ascii<_digit>{};
@@ -188,10 +191,11 @@ struct _alnum
         return "ASCII.alnum";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return _lower::match(c) || _upper::match(c) || _digit::match(c);
+        return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c)
+               || _digit::template match<Encoding>(c);
     }
 };
 inline constexpr auto alnum = _ascii<_alnum>{};
@@ -204,14 +208,25 @@ struct _punct
         return "ASCII.punct";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c == '!' || c == '"' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\''
-               || c == '(' || c == ')' || c == '*' || c == '+' || c == ',' || c == '-' || c == '.'
-               || c == '/' || c == ':' || c == ';' || c == '<' || c == '=' || c == '>' || c == '?'
-               || c == '@' || c == '[' || c == '\\' || c == ']' || c == '^' || c == '_' || c == '`'
-               || c == '{' || c == '|' || c == '}' || c == '~';
+        return c == Encoding::to_int_type('!') || c == Encoding::to_int_type('"')
+               || c == Encoding::to_int_type('#') || c == Encoding::to_int_type('$')
+               || c == Encoding::to_int_type('%') || c == Encoding::to_int_type('&')
+               || c == Encoding::to_int_type('\'') || c == Encoding::to_int_type('(')
+               || c == Encoding::to_int_type(')') || c == Encoding::to_int_type('*')
+               || c == Encoding::to_int_type('+') || c == Encoding::to_int_type(',')
+               || c == Encoding::to_int_type('-') || c == Encoding::to_int_type('.')
+               || c == Encoding::to_int_type('/') || c == Encoding::to_int_type(':')
+               || c == Encoding::to_int_type(';') || c == Encoding::to_int_type('<')
+               || c == Encoding::to_int_type('=') || c == Encoding::to_int_type('>')
+               || c == Encoding::to_int_type('?') || c == Encoding::to_int_type('@')
+               || c == Encoding::to_int_type('[') || c == Encoding::to_int_type('\\')
+               || c == Encoding::to_int_type(']') || c == Encoding::to_int_type('^')
+               || c == Encoding::to_int_type('_') || c == Encoding::to_int_type('`')
+               || c == Encoding::to_int_type('{') || c == Encoding::to_int_type('|')
+               || c == Encoding::to_int_type('}') || c == Encoding::to_int_type('~');
     }
 };
 inline constexpr auto punct = _ascii<_punct>{};
@@ -224,10 +239,11 @@ struct _graph
         return "ASCII.graph";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return _lower::match(c) || _upper::match(c) || _digit::match(c) || _punct::match(c);
+        return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c)
+               || _digit::template match<Encoding>(c) || _punct::template match<Encoding>(c);
     }
 };
 inline constexpr auto graph = _ascii<_graph>{};
@@ -239,11 +255,12 @@ struct _print
         return "ASCII.print";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return c == ' ' || _lower::match(c) || _upper::match(c) || _digit::match(c)
-               || _punct::match(c);
+        return c == Encoding::to_int_type(' ') || _lower::template match<Encoding>(c)
+               || _upper::template match<Encoding>(c) || _digit::template match<Encoding>(c)
+               || _punct::template match<Encoding>(c);
     }
 };
 inline constexpr auto print = _ascii<_print>{};
@@ -255,10 +272,10 @@ struct _char
         return "ASCII";
     }
 
-    template <typename T>
-    LEXY_ATOM_FUNC bool match(T c)
+    template <typename Encoding, typename IntType>
+    LEXY_ATOM_FUNC bool match(IntType c)
     {
-        return 0 <= c && c <= 0x7F;
+        return Encoding::to_int_type(0) <= c && c <= Encoding::to_int_type(0x7F);
     }
 };
 inline constexpr auto character = _ascii<_char>{};

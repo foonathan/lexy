@@ -24,7 +24,7 @@ struct default_encoding
         return -1;
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         if constexpr (std::is_unsigned_v<char_type>)
             // We can just convert it to int directly.
@@ -55,7 +55,7 @@ struct ascii_encoding
             return static_cast<int_type>(0xFF);
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
     }
@@ -76,7 +76,7 @@ struct utf8_encoding
         return static_cast<int_type>(0xFF);
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
     }
@@ -99,7 +99,7 @@ struct utf16_encoding
         return int_type(-1);
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
     }
@@ -120,7 +120,7 @@ struct utf32_encoding
         return int_type(0xFFFF'FFFF);
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return c;
     }
@@ -140,7 +140,7 @@ struct raw_encoding
         return -1;
     }
 
-    static constexpr int_type to_int_type(char_type c) noexcept
+    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
     }
