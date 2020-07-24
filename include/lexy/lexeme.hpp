@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/string_view.hpp>
 #include <lexy/encoding.hpp>
 
 namespace lexy
@@ -25,6 +26,11 @@ public:
     constexpr explicit lexeme(const Input& input, iterator begin) noexcept
     : _begin(begin), _end(input.cur())
     {}
+
+    constexpr bool empty() const noexcept
+    {
+        return _begin == _end;
+    }
 
     constexpr iterator begin() const noexcept
     {
@@ -50,6 +56,12 @@ public:
     {
         LEXY_PRECONDITION(idx < size());
         return _begin[idx];
+    }
+
+    constexpr auto string_view() const noexcept
+    {
+        static_assert(std::is_pointer_v<iterator>);
+        return _detail::basic_string_view<char_type>(_begin, _end);
     }
 
 private:
