@@ -10,11 +10,11 @@
 namespace lexyd
 {
 template <typename... P>
-struct _palt : pattern_base
+struct _palt : pattern_base<_palt<P...>>
 {
     static constexpr auto max_capture_count = [] {
         std::size_t max      = 0;
-        std::size_t counts[] = {P::max_capture_count...};
+        std::size_t counts[] = {P::pattern::max_capture_count...};
         for (auto count : counts)
             if (count > max)
                 max = count;
@@ -22,9 +22,9 @@ struct _palt : pattern_base
     }();
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input)
+    LEXY_DSL_FUNC bool match(Context& context, Input& input)
     {
-        return (P::match(context, input) || ...);
+        return (P::pattern::match(context, input) || ...);
     }
 
     LEXY_CONSTEVAL _palt() = default;
@@ -34,17 +34,17 @@ struct _palt : pattern_base
 template <typename P1, typename P2, typename = lexy::_enable_pattern<P1, P2>>
 LEXY_CONSTEVAL auto operator/(P1 p1, P2 p2)
 {
-    return _palt(pattern(p1), pattern(p2));
+    return _palt(p1, p2);
 }
 template <typename... P, typename Other, typename = lexy::_enable_pattern<Other>>
 LEXY_CONSTEVAL auto operator/(_palt<P...>, Other other)
 {
-    return _palt(P{}..., pattern(other));
+    return _palt(P{}..., other);
 }
 template <typename Other, typename... P, typename = lexy::_enable_pattern<Other>>
 LEXY_CONSTEVAL auto operator/(Other other, _palt<P...>)
 {
-    return _palt(pattern(other), P{}...);
+    return _palt(other, P{}...);
 }
 template <typename... P, typename... U>
 LEXY_CONSTEVAL auto operator/(_palt<P...>, _palt<U...>)

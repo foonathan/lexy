@@ -10,14 +10,14 @@
 namespace lexyd
 {
 template <typename P>
-struct _while : pattern_base
+struct _while : pattern_base<_while<P>>
 {
     static constexpr auto max_capture_count = 0;
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input)
+    LEXY_DSL_FUNC bool match(Context& context, Input& input)
     {
-        while (P::match(context, input))
+        while (P::pattern::match(context, input))
         {
         }
 
@@ -28,9 +28,8 @@ struct _while : pattern_base
 template <typename P>
 LEXY_CONSTEVAL auto while_(P)
 {
-    auto p = pattern(P{});
-    static_assert(p.max_capture_count == 0, "cannot repeat captures");
-    return _while<decltype(p)>{};
+    static_assert(P::pattern::max_capture_count == 0, "cannot repeat captures");
+    return _while<P>{};
 }
 } // namespace lexyd
 

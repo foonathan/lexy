@@ -10,14 +10,14 @@
 namespace lexyd
 {
 template <typename P>
-struct _popt : pattern_base
+struct _popt : pattern_base<_popt<P>>
 {
-    static constexpr auto max_capture_count = P::max_capture_count;
+    static constexpr auto max_capture_count = P::pattern::max_capture_count;
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input)
+    LEXY_DSL_FUNC bool match(Context& context, Input& input)
     {
-        if (auto reset = input; P::match(context, input))
+        if (auto reset = input; P::pattern::match(context, input))
             return true;
         else
         {
@@ -28,11 +28,10 @@ struct _popt : pattern_base
 };
 
 template <typename P, typename = lexy::_enable_pattern<P>>
-LEXY_CONSTEVAL auto opt(P p)
+LEXY_CONSTEVAL auto opt(P)
 {
-    return _popt<decltype(pattern(p))>{};
+    return _popt<P>{};
 }
 } // namespace lexyd
 
 #endif // LEXY_PATTERN_OPTION_HPP_INCLUDED
-

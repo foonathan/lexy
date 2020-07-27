@@ -10,17 +10,17 @@
 namespace lexyd
 {
 template <typename Pattern>
-struct _cap : pattern_base
+struct _cap : pattern_base<_cap<Pattern>>
 {
-    static constexpr auto max_capture_count = 1 + Pattern::max_capture_count;
+    static constexpr auto max_capture_count = 1 + Pattern::pattern::max_capture_count;
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input)
+    LEXY_DSL_FUNC bool match(Context& context, Input& input)
     {
         auto idx = context._capture_count++;
 
         auto begin = input.cur();
-        if (!Pattern::match(context, input))
+        if (!Pattern::pattern::match(context, input))
         {
             context._capture_count--; // Undo the increment.
             return false;
@@ -34,9 +34,9 @@ struct _cap : pattern_base
 
 /// Captures whatever the pattern matches as a lexeme.
 template <typename Pattern>
-LEXY_CONSTEVAL auto capture(Pattern p)
+LEXY_CONSTEVAL auto capture(Pattern)
 {
-    return _cap<decltype(pattern(p))>{};
+    return _cap<Pattern>{};
 }
 } // namespace lexyd
 

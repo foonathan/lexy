@@ -2,10 +2,10 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_ATOM_NEWLINE_HPP_INCLUDED
-#define LEXY_ATOM_NEWLINE_HPP_INCLUDED
+#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
+#define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 
 namespace lexy
 {
@@ -30,10 +30,10 @@ struct expected_newline
 
 namespace lexyd
 {
-struct _nl : atom_base
+struct _nl : atom_base<_nl>
 {
     template <typename Input>
-    LEXY_ATOM_FUNC bool match(Input& input)
+    LEXY_DSL_FUNC bool match(Input& input)
     {
         if (auto cur = input.peek(); cur == Input::encoding::to_int_type('\n'))
         {
@@ -56,7 +56,7 @@ struct _nl : atom_base
     }
 
     template <typename Input>
-    LEXY_ATOM_FUNC auto error(const Input&, typename Input::iterator pos)
+    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
     {
         return lexy::expected_newline::error<Input>(pos);
     }
@@ -66,5 +66,4 @@ struct _nl : atom_base
 constexpr auto newline = _nl{};
 } // namespace lexyd
 
-#endif // LEXY_ATOM_NEWLINE_HPP_INCLUDED
-
+#endif // LEXY_DSL_NEWLINE_HPP_INCLUDED

@@ -2,12 +2,12 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_ATOM_LITERAL_HPP_INCLUDED
-#define LEXY_ATOM_LITERAL_HPP_INCLUDED
+#ifndef LEXY_DSL_LITERAL_HPP_INCLUDED
+#define LEXY_DSL_LITERAL_HPP_INCLUDED
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/_detail/string_view.hpp>
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 
 namespace lexy
 {
@@ -54,10 +54,10 @@ struct expected_literal
 namespace lexyd
 {
 template <typename String>
-struct _lit : atom_base
+struct _lit : atom_base<_lit<String>>
 {
     template <typename Input>
-    LEXY_ATOM_FUNC bool match(Input& input)
+    LEXY_DSL_FUNC bool match(Input& input)
     {
         static_assert(lexy::char_type_compatible_with_input<Input, typename String::char_type>);
 
@@ -72,7 +72,7 @@ struct _lit : atom_base
     }
 
     template <typename Input>
-    LEXY_ATOM_FUNC auto error(const Input& input, typename Input::iterator pos)
+    LEXY_DSL_FUNC auto error(const Input& input, typename Input::iterator pos)
     {
         return lexy::expected_literal::error<Input>(pos, String::get(),
                                                     lexy::_detail::range_size(pos, input.cur()));
@@ -92,5 +92,4 @@ constexpr auto lit = _lit<lexy::_detail::type_string<Str>>;
     ::lexyd::_lit<LEXY_NTTP_STRING(Str)> {}
 } // namespace lexyd
 
-#endif // LEXY_ATOM_LITERAL_HPP_INCLUDED
-
+#endif // LEXY_DSL_LITERAL_HPP_INCLUDED

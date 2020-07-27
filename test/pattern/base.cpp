@@ -6,25 +6,6 @@
 
 #include "verify.hpp"
 
-TEST_CASE("pattern: pattern")
-{
-    constexpr auto pattern = lexy::dsl::pattern(LEXY_LIT("abc"));
-    CHECK(lexy::is_pattern<decltype(pattern)>);
-
-    constexpr auto empty = pattern_matches(pattern, "");
-    CHECK(!empty);
-
-    constexpr auto success = pattern_matches(pattern, "abc");
-    CHECK(success);
-    CHECK(success.id() == 0);
-    CHECK(success.match().string_view() == "abc");
-
-    constexpr auto additional = pattern_matches(pattern, "abcde");
-    CHECK(additional);
-    CHECK(additional.id() == 0);
-    CHECK(additional.match().string_view() == "abc");
-}
-
 TEST_CASE("pattern_match")
 {
     constexpr auto result

@@ -10,14 +10,14 @@
 namespace lexyd
 {
 template <auto Id>
-struct _id : pattern_base
+struct _id : pattern_base<_id<Id>>
 {
     static_assert(Id > 0);
 
     static constexpr auto max_capture_count = 0;
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input&)
+    LEXY_DSL_FUNC bool match(Context& context, Input&)
     {
         context._id = int(Id);
         return true;
@@ -30,4 +30,3 @@ constexpr auto id = _id<Id>{};
 } // namespace lexyd
 
 #endif // LEXY_PATTERN_ID_HPP_INCLUDED
-

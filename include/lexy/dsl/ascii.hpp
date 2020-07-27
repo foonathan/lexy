@@ -2,10 +2,10 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_ATOM_ASCII_HPP_INCLUDED
-#define LEXY_ATOM_ASCII_HPP_INCLUDED
+#ifndef LEXY_DSL_ASCII_HPP_INCLUDED
+#define LEXY_DSL_ASCII_HPP_INCLUDED
 
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 
 namespace lexy
 {
@@ -39,10 +39,10 @@ struct expected_char_class
 namespace lexyd::ascii
 {
 template <typename Predicate>
-struct _ascii : atom_base
+struct _ascii : atom_base<_ascii<Predicate>>
 {
     template <typename Input>
-    LEXY_ATOM_FUNC bool match(Input& input)
+    LEXY_DSL_FUNC bool match(Input& input)
     {
         if (!Predicate::template match<typename Input::encoding>(input.peek()))
             return false;
@@ -51,7 +51,7 @@ struct _ascii : atom_base
     }
 
     template <typename Input>
-    LEXY_ATOM_FUNC auto error(const Input&, typename Input::iterator pos)
+    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
     {
         return lexy::expected_char_class::error<Input>(pos, Predicate::name());
     }
@@ -66,7 +66,7 @@ struct _control
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return (Encoding::to_int_type(0x0) <= c && c <= Encoding::to_int_type(0x8))
                || (Encoding::to_int_type(0xE) <= c && c <= Encoding::to_int_type(0x1F))
@@ -84,7 +84,7 @@ struct _blank
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c == Encoding::to_int_type(' ') || c == Encoding::to_int_type('\t');
     }
@@ -99,7 +99,7 @@ struct _newline
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c == Encoding::to_int_type('\n') || c == Encoding::to_int_type('\r')
                || c == Encoding::to_int_type('\f') || c == Encoding::to_int_type('\v');
@@ -115,7 +115,7 @@ struct _space
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return _blank::template match<Encoding>(c) || _newline::template match<Encoding>(c);
     }
@@ -131,7 +131,7 @@ struct _lower
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c >= Encoding::to_int_type('a') && c <= Encoding::to_int_type('z');
     }
@@ -146,7 +146,7 @@ struct _upper
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c >= Encoding::to_int_type('A') && c <= Encoding::to_int_type('Z');
     }
@@ -161,7 +161,7 @@ struct _alpha
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c);
     }
@@ -177,7 +177,7 @@ struct _digit
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9');
     }
@@ -192,7 +192,7 @@ struct _alnum
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c)
                || _digit::template match<Encoding>(c);
@@ -209,7 +209,7 @@ struct _punct
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c == Encoding::to_int_type('!') || c == Encoding::to_int_type('"')
                || c == Encoding::to_int_type('#') || c == Encoding::to_int_type('$')
@@ -240,7 +240,7 @@ struct _graph
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return _lower::template match<Encoding>(c) || _upper::template match<Encoding>(c)
                || _digit::template match<Encoding>(c) || _punct::template match<Encoding>(c);
@@ -256,7 +256,7 @@ struct _print
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return c == Encoding::to_int_type(' ') || _lower::template match<Encoding>(c)
                || _upper::template match<Encoding>(c) || _digit::template match<Encoding>(c)
@@ -273,7 +273,7 @@ struct _char
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_ATOM_FUNC bool match(IntType c)
+    LEXY_DSL_FUNC bool match(IntType c)
     {
         return Encoding::to_int_type(0) <= c && c <= Encoding::to_int_type(0x7F);
     }
@@ -281,5 +281,4 @@ struct _char
 inline constexpr auto character = _ascii<_char>{};
 } // namespace lexyd::ascii
 
-#endif // LEXY_ATOM_ASCII_HPP_INCLUDED
-
+#endif // LEXY_DSL_ASCII_HPP_INCLUDED

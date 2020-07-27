@@ -2,10 +2,10 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_ATOM_EOF_HPP_INCLUDED
-#define LEXY_ATOM_EOF_HPP_INCLUDED
+#ifndef LEXY_DSL_EOF_HPP_INCLUDED
+#define LEXY_DSL_EOF_HPP_INCLUDED
 
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 
 namespace lexy
 {
@@ -30,16 +30,16 @@ struct expected_eof
 
 namespace lexyd
 {
-struct _eof : atom_base
+struct _eof : atom_base<_eof>
 {
     template <typename Input>
-    LEXY_ATOM_FUNC bool match(Input& input)
+    LEXY_DSL_FUNC bool match(Input& input)
     {
         return input.peek() == Input::encoding::eof();
     }
 
     template <typename Input>
-    LEXY_ATOM_FUNC auto error(const Input&, typename Input::iterator pos)
+    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
     {
         return lexy::expected_eof::error<Input>(pos);
     }
@@ -49,5 +49,4 @@ struct _eof : atom_base
 constexpr auto eof = _eof{};
 } // namespace lexyd
 
-#endif // LEXY_ATOM_EOF_HPP_INCLUDED
-
+#endif // LEXY_DSL_EOF_HPP_INCLUDED

@@ -10,15 +10,15 @@
 namespace lexyd
 {
 template <typename... P>
-struct _pseq : pattern_base
+struct _pseq : pattern_base<_pseq<P...>>
 {
-    static constexpr auto max_capture_count = (P::max_capture_count + ...);
+    static constexpr auto max_capture_count = (P::pattern::max_capture_count + ...);
 
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input)
+    LEXY_DSL_FUNC bool match(Context& context, Input& input)
     {
         auto reset = input;
-        if ((P::match(context, input) && ...))
+        if ((P::pattern::match(context, input) && ...))
             return true;
 
         input = LEXY_MOV(reset);
@@ -32,17 +32,17 @@ struct _pseq : pattern_base
 template <typename P1, typename P2, typename = lexy::_enable_pattern<P1, P2>>
 LEXY_CONSTEVAL auto operator+(P1 p1, P2 p2)
 {
-    return _pseq(pattern(p1), pattern(p2));
+    return _pseq(p1, p2);
 }
 template <typename... P, typename Other, typename = lexy::_enable_pattern<Other>>
 LEXY_CONSTEVAL auto operator+(_pseq<P...>, Other other)
 {
-    return _pseq(P{}..., pattern(other));
+    return _pseq(P{}..., other);
 }
 template <typename Other, typename... P, typename = lexy::_enable_pattern<Other>>
 LEXY_CONSTEVAL auto operator+(Other other, _pseq<P...>)
 {
-    return _pseq(pattern(other), P{}...);
+    return _pseq(other, P{}...);
 }
 template <typename... P, typename... U>
 LEXY_CONSTEVAL auto operator+(_pseq<P...>, _pseq<U...>)

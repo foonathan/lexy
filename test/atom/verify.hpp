@@ -6,7 +6,7 @@
 #define TEST_ATOM_VERIFY_HPP_INCLUDED
 
 #include <doctest.h>
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 
 #include "../test_encoding.hpp"
 

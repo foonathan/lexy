@@ -7,7 +7,7 @@
 
 #include <cassert>
 #include <doctest.h>
-#include <lexy/atom/literal.hpp>
+#include <lexy/dsl/literal.hpp>
 #include <lexy/pattern/base.hpp>
 
 #include "../test_encoding.hpp"

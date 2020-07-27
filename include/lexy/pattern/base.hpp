@@ -6,17 +6,19 @@
 #define LEXY_PATTERN_BASE_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
-#include <lexy/atom/base.hpp>
+#include <lexy/dsl/base.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
-#define LEXY_PATTERN_FUNC LEXY_FORCE_INLINE static constexpr
-
-// We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
-struct pattern_base
+struct _pattern_base
 {};
+template <typename Pattern>
+struct pattern_base : _pattern_base
+{
+    using pattern = Pattern;
+};
 } // namespace lexyd
 
 #if 0
@@ -27,53 +29,18 @@ class Pattern : pattern_base
     // If matches, consumes characters from input, update context, and return true.
     // If it doesn't match, leave input as-is and return false.
     template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context& context, Input& input);
+    LEXY_DSL_FUNC bool match(Context& context, Input& input);
 };
 #endif
 
 namespace lexy
 {
-namespace dsl = lexyd;
-
 template <typename T>
-constexpr bool is_pattern = std::is_base_of_v<dsl::pattern_base, T>;
+constexpr bool is_pattern = std::is_base_of_v<dsl::_pattern_base, T>;
 
 template <typename... T>
 using _enable_pattern = std::enable_if_t<((is_pattern<T> || is_atom<T>)&&...)>;
 } // namespace lexy
-
-namespace lexyd
-{
-template <typename Atom>
-struct _atomp : pattern_base
-{
-    static constexpr auto max_capture_count = 0;
-
-    template <typename Context, typename Input>
-    LEXY_PATTERN_FUNC bool match(Context&, Input& input)
-    {
-        auto reset = input;
-        if (Atom::match(input))
-            return true;
-
-        input = LEXY_MOV(reset);
-        return false;
-    }
-};
-
-/// A pattern that matches an atom.
-template <typename AtomOrPattern>
-LEXY_CONSTEVAL auto pattern(AtomOrPattern)
-{
-    if constexpr (lexy::is_atom<AtomOrPattern>)
-        return _atomp<AtomOrPattern>{};
-    else
-    {
-        static_assert(lexy::is_pattern<AtomOrPattern>);
-        return AtomOrPattern{};
-    }
-}
-} // namespace lexyd
 
 namespace lexy
 {
@@ -154,9 +121,9 @@ struct pattern_match_result<Input, 0>
 
 template <typename Input, typename Pattern,
           typename = std::enable_if_t<is_atom<Pattern> || is_pattern<Pattern>>>
-LEXY_FORCE_INLINE constexpr auto pattern_match(Input&& input, Pattern p)
+LEXY_FORCE_INLINE constexpr auto pattern_match(Input&& input, Pattern)
 {
-    using pattern     = decltype(dsl::pattern(p));
+    using pattern     = typename Pattern::pattern;
     using result_type = pattern_match_result<std::decay_t<Input>, pattern::max_capture_count>;
 
     result_type result;
@@ -184,4 +151,3 @@ constexpr auto pattern_match(Input&& input, PatternHolder holder)
 } // namespace lexy
 
 #endif // LEXY_PATTERN_BASE_HPP_INCLUDED
-

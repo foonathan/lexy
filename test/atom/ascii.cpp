@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/atom/ascii.hpp>
+#include <lexy/dsl/ascii.hpp>
 
 #include "verify.hpp"
 #include <cctype>
