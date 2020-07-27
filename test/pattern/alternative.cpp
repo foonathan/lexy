@@ -2,11 +2,11 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/pattern/alternative.hpp>
+#include <lexy/dsl/alternative.hpp>
 
 #include "verify.hpp"
-#include <lexy/pattern/id.hpp>
-#include <lexy/pattern/sequence.hpp>
+#include <lexy/dsl/id.hpp>
+#include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("pattern: alternative")
 {

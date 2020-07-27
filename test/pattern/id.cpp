@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/pattern/id.hpp>
+#include <lexy/dsl/id.hpp>
 
 #include "verify.hpp"
 

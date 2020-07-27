@@ -2,9 +2,11 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/pattern/base.hpp>
+#include <lexy/match.hpp>
 
-#include "verify.hpp"
+#include <doctest.h>
+#include <lexy/dsl/literal.hpp>
+#include <lexy/input/string_input.hpp>
 
 TEST_CASE("pattern_match")
 {

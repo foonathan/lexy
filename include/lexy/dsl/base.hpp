@@ -10,8 +10,58 @@
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
+//=== dsl ===//
 #if 0
-class Atom : atom_base
+class DSL : dsl_base
+{
+    struct matcher
+    {
+        // The maximal number of captures this pattern has.
+        static constexpr std::size_t max_capture_count;
+
+        // If matches, consumes characters from input, update context, and return true.
+        // If it doesn't match, leave input as-is and return false.
+        template <typename Context, typename Input>
+        LEXY_DSL_FUNC bool match(Context& context, Input& input);
+    };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Input, typename ... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args)
+            -> typename Context::result_type
+        {
+            if (/* match input */)
+                return NextParser::parse(context, input, LEXY_FWD(args)..., /* rule arguments */);
+            else
+                return context.report_error(/* error */);
+        }
+    };
+};
+#endif
+
+// We use a shorthand namespace to decrease symbol size.
+namespace lexyd
+{
+struct dsl_base
+{};
+} // namespace lexyd
+
+namespace lexy
+{
+namespace dsl = lexyd;
+
+template <typename T>
+constexpr bool is_dsl = std::is_base_of_v<dsl::dsl_base, T>;
+
+template <typename T>
+constexpr bool is_pattern = is_dsl<T>; // TODO: check for ::matcher
+} // namespace lexy
+
+//=== atom ===//
+#if 0
+class Atom : atom_base<Atom>
 {
     // Try to match and consume characters.
     // Returns true, if match succesful and leave input after the consumed characters.
@@ -26,15 +76,14 @@ class Atom : atom_base
 };
 #endif
 
-// We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
-struct _atom_base
+struct _atom_base : dsl_base
 {};
 template <typename Atom>
 struct atom_base : _atom_base
 {
-    struct pattern
+    struct matcher
     {
         static constexpr std::size_t max_capture_count = 0;
 
@@ -49,13 +98,25 @@ struct atom_base : _atom_base
             return false;
         }
     };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Input, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+            typename Context::result_type
+        {
+            if (auto pos = input.cur(); Atom::match(input))
+                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            else
+                return context.report_error(Atom::error(input, pos));
+        }
+    };
 };
 } // namespace lexyd
 
 namespace lexy
 {
-namespace dsl = lexyd;
-
 template <typename T>
 constexpr bool is_atom = std::is_base_of_v<dsl::_atom_base, T>;
 } // namespace lexy

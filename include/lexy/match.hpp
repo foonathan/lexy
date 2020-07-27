@@ -2,45 +2,11 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_PATTERN_BASE_HPP_INCLUDED
-#define LEXY_PATTERN_BASE_HPP_INCLUDED
+#ifndef LEXY_MATCH_HPP_INCLUDED
+#define LEXY_MATCH_HPP_INCLUDED
 
-#include <lexy/_detail/config.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
-
-namespace lexyd
-{
-struct _pattern_base
-{};
-template <typename Pattern>
-struct pattern_base : _pattern_base
-{
-    using pattern = Pattern;
-};
-} // namespace lexyd
-
-#if 0
-class Pattern : pattern_base
-{
-    static constexpr std::size_t max_capture_count;
-
-    // If matches, consumes characters from input, update context, and return true.
-    // If it doesn't match, leave input as-is and return false.
-    template <typename Context, typename Input>
-    LEXY_DSL_FUNC bool match(Context& context, Input& input);
-};
-#endif
-
-namespace lexy
-{
-template <typename T>
-constexpr bool is_pattern = std::is_base_of_v<dsl::_pattern_base, T>;
-
-template <typename... T>
-using _enable_pattern = std::enable_if_t<((is_pattern<T> || is_atom<T>)&&...)>;
-} // namespace lexy
 
 namespace lexy
 {
@@ -119,18 +85,18 @@ struct pattern_match_result<Input, 0>
     }
 };
 
-template <typename Input, typename Pattern,
-          typename = std::enable_if_t<is_atom<Pattern> || is_pattern<Pattern>>>
+template <typename Input, typename Pattern, typename = std::enable_if_t<is_dsl<Pattern>>>
 LEXY_FORCE_INLINE constexpr auto pattern_match(Input&& input, Pattern)
 {
-    using pattern     = typename Pattern::pattern;
-    using result_type = pattern_match_result<std::decay_t<Input>, pattern::max_capture_count>;
+    static_assert(is_pattern<Pattern>);
+    using matcher     = typename Pattern::matcher;
+    using result_type = pattern_match_result<std::decay_t<Input>, matcher::max_capture_count>;
 
     result_type result;
     result._id = 0;
 
     auto begin = input.cur();
-    if (!pattern::match(result, input))
+    if (!matcher::match(result, input))
     {
         result._id = -1;
         return result;
@@ -150,4 +116,5 @@ constexpr auto pattern_match(Input&& input, PatternHolder holder)
 }
 } // namespace lexy
 
-#endif // LEXY_PATTERN_BASE_HPP_INCLUDED
+#endif // LEXY_MATCH_HPP_INCLUDED
+

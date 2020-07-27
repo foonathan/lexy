@@ -8,7 +8,7 @@
 #include <cassert>
 #include <doctest.h>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/pattern/base.hpp>
+#include <lexy/match.hpp>
 
 #include "../test_encoding.hpp"
 
