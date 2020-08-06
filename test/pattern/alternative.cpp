@@ -5,7 +5,7 @@
 #include <lexy/dsl/alternative.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/id.hpp>
+#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("pattern: alternative")

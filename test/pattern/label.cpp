@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/dsl/id.hpp>
+#include <lexy/dsl/label.hpp>
 
 #include "verify.hpp"
 
@@ -16,9 +16,8 @@ TEST_CASE("pattern: id")
     CHECK(empty.id() == 1);
     CHECK(empty.match().empty());
 
-    constexpr auto success = pattern_matches(pattern, "abc");
-    CHECK(success);
-    CHECK(success.id() == 1);
-    CHECK(success.match().empty());
+    constexpr auto string = pattern_matches(pattern, "abc");
+    CHECK(string);
+    CHECK(string.id() == 1);
+    CHECK(string.match().empty());
 }
-
