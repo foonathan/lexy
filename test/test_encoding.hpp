@@ -55,5 +55,7 @@ struct test_encoding
     }
 };
 
+using test_input = lexy::string_input<test_encoding>;
+
 #endif // TEST_TEST_ENCODING_HPP_INCLUDED
 

@@ -6,6 +6,7 @@
 #define LEXY_DSL_CAPTURE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexyd
 {
@@ -31,6 +32,30 @@ struct _cap : dsl_base
 
             context._captures[idx] = {begin, end};
             return true;
+        }
+    };
+
+    template <typename NextParser>
+    struct parser
+    {
+        struct continuation
+        {
+            template <typename Context, typename Input, typename... Args>
+            LEXY_DSL_FUNC auto parse(Context& context, Input& input, typename Input::iterator begin,
+                                     Args&&... args) -> typename Context::result_type
+            {
+                auto end = input.cur();
+                return NextParser::parse(context, input, LEXY_FWD(args)...,
+                                         lexy::lexeme<Input>(begin, end));
+            }
+        };
+
+        template <typename Context, typename Input, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+            typename Context::result_type
+        {
+            return Rule::template parser<continuation>::parse(context, input, input.cur(),
+                                                              LEXY_FWD(args)...);
         }
     };
 };
