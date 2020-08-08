@@ -40,6 +40,7 @@ TEST_CASE("rule: id")
 
         constexpr int success(const char* cur, lexy::id<0>)
         {
+            static_assert(lexy::id<0>{} == 0);
             assert(str == cur);
             return 0;
         }

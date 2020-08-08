@@ -9,9 +9,17 @@
 
 namespace lexy
 {
-template <typename T>
+template <typename T, typename = void>
 struct label
 {};
+template <typename T>
+struct label<T, decltype(void(T::value))>
+{
+    LEXY_CONSTEVAL operator decltype(T::value)() const
+    {
+        return T::value;
+    }
+};
 
 template <auto Id>
 using id = label<std::integral_constant<int, Id>>;
