@@ -6,10 +6,11 @@
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/match.hpp>
 
 namespace lexyd
 {
-template <typename R>
+template <typename Pattern>
 struct _while : dsl_base
 {
     struct matcher
@@ -19,20 +20,35 @@ struct _while : dsl_base
         template <typename Context, typename Input>
         LEXY_DSL_FUNC bool match(Context& context, Input& input)
         {
-            while (R::matcher::match(context, input))
+            while (Pattern::matcher::match(context, input))
             {
             }
 
             return true;
         }
     };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Input, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+            typename Context::result_type
+        {
+            // We match ourselves as pattern.
+            lexy::pattern_match(input, _while{});
+            // Then we continue.
+            return NextParser::parse(context, input, LEXY_FWD(args)...);
+        }
+    };
 };
 
-template <typename R>
-LEXY_CONSTEVAL auto while_(R)
+template <typename Pattern>
+LEXY_CONSTEVAL auto while_(Pattern)
 {
-    static_assert(R::matcher::max_capture_count == 0, "cannot repeat captures");
-    return _while<R>{};
+    static_assert(lexy::is_pattern<Pattern>);
+    static_assert(Pattern::matcher::max_capture_count == 0, "cannot repeat captures");
+    return _while<Pattern>{};
 }
 } // namespace lexyd
 
