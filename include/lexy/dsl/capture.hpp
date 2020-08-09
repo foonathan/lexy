@@ -38,15 +38,17 @@ struct _cap : dsl_base
     template <typename NextParser>
     struct parser
     {
-        struct continuation
+        template <typename... PrevArgs>
+        struct _continuation
         {
             template <typename Context, typename Input, typename... Args>
             LEXY_DSL_FUNC auto parse(Context& context, Input& input, typename Input::iterator begin,
-                                     Args&&... args) -> typename Context::result_type
+                                     PrevArgs&&... prev_args, Args&&... args) ->
+                typename Context::result_type
             {
                 auto end = input.cur();
-                return NextParser::parse(context, input, LEXY_FWD(args)...,
-                                         lexy::lexeme<Input>(begin, end));
+                return NextParser::parse(context, input, LEXY_FWD(prev_args)...,
+                                         lexy::lexeme<Input>(begin, end), LEXY_FWD(args)...);
             }
         };
 
@@ -54,6 +56,7 @@ struct _cap : dsl_base
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
+            using continuation = _continuation<Args...>;
             return Rule::template parser<continuation>::parse(context, input, input.cur(),
                                                               LEXY_FWD(args)...);
         }
