@@ -9,6 +9,20 @@
 
 namespace lexyd
 {
+template <typename NextParser, typename... R>
+struct _seq_parser;
+template <typename NextParser>
+struct _seq_parser<NextParser>
+{
+    using type = NextParser;
+};
+template <typename NextParser, typename H, typename... T>
+struct _seq_parser<NextParser, H, T...>
+{
+    using tail = typename _seq_parser<NextParser, T...>::type;
+    using type = typename H::template parser<tail>;
+};
+
 template <typename... R>
 struct _seq : dsl_base
 {
@@ -27,6 +41,9 @@ struct _seq : dsl_base
             return false;
         }
     };
+
+    template <typename NextParser>
+    using parser = typename _seq_parser<NextParser, R...>::type;
 
     LEXY_CONSTEVAL _seq() = default;
     LEXY_CONSTEVAL _seq(R...) {}

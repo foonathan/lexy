@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/label.hpp>
+#include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("rule: capture")
 {
@@ -70,13 +71,11 @@ TEST_CASE("rule: capture")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme<test_input> inner,
+            constexpr int success(const char*, lexy::lexeme<test_input> inner,
                                   lexy::lexeme<test_input> outer)
             {
-                assert(inner.begin() == str);
-                assert(inner.end() == cur);
-                assert(outer.begin() == str);
-                assert(outer.end() == cur);
+                assert(inner.string_view() == "abc");
+                assert(outer.string_view() == "abc");
                 return 0;
             }
 
@@ -95,7 +94,32 @@ TEST_CASE("rule: capture")
     }
     SUBCASE("indirectly nested")
     {
-        // TODO
+        constexpr auto rule = capture(LEXY_LIT("(") + capture(LEXY_LIT("abc")) + LEXY_LIT(")"));
+        CHECK(lexy::is_dsl<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char*, lexy::lexeme<test_input> inner,
+                                  lexy::lexeme<test_input> outer)
+            {
+                assert(inner.string_view() == "abc");
+                assert(outer.string_view() == "(abc)");
+                return 0;
+            }
+
+            constexpr int error(test_error<lexy::expected_literal>)
+            {
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto success = rule_matches<callback>(rule, "(abc)");
+        CHECK(success == 0);
     }
 }
 
