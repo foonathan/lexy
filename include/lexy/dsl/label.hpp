@@ -30,6 +30,8 @@ namespace lexyd
 template <typename Label>
 struct _lab : rule_base
 {
+    static constexpr auto has_matcher = false;
+
     template <typename NextParser>
     struct parser
     {
@@ -49,6 +51,8 @@ constexpr auto label = _lab<Label>{};
 template <auto Id>
 struct _id : _lab<std::integral_constant<int, Id>>
 {
+    static constexpr auto has_matcher = true;
+
     struct matcher
     {
         static_assert(Id > 0);

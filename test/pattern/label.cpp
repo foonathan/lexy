@@ -21,3 +21,4 @@ TEST_CASE("pattern: id")
     CHECK(string.id() == 1);
     CHECK(string.match().empty());
 }
+

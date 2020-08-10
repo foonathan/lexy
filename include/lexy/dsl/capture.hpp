@@ -13,6 +13,8 @@ namespace lexyd
 template <typename Rule>
 struct _cap : rule_base
 {
+    static constexpr auto has_matcher = Rule::has_matcher;
+
     struct matcher
     {
         static constexpr auto sets_id           = Rule::matcher::sets_id;

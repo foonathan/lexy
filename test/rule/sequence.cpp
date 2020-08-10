@@ -13,6 +13,7 @@ TEST_CASE("rule: sequence")
     constexpr auto rule
         = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -48,3 +49,4 @@ TEST_CASE("rule: sequence")
     constexpr auto abc = rule_matches<callback>(rule, "abc");
     CHECK(abc == 0);
 }
+

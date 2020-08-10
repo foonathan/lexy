@@ -26,6 +26,8 @@ struct _seq_parser<NextParser, H, T...>
 template <typename... R>
 struct _seq : rule_base
 {
+    static constexpr auto has_matcher = (R::has_matcher && ...);
+
     struct matcher
     {
         static constexpr auto sets_id           = (R::matcher::sets_id || ...);

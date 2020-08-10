@@ -13,6 +13,8 @@ namespace lexyd
 template <typename Pattern>
 struct _while : rule_base
 {
+    static constexpr auto has_matcher = true;
+
     struct matcher
     {
         static constexpr auto sets_id           = false;

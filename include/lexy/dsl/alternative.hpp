@@ -12,6 +12,8 @@ namespace lexyd
 template <typename... R>
 struct _alt : rule_base
 {
+    static constexpr auto has_matcher = (R::has_matcher && ...);
+
     struct matcher
     {
         static constexpr auto sets_id           = (R::matcher::sets_id || ...);

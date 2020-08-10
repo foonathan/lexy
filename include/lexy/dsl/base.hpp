@@ -14,6 +14,9 @@
 #if 0
 class Rule : rule_base
 {
+    // Whether or not the rule has a matcher, in which case it is a pattern.
+    static constexpr bool has_matcher;
+
     struct matcher
     {
         // Whether or  not this pattern can set an id.
@@ -58,7 +61,12 @@ template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
 
 template <typename T>
-constexpr bool is_pattern = is_rule<T>;
+constexpr bool is_pattern = [] {
+    if constexpr (is_rule<T>)
+        return T::has_matcher;
+    else
+        return false;
+}();
 } // namespace lexy
 
 //=== atom ===//
@@ -85,6 +93,8 @@ struct _atom_base : rule_base
 template <typename Atom>
 struct atom_base : _atom_base
 {
+    static constexpr auto has_matcher = true;
+
     struct matcher
     {
         static constexpr auto sets_id           = false;
