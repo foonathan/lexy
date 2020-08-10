@@ -14,6 +14,7 @@ struct _alt : dsl_base
 {
     struct matcher
     {
+        static constexpr auto sets_id           = (R::matcher::sets_id || ...);
         static constexpr auto max_capture_count = [] {
             std::size_t max      = 0;
             std::size_t counts[] = {R::matcher::max_capture_count...};

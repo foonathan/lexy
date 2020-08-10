@@ -14,6 +14,7 @@ struct _opt : dsl_base
 {
     struct matcher
     {
+        static constexpr auto sets_id           = Rule::matcher::sets_id;
         static constexpr auto max_capture_count = Rule::matcher::max_capture_count;
 
         template <typename Context, typename Input>

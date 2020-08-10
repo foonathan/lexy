@@ -28,6 +28,7 @@ struct _seq : dsl_base
 {
     struct matcher
     {
+        static constexpr auto sets_id           = (R::matcher::sets_id || ...);
         static constexpr auto max_capture_count = (R::matcher::max_capture_count + ...);
 
         template <typename Context, typename Input>

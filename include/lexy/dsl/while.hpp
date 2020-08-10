@@ -15,6 +15,7 @@ struct _while : dsl_base
 {
     struct matcher
     {
+        static constexpr auto sets_id           = false;
         static constexpr auto max_capture_count = 0;
 
         template <typename Context, typename Input>
@@ -47,6 +48,7 @@ template <typename Pattern>
 LEXY_CONSTEVAL auto while_(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
+    static_assert(!Pattern::matcher::sets_id, "repeated pattern must not set an id");
     static_assert(Pattern::matcher::max_capture_count == 0, "cannot repeat captures");
     return _while<Pattern>{};
 }

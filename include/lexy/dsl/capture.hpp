@@ -15,6 +15,7 @@ struct _cap : dsl_base
 {
     struct matcher
     {
+        static constexpr auto sets_id           = Rule::matcher::sets_id;
         static constexpr auto max_capture_count = 1 + Rule::matcher::max_capture_count;
 
         template <typename Context, typename Input>

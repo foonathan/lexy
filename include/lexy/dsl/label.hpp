@@ -53,6 +53,7 @@ struct _id : _lab<std::integral_constant<int, Id>>
     {
         static_assert(Id > 0);
 
+        static constexpr auto sets_id           = true;
         static constexpr auto max_capture_count = 0;
 
         template <typename Context, typename Input>
