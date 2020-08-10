@@ -13,7 +13,7 @@ TEST_CASE("rule: capture")
     SUBCASE("basic")
     {
         constexpr auto rule = capture(LEXY_LIT("abc"));
-        CHECK(lexy::is_dsl<decltype(rule)>);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
@@ -42,7 +42,7 @@ TEST_CASE("rule: capture")
     SUBCASE("capture label")
     {
         constexpr auto rule = capture(lexy::dsl::label<struct lab>);
-        CHECK(lexy::is_dsl<decltype(rule)>);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
@@ -65,7 +65,7 @@ TEST_CASE("rule: capture")
     SUBCASE("directly nested")
     {
         constexpr auto rule = capture(capture(LEXY_LIT("abc")));
-        CHECK(lexy::is_dsl<decltype(rule)>);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
@@ -95,7 +95,7 @@ TEST_CASE("rule: capture")
     SUBCASE("indirectly nested")
     {
         constexpr auto rule = capture(LEXY_LIT("(") + capture(LEXY_LIT("abc")) + LEXY_LIT(")"));
-        CHECK(lexy::is_dsl<decltype(rule)>);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
@@ -122,4 +122,3 @@ TEST_CASE("rule: capture")
         CHECK(success == 0);
     }
 }
-

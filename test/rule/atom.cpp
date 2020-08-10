@@ -9,7 +9,7 @@
 TEST_CASE("rule: atom")
 {
     constexpr auto rule = LEXY_LIT("abc");
-    CHECK(lexy::is_dsl<decltype(rule)>);
+    CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
@@ -34,4 +34,3 @@ TEST_CASE("rule: atom")
     constexpr auto success = rule_matches<callback>(rule, "abc");
     CHECK(success == 0);
 }
-

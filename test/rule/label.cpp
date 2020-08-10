@@ -9,7 +9,7 @@
 TEST_CASE("rule: label")
 {
     constexpr auto rule = lexy::dsl::label<struct lab>;
-    CHECK(lexy::is_dsl<decltype(rule)>);
+    CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
@@ -32,7 +32,7 @@ TEST_CASE("rule: label")
 TEST_CASE("rule: id")
 {
     constexpr auto rule = lexy::dsl::id<0>;
-    CHECK(lexy::is_dsl<decltype(rule)>);
+    CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
@@ -52,4 +52,3 @@ TEST_CASE("rule: id")
     constexpr auto string = rule_matches<callback>(rule, "abc");
     CHECK(string == 0);
 }
-

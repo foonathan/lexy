@@ -10,9 +10,9 @@
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
-//=== dsl ===//
+//=== rule ===//
 #if 0
-class DSL : dsl_base
+class Rule : rule_base
 {
     struct matcher
     {
@@ -46,7 +46,7 @@ class DSL : dsl_base
 // We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
-struct dsl_base
+struct rule_base
 {};
 } // namespace lexyd
 
@@ -55,10 +55,10 @@ namespace lexy
 namespace dsl = lexyd;
 
 template <typename T>
-constexpr bool is_dsl = std::is_base_of_v<dsl::dsl_base, T>;
+constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
 
 template <typename T>
-constexpr bool is_pattern = is_dsl<T>; // TODO: check for ::matcher
+constexpr bool is_pattern = is_rule<T>;
 } // namespace lexy
 
 //=== atom ===//
@@ -80,7 +80,7 @@ class Atom : atom_base<Atom>
 
 namespace lexyd
 {
-struct _atom_base : dsl_base
+struct _atom_base : rule_base
 {};
 template <typename Atom>
 struct atom_base : _atom_base

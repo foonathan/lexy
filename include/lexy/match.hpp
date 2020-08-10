@@ -85,7 +85,7 @@ struct pattern_match_result<Input, 0>
     }
 };
 
-template <typename Input, typename Pattern, typename = std::enable_if_t<is_dsl<Pattern>>>
+template <typename Input, typename Pattern, typename = std::enable_if_t<is_rule<Pattern>>>
 LEXY_FORCE_INLINE constexpr auto pattern_match(Input&& input, Pattern)
 {
     static_assert(is_pattern<Pattern>);

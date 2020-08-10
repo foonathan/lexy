@@ -28,7 +28,7 @@ using id = label<std::integral_constant<int, Id>>;
 namespace lexyd
 {
 template <typename Label>
-struct _lab : dsl_base
+struct _lab : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -71,4 +71,3 @@ constexpr auto id = _id<Id>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LABEL_HPP_INCLUDED
-

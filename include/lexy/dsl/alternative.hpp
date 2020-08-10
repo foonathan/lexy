@@ -10,7 +10,7 @@
 namespace lexyd
 {
 template <typename... R>
-struct _alt : dsl_base
+struct _alt : rule_base
 {
     struct matcher
     {

@@ -10,7 +10,7 @@
 namespace lexyd
 {
 template <typename Rule>
-struct _opt : dsl_base
+struct _opt : rule_base
 {
     struct matcher
     {
@@ -40,4 +40,3 @@ LEXY_CONSTEVAL auto opt(Rule)
 } // namespace lexyd
 
 #endif // LEXY_DSL_OPTION_HPP_INCLUDED
-

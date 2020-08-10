@@ -11,7 +11,7 @@
 namespace lexyd
 {
 template <typename Pattern>
-struct _while : dsl_base
+struct _while : rule_base
 {
     struct matcher
     {

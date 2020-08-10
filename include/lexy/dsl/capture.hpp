@@ -11,7 +11,7 @@
 namespace lexyd
 {
 template <typename Rule>
-struct _cap : dsl_base
+struct _cap : rule_base
 {
     struct matcher
     {

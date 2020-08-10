@@ -24,7 +24,7 @@ struct _seq_parser<NextParser, H, T...>
 };
 
 template <typename... R>
-struct _seq : dsl_base
+struct _seq : rule_base
 {
     struct matcher
     {
