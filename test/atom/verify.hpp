@@ -34,6 +34,21 @@ struct atom_match_result
         return matches;
     }
 };
+template <>
+struct atom_match_result<void>
+{
+    const char* input;
+    std::size_t count;
+
+    constexpr explicit atom_match_result(const char* input, std::size_t count)
+    : input(input), count(count)
+    {}
+
+    constexpr explicit operator bool() const noexcept
+    {
+        return true;
+    }
+};
 
 template <typename Atom>
 constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
@@ -45,7 +60,7 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
 
     if (Atom::match(input))
         return atom_match_result<error_type>(str, std::size_t(input.cur() - pos));
-    else
+    else if constexpr (!std::is_same_v<error_type, void>)
         return atom_match_result<error_type>(str, std::size_t(input.cur() - pos),
                                              Atom::error(input, pos));
 }

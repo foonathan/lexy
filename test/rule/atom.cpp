@@ -5,32 +5,55 @@
 #include <lexy/dsl/base.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/success.hpp>
 
 TEST_CASE("rule: atom")
 {
-    constexpr auto rule = LEXY_LIT("abc");
-    CHECK(lexy::is_rule<decltype(rule)>);
-
-    struct callback
+    SUBCASE("lit")
     {
-        const char* str;
+        constexpr auto rule = LEXY_LIT("abc");
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-        constexpr int success(const char* cur)
+        struct callback
         {
-            assert(cur - str == 3);
-            return 0;
-        }
+            const char* str;
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+            constexpr int success(const char* cur)
+            {
+                assert(cur - str == 3);
+                return 0;
+            }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "abc");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 0);
+    }
+    SUBCASE("success")
+    {
+        constexpr auto rule = lexy::dsl::success;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
         {
-            assert(e.string() == "abc");
-            return -1;
-        }
-    };
+            const char* str;
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
-    CHECK(empty == -1);
+            constexpr int success(const char* cur)
+            {
+                assert(cur == str);
+                return 0;
+            }
+        };
 
-    constexpr auto success = rule_matches<callback>(rule, "abc");
-    CHECK(success == 0);
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+    }
 }

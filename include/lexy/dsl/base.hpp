@@ -119,10 +119,18 @@ struct atom_base : _atom_base
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
-            if (auto pos = input.cur(); Atom::match(input))
+            if constexpr (std::is_same_v<decltype(Atom::error(input, input.cur())), void>)
+            {
+                Atom::match(input);
                 return NextParser::parse(context, input, LEXY_FWD(args)...);
+            }
             else
-                return context.report_error(Atom::error(input, pos));
+            {
+                if (auto pos = input.cur(); Atom::match(input))
+                    return NextParser::parse(context, input, LEXY_FWD(args)...);
+                else
+                    return context.report_error(Atom::error(input, pos));
+            }
         }
     };
 };

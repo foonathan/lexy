@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/success.hpp>
 
 namespace lexyd
 {
@@ -35,30 +36,6 @@ struct _br : rule_base
         return _br{};
     }
 };
-template <typename Pattern>
-struct _br<Pattern, void> : rule_base
-{
-    static LEXY_CONSTEVAL auto condition()
-    {
-        return Pattern{};
-    }
-
-    template <typename NextParser>
-    using then_parser = NextParser;
-
-    //=== rule ===//
-    static constexpr auto has_matcher = true;
-
-    using matcher = typename Pattern::matcher;
-    template <typename NextParser>
-    using parser = typename Pattern::template parser<NextParser>;
-
-    //=== dsl ===//
-    friend LEXY_CONSTEVAL auto branch(_br)
-    {
-        return _br{};
-    }
-};
 
 /// Parses `Then` only after `Condition` has matched.
 template <typename Condition, typename Then>
@@ -70,11 +47,10 @@ LEXY_CONSTEVAL auto operator>>(Condition, Then)
 }
 
 template <typename Pattern>
-LEXY_CONSTEVAL auto branch(Pattern)
+LEXY_CONSTEVAL auto branch(Pattern pattern)
 {
     static_assert(lexy::is_pattern<Pattern>, "non-pattern rule requires a condition");
-    static_assert(!Pattern::matcher::sets_id, "branch condition must not set an id");
-    return _br<Pattern, void>{};
+    return pattern >> success;
 }
 } // namespace lexyd
 
