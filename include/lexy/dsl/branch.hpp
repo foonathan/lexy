@@ -14,10 +14,7 @@ namespace lexyd
 template <typename Condition, typename Then>
 struct _br : rule_base
 {
-    static LEXY_CONSTEVAL auto condition()
-    {
-        return Condition{};
-    }
+    using condition_matcher = typename Condition::matcher;
 
     template <typename NextParser>
     using then_parser = typename Then::template parser<NextParser>;
@@ -42,7 +39,6 @@ template <typename Condition, typename Then>
 LEXY_CONSTEVAL auto operator>>(Condition, Then)
 {
     static_assert(lexy::is_pattern<Condition>, "branch condition must be a pattern");
-    static_assert(!Condition::matcher::sets_id, "branch condition must not set an id");
     return _br<Condition, Then>{};
 }
 

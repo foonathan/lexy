@@ -30,14 +30,11 @@ struct _seq : rule_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = (R::matcher::sets_id || ...);
-        static constexpr auto max_capture_count = (R::matcher::max_capture_count + ...);
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
             auto reset = input;
-            if ((R::matcher::match(context, input) && ...))
+            if ((R::matcher::match(input) && ...))
                 return true;
 
             input = LEXY_MOV(reset);

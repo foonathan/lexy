@@ -16,7 +16,6 @@ TEST_CASE("pattern: if_")
 
     constexpr auto abc = pattern_matches(pattern, "abc");
     CHECK(abc);
-    CHECK(abc.id() == 0);
     CHECK(abc.match().empty());
 }
 
@@ -27,7 +26,6 @@ TEST_CASE("pattern: unless")
 
     constexpr auto empty = pattern_matches(pattern, "");
     CHECK(empty);
-    CHECK(empty.id() == 0);
     CHECK(empty.match().empty());
 
     constexpr auto abc = pattern_matches(pattern, "abc");

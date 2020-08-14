@@ -7,7 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/match.hpp>
 
 namespace lexyd
 {
@@ -18,13 +17,10 @@ struct _opt : rule_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = Branch::matcher::sets_id;
-        static constexpr auto max_capture_count = Branch::matcher::max_capture_count;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
-            if (auto reset = input; Branch::matcher::match(context, input))
+            if (auto reset = input; Branch::matcher::match(input))
                 return true;
             else
             {
@@ -41,7 +37,7 @@ struct _opt : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
-            if (auto result = lexy::pattern_match(input, Branch::condition()))
+            if (auto result = Branch::condition_matcher::match(input))
                 return Branch::template then_parser<NextParser>::parse(context, input,
                                                                        LEXY_FWD(args)...);
             else

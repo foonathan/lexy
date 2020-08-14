@@ -6,7 +6,6 @@
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/match.hpp>
 
 namespace lexyd
 {
@@ -17,13 +16,10 @@ struct _while : rule_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = false;
-        static constexpr auto max_capture_count = 0;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
-            while (Pattern::matcher::match(context, input))
+            while (Pattern::matcher::match(input))
             {
             }
 
@@ -39,7 +35,7 @@ struct _while : rule_base
             typename Context::result_type
         {
             // We match ourselves as pattern.
-            lexy::pattern_match(input, _while{});
+            matcher::match(input);
             // Then we continue.
             return NextParser::parse(context, input, LEXY_FWD(args)...);
         }
@@ -50,8 +46,6 @@ template <typename Pattern>
 LEXY_CONSTEVAL auto while_(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    static_assert(!Pattern::matcher::sets_id, "repeated pattern must not set an id");
-    static_assert(Pattern::matcher::max_capture_count == 0, "cannot repeat captures");
     return _while<Pattern>{};
 }
 } // namespace lexyd

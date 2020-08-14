@@ -14,9 +14,8 @@ TEST_CASE("pattern: atom")
     constexpr auto empty = pattern_matches(pattern, "");
     CHECK(!empty);
 
-    constexpr auto success = pattern_matches(pattern, "abc");
-    CHECK(success);
-    CHECK(success.id() == 0);
-    CHECK(success.match().string_view() == "abc");
+    constexpr auto abc = pattern_matches(pattern, "abc");
+    CHECK(abc);
+    CHECK(abc.match().string_view() == "abc");
 }
 

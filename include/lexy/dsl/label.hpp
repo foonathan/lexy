@@ -44,34 +44,13 @@ struct _lab : rule_base
     };
 };
 
-/// Matches with the specified label (parsing only).
+/// Matches with the specified label.
 template <typename Label>
 constexpr auto label = _lab<Label>{};
 
-template <auto Id>
-struct _id : _lab<std::integral_constant<int, Id>>
-{
-    static constexpr auto has_matcher = true;
-
-    struct matcher
-    {
-        static_assert(Id > 0);
-
-        static constexpr auto sets_id           = true;
-        static constexpr auto max_capture_count = 0;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input&)
-        {
-            context._id = int(Id);
-            return true;
-        }
-    };
-};
-
 /// Matches with the specified id.
 template <auto Id>
-constexpr auto id = _id<Id>{};
+constexpr auto id = _lab<std::integral_constant<int, Id>>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LABEL_HPP_INCLUDED

@@ -13,30 +13,7 @@ namespace lexyd
 template <typename Rule>
 struct _cap : rule_base
 {
-    static constexpr auto has_matcher = Rule::has_matcher;
-
-    struct matcher
-    {
-        static constexpr auto sets_id           = Rule::matcher::sets_id;
-        static constexpr auto max_capture_count = 1 + Rule::matcher::max_capture_count;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
-        {
-            auto idx = context._capture_count++;
-
-            auto begin = input.cur();
-            if (!Rule::matcher::match(context, input))
-            {
-                context._capture_count--; // Undo the increment.
-                return false;
-            }
-            auto end = input.cur();
-
-            context._captures[idx] = {begin, end};
-            return true;
-        }
-    };
+    static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser

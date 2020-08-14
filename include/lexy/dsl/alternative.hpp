@@ -16,20 +16,10 @@ struct _alt : rule_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = (R::matcher::sets_id || ...);
-        static constexpr auto max_capture_count = [] {
-            std::size_t max      = 0;
-            std::size_t counts[] = {R::matcher::max_capture_count...};
-            for (auto count : counts)
-                if (count > max)
-                    max = count;
-            return max;
-        }();
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
-            return (R::matcher::match(context, input) || ...);
+            return (R::matcher::match(input) || ...);
         }
     };
 

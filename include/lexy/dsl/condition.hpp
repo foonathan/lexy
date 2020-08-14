@@ -6,7 +6,6 @@
 #define LEXY_DSL_CONDITION_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/match.hpp>
 
 namespace lexyd
 {
@@ -17,14 +16,11 @@ struct _if : rule_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = Pattern::matcher::sets_id;
-        static constexpr auto max_capture_count = Pattern::matcher::max_capture_count;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
             auto copy = input;
-            return Pattern::matcher::match(context, copy) == Expected;
+            return Pattern::matcher::match(copy) == Expected;
         }
     };
 

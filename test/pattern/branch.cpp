@@ -23,7 +23,6 @@ TEST_CASE("pattern: operator>>")
 
     constexpr auto third = pattern_matches(pattern, "abcdef");
     CHECK(third);
-    CHECK(third.id() == 0);
     CHECK(third.match().string_view() == "abcdef");
 }
 

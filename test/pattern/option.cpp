@@ -15,17 +15,14 @@ TEST_CASE("pattern: option")
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(empty);
-        CHECK(empty.id() == 0);
         CHECK(empty.match().empty());
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.id() == 0);
         CHECK(abc.match().string_view() == "abc");
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(ab);
-        CHECK(ab.id() == 0);
         CHECK(ab.match().empty());
     }
     SUBCASE("branch")
@@ -35,17 +32,14 @@ TEST_CASE("pattern: option")
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(empty);
-        CHECK(empty.id() == 0);
         CHECK(empty.match().empty());
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.id() == 0);
         CHECK(abc.match().string_view() == "abc");
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(ab);
-        CHECK(ab.id() == 0);
         CHECK(ab.match().empty());
     }
 }

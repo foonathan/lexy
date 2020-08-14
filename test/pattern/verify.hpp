@@ -8,28 +8,37 @@
 #include <cassert>
 #include <doctest.h>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/match.hpp>
+#include <lexy/lexeme.hpp>
 
 #include "../test_encoding.hpp"
 
+struct pattern_match_result
+{
+    bool                     _matches;
+    lexy::lexeme<test_input> _match;
+
+    constexpr explicit operator bool() const
+    {
+        return _matches;
+    }
+
+    constexpr auto match() const
+    {
+        return _match;
+    }
+};
+
 template <typename Pattern>
-constexpr auto pattern_matches(Pattern pattern, const char* str)
+constexpr auto pattern_matches(Pattern, const char* str)
 {
     auto input = lexy::zstring_input<test_encoding>(str);
 
-    auto result = lexy::pattern_match(input, pattern);
-    if (!result)
-    {
-        assert(input.cur() == str);
-        return result;
-    }
-    else
-    {
-        assert(result.id() >= 0);
-        assert(result.match().begin() == str);
-        assert(result.match().end() == input.cur());
-        return result;
-    }
+    auto begin = input.cur();
+    if (!Pattern::matcher::match(input))
+        return pattern_match_result{false, {}};
+    auto match = lexy::lexeme(input, begin);
+
+    return pattern_match_result{true, match};
 }
 
 #endif // TEST_PATTERN_VERIFY_HPP_INCLUDED

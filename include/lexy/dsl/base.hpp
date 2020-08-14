@@ -19,15 +19,10 @@ class Rule : rule_base
 
     struct matcher
     {
-        // Whether or  not this pattern can set an id.
-        static constexpr bool sets_id;
-        // The maximal number of captures this pattern has.
-        static constexpr std::size_t max_capture_count;
-
-        // If matches, consumes characters from input, update context, and return true.
+        // If matches, consumes characters from input and return true.
         // If it doesn't match, leave input as-is and return false.
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context& context, Input& input);
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input);
     };
 
     template <typename NextParser>
@@ -97,11 +92,8 @@ struct atom_base : _atom_base
 
     struct matcher
     {
-        static constexpr auto sets_id           = false;
-        static constexpr auto max_capture_count = 0;
-
-        template <typename Context, typename Input>
-        LEXY_DSL_FUNC bool match(Context&, Input& input)
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
         {
             auto reset = input;
             if (Atom::match(input))
