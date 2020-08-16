@@ -36,3 +36,4 @@ TEST_CASE("rule: operator>>")
     constexpr auto success = rule_matches<callback>(rule, "a");
     CHECK(success == 0);
 }
+
