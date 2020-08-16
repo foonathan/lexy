@@ -45,30 +45,30 @@ struct _seq : rule_base
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
 
-    LEXY_CONSTEVAL _seq() = default;
-    LEXY_CONSTEVAL _seq(R...) {}
+    //=== dsl ===//
+    template <typename Other>
+    friend LEXY_CONSTEVAL auto operator+(_seq, Other)
+    {
+        return _seq<R..., Other>{};
+    }
+    template <typename Other>
+    friend LEXY_CONSTEVAL auto operator+(Other, _seq)
+    {
+        return _seq<Other, R...>{};
+    }
 };
 
 template <typename R1, typename R2>
-LEXY_CONSTEVAL auto operator+(R1 r1, R2 r2)
+LEXY_CONSTEVAL auto operator+(R1, R2)
 {
-    return _seq(r1, r2);
-}
-template <typename... R, typename Other>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, Other other)
-{
-    return _seq(R{}..., other);
-}
-template <typename Other, typename... R>
-LEXY_CONSTEVAL auto operator+(Other other, _seq<R...>)
-{
-    return _seq(other, R{}...);
+    return _seq<R1, R2>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
 {
-    return _seq(R{}..., S{}...);
+    return _seq<R..., S...>{};
 }
 } // namespace lexyd
 
 #endif // LEXY_DSL_SEQUENCE_HPP_INCLUDED
+

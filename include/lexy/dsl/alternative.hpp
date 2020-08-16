@@ -23,29 +23,28 @@ struct _alt : rule_base
         }
     };
 
-    LEXY_CONSTEVAL _alt() = default;
-    LEXY_CONSTEVAL _alt(R...) {}
+    //=== dsl ===//
+    template <typename Other>
+    friend LEXY_CONSTEVAL auto operator/(_alt<R...>, Other)
+    {
+        return _alt<R..., Other>{};
+    }
+    template <typename Other>
+    friend LEXY_CONSTEVAL auto operator/(Other, _alt<R...>)
+    {
+        return _alt<Other, R...>{};
+    }
 };
 
 template <typename R1, typename R2>
-LEXY_CONSTEVAL auto operator/(R1 r1, R2 r2)
+LEXY_CONSTEVAL auto operator/(R1, R2)
 {
-    return _alt(r1, r2);
-}
-template <typename... R, typename Other>
-LEXY_CONSTEVAL auto operator/(_alt<R...>, Other other)
-{
-    return _alt(R{}..., other);
-}
-template <typename Other, typename... R>
-LEXY_CONSTEVAL auto operator/(Other other, _alt<R...>)
-{
-    return _alt(other, R{}...);
+    return _alt<R1, R2>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator/(_alt<R...>, _alt<S...>)
 {
-    return _alt(R{}..., S{}...);
+    return _alt<R..., S...>{};
 }
 } // namespace lexyd
 
