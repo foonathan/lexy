@@ -15,24 +15,49 @@
 template <typename Error>
 using test_error = typename Error::template error<test_input>;
 
-template <typename Callback>
+template <typename Callback, typename Production = void>
 struct test_context
 {
     const char* str;
 
     using result_type = int;
 
+    constexpr bool success(int i)
+    {
+        return i >= 0;
+    }
+    constexpr int forward_value(int i)
+    {
+        return i;
+    }
+    constexpr int forward_error(int i)
+    {
+        return i;
+    }
+
+    template <typename SubProduction>
+    constexpr auto sub_context()
+    {
+        return test_context<Callback, SubProduction>{str};
+    }
+
     template <typename Error>
     constexpr int report_error(Error&& error)
     {
-        return Callback{str}.error(LEXY_FWD(error));
+        if constexpr (std::is_same_v<Production, void>)
+            return Callback{str}.error(LEXY_FWD(error));
+        else
+            return Callback{str}.error(Production{}, LEXY_FWD(error));
     }
 
     template <typename... Args>
     static constexpr int parse(test_context& self, lexy::string_input<test_encoding> input,
                                Args&&... args)
     {
-        return Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);
+        if constexpr (std::is_same_v<Production, void>)
+            return Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);
+        else
+            return Callback{self.str}.success(Production{}, input.cur(), LEXY_FWD(args)...);
     }
 };
 
