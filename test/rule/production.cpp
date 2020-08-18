@@ -7,6 +7,7 @@
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/label.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("rule: p")
@@ -110,6 +111,127 @@ TEST_CASE("rule: p")
         CHECK(abc == 0);
         constexpr auto def = rule_matches<callback>(rule, "def");
         CHECK(def == 1);
+    }
+}
+
+TEST_CASE("rule: recurse")
+{
+    SUBCASE("indirect recursion")
+    {
+        struct outer;
+        struct inner
+        {
+            LEXY_CONSTEVAL auto rule()
+            {
+                return lexy::dsl::recurse<outer>;
+            }
+        };
+        struct outer
+        {
+            LEXY_CONSTEVAL auto rule()
+            {
+                return opt(LEXY_LIT("a") >> lexy::dsl::p<inner>);
+            }
+        };
+        constexpr auto rule = lexy::dsl::p<outer>;
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(inner, const char*, int outer_result)
+            {
+                return outer_result + 1;
+            }
+            constexpr int success(outer, const char*)
+            {
+                return 0;
+            }
+            constexpr int success(outer, const char*, int inner_result)
+            {
+                return inner_result;
+            }
+            constexpr int success(const char*, int result)
+            {
+                return result;
+            }
+
+            int error(inner, int)
+            {
+                assert(false);
+                return -1;
+            }
+            int error(outer, int)
+            {
+                assert(false);
+                return -1;
+            }
+            int error(int)
+            {
+                assert(false);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto a = rule_matches<callback>(rule, "a");
+        CHECK(a == 1);
+        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        CHECK(aa == 2);
+        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        CHECK(aaa == 3);
+    }
+    SUBCASE("right recursion")
+    {
+        struct prod
+        {
+            LEXY_CONSTEVAL auto rule()
+            {
+                return opt(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
+            }
+        };
+        constexpr auto rule = lexy::dsl::p<prod>;
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(prod, const char*)
+            {
+                return 0;
+            }
+            constexpr int success(prod, const char*, int result)
+            {
+                return result + 1;
+            }
+            constexpr int success(const char*, int result)
+            {
+                return result;
+            }
+
+            int error(prod, int)
+            {
+                assert(false);
+                return -1;
+            }
+            int error(int)
+            {
+                assert(false);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto a = rule_matches<callback>(rule, "a");
+        CHECK(a == 1);
+        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        CHECK(aa == 2);
+        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        CHECK(aaa == 3);
     }
 }
 

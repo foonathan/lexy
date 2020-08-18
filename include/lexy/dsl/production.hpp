@@ -47,6 +47,22 @@ constexpr auto p = [] {
     else
         return _prd<Production, rule>{};
 }();
+
+template <typename Production>
+struct _rec : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser : _prd<Production, decltype(Production().rule())>::template parser<NextParser>
+    {};
+};
+
+/// Parses the production, recursively.
+/// `dsl::p` requires that the production is already defined in order to propagate a branch
+/// condition outwards.
+template <typename Production>
+constexpr auto recurse = _rec<Production>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED
