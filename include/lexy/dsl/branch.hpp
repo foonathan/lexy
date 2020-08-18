@@ -14,9 +14,11 @@ namespace lexyd
 template <typename Condition, typename Then>
 struct _br : rule_base
 {
+    using condition                        = Condition;
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
     using condition_matcher                = typename Condition::matcher;
 
+    using then = Then;
     template <typename NextParser>
     using then_parser = typename Then::template parser<NextParser>;
 
@@ -96,6 +98,14 @@ struct _else
 /// Takes the branch unconditionally.
 inline constexpr auto else_ = _else{};
 } // namespace lexyd
+
+namespace lexy
+{
+template <typename Rule>
+constexpr auto is_branch_rule = is_pattern<Rule>;
+template <typename Condition, typename Then>
+constexpr auto is_branch_rule<lexyd::_br<Condition, Then>> = true;
+} // namespace lexy
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
 
