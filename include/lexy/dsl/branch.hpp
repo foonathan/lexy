@@ -18,7 +18,8 @@ struct _br : rule_base
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
     using condition_matcher                = typename Condition::matcher;
 
-    using then = Then;
+    using then                     = Then;
+    static constexpr auto has_then = !std::is_same_v<const Then, decltype(success)>;
     template <typename NextParser>
     using then_parser = typename Then::template parser<NextParser>;
 

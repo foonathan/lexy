@@ -6,10 +6,11 @@
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/branch.hpp>
 
 namespace lexyd
 {
-template <typename Pattern>
+template <typename Branch>
 struct _while : rule_base
 {
     static constexpr auto has_matcher = true;
@@ -19,7 +20,7 @@ struct _while : rule_base
         template <typename Input>
         LEXY_DSL_FUNC bool match(Input& input)
         {
-            while (Pattern::matcher::match(input))
+            while (Branch::matcher::match(input))
             {
             }
 
@@ -30,24 +31,54 @@ struct _while : rule_base
     template <typename NextParser>
     struct parser
     {
+        struct _continuation
+        {
+            template <typename Context, typename Input, typename... Args>
+            LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+                typename Context::result_type
+            {
+                // After we've parsed then, we try again.
+                // Note that, as we're a pattern, we never add additional arguments.
+                return parser::parse(context, input, LEXY_FWD(args)...);
+            }
+        };
+
         template <typename Context, typename Input, typename... Args>
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
-            // We match ourselves as pattern.
-            matcher::match(input);
-            // Then we continue.
-            return NextParser::parse(context, input, LEXY_FWD(args)...);
+            if constexpr (Branch::has_then)
+            {
+                if (Branch::condition_matcher::match(input))
+                    // Try another iteration.
+                    return Branch::template then_parser<_continuation>::parse(context, input,
+                                                                              LEXY_FWD(args)...);
+                else
+                    // Continue with next parser.
+                    return NextParser::parse(context, input, LEXY_FWD(args)...);
+            }
+            else
+            {
+                // Without a then in the branch, we can just repeatedly match the condition and
+                // continue. This doesn't require mutual recursion.
+                while (Branch::condition_matcher::match(input))
+                {
+                }
+
+                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            }
         }
     };
 };
 
+/// Matches the pattern as often as possible.
 template <typename Pattern>
-LEXY_CONSTEVAL auto while_(Pattern)
+LEXY_CONSTEVAL auto while_(Pattern pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    return _while<Pattern>{};
+    return _while<decltype(branch(pattern))>{};
 }
 } // namespace lexyd
 
 #endif // LEXY_DSL_WHILE_HPP_INCLUDED
+
