@@ -28,9 +28,9 @@ struct _prd : rule_base
             if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input);
                 sub_context.success(result))
                 return NextParser::parse(context, input, LEXY_FWD(args)...,
-                                         sub_context.forward_value(result));
+                                         sub_context.forward_value(LEXY_MOV(result)));
             else
-                return context.report_error(sub_context.forward_error(result));
+                return sub_context.forward_error(LEXY_MOV(result));
         }
     };
 };

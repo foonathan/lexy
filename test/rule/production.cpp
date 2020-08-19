@@ -45,11 +45,6 @@ TEST_CASE("rule: p")
                 assert(e.string() == "abc");
                 return -1;
             }
-            constexpr int error(int result)
-            {
-                assert(result == -1);
-                return result;
-            }
         };
 
         constexpr auto empty = rule_matches<callback>(rule, "");
@@ -92,11 +87,6 @@ TEST_CASE("rule: p")
                 return 1;
             }
 
-            int error(int)
-            {
-                assert(false);
-                return -1;
-            }
             constexpr int error(test_error<lexy::exhausted_choice> e)
             {
                 assert(e.position() == str);
@@ -162,11 +152,6 @@ TEST_CASE("rule: recurse")
                 return -1;
             }
             int error(outer, int)
-            {
-                assert(false);
-                return -1;
-            }
-            int error(int)
             {
                 assert(false);
                 return -1;
