@@ -53,6 +53,47 @@ TEST_CASE("rule: p")
         constexpr auto abc = rule_matches<callback>(rule, "abc");
         CHECK(abc == 0);
     }
+    SUBCASE("pattern")
+    {
+        struct prod
+        {
+            LEXY_CONSTEVAL auto rule()
+            {
+                return LEXY_LIT("abc");
+            }
+        };
+        constexpr auto rule = lexy::dsl::p<prod>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(prod, const char* cur)
+            {
+                assert(cur - str == 3);
+                return 0;
+            }
+            constexpr int success(const char*, int result)
+            {
+                assert(result == 0);
+                return result;
+            }
+
+            constexpr int error(prod, test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "abc");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 0);
+    }
     SUBCASE("branch")
     {
         struct prod

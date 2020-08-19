@@ -10,43 +10,59 @@
 
 namespace lexyd
 {
+template <typename Production, typename Rule, typename NextParser>
+struct _prd_parser
+{
+    template <typename Context, typename Input, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        typename Context::result_type
+    {
+        auto&& sub_context  = context.template sub_context<Production>();
+        using sub_context_t = std::decay_t<decltype(sub_context)>;
+
+        if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input);
+            sub_context.success(result))
+            return NextParser::parse(context, input, LEXY_FWD(args)...,
+                                     sub_context.forward_value(LEXY_MOV(result)));
+        else
+            return sub_context.forward_error(LEXY_MOV(result));
+    }
+};
+
 template <typename Production, typename Rule>
-struct _prd : rule_base
+struct _prd_then : rule_base
 {
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
-            typename Context::result_type
-        {
-            auto&& sub_context  = context.template sub_context<Production>();
-            using sub_context_t = std::decay_t<decltype(sub_context)>;
+    using parser = _prd_parser<Production, Rule, NextParser>;
+};
 
-            if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input);
-                sub_context.success(result))
-                return NextParser::parse(context, input, LEXY_FWD(args)...,
-                                         sub_context.forward_value(LEXY_MOV(result)));
-            else
-                return sub_context.forward_error(LEXY_MOV(result));
-        }
-    };
+template <typename Production>
+struct _prd : rule_base
+{
+    using _rule = decltype(Production().rule());
+
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    using parser = _prd_parser<Production, _rule, NextParser>;
+
+    // Allow using the production as a branch, if its rule is a branch rule.
+    friend LEXY_CONSTEVAL auto branch(_prd)
+    {
+        static_assert(lexy::is_branch_rule<_rule>,
+                      "production cannot be used in a branch without a condition");
+
+        using branch_rule = decltype(branch(_rule()));
+        return typename branch_rule::condition{}
+               >> _prd_then<Production, typename branch_rule::then>{};
+    }
 };
 
 /// Parses the production.
 template <typename Production>
-constexpr auto p = [] {
-    using rule = decltype(Production().rule());
-    if constexpr (lexy::is_branch_rule<rule>)
-    {
-        using branch_rule = decltype(branch(rule()));
-        return typename branch_rule::condition{} >> _prd<Production, typename branch_rule::then>{};
-    }
-    else
-        return _prd<Production, rule>{};
-}();
+constexpr auto p = _prd<Production>{};
 
 template <typename Production>
 struct _rec : rule_base
@@ -54,7 +70,7 @@ struct _rec : rule_base
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
-    struct parser : _prd<Production, decltype(Production().rule())>::template parser<NextParser>
+    struct parser : _prd_parser<Production, decltype(Production().rule()), NextParser>
     {};
 };
 
