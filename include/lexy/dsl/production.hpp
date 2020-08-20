@@ -25,7 +25,7 @@ struct _prd_parser
             return NextParser::parse(context, input, LEXY_FWD(args)...,
                                      sub_context.forward_value(LEXY_MOV(result)));
         else
-            return sub_context.forward_result(context, LEXY_MOV(result));
+            return sub_context.forward_error_result(context, LEXY_MOV(result));
     }
 };
 

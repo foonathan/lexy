@@ -57,5 +57,18 @@ LEXY_CONSTEVAL auto callback(Fns&&... fns)
 }
 } // namespace lexy
 
+namespace lexy
+{
+struct _null_callback
+{
+    using return_type = void;
+
+    template <typename... Args>
+    constexpr void operator()(const Args&...) const
+    {}
+};
+inline constexpr auto null_callback = _null_callback{};
+} // namespace lexy
+
 #endif // LEXY_CALLBACK_HPP_INCLUDED
 

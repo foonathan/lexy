@@ -36,3 +36,9 @@ TEST_CASE("callback")
     }
 }
 
+TEST_CASE("null_callback")
+{
+    lexy::null_callback();
+    lexy::null_callback(1, 2, 3);
+}
+

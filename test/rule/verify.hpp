@@ -31,7 +31,7 @@ struct test_context
         return i;
     }
     template <typename Parent>
-    constexpr int forward_result(Parent&, int i)
+    constexpr int forward_error_result(Parent&, int i)
     {
         return i;
     }

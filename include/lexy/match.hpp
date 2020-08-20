@@ -21,7 +21,7 @@ struct _match_context
     {
         return v;
     }
-    constexpr bool forward_result(_match_context&, bool v)
+    constexpr bool forward_error_result(_match_context&, bool v)
     {
         return v;
     }

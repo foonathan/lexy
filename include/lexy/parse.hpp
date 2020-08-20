@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_VALIDATE_HPP_INCLUDED
-#define LEXY_VALIDATE_HPP_INCLUDED
+#ifndef LEXY_PARSE_HPP_INCLUDED
+#define LEXY_PARSE_HPP_INCLUDED
 
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
@@ -12,31 +12,33 @@
 namespace lexy
 {
 template <typename Production, typename Input, typename Callback>
-struct _validate_context
+struct _parse_context
 {
     const Input&    _input;
     const Callback& _callback;
 
-    using result_type = optional_error<typename Callback::return_type>;
+    using result_type = result<typename Production::value_type, typename Callback::return_type>;
 
     constexpr bool is_success(const result_type& result)
     {
         return result.has_value();
     }
-    constexpr lexy::result_value_t forward_value(result_type&& result)
+    constexpr decltype(auto) forward_value(result_type&& result)
     {
-        return result.value();
+        return LEXY_MOV(result).value();
     }
     template <typename Parent>
-    constexpr result_type&& forward_error_result(Parent&, result_type&& result)
+    constexpr auto forward_error_result(Parent&, result_type&& result)
     {
-        return LEXY_MOV(result);
+        // As all contexts use the same callback, the error type is the same.
+        // We just need to turn an errored result<T, E> into an errored result<U, E>.
+        return typename Parent::result_type(lexy::result_error, LEXY_MOV(result).error());
     }
 
     template <typename SubProduction>
     constexpr auto sub_context()
     {
-        return _validate_context<SubProduction, Input, Callback>{_input, _callback};
+        return _parse_context<SubProduction, Input, Callback>{_input, _callback};
     }
 
     template <typename Error>
@@ -55,22 +57,28 @@ struct _validate_context
     }
 
     template <typename... Args>
-    static constexpr result_type parse(_validate_context&, Input&, Args&&...)
+    static constexpr result_type parse(_parse_context&, Input&, Args&&... args)
     {
-        return result_type(lexy::result_value);
+        return result_type(lexy::result_value, typename Production::value_type(LEXY_FWD(args)...));
     }
 };
 
+/// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename Callback>
-constexpr auto validate(Input&& input, Callback&& callback)
+constexpr auto parse(Input&& input, Callback&& callback)
 {
     using rule      = decltype(Production().rule());
-    using context_t = _validate_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;
+    using context_t = _parse_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;
 
     context_t context{input, callback};
     return rule::template parser<context_t>::parse(context, input);
 }
+template <typename Production, typename Input>
+constexpr auto parse(Input&& input)
+{
+    return parse<Production>(LEXY_FWD(input), null_callback);
+}
 } // namespace lexy
 
-#endif // LEXY_VALIDATE_HPP_INCLUDED
+#endif // LEXY_PARSE_HPP_INCLUDED
 

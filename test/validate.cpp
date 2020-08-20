@@ -6,7 +6,6 @@
 
 #include <doctest.h>
 #include <lexy/dsl/capture.hpp>
-#include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/sequence.hpp>
