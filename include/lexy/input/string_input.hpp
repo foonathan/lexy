@@ -6,6 +6,7 @@
 #define LEXY_INPUT_STRING_INPUT_HPP_INCLUDED
 
 #include <lexy/input/base.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -99,6 +100,13 @@ constexpr auto zstring_input(const CharT* str) noexcept
 {
     return zstring_input<deduce_encoding<CharT>>(str);
 }
+
+//=== convenience typedefs ===//
+template <typename Encoding = default_encoding>
+using string_lexeme = lexeme<string_input<Encoding>>;
+
+template <typename Error, typename Encoding = default_encoding>
+using string_error = typename Error::template error<string_input<Encoding>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_STRING_INPUT_HPP_INCLUDED

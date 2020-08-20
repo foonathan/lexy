@@ -79,11 +79,13 @@ TEST_CASE("validate")
     }
     SUBCASE("non-void callback")
     {
-        constexpr auto prod_a_error = [](prod_a, const lexy::string_input<>&, auto error) {
+        constexpr auto prod_a_error = [](prod_a, const lexy::string_input<>&,
+                                         lexy::string_error<lexy::expected_literal> error) {
             assert(error.string() == "abc");
             return -1;
         };
-        constexpr auto prod_b_error = [](prod_b, const lexy::string_input<>&, auto error) {
+        constexpr auto prod_b_error = [](prod_b, const lexy::string_input<>&,
+                                         lexy::string_error<lexy::expected_literal> error) {
             if (error.string() == "(")
                 return -2;
             else if (error.string() == ")")

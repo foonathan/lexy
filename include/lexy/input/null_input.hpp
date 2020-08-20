@@ -6,6 +6,7 @@
 #define LEXY_INPUT_NULL_INPUT_HPP_INCLUDED
 
 #include <lexy/input/base.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -31,6 +32,12 @@ public:
         return nullptr;
     }
 };
+
+template <typename Encoding = default_encoding>
+using null_lexeme = lexeme<null_input<Encoding>>;
+
+template <typename Error, typename Encoding = default_encoding>
+using null_error = typename Error::template error<null_input<Encoding>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_NULL_INPUT_HPP_INCLUDED

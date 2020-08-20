@@ -18,9 +18,9 @@ TEST_CASE("parse")
     //=== AST ===//
     struct string
     {
-        lexy::lexeme<lexy::string_input<>> lexeme;
+        lexy::string_lexeme<> lexeme;
 
-        constexpr string(lexy::lexeme<lexy::string_input<>> lexeme) : lexeme(lexeme) {}
+        constexpr string(lexy::string_lexeme<> lexeme) : lexeme(lexeme) {}
     };
 
     struct string_pair
