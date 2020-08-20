@@ -5,29 +5,32 @@
 #ifndef LEXY_VALIDATE_HPP_INCLUDED
 #define LEXY_VALIDATE_HPP_INCLUDED
 
+#include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/result.hpp>
 
 namespace lexy
 {
 template <typename Production, typename Input, typename Callback>
 struct _validate_context
 {
-    const Input& _input;
-    Callback&    _callback;
+    const Input&    _input;
+    const Callback& _callback;
 
-    using result_type = bool;
+    using result_type = optional_error<typename Callback::return_type>;
 
-    constexpr bool success(bool v)
+    constexpr bool is_success(const result_type& result)
     {
-        return v;
+        return result.has_value();
     }
-    constexpr bool forward_value(bool v)
+    constexpr lexy::result_value_t forward_value(result_type&& result)
     {
-        return v;
+        return result.value();
     }
-    constexpr bool forward_error(bool v)
+    template <typename Parent>
+    constexpr result_type&& forward_result(Parent&, result_type&& result)
     {
-        return v;
+        return LEXY_MOV(result);
     }
 
     template <typename SubProduction>
@@ -37,21 +40,29 @@ struct _validate_context
     }
 
     template <typename Error>
-    constexpr bool report_error(Error&& error)
+    constexpr result_type report_error(Error&& error)
     {
-        _callback(Production{}, _input, LEXY_FWD(error));
-        return false;
+        if constexpr (std::is_same_v<typename Callback::return_type, void>)
+        {
+            _callback(Production{}, _input, LEXY_FWD(error));
+            return result_type();
+        }
+        else
+        {
+            auto cb_result = _callback(Production{}, _input, LEXY_FWD(error));
+            return result_type(lexy::result_error, LEXY_MOV(cb_result));
+        }
     }
 
     template <typename... Args>
-    static constexpr bool parse(_validate_context&, Input&, Args&&...)
+    static constexpr result_type parse(_validate_context&, Input&, Args&&...)
     {
-        return true;
+        return result_type(lexy::result_value);
     }
 };
 
 template <typename Production, typename Input, typename Callback>
-constexpr bool validate(Input&& input, Callback&& callback)
+constexpr auto validate(Input&& input, Callback&& callback)
 {
     using rule      = decltype(Production().rule());
     using context_t = _validate_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;

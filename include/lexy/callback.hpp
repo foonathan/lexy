@@ -47,10 +47,11 @@ struct _callback : _fn_as_base<Fns>...
 };
 
 /// Creates a callback
-template <typename ReturnType, typename... Fns>
+template <typename ReturnType = void, typename... Fns>
 LEXY_CONSTEVAL auto callback(Fns&&... fns)
 {
-    static_assert(((std::is_pointer_v<Fns> || std::is_empty_v<Fns>)&&...),
+    static_assert(((std::is_pointer_v<
+                        std::decay_t<Fns>> || std::is_empty_v<std::decay_t<Fns>>)&&...),
                   "only capture-less lambdas are allowed in a callback");
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }

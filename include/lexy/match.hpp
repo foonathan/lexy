@@ -13,7 +13,7 @@ struct _match_context
 {
     using result_type = bool;
 
-    constexpr bool success(bool v)
+    constexpr bool is_success(bool v)
     {
         return v;
     }
@@ -21,7 +21,7 @@ struct _match_context
     {
         return v;
     }
-    constexpr bool forward_error(bool v)
+    constexpr bool forward_result(_match_context&, bool v)
     {
         return v;
     }

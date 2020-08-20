@@ -21,11 +21,11 @@ struct _prd_parser
         using sub_context_t = std::decay_t<decltype(sub_context)>;
 
         if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input);
-            sub_context.success(result))
+            sub_context.is_success(result))
             return NextParser::parse(context, input, LEXY_FWD(args)...,
                                      sub_context.forward_value(LEXY_MOV(result)));
         else
-            return sub_context.forward_error(LEXY_MOV(result));
+            return sub_context.forward_result(context, LEXY_MOV(result));
     }
 };
 

@@ -22,7 +22,7 @@ struct test_context
 
     using result_type = int;
 
-    constexpr bool success(int i)
+    constexpr bool is_success(int i)
     {
         return i >= 0;
     }
@@ -30,7 +30,8 @@ struct test_context
     {
         return i;
     }
-    constexpr int forward_error(int i)
+    template <typename Parent>
+    constexpr int forward_result(Parent&, int i)
     {
         return i;
     }
