@@ -12,6 +12,9 @@ namespace lexy::_detail
 {
 template <typename T>
 using add_rvalue_ref = T&&;
+
+template <typename... T>
+constexpr bool error = false;
 } // namespace lexy::_detail
 
 #define LEXY_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
