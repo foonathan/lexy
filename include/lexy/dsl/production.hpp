@@ -10,6 +10,9 @@
 
 namespace lexyd
 {
+template <typename Production>
+using _production_rule = std::remove_const_t<decltype(Production::rule)>;
+
 template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
@@ -29,19 +32,10 @@ struct _prd_parser
     }
 };
 
-template <typename Production, typename Rule>
-struct _prd_then : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    using parser = _prd_parser<Production, Rule, NextParser>;
-};
-
-template <typename Production>
+template <typename Production, typename Rule = void>
 struct _prd : rule_base
 {
-    using _rule = decltype(Production().rule());
+    using _rule = std::conditional_t<std::is_void_v<Rule>, _production_rule<Production>, Rule>;
 
     static constexpr auto has_matcher = false;
 
@@ -55,8 +49,7 @@ struct _prd : rule_base
                       "production cannot be used in a branch without a condition");
 
         using branch_rule = decltype(branch(_rule()));
-        return typename branch_rule::condition{}
-               >> _prd_then<Production, typename branch_rule::then>{};
+        return typename branch_rule::condition{} >> _prd<Production, typename branch_rule::then>{};
     }
 };
 
@@ -70,7 +63,7 @@ struct _rec : rule_base
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
-    struct parser : _prd_parser<Production, decltype(Production().rule()), NextParser>
+    struct parser : _prd_parser<Production, _production_rule<Production>, NextParser>
     {};
 };
 

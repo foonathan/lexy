@@ -10,17 +10,35 @@
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
+namespace p_basic
+{
+struct prod
+{
+    static constexpr auto rule = LEXY_LIT("abc") + lexy::dsl::id<0>;
+};
+} // namespace p_basic
+
+namespace p_pattern
+{
+struct prod
+{
+    static constexpr auto rule = LEXY_LIT("abc");
+};
+} // namespace p_pattern
+
+namespace p_branch
+{
+struct prod
+{
+    static constexpr auto rule = LEXY_LIT("abc") >> lexy::dsl::id<0>;
+};
+} // namespace p_branch
+
 TEST_CASE("rule: p")
 {
     SUBCASE("basic")
     {
-        struct prod
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return LEXY_LIT("abc") + lexy::dsl::id<0>;
-            }
-        };
+        using namespace p_basic;
         constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
@@ -55,13 +73,7 @@ TEST_CASE("rule: p")
     }
     SUBCASE("pattern")
     {
-        struct prod
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return LEXY_LIT("abc");
-            }
-        };
+        using namespace p_pattern;
         constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
@@ -96,13 +108,7 @@ TEST_CASE("rule: p")
     }
     SUBCASE("branch")
     {
-        struct prod
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return LEXY_LIT("abc") >> lexy::dsl::id<0>;
-            }
-        };
+        using namespace p_branch;
         constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
@@ -145,25 +151,33 @@ TEST_CASE("rule: p")
     }
 }
 
+namespace recurse_indirect
+{
+struct outer;
+struct inner
+{
+    static constexpr auto rule = lexy::dsl::recurse<outer>;
+};
+
+struct outer
+{
+    static constexpr auto rule = opt(LEXY_LIT("a") >> lexy::dsl::p<inner>);
+};
+} // namespace recurse_indirect
+
+namespace recurse_right
+{
+struct prod
+{
+    static constexpr auto rule = opt(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
+};
+} // namespace recurse_right
+
 TEST_CASE("rule: recurse")
 {
     SUBCASE("indirect recursion")
     {
-        struct outer;
-        struct inner
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return lexy::dsl::recurse<outer>;
-            }
-        };
-        struct outer
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return opt(LEXY_LIT("a") >> lexy::dsl::p<inner>);
-            }
-        };
+        using namespace recurse_indirect;
         constexpr auto rule = lexy::dsl::p<outer>;
 
         struct callback
@@ -211,13 +225,7 @@ TEST_CASE("rule: recurse")
     }
     SUBCASE("right recursion")
     {
-        struct prod
-        {
-            LEXY_CONSTEVAL auto rule()
-            {
-                return opt(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
-            }
-        };
+        using namespace recurse_right;
         constexpr auto rule = lexy::dsl::p<prod>;
 
         struct callback

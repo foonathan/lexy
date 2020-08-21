@@ -13,49 +13,45 @@
 #include <lexy/dsl/while.hpp>
 #include <lexy/input/string_input.hpp>
 
+namespace
+{
+//=== AST ===//
+struct string
+{
+    lexy::string_lexeme<> lexeme;
+
+    constexpr string(lexy::string_lexeme<> lexeme) : lexeme(lexeme) {}
+};
+
+struct string_pair
+{
+    string a;
+    string b;
+
+    constexpr string_pair(string a, string b) : a(a), b(b) {}
+};
+
+//=== grammar ===//
+struct string_p
+{
+    using value_type = string;
+
+    static constexpr auto rule = capture(while_(lexy::dsl::ascii::alnum));
+};
+
+struct string_pair_p
+{
+    using value_type = string_pair;
+
+    static constexpr auto rule = LEXY_LIT("(") + lexy::dsl::p<string_p> + LEXY_LIT(",")
+                                 + lexy::dsl::p<string_p> + LEXY_LIT(")");
+};
+
+using prod = string_pair_p;
+} // namespace
+
 TEST_CASE("parse")
 {
-    //=== AST ===//
-    struct string
-    {
-        lexy::string_lexeme<> lexeme;
-
-        constexpr string(lexy::string_lexeme<> lexeme) : lexeme(lexeme) {}
-    };
-
-    struct string_pair
-    {
-        string a;
-        string b;
-
-        constexpr string_pair(string a, string b) : a(a), b(b) {}
-    };
-
-    //=== grammar ===//
-    struct string_p
-    {
-        using value_type = string;
-
-        LEXY_CONSTEVAL auto rule()
-        {
-            return capture(while_(lexy::dsl::ascii::alnum));
-        }
-    };
-
-    struct string_pair_p
-    {
-        using value_type = string_pair;
-
-        LEXY_CONSTEVAL auto rule()
-        {
-            return LEXY_LIT("(") + lexy::dsl::p<string_p> + LEXY_LIT(",")
-                   + lexy::dsl::p<string_p> + LEXY_LIT(")");
-        }
-    };
-
-    using prod = string_pair_p;
-
-    //=== test ===//
     constexpr auto empty = lexy::parse<prod>(lexy::zstring_input(""));
     CHECK(!empty);
 

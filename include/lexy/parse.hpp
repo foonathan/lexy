@@ -67,7 +67,7 @@ struct _parse_context
 template <typename Production, typename Input, typename Callback>
 constexpr auto parse(Input&& input, Callback&& callback)
 {
-    using rule      = decltype(Production().rule());
+    using rule      = std::remove_const_t<decltype(Production::rule)>;
     using context_t = _parse_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;
 
     context_t context{input, callback};

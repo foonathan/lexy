@@ -11,23 +11,20 @@
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/input/string_input.hpp>
 
+namespace
+{
+struct prod_a
+{
+    static constexpr auto rule = LEXY_LIT("abc");
+};
+struct prod_b
+{
+    static constexpr auto rule = LEXY_LIT("(") + capture(lexy::dsl::p<prod_a>) + LEXY_LIT(")");
+};
+} // namespace
+
 TEST_CASE("validate")
 {
-    struct prod_a
-    {
-        LEXY_CONSTEVAL auto rule()
-        {
-            return LEXY_LIT("abc");
-        }
-    };
-    struct prod_b
-    {
-        LEXY_CONSTEVAL auto rule()
-        {
-            return LEXY_LIT("(") + capture(lexy::dsl::p<prod_a>) + LEXY_LIT(")");
-        }
-    };
-
     SUBCASE("void callback")
     {
         SUBCASE("success")

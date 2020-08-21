@@ -60,7 +60,7 @@ LEXY_FORCE_INLINE constexpr bool match(Input&& input, Rule)
 template <typename Production, typename Input>
 constexpr bool match(Input&& input)
 {
-    return match(input, Production().rule());
+    return match(input, Production::rule);
 }
 } // namespace lexy
 
