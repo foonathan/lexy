@@ -17,7 +17,8 @@ struct _parse_context
     const Input&    _input;
     const Callback& _callback;
 
-    using result_type = result<typename Production::value_type, typename Callback::return_type>;
+    using result_type
+        = result<typename decltype(Production::value)::return_type, typename Callback::return_type>;
 
     constexpr bool is_success(const result_type& result)
     {
@@ -59,7 +60,8 @@ struct _parse_context
     template <typename... Args>
     static constexpr result_type parse(_parse_context&, Input&, Args&&... args)
     {
-        return result_type(lexy::result_value, typename Production::value_type(LEXY_FWD(args)...));
+        auto value = Production::value(LEXY_FWD(args)...);
+        return result_type(lexy::result_value, LEXY_MOV(value));
     }
 };
 
