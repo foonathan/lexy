@@ -27,8 +27,7 @@ struct string_p
 {
     static constexpr auto rule = capture(while_(lexy::dsl::ascii::alnum));
 
-    static constexpr auto value
-        = lexy::callback<lexy::string_lexeme<>>([](lexy::string_lexeme<> lex) { return lex; });
+    static constexpr auto value = lexy::construct<lexy::string_lexeme<>>;
 };
 
 struct string_pair_p
@@ -36,10 +35,7 @@ struct string_pair_p
     static constexpr auto rule = LEXY_LIT("(") + lexy::dsl::p<string_p> + LEXY_LIT(",")
                                  + lexy::dsl::p<string_p> + LEXY_LIT(")");
 
-    static constexpr auto value
-        = lexy::callback<string_pair>([](lexy::string_lexeme<> a, lexy::string_lexeme<> b) {
-              return string_pair{a, b};
-          });
+    static constexpr auto value = lexy::construct<string_pair>;
 };
 
 using prod = string_pair_p;

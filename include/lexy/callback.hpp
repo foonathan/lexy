@@ -67,7 +67,40 @@ struct _null_callback
     constexpr void operator()(const Args&...) const
     {}
 };
+
+/// A callback that does nothing.
 inline constexpr auto null_callback = _null_callback{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename T>
+struct _construct_callback
+{
+    using return_type = T;
+
+    constexpr T operator()(T&& t) const
+    {
+        return LEXY_MOV(t);
+    }
+    constexpr T operator()(const T& t) const
+    {
+        return t;
+    }
+
+    template <typename... Args>
+    constexpr T operator()(Args&&... args) const
+    {
+        if constexpr (std::is_constructible_v<T, Args&&...>)
+            return T(LEXY_FWD(args)...);
+        else
+            return T{LEXY_FWD(args)...};
+    }
+};
+
+/// A callback that constructs an object of type T.
+template <typename T>
+inline constexpr auto construct = _construct_callback<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
