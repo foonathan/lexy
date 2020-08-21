@@ -40,7 +40,7 @@ struct _chc_parser<NextParser>
     LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&...) ->
         typename Context::result_type
     {
-        return context.report_error(lexy::exhausted_choice::error<Input>(input.cur()));
+        return context.report_error(input, lexy::exhausted_choice::error<Input>(input.cur()));
     }
 };
 template <typename NextParser, typename H, typename... T>

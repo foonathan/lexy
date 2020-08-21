@@ -32,8 +32,8 @@ struct _match_context
         return _match_context();
     }
 
-    template <typename Error>
-    constexpr bool report_error(Error&&)
+    template <typename Input, typename Error>
+    constexpr bool report_error(const Input&, Error&&)
     {
         return false;
     }

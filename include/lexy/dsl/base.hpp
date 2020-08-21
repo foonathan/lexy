@@ -35,7 +35,7 @@ class Rule : rule_base
             if (/* match input */)
                 return NextParser::parse(context, input, LEXY_FWD(args)..., /* rule arguments */);
             else
-                return context.report_error(/* error */);
+                return context.report_error(input, /* error */);
         }
     };
 };
@@ -121,7 +121,7 @@ struct atom_base : _atom_base
                 if (auto pos = input.cur(); Atom::match(input))
                     return NextParser::parse(context, input, LEXY_FWD(args)...);
                 else
-                    return context.report_error(Atom::error(input, pos));
+                    return context.report_error(input, Atom::error(input, pos));
             }
         }
     };

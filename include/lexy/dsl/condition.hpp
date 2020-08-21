@@ -64,8 +64,8 @@ struct _if : rule_base
             if (matcher::match(input))
                 return NextParser::parse(context, input, LEXY_FWD(args)...);
             else
-                return context.report_error(
-                    lexy::_expected_pattern_error<Expected, Input>(input.cur()));
+                return context.report_error(input, lexy::_expected_pattern_error<Expected, Input>(
+                                                       input.cur()));
         }
     };
 };

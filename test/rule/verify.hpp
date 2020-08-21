@@ -43,7 +43,7 @@ struct test_context
     }
 
     template <typename Error>
-    constexpr int report_error(Error&& error)
+    constexpr int report_error(const test_input&, Error&& error)
     {
         if constexpr (std::is_same_v<Production, void>)
             return Callback{str}.error(LEXY_FWD(error));
@@ -52,8 +52,7 @@ struct test_context
     }
 
     template <typename... Args>
-    static constexpr int parse(test_context& self, lexy::string_input<test_encoding> input,
-                               Args&&... args)
+    static constexpr int parse(test_context& self, test_input input, Args&&... args)
     {
         if constexpr (std::is_same_v<Production, void>)
             return Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);

@@ -11,10 +11,9 @@
 
 namespace lexy
 {
-template <typename Production, typename Input, typename Callback>
+template <typename Production, typename Callback>
 struct _validate_context
 {
-    const Input&    _input;
     const Callback& _callback;
 
     using result_type = optional_error<typename Callback::return_type>;
@@ -36,25 +35,25 @@ struct _validate_context
     template <typename SubProduction>
     constexpr auto sub_context()
     {
-        return _validate_context<SubProduction, Input, Callback>{_input, _callback};
+        return _validate_context<SubProduction, Callback>{_callback};
     }
 
-    template <typename Error>
-    constexpr result_type report_error(Error&& error)
+    template <typename Input, typename Error>
+    constexpr result_type report_error(const Input& input, Error&& error)
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
-            _callback(Production{}, _input, LEXY_FWD(error));
+            _callback(Production{}, input, LEXY_FWD(error));
             return result_type();
         }
         else
         {
-            auto cb_result = _callback(Production{}, _input, LEXY_FWD(error));
+            auto cb_result = _callback(Production{}, input, LEXY_FWD(error));
             return result_type(lexy::result_error, LEXY_MOV(cb_result));
         }
     }
 
-    template <typename... Args>
+    template <typename Input, typename... Args>
     static constexpr result_type parse(_validate_context&, Input&, Args&&...)
     {
         return result_type(lexy::result_value);
@@ -65,9 +64,9 @@ template <typename Production, typename Input, typename Callback>
 constexpr auto validate(Input&& input, Callback&& callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using context_t = _validate_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;
+    using context_t = _validate_context<Production, std::decay_t<Callback>>;
 
-    context_t context{input, callback};
+    context_t context{callback};
     return rule::template parser<context_t>::parse(context, input);
 }
 } // namespace lexy

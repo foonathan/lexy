@@ -11,10 +11,9 @@
 
 namespace lexy
 {
-template <typename Production, typename Input, typename Callback>
+template <typename Production, typename Callback>
 struct _parse_context
 {
-    const Input&    _input;
     const Callback& _callback;
 
     using result_type
@@ -39,25 +38,25 @@ struct _parse_context
     template <typename SubProduction>
     constexpr auto sub_context()
     {
-        return _parse_context<SubProduction, Input, Callback>{_input, _callback};
+        return _parse_context<SubProduction, Callback>{_callback};
     }
 
-    template <typename Error>
-    constexpr result_type report_error(Error&& error)
+    template <typename Input, typename Error>
+    constexpr result_type report_error(const Input& input, Error&& error)
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
-            _callback(Production{}, _input, LEXY_FWD(error));
+            _callback(Production{}, input, LEXY_FWD(error));
             return result_type();
         }
         else
         {
-            auto cb_result = _callback(Production{}, _input, LEXY_FWD(error));
+            auto cb_result = _callback(Production{}, input, LEXY_FWD(error));
             return result_type(lexy::result_error, LEXY_MOV(cb_result));
         }
     }
 
-    template <typename... Args>
+    template <typename Input, typename... Args>
     static constexpr result_type parse(_parse_context&, Input&, Args&&... args)
     {
         auto value = Production::value(LEXY_FWD(args)...);
@@ -70,9 +69,9 @@ template <typename Production, typename Input, typename Callback>
 constexpr auto parse(Input&& input, Callback&& callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using context_t = _parse_context<Production, std::decay_t<Input>, std::decay_t<Callback>>;
+    using context_t = _parse_context<Production, std::decay_t<Callback>>;
 
-    context_t context{input, callback};
+    context_t context{callback};
     return rule::template parser<context_t>::parse(context, input);
 }
 template <typename Production, typename Input>
