@@ -15,7 +15,7 @@ template <typename String>
 struct _punct : _lit<String>
 {
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator()(Whitespace ws) const
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
         static_assert(lexy::is_pattern<Whitespace>, "whitespace must be a pattern");
         return ws + _lit<String>{};

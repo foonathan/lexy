@@ -6,9 +6,9 @@
 
 #include <doctest.h>
 
-TEST_CASE("dsl punctuator operator()")
+TEST_CASE("dsl punctuator whitespace")
 {
-    constexpr auto result     = lexy::dsl::period(LEXY_LIT(" "));
+    constexpr auto result     = lexy::dsl::period[LEXY_LIT(" ")];
     constexpr auto equivalent = LEXY_LIT(" ") + LEXY_LIT(".");
     CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 }
