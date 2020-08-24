@@ -70,33 +70,27 @@ struct _chc : rule_base
 
     template <typename NextParser>
     using parser = _chc_parser<NextParser, B...>;
-
-    //=== dsl ===//
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator|(_chc<B...>, Other other)
-    {
-        auto b = branch(other);
-        return _chc<B..., decltype(b)>{};
-    }
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator|(Other other, _chc<B...>)
-    {
-        auto b = branch(other);
-        return _chc<decltype(b), B...>{};
-    }
 };
 
-template <typename R1, typename R2>
-LEXY_CONSTEVAL auto operator|(R1 r1, R2 r2)
+template <typename R, typename S>
+LEXY_CONSTEVAL auto operator|(R r, S s)
 {
-    auto b1 = branch(r1);
-    auto b2 = branch(r2);
-    return _chc<decltype(b1), decltype(b2)>{};
+    return _chc<decltype(branch(r)), decltype(branch(s))>{};
 }
-template <typename... B, typename... C>
-LEXY_CONSTEVAL auto operator|(_chc<B...>, _chc<C...>)
+template <typename... R, typename S>
+LEXY_CONSTEVAL auto operator|(_chc<R...>, S s)
 {
-    return _chc<B..., C...>{};
+    return _chc<R..., decltype(branch(s))>{};
+}
+template <typename R, typename... S>
+LEXY_CONSTEVAL auto operator|(R r, _chc<S...>)
+{
+    return _chc<decltype(branch(r)), S...>{};
+}
+template <typename... R, typename... S>
+LEXY_CONSTEVAL auto operator|(_chc<R...>, _chc<S...>)
+{
+    return _chc<R..., S...>{};
 }
 } // namespace lexyd
 

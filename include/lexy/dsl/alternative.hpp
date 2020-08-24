@@ -58,32 +58,31 @@ struct _alt : rule_base
                                                        input.cur()));
         }
     };
-
-    //=== dsl ===//
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator/(_alt<P...>, Other)
-    {
-        static_assert(lexy::is_pattern<Other>);
-        return _alt<P..., Other>{};
-    }
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator/(Other, _alt<P...>)
-    {
-        static_assert(lexy::is_pattern<Other>);
-        return _alt<Other, P...>{};
-    }
 };
 
-template <typename P1, typename P2>
-LEXY_CONSTEVAL auto operator/(P1, P2)
+template <typename R, typename S>
+LEXY_CONSTEVAL auto operator/(R, S)
 {
-    static_assert(lexy::is_pattern<P1> && lexy::is_pattern<P2>);
-    return _alt<P1, P2>{};
+    static_assert(lexy::is_pattern<R>);
+    static_assert(lexy::is_pattern<S>);
+    return _alt<R, S>{};
 }
-template <typename... P, typename... Q>
-LEXY_CONSTEVAL auto operator/(_alt<P...>, _alt<Q...>)
+template <typename... R, typename S>
+LEXY_CONSTEVAL auto operator/(_alt<R...>, S)
 {
-    return _alt<P..., Q...>{};
+    static_assert(lexy::is_pattern<S>);
+    return _alt<R..., S>{};
+}
+template <typename R, typename... S>
+LEXY_CONSTEVAL auto operator/(R, _alt<S...>)
+{
+    static_assert(lexy::is_pattern<R>);
+    return _alt<R, S...>{};
+}
+template <typename... R, typename... S>
+LEXY_CONSTEVAL auto operator/(_alt<R...>, _alt<S...>)
+{
+    return _alt<R..., S...>{};
 }
 } // namespace lexyd
 

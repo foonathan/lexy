@@ -44,24 +44,22 @@ struct _seq : rule_base
 
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
-
-    //=== dsl ===//
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator+(_seq, Other)
-    {
-        return _seq<R..., Other>{};
-    }
-    template <typename Other>
-    friend LEXY_CONSTEVAL auto operator+(Other, _seq)
-    {
-        return _seq<Other, R...>{};
-    }
 };
 
-template <typename R1, typename R2>
-LEXY_CONSTEVAL auto operator+(R1, R2)
+template <typename R, typename S>
+LEXY_CONSTEVAL auto operator+(R, S)
 {
-    return _seq<R1, R2>{};
+    return _seq<R, S>{};
+}
+template <typename... R, typename S>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
+{
+    return _seq<R..., S>{};
+}
+template <typename R, typename... S>
+LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
+{
+    return _seq<R, S...>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
