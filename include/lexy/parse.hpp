@@ -77,9 +77,8 @@ constexpr auto parse(Input&& input, Callback&& callback)
 template <typename Production, typename Input>
 constexpr auto parse(Input&& input)
 {
-    return parse<Production>(LEXY_FWD(input), null_callback);
+    return parse<Production>(LEXY_FWD(input), noop);
 }
 } // namespace lexy
 
 #endif // LEXY_PARSE_HPP_INCLUDED
-

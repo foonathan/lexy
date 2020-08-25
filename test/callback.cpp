@@ -36,10 +36,10 @@ TEST_CASE("callback")
     }
 }
 
-TEST_CASE("null_callback")
+TEST_CASE("noop")
 {
-    lexy::null_callback();
-    lexy::null_callback(1, 2, 3);
+    lexy::noop();
+    lexy::noop(1, 2, 3);
 }
 
 TEST_CASE("construct")
@@ -78,4 +78,3 @@ TEST_CASE("construct")
         CHECK(result.b == 3.14f);
     }
 }
-

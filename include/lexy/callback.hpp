@@ -59,7 +59,7 @@ LEXY_CONSTEVAL auto callback(Fns&&... fns)
 
 namespace lexy
 {
-struct _null_callback
+struct _noop
 {
     using return_type = void;
 
@@ -69,13 +69,13 @@ struct _null_callback
 };
 
 /// A callback that does nothing.
-inline constexpr auto null_callback = _null_callback{};
+inline constexpr auto noop = _noop{};
 } // namespace lexy
 
 namespace lexy
 {
 template <typename T>
-struct _construct_callback
+struct _construct
 {
     using return_type = T;
 
@@ -100,8 +100,7 @@ struct _construct_callback
 
 /// A callback that constructs an object of type T.
 template <typename T>
-inline constexpr auto construct = _construct_callback<T>{};
+inline constexpr auto construct = _construct<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
-
