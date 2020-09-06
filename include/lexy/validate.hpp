@@ -18,20 +18,6 @@ struct _validate_context
 
     using result_type = optional_error<typename Callback::return_type>;
 
-    constexpr bool is_success(const result_type& result)
-    {
-        return result.has_value();
-    }
-    constexpr lexy::result_value_t forward_value(result_type&& result)
-    {
-        return result.value();
-    }
-    template <typename Parent>
-    constexpr result_type&& forward_error_result(Parent&, result_type&& result)
-    {
-        return LEXY_MOV(result);
-    }
-
     template <typename SubProduction>
     constexpr auto sub_context()
     {
@@ -39,7 +25,7 @@ struct _validate_context
     }
 
     template <typename Input, typename Error>
-    constexpr result_type report_error(const Input& input, Error&& error)
+    constexpr auto report_error(const Input& input, Error&& error)
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
@@ -54,7 +40,7 @@ struct _validate_context
     }
 
     template <typename Input, typename... Args>
-    static constexpr result_type parse(_validate_context&, Input&, Args&&...)
+    static constexpr auto parse(_validate_context&, Input&, Args&&...)
     {
         return result_type(lexy::result_value);
     }

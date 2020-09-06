@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/result.hpp>
 
 namespace lexyd
 {
@@ -23,12 +24,10 @@ struct _prd_parser
         auto&& sub_context  = context.template sub_context<Production>();
         using sub_context_t = std::decay_t<decltype(sub_context)>;
 
-        if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input);
-            sub_context.is_success(result))
-            return NextParser::parse(context, input, LEXY_FWD(args)...,
-                                     sub_context.forward_value(LEXY_MOV(result)));
+        if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input))
+            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(result).value());
         else
-            return sub_context.forward_error_result(context, LEXY_MOV(result));
+            return typename Context::result_type(LEXY_MOV(result));
     }
 };
 

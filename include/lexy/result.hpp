@@ -148,6 +148,14 @@ public:
     : _result_storage<T, E>(result_error, LEXY_FWD(args)...)
     {}
 
+    /// Convertion from an errored result with a different value type.
+    template <typename U>
+    constexpr explicit result(const result<U, E>& other) : result(result_error, other.error())
+    {}
+    template <typename U>
+    constexpr explicit result(result<U, E>&& other) : result(result_error, LEXY_MOV(other).error())
+    {}
+
     //=== access ===//
     constexpr explicit operator bool() const noexcept
     {

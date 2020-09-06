@@ -28,6 +28,12 @@ TEST_CASE("result")
         CHECK(!err.has_value());
         CHECK(err.has_error());
         CHECK(err.error() == 42);
+
+        constexpr lexy::result<short, int> conv_err(err);
+        CHECK(!conv_err);
+        CHECK(!conv_err.has_value());
+        CHECK(conv_err.has_error());
+        CHECK(conv_err.error() == 42);
     }
     SUBCASE("non-trivial")
     {
@@ -54,6 +60,9 @@ TEST_CASE("result")
         lexy::result<std::string, std::string> err(lexy::result_error,
                                                    "a somewhat long string against SSO");
         check_error(err, "a somewhat long string against SSO");
+
+        lexy::result<int, std::string> conv_err(err);
+        check_error(conv_err, "a somewhat long string against SSO");
 
         SUBCASE("move ctor - value")
         {

@@ -9,6 +9,7 @@
 #include <doctest.h>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/result.hpp>
 
 #include "../test_encoding.hpp"
 
@@ -20,21 +21,7 @@ struct test_context
 {
     const char* str;
 
-    using result_type = int;
-
-    constexpr bool is_success(int i)
-    {
-        return i >= 0;
-    }
-    constexpr int forward_value(int i)
-    {
-        return i;
-    }
-    template <typename Parent>
-    constexpr int forward_error_result(Parent&, int i)
-    {
-        return i;
-    }
+    using result_type = lexy::result<int, int>;
 
     template <typename SubProduction>
     constexpr auto sub_context()
@@ -43,30 +30,46 @@ struct test_context
     }
 
     template <typename Error>
-    constexpr int report_error(const test_input&, Error&& error)
+    constexpr auto report_error(const test_input&, Error&& error)
     {
         if constexpr (std::is_same_v<Production, void>)
-            return Callback{str}.error(LEXY_FWD(error));
+        {
+            auto code = Callback{str}.error(LEXY_FWD(error));
+            return result_type(lexy::result_error, code);
+        }
         else
-            return Callback{str}.error(Production{}, LEXY_FWD(error));
+        {
+            auto code = Callback{str}.error(Production{}, LEXY_FWD(error));
+            return result_type(lexy::result_error, code);
+        }
     }
 
     template <typename... Args>
-    static constexpr int parse(test_context& self, test_input input, Args&&... args)
+    static constexpr auto parse(test_context& self, test_input input, Args&&... args)
     {
         if constexpr (std::is_same_v<Production, void>)
-            return Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);
+        {
+            auto code = Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);
+            return result_type(lexy::result_value, code);
+        }
         else
-            return Callback{self.str}.success(Production{}, input.cur(), LEXY_FWD(args)...);
+        {
+            auto code = Callback{self.str}.success(Production{}, input.cur(), LEXY_FWD(args)...);
+            return result_type(lexy::result_value, code);
+        }
     }
 };
 
 template <typename Callback, typename Rule>
-constexpr auto rule_matches(Rule, const char* str)
+constexpr int rule_matches(Rule, const char* str)
 {
     test_context<Callback> context{str};
     auto                   input = lexy::zstring_input<test_encoding>(str);
-    return Rule::template parser<test_context<Callback>>::parse(context, input);
+    auto result = Rule::template parser<test_context<Callback>>::parse(context, input);
+    if (result)
+        return result.value();
+    else
+        return result.error();
 }
 
 #endif // TEST_RULE_VERIFY_HPP_INCLUDED

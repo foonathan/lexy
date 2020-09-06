@@ -6,25 +6,13 @@
 #define LEXY_MATCH_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/result.hpp>
 
 namespace lexy
 {
 struct _match_context
 {
-    using result_type = bool;
-
-    constexpr bool is_success(bool v)
-    {
-        return v;
-    }
-    constexpr bool forward_value(bool v)
-    {
-        return v;
-    }
-    constexpr bool forward_error_result(_match_context&, bool v)
-    {
-        return v;
-    }
+    using result_type = lexy::result<void, void>;
 
     template <typename SubProduction>
     constexpr auto sub_context()
@@ -33,15 +21,15 @@ struct _match_context
     }
 
     template <typename Input, typename Error>
-    constexpr bool report_error(const Input&, Error&&)
+    constexpr auto report_error(const Input&, Error&&)
     {
-        return false;
+        return result_type();
     }
 
     template <typename Input, typename... Args>
-    static constexpr bool parse(_match_context&, Input&, Args&&...)
+    static constexpr auto parse(_match_context&, Input&, Args&&...)
     {
-        return true;
+        return result_type(result_value);
     }
 };
 
@@ -53,7 +41,7 @@ LEXY_FORCE_INLINE constexpr bool match(Input&& input, Rule)
     else
     {
         _match_context context;
-        return Rule::template parser<_match_context>::parse(context, input);
+        return !!Rule::template parser<_match_context>::parse(context, input);
     }
 }
 

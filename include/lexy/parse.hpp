@@ -19,22 +19,6 @@ struct _parse_context
     using result_type
         = result<typename decltype(Production::value)::return_type, typename Callback::return_type>;
 
-    constexpr bool is_success(const result_type& result)
-    {
-        return result.has_value();
-    }
-    constexpr decltype(auto) forward_value(result_type&& result)
-    {
-        return LEXY_MOV(result).value();
-    }
-    template <typename Parent>
-    constexpr auto forward_error_result(Parent&, result_type&& result)
-    {
-        // As all contexts use the same callback, the error type is the same.
-        // We just need to turn an errored result<T, E> into an errored result<U, E>.
-        return typename Parent::result_type(lexy::result_error, LEXY_MOV(result).error());
-    }
-
     template <typename SubProduction>
     constexpr auto sub_context()
     {
@@ -42,7 +26,7 @@ struct _parse_context
     }
 
     template <typename Input, typename Error>
-    constexpr result_type report_error(const Input& input, Error&& error)
+    constexpr auto report_error(const Input& input, Error&& error)
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
@@ -57,7 +41,7 @@ struct _parse_context
     }
 
     template <typename Input, typename... Args>
-    static constexpr result_type parse(_parse_context&, Input&, Args&&... args)
+    static constexpr auto parse(_parse_context&, Input&, Args&&... args)
     {
         auto value = Production::value(LEXY_FWD(args)...);
         return result_type(lexy::result_value, LEXY_MOV(value));
