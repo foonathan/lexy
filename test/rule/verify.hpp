@@ -30,7 +30,7 @@ struct test_context
     }
 
     template <typename Error>
-    constexpr auto report_error(const test_input&, Error&& error)
+    constexpr auto error(const test_input&, Error&& error) &&
     {
         if constexpr (std::is_same_v<Production, void>)
         {
@@ -45,27 +45,39 @@ struct test_context
     }
 
     template <typename... Args>
-    static constexpr auto parse(test_context& self, test_input input, Args&&... args)
+    constexpr auto value(Args&&... args) &&
     {
         if constexpr (std::is_same_v<Production, void>)
         {
-            auto code = Callback{self.str}.success(input.cur(), LEXY_FWD(args)...);
+            auto code = Callback{str}.success(LEXY_FWD(args)...);
             return result_type(lexy::result_value, code);
         }
         else
         {
-            auto code = Callback{self.str}.success(Production{}, input.cur(), LEXY_FWD(args)...);
+            auto code = Callback{str}.success(Production{}, LEXY_FWD(args)...);
             return result_type(lexy::result_value, code);
         }
+    }
+};
+
+struct test_final_parser
+{
+    template <typename Context, typename Input, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        typename Context::result_type
+    {
+        // We sneak in the final input position.
+        return LEXY_MOV(context).value(input.cur(), LEXY_FWD(args)...);
     }
 };
 
 template <typename Callback, typename Rule>
 constexpr int rule_matches(Rule, const char* str)
 {
+    auto input = lexy::zstring_input<test_encoding>(str);
+
     test_context<Callback> context{str};
-    auto                   input = lexy::zstring_input<test_encoding>(str);
-    auto result = Rule::template parser<test_context<Callback>>::parse(context, input);
+    auto                   result = Rule::template parser<test_final_parser>::parse(context, input);
     if (result)
         return result.value();
     else

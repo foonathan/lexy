@@ -25,9 +25,9 @@ struct _try : rule_base
             if (auto pos = input.cur(); Pattern::matcher::match(input))
                 return NextParser::parse(context, input, LEXY_FWD(args)...);
             else
-                return context.report_error(input,
-                                            typename lexy::failure<Tag>::template error<Input>(
-                                                pos));
+                return LEXY_MOV(context).error(input,
+                                               typename lexy::failure<Tag>::template error<Input>(
+                                                   pos));
         }
     };
 };

@@ -21,10 +21,9 @@ struct _prd_parser
     LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
         typename Context::result_type
     {
-        auto&& sub_context  = context.template sub_context<Production>();
-        using sub_context_t = std::decay_t<decltype(sub_context)>;
+        auto&& sub_context = context.template sub_context<Production>();
 
-        if (auto result = Rule::template parser<sub_context_t>::parse(sub_context, input))
+        if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_context, input))
             return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(result).value());
         else
             return typename Context::result_type(LEXY_MOV(result));

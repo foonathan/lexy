@@ -12,7 +12,24 @@
 
 //=== rule ===//
 #if 0
-class Rule : rule_base
+struct ParseContext
+{
+    using result_type = ...;
+
+    /// Returns a sub-context for an inner production.
+    template <typename Production>
+    ParseContext sub_context();
+
+    /// Called when an error ocurred.
+    template <typename Input, typename Error>
+    result_type error(const Input& input, Error&& error) &&;
+
+    /// Called when parsing was succesful.
+    template <typename ... Args>
+    result_type value(Args&&... args) &&;
+};
+
+struct Rule : rule_base
 {
     // Whether or not the rule has a matcher, in which case it is a pattern.
     static constexpr bool has_matcher;
@@ -35,7 +52,7 @@ class Rule : rule_base
             if (/* match input */)
                 return NextParser::parse(context, input, LEXY_FWD(args)..., /* rule arguments */);
             else
-                return context.report_error(input, /* error */);
+                return LEXY_MOV(context).error(input, /* error */);
         }
     };
 };
@@ -121,7 +138,7 @@ struct atom_base : _atom_base
                 if (auto pos = input.cur(); Atom::match(input))
                     return NextParser::parse(context, input, LEXY_FWD(args)...);
                 else
-                    return context.report_error(input, Atom::error(input, pos));
+                    return LEXY_MOV(context).error(input, Atom::error(input, pos));
             }
         }
     };
@@ -132,6 +149,21 @@ namespace lexy
 {
 template <typename T>
 constexpr bool is_atom = std::is_base_of_v<dsl::_atom_base, T>;
+} // namespace lexy
+
+//=== infrastructure ===//
+namespace lexy
+{
+/// The final parser in the chain of NextParsers, forwarding everything to the context.
+struct final_parser
+{
+    template <typename Context, typename Input, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input&, Args&&... args) ->
+        typename Context::result_type
+    {
+        return LEXY_MOV(context).value(LEXY_FWD(args)...);
+    }
+};
 } // namespace lexy
 
 #endif // LEXY_DSL_BASE_HPP_INCLUDED

@@ -25,7 +25,7 @@ struct _validate_context
     }
 
     template <typename Input, typename Error>
-    constexpr auto report_error(const Input& input, Error&& error)
+    constexpr auto error(const Input& input, Error&& error) &&
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
@@ -39,8 +39,8 @@ struct _validate_context
         }
     }
 
-    template <typename Input, typename... Args>
-    static constexpr auto parse(_validate_context&, Input&, Args&&...)
+    template <typename... Args>
+    constexpr auto value(Args&&...) &&
     {
         return result_type(lexy::result_value);
     }
@@ -53,7 +53,7 @@ constexpr auto validate(Input&& input, Callback&& callback)
     using context_t = _validate_context<Production, std::decay_t<Callback>>;
 
     context_t context{callback};
-    return rule::template parser<context_t>::parse(context, input);
+    return rule::template parser<final_parser>::parse(context, input);
 }
 } // namespace lexy
 

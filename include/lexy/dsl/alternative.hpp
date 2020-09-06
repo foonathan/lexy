@@ -54,8 +54,8 @@ struct _alt : rule_base
             if (matcher::match(input))
                 return NextParser::parse(context, input, LEXY_FWD(args)...);
             else
-                return context.report_error(input, lexy::exhausted_alternatives::error<Input>(
-                                                       input.cur()));
+                return LEXY_MOV(context).error(input, lexy::exhausted_alternatives::error<Input>(
+                                                          input.cur()));
         }
     };
 };

@@ -47,13 +47,13 @@ TEST_CASE("rule: p")
         {
             const char* str;
 
-            constexpr int success(prod, const char* cur, lexy::id<0>)
+            constexpr int success(prod, lexy::id<0>)
             {
-                assert(cur - str == 3);
                 return 0;
             }
-            constexpr int success(const char*, int result)
+            constexpr int success(const char* cur, int result)
             {
+                assert(cur - str == 3);
                 assert(result == 0);
                 return result;
             }
@@ -82,13 +82,13 @@ TEST_CASE("rule: p")
         {
             const char* str;
 
-            constexpr int success(prod, const char* cur)
+            constexpr int success(prod)
             {
-                assert(cur - str == 3);
                 return 0;
             }
-            constexpr int success(const char*, int result)
+            constexpr int success(const char* cur, int result)
             {
+                assert(cur - str == 3);
                 assert(result == 0);
                 return result;
             }
@@ -117,14 +117,14 @@ TEST_CASE("rule: p")
         {
             const char* str;
 
-            constexpr int success(prod, const char* cur, lexy::id<0>)
+            constexpr int success(prod, lexy::id<0>)
             {
-                assert(lexy::_detail::string_view(str, cur) == "abc");
                 return 0;
             }
 
-            constexpr int success(const char*, int result)
+            constexpr int success(const char* cur, int result)
             {
+                assert(lexy::_detail::string_view(str, cur) == "abc");
                 assert(result == 0);
                 return result;
             }
@@ -184,15 +184,15 @@ TEST_CASE("rule: recurse")
         {
             const char* str;
 
-            constexpr int success(inner, const char*, int outer_result)
+            constexpr int success(inner, int outer_result)
             {
                 return outer_result + 1;
             }
-            constexpr int success(outer, const char*)
+            constexpr int success(outer)
             {
                 return 0;
             }
-            constexpr int success(outer, const char*, int inner_result)
+            constexpr int success(outer, int inner_result)
             {
                 return inner_result;
             }
@@ -232,11 +232,11 @@ TEST_CASE("rule: recurse")
         {
             const char* str;
 
-            constexpr int success(prod, const char*)
+            constexpr int success(prod)
             {
                 return 0;
             }
-            constexpr int success(prod, const char*, int result)
+            constexpr int success(prod, int result)
             {
                 return result + 1;
             }

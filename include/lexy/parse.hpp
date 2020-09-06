@@ -26,7 +26,7 @@ struct _parse_context
     }
 
     template <typename Input, typename Error>
-    constexpr auto report_error(const Input& input, Error&& error)
+    constexpr auto error(const Input& input, Error&& error) &&
     {
         if constexpr (std::is_same_v<typename Callback::return_type, void>)
         {
@@ -40,8 +40,8 @@ struct _parse_context
         }
     }
 
-    template <typename Input, typename... Args>
-    static constexpr auto parse(_parse_context&, Input&, Args&&... args)
+    template <typename... Args>
+    constexpr auto value(Args&&... args) &&
     {
         auto value = Production::value(LEXY_FWD(args)...);
         return result_type(lexy::result_value, LEXY_MOV(value));
@@ -56,7 +56,7 @@ constexpr auto parse(Input&& input, Callback&& callback)
     using context_t = _parse_context<Production, std::decay_t<Callback>>;
 
     context_t context{callback};
-    return rule::template parser<context_t>::parse(context, input);
+    return rule::template parser<final_parser>::parse(context, input);
 }
 template <typename Production, typename Input>
 constexpr auto parse(Input&& input)
