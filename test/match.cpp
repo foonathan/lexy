@@ -5,7 +5,7 @@
 #include <lexy/match.hpp>
 
 #include <doctest.h>
-#include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/input/string_input.hpp>
 
@@ -37,24 +37,31 @@ TEST_CASE("match")
     }
     SUBCASE("rule")
     {
-        SUBCASE("match")
+        SUBCASE("match one")
         {
             auto input  = lexy::zstring_input("abc");
-            auto result = lexy::match(input, capture(LEXY_LIT("abc")));
+            auto result = lexy::match(input, list(LEXY_LIT("abc")));
+            CHECK(result);
+            CHECK(input.peek() == lexy::default_encoding::eof());
+        }
+        SUBCASE("match twice")
+        {
+            auto input  = lexy::zstring_input("abcabc");
+            auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(result);
             CHECK(input.peek() == lexy::default_encoding::eof());
         }
         SUBCASE("no match")
         {
             auto input  = lexy::zstring_input("def");
-            auto result = lexy::match(input, capture(LEXY_LIT("abc")));
+            auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(!result);
             CHECK(input.peek() == 'd');
         }
         SUBCASE("partial match")
         {
             auto input  = lexy::zstring_input("abc123");
-            auto result = lexy::match(input, capture(LEXY_LIT("abc")));
+            auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(result);
             CHECK(input.peek() == '1');
         }

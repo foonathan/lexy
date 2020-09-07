@@ -6,6 +6,7 @@
 
 #include <doctest.h>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/sequence.hpp>
@@ -15,7 +16,7 @@ namespace
 {
 struct prod_a
 {
-    static constexpr auto rule = LEXY_LIT("abc");
+    static constexpr auto rule = list(LEXY_LIT("abc"));
 };
 struct prod_b
 {
@@ -33,9 +34,12 @@ TEST_CASE("validate")
                 FAIL_CHECK("should not be called");
             };
 
-            auto result
+            auto one
                 = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), lexy::callback(callback));
-            CHECK(result);
+            CHECK(one);
+            auto two
+                = lexy::validate<prod_b>(lexy::zstring_input("(abcabc)"), lexy::callback(callback));
+            CHECK(two);
         }
         SUBCASE("missing abc")
         {

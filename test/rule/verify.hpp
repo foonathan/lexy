@@ -29,6 +29,11 @@ struct test_context
         return test_context<Callback, SubProduction>{str};
     }
 
+    constexpr auto list_builder()
+    {
+        return Callback{str}.list();
+    }
+
     template <typename Error>
     constexpr auto error(const test_input&, Error&& error) &&
     {
