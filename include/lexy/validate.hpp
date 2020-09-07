@@ -27,16 +27,8 @@ struct _validate_context
     template <typename Input, typename Error>
     constexpr auto error(const Input& input, Error&& error) &&
     {
-        if constexpr (std::is_same_v<typename Callback::return_type, void>)
-        {
-            _callback(Production{}, input, LEXY_FWD(error));
-            return result_type();
-        }
-        else
-        {
-            auto cb_result = _callback(Production{}, input, LEXY_FWD(error));
-            return result_type(lexy::result_error, LEXY_MOV(cb_result));
-        }
+        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, Production{},
+                                                   input, LEXY_FWD(error));
     }
 
     template <typename... Args>

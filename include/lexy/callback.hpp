@@ -46,7 +46,7 @@ struct _callback : _fn_as_base<Fns>...
     }
 };
 
-/// Creates a callback
+/// Creates a callback.
 template <typename ReturnType = void, typename... Fns>
 LEXY_CONSTEVAL auto callback(Fns&&... fns)
 {
@@ -54,6 +54,24 @@ LEXY_CONSTEVAL auto callback(Fns&&... fns)
                         std::decay_t<Fns>> || std::is_empty_v<std::decay_t<Fns>>)&&...),
                   "only capture-less lambdas are allowed in a callback");
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+
+/// Invokes a callback into a result.
+template <typename Result, typename ErrorOrValue, typename Callback, typename... Args>
+constexpr Result invoke_as_result(ErrorOrValue tag, Callback&& callback, Args&&... args)
+{
+    using callback_t  = std::decay_t<Callback>;
+    using return_type = typename callback_t::return_type;
+
+    if constexpr (std::is_same_v<return_type, void>)
+    {
+        LEXY_FWD(callback)(LEXY_FWD(args)...);
+        return Result(tag);
+    }
+    else
+    {
+        return Result(tag, LEXY_FWD(callback)(LEXY_FWD(args)...));
+    }
 }
 } // namespace lexy
 
