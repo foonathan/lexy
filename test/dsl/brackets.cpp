@@ -102,4 +102,32 @@ TEST_CASE("dsl::brackets")
             CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result));
         }
     }
+    SUBCASE("opt_list")
+    {
+        constexpr auto o = LEXY_LIT("(");
+        constexpr auto c = LEXY_LIT(")");
+
+        SUBCASE("no sep")
+        {
+            constexpr auto result     = lexy::dsl::parenthesized.opt_list(inner);
+            constexpr auto equivalent = o >> opt_list(!c >> inner);
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(lexy::match(lexy::zstring_input("()"), result));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
+            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result));
+        }
+        SUBCASE("sep")
+        {
+            constexpr auto result
+                = lexy::dsl::parenthesized.opt_list(inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto equivalent = o >> opt_list(!c >> inner, trailing_sep(LEXY_LIT(",")));
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(lexy::match(lexy::zstring_input("()"), result));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result));
+        }
+    }
 }
