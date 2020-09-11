@@ -81,9 +81,22 @@ struct _noop
 {
     using return_type = void;
 
+    //=== function interface ===//
     template <typename... Args>
     constexpr void operator()(const Args&...) const
     {}
+
+    //=== list interface ===//
+    constexpr auto list_callback() const
+    {
+        return *this;
+    }
+
+    template <typename... Args>
+    constexpr void item(const Args&...) const
+    {}
+
+    constexpr void finish() && {}
 };
 
 /// A callback that does nothing.
@@ -119,6 +132,56 @@ struct _construct
 /// A callback that constructs an object of type T.
 template <typename T>
 inline constexpr auto construct = _construct<T>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename T>
+struct _container
+{
+    using return_type = T;
+
+    template <typename... Args>
+    constexpr T operator()(Args&&... args) const
+    {
+        // Use the initializer_list constructor.
+        return T{LEXY_FWD(args)...};
+    }
+
+    struct _list_cb
+    {
+        T _result;
+
+        using return_type = T;
+
+        void item(const typename T::value_type& obj)
+        {
+            _result.push_back(obj);
+        }
+        void item(typename T::value_type&& obj)
+        {
+            _result.push_back(LEXY_MOV(obj));
+        }
+        template <typename... Args>
+        void item(Args&&... args)
+        {
+            _result.emplace_back(LEXY_FWD(args)...);
+        }
+
+        T&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+    constexpr auto list_callback() const
+    {
+        return _list_cb{};
+    }
+};
+
+/// A callback that builds a container of things.
+template <typename T>
+inline constexpr auto container = _container<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED

@@ -5,6 +5,7 @@
 #ifndef LEXY_MATCH_HPP_INCLUDED
 #define LEXY_MATCH_HPP_INCLUDED
 
+#include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/result.hpp>
 
@@ -20,20 +21,9 @@ struct _match_context
         return _match_context();
     }
 
-    struct _list_builder
+    constexpr auto list_callback()
     {
-        template <typename... Args>
-        constexpr void item(Args&&...)
-        {}
-
-        constexpr int finish() &&
-        {
-            return 0; // Value is ignored anyway.
-        }
-    };
-    constexpr auto list_builder()
-    {
-        return _list_builder{};
+        return noop.list_callback();
     }
 
     template <typename Input, typename Error>

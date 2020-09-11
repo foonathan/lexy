@@ -24,20 +24,9 @@ struct _validate_context
         return _validate_context<SubProduction, Callback>{_callback};
     }
 
-    struct _list_builder
+    constexpr auto list_callback()
     {
-        template <typename... Args>
-        constexpr void item(Args&&...)
-        {}
-
-        constexpr int finish() &&
-        {
-            return 0; // Value is ignored anyway.
-        }
-    };
-    constexpr auto list_builder()
-    {
-        return _list_builder{};
+        return noop.list_callback();
     }
 
     template <typename Input, typename Error>

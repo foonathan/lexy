@@ -37,16 +37,37 @@ LEXY_CONSTEVAL auto trailing_sep(Pattern)
 
 namespace lexyd
 {
+// Continuation after the entire list has been parsed.
+template <typename NextParser>
+struct _list_done
+{
+    template <typename Context, typename Input, typename ListCallback, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListCallback& callback, Args&&... args)
+        -> typename Context::result_type
+    {
+        if constexpr (std::is_same_v<typename ListCallback::return_type, void>)
+        {
+            LEXY_MOV(callback).finish();
+            return NextParser::parse(context, input, LEXY_FWD(args)...);
+        }
+        else
+        {
+            return NextParser::parse(context, input, LEXY_FWD(args)...,
+                                     LEXY_MOV(callback).finish());
+        }
+    }
+};
+
 // Continuation after a list item has been parsed.
 template <typename NextParser, typename... ParentArgs>
 struct _list_item_done
 {
-    template <typename Context, typename Input, typename ListBuilder, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListBuilder& builder,
+    template <typename Context, typename Input, typename ListCallback, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListCallback& callback,
                              ParentArgs&&... pargs, Args&&... args) -> typename Context::result_type
     {
-        builder.item(LEXY_FWD(args)...); // Forward item args to the builder.
-        return NextParser::parse(context, input, builder, LEXY_FWD(pargs)...); // Continue.
+        callback.item(LEXY_FWD(args)...); // Forward item args to the callback.
+        return NextParser::parse(context, input, callback, LEXY_FWD(pargs)...); // Continue.
     }
 };
 
@@ -56,8 +77,8 @@ struct _list_loop_parser;
 template <typename Item, typename NextParser>
 struct _list_loop_parser<Item, void, NextParser> // no separator
 {
-    template <typename Context, typename Input, typename ListBuilder, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListBuilder& builder, Args&&... args)
+    template <typename Context, typename Input, typename ListCallback, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListCallback& callback, Args&&... args)
         -> typename Context::result_type
     {
         // We parse other items while the condition matches.
@@ -65,21 +86,20 @@ struct _list_loop_parser<Item, void, NextParser> // no separator
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(context, input, builder,
+            return Item::template then_parser<continuation>::parse(context, input, callback,
                                                                    LEXY_FWD(args)...);
         }
         else
         {
-            // We're done with the list, finish builder and continue normal parsing.
-            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(builder).finish());
+            return _list_done<NextParser>::parse(context, input, callback, LEXY_FWD(args)...);
         }
     }
 };
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser<Item, _sep<Sep>, NextParser> // normal separator
 {
-    template <typename Context, typename Input, typename ListBuilder, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListBuilder& builder, Args&&... args)
+    template <typename Context, typename Input, typename ListCallback, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListCallback& callback, Args&&... args)
         -> typename Context::result_type
     {
         // We parse other items while the separator matches.
@@ -87,21 +107,20 @@ struct _list_loop_parser<Item, _sep<Sep>, NextParser> // normal separator
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template parser<continuation>::parse(context, input, builder,
+            return Item::template parser<continuation>::parse(context, input, callback,
                                                               LEXY_FWD(args)...);
         }
         else
         {
-            // We're done with the list, finish builder and continue normal parsing.
-            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(builder).finish());
+            return _list_done<NextParser>::parse(context, input, callback, LEXY_FWD(args)...);
         }
     }
 };
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
 {
-    template <typename Context, typename Input, typename ListBuilder, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListBuilder& builder, Args&&... args)
+    template <typename Context, typename Input, typename ListCallback, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Input& input, ListCallback& callback, Args&&... args)
         -> typename Context::result_type
     {
         // We parse other items while the separator and condition matches.
@@ -111,13 +130,12 @@ struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(context, input, builder,
+            return Item::template then_parser<continuation>::parse(context, input, callback,
                                                                    LEXY_FWD(args)...);
         }
         else
         {
-            // We're done with the list, finish builder and continue normal parsing.
-            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(builder).finish());
+            return _list_done<NextParser>::parse(context, input, callback, LEXY_FWD(args)...);
         }
     }
 };
@@ -134,14 +152,14 @@ struct _list : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
-            auto&& builder = context.list_builder();
+            auto&& callback = context.list_callback();
 
             // We need the first item in either case.
             // So we parse it unconditionally, using the item done continuation to pass its
-            // arguments to the builder. Once that's done we continue with the proper loop.
+            // arguments to the callback. Once that's done we continue with the proper loop.
             using loop         = _list_loop_parser<Item, Sep, NextParser>;
             using continuation = _list_item_done<loop, Args...>;
-            return Item::template parser<continuation>::parse(context, input, builder,
+            return Item::template parser<continuation>::parse(context, input, callback,
                                                               LEXY_FWD(args)...);
         }
     };

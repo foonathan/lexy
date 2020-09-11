@@ -24,6 +24,8 @@ TEST_CASE("rule: list without separator")
             {
                 int count = 0;
 
+                using return_type = int;
+
                 constexpr void item(lexy::id<0>)
                 {
                     ++count;
@@ -79,6 +81,8 @@ TEST_CASE("rule: list with separator")
             struct b
             {
                 int count = 0;
+
+                using return_type = int;
 
                 constexpr void item(lexy::id<0>)
                 {
@@ -138,6 +142,8 @@ TEST_CASE("rule: list with trailing separator")
             struct b
             {
                 int count = 0;
+
+                using return_type = int;
 
                 constexpr void item(lexy::id<0>)
                 {

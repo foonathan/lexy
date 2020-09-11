@@ -5,24 +5,42 @@
 #ifndef LEXY_PARSE_HPP_INCLUDED
 #define LEXY_PARSE_HPP_INCLUDED
 
+#include <lexy/_detail/detect.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy
 {
+template <typename Production>
+using _production_value = decltype(Production::value);
+
 template <typename Production, typename Callback>
 struct _parse_context
 {
     const Callback& _callback;
 
-    using result_type
-        = result<typename decltype(Production::value)::return_type, typename Callback::return_type>;
+    static auto _result_value_cb()
+    {
+        if constexpr (_detail::is_detected<_production_value, Production>)
+            return Production::value;
+        else
+            // If we don't have a Production::value callback, we must have only the list.
+            // Then the list return type determines value.
+            return Production::list;
+    }
+    using result_type = result<typename decltype(_result_value_cb())::return_type,
+                               typename Callback::return_type>;
 
     template <typename SubProduction>
     constexpr auto sub_context()
     {
         return _parse_context<SubProduction, Callback>{_callback};
+    }
+
+    constexpr auto list_callback()
+    {
+        return Production::list.list_callback();
     }
 
     template <typename Input, typename Error>
@@ -35,8 +53,13 @@ struct _parse_context
     template <typename... Args>
     constexpr auto value(Args&&... args) &&
     {
-        return lexy::invoke_as_result<result_type>(lexy::result_value, Production::value,
-                                                   LEXY_FWD(args)...);
+        if constexpr (!_detail::is_detected<_production_value, Production> && sizeof...(Args) == 1)
+            // We don't have a value callback and only a single argument.
+            // This means the result of the list builder (which we must have), is our result.
+            return result_type(lexy::result_value, LEXY_FWD(args)...);
+        else
+            return lexy::invoke_as_result<result_type>(lexy::result_value, Production::value,
+                                                       LEXY_FWD(args)...);
     }
 };
 

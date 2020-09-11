@@ -5,6 +5,8 @@
 #include <lexy/callback.hpp>
 
 #include <doctest.h>
+#include <string>
+#include <vector>
 
 namespace
 {
@@ -38,8 +40,18 @@ TEST_CASE("callback")
 
 TEST_CASE("noop")
 {
-    lexy::noop();
-    lexy::noop(1, 2, 3);
+    SUBCASE("callback")
+    {
+        lexy::noop();
+        lexy::noop(1, 2, 3);
+    }
+    SUBCASE("list callback")
+    {
+        auto list = lexy::noop.list_callback();
+        list.item(1, 2, 3);
+        list.item(1, 2, 3);
+        LEXY_MOV(list).finish();
+    }
 }
 
 TEST_CASE("construct")
@@ -78,3 +90,22 @@ TEST_CASE("construct")
         CHECK(result.b == 3.14f);
     }
 }
+
+TEST_CASE("container")
+{
+    SUBCASE("callback")
+    {
+        std::vector<int> vec = lexy::container<std::vector<int>>(1, 2, 3);
+        CHECK(vec == std::vector{1, 2, 3});
+    }
+    SUBCASE("list callback")
+    {
+        auto cb = lexy::container<std::vector<std::string>>.list_callback();
+        cb.item("a");
+        cb.item(std::string("b"));
+        cb.item(1, 'c');
+        std::vector<std::string> result = LEXY_MOV(cb).finish();
+        CHECK(result == std::vector<std::string>{"a", "b", "c"});
+    }
+}
+
