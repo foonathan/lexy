@@ -32,3 +32,17 @@ TEST_CASE("pattern: unless")
     CHECK(!abc);
 }
 
+TEST_CASE("pattern: not")
+{
+    constexpr auto pattern = !LEXY_LIT("abc");
+    CHECK(lexy::is_pattern<decltype(pattern)>);
+
+    constexpr auto empty = pattern_matches(pattern, "");
+    CHECK(empty);
+    CHECK(empty.match().empty());
+
+    constexpr auto abc = pattern_matches(pattern, "abc");
+    CHECK(!abc);
+    CHECK(abc.match().string_view() == "abc");
+}
+

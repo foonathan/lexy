@@ -64,3 +64,32 @@ TEST_CASE("rule: unless")
     CHECK(abc == -1);
 }
 
+TEST_CASE("rule: not")
+{
+    constexpr auto rule = !LEXY_LIT("abc");
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int success(const char* cur)
+        {
+            assert(cur == str);
+            return 0;
+        }
+
+        constexpr int error(test_error<lexy::unexpected_pattern> e)
+        {
+            assert(e.position() == str);
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == 0);
+
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == -1);
+}
+

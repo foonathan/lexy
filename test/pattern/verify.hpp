@@ -33,12 +33,10 @@ constexpr auto pattern_matches(Pattern, const char* str)
 {
     auto input = lexy::zstring_input<test_encoding>(str);
 
-    auto begin = input.cur();
-    if (!Pattern::matcher::match(input))
-        return pattern_match_result{false, {}};
-    auto match = lexy::lexeme(input, begin);
-
-    return pattern_match_result{true, match};
+    auto begin  = input.cur();
+    auto result = Pattern::matcher::match(input);
+    auto match  = lexy::lexeme(input, begin);
+    return pattern_match_result{result, match};
 }
 
 #endif // TEST_PATTERN_VERIFY_HPP_INCLUDED

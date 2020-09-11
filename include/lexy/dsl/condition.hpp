@@ -71,6 +71,8 @@ struct _if : rule_base
     };
 };
 
+/// Check if at this input position, Pattern would match, but don't actually consume any characters
+/// if it does.
 template <typename Pattern>
 LEXY_CONSTEVAL auto if_(Pattern)
 {
@@ -78,11 +80,49 @@ LEXY_CONSTEVAL auto if_(Pattern)
     return _if<Pattern, true>{};
 }
 
+/// Check if at this input position, Pattern would not match, but don't actually consume any
+/// characters if it does.
 template <typename Pattern>
 LEXY_CONSTEVAL auto unless(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
     return _if<Pattern, false>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Pattern>
+struct _not : rule_base
+{
+    static constexpr auto has_matcher = true;
+
+    struct matcher
+    {
+        template <typename Input>
+        LEXY_DSL_FUNC bool match(Input& input)
+        {
+            // We match if we didn't match the pattern.
+            // In other words:
+            // If we return true, we haven't matched Pattern and haven't consumed any input.
+            // If we return false, we have matched Pattern and have consumed it.
+            return !Pattern::matcher::match(input);
+        }
+    };
+
+    // As parser, we use the one from unless().
+    // Otherwise, the generated error is at the wrong position.
+    template <typename NextParser>
+    using parser = typename _if<Pattern, false>::template parser<NextParser>;
+};
+
+/// Check that Pattern doesn't match.
+/// This is used for something like `opt(!pattern >> rule)`, which is equivalent to `pattern |
+/// rule`.
+template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
+LEXY_CONSTEVAL auto operator!(Pattern)
+{
+    return _not<Pattern>{};
 }
 } // namespace lexyd
 
