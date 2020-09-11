@@ -37,7 +37,8 @@ struct string_p
 
 struct string_pair_p
 {
-    static constexpr auto rule = dsl::parentheses(dsl::p<string_p> + dsl::comma + dsl::p<string_p>);
+    static constexpr auto rule
+        = dsl::parenthesized(dsl::p<string_p> + dsl::comma + dsl::p<string_p>);
 
     static constexpr auto value = lexy::construct<string_pair>;
 };
@@ -53,7 +54,7 @@ using parse_value::string_p;
 
 struct string_list_p
 {
-    static constexpr auto rule = dsl::parentheses(list(dsl::p<string_p>, sep(dsl::comma)));
+    static constexpr auto rule = dsl::parenthesized.list(dsl::p<string_p>, sep(dsl::comma));
 
     static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
 };
@@ -69,7 +70,7 @@ using parse_value::string_p;
 
 struct string_list_p
 {
-    static constexpr auto rule = dsl::parentheses(list(dsl::p<string_p>, sep(dsl::comma)));
+    static constexpr auto rule = dsl::parenthesized.list(dsl::p<string_p>, sep(dsl::comma));
 
     static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
     static constexpr auto value

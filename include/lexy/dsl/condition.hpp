@@ -119,9 +119,10 @@ struct _not : rule_base
 /// Check that Pattern doesn't match.
 /// This is used for something like `opt(!pattern >> rule)`, which is equivalent to `pattern |
 /// rule`.
-template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
+template <typename Pattern>
 LEXY_CONSTEVAL auto operator!(Pattern)
 {
+    static_assert(lexy::is_pattern<Pattern>);
     return _not<Pattern>{};
 }
 } // namespace lexyd

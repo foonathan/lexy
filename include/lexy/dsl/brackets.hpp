@@ -7,7 +7,10 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/condition.hpp>
+#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace lexyd
@@ -29,6 +32,38 @@ struct _brackets
     LEXY_CONSTEVAL auto operator()(R r) const
     {
         return open(*this) >> r + close(*this);
+    }
+
+    /// Matches `opt(r)` surrounded by brackets.
+    /// The rule does not require a condition.
+    template <typename R>
+    LEXY_CONSTEVAL auto opt(R r) const
+    {
+        auto o = open(*this);
+        auto c = close(*this);
+        // We always match an open bracket.
+        // If in the condition of the option, we have matched the closing bracket, we have an empty
+        // option. Otherwise, if we didn't, we match the rule and then the closing bracket.
+        return o >> lexyd::opt(!c >> r + c);
+    }
+
+    /// Matches `list(r, sep)` surrounded by brackets.
+    /// The rule does not require a condition.
+    template <typename R>
+    LEXY_CONSTEVAL auto list(R r) const
+    {
+        auto o = open(*this);
+        auto c = close(*this);
+        // We match list items until we have the closing bracket.
+        return o >> lexyd::list(!c >> r);
+    }
+    template <typename R, typename S>
+    LEXY_CONSTEVAL auto list(R r, S sep) const
+    {
+        auto o = open(*this);
+        auto c = close(*this);
+        // We match list items until we have the closing bracket.
+        return o >> lexyd::list(!c >> r, sep);
     }
 
     /// Matches the open bracket.
@@ -57,13 +92,12 @@ LEXY_CONSTEVAL auto brackets(Open, Close)
     return _brackets<Open, Close, void>{};
 }
 
-constexpr auto round_brackets  = brackets(lit_c<'('>, lit_c<')'>);
-constexpr auto square_brackets = brackets(lit_c<'['>, lit_c<']'>);
-constexpr auto curly_brackets  = brackets(lit_c<'{'>, lit_c<'}'>);
-constexpr auto angle_brackets  = brackets(lit_c<'<'>, lit_c<'>'>);
+constexpr auto round_bracketed  = brackets(lit_c<'('>, lit_c<')'>);
+constexpr auto square_bracketed = brackets(lit_c<'['>, lit_c<']'>);
+constexpr auto curly_bracketed  = brackets(lit_c<'{'>, lit_c<'}'>);
+constexpr auto angle_bracketed  = brackets(lit_c<'<'>, lit_c<'>'>);
 
-constexpr auto parentheses = round_brackets;
+constexpr auto parenthesized = round_bracketed;
 } // namespace lexyd
 
 #endif // LEXY_DSL_BRACKETS_HPP_INCLUDED
-
