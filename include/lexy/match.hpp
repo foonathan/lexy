@@ -21,9 +21,9 @@ struct _match_context
         return _match_context();
     }
 
-    constexpr auto list_callback()
+    constexpr auto list_sink()
     {
-        return noop.list_callback();
+        return noop.sink();
     }
 
     template <typename Input, typename Error>

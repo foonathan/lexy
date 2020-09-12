@@ -20,8 +20,9 @@ TEST_CASE("callback")
 {
     SUBCASE("basic")
     {
-        auto callback = lexy::callback<int>([](int i) { return 2 * i; },
-                                            [](const char* ptr) { return *ptr; }, &test_fn);
+        constexpr auto callback
+            = lexy::callback<int>([](int i) { return 2 * i; }, [](const char* ptr) { return *ptr; },
+                                  &test_fn);
 
         CHECK(std::is_same_v<typename decltype(callback)::return_type, int>);
 
@@ -31,11 +32,24 @@ TEST_CASE("callback")
     }
     SUBCASE("match all case")
     {
-        auto callback = lexy::callback<int>([](const auto&... args) { return sizeof...(args); });
+        constexpr auto callback
+            = lexy::callback<int>([](const auto&... args) { return sizeof...(args); });
         CHECK(callback() == 0);
         CHECK(callback(1) == 1);
         CHECK(callback(1, 2, 3) == 3);
     }
+}
+
+TEST_CASE("sink")
+{
+    constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; },
+                                          [](int& result, const char* ptr) { result += *ptr; });
+    auto           cb   = sink.sink();
+    cb(4);
+    cb("abc");
+
+    int result = LEXY_MOV(cb).finish();
+    CHECK(result == 4 + 'a');
 }
 
 TEST_CASE("noop")
@@ -45,12 +59,12 @@ TEST_CASE("noop")
         lexy::noop();
         lexy::noop(1, 2, 3);
     }
-    SUBCASE("list callback")
+    SUBCASE("sink")
     {
-        auto list = lexy::noop.list_callback();
-        list.item(1, 2, 3);
-        list.item(1, 2, 3);
-        LEXY_MOV(list).finish();
+        auto sink = lexy::noop.sink();
+        sink(1, 2, 3);
+        sink(1, 2, 3);
+        LEXY_MOV(sink).finish();
     }
 }
 
@@ -98,13 +112,13 @@ TEST_CASE("container")
         std::vector<int> vec = lexy::container<std::vector<int>>(1, 2, 3);
         CHECK(vec == std::vector{1, 2, 3});
     }
-    SUBCASE("list callback")
+    SUBCASE("sink")
     {
-        auto cb = lexy::container<std::vector<std::string>>.list_callback();
-        cb.item("a");
-        cb.item(std::string("b"));
-        cb.item(1, 'c');
-        std::vector<std::string> result = LEXY_MOV(cb).finish();
+        auto sink = lexy::container<std::vector<std::string>>.sink();
+        sink("a");
+        sink(std::string("b"));
+        sink(1, 'c');
+        std::vector<std::string> result = LEXY_MOV(sink).finish();
         CHECK(result == std::vector<std::string>{"a", "b", "c"});
     }
 }

@@ -29,7 +29,7 @@ struct test_context
         return test_context<Callback, SubProduction>{str};
     }
 
-    constexpr auto list_callback()
+    constexpr auto list_sink()
     {
         return Callback{str}.list();
     }

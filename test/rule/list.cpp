@@ -26,7 +26,7 @@ TEST_CASE("rule: list without separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
@@ -84,7 +84,7 @@ TEST_CASE("rule: list with separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
@@ -145,7 +145,7 @@ TEST_CASE("rule: list with trailing separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
@@ -212,7 +212,7 @@ TEST_CASE("rule: opt_list without separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
@@ -270,7 +270,7 @@ TEST_CASE("rule: opt_list with separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
@@ -335,7 +335,7 @@ TEST_CASE("rule: opt_list with trailing separator")
 
                 using return_type = int;
 
-                constexpr void item(lexy::id<0>)
+                constexpr void operator()(lexy::id<0>)
                 {
                     ++count;
                 }

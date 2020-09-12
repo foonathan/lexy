@@ -20,6 +20,9 @@ struct ParseContext
     template <typename Production>
     ParseContext sub_context();
 
+    /// Returns a sink to construct a list.
+    Sink list_sink();
+
     /// Called when an error ocurred.
     template <typename Input, typename Error>
     result_type error(const Input& input, Error&& error) &&;

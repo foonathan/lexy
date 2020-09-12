@@ -25,7 +25,10 @@ struct _fn_holder
 
 template <typename Fn>
 using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
+} // namespace lexy
 
+namespace lexy
+{
 template <typename ReturnType, typename... Fns>
 struct _callback : _fn_as_base<Fns>...
 {
@@ -77,23 +80,71 @@ constexpr Result invoke_as_result(ErrorOrValue tag, Callback&& callback, Args&&.
 
 namespace lexy
 {
+template <typename T, typename Callback>
+class _sink
+{
+public:
+    using return_type = T;
+
+    constexpr explicit _sink(Callback cb) : _value(), _cb(cb) {}
+
+    template <typename... Args>
+    constexpr void operator()(Args&&... args)
+    {
+        // We pass the value and other arguments to the internal callback.
+        _cb(_value, LEXY_FWD(args)...);
+    }
+
+    constexpr T&& finish() &&
+    {
+        return LEXY_MOV(_value);
+    }
+
+private:
+    T                          _value;
+    LEXY_EMPTY_MEMBER Callback _cb;
+};
+
+template <typename T, typename... Fns>
+class _sink_callback
+{
+public:
+    LEXY_CONSTEVAL explicit _sink_callback(Fns... fns) : _cb(fns...) {}
+
+    constexpr auto sink() const
+    {
+        return _sink<T, _callback<void, Fns...>>(_cb);
+    }
+
+private:
+    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
+};
+
+/// Creates a sink callback.
+template <typename T, typename... Fns>
+LEXY_CONSTEVAL auto sink(Fns&&... fns)
+{
+    static_assert(((std::is_pointer_v<
+                        std::decay_t<Fns>> || std::is_empty_v<std::decay_t<Fns>>)&&...),
+                  "only capture-less lambdas are allowed in a callback");
+    return _sink_callback<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+} // namespace lexy
+
+namespace lexy
+{
 struct _noop
 {
     using return_type = void;
 
-    //=== function interface ===//
-    template <typename... Args>
-    constexpr void operator()(const Args&...) const
-    {}
-
-    //=== list interface ===//
-    constexpr auto list_callback() const
+    constexpr auto sink() const
     {
+        // We don't need a separate type, noop itself can have the required functions.
         return *this;
     }
 
     template <typename... Args>
-    constexpr void item(const Args&...) const
+    constexpr void operator()(const Args&...) const
     {}
 
     constexpr void finish() && {}
@@ -148,22 +199,22 @@ struct _container
         return T{LEXY_FWD(args)...};
     }
 
-    struct _list_cb
+    struct _sink
     {
         T _result;
 
         using return_type = T;
 
-        void item(const typename T::value_type& obj)
+        void operator()(const typename T::value_type& obj)
         {
             _result.push_back(obj);
         }
-        void item(typename T::value_type&& obj)
+        void operator()(typename T::value_type&& obj)
         {
             _result.push_back(LEXY_MOV(obj));
         }
         template <typename... Args>
-        void item(Args&&... args)
+        void operator()(Args&&... args)
         {
             _result.emplace_back(LEXY_FWD(args)...);
         }
@@ -173,9 +224,9 @@ struct _container
             return LEXY_MOV(_result);
         }
     };
-    constexpr auto list_callback() const
+    constexpr auto sink() const
     {
-        return _list_cb{};
+        return _sink{};
     }
 };
 

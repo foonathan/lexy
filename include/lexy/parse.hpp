@@ -38,9 +38,9 @@ struct _parse_context
         return _parse_context<SubProduction, Callback>{_callback};
     }
 
-    constexpr auto list_callback()
+    constexpr auto list_sink()
     {
-        return Production::list.list_callback();
+        return Production::list.sink();
     }
 
     template <typename Input, typename Error>
