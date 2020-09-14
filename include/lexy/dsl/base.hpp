@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_BASE_HPP_INCLUDED
 #define LEXY_DSL_BASE_HPP_INCLUDED
 
+#include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/input/base.hpp>
 
@@ -124,6 +125,16 @@ struct atom_base : _atom_base
         }
     };
 
+    template <typename Context, typename Input>
+    LEXY_DSL_FUNC auto report_error(Context& context, Input& input, typename Input::iterator pos) ->
+        typename Context::result_type
+    {
+        if constexpr (std::is_same_v<decltype(Atom::error(input, input.cur())), void>)
+            LEXY_ASSERT(false, "can never be reached");
+        else
+            return LEXY_MOV(context).error(input, Atom::error(input, pos));
+    }
+
     template <typename NextParser>
     struct parser
     {
@@ -131,18 +142,10 @@ struct atom_base : _atom_base
         LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
             typename Context::result_type
         {
-            if constexpr (std::is_same_v<decltype(Atom::error(input, input.cur())), void>)
-            {
-                Atom::match(input);
+            if (auto pos = input.cur(); Atom::match(input))
                 return NextParser::parse(context, input, LEXY_FWD(args)...);
-            }
             else
-            {
-                if (auto pos = input.cur(); Atom::match(input))
-                    return NextParser::parse(context, input, LEXY_FWD(args)...);
-                else
-                    return LEXY_MOV(context).error(input, Atom::error(input, pos));
-            }
+                return report_error(context, input, pos);
         }
     };
 };

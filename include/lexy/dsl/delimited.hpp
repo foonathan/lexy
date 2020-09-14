@@ -34,7 +34,7 @@ struct missing_delimiter
 
 namespace lexyd
 {
-template <typename Close>
+template <typename CodePoint, typename Close>
 struct _delim_end : rule_base
 {
     static constexpr auto has_matcher = false;
@@ -58,8 +58,11 @@ struct _delim_end : rule_base
 
                 // We didn't match the closing delimiter.
                 // Advance to the next code point and increase content length.
-                input.bump();
-                ++end;
+                if (!CodePoint::match(input))
+                    // We know that end was the previous position.
+                    return CodePoint::report_error(context, input, end);
+
+                end = input.cur();
             }
 
             // Add the lexeme as an argument.
@@ -69,36 +72,44 @@ struct _delim_end : rule_base
     };
 };
 
-template <typename Base>
-struct _delim : Base
+template <typename Open, typename Close, typename Whitespace>
+struct _delim
 {
+    /// Specifies the atomic for a valid code point.
+    template <typename CodePoint>
+    LEXY_CONSTEVAL auto operator()(CodePoint) const
+    {
+        static_assert(lexy::is_atom<CodePoint>);
+        if constexpr (std::is_same_v<Whitespace, void>)
+            return Open{} >> _delim_end<CodePoint, Close>{};
+        else
+            return Whitespace{} + Open{} >> _delim_end<CodePoint, Close>{};
+    }
+
     /// Sets the whitespace pattern.
-    template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    template <typename Ws, typename Old = Whitespace,
+              typename = std::enable_if_t<std::is_void_v<Old>>>
+    LEXY_CONSTEVAL auto operator[](Ws) const
     {
         static_assert(lexy::is_pattern<Ws>, "whitespace must be a pattern");
-        // We add the whitespace as another condition.
-        // This will extend the original condition.
-        return ws >> Base{};
+        return _delim<Open, Close, Ws>{};
     }
 };
 
 /// Parses everything between the two delimiters and captures it.
 template <typename Open, typename Close>
-LEXY_CONSTEVAL auto delimited(Open open, Close)
+LEXY_CONSTEVAL auto delimited(Open, Close)
 {
     static_assert(lexy::is_pattern<Open> && lexy::is_pattern<Close>);
-    auto base = open >> _delim_end<Close>{};
-    return _delim<decltype(base)>{};
+    return _delim<Open, Close, void>{};
 }
 
 /// Parses everything between a paired delimiter.
 template <typename Delim>
-LEXY_CONSTEVAL auto delimited(Delim delim)
+LEXY_CONSTEVAL auto delimited(Delim)
 {
     static_assert(lexy::is_pattern<Delim>);
-    auto base = delim >> _delim_end<Delim>{};
-    return _delim<decltype(base)>{};
+    return _delim<Delim, Delim, void>{};
 }
 
 constexpr auto quoted        = delimited(LEXY_LIT("\""));

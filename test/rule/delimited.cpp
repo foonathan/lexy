@@ -5,14 +5,17 @@
 #include <lexy/dsl/delimited.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/match.hpp>
 
 TEST_CASE("rule: delimited")
 {
+    constexpr auto cp = lexy::dsl::ascii::character;
+
     SUBCASE("basic")
     {
-        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"));
+        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
@@ -39,6 +42,11 @@ TEST_CASE("rule: delimited")
                 assert(e.position() == str + 1);
                 return -2;
             }
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                assert(e.character_class() == lexy::_detail::string_view("ASCII"));
+                return -3;
+            }
         };
 
         constexpr auto empty = rule_matches<callback>(rule, "");
@@ -55,10 +63,13 @@ TEST_CASE("rule: delimited")
 
         constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
         CHECK(unterminated == -2);
+
+        constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+        CHECK(invalid_ascii == -3);
     }
     SUBCASE("whitespace")
     {
-        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))[LEXY_LIT(" ")];
+        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))[LEXY_LIT(" ")](cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
@@ -85,6 +96,11 @@ TEST_CASE("rule: delimited")
                 assert(e.position() == str + 2);
                 return -2;
             }
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                assert(e.character_class() == lexy::_detail::string_view("ASCII"));
+                return -3;
+            }
         };
 
         constexpr auto empty = rule_matches<callback>(rule, "");
@@ -101,20 +117,24 @@ TEST_CASE("rule: delimited")
 
         constexpr auto unterminated = rule_matches<callback>(rule, " (abc");
         CHECK(unterminated == -2);
+
+        constexpr auto invalid_ascii = rule_matches<callback>(rule, " (ab\xFF");
+        CHECK(invalid_ascii == -3);
     }
     SUBCASE("predefined")
     {
-        CHECK(lexy::match(lexy::zstring_input(R"("abc")"), lexy::dsl::quoted + lexy::dsl::eof));
+        CHECK(lexy::match(lexy::zstring_input(R"("abc")"), lexy::dsl::quoted(cp) + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input(R"("""abc""")"),
-                          lexy::dsl::triple_quoted + lexy::dsl::eof));
+                          lexy::dsl::triple_quoted(cp) + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input(R"('abc')"),
-                          lexy::dsl::single_quoted + lexy::dsl::eof));
+                          lexy::dsl::single_quoted(cp) + lexy::dsl::eof));
 
-        CHECK(lexy::match(lexy::zstring_input("`abc`"), lexy::dsl::backticked + lexy::dsl::eof));
+        CHECK(
+            lexy::match(lexy::zstring_input("`abc`"), lexy::dsl::backticked(cp) + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("``abc``"),
-                          lexy::dsl::double_backticked + lexy::dsl::eof));
+                          lexy::dsl::double_backticked(cp) + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("```abc```"),
-                          lexy::dsl::triple_backticked + lexy::dsl::eof));
+                          lexy::dsl::triple_backticked(cp) + lexy::dsl::eof));
     }
 }
 
