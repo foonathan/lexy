@@ -11,8 +11,10 @@
 
 namespace lexyd
 {
+struct _br_base
+{};
 template <typename Condition, typename Then>
-struct _br : rule_base
+struct _br : rule_base, _br_base
 {
     using condition                        = Condition;
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
@@ -103,9 +105,7 @@ inline constexpr auto else_ = _else{};
 namespace lexy
 {
 template <typename Rule>
-constexpr auto is_branch_rule = is_pattern<Rule>;
-template <typename Condition, typename Then>
-constexpr auto is_branch_rule<lexyd::_br<Condition, Then>> = true;
+constexpr auto is_branch_rule = is_pattern<Rule> || std::is_base_of_v<lexyd::_br_base, Rule>;
 } // namespace lexy
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
