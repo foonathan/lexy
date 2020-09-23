@@ -172,4 +172,33 @@ struct final_parser
 };
 } // namespace lexy
 
+namespace lexy
+{
+struct expected_char_class
+{
+    template <typename Input>
+    class error
+    {
+    public:
+        constexpr explicit error(typename Input::iterator pos, const char* name) noexcept
+        : _pos(pos), _name(name)
+        {}
+
+        constexpr auto position() const noexcept
+        {
+            return _pos;
+        }
+
+        constexpr auto character_class() const noexcept
+        {
+            return _name;
+        }
+
+    private:
+        typename Input::iterator _pos;
+        const char*              _name;
+    };
+};
+} // namespace lexy
+
 #endif // LEXY_DSL_BASE_HPP_INCLUDED

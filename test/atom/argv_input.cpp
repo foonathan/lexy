@@ -17,11 +17,13 @@ TEST_CASE("atom: argv_separator")
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.error.position() == empty.input);
+        CHECK(empty.error.character_class() == "argv-separator");
 
         constexpr auto non_empty = atom_matches(atom, "abc");
         CHECK(!non_empty);
         CHECK(non_empty.count == 0);
         CHECK(non_empty.error.position() == non_empty.input);
+        CHECK(non_empty.error.character_class() == "argv-separator");
     }
     SUBCASE("argv_input")
     {

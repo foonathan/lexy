@@ -7,27 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 
-namespace lexy
-{
-struct expected_eof
-{
-    template <typename Input>
-    class error
-    {
-    public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-    private:
-        typename Input::iterator _pos;
-    };
-};
-} // namespace lexy
-
 namespace lexyd
 {
 struct _eof : atom_base<_eof>
@@ -41,7 +20,7 @@ struct _eof : atom_base<_eof>
     template <typename Input>
     LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
     {
-        return lexy::expected_eof::error<Input>(pos);
+        return lexy::expected_char_class::error<Input>(pos, "EOF");
     }
 };
 

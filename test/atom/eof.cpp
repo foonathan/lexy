@@ -19,5 +19,6 @@ TEST_CASE("atom: eof")
     CHECK(!non_empty);
     CHECK(non_empty.count == 0);
     CHECK(non_empty.error.position() == non_empty.input);
+    CHECK(non_empty.error.character_class() == "EOF");
 }
 

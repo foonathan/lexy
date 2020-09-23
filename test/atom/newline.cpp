@@ -15,6 +15,7 @@ TEST_CASE("atom: newline")
     CHECK(!empty);
     CHECK(empty.count == 0);
     CHECK(empty.error.position() == empty.input);
+    CHECK(empty.error.character_class() == "newline");
 
     constexpr auto nl = atom_matches(atom, "\n");
     CHECK(nl);

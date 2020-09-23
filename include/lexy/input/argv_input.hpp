@@ -211,24 +211,6 @@ argv_input(int argc, char* argv[])->argv_input<>;
 
 namespace lexy
 {
-struct expected_argv_separator
-{
-    template <typename Input>
-    class error
-    {
-    public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-    private:
-        typename Input::iterator _pos;
-    };
-};
-
 template <typename Encoding = default_encoding>
 using argv_lexeme = lexeme<argv_input<Encoding>>;
 
@@ -257,7 +239,7 @@ struct _argvsep : atom_base<_argvsep>
     template <typename Input>
     LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
     {
-        return lexy::expected_argv_separator::error<Input>(pos);
+        return lexy::expected_char_class::error<Input>(pos, "argv-separator");
     }
 };
 
