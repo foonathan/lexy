@@ -14,6 +14,11 @@ struct test_encoding
     {
         int value;
 
+        constexpr explicit operator int() const noexcept
+        {
+            return value;
+        }
+
         friend constexpr bool operator==(int_type a, int_type b) noexcept
         {
             return a.value == b.value;
