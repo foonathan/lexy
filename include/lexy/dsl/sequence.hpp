@@ -30,14 +30,14 @@ struct _seq : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            auto reset = input;
-            if ((R::matcher::match(input) && ...))
+            auto reset = reader;
+            if ((R::matcher::match(reader) && ...))
                 return true;
 
-            input = LEXY_MOV(reset);
+            reader = LEXY_MOV(reset);
             return false;
         }
     };

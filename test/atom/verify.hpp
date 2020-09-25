@@ -55,14 +55,16 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
 {
     auto input = size == std::size_t(-1) ? lexy::zstring_input<test_encoding>(str)
                                          : lexy::string_input<test_encoding>(str, size);
-    auto pos         = input.cur();
-    using error_type = decltype(Atom::error(input, pos));
+    auto reader = input.reader();
 
-    if (Atom::match(input))
-        return atom_match_result<error_type>(str, std::size_t(input.cur() - pos));
+    auto pos         = reader.cur();
+    using error_type = decltype(Atom::error(reader, pos));
+
+    if (Atom::match(reader))
+        return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos));
     else if constexpr (!std::is_same_v<error_type, void>)
-        return atom_match_result<error_type>(str, std::size_t(input.cur() - pos),
-                                             Atom::error(input, pos));
+        return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos),
+                                             Atom::error(reader, pos));
 }
 
 #endif // TEST_ATOM_VERIFY_HPP_INCLUDED

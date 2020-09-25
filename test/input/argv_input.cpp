@@ -152,26 +152,28 @@ TEST_CASE("argv_input")
     int   argc   = 4;
 
     lexy::argv_input input(argc, argv);
-    CHECK(input.peek() == 'a');
-    CHECK(input.cur() == lexy::argv_begin(argc, argv));
+    auto             reader = input.reader();
 
-    input.bump();
-    CHECK(input.peek() == 'b');
-    input.bump();
-    CHECK(input.peek() == 'c');
-    input.bump();
-    CHECK(input.peek() == '\0');
-    input.bump();
-    CHECK(input.peek() == 'd');
-    input.bump();
-    CHECK(input.peek() == 'e');
-    input.bump();
-    CHECK(input.peek() == '\0');
-    input.bump();
-    CHECK(input.peek() == 'f');
+    CHECK(reader.peek() == 'a');
+    CHECK(reader.cur() == lexy::argv_begin(argc, argv));
 
-    input.bump();
-    CHECK(input.peek() == lexy::default_encoding::eof());
-    CHECK(input.cur() == lexy::argv_end(argc, argv));
+    reader.bump();
+    CHECK(reader.peek() == 'b');
+    reader.bump();
+    CHECK(reader.peek() == 'c');
+    reader.bump();
+    CHECK(reader.peek() == '\0');
+    reader.bump();
+    CHECK(reader.peek() == 'd');
+    reader.bump();
+    CHECK(reader.peek() == 'e');
+    reader.bump();
+    CHECK(reader.peek() == '\0');
+    reader.bump();
+    CHECK(reader.peek() == 'f');
+
+    reader.bump();
+    CHECK(reader.peek() == lexy::default_encoding::eof());
+    CHECK(reader.cur() == lexy::argv_end(argc, argv));
 }
 

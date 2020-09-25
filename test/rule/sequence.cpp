@@ -19,7 +19,7 @@ TEST_CASE("rule: sequence")
     {
         const char* str;
 
-        constexpr int success(const char* cur, lexy::label<lab>, lexy::lexeme<test_input> lex)
+        constexpr int success(const char* cur, lexy::label<lab>, lexy::lexeme_for<test_input> lex)
         {
             assert(str + 3 == cur);
             assert(lex.string_view() == "c");

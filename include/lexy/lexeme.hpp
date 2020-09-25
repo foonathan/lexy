@@ -9,22 +9,25 @@
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/encoding.hpp>
+#include <lexy/input/base.hpp>
 
 namespace lexy
 {
-template <typename Input>
+template <typename Encoding, typename Iterator>
 class lexeme
 {
 public:
-    using encoding  = typename Input::encoding;
+    using encoding  = Encoding;
     using char_type = typename encoding::char_type;
-    using iterator  = typename Input::iterator;
+    using iterator  = Iterator;
 
     constexpr lexeme() noexcept = default;
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
 
-    constexpr explicit lexeme(const Input& input, iterator begin) noexcept
-    : _begin(begin), _end(input.cur())
+    template <typename Reader,
+              typename = std::enable_if_t<std::is_same_v<typename Reader::iterator, Iterator>>>
+    constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
+    : _begin(begin), _end(reader.cur())
     {}
 
     constexpr bool empty() const noexcept
@@ -67,7 +70,14 @@ public:
 private:
     iterator _begin, _end;
 };
+
+template <typename Reader>
+lexeme(Reader, typename Reader::iterator)
+    -> lexeme<typename Reader::encoding, typename Reader::iterator>;
+
+template <typename Input>
+using lexeme_for
+    = lexeme<typename input_reader<Input>::encoding, typename input_reader<Input>::iterator>;
 } // namespace lexy
 
 #endif // LEXY_LEXEME_HPP_INCLUDED
-

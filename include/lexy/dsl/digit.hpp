@@ -162,67 +162,67 @@ namespace lexyd
 template <typename Base>
 struct _zero : atom_base<_zero<Base>>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        if (!Base::template match<typename Input::encoding>(input.peek()))
+        if (!Base::template match<typename Reader::encoding>(reader.peek()))
             return false;
-        else if (Base::template value<typename Input::encoding>(input.peek()) != 0)
+        else if (Base::template value<typename Reader::encoding>(reader.peek()) != 0)
             return false;
 
-        input.bump();
+        reader.bump();
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Input>(pos, "digit.zero");
+        return lexy::expected_char_class::error<Reader>(pos, "digit.zero");
     }
 };
 
 template <typename Base>
 struct _nzero : atom_base<_nzero<Base>>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        if (!Base::template match<typename Input::encoding>(input.peek()))
+        if (!Base::template match<typename Reader::encoding>(reader.peek()))
             return false;
-        else if (Base::template value<typename Input::encoding>(input.peek()) == 0)
+        else if (Base::template value<typename Reader::encoding>(reader.peek()) == 0)
             return false;
 
-        input.bump();
+        reader.bump();
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input& input, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
-        if (!Base::template match<typename Input::encoding>(input.peek()))
-            return lexy::expected_char_class::error<Input>(pos, Base::name());
+        if (!Base::template match<typename Reader::encoding>(reader.peek()))
+            return lexy::expected_char_class::error<Reader>(pos, Base::name());
         else
-            return lexy::expected_char_class::error<Input>(pos, "digit.non-zero");
+            return lexy::expected_char_class::error<Reader>(pos, "digit.non-zero");
     }
 };
 
 template <typename Base>
 struct _digit : atom_base<_digit<Base>>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        if (!Base::template match<typename Input::encoding>(input.peek()))
+        if (!Base::template match<typename Reader::encoding>(reader.peek()))
             return false;
 
-        input.bump();
+        reader.bump();
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Input>(pos, Base::name());
+        return lexy::expected_char_class::error<Reader>(pos, Base::name());
     }
 
     //=== dsl ===//

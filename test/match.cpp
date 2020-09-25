@@ -18,21 +18,18 @@ TEST_CASE("match")
             auto input  = lexy::zstring_input("abc");
             auto result = lexy::match(input, LEXY_LIT("abc"));
             CHECK(result);
-            CHECK(input.peek() == lexy::default_encoding::eof());
         }
         SUBCASE("no match")
         {
             auto input  = lexy::zstring_input("def");
             auto result = lexy::match(input, LEXY_LIT("abc"));
             CHECK(!result);
-            CHECK(input.peek() == 'd');
         }
         SUBCASE("partial match")
         {
             auto input  = lexy::zstring_input("abc123");
             auto result = lexy::match(input, LEXY_LIT("abc"));
             CHECK(result);
-            CHECK(input.peek() == '1');
         }
     }
     SUBCASE("rule")
@@ -42,28 +39,24 @@ TEST_CASE("match")
             auto input  = lexy::zstring_input("abc");
             auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(result);
-            CHECK(input.peek() == lexy::default_encoding::eof());
         }
         SUBCASE("match twice")
         {
             auto input  = lexy::zstring_input("abcabc");
             auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(result);
-            CHECK(input.peek() == lexy::default_encoding::eof());
         }
         SUBCASE("no match")
         {
             auto input  = lexy::zstring_input("def");
             auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(!result);
-            CHECK(input.peek() == 'd');
         }
         SUBCASE("partial match")
         {
             auto input  = lexy::zstring_input("abc123");
             auto result = lexy::match(input, list(LEXY_LIT("abc")));
             CHECK(result);
-            CHECK(input.peek() == '1');
         }
     }
 }

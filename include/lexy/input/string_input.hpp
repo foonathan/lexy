@@ -13,6 +13,7 @@ namespace lexy
 template <typename View>
 using _string_view_char_type = std::decay_t<decltype(*LEXY_DECLVAL(View).data())>;
 
+/// An input that refers to a string.
 template <typename Encoding = default_encoding>
 class string_input
 {
@@ -23,10 +24,10 @@ public:
     using iterator = const char_type*;
 
     //=== constructors ===//
-    constexpr string_input() noexcept : _cur(nullptr), _end(nullptr) {}
+    constexpr string_input() noexcept : _begin(nullptr), _end(nullptr) {}
 
     constexpr string_input(const char_type* begin, const char_type* end) noexcept
-    : _cur(begin), _end(end)
+    : _begin(begin), _end(end)
     {}
     constexpr string_input(const char_type* data, std::size_t size) noexcept
     : string_input(data, data + size)
@@ -34,7 +35,7 @@ public:
 
     template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
     string_input(const CharT* begin, const CharT* end) noexcept
-    : _cur(reinterpret_cast<iterator>(begin)), _end(reinterpret_cast<iterator>(end))
+    : _begin(reinterpret_cast<iterator>(begin)), _end(reinterpret_cast<iterator>(end))
     {}
     template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
     string_input(const CharT* data, std::size_t size) noexcept : string_input(data, data + size)
@@ -45,38 +46,36 @@ public:
     {
         if constexpr (std::is_same_v<CharT, char_type>)
         {
-            _cur = view.data();
-            _end = _cur + view.size();
+            _begin = view.data();
+            _end   = _begin + view.size();
         }
         else
         {
             static_assert(Encoding::template is_secondary_char_type<CharT>);
-            _cur = reinterpret_cast<iterator>(view.data());
-            _end = _cur + view.size();
+            _begin = reinterpret_cast<iterator>(view.data());
+            _end   = _begin + view.size();
         }
     }
 
-    //=== input functions ===//
-    constexpr auto peek() const noexcept
+    //=== access ===//
+    constexpr iterator begin() const noexcept
     {
-        if (_cur == _end)
-            return Encoding::eof();
-        else
-            return Encoding::to_int_type(*_cur);
+        return _begin;
     }
 
-    constexpr void bump() noexcept
+    constexpr iterator end() const noexcept
     {
-        ++_cur;
+        return _end;
     }
 
-    constexpr iterator cur() const noexcept
+    //=== reader ===//
+    constexpr auto reader() const& noexcept
     {
-        return _cur;
+        return _detail::range_reader<string_input, iterator>(_begin, _end);
     }
 
 private:
-    iterator _cur, _end;
+    iterator _begin, _end;
 };
 
 template <typename CharT>
@@ -103,10 +102,10 @@ constexpr auto zstring_input(const CharT* str) noexcept
 
 //=== convenience typedefs ===//
 template <typename Encoding = default_encoding>
-using string_lexeme = lexeme<string_input<Encoding>>;
+using string_lexeme = lexeme_for<string_input<Encoding>>;
 
 template <typename Error, typename Encoding = default_encoding>
-using string_error = typename Error::template error<string_input<Encoding>>;
+using string_error = typename Error::template error<input_reader<string_input<Encoding>>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_STRING_INPUT_HPP_INCLUDED

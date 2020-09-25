@@ -175,35 +175,22 @@ public:
     constexpr argv_input() = default;
 
     /// Iterate over the range of command-line arguments.
-    constexpr argv_input(argv_iterator begin, argv_iterator end) noexcept : _cur(begin), _end(end)
+    constexpr argv_input(argv_iterator begin, argv_iterator end) noexcept : _begin(begin), _end(end)
     {}
 
     /// Iterate over the command-line arguments.
     constexpr argv_input(int argc, char* argv[]) noexcept
-    : _cur(argv_begin(argc, argv)), _end(argv_end(argc, argv))
+    : _begin(argv_begin(argc, argv)), _end(argv_end(argc, argv))
     {}
 
-    //=== input functions ===//
-    constexpr auto peek() const noexcept
+    //=== reader ===//
+    constexpr auto reader() const& noexcept
     {
-        if (_cur == _end)
-            return Encoding::eof();
-        else
-            return Encoding::to_int_type(*_cur);
-    }
-
-    constexpr void bump() noexcept
-    {
-        ++_cur;
-    }
-
-    constexpr iterator cur() const noexcept
-    {
-        return _cur;
+        return _detail::range_reader<argv_input, iterator>(_begin, _end);
     }
 
 private:
-    argv_iterator _cur, _end;
+    argv_iterator _begin, _end;
 };
 
 argv_input(int argc, char* argv[])->argv_input<>;
@@ -212,10 +199,10 @@ argv_input(int argc, char* argv[])->argv_input<>;
 namespace lexy
 {
 template <typename Encoding = default_encoding>
-using argv_lexeme = lexeme<argv_input<Encoding>>;
+using argv_lexeme = lexeme_for<argv_input<Encoding>>;
 
 template <typename Error, typename Encoding = default_encoding>
-using argv_error = typename Error::template error<argv_input<Encoding>>;
+using argv_error = typename Error::template error<input_reader<argv_input<Encoding>>>;
 } // namespace lexy
 
 namespace lexyd
@@ -223,23 +210,27 @@ namespace lexyd
 struct _argvsep : atom_base<_argvsep>
 {
     template <typename Encoding>
-    LEXY_DSL_FUNC bool match(lexy::argv_input<Encoding>& input)
+    using _argv_reader
+        = lexy::_detail::range_reader<lexy::argv_input<Encoding>, lexy::argv_iterator>;
+
+    template <typename Encoding>
+    LEXY_DSL_FUNC bool match(_argv_reader<Encoding>& reader)
     {
-        if (input.peek() != Encoding::to_int_type('\0'))
+        if (reader.peek() != Encoding::to_int_type('\0'))
             return false;
-        input.bump();
+        reader.bump();
         return true;
     }
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input&)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader&)
     {
         return false;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Input>(pos, "argv-separator");
+        return lexy::expected_char_class::error<Reader>(pos, "argv-separator");
     }
 };
 

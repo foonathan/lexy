@@ -13,12 +13,12 @@ namespace lexy
 {
 struct expected_literal
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator                              pos,
-                                 _detail::basic_string_view<typename Input::char_type> str,
+        constexpr explicit error(typename Reader::iterator                              pos,
+                                 _detail::basic_string_view<typename Reader::char_type> str,
                                  std::size_t index) noexcept
         : _pos(pos), _str(str), _idx(index)
         {}
@@ -44,9 +44,9 @@ struct expected_literal
         }
 
     private:
-        typename Input::iterator                              _pos;
-        _detail::basic_string_view<typename Input::char_type> _str;
-        std::size_t                                           _idx;
+        typename Reader::iterator                              _pos;
+        _detail::basic_string_view<typename Reader::char_type> _str;
+        std::size_t                                            _idx;
     };
 };
 } // namespace lexy
@@ -56,26 +56,26 @@ namespace lexyd
 template <typename String>
 struct _lit : atom_base<_lit<String>>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        static_assert(lexy::char_type_compatible_with_input<Input, typename String::char_type>);
+        static_assert(lexy::char_type_compatible_with_reader<Reader, typename String::char_type>);
 
         for (auto c : String::get())
         {
-            if (input.peek() != Input::encoding::to_int_type(c))
+            if (reader.peek() != Reader::encoding::to_int_type(c))
                 return false;
-            input.bump();
+            reader.bump();
         }
 
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input& input, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
-        return lexy::expected_literal::error<Input>(pos, String::get(),
-                                                    lexy::_detail::range_size(pos, input.cur()));
+        return lexy::expected_literal::error<Reader>(pos, String::get(),
+                                                     lexy::_detail::range_size(pos, reader.cur()));
     }
 };
 

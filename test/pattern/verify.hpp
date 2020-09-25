@@ -14,8 +14,8 @@
 
 struct pattern_match_result
 {
-    bool                     _matches;
-    lexy::lexeme<test_input> _match;
+    bool                         _matches;
+    lexy::lexeme_for<test_input> _match;
 
     constexpr explicit operator bool() const
     {
@@ -31,11 +31,12 @@ struct pattern_match_result
 template <typename Pattern>
 constexpr auto pattern_matches(Pattern, const char* str)
 {
-    auto input = lexy::zstring_input<test_encoding>(str);
+    auto input  = lexy::zstring_input<test_encoding>(str);
+    auto reader = input.reader();
 
-    auto begin  = input.cur();
-    auto result = Pattern::matcher::match(input);
-    auto match  = lexy::lexeme(input, begin);
+    auto begin  = reader.cur();
+    auto result = Pattern::matcher::match(reader);
+    auto match  = lexy::lexeme(reader, begin);
     return pattern_match_result{result, match};
 }
 

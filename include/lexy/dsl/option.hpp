@@ -17,14 +17,14 @@ struct _opt : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            if (auto reset = input; Branch::matcher::match(input))
+            if (auto reset = reader; Branch::matcher::match(reader))
                 return true;
             else
             {
-                input = LEXY_MOV(reset);
+                reader = LEXY_MOV(reset);
                 return true;
             }
         }
@@ -33,15 +33,15 @@ struct _opt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            if (auto result = Branch::condition_matcher::match(input))
-                return Branch::template then_parser<NextParser>::parse(context, input,
+            if (auto result = Branch::condition_matcher::match(reader))
+                return Branch::template then_parser<NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
             else
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 

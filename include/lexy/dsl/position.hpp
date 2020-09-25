@@ -16,16 +16,16 @@ struct _pos : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            return NextParser::parse(context, input, LEXY_FWD(args)..., input.cur());
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., reader.cur());
         }
     };
 };
 
-/// Produces an iterator to the current input position without parsing anything.
+/// Produces an iterator to the current reader position without parsing anything.
 constexpr auto position = _pos{};
 } // namespace lexyd
 

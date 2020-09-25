@@ -11,16 +11,16 @@ namespace lexyd
 {
 struct _eof : atom_base<_eof>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        return input.peek() == Input::encoding::eof();
+        return reader.peek() == Reader::encoding::eof();
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Input>(pos, "EOF");
+        return lexy::expected_char_class::error<Reader>(pos, "EOF");
     }
 };
 

@@ -12,11 +12,11 @@ namespace lexy
 template <typename Tag>
 struct failure
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
 
         constexpr auto position() const noexcept
         {
@@ -24,7 +24,7 @@ struct failure
         }
 
     private:
-        typename Input::iterator _pos;
+        typename Reader::iterator _pos;
     };
 };
 } // namespace lexy
@@ -34,16 +34,16 @@ namespace lexyd
 template <typename Tag>
 struct _fail : atom_base<_fail<Tag>>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input&)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader&)
     {
         return false;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return typename lexy::failure<Tag>::template error<Input>(pos);
+        return typename lexy::failure<Tag>::template error<Reader>(pos);
     }
 };
 

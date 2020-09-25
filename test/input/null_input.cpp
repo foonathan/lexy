@@ -9,7 +9,9 @@
 TEST_CASE("null_input")
 {
     lexy::null_input<> input;
-    CHECK(input.cur() == nullptr);
-    CHECK(input.peek() == lexy::default_encoding::eof());
+
+    auto reader = input.reader();
+    CHECK(reader.cur() == nullptr);
+    CHECK(reader.peek() == lexy::default_encoding::eof());
 }
 

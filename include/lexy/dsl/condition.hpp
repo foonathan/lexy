@@ -9,11 +9,12 @@
 
 namespace lexy
 {
-template <bool Expected, typename Input>
+template <bool Expected, typename Reader>
 struct _expected_pattern_error
 {
 public:
-    constexpr explicit _expected_pattern_error(typename Input::iterator pos) noexcept : _pos(pos) {}
+    constexpr explicit _expected_pattern_error(typename Reader::iterator pos) noexcept : _pos(pos)
+    {}
 
     constexpr auto position() const noexcept
     {
@@ -21,19 +22,19 @@ public:
     }
 
 private:
-    typename Input::iterator _pos;
+    typename Reader::iterator _pos;
 };
 
 struct expected_pattern
 {
-    template <typename Input>
-    using error = _expected_pattern_error<true, Input>;
+    template <typename Reader>
+    using error = _expected_pattern_error<true, Reader>;
 };
 
 struct unexpected_pattern
 {
-    template <typename Input>
-    using error = _expected_pattern_error<false, Input>;
+    template <typename Reader>
+    using error = _expected_pattern_error<false, Reader>;
 };
 } // namespace lexy
 
@@ -46,10 +47,10 @@ struct _if : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            auto copy = input;
+            auto copy = reader;
             return Pattern::matcher::match(copy) == Expected;
         }
     };
@@ -57,21 +58,21 @@ struct _if : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            if (matcher::match(input))
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            if (matcher::match(reader))
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(input,
-                                               lexy::_expected_pattern_error<Expected, Input>(
-                                                   input.cur()));
+                return LEXY_MOV(context).error(reader,
+                                               lexy::_expected_pattern_error<Expected, Reader>(
+                                                   reader.cur()));
         }
     };
 };
 
-/// Check if at this input position, Pattern would match, but don't actually consume any characters
+/// Check if at this reader position, Pattern would match, but don't actually consume any characters
 /// if it does.
 template <typename Pattern>
 LEXY_CONSTEVAL auto if_(Pattern)
@@ -80,7 +81,7 @@ LEXY_CONSTEVAL auto if_(Pattern)
     return _if<Pattern, true>{};
 }
 
-/// Check if at this input position, Pattern would not match, but don't actually consume any
+/// Check if at this reader position, Pattern would not match, but don't actually consume any
 /// characters if it does.
 template <typename Pattern>
 LEXY_CONSTEVAL auto unless(Pattern)
@@ -99,14 +100,14 @@ struct _not : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
             // We match if we didn't match the pattern.
             // In other words:
-            // If we return true, we haven't matched Pattern and haven't consumed any input.
+            // If we return true, we haven't matched Pattern and haven't consumed any reader.
             // If we return false, we have matched Pattern and have consumed it.
-            return !Pattern::matcher::match(input);
+            return !Pattern::matcher::match(reader);
         }
     };
 

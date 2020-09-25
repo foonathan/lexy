@@ -17,14 +17,14 @@ using _production_rule = std::remove_const_t<decltype(Production::rule)>;
 template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
-    template <typename Context, typename Input, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
         auto&& sub_context = context.template sub_context<Production>();
 
-        if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_context, input))
-            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(result).value());
+        if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_context, reader))
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(result).value());
         else
             return typename Context::result_type(LEXY_MOV(result));
     }

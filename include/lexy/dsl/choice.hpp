@@ -12,11 +12,11 @@ namespace lexy
 {
 struct exhausted_choice
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
 
         constexpr auto position() const noexcept
         {
@@ -24,7 +24,7 @@ struct exhausted_choice
         }
 
     private:
-        typename Input::iterator _pos;
+        typename Reader::iterator _pos;
     };
 };
 } // namespace lexy
@@ -36,29 +36,29 @@ struct _chc_parser;
 template <typename NextParser>
 struct _chc_parser<NextParser>
 {
-    template <typename Context, typename Input, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&...) ->
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
         typename Context::result_type
     {
-        return LEXY_MOV(context).error(input, lexy::exhausted_choice::error<Input>(input.cur()));
+        return LEXY_MOV(context).error(reader, lexy::exhausted_choice::error<Reader>(reader.cur()));
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _chc_parser<NextParser, H, T...>
 {
-    template <typename Context, typename Input, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
         if constexpr (H::is_unconditional)
-            return H::template then_parser<NextParser>::parse(context, input, LEXY_FWD(args)...);
+            return H::template then_parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
         else
         {
-            if (H::condition_matcher::match(input))
-                return H::template then_parser<NextParser>::parse(context, input,
+            if (H::condition_matcher::match(reader))
+                return H::template then_parser<NextParser>::parse(context, reader,
                                                                   LEXY_FWD(args)...);
             else
-                return _chc_parser<NextParser, T...>::parse(context, input, LEXY_FWD(args)...);
+                return _chc_parser<NextParser, T...>::parse(context, reader, LEXY_FWD(args)...);
         }
     }
 };

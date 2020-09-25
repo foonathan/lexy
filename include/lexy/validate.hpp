@@ -29,11 +29,11 @@ struct _validate_context
         return noop.sink();
     }
 
-    template <typename Input, typename Error>
-    constexpr auto error(const Input& input, Error&& error) &&
+    template <typename Reader, typename Error>
+    constexpr auto error(const Reader& reader, Error&& error) &&
     {
         return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, Production{},
-                                                   input, LEXY_FWD(error));
+                                                   reader, LEXY_FWD(error));
     }
 
     template <typename... Args>
@@ -44,13 +44,15 @@ struct _validate_context
 };
 
 template <typename Production, typename Input, typename Callback>
-constexpr auto validate(Input&& input, Callback&& callback)
+constexpr auto validate(const Input& input, Callback&& callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
     using context_t = _validate_context<Production, std::decay_t<Callback>>;
 
+    auto reader = input.reader();
+
     context_t context{callback};
-    return rule::template parser<final_parser>::parse(context, input);
+    return rule::template parser<final_parser>::parse(context, reader);
 }
 } // namespace lexy
 

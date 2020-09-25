@@ -14,30 +14,38 @@ template <typename Encoding = default_encoding>
 class null_input
 {
 public:
-    using encoding  = Encoding;
-    using char_type = typename encoding::char_type;
-
-    using iterator = const char_type*;
-
-    //=== input functions ===//
-    constexpr auto peek() const noexcept
+    constexpr auto reader() const& noexcept
     {
-        return Encoding::eof();
-    }
+        class reader_type
+        {
+        public:
+            using encoding  = Encoding;
+            using char_type = typename encoding::char_type;
 
-    constexpr void bump() noexcept {}
+            using iterator = const char_type*;
 
-    constexpr iterator cur() const noexcept
-    {
-        return nullptr;
+            constexpr auto peek() const noexcept
+            {
+                return Encoding::eof();
+            }
+
+            constexpr void bump() noexcept {}
+
+            constexpr iterator cur() const noexcept
+            {
+                return nullptr;
+            }
+        };
+
+        return reader_type();
     }
 };
 
 template <typename Encoding = default_encoding>
-using null_lexeme = lexeme<null_input<Encoding>>;
+using null_lexeme = lexeme_for<null_input<Encoding>>;
 
 template <typename Error, typename Encoding = default_encoding>
-using null_error = typename Error::template error<null_input<Encoding>>;
+using null_error = typename Error::template error<input_reader<null_input<Encoding>>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_NULL_INPUT_HPP_INCLUDED

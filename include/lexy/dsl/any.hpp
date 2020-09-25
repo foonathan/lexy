@@ -12,16 +12,16 @@ namespace lexyd
 {
 struct _any : atom_base<_any>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        while (input.peek() != Input::encoding::eof())
-            input.bump();
+        while (reader.peek() != Reader::encoding::eof())
+            reader.bump();
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator)
     {
         LEXY_PRECONDITION(false);
         return nullptr;

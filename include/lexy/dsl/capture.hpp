@@ -10,29 +10,29 @@
 
 namespace lexyd
 {
-template <template <typename Input> typename Lexeme, typename Rule, typename NextParser>
+template <template <typename Reader> typename Lexeme, typename Rule, typename NextParser>
 struct _cap_parser
 {
     template <typename... PrevArgs>
     struct _continuation
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, typename Input::iterator begin,
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, typename Reader::iterator begin,
                                  PrevArgs&&... prev_args, Args&&... args) ->
             typename Context::result_type
         {
-            auto end = input.cur();
-            return NextParser::parse(context, input, LEXY_FWD(prev_args)...,
-                                     Lexeme<Input>(begin, end), LEXY_FWD(args)...);
+            auto end = reader.cur();
+            return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
+                                     Lexeme<Reader>(begin, end), LEXY_FWD(args)...);
         }
     };
 
-    template <typename Context, typename Input, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
         using continuation = _continuation<Args...>;
-        return Rule::template parser<continuation>::parse(context, input, input.cur(),
+        return Rule::template parser<continuation>::parse(context, reader, reader.cur(),
                                                           LEXY_FWD(args)...);
     }
 };
@@ -42,8 +42,11 @@ struct _cap : rule_base
 {
     static constexpr auto has_matcher = false;
 
+    template <typename Reader>
+    using _lexeme = lexy::lexeme<typename Reader::encoding, typename Reader::iterator>;
+
     template <typename NextParser>
-    using parser = _cap_parser<lexy::lexeme, Rule, NextParser>;
+    using parser = _cap_parser<_lexeme, Rule, NextParser>;
 };
 
 /// Captures whatever the rule matches as a lexeme.

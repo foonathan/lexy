@@ -26,8 +26,8 @@ struct _match_context
         return noop.sink();
     }
 
-    template <typename Input, typename Error>
-    constexpr auto error(const Input&, Error&&) &&
+    template <typename Reader, typename Error>
+    constexpr auto error(const Reader&, Error&&) &&
     {
         return result_type();
     }
@@ -40,19 +40,20 @@ struct _match_context
 };
 
 template <typename Input, typename Rule, typename = std::enable_if_t<is_rule<Rule>>>
-LEXY_FORCE_INLINE constexpr bool match(Input&& input, Rule)
+LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule)
 {
+    auto reader = input.reader();
     if constexpr (is_pattern<Rule>)
-        return Rule::matcher::match(input);
+        return Rule::matcher::match(reader);
     else
     {
         _match_context context;
-        return !!Rule::template parser<final_parser>::parse(context, input);
+        return !!Rule::template parser<final_parser>::parse(context, reader);
     }
 }
 
 template <typename Production, typename Input>
-constexpr bool match(Input&& input)
+constexpr bool match(const Input& input)
 {
     return match(input, Production::rule);
 }

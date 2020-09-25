@@ -18,15 +18,15 @@ struct _try : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            if (auto pos = input.cur(); Pattern::matcher::match(input))
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            if (auto pos = reader.cur(); Pattern::matcher::match(reader))
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(input,
-                                               typename lexy::failure<Tag>::template error<Input>(
+                return LEXY_MOV(context).error(reader,
+                                               typename lexy::failure<Tag>::template error<Reader>(
                                                    pos));
         }
     };

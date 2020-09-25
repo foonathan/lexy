@@ -19,31 +19,29 @@ public:
     using iterator = Iterator;
 
     //=== constructors ===//
-    constexpr range_input() noexcept : _cur(), _end() {}
+    constexpr range_input() noexcept : _begin(), _end() {}
 
-    constexpr range_input(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end) {}
+    constexpr range_input(Iterator begin, Sentinel end) noexcept : _begin(begin), _end(end) {}
 
-    //=== input functions ===//
-    constexpr auto peek() const noexcept
+    //=== access ===//
+    constexpr iterator begin() const noexcept
     {
-        if (_cur == _end)
-            return Encoding::eof();
-        else
-            return Encoding::to_int_type(*_cur);
+        return _begin;
     }
 
-    constexpr void bump() noexcept
+    constexpr iterator end() const noexcept
     {
-        ++_cur;
+        return _end;
     }
 
-    constexpr iterator cur() const noexcept
+    //=== reader ===//
+    constexpr auto reader() const& noexcept
     {
-        return _cur;
+        return _detail::range_reader<range_input, Iterator, Sentinel>(_begin, _end);
     }
 
 private:
-    Iterator                   _cur;
+    Iterator                   _begin;
     LEXY_EMPTY_MEMBER Sentinel _end;
 };
 
@@ -53,4 +51,3 @@ range_input(Iterator begin, Sentinel end)
 } // namespace lexy
 
 #endif // LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
-

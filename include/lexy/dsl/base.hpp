@@ -25,8 +25,8 @@ struct ParseContext
     Sink list_sink();
 
     /// Called when an error ocurred.
-    template <typename Input, typename Error>
-    result_type error(const Input& input, Error&& error) &&;
+    template <typename Reader, typename Error>
+    result_type error(const Reader& reader, Error&& error) &&;
 
     /// Called when parsing was succesful.
     template <typename ... Args>
@@ -40,23 +40,23 @@ struct Rule : rule_base
 
     struct matcher
     {
-        // If matches, consumes characters from input and return true.
-        // If it doesn't match, leave input as-is and return false.
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input);
+        // If matches, consumes characters from reader and return true.
+        // If it doesn't match, leave reader as-is and return false.
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader);
     };
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename ... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args)
+        template <typename Context, typename Reader, typename ... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args)
             -> typename Context::result_type
         {
-            if (/* match input */)
-                return NextParser::parse(context, input, LEXY_FWD(args)..., /* rule arguments */);
+            if (/* match reader */)
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
             else
-                return LEXY_MOV(context).error(input, /* error */);
+                return LEXY_MOV(context).error(reader, /* error */);
         }
     };
 };
@@ -90,15 +90,15 @@ constexpr bool is_pattern = [] {
 class Atom : atom_base<Atom>
 {
     // Try to match and consume characters.
-    // Returns true, if match succesful and leave input after the consumed characters.
-    // Otherwise, return false and leaves input at the error position.
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input);
+    // Returns true, if match succesful and leave reader after the consumed characters.
+    // Otherwise, return false and leaves reader at the error position.
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader);
 
     // Returns an error object describing the error.
-    // The input is in the state the match function left it, `pos` is the position before calling match.
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input& input, typename Input::iterator pos);
+    // The reader is in the state the match function left it, `pos` is the position before calling match.
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos);
 };
 #endif
 
@@ -113,39 +113,39 @@ struct atom_base : _atom_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            auto reset = input;
-            if (Atom::match(input))
+            auto reset = reader;
+            if (Atom::match(reader))
                 return true;
 
-            input = LEXY_MOV(reset);
+            reader = LEXY_MOV(reset);
             return false;
         }
     };
 
-    template <typename Context, typename Input>
-    LEXY_DSL_FUNC auto report_error(Context& context, Input& input, typename Input::iterator pos) ->
-        typename Context::result_type
+    template <typename Context, typename Reader>
+    LEXY_DSL_FUNC auto report_error(Context& context, Reader& reader, typename Reader::iterator pos)
+        -> typename Context::result_type
     {
-        if constexpr (std::is_same_v<decltype(Atom::error(input, input.cur())), void>)
+        if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
             LEXY_ASSERT(false, "can never be reached");
         else
-            return LEXY_MOV(context).error(input, Atom::error(input, pos));
+            return LEXY_MOV(context).error(reader, Atom::error(reader, pos));
     }
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            if (auto pos = input.cur(); Atom::match(input))
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            if (auto pos = reader.cur(); Atom::match(reader))
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return report_error(context, input, pos);
+                return report_error(context, reader, pos);
         }
     };
 };
@@ -163,8 +163,8 @@ namespace lexy
 /// The final parser in the chain of NextParsers, forwarding everything to the context.
 struct final_parser
 {
-    template <typename Context, typename Input, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Input&, Args&&... args) ->
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader&, Args&&... args) ->
         typename Context::result_type
     {
         return LEXY_MOV(context).value(LEXY_FWD(args)...);
@@ -176,11 +176,11 @@ namespace lexy
 {
 struct expected_char_class
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos, const char* name) noexcept
+        constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
         : _pos(pos), _name(name)
         {}
 
@@ -195,8 +195,8 @@ struct expected_char_class
         }
 
     private:
-        typename Input::iterator _pos;
-        const char*              _name;
+        typename Reader::iterator _pos;
+        const char*               _name;
     };
 };
 } // namespace lexy

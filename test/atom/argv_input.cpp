@@ -36,21 +36,22 @@ TEST_CASE("atom: argv_separator")
         int   argc   = 4;
 
         lexy::argv_input input(argc, argv);
+        auto             reader = input.reader();
 
-        CHECK(!lexy::dsl::argv_separator.match(input));
-        CHECK(input.peek() == 'a');
-        input.bump();
+        CHECK(!lexy::dsl::argv_separator.match(reader));
+        CHECK(reader.peek() == 'a');
+        reader.bump();
 
-        CHECK(!lexy::dsl::argv_separator.match(input));
-        CHECK(input.peek() == 'b');
-        input.bump();
+        CHECK(!lexy::dsl::argv_separator.match(reader));
+        CHECK(reader.peek() == 'b');
+        reader.bump();
 
-        CHECK(!lexy::dsl::argv_separator.match(input));
-        CHECK(input.peek() == 'c');
-        input.bump();
+        CHECK(!lexy::dsl::argv_separator.match(reader));
+        CHECK(reader.peek() == 'c');
+        reader.bump();
 
-        CHECK(lexy::dsl::argv_separator.match(input));
-        CHECK(input.peek() == 'd');
+        CHECK(lexy::dsl::argv_separator.match(reader));
+        CHECK(reader.peek() == 'd');
     }
 }
 

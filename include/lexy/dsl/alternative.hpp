@@ -11,11 +11,11 @@ namespace lexy
 {
 struct exhausted_alternatives
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
 
         constexpr auto position() const noexcept
         {
@@ -23,7 +23,7 @@ struct exhausted_alternatives
         }
 
     private:
-        typename Input::iterator _pos;
+        typename Reader::iterator _pos;
     };
 };
 } // namespace lexy
@@ -37,25 +37,25 @@ struct _alt : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            return (P::matcher::match(input) || ...);
+            return (P::matcher::match(reader) || ...);
         }
     };
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            if (matcher::match(input))
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+            if (matcher::match(reader))
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(input, lexy::exhausted_alternatives::error<Input>(
-                                                          input.cur()));
+                return LEXY_MOV(context).error(reader, lexy::exhausted_alternatives::error<Reader>(
+                                                           reader.cur()));
         }
     };
 };

@@ -21,7 +21,7 @@ TEST_CASE("rule: capture")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme<test_input> lex)
+            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
                 assert(lex.begin() == str);
                 assert(lex.end() == cur);
@@ -51,7 +51,8 @@ TEST_CASE("rule: capture")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme<test_input> lex, lexy::label<lab>)
+            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex,
+                                  lexy::label<lab>)
             {
                 assert(str == cur);
                 assert(lex.empty());
@@ -75,8 +76,8 @@ TEST_CASE("rule: capture")
         {
             const char* str;
 
-            constexpr int success(const char*, lexy::lexeme<test_input> outer,
-                                  lexy::lexeme<test_input> inner)
+            constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
+                                  lexy::lexeme_for<test_input> inner)
             {
                 assert(outer.string_view() == "abc");
                 assert(inner.string_view() == "abc");
@@ -105,8 +106,8 @@ TEST_CASE("rule: capture")
         {
             const char* str;
 
-            constexpr int success(const char*, lexy::lexeme<test_input> outer,
-                                  lexy::lexeme<test_input> inner)
+            constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
+                                  lexy::lexeme_for<test_input> inner)
             {
                 assert(inner.string_view() == "abc");
                 assert(outer.string_view() == "(abc)");

@@ -24,7 +24,7 @@ TEST_CASE("rule: delimited")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme<test_input> lex)
+            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
                 assert(lex.begin() == str + 1);
                 assert(lex.end() == cur - 1);
@@ -78,7 +78,7 @@ TEST_CASE("rule: delimited")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme<test_input> lex)
+            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
                 assert(lex.begin() == str + 2);
                 assert(lex.end() == cur - 1);

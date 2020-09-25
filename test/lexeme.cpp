@@ -9,16 +9,17 @@
 
 TEST_CASE("lexeme")
 {
-    lexy::string_input input = lexy::zstring_input("abc");
+    lexy::string_input input  = lexy::zstring_input("abc");
+    auto               reader = input.reader();
 
-    auto begin = input.cur();
-    input.bump();
-    input.bump();
-    input.bump();
+    auto begin = reader.cur();
+    reader.bump();
+    reader.bump();
+    reader.bump();
 
-    lexy::lexeme lexeme(input, begin);
+    lexy::lexeme lexeme(reader, begin);
     CHECK(lexeme.begin() == begin);
-    CHECK(lexeme.end() == input.cur());
+    CHECK(lexeme.end() == reader.cur());
     CHECK(lexeme.size() == 3);
     CHECK(lexeme.data() == begin);
     CHECK(lexeme[0] == 'a');

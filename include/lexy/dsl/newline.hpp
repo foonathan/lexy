@@ -11,20 +11,20 @@ namespace lexyd
 {
 struct _nl : atom_base<_nl>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input& input)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        if (auto cur = input.peek(); cur == Input::encoding::to_int_type('\n'))
+        if (auto cur = reader.peek(); cur == Reader::encoding::to_int_type('\n'))
         {
-            input.bump();
+            reader.bump();
             return true;
         }
-        else if (cur == Input::encoding::to_int_type('\r'))
+        else if (cur == Reader::encoding::to_int_type('\r'))
         {
-            input.bump();
-            if (input.peek() == Input::encoding::to_int_type('\n'))
+            reader.bump();
+            if (reader.peek() == Reader::encoding::to_int_type('\n'))
             {
-                input.bump();
+                reader.bump();
                 return true;
             }
 
@@ -34,10 +34,10 @@ struct _nl : atom_base<_nl>
             return false;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC auto error(const Input&, typename Input::iterator pos)
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Input>(pos, "newline");
+        return lexy::expected_char_class::error<Reader>(pos, "newline");
     }
 };
 

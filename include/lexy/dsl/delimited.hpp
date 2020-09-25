@@ -12,14 +12,14 @@
 
 namespace lexy
 {
-/// The input ends before the closing delimiter was found.
+/// The reader ends before the closing delimiter was found.
 struct missing_delimiter
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
 
         constexpr auto position() const noexcept
         {
@@ -27,7 +27,7 @@ struct missing_delimiter
         }
 
     private:
-        typename Input::iterator _pos;
+        typename Reader::iterator _pos;
     };
 };
 } // namespace lexy
@@ -42,44 +42,44 @@ struct _delim : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
             auto sink = context.list_sink();
 
-            const auto begin = input.cur();
+            const auto begin = reader.cur();
             while (true)
             {
-                if (input.peek() == Input::encoding::eof())
+                if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context).error(input,
-                                                   lexy::missing_delimiter::error<Input>(begin));
-                else if (auto pos = input.cur(); Escape::escape_matcher::match(input))
+                    return LEXY_MOV(context).error(reader,
+                                                   lexy::missing_delimiter::error<Reader>(begin));
+                else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
                 {
                     // We have an escape character.
-                    if (!Escape::match_arg(sink, input))
+                    if (!Escape::match_arg(sink, reader))
                         // Invalid escape sequence.
-                        return Escape::report_error(context, input, pos);
+                        return Escape::report_error(context, reader, pos);
                 }
-                else if (Close::matcher::match(input))
+                else if (Close::matcher::match(reader))
                     // Done with the string.
                     break;
                 else
                 {
                     // Match a code point.
-                    if (auto pos = input.cur(); CodePoint::match(input))
+                    if (auto pos = reader.cur(); CodePoint::match(reader))
                     {
-                        for (auto end = input.cur(); pos != end; ++pos)
+                        for (auto end = reader.cur(); pos != end; ++pos)
                             sink(*pos);
                     }
                     else
-                        return CodePoint::report_error(context, input, pos);
+                        return CodePoint::report_error(context, reader, pos);
                 }
             }
 
             // Add the final string as an argument.
-            return NextParser::parse(context, input, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
         }
     };
 };
@@ -92,35 +92,36 @@ struct _delim<void, CodePoint, Close> : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            const auto begin = input.cur();
+            const auto begin = reader.cur();
 
-            auto pos = input.cur();
+            auto pos = reader.cur();
             while (true)
             {
-                if (input.peek() == Input::encoding::eof())
+                if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context).error(input,
-                                                   lexy::missing_delimiter::error<Input>(begin));
-                else if (Close::matcher::match(input))
+                    return LEXY_MOV(context).error(reader,
+                                                   lexy::missing_delimiter::error<Reader>(begin));
+                else if (Close::matcher::match(reader))
                     // Done with the string.
                     break;
                 else
                 {
                     // Match a code point.
-                    if (!CodePoint::match(input))
-                        return CodePoint::report_error(context, input, pos);
+                    if (!CodePoint::match(reader))
+                        return CodePoint::report_error(context, reader, pos);
 
-                    pos = input.cur();
+                    pos = reader.cur();
                 }
             }
 
             // Add the lexeme as an argument.
-            return NextParser::parse(context, input, LEXY_FWD(args)...,
-                                     lexy::lexeme<Input>(begin, pos));
+            return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                     lexy::lexeme<typename Reader::encoding,
+                                                  typename Reader::iterator>(begin, pos));
         }
     };
 };
@@ -190,11 +191,11 @@ namespace lexy
 {
 struct invalid_escape_sequence
 {
-    template <typename Input>
+    template <typename Reader>
     class error
     {
     public:
-        constexpr explicit error(typename Input::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
 
         constexpr auto position() const noexcept
         {
@@ -202,7 +203,7 @@ struct invalid_escape_sequence
         }
 
     private:
-        typename Input::iterator _pos;
+        typename Reader::iterator _pos;
     };
 };
 } // namespace lexy
@@ -212,10 +213,10 @@ namespace lexyd
 template <typename Pattern, typename Replacement>
 struct _escape_lit
 {
-    template <typename Sink, typename Input>
-    LEXY_DSL_FUNC bool try_match(Sink& sink, Input& input)
+    template <typename Sink, typename Reader>
+    LEXY_DSL_FUNC bool try_match(Sink& sink, Reader& reader)
     {
-        if (!Pattern::matcher::match(input))
+        if (!Pattern::matcher::match(reader))
             return false;
 
         for (auto c : Replacement::get())
@@ -229,17 +230,17 @@ struct _escape
 {
     using escape_matcher = typename EscapePattern::matcher;
 
-    template <typename Sink, typename Input>
-    LEXY_DSL_FUNC bool match_arg(Sink& sink, Input& input)
+    template <typename Sink, typename Reader>
+    LEXY_DSL_FUNC bool match_arg(Sink& sink, Reader& reader)
     {
-        return (EscapeArguments::try_match(sink, input) || ...);
+        return (EscapeArguments::try_match(sink, reader) || ...);
     }
 
-    template <typename Context, typename Input>
-    LEXY_DSL_FUNC auto report_error(Context& context, Input& input, typename Input::iterator pos) ->
-        typename Context::result_type
+    template <typename Context, typename Reader>
+    LEXY_DSL_FUNC auto report_error(Context& context, Reader& reader, typename Reader::iterator pos)
+        -> typename Context::result_type
     {
-        return LEXY_MOV(context).error(input, lexy::invalid_escape_sequence::error<Input>(pos));
+        return LEXY_MOV(context).error(reader, lexy::invalid_escape_sequence::error<Reader>(pos));
     }
 
     //=== dsl ===//

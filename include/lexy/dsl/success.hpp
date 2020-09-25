@@ -12,14 +12,14 @@ namespace lexyd
 {
 struct _suc : atom_base<_suc>
 {
-    template <typename Input>
-    LEXY_DSL_FUNC bool match(Input&)
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader&)
     {
         return true;
     }
 
-    template <typename Input>
-    LEXY_DSL_FUNC void error(const Input&, typename Input::iterator);
+    template <typename Reader>
+    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
 };
 
 /// Matches the empty string, always succeeds.

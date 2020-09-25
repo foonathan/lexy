@@ -17,10 +17,10 @@ struct _while : rule_base
 
     struct matcher
     {
-        template <typename Input>
-        LEXY_DSL_FUNC bool match(Input& input)
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            while (Branch::matcher::match(input))
+            while (Branch::matcher::match(reader))
             {
             }
 
@@ -33,39 +33,39 @@ struct _while : rule_base
     {
         struct _continuation
         {
-            template <typename Context, typename Input, typename... Args>
-            LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
                 typename Context::result_type
             {
                 // After we've parsed then, we try again.
                 // Note that, as we're a pattern, we never add additional arguments.
-                return parser::parse(context, input, LEXY_FWD(args)...);
+                return parser::parse(context, reader, LEXY_FWD(args)...);
             }
         };
 
-        template <typename Context, typename Input, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Input& input, Args&&... args) ->
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
             if constexpr (Branch::has_then)
             {
-                if (Branch::condition_matcher::match(input))
+                if (Branch::condition_matcher::match(reader))
                     // Try another iteration.
-                    return Branch::template then_parser<_continuation>::parse(context, input,
+                    return Branch::template then_parser<_continuation>::parse(context, reader,
                                                                               LEXY_FWD(args)...);
                 else
                     // Continue with next parser.
-                    return NextParser::parse(context, input, LEXY_FWD(args)...);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
                 // Without a then in the branch, we can just repeatedly match the condition and
                 // continue. This doesn't require mutual recursion.
-                while (Branch::condition_matcher::match(input))
+                while (Branch::condition_matcher::match(reader))
                 {
                 }
 
-                return NextParser::parse(context, input, LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         }
     };

@@ -25,8 +25,10 @@ TEST_CASE("string_input")
     SUBCASE("basic")
     {
         lexy::string_input<> input;
-        CHECK(input.cur() == nullptr);
-        CHECK(input.peek() == lexy::default_encoding::eof());
+        CHECK(input.begin() == nullptr);
+        CHECK(input.end() == nullptr);
+        CHECK(input.reader().cur() == nullptr);
+        CHECK(input.reader().peek() == lexy::default_encoding::eof());
 
         SUBCASE("range ctor")
         {
@@ -44,21 +46,24 @@ TEST_CASE("string_input")
         {
             input = lexy::zstring_input(str);
         }
+        CHECK(input.begin() == str);
+        CHECK(input.end() == str + 3);
 
-        CHECK(input.cur() == str);
-        CHECK(input.peek() == 'a');
+        auto reader = input.reader();
+        CHECK(reader.cur() == str);
+        CHECK(reader.peek() == 'a');
 
-        input.bump();
-        CHECK(input.cur() == str + 1);
-        CHECK(input.peek() == 'b');
+        reader.bump();
+        CHECK(reader.cur() == str + 1);
+        CHECK(reader.peek() == 'b');
 
-        input.bump();
-        CHECK(input.cur() == str + 2);
-        CHECK(input.peek() == 'c');
+        reader.bump();
+        CHECK(reader.cur() == str + 2);
+        CHECK(reader.peek() == 'c');
 
-        input.bump();
-        CHECK(input.cur() == str + 3);
-        CHECK(input.peek() == lexy::default_encoding::eof());
+        reader.bump();
+        CHECK(reader.cur() == str + 3);
+        CHECK(reader.peek() == lexy::default_encoding::eof());
     }
     SUBCASE("converting ctor")
     {
@@ -81,7 +86,8 @@ TEST_CASE("string_input")
             input = lexy::zstring_input<lexy::raw_encoding>(str);
         }
 
-        CHECK(input.cur() == reinterpret_cast<const unsigned char*>(str));
+        CHECK(input.begin() == reinterpret_cast<const unsigned char*>(str));
+        CHECK(input.end() == reinterpret_cast<const unsigned char*>(str + 3));
     }
 }
 

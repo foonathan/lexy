@@ -9,8 +9,8 @@
 #include <lexy/encoding.hpp>
 
 #if 0
-/// Inputs are non-owning, cheaply copyable types.
-class Input
+/// Readers are non-owning, cheaply copyable types.
+class Reader
 {
 public:
     /// The encoding the input uses.
@@ -20,7 +20,7 @@ public:
     /// An iterator of char_type, not int_type.
     using iterator = ForwardIterator;
 
-    /// If the input is at eof, returns Encoding::eof().
+    /// If the reader is at eof, returns Encoding::eof().
     /// Otherwise, returns Encoding::to_int_type(/* current character */).
     typename Encoding::int_type peek() const;
 
@@ -30,12 +30,20 @@ public:
     /// Returns an iterator to the current character.
     /// The following code must produce a valid range:
     /// ```
-    /// auto begin = input.cur();
-    /// input.bump();
+    /// auto begin = reader.cur();
+    /// reader.bump();
     /// ... // more bumps
-    /// auto end = input.cur();
+    /// auto end = reader.cur();
     /// ```
     iterator cur() const;
+};
+
+/// An Input produces a reader.
+class Input
+{
+public:
+    /// Returns a reader to the beginning of the input.
+    Reader reader() const &;
 };
 #endif
 
@@ -54,18 +62,53 @@ constexpr auto range_size(I begin, I2 end)
         ++result;
     return result;
 }
+
+template <typename Input, typename Iterator, typename Sentinel = Iterator>
+class range_reader
+{
+public:
+    using encoding  = typename Input::encoding;
+    using char_type = typename encoding::char_type;
+    using iterator  = Iterator;
+
+    constexpr auto peek() const noexcept
+    {
+        if (_cur == _end)
+            return encoding::eof();
+        else
+            return encoding::to_int_type(*_cur);
+    }
+
+    constexpr void bump() noexcept
+    {
+        ++_cur;
+    }
+
+    constexpr iterator cur() const noexcept
+    {
+        return _cur;
+    }
+
+private:
+    constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
+    {}
+
+    Iterator                   _cur;
+    LEXY_EMPTY_MEMBER Sentinel _end;
+
+    friend Input;
+};
 } // namespace lexy::_detail
 
 namespace lexy
 {
 template <typename Input>
-using input_iterator_type = typename std::decay_t<Input>::iterator;
+using input_reader = decltype(LEXY_DECLVAL(Input).reader());
 
-template <typename Input, typename CharT>
-constexpr bool char_type_compatible_with_input
-    = (std::is_same_v<CharT, typename Input::char_type>)
-      || Input::encoding::template is_secondary_char_type<CharT>;
+template <typename Reader, typename CharT>
+constexpr bool char_type_compatible_with_reader
+    = (std::is_same_v<CharT, typename Reader::char_type>)
+      || Reader::encoding::template is_secondary_char_type<CharT>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BASE_HPP_INCLUDED
-

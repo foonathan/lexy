@@ -43,11 +43,11 @@ struct _parse_context
         return Production::list.sink();
     }
 
-    template <typename Input, typename Error>
-    constexpr auto error(const Input& input, Error&& error) &&
+    template <typename Reader, typename Error>
+    constexpr auto error(const Reader& reader, Error&& error) &&
     {
         return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, Production{},
-                                                   input, LEXY_FWD(error));
+                                                   reader, LEXY_FWD(error));
     }
 
     template <typename... Args>
@@ -65,16 +65,18 @@ struct _parse_context
 
 /// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename Callback>
-constexpr auto parse(Input&& input, Callback&& callback)
+constexpr auto parse(const Input& input, Callback&& callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
     using context_t = _parse_context<Production, std::decay_t<Callback>>;
 
+    auto reader = input.reader();
+
     context_t context{callback};
-    return rule::template parser<final_parser>::parse(context, input);
+    return rule::template parser<final_parser>::parse(context, reader);
 }
 template <typename Production, typename Input>
-constexpr auto parse(Input&& input)
+constexpr auto parse(const Input& input)
 {
     return parse<Production>(LEXY_FWD(input), noop);
 }
