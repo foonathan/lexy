@@ -6,12 +6,14 @@
 #define LEXY_PARSE_HPP_INCLUDED
 
 #include <lexy/_detail/detect.hpp>
+#include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/result.hpp>
 
 namespace lexyd
 {
+template <auto Fn>
 struct _state;
 } // namespace lexyd
 
@@ -86,7 +88,8 @@ private:
     LEXY_EMPTY_MEMBER _state_storage_type _state;
     LEXY_EMPTY_MEMBER Callback            _callback;
 
-    friend lexyd::_state;
+    template <auto Fn>
+    friend struct lexyd::_state;
 };
 
 /// Parses the production into a value, invoking the callback on error.
@@ -112,6 +115,7 @@ constexpr auto parse(const Input& input, Callback callback)
 
 namespace lexyd
 {
+template <auto Fn>
 struct _state : rule_base
 {
     static constexpr auto has_matcher = false;
@@ -127,7 +131,12 @@ struct _state : rule_base
         {
             static_assert(!std::is_same_v<State, lexy::_no_parse_state&>,
                           "lexy::dsl::state requires passing a state to lexy::parse()");
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., context._state);
+
+            if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., context._state);
+            else
+                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                         lexy::_detail::invoke(Fn, context._state));
         }
 
         template <typename Context, typename Reader, typename... Args>
@@ -141,7 +150,11 @@ struct _state : rule_base
 };
 
 /// Produces the parsing state passed to `parse()` as a value.
-constexpr auto parse_state = _state{};
+constexpr auto parse_state = _state<nullptr>{};
+
+/// Produces a member of the parsing state as a value.
+template <auto Fn>
+constexpr auto parse_state_member = _state<Fn>{};
 } // namespace lexyd
 
 #endif // LEXY_PARSE_HPP_INCLUDED
