@@ -86,15 +86,15 @@ TEST_CASE("parse")
     {
         using namespace parse_value;
 
-        constexpr auto empty = lexy::parse<prod>(lexy::zstring_input(""));
+        constexpr auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
 
-        constexpr auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"));
+        constexpr auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
         CHECK(abc_abc);
         CHECK(abc_abc.value().a.string_view() == "abc");
         CHECK(abc_abc.value().b.string_view() == "abc");
 
-        constexpr auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"));
+        constexpr auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
         CHECK(abc_123);
         CHECK(abc_123.value().a.string_view() == "abc");
         CHECK(abc_123.value().b.string_view() == "123");
@@ -103,27 +103,27 @@ TEST_CASE("parse")
     {
         using namespace parse_list;
 
-        auto empty = lexy::parse<prod>(lexy::zstring_input(""));
+        auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
 
-        auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"));
+        auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
         CHECK(abc);
         CHECK(abc.value().size() == 1);
         CHECK(abc.value().at(0).string_view() == "abc");
 
-        auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"));
+        auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
         CHECK(abc_abc);
         CHECK(abc_abc.value().size() == 2);
         CHECK(abc_abc.value().at(0).string_view() == "abc");
         CHECK(abc_abc.value().at(1).string_view() == "abc");
 
-        auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"));
+        auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
         CHECK(abc_123);
         CHECK(abc_123.value().size() == 2);
         CHECK(abc_123.value().at(0).string_view() == "abc");
         CHECK(abc_123.value().at(1).string_view() == "123");
 
-        auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"));
+        auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"), lexy::noop);
         CHECK(abc_abc_123);
         CHECK(abc_abc_123.value().size() == 3);
         CHECK(abc_abc_123.value().at(0).string_view() == "abc");
@@ -134,22 +134,22 @@ TEST_CASE("parse")
     {
         using namespace parse_list_value;
 
-        auto empty = lexy::parse<prod>(lexy::zstring_input(""));
+        auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
 
-        auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"));
+        auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
         CHECK(abc);
         CHECK(abc.value() == 1);
 
-        auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"));
+        auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
         CHECK(abc_abc);
         CHECK(abc_abc.value() == 2);
 
-        auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"));
+        auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
         CHECK(abc_123);
         CHECK(abc_123.value() == 2);
 
-        auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"));
+        auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"), lexy::noop);
         CHECK(abc_abc_123);
         CHECK(abc_abc_123.value() == 3);
     }
