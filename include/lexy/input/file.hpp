@@ -5,6 +5,7 @@
 #ifndef LEXY_INPUT_FILE_HPP_INCLUDED
 #define LEXY_INPUT_FILE_HPP_INCLUDED
 
+#include <cerrno>
 #include <cstdio>
 #include <lexy/_detail/buffer_builder.hpp>
 #include <lexy/input/base.hpp>
@@ -36,16 +37,48 @@ private:
     std::FILE* _file;
 };
 
+} // namespace lexy
+
+namespace lexy
+{
+/// Errors that might occur while reading the file.
+enum class file_error
+{
+    /// An internal OS error, such as failure to read from the file.
+    os_error,
+    /// The file was not found.
+    file_not_found,
+    /// The file cannot be opened.
+    permission_denied,
+};
+
+inline file_error _get_file_error() noexcept
+{
+    switch (errno)
+    {
+    case ENOENT:
+    case ENOTDIR:
+    case ELOOP:
+        return file_error::file_not_found;
+
+    case EACCES:
+    case EPERM:
+        return file_error::permission_denied;
+
+    default:
+        return file_error::os_error;
+    }
+}
+
 /// Reads the file at the specified path into a buffer.
 template <typename Encoding       = default_encoding,
           typename MemoryResource = _detail::default_memory_resource>
-optional_value<buffer<Encoding, MemoryResource>> read_file(
+result<buffer<Encoding, MemoryResource>, file_error> read_file(
     const char* path, MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
 {
     _file_handle file(std::fopen(path, "rb"));
     if (!file)
-        // File not found.
-        return {};
+        return {lexy::result_error, _get_file_error()};
 
     using char_type = typename Encoding::char_type;
     _detail::buffer_builder<char_type> buffer;
@@ -64,7 +97,7 @@ optional_value<buffer<Encoding, MemoryResource>> read_file(
         {
             if (std::ferror(file))
                 // We have a read error.
-                return {};
+                return {lexy::result_error, file_error::os_error};
 
             // We should have reached the end of the file.
             LEXY_ASSERT(std::feof(file), "why did fread() not read enough?");

@@ -26,6 +26,7 @@ TEST_CASE("read_file")
     {
         auto buffer = lexy::read_file(test_file_name);
         CHECK(!buffer);
+        CHECK(buffer.error() == lexy::file_error::file_not_found);
     }
     SUBCASE("empty file")
     {
