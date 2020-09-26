@@ -142,6 +142,7 @@ TEST_CASE("optional_error")
     constexpr lexy::optional_error<int> def;
     CHECK(!def);
     CHECK(!def.has_value());
+    CHECK(def.has_void_value());
     CHECK(def.has_error());
     CHECK(def.error() == 0);
 
@@ -149,5 +150,6 @@ TEST_CASE("optional_error")
     CHECK(val);
     CHECK(val.has_value());
     CHECK(!val.has_error());
+    CHECK(val.has_void_error());
 }
 

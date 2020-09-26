@@ -170,6 +170,15 @@ public:
         return !this->_has_value;
     }
 
+    static constexpr bool has_void_value() noexcept
+    {
+        return std::is_same_v<T, void>;
+    }
+    static constexpr bool has_void_error() noexcept
+    {
+        return std::is_same_v<E, void>;
+    }
+
     constexpr value_type& value() & noexcept
     {
         LEXY_PRECONDITION(has_value());

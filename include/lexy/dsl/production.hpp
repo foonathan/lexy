@@ -24,7 +24,13 @@ struct _prd_parser
         auto&& sub_context = context.template sub_context<Production>();
 
         if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_context, reader))
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(result).value());
+        {
+            if constexpr (result.has_void_value())
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else
+                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                         LEXY_MOV(result).value());
+        }
         else
             return typename Context::result_type(LEXY_MOV(result));
     }

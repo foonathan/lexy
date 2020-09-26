@@ -20,8 +20,7 @@ struct production
 {
     static constexpr auto rule
         = lexy::dsl::p<child_prod> + lexy::dsl::p<child_prod> + lexy::dsl::parse_state;
-    static constexpr auto value = lexy::callback<int>(
-        [](lexy::result_value_t, lexy::result_value_t, int state) { return state; });
+    static constexpr auto value = lexy::construct<int>;
 };
 } // namespace
 
