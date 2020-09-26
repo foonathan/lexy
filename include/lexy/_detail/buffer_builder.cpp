@@ -1,0 +1,76 @@
+// Copyright (C) 2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#include <lexy/_detail/buffer_builder.hpp>
+
+#include <doctest.h>
+
+TEST_CASE("_detail::buffer_builder")
+{
+    lexy::_detail::buffer_builder<char> buffer;
+    REQUIRE(buffer.read_size() == 0);
+    REQUIRE(buffer.write_size() == buffer.capacity());
+    REQUIRE(buffer.read_data() == buffer.write_data());
+
+    std::strcpy(buffer.write_data(), "abc");
+    buffer.commit(3);
+    REQUIRE(buffer.read_size() == 3);
+    REQUIRE(buffer.write_size() == buffer.capacity() - 3);
+    REQUIRE(buffer.read_data() + 3 == buffer.write_data());
+    REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+
+    SUBCASE("grow partial")
+    {
+        auto old_cap = buffer.capacity();
+        buffer.grow();
+        REQUIRE(buffer.capacity() > old_cap);
+        REQUIRE(buffer.read_size() == 3);
+        REQUIRE(buffer.write_size() == buffer.capacity() - 3);
+        REQUIRE(buffer.read_data() + 3 == buffer.write_data());
+        REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+    }
+    SUBCASE("grow full")
+    {
+        std::memset(buffer.write_data(), '!', buffer.write_size());
+        buffer.commit(buffer.write_size());
+        REQUIRE(buffer.read_size() == buffer.capacity());
+        REQUIRE(buffer.write_size() == 0);
+        REQUIRE(buffer.read_data() + buffer.capacity() == buffer.write_data());
+        REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+        REQUIRE(buffer.read_data()[42] == '!');
+
+        auto old_cap = buffer.capacity();
+        buffer.grow();
+        REQUIRE(buffer.capacity() > old_cap);
+        REQUIRE(buffer.read_size() == old_cap);
+        REQUIRE(buffer.write_size() == buffer.capacity() - old_cap);
+        REQUIRE(buffer.read_data() + old_cap == buffer.write_data());
+        REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+        REQUIRE(buffer.read_data()[42] == '!');
+    }
+    SUBCASE("grow twice")
+    {
+        auto old_cap = buffer.capacity();
+        buffer.grow();
+        REQUIRE(buffer.capacity() > old_cap);
+        REQUIRE(buffer.read_size() == 3);
+        REQUIRE(buffer.write_size() == buffer.capacity() - 3);
+        REQUIRE(buffer.read_data() + 3 == buffer.write_data());
+        REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+
+        old_cap = buffer.capacity();
+        buffer.grow();
+        REQUIRE(buffer.capacity() > old_cap);
+        REQUIRE(buffer.read_size() == 3);
+        REQUIRE(buffer.write_size() == buffer.capacity() - 3);
+        REQUIRE(buffer.read_data() + 3 == buffer.write_data());
+        REQUIRE(std::strncmp(buffer.read_data(), "abc", 3) == 0);
+    }
+
+    buffer.clear();
+    REQUIRE(buffer.read_size() == 0);
+    REQUIRE(buffer.write_size() == buffer.capacity());
+    REQUIRE(buffer.read_data() == buffer.write_data());
+}
+
