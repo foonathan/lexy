@@ -14,7 +14,7 @@ namespace lexy
 template <typename Production, typename Callback>
 struct _validate_context
 {
-    const Callback& _callback;
+    LEXY_EMPTY_MEMBER Callback _callback;
 
     using result_type = optional_error<typename Callback::return_type>;
 
@@ -44,10 +44,10 @@ struct _validate_context
 };
 
 template <typename Production, typename Input, typename Callback>
-constexpr auto validate(const Input& input, Callback&& callback)
+constexpr auto validate(const Input& input, Callback callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using context_t = _validate_context<Production, std::decay_t<Callback>>;
+    using context_t = _validate_context<Production, Callback>;
 
     auto reader = input.reader();
 

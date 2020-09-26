@@ -18,7 +18,7 @@ using _production_value = decltype(Production::value);
 template <typename Production, typename Callback>
 struct _parse_context
 {
-    const Callback& _callback;
+    LEXY_EMPTY_MEMBER Callback _callback;
 
     static auto _result_value_cb()
     {
@@ -65,10 +65,10 @@ struct _parse_context
 
 /// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename Callback>
-constexpr auto parse(const Input& input, Callback&& callback)
+constexpr auto parse(const Input& input, Callback callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using context_t = _parse_context<Production, std::decay_t<Callback>>;
+    using context_t = _parse_context<Production, Callback>;
 
     auto reader = input.reader();
 
