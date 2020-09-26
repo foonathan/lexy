@@ -23,6 +23,17 @@ constexpr bool error = false;
 #define LEXY_DECLVAL(...)                                                                          \
     reinterpret_cast<::lexy::_detail::add_rvalue_ref<__VA_ARGS__>>(*reinterpret_cast<char*>(1024))
 
+namespace lexy::_detail
+{
+template <typename T>
+constexpr void swap(T& lhs, T& rhs)
+{
+    T tmp = LEXY_MOV(lhs);
+    lhs   = LEXY_MOV(rhs);
+    rhs   = LEXY_MOV(tmp);
+}
+} // namespace lexy::_detail
+
 //=== NTTP ===//
 #ifndef LEXY_HAS_NTTP
 #    if __cpp_nontype_template_parameter_class

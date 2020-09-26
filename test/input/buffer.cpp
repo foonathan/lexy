@@ -24,6 +24,8 @@ TEST_CASE("buffer")
     };
 
     auto verify = [](const auto& buffer) {
+        CHECK(!buffer.empty());
+
         CHECK(buffer.begin() == buffer.data());
         CHECK(buffer.end() == buffer.data() + 3);
         CHECK(buffer.size() == 3);
@@ -135,6 +137,45 @@ TEST_CASE("buffer")
 
         const buffer_type view_conv(view_type{}, std::pmr::new_delete_resource());
         verify(view_conv);
+    }
+
+    SUBCASE("copy constructor")
+    {
+        const lexy::buffer original(str, str + 3);
+
+        const lexy::buffer copy(original);
+        verify(copy);
+
+        lexy::_detail::default_memory_resource other_resource;
+        const lexy::buffer                     copy_resource(original, &other_resource);
+        verify(copy_resource);
+    }
+    SUBCASE("move constructor")
+    {
+        lexy::buffer original(str, str + 3);
+
+        lexy::buffer move(LEXY_MOV(original));
+        verify(move);
+        CHECK(original.empty());
+    }
+    SUBCASE("copy assignment")
+    {
+        const lexy::buffer other(str, str + 3);
+
+        lexy::buffer buffer{};
+        CHECK(buffer.empty());
+        buffer = other;
+        verify(buffer);
+    }
+    SUBCASE("move assignment")
+    {
+        lexy::buffer other(str, str + 3);
+
+        lexy::buffer buffer{};
+        CHECK(buffer.empty());
+        buffer = LEXY_MOV(other);
+        verify(buffer);
+        CHECK(other.empty());
     }
 
     SUBCASE("reader, no sentinel")

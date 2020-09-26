@@ -17,6 +17,8 @@ class MemoryResource
 public:
     void* allocate(std::size_t bytes, std::size_t alignment);
     void deallocate(void* ptr, std::size_t bytes, std::size_t alignment);
+
+    friend bool operator==(const MemoryResource& lhs, const MemoryResource& rhs);
 };
 #endif
 
@@ -49,6 +51,11 @@ public:
             ::operator delete(ptr);
 #endif
     }
+
+    friend constexpr bool operator==(default_memory_resource, default_memory_resource) noexcept
+    {
+        return true;
+    }
 };
 } // namespace lexy::_detail
 
@@ -60,9 +67,14 @@ class _memory_resource_ptr_empty
 public:
     constexpr explicit _memory_resource_ptr_empty(MemoryResource*) noexcept {}
 
+    constexpr auto operator*() const noexcept
+    {
+        return MemoryResource{};
+    }
+
     constexpr auto operator->() const noexcept
     {
-        struct _proxy
+        struct proxy
         {
             MemoryResource _resource;
 
@@ -72,7 +84,12 @@ public:
             }
         };
 
-        return _proxy{};
+        return proxy{};
+    }
+
+    constexpr MemoryResource* get() const noexcept
+    {
+        return nullptr;
     }
 };
 
@@ -85,7 +102,17 @@ public:
         LEXY_PRECONDITION(resource);
     }
 
-    constexpr auto operator->() const noexcept
+    constexpr MemoryResource& operator*() const noexcept
+    {
+        return *_resource;
+    }
+
+    constexpr MemoryResource* operator->() const noexcept
+    {
+        return _resource;
+    }
+
+    constexpr MemoryResource* get() const noexcept
     {
         return _resource;
     }

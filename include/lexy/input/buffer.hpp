@@ -26,6 +26,12 @@ public:
     using char_type = typename encoding::char_type;
 
     //=== constructors ===//
+    constexpr buffer() noexcept : buffer(_detail::get_memory_resource<MemoryResource>()) {}
+
+    constexpr buffer(MemoryResource* resource) noexcept
+    : _resource(resource), _data(nullptr), _size(0)
+    {}
+
     explicit buffer(const char_type* data, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     : _resource(resource), _size(size)
@@ -60,15 +66,56 @@ public:
     : buffer(view.data(), view.size(), resource)
     {}
 
-    buffer(const buffer&) = delete;
-    buffer& operator=(const buffer&) = delete;
+    buffer(const buffer& other) : buffer(other.data(), other.size(), other._resource.get()) {}
+    buffer(const buffer& other, MemoryResource* resource)
+    : buffer(other.data(), other.size(), resource)
+    {}
+
+    buffer(buffer&& other) noexcept
+    : _resource(other._resource), _data(other._data), _size(other._size)
+    {
+        other._data = nullptr;
+        other._size = 0;
+    }
 
     ~buffer() noexcept
     {
+        if (!_data)
+            return;
+
         if constexpr (_has_sentinel)
             _resource->deallocate(_data, (_size + 1) * sizeof(char_type), alignof(char_type));
         else
             _resource->deallocate(_data, _size * sizeof(char_type), alignof(char_type));
+    }
+
+    buffer& operator=(const buffer& other)
+    {
+        // Create a temporary buffer that owns the same memory as other but with our resource.
+        // We then move assign it to *this.
+        return *this = buffer(other, _resource.get());
+    }
+
+    buffer& operator=(buffer&& other) noexcept(std::is_empty_v<MemoryResource>)
+    {
+        if (*_resource == *other._resource)
+        {
+            // We have the same resource; we can just steal other's memory.
+            // We do that by swapping - when other is destroyed it will free our memory.
+            _detail::swap(_data, other._data);
+            _detail::swap(_size, other._size);
+            return *this;
+        }
+        else
+        {
+            LEXY_PRECONDITION(!std::is_empty_v<MemoryResource>);
+
+            // We create a copy using the right resource and swap the ownership.
+            buffer copy(other, _resource.get());
+            _detail::swap(_data, copy._data);
+            _detail::swap(_size, copy._size);
+            return *this;
+        }
     }
 
     //=== access ===//
@@ -84,6 +131,11 @@ public:
     const char_type* data() const noexcept
     {
         return _data;
+    }
+
+    bool empty() const noexcept
+    {
+        return _size == 0;
     }
 
     std::size_t size() const noexcept
