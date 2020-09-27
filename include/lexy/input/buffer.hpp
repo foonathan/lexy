@@ -8,6 +8,7 @@
 #include <cstring>
 #include <lexy/_detail/memory_resource.hpp>
 #include <lexy/input/base.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -223,6 +224,15 @@ buffer(const CharT*, std::size_t, MemoryResource*)
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
     -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>, MemoryResource>;
+
+//=== convenience typedefs ===//
+template <typename Encoding       = default_encoding,
+          typename MemoryResource = _detail::default_memory_resource>
+using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
+
+template <typename Error, typename Encoding = default_encoding,
+          typename MemoryResource = _detail::default_memory_resource>
+using buffer_error = typename Error::template error<input_reader<buffer<Encoding, MemoryResource>>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BUFFER_HPP_INCLUDED
