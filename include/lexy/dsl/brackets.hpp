@@ -12,6 +12,7 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -91,7 +92,7 @@ struct _brackets
         if constexpr (std::is_same_v<Whitespace, void>)
             return Open{};
         else
-            return Whitespace{} + Open{};
+            return whitespaced(Open{}, Whitespace{});
     }
     /// Matches the closing bracket.
     friend LEXY_CONSTEVAL auto close(_brackets)
@@ -99,7 +100,7 @@ struct _brackets
         if constexpr (std::is_same_v<Whitespace, void>)
             return Close{};
         else
-            return Whitespace{} + Close{};
+            return whitespaced(Close{}, Whitespace{});
     }
 };
 

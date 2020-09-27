@@ -8,6 +8,7 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy
@@ -137,7 +138,7 @@ struct _delim_dsl
         if constexpr (std::is_same_v<Whitespace, void>)
             return Open{} >> _delim<void, CodePoint, Close>{};
         else
-            return Whitespace{} + Open{} >> _delim<void, CodePoint, Close>{};
+            return whitespaced(Open{}, Whitespace{}) >> _delim<void, CodePoint, Close>{};
     }
 
     /// Specifies the atomic for a valid code point and an escape sequence.
@@ -148,7 +149,7 @@ struct _delim_dsl
         if constexpr (std::is_same_v<Whitespace, void>)
             return Open{} >> _delim<Escape, CodePoint, Close>{};
         else
-            return Whitespace{} + Open{} >> _delim<Escape, CodePoint, Close>{};
+            return whitespaced(Open{}, Whitespace{}) >> _delim<Escape, CodePoint, Close>{};
     }
 
     /// Sets the whitespace pattern.

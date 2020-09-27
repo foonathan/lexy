@@ -10,7 +10,7 @@
 TEST_CASE("eof whitespace")
 {
     constexpr auto result     = lexy::dsl::eof[LEXY_LIT(" ")];
-    constexpr auto equivalent = LEXY_LIT(" ") + lexy::dsl::eof;
+    constexpr auto equivalent = whitespaced(lexy::dsl::eof, LEXY_LIT(" "));
     CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 }
 

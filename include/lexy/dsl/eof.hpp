@@ -6,7 +6,7 @@
 #define LEXY_DSL_EOF_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -27,8 +27,7 @@ struct _eof : atom_base<_eof>
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        static_assert(lexy::is_pattern<Whitespace>, "whitespace must be a pattern");
-        return ws + _eof{};
+        return whitespaced(_eof{}, ws);
     }
 };
 

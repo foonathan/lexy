@@ -7,7 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -17,8 +17,7 @@ struct _punct : _lit<String>
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        static_assert(lexy::is_pattern<Whitespace>, "whitespace must be a pattern");
-        return ws + _lit<String>{};
+        return whitespaced(_lit<String>{}, ws);
     }
 };
 

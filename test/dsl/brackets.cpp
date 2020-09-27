@@ -57,9 +57,9 @@ TEST_CASE("dsl::brackets")
 
     SUBCASE("whitespace")
     {
-        constexpr auto result = lexy::dsl::parenthesized[LEXY_LIT(" ")](inner);
-        constexpr auto equivalent
-            = LEXY_LIT(" ") + LEXY_LIT("(") >> inner + LEXY_LIT(" ") + LEXY_LIT(")");
+        constexpr auto result     = lexy::dsl::parenthesized[LEXY_LIT(" ")](inner);
+        constexpr auto equivalent = whitespaced(LEXY_LIT("("), LEXY_LIT(" "))
+                                    >> inner + whitespaced(LEXY_LIT(")"), LEXY_LIT(" "));
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
         CHECK(lexy::match(lexy::zstring_input(" (abc )"), result));
