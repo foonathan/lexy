@@ -109,12 +109,12 @@ TEST_CASE("container")
 {
     SUBCASE("callback")
     {
-        std::vector<int> vec = lexy::container<std::vector<int>>(1, 2, 3);
+        std::vector<int> vec = lexy::list<std::vector<int>>(1, 2, 3);
         CHECK(vec == std::vector{1, 2, 3});
     }
     SUBCASE("sink")
     {
-        auto sink = lexy::container<std::vector<std::string>>.sink();
+        auto sink = lexy::list<std::vector<std::string>>.sink();
         sink("a");
         sink(std::string("b"));
         sink(1, 'c');
@@ -122,4 +122,3 @@ TEST_CASE("container")
         CHECK(result == std::vector<std::string>{"a", "b", "c"});
     }
 }
-

@@ -56,7 +56,7 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
+    static constexpr auto list = lexy::list<std::vector<lexy::string_lexeme<>>>;
 };
 
 using prod = string_list_p;
@@ -72,7 +72,7 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
+    static constexpr auto list = lexy::list<std::vector<lexy::string_lexeme<>>>;
     static constexpr auto value
         = lexy::callback<std::size_t>([] { return std::size_t(0); },
                                       [](const auto& vec) { return vec.size(); });

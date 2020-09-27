@@ -188,7 +188,7 @@ inline constexpr auto construct = _construct<T>{};
 namespace lexy
 {
 template <typename T>
-struct _container
+struct _list
 {
     using return_type = T;
 
@@ -214,7 +214,7 @@ struct _container
             _result.push_back(LEXY_MOV(obj));
         }
         template <typename... Args>
-        void operator()(Args&&... args)
+        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
         {
             _result.emplace_back(LEXY_FWD(args)...);
         }
@@ -230,9 +230,9 @@ struct _container
     }
 };
 
-/// A callback that builds a container of things.
+/// A callback that builds a list of things.
 template <typename T>
-inline constexpr auto container = _container<T>{};
+inline constexpr auto list = _list<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
