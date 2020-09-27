@@ -267,6 +267,9 @@ LEXY_CONSTEVAL auto escape(EscapePattern)
     return _escape<EscapePattern>{};
 }
 
+template <auto C>
+constexpr auto escape_value_c = lexy::_detail::type_char<C>{};
+
 #if LEXY_HAS_NTTP
 /// Defines the replacement string of a literal replacement.
 template <lexy::_detail::string_literal Str>
