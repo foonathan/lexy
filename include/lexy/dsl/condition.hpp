@@ -7,37 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 
-namespace lexy
-{
-template <bool Expected, typename Reader>
-struct _expected_pattern_error
-{
-public:
-    constexpr explicit _expected_pattern_error(typename Reader::iterator pos) noexcept : _pos(pos)
-    {}
-
-    constexpr auto position() const noexcept
-    {
-        return _pos;
-    }
-
-private:
-    typename Reader::iterator _pos;
-};
-
-struct expected_pattern
-{
-    template <typename Reader>
-    using error = _expected_pattern_error<true, Reader>;
-};
-
-struct unexpected_pattern
-{
-    template <typename Reader>
-    using error = _expected_pattern_error<false, Reader>;
-};
-} // namespace lexy
-
 namespace lexyd
 {
 template <typename Pattern, bool Expected>
@@ -55,25 +24,14 @@ struct _if : rule_base
         }
     };
 
+    // As a parser, we don't actually do anything.
     template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
-        {
-            if (matcher::match(reader))
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            else
-                return LEXY_MOV(context).error(reader,
-                                               lexy::_expected_pattern_error<Expected, Reader>(
-                                                   reader.cur()));
-        }
-    };
+    using parser = NextParser;
 };
 
 /// Check if at this reader position, Pattern would match, but don't actually consume any characters
 /// if it does.
+/// Only used as a branch condition.
 template <typename Pattern>
 LEXY_CONSTEVAL auto if_(Pattern)
 {
@@ -83,6 +41,7 @@ LEXY_CONSTEVAL auto if_(Pattern)
 
 /// Check if at this reader position, Pattern would not match, but don't actually consume any
 /// characters if it does.
+/// Only used as a branch condition.
 template <typename Pattern>
 LEXY_CONSTEVAL auto unless(Pattern)
 {
@@ -111,10 +70,9 @@ struct _not : rule_base
         }
     };
 
-    // As parser, we use the one from unless().
-    // Otherwise, the generated error is at the wrong position.
+    // As parser, we don't actually do anything..
     template <typename NextParser>
-    using parser = typename _if<Pattern, false>::template parser<NextParser>;
+    using parser = NextParser;
 };
 
 /// Check that Pattern doesn't match.

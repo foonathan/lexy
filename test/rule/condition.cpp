@@ -20,16 +20,10 @@ TEST_CASE("rule: if_")
             assert(cur == str);
             return 0;
         }
-
-        constexpr int error(test_error<lexy::expected_pattern> e)
-        {
-            assert(e.position() == str);
-            return -1;
-        }
     };
 
     constexpr auto empty = rule_matches<callback>(rule, "");
-    CHECK(empty == -1);
+    CHECK(empty == 0);
 
     constexpr auto abc = rule_matches<callback>(rule, "abc");
     CHECK(abc == 0);
@@ -49,19 +43,13 @@ TEST_CASE("rule: unless")
             assert(cur == str);
             return 0;
         }
-
-        constexpr int error(test_error<lexy::unexpected_pattern> e)
-        {
-            assert(e.position() == str);
-            return -1;
-        }
     };
 
     constexpr auto empty = rule_matches<callback>(rule, "");
     CHECK(empty == 0);
 
     constexpr auto abc = rule_matches<callback>(rule, "abc");
-    CHECK(abc == -1);
+    CHECK(abc == 0);
 }
 
 TEST_CASE("rule: not")
@@ -78,18 +66,12 @@ TEST_CASE("rule: not")
             assert(cur == str);
             return 0;
         }
-
-        constexpr int error(test_error<lexy::unexpected_pattern> e)
-        {
-            assert(e.position() == str);
-            return -1;
-        }
     };
 
     constexpr auto empty = rule_matches<callback>(rule, "");
     CHECK(empty == 0);
 
     constexpr auto abc = rule_matches<callback>(rule, "abc");
-    CHECK(abc == -1);
+    CHECK(abc == 0);
 }
 
