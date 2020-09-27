@@ -43,13 +43,9 @@ template <typename Input, typename Rule, typename = std::enable_if_t<is_rule<Rul
 LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule)
 {
     auto reader = input.reader();
-    if constexpr (is_pattern<Rule>)
-        return Rule::matcher::match(reader);
-    else
-    {
-        _match_context context;
-        return !!Rule::template parser<final_parser>::parse(context, reader);
-    }
+
+    _match_context context;
+    return !!Rule::template parser<final_parser>::parse(context, reader);
 }
 
 template <typename Production, typename Input>
