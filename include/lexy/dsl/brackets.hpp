@@ -66,7 +66,7 @@ struct _brackets
         return o >> lexyd::list(!c >> r, sep);
     }
 
-    /// Matches `opt_list(r, sep)` surrounded by brackets.
+    /// Matches `opt(list(r, sep))` surrounded by brackets.
     /// The rule does not require a condition.
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
@@ -74,7 +74,7 @@ struct _brackets
         auto o = open(*this);
         auto c = close(*this);
         // We match list items until we have the closing bracket.
-        return o >> lexyd::opt_list(!c >> r);
+        return o >> lexyd::opt(lexyd::list(!c >> r));
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
@@ -82,7 +82,7 @@ struct _brackets
         auto o = open(*this);
         auto c = close(*this);
         // We match list items until we have the closing bracket.
-        return o >> lexyd::opt_list(!c >> r, sep);
+        return o >> lexyd::opt(lexyd::list(!c >> r, sep));
     }
 
     /// Matches the open bracket.

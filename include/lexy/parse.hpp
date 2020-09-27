@@ -71,11 +71,23 @@ public:
     template <typename... Args>
     constexpr auto value(Args&&... args) &&
     {
-        if constexpr (!_detail::is_detected<_production_value, Production> && sizeof...(Args) == 1)
-            // We don't have a value callback and only a single argument.
-            // This means the result of the list builder (which we must have), is our result.
-            return result_type(lexy::result_value, LEXY_FWD(args)...);
+        if constexpr (!_detail::is_detected<_production_value, Production>)
+        {
+            // We don't have a value callback, which means we must have a list callback.
+            // Use it to handle the arguments.
+
+            if constexpr (sizeof...(Args) == 0)
+                // No arguments, build an empty list.
+                return result_type(lexy::result_value, Production::list.sink().finish());
+            else if constexpr (sizeof...(Args) == 1)
+                // Single argument, return that one.
+                return result_type(lexy::result_value, LEXY_FWD(args)...);
+            else
+                static_assert(_detail::error<Production, Args...>,
+                              "missing value callback for Production");
+        }
         else
+            // Pass the arguments to the value callback.
             return lexy::invoke_as_result<result_type>(lexy::result_value, Production::value,
                                                        LEXY_FWD(args)...);
     }

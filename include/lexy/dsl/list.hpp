@@ -142,7 +142,7 @@ struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
 
 namespace lexyd
 {
-template <typename Item, typename Sep>
+template <typename First, typename Item, typename Sep>
 struct _list : rule_base
 {
     static constexpr auto has_matcher = false;
@@ -161,8 +161,8 @@ struct _list : rule_base
             // arguments to the sink. Once that's done we continue with the proper loop.
             using loop         = _list_loop_parser<Item, Sep, NextParser>;
             using continuation = _list_item_done<loop, Args...>;
-            return Item::template parser<continuation>::parse(context, reader, sink,
-                                                              LEXY_FWD(args)...);
+            return First::template parser<continuation>::parse(context, reader, sink,
+                                                               LEXY_FWD(args)...);
         }
     };
 };
@@ -173,83 +173,41 @@ LEXY_CONSTEVAL auto list(Item item)
 {
     static_assert(lexy::is_branch_rule<Item>,
                   "list() without a separator requires a branch condition");
-    return _list<decltype(branch(item)), void>{};
+    using branch_rule = decltype(branch(item));
+
+    // We turn the condition of the first item into a condition for the entire list.
+    return
+        typename branch_rule::condition{} >> _list<typename branch_rule::then, branch_rule, void>{};
 }
 
 /// Creates a list of items with the specified separator.
 template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto list(Item, _sep<Pattern>)
+LEXY_CONSTEVAL auto list(Item item, _sep<Pattern>)
 {
-    return _list<Item, _sep<Pattern>>{};
+    if constexpr (lexy::is_branch_rule<Item>)
+    {
+        using branch_rule = decltype(branch(item));
+
+        // We turn the condition of the first item into a condition for the entire list.
+        return typename branch_rule::condition{}
+               >> _list<typename branch_rule::then, branch_rule, _sep<Pattern>>{};
+    }
+    else
+        // We don't have a condition.
+        return _list<Item, Item, _sep<Pattern>>{};
 }
 
 /// Creates a list of items with the specified separator that can be trailing.
 template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto list(Item, _tsep<Pattern>)
+LEXY_CONSTEVAL auto list(Item item, _tsep<Pattern>)
 {
     static_assert(lexy::is_branch_rule<Item>,
                   "list() without a trailing separator requires a branch condition");
-    return _list<Item, _tsep<Pattern>>{};
-}
-} // namespace lexyd
+    using branch_rule = decltype(branch(item));
 
-namespace lexyd
-{
-template <typename Item, typename Sep>
-struct _opt_list : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
-        {
-            auto sink = context.list_sink();
-
-            // The Item is a branch, so we can check whether we have at least one.
-            if (Item::condition_matcher::match(reader))
-            {
-                // We parse the remainder of Item and jump in the loop.
-                using loop         = _list_loop_parser<Item, Sep, NextParser>;
-                using continuation = _list_item_done<loop, Args...>;
-                return Item::template then_parser<continuation>::parse(context, reader, sink,
-                                                                       LEXY_FWD(args)...);
-            }
-            else
-            {
-                // We're done.
-                return _list_done<NextParser>::parse(context, reader, sink, LEXY_FWD(args)...);
-            }
-        }
-    };
-};
-
-/// Creates a (possibly empty) list of items without a separator.
-template <typename Item>
-LEXY_CONSTEVAL auto opt_list(Item item)
-{
-    static_assert(lexy::is_branch_rule<Item>,
-                  "opt_list() without a separator requires a branch condition");
-    return _opt_list<decltype(branch(item)), void>{};
-}
-
-/// Creates a (possibly empty) list of items with the specified separator.
-template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto opt_list(Item, _sep<Pattern>)
-{
-    return _opt_list<Item, _sep<Pattern>>{};
-}
-
-/// Creates a (possibly empty) list of items with the specified separator that can be trailing.
-template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto opt_list(Item, _tsep<Pattern>)
-{
-    static_assert(lexy::is_branch_rule<Item>,
-                  "opt_list() without a trailing separator requires a branch condition");
-    return _opt_list<Item, _tsep<Pattern>>{};
+    // We turn the condition of the first item into a condition for the entire list.
+    return typename branch_rule::condition{}
+           >> _list<typename branch_rule::then, branch_rule, _tsep<Pattern>>{};
 }
 } // namespace lexyd
 

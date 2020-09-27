@@ -30,7 +30,7 @@ namespace dsl = lexy::dsl;
 
 struct string_p
 {
-    static constexpr auto rule = capture(while_(dsl::ascii::alnum));
+    static constexpr auto rule = capture(dsl::ascii::alnum + while_(dsl::ascii::alnum));
 
     static constexpr auto value = lexy::construct<lexy::string_lexeme<>>;
 };
@@ -54,7 +54,7 @@ using parse_value::string_p;
 
 struct string_list_p
 {
-    static constexpr auto rule = dsl::parenthesized.list(dsl::p<string_p>, sep(dsl::comma));
+    static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
     static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
 };
@@ -70,11 +70,12 @@ using parse_value::string_p;
 
 struct string_list_p
 {
-    static constexpr auto rule = dsl::parenthesized.list(dsl::p<string_p>, sep(dsl::comma));
+    static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
     static constexpr auto list = lexy::container<std::vector<lexy::string_lexeme<>>>;
     static constexpr auto value
-        = lexy::callback<std::size_t>([](const auto& vec) { return vec.size(); });
+        = lexy::callback<std::size_t>([] { return std::size_t(0); },
+                                      [](const auto& vec) { return vec.size(); });
 };
 
 using prod = string_list_p;
@@ -106,6 +107,10 @@ TEST_CASE("parse")
         auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
 
+        auto parens = lexy::parse<prod>(lexy::zstring_input("()"), lexy::noop);
+        CHECK(parens);
+        CHECK(parens.value().empty());
+
         auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
         CHECK(abc);
         CHECK(abc.value().size() == 1);
@@ -136,6 +141,10 @@ TEST_CASE("parse")
 
         auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
+
+        auto parens = lexy::parse<prod>(lexy::zstring_input("()"), lexy::noop);
+        CHECK(parens);
+        CHECK(parens.value() == 0);
 
         auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
         CHECK(abc);

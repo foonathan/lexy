@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/label.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("rule: list without separator")
@@ -194,9 +195,9 @@ TEST_CASE("rule: list with trailing separator")
     CHECK(trailing == 1);
 }
 
-TEST_CASE("rule: opt_list without separator")
+TEST_CASE("rule: opt(list) without separator")
 {
-    constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
+    constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 
@@ -225,6 +226,11 @@ TEST_CASE("rule: opt_list without separator")
             return b{};
         }
 
+        constexpr int success(const char* cur)
+        {
+            assert(cur == str);
+            return 0;
+        }
         constexpr int success(const char* cur, int count)
         {
             assert(cur - str == 3 * count);
@@ -252,9 +258,9 @@ TEST_CASE("rule: opt_list without separator")
     CHECK(three == 3);
 }
 
-TEST_CASE("rule: opt_list with separator")
+TEST_CASE("rule: opt(list) with separator")
 {
-    constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(",")));
+    constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 
@@ -283,11 +289,13 @@ TEST_CASE("rule: opt_list with separator")
             return b{};
         }
 
+        constexpr int success(const char* cur)
+        {
+            assert(cur == str);
+            return 0;
+        }
         constexpr int success(const char* cur, int count)
         {
-            if (str == cur)
-                return count;
-
             assert(cur - str == 4 * count - 1);
             return count;
         }
@@ -316,10 +324,10 @@ TEST_CASE("rule: opt_list with separator")
     CHECK(no_sep == 1);
 }
 
-TEST_CASE("rule: opt_list with trailing separator")
+TEST_CASE("rule: opt(list) with trailing separator")
 {
     constexpr auto rule
-        = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
+        = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 
@@ -348,11 +356,13 @@ TEST_CASE("rule: opt_list with trailing separator")
             return b{};
         }
 
+        constexpr int success(const char* cur)
+        {
+            assert(cur == str);
+            return 0;
+        }
         constexpr int success(const char* cur, int count)
         {
-            if (cur == str)
-                return count;
-
             if (cur[-1] == ',')
                 assert(cur - str == 4 * count);
             else
