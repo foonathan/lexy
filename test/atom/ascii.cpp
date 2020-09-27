@@ -31,11 +31,11 @@ TEST_CASE("atom: ascii character class")
         INFO(code << " '" << c << "'");
         REQUIRE(is(character, c));
 
-        auto category_count = is(control, c) + is(blank, c) + is(newline, c) + is(digit, c)
-                              + is(lower, c) + is(upper, c) + is(punct, c);
+        auto category_count = is(control, c) + is(blank, c) + is(newline, c) + is(other_space, c)
+                              + is(digit, c) + is(lower, c) + is(upper, c) + is(punct, c);
         REQUIRE(category_count == 1);
 
-        if (is(blank, c) || is(newline, c))
+        if (is(blank, c) || is(newline, c) || is(other_space, c))
             REQUIRE(is(space, c));
         else
             REQUIRE(!is(space, c));

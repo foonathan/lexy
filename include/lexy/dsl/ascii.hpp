@@ -72,11 +72,25 @@ struct _newline
     template <typename Encoding, typename IntType>
     LEXY_DSL_FUNC bool match(IntType c)
     {
-        return c == Encoding::to_int_type('\n') || c == Encoding::to_int_type('\r')
-               || c == Encoding::to_int_type('\f') || c == Encoding::to_int_type('\v');
+        return c == Encoding::to_int_type('\n') || c == Encoding::to_int_type('\r');
     }
 };
 inline constexpr auto newline = _ascii<_newline>{};
+
+struct _other_space
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "ASCII.other-space";
+    }
+
+    template <typename Encoding, typename IntType>
+    LEXY_DSL_FUNC bool match(IntType c)
+    {
+        return c == Encoding::to_int_type('\f') || c == Encoding::to_int_type('\v');
+    }
+};
+inline constexpr auto other_space = _ascii<_other_space>{};
 
 struct _space
 {
@@ -88,7 +102,8 @@ struct _space
     template <typename Encoding, typename IntType>
     LEXY_DSL_FUNC bool match(IntType c)
     {
-        return _blank::template match<Encoding>(c) || _newline::template match<Encoding>(c);
+        return _blank::template match<Encoding>(c) || _newline::template match<Encoding>(c)
+               || _other_space::template match<Encoding>(c);
     }
 };
 inline constexpr auto space = _ascii<_space>{};
