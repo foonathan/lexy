@@ -45,7 +45,7 @@ public:
         else
             // If we don't have a Production::value callback, we must have only the list.
             // Then the list return type determines value.
-            return Production::list;
+            return Production::list.sink();
     }
     using result_type = result<typename decltype(_result_value_cb())::return_type,
                                typename Callback::return_type>;
