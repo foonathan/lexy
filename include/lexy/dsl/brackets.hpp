@@ -55,7 +55,8 @@ struct _brackets
     {
         auto o = open(*this);
         auto c = close(*this);
-        // We match list items until we have the closing bracket.
+        // We parse the list item while we're haven't matched the closing bracket.
+        // When we're done with the list, we will have consumed the closing bracket.
         return o >> lexyd::list(!c >> r);
     }
     template <typename R, typename S>
@@ -63,8 +64,10 @@ struct _brackets
     {
         auto o = open(*this);
         auto c = close(*this);
-        // We match list items until we have the closing bracket.
-        return o >> lexyd::list(!c >> r, sep);
+        // When we have a separator, it can influence whether or not we're trying to have another
+        // item. As such, we can't use !c - we can finish parsing the list without having matched
+        // the closing bracket. We use unless(c) and then parse c at the end.
+        return o >> lexyd::list(unless(c) >> r, sep) + c;
     }
 
     /// Matches `opt(list(r, sep))` surrounded by brackets.
@@ -74,7 +77,7 @@ struct _brackets
     {
         auto o = open(*this);
         auto c = close(*this);
-        // We match list items until we have the closing bracket.
+        // See above.
         return o >> lexyd::opt(lexyd::list(!c >> r));
     }
     template <typename R, typename S>
@@ -82,8 +85,8 @@ struct _brackets
     {
         auto o = open(*this);
         auto c = close(*this);
-        // We match list items until we have the closing bracket.
-        return o >> lexyd::opt(lexyd::list(!c >> r, sep));
+        // See above.
+        return o >> lexyd::opt(lexyd::list(unless(c) >> r, sep)) + c;
     }
 
     /// Matches the open bracket.

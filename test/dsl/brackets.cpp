@@ -5,6 +5,7 @@
 #include <lexy/dsl/brackets.hpp>
 
 #include <doctest.h>
+#include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
@@ -20,7 +21,7 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = LEXY_LIT("(") >> inner + LEXY_LIT(")");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
+        CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
     }
     SUBCASE("square_brackets")
     {
@@ -28,7 +29,7 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = LEXY_LIT("[") >> inner + LEXY_LIT("]");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("[abc]"), result));
+        CHECK(lexy::match(lexy::zstring_input("[abc]"), result + lexy::dsl::eof));
     }
     SUBCASE("curly_brackets")
     {
@@ -36,7 +37,7 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = LEXY_LIT("{") >> inner + LEXY_LIT("}");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("{abc}"), result));
+        CHECK(lexy::match(lexy::zstring_input("{abc}"), result + lexy::dsl::eof));
     }
     SUBCASE("angle_brackets")
     {
@@ -44,7 +45,7 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = LEXY_LIT("<") >> inner + LEXY_LIT(">");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("<abc>"), result));
+        CHECK(lexy::match(lexy::zstring_input("<abc>"), result + lexy::dsl::eof));
     }
     SUBCASE("parentheses")
     {
@@ -52,7 +53,7 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = LEXY_LIT("(") >> inner + LEXY_LIT(")");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
+        CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
     }
 
     SUBCASE("whitespace")
@@ -62,7 +63,7 @@ TEST_CASE("dsl::brackets")
                                     >> inner + whitespaced(LEXY_LIT(")"), LEXY_LIT(" "));
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input(" (abc )"), result));
+        CHECK(lexy::match(lexy::zstring_input(" (abc )"), result + lexy::dsl::eof));
     }
     SUBCASE("opt")
     {
@@ -73,8 +74,8 @@ TEST_CASE("dsl::brackets")
         constexpr auto equivalent = o >> opt(!c >> inner + c);
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("()"), result));
-        CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
+        CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+        CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
     }
     SUBCASE("list")
     {
@@ -87,32 +88,33 @@ TEST_CASE("dsl::brackets")
             constexpr auto equivalent = o >> list(!c >> inner);
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(!lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result));
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result + lexy::dsl::eof));
         }
         SUBCASE("sep")
         {
             constexpr auto result     = lexy::dsl::parenthesized.list(inner, sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> list(!c >> inner, sep(LEXY_LIT(",")));
+            constexpr auto equivalent = o >> list(unless(c) >> inner, sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(!lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result));
-            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result));
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
         }
         SUBCASE("trailing sep")
         {
             constexpr auto result
                 = lexy::dsl::parenthesized.list(inner, trailing_sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> list(!c >> inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto equivalent
+                = o >> list(unless(c) >> inner, trailing_sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(!lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result));
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
         }
     }
     SUBCASE("opt_list")
@@ -126,32 +128,33 @@ TEST_CASE("dsl::brackets")
             constexpr auto equivalent = o >> opt(list(!c >> inner));
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result));
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result + lexy::dsl::eof));
         }
         SUBCASE("sep")
         {
             constexpr auto result = lexy::dsl::parenthesized.opt_list(inner, sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> opt(list(!c >> inner, sep(LEXY_LIT(","))));
+            constexpr auto equivalent = o >> opt(list(unless(c) >> inner, sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result));
-            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result));
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
         }
         SUBCASE("trailing sep")
         {
             constexpr auto result
                 = lexy::dsl::parenthesized.opt_list(inner, trailing_sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> opt(list(!c >> inner, trailing_sep(LEXY_LIT(","))));
+            constexpr auto equivalent
+                = o >> opt(list(unless(c) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
-            CHECK(lexy::match(lexy::zstring_input("()"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result));
-            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result));
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
         }
     }
 }
