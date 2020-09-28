@@ -5,6 +5,7 @@
 #include <lexy/callback.hpp>
 
 #include <doctest.h>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -105,7 +106,7 @@ TEST_CASE("construct")
     }
 }
 
-TEST_CASE("container")
+TEST_CASE("list")
 {
     SUBCASE("callback")
     {
@@ -122,3 +123,22 @@ TEST_CASE("container")
         CHECK(result == std::vector<std::string>{"a", "b", "c"});
     }
 }
+
+TEST_CASE("collection")
+{
+    SUBCASE("callback")
+    {
+        std::set<int> s = lexy::collection<std::set<int>>(1, 2, 3);
+        CHECK(s == std::set{1, 2, 3});
+    }
+    SUBCASE("sink")
+    {
+        auto sink = lexy::collection<std::set<std::string>>.sink();
+        sink("a");
+        sink(std::string("b"));
+        sink(1, 'c');
+        std::set<std::string> result = LEXY_MOV(sink).finish();
+        CHECK(result == std::set<std::string>{"a", "b", "c"});
+    }
+}
+

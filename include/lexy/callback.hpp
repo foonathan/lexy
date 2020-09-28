@@ -230,9 +230,56 @@ struct _list
     }
 };
 
-/// A callback that builds a list of things.
+/// A callback that builds a list of things by calling `push_back()`.
 template <typename T>
 inline constexpr auto list = _list<T>{};
+
+template <typename T>
+struct _collection
+{
+    using return_type = T;
+
+    template <typename... Args>
+    constexpr T operator()(Args&&... args) const
+    {
+        // Use the initializer_list constructor.
+        return T{LEXY_FWD(args)...};
+    }
+
+    struct _sink
+    {
+        T _result;
+
+        using return_type = T;
+
+        void operator()(const typename T::value_type& obj)
+        {
+            _result.insert(obj);
+        }
+        void operator()(typename T::value_type&& obj)
+        {
+            _result.insert(LEXY_MOV(obj));
+        }
+        template <typename... Args>
+        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
+        {
+            _result.emplace(LEXY_FWD(args)...);
+        }
+
+        T&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+    constexpr auto sink() const
+    {
+        return _sink{};
+    }
+};
+
+/// A callback that builds a collection of things by calling `insert()`.
+template <typename T>
+inline constexpr auto collection = _collection<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
