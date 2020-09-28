@@ -5,7 +5,13 @@
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
 #define LEXY_DSL_DIGIT_HPP_INCLUDED
 
+#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/failure.hpp>
+#include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/option.hpp>
+#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/while.hpp>
 
 namespace lexyd
 {
@@ -238,8 +244,62 @@ struct _digit : atom_base<_digit<Base>>
 };
 
 /// Matches a single digit.
-template <typename Base>
+template <typename Base = decimal>
 constexpr auto digit = _digit<Base>{};
+} // namespace lexyd
+
+namespace lexy
+{
+struct forbidden_leading_zero
+{};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Base, typename Sep, bool LeadingZero>
+LEXY_CONSTEVAL auto _make_digits()
+{
+    auto d = digit<Base>;
+    if constexpr (LeadingZero)
+    {
+        if constexpr (std::is_same_v<Sep, void>)
+            return d + while_(d);
+        else
+            return d + while_(opt(Sep{}) + d);
+    }
+    else
+    {
+        if constexpr (std::is_same_v<Sep, void>)
+            return (d.zero() + prevent<lexy::forbidden_leading_zero>(d))
+                   / (d.non_zero() + while_(d));
+        else
+            return (d.zero() + prevent<lexy::forbidden_leading_zero>(d))
+                   / (d.non_zero() + while_(opt(Sep{}) + d));
+    }
+}
+
+template <typename Base, typename Sep, bool LeadingZero>
+struct _digits : decltype(_make_digits<Base, Sep, LeadingZero>())
+{
+    template <typename Pattern>
+    LEXY_CONSTEVAL auto sep(Pattern) const
+    {
+        static_assert(lexy::is_pattern<Pattern>);
+        return _digits<Base, Pattern, LeadingZero>{};
+    }
+
+    LEXY_CONSTEVAL auto no_leading_zero() const
+    {
+        return _digits<Base, Sep, false>{};
+    }
+};
+
+/// Matches a non-empty list of digits.
+template <typename Base = decimal>
+constexpr auto digits = _digits<Base, void, true>{};
+
+constexpr auto digit_sep_underscore = LEXY_LIT("_");
+constexpr auto digit_sep_tick       = LEXY_LIT("'");
 } // namespace lexyd
 
 #endif // LEXY_DSL_DIGIT_HPP_INCLUDED
