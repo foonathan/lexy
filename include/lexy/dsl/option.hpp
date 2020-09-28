@@ -20,8 +20,8 @@ struct _opt : rule_base
         template <typename Reader>
         LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            if (auto reset = reader; Branch::matcher::match(reader))
-                return true;
+            if (auto reset = reader; Branch::condition_matcher::match(reader))
+                return Branch::then::matcher::match(reader);
             else
             {
                 reader = LEXY_MOV(reset);

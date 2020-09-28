@@ -9,8 +9,9 @@
 TEST_CASE("_detail::invoke")
 {
     const auto function
-        = lexy::_detail::invoke([](int a, char b, float c) { return a + b + c; }, 1, '\x02', 3.f);
-    CHECK(function == 6);
+        = lexy::_detail::invoke([](int a, char b, float c) { return float(a) + b + c; }, 1, '\x02',
+                                3.f);
+    CHECK(function == 6.);
 
     struct test_class
     {
