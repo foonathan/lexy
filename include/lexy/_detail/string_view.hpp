@@ -79,6 +79,12 @@ public:
         return _begin;
     }
 
+    template <typename String, typename = decltype(String(nullptr, 1))>
+    constexpr operator String() const
+    {
+        return String(data(), size());
+    }
+
     //=== operations ===//
     static constexpr std::size_t npos = std::size_t(-1);
 
