@@ -252,11 +252,21 @@ struct _escape
         static_assert(lexy::is_pattern<Pattern>);
         return _escape<EscapePattern, EscapeArguments..., _escape_lit<Pattern, Replacement>>{};
     }
+    template <auto C, typename Replacement>
+    LEXY_CONSTEVAL auto literal(Replacement rep) const
+    {
+        return literal(lit_c<C>, rep);
+    }
     /// Replace the escaped literal with itself.
     template <typename Replacement>
     LEXY_CONSTEVAL auto literal(Replacement rep) const
     {
         return literal(_lit<Replacement>{}, rep);
+    }
+    template <auto C>
+    LEXY_CONSTEVAL auto literal() const
+    {
+        return literal(lit_c<C>, lexy::_detail::type_char<C>{});
     }
 };
 
