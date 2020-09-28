@@ -80,4 +80,23 @@ using lexeme_for
     = lexeme<typename input_reader<Input>::encoding, typename input_reader<Input>::iterator>;
 } // namespace lexy
 
+namespace lexy
+{
+template <typename String>
+struct _as_string
+{
+    using return_type = String;
+
+    template <typename Encoding, typename Iterator>
+    constexpr String operator()(const lexeme<Encoding, Iterator>& lexeme) const
+    {
+        return lexeme.string_view();
+    }
+};
+
+/// A callback that turns a lexeme into a string.
+template <typename String>
+constexpr auto as_string = _as_string<String>{};
+} // namespace lexy
+
 #endif // LEXY_LEXEME_HPP_INCLUDED
