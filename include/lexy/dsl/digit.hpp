@@ -17,7 +17,7 @@ namespace lexyd
 {
 struct binary
 {
-    static constexpr int radix = 2;
+    static constexpr unsigned radix = 2;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -31,15 +31,21 @@ struct binary
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        return static_cast<unsigned>(c) - '0';
     }
 };
 
 struct octal
 {
-    static constexpr int radix = 8;
+    static constexpr unsigned radix = 8;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -53,15 +59,21 @@ struct octal
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        return static_cast<unsigned>(c) - '0';
     }
 };
 
 struct decimal
 {
-    static constexpr int radix = 10;
+    static constexpr unsigned radix = 10;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -75,15 +87,21 @@ struct decimal
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        return static_cast<unsigned>(c) - '0';
     }
 };
 
 struct hex_lower
 {
-    static constexpr int radix = 16;
+    static constexpr unsigned radix = 16;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -98,18 +116,26 @@ struct hex_lower
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        if (c <= Encoding::to_int_type('9'))
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        if (c >= 'a')
+            return static_cast<unsigned>(c) - 'a' + 10;
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
         else
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('a')) + 10;
+            return unsigned(-1);
     }
 };
 
 struct hex_upper
 {
-    static constexpr int radix = 16;
+    static constexpr unsigned radix = 16;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -124,18 +150,26 @@ struct hex_upper
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        if (c <= Encoding::to_int_type('9'))
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        if (c >= 'A')
+            return static_cast<unsigned>(c) - 'A' + 10;
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
         else
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('A')) + 10;
+            return unsigned(-1);
     }
 };
 
 struct hex
 {
-    static constexpr int radix = 16;
+    static constexpr unsigned radix = 16;
 
     static LEXY_CONSTEVAL auto name()
     {
@@ -151,14 +185,22 @@ struct hex
     }
 
     template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC int value(IntType c)
+    LEXY_DSL_FUNC bool match_zero(IntType c)
     {
-        if (c <= Encoding::to_int_type('9'))
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('0'));
-        else if (c <= Encoding::to_int_type('F'))
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('A')) + 10;
+        return c == Encoding::to_int_type('0');
+    }
+
+    template <typename CharT>
+    LEXY_DSL_FUNC unsigned value(CharT c)
+    {
+        if (c >= 'a')
+            return static_cast<unsigned>(c) - 'a' + 10;
+        else if (c >= 'A')
+            return static_cast<unsigned>(c) - 'A' + 10;
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
         else
-            return static_cast<int>(c) - static_cast<int>(Encoding::to_int_type('a')) + 10;
+            return unsigned(-1);
     }
 };
 } // namespace lexyd
@@ -173,7 +215,7 @@ struct _zero : atom_base<_zero<Base>>
     {
         if (!Base::template match<typename Reader::encoding>(reader.peek()))
             return false;
-        else if (Base::template value<typename Reader::encoding>(reader.peek()) != 0)
+        else if (!Base::template match_zero<typename Reader::encoding>(reader.peek()))
             return false;
 
         reader.bump();
@@ -195,7 +237,7 @@ struct _nzero : atom_base<_nzero<Base>>
     {
         if (!Base::template match<typename Reader::encoding>(reader.peek()))
             return false;
-        else if (Base::template value<typename Reader::encoding>(reader.peek()) == 0)
+        else if (Base::template match_zero<typename Reader::encoding>(reader.peek()))
             return false;
 
         reader.bump();
@@ -205,10 +247,10 @@ struct _nzero : atom_base<_nzero<Base>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
-        if (!Base::template match<typename Reader::encoding>(reader.peek()))
-            return lexy::expected_char_class::error<Reader>(pos, Base::name());
-        else
+        if (Base::template match_zero<typename Reader::encoding>(reader.peek()))
             return lexy::expected_char_class::error<Reader>(pos, "digit.non-zero");
+        else
+            return lexy::expected_char_class::error<Reader>(pos, Base::name());
     }
 };
 

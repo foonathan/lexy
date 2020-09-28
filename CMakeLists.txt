@@ -29,3 +29,8 @@ if(${LEXY_BUILD_TEST} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
     add_subdirectory(test)
 endif()
 
+option(LEXY_BUILD_EXAMPLE "build examples of lexy" OFF)
+if(${LEXY_BUILD_EXAMPLE} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+    add_subdirectory(example)
+endif()
+

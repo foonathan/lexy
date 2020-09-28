@@ -11,10 +11,22 @@ namespace
 template <typename Radix, typename... Digits>
 void radix_match(Digits... digits)
 {
-    for (auto c = 0; c <= 127; ++c)
+    for (auto c = 0; c <= 255; ++c)
     {
         auto valid = ((c == digits) || ...);
         CHECK(Radix::template match<test_encoding>(test_encoding::int_type{c}) == valid);
+        CHECK(Radix::template match_zero<test_encoding>(test_encoding::int_type{c}) == (c == '0'));
+
+        if (valid)
+        {
+            CHECK(0 <= Radix::value(c));
+            CHECK(Radix::value(c) < Radix::radix);
+        }
+        else
+        {
+            INFO(char(c));
+            CHECK(Radix::value(c) >= Radix::radix);
+        }
     }
 }
 } // namespace
@@ -26,7 +38,7 @@ TEST_CASE("radix: binary")
     CHECK(radix::name() == lexy::_detail::string_view("digit.binary"));
 
     for (auto digit = 0; digit < 2; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
 
     radix_match<radix>('0', '1');
 }
@@ -38,7 +50,7 @@ TEST_CASE("radix: octal")
     CHECK(radix::name() == lexy::_detail::string_view("digit.octal"));
 
     for (auto digit = 0; digit < 8; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7');
 }
@@ -50,7 +62,7 @@ TEST_CASE("radix: decimal")
     CHECK(radix::name() == lexy::_detail::string_view("digit.decimal"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
 }
@@ -62,9 +74,9 @@ TEST_CASE("radix: hex_lower")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex-lower"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'a' + digit}) == 10 + digit);
+        CHECK(radix::value(test_encoding::char_type('a' + digit)) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
                        'f');
@@ -77,9 +89,9 @@ TEST_CASE("radix: hex_upper")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex-upper"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'A' + digit}) == 10 + digit);
+        CHECK(radix::value(test_encoding::char_type('A' + digit)) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
                        'F');
@@ -92,11 +104,11 @@ TEST_CASE("radix: hex")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'0' + digit}) == digit);
+        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'A' + digit}) == 10 + digit);
+        CHECK(radix::value(test_encoding::char_type('A' + digit)) == 10 + digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value<test_encoding>(test_encoding::int_type{'a' + digit}) == 10 + digit);
+        CHECK(radix::value(test_encoding::char_type('a' + digit)) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
                        'f', 'A', 'B', 'C', 'D', 'E', 'F');
