@@ -75,16 +75,20 @@ struct _chc : rule_base
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator|(R r, S s)
 {
+    static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
+    static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
     return _chc<decltype(branch(r)), decltype(branch(s))>{};
 }
 template <typename... R, typename S>
 LEXY_CONSTEVAL auto operator|(_chc<R...>, S s)
 {
+    static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
     return _chc<R..., decltype(branch(s))>{};
 }
 template <typename R, typename... S>
 LEXY_CONSTEVAL auto operator|(R r, _chc<S...>)
 {
+    static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
     return _chc<decltype(branch(r)), S...>{};
 }
 template <typename... R, typename... S>

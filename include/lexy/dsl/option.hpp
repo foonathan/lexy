@@ -53,6 +53,7 @@ struct _opt : rule_base
 template <typename Rule>
 LEXY_CONSTEVAL auto opt(Rule rule)
 {
+    static_assert(lexy::is_branch_rule<Rule>, "option rule must be a branch");
     return _opt(branch(rule));
 }
 } // namespace lexyd

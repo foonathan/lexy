@@ -47,11 +47,9 @@ struct _prd : rule_base
     using parser = _prd_parser<Production, _rule, NextParser>;
 
     // Allow using the production as a branch, if its rule is a branch rule.
+    template <typename R = _rule, typename = std::enable_if_t<lexy::is_branch_rule<R>>>
     friend LEXY_CONSTEVAL auto branch(_prd)
     {
-        static_assert(lexy::is_branch_rule<_rule>,
-                      "production cannot be used in a branch without a condition");
-
         using branch_rule = decltype(branch(_rule()));
         return typename branch_rule::condition{} >> _prd<Production, typename branch_rule::then>{};
     }

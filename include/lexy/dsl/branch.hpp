@@ -5,16 +5,15 @@
 #ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
 #define LEXY_DSL_BRANCH_HPP_INCLUDED
 
+#include <lexy/_detail/detect.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/success.hpp>
 
 namespace lexyd
 {
-struct _br_base
-{};
 template <typename Condition, typename Then>
-struct _br : rule_base, _br_base
+struct _br : rule_base
 {
     using condition                        = Condition;
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
@@ -79,10 +78,9 @@ LEXY_CONSTEVAL auto operator>>(Condition, Then)
 }
 
 /// Turns a pattern into a branch.
-template <typename Pattern>
+template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
 LEXY_CONSTEVAL auto branch(Pattern pattern)
 {
-    static_assert(lexy::is_pattern<Pattern>, "non-pattern rule requires a condition");
     return pattern >> success;
 }
 } // namespace lexyd
@@ -105,7 +103,10 @@ inline constexpr auto else_ = _else{};
 namespace lexy
 {
 template <typename Rule>
-constexpr auto is_branch_rule = is_pattern<Rule> || std::is_base_of_v<lexyd::_br_base, Rule>;
+using _detect_branch = decltype(branch(Rule{}));
+
+template <typename Rule>
+constexpr auto is_branch_rule = _detail::is_detected<_detect_branch, Rule>;
 } // namespace lexy
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED

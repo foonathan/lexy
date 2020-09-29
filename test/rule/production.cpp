@@ -34,6 +34,14 @@ struct prod
 };
 } // namespace p_branch
 
+namespace p_branch_branch
+{
+struct prod
+{
+    static constexpr auto rule = lexy::dsl::p<p_branch::prod>;
+};
+} // namespace p_branch_branch
+
 TEST_CASE("rule: p")
 {
     SUBCASE("basic")
@@ -120,6 +128,53 @@ TEST_CASE("rule: p")
             constexpr int success(prod, lexy::id<0>)
             {
                 return 0;
+            }
+
+            constexpr int success(const char* cur, int result)
+            {
+                assert(lexy::_detail::string_view(str, cur) == "abc");
+                assert(result == 0);
+                return result;
+            }
+            constexpr int success(const char* cur, lexy::id<1>)
+            {
+                assert(lexy::_detail::string_view(str, cur) == "def");
+                return 1;
+            }
+
+            constexpr int error(test_error<lexy::exhausted_choice> e)
+            {
+                assert(e.position() == str);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 0);
+        constexpr auto def = rule_matches<callback>(rule, "def");
+        CHECK(def == 1);
+    }
+    SUBCASE("branch in branch")
+    {
+        using namespace p_branch_branch;
+        constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(p_branch::prod, lexy::id<0>)
+            {
+                return 0;
+            }
+            constexpr int success(prod, int i)
+            {
+                return i;
             }
 
             constexpr int success(const char* cur, int result)
