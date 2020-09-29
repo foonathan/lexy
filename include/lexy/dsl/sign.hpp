@@ -14,12 +14,17 @@
 namespace lexy
 {
 template <typename T>
-struct _signed_integer
+struct _int
 {
     using return_type = T;
 
     template <typename Integer>
-    constexpr T operator()(int sign, Integer value) const
+    constexpr T operator()(const Integer& value) const
+    {
+        return T(value);
+    }
+    template <typename Integer>
+    constexpr T operator()(int sign, const Integer& value) const
     {
         return T(sign * value);
     }
@@ -27,7 +32,7 @@ struct _signed_integer
 
 // A callback that takes a sign and an integer and produces the signed integer.
 template <typename T>
-constexpr auto signed_integer = _signed_integer<T>{};
+constexpr auto as_integer = _int<T>{};
 } // namespace lexy
 
 namespace lexyd
@@ -43,4 +48,3 @@ constexpr auto sign
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
-

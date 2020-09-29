@@ -106,16 +106,16 @@ TEST_CASE("construct")
     }
 }
 
-TEST_CASE("list")
+TEST_CASE("as_list")
 {
     SUBCASE("callback")
     {
-        std::vector<int> vec = lexy::list<std::vector<int>>(1, 2, 3);
+        std::vector<int> vec = lexy::as_list<std::vector<int>>(1, 2, 3);
         CHECK(vec == std::vector{1, 2, 3});
     }
     SUBCASE("sink")
     {
-        auto sink = lexy::list<std::vector<std::string>>.sink();
+        auto sink = lexy::as_list<std::vector<std::string>>.sink();
         sink("a");
         sink(std::string("b"));
         sink(1, 'c');
@@ -124,16 +124,16 @@ TEST_CASE("list")
     }
 }
 
-TEST_CASE("collection")
+TEST_CASE("as_collection")
 {
     SUBCASE("callback")
     {
-        std::set<int> s = lexy::collection<std::set<int>>(1, 2, 3);
+        std::set<int> s = lexy::as_collection<std::set<int>>(1, 2, 3);
         CHECK(s == std::set{1, 2, 3});
     }
     SUBCASE("sink")
     {
-        auto sink = lexy::collection<std::set<std::string>>.sink();
+        auto sink = lexy::as_collection<std::set<std::string>>.sink();
         sink("a");
         sink(std::string("b"));
         sink(1, 'c');
@@ -141,4 +141,3 @@ TEST_CASE("collection")
         CHECK(result == std::set<std::string>{"a", "b", "c"});
     }
 }
-

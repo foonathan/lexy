@@ -232,7 +232,7 @@ struct _list
 
 /// A callback that builds a list of things by calling `push_back()`.
 template <typename T>
-inline constexpr auto list = _list<T>{};
+inline constexpr auto as_list = _list<T>{};
 
 template <typename T>
 struct _collection
@@ -279,7 +279,7 @@ struct _collection
 
 /// A callback that builds a collection of things by calling `insert()`.
 template <typename T>
-inline constexpr auto collection = _collection<T>{};
+inline constexpr auto as_collection = _collection<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
