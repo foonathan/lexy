@@ -5,6 +5,8 @@
 #include <lexy/dsl/whitespace.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/label.hpp>
+#include <lexy/dsl/option.hpp>
 
 TEST_CASE("rule: whitespace")
 {
@@ -12,6 +14,7 @@ TEST_CASE("rule: whitespace")
     {
         constexpr auto rule = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
 
         struct callback
         {
@@ -44,6 +47,7 @@ TEST_CASE("rule: whitespace")
     {
         constexpr auto rule = capture(whitespaced(LEXY_LIT("abc"), LEXY_LIT(" ")));
         CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_branch_rule<decltype(rule)>);
 
         struct callback
         {
@@ -78,6 +82,7 @@ TEST_CASE("rule: whitespace")
         constexpr auto rule = lexy::dsl::capture<lexy::_detail::string_view>(
             whitespaced(LEXY_LIT("abc"), LEXY_LIT(" ")));
         CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_branch_rule<decltype(rule)>);
 
         struct callback
         {
@@ -106,6 +111,40 @@ TEST_CASE("rule: whitespace")
         CHECK(space_abc == 1);
         constexpr auto space_space_abc = rule_matches<callback>(rule, "  abc");
         CHECK(space_space_abc == 2);
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto rule_ = whitespaced(LEXY_LIT("abc") >> lexy::dsl::id<0>, LEXY_LIT(" "));
+        CHECK(lexy::is_rule<decltype(rule_)>);
+        CHECK(lexy::is_branch_rule<decltype(rule_)>);
+
+        constexpr auto rule = opt(rule_);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                assert(cur == str);
+                return 0;
+            }
+            constexpr int success(const char* cur, lexy::id<0>)
+            {
+                return int(cur - str);
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 3);
+
+        constexpr auto space_abc = rule_matches<callback>(rule, " abc");
+        CHECK(space_abc == 4);
+        constexpr auto space_space_abc = rule_matches<callback>(rule, "  abc");
+        CHECK(space_space_abc == 5);
     }
 }
 

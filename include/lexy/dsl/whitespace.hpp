@@ -6,6 +6,7 @@
 #define LEXY_DSL_WHITESPACE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/while.hpp>
 
@@ -31,6 +32,16 @@ struct _ws : rule_base
     template <typename NextParser>
     using parser =
         typename _whitespace::template parser<typename Rule::template parser<NextParser>>;
+
+    /// Make it a branch rule, if the rule is a branch rule.
+    /// If the rule isn't a branch rule, we could make the whitespace the condition, but this is
+    /// probably insufficient to identify the rule.
+    template <typename R = Rule, typename = std::enable_if_t<lexy::is_branch_rule<R>>>
+    friend LEXY_CONSTEVAL auto branch(_ws)
+    {
+        // We just add another condition to the left of the branch rule.
+        return _whitespace{} >> branch(Rule{});
+    }
 };
 
 /// Capturing a whitespaced rule doesn't capture the whitespace.
