@@ -39,6 +39,11 @@ LEXY_CONSTEVAL auto capture(_ws<Rule, Whitespace>)
 {
     return _ws<decltype(capture(Rule{})), Whitespace>{};
 }
+template <typename T, typename Rule, typename Whitespace>
+LEXY_CONSTEVAL auto capture(_ws<Rule, Whitespace>)
+{
+    return _ws<decltype(lexy::dsl::capture<T>(Rule{})), Whitespace>{};
+}
 
 /// Matches whitespace before parsing rule.
 template <typename Rule, typename Whitespace>
