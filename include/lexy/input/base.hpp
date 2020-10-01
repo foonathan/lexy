@@ -63,13 +63,16 @@ constexpr auto range_size(I begin, I2 end)
     return result;
 }
 
-template <typename Input, typename Iterator, typename Sentinel = Iterator>
+template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
 class range_reader
 {
 public:
-    using encoding  = typename Input::encoding;
+    using encoding  = Encoding;
     using char_type = typename encoding::char_type;
     using iterator  = Iterator;
+
+    constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
+    {}
 
     constexpr auto peek() const noexcept
     {
@@ -90,13 +93,8 @@ public:
     }
 
 private:
-    constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
-    {}
-
     Iterator                   _cur;
     LEXY_EMPTY_MEMBER Sentinel _end;
-
-    friend Input;
 };
 } // namespace lexy::_detail
 

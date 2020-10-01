@@ -186,7 +186,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<argv_input, iterator>(_begin, _end);
+        return _detail::range_reader<encoding, iterator>(_begin, _end);
     }
 
 private:
@@ -210,8 +210,7 @@ namespace lexyd
 struct _argvsep : atom_base<_argvsep>
 {
     template <typename Encoding>
-    using _argv_reader
-        = lexy::_detail::range_reader<lexy::argv_input<Encoding>, lexy::argv_iterator>;
+    using _argv_reader = lexy::_detail::range_reader<Encoding, lexy::argv_iterator>;
 
     template <typename Encoding>
     LEXY_DSL_FUNC bool match(_argv_reader<Encoding>& reader)

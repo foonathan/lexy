@@ -71,7 +71,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<string_input, iterator>(_begin, _end);
+        return _detail::range_reader<encoding, iterator>(_begin, _end);
     }
 
 private:

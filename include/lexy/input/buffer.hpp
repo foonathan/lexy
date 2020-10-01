@@ -187,7 +187,7 @@ public:
             return reader_type(_data);
         }
         else
-            return _detail::range_reader<buffer, const char_type*>(_data, _data + _size);
+            return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
     }
 
 private:
