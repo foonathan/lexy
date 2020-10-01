@@ -14,22 +14,12 @@
 namespace lexy
 {
 /// The reader ends before the closing delimiter was found.
-struct missing_delimiter
+struct missing_delimiter : failure<missing_delimiter>
 {
-    template <typename Reader>
-    class error
+    static LEXY_CONSTEVAL auto name()
     {
-    public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-    };
+        return "missing delimiter";
+    }
 };
 } // namespace lexy
 
@@ -190,22 +180,12 @@ constexpr auto triple_backticked = delimited(LEXY_LIT("```"));
 
 namespace lexy
 {
-struct invalid_escape_sequence
+struct invalid_escape_sequence : failure<invalid_escape_sequence>
 {
-    template <typename Reader>
-    class error
+    static LEXY_CONSTEVAL auto name()
     {
-    public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-    };
+        return "invalid escape sequence";
+    }
 };
 } // namespace lexy
 

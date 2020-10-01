@@ -9,48 +9,6 @@
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
 
-namespace lexy
-{
-struct expected_literal
-{
-    template <typename Reader>
-    class error
-    {
-    public:
-        constexpr explicit error(typename Reader::iterator                              pos,
-                                 _detail::basic_string_view<typename Reader::char_type> str,
-                                 std::size_t index) noexcept
-        : _pos(pos), _str(str), _idx(index)
-        {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-        constexpr auto string() const noexcept
-        {
-            return _str;
-        }
-
-        constexpr std::size_t index() const noexcept
-        {
-            return _idx;
-        }
-
-        constexpr auto character() const noexcept
-        {
-            return _str[_idx];
-        }
-
-    private:
-        typename Reader::iterator                              _pos;
-        _detail::basic_string_view<typename Reader::char_type> _str;
-        std::size_t                                            _idx;
-    };
-};
-} // namespace lexy
-
 namespace lexyd
 {
 template <typename String>

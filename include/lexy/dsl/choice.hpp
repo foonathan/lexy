@@ -10,22 +10,12 @@
 
 namespace lexy
 {
-struct exhausted_choice
+struct exhausted_choice : failure<exhausted_choice>
 {
-    template <typename Reader>
-    class error
+    static LEXY_CONSTEVAL auto name()
     {
-    public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-    };
+        return "exhausted choice";
+    }
 };
 } // namespace lexy
 

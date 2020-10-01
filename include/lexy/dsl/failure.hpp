@@ -10,33 +10,6 @@
 #include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/option.hpp>
 
-namespace lexy
-{
-template <typename Tag>
-struct failure
-{
-    template <typename Reader>
-    class error
-    {
-    public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-        constexpr auto name() const noexcept
-        {
-            return _detail::type_name<Tag>();
-        }
-
-    private:
-        typename Reader::iterator _pos;
-    };
-};
-} // namespace lexy
-
 namespace lexyd
 {
 template <typename Tag>

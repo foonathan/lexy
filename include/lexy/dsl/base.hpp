@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
@@ -172,33 +173,5 @@ struct final_parser
 };
 } // namespace lexy
 
-namespace lexy
-{
-struct expected_char_class
-{
-    template <typename Reader>
-    class error
-    {
-    public:
-        constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
-        : _pos(pos), _name(name)
-        {}
-
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
-
-        constexpr auto character_class() const noexcept
-        {
-            return _name;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-        const char*               _name;
-    };
-};
-} // namespace lexy
-
 #endif // LEXY_DSL_BASE_HPP_INCLUDED
+
