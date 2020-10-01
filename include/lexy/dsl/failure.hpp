@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_FAILURE_HPP_INCLUDED
 #define LEXY_DSL_FAILURE_HPP_INCLUDED
 
+#include <lexy/_detail/type_name.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/option.hpp>
@@ -23,6 +24,11 @@ struct failure
         constexpr auto position() const noexcept
         {
             return _pos;
+        }
+
+        constexpr auto name() const noexcept
+        {
+            return _detail::type_name<Tag>();
         }
 
     private:
