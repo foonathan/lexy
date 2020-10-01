@@ -4,3 +4,15 @@
 
 #include <lexy/error.hpp>
 
+#include <doctest.h>
+
+TEST_CASE("production_name")
+{
+    // Simple test, _detail::type_name does all the heavy lifting.
+    struct production
+    {};
+
+    constexpr auto name = lexy::production_name(production{});
+    CHECK(name == "production");
+}
+

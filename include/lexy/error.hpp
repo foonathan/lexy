@@ -104,5 +104,14 @@ struct expected_char_class
 };
 } // namespace lexy
 
+namespace lexy
+{
+template <typename Production>
+LEXY_CONSTEVAL _detail::string_view production_name(Production)
+{
+    return _detail::type_name<Production>();
+}
+} // namespace lexy
+
 #endif // LEXY_ERROR_HPP_INCLUDED
 
