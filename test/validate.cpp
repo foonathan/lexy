@@ -30,8 +30,9 @@ TEST_CASE("validate")
     {
         SUBCASE("success")
         {
-            constexpr auto callback = [](auto, const lexy::input_reader<lexy::string_input<>>&,
-                                         auto) { FAIL_CHECK("should not be called"); };
+            constexpr auto callback = [](auto, const lexy::string_input<>&, auto) {
+                FAIL_CHECK("should not be called");
+            };
 
             auto one
                 = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), lexy::callback(callback));
@@ -42,12 +43,11 @@ TEST_CASE("validate")
         }
         SUBCASE("missing abc")
         {
-            constexpr auto callback =
-                [](auto prod, const lexy::input_reader<lexy::string_input<>>& reader, auto error) {
-                    CHECK(std::is_same_v<decltype(prod), prod_a>);
-                    CHECK(reader.peek() == ')');
-                    CHECK(error.string() == "abc");
-                };
+            constexpr auto callback = [](auto prod, const lexy::string_input<>&, auto error) {
+                CHECK(std::is_same_v<decltype(prod), prod_a>);
+                CHECK(*error.position() == ')');
+                CHECK(error.string() == "abc");
+            };
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("()"), lexy::callback(callback));
@@ -55,12 +55,11 @@ TEST_CASE("validate")
         }
         SUBCASE("invalid abc")
         {
-            constexpr auto callback =
-                [](auto prod, const lexy::input_reader<lexy::string_input<>>& reader, auto error) {
-                    CHECK(std::is_same_v<decltype(prod), prod_a>);
-                    CHECK(reader.peek() == 'd');
-                    CHECK(error.string() == "abc");
-                };
+            constexpr auto callback = [](auto prod, const lexy::string_input<>&, auto error) {
+                CHECK(std::is_same_v<decltype(prod), prod_a>);
+                CHECK(*error.position() == 'a');
+                CHECK(error.string() == "abc");
+            };
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("(adc)"), lexy::callback(callback));
@@ -68,12 +67,11 @@ TEST_CASE("validate")
         }
         SUBCASE("missing )")
         {
-            constexpr auto callback =
-                [](auto prod, const lexy::input_reader<lexy::string_input<>>& reader, auto error) {
-                    CHECK(std::is_same_v<decltype(prod), prod_b>);
-                    CHECK(reader.peek() == ']');
-                    CHECK(error.string() == ")");
-                };
+            constexpr auto callback = [](auto prod, const lexy::string_input<>&, auto error) {
+                CHECK(std::is_same_v<decltype(prod), prod_b>);
+                CHECK(*error.position() == ']');
+                CHECK(error.string() == ")");
+            };
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("(abc]"), lexy::callback(callback));
@@ -82,12 +80,12 @@ TEST_CASE("validate")
     }
     SUBCASE("non-void callback")
     {
-        constexpr auto prod_a_error = [](prod_a, const lexy::input_reader<lexy::string_input<>>&,
+        constexpr auto prod_a_error = [](prod_a, const lexy::string_input<>&,
                                          lexy::string_error<lexy::expected_literal> error) {
             assert(error.string() == "abc");
             return -1;
         };
-        constexpr auto prod_b_error = [](prod_b, const lexy::input_reader<lexy::string_input<>>&,
+        constexpr auto prod_b_error = [](prod_b, const lexy::string_input<>&,
                                          lexy::string_error<lexy::expected_literal> error) {
             if (error.string() == "(")
                 return -2;
