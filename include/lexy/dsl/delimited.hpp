@@ -44,8 +44,8 @@ struct _delim : rule_base
             {
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context).error(reader,
-                                                   lexy::missing_delimiter::error<Reader>(begin));
+                    return LEXY_MOV(context)
+                        .error(reader, lexy::missing_delimiter::error<Reader>(begin, reader.cur()));
                 else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
                 {
                     // We have an escape character.
@@ -94,8 +94,8 @@ struct _delim<void, CodePoint, Close> : rule_base
             {
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context).error(reader,
-                                                   lexy::missing_delimiter::error<Reader>(begin));
+                    return LEXY_MOV(context)
+                        .error(reader, lexy::missing_delimiter::error<Reader>(begin, reader.cur()));
                 else if (Close::matcher::match(reader))
                     // Done with the string.
                     break;

@@ -90,8 +90,11 @@ TEST_CASE("rule: integer")
                 return value;
             }
 
-            constexpr int error(test_error<lexy::failure<lexy::integer_overflow>>)
+            constexpr int error(test_error<lexy::integer_overflow> e)
             {
+                assert(e.message() == "integer overflow");
+                assert(e.begin() == str);
+                assert(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
             constexpr int error(test_error<lexy::expected_char_class>)

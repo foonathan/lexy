@@ -36,8 +36,13 @@ struct integer_traits<unbounded<T>>
     static constexpr auto is_bounded = false;
 };
 
-struct integer_overflow
-{};
+struct integer_overflow : lexy::failure<integer_overflow>
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "integer overflow";
+    }
+};
 } // namespace lexy
 
 namespace lexyd
@@ -74,19 +79,19 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
         {
             template <typename Context, typename Reader, typename... Args>
             LEXY_DSL_FUNC auto parse(Context& context, Reader& reader,
-                                     typename Reader::iterator begin, Args&&... args) ->
+                                     const typename Reader::iterator begin, Args&&... args) ->
                 typename Context::result_type
             {
-                using error_type       = lexy::failure<lexy::integer_overflow>::error<Reader>;
+                using error_type       = lexy::integer_overflow::error<Reader>;
                 constexpr auto has_sep = !std::is_same_v<Sep, void>;
 
                 using traits         = lexy::integer_traits<T>;
                 using integer        = typename traits::integer_type;
                 constexpr auto radix = integer(Base::radix);
 
-                auto cur    = begin;
-                auto end    = reader.cur();
-                auto result = integer(0);
+                auto       cur    = begin;
+                const auto end    = reader.cur();
+                auto       result = integer(0);
 
                 if constexpr (traits::is_bounded)
                 {
@@ -160,18 +165,18 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
 
                         // result *= radix
                         if (result > max_value / radix)
-                            return LEXY_MOV(context).error(reader, error_type(begin));
+                            return LEXY_MOV(context).error(reader, error_type(begin, end));
                         result *= radix;
 
                         // result += value
                         if (result > integer(max_value - value))
-                            return LEXY_MOV(context).error(reader, error_type(begin));
+                            return LEXY_MOV(context).error(reader, error_type(begin, end));
                         result += integer(value);
                     }
 
                     // If we're having any more digits, this is a guranteed overflow.
                     if (cur != end)
-                        return LEXY_MOV(context).error(reader, error_type(begin));
+                        return LEXY_MOV(context).error(reader, error_type(begin, end));
 
                     return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
                 }

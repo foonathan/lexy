@@ -19,20 +19,34 @@ struct failure
     class error
     {
     public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos) {}
+        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
+        constexpr explicit error(typename Reader::iterator begin,
+                                 typename Reader::iterator end) noexcept
+        : _pos(begin), _end(end)
+        {}
 
         constexpr auto position() const noexcept
         {
             return _pos;
         }
 
-        constexpr _detail::string_view name() const noexcept
+        constexpr _detail::string_view message() const noexcept
         {
             return _detail::type_name<Tag>();
         }
 
+        constexpr auto begin() const noexcept
+        {
+            return _pos;
+        }
+        constexpr auto end() const noexcept
+        {
+            return _end;
+        }
+
     private:
         typename Reader::iterator _pos;
+        typename Reader::iterator _end;
     };
 };
 
@@ -114,4 +128,3 @@ LEXY_CONSTEVAL _detail::string_view production_name(Production)
 } // namespace lexy
 
 #endif // LEXY_ERROR_HPP_INCLUDED
-

@@ -40,6 +40,9 @@ TEST_CASE("rule: delimited")
             constexpr int error(test_error<lexy::missing_delimiter> e)
             {
                 assert(e.position() == str + 1);
+                assert(e.message() == "missing delimiter");
+                assert(e.begin() == str + 1);
+                assert(e.end() == lexy::_detail::string_view(str).end());
                 return -2;
             }
             constexpr int error(test_error<lexy::expected_char_class> e)
