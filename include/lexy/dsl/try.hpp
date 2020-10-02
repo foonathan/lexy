@@ -6,7 +6,6 @@
 #define LEXY_DSL_TRY_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/failure.hpp>
 
 namespace lexyd
 {

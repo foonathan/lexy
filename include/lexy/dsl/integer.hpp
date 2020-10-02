@@ -10,7 +10,6 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/digit.hpp>
-#include <lexy/dsl/failure.hpp>
 
 namespace lexy
 {

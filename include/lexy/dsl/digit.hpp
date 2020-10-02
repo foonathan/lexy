@@ -7,7 +7,7 @@
 
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/failure.hpp>
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>

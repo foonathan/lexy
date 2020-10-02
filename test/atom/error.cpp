@@ -2,16 +2,16 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/dsl/failure.hpp>
+#include <lexy/dsl/error.hpp>
 
 #include "verify.hpp"
 
-TEST_CASE("atom: failure")
+TEST_CASE("atom: error")
 {
     struct my_tag
     {};
 
-    constexpr auto atom = lexy::dsl::failure<my_tag>;
+    constexpr auto atom = lexy::dsl::error<my_tag>;
     CHECK(lexy::is_atom<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
