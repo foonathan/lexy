@@ -37,7 +37,7 @@ struct _nl : atom_base<_nl>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Reader>(pos, "newline");
+        return lexy::error<Reader, lexy::expected_char_class>(pos, "newline");
     }
 };
 

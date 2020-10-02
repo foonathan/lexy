@@ -9,7 +9,7 @@
 
 namespace lexy
 {
-struct exhausted_alternatives : failure<exhausted_alternatives>
+struct exhausted_alternatives
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -44,8 +44,9 @@ struct _alt : rule_base
             if (matcher::match(reader))
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(reader, lexy::exhausted_alternatives::error<Reader>(
-                                                           reader.cur()));
+                return LEXY_MOV(context).error(reader,
+                                               lexy::error<Reader, lexy::exhausted_alternatives>(
+                                                   reader.cur()));
         }
     };
 };

@@ -21,7 +21,7 @@ TEST_CASE("rule: try_")
             return 0;
         }
 
-        constexpr int error(test_error<lexy::failure<tag>> e)
+        constexpr int error(test_error<tag> e)
         {
             assert(e.position() == str);
             return -1;

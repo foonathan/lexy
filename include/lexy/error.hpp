@@ -12,110 +12,107 @@
 namespace lexy
 {
 /// Generic failure.
-template <typename Tag>
-struct failure
+template <typename Reader, typename Tag>
+class error
 {
-    template <typename Reader>
-    class error
+public:
+    constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
+    constexpr explicit error(typename Reader::iterator begin,
+                             typename Reader::iterator end) noexcept
+    : _pos(begin), _end(end)
+    {}
+
+    constexpr auto position() const noexcept
     {
-    public:
-        constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
-        constexpr explicit error(typename Reader::iterator begin,
-                                 typename Reader::iterator end) noexcept
-        : _pos(begin), _end(end)
-        {}
+        return _pos;
+    }
 
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
+    constexpr _detail::string_view message() const noexcept
+    {
+        return _detail::type_name<Tag>();
+    }
 
-        constexpr _detail::string_view message() const noexcept
-        {
-            return _detail::type_name<Tag>();
-        }
+    constexpr auto begin() const noexcept
+    {
+        return _pos;
+    }
+    constexpr auto end() const noexcept
+    {
+        return _end;
+    }
 
-        constexpr auto begin() const noexcept
-        {
-            return _pos;
-        }
-        constexpr auto end() const noexcept
-        {
-            return _end;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-        typename Reader::iterator _end;
-    };
+private:
+    typename Reader::iterator _pos;
+    typename Reader::iterator _end;
 };
 
 /// Expected the literal character sequence.
 struct expected_literal
+{};
+template <typename Reader>
+class error<Reader, expected_literal>
 {
-    template <typename Reader>
-    class error
+public:
+    constexpr explicit error(typename Reader::iterator                              pos,
+                             _detail::basic_string_view<typename Reader::char_type> str,
+                             std::size_t                                            index) noexcept
+    : _pos(pos), _str(str), _idx(index)
+    {}
+
+    constexpr auto position() const noexcept
     {
-    public:
-        constexpr explicit error(typename Reader::iterator                              pos,
-                                 _detail::basic_string_view<typename Reader::char_type> str,
-                                 std::size_t index) noexcept
-        : _pos(pos), _str(str), _idx(index)
-        {}
+        return _pos;
+    }
 
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
+    constexpr auto string() const noexcept
+    {
+        return _str;
+    }
 
-        constexpr auto string() const noexcept
-        {
-            return _str;
-        }
+    constexpr std::size_t index() const noexcept
+    {
+        return _idx;
+    }
 
-        constexpr std::size_t index() const noexcept
-        {
-            return _idx;
-        }
+    constexpr auto character() const noexcept
+    {
+        return _str[_idx];
+    }
 
-        constexpr auto character() const noexcept
-        {
-            return _str[_idx];
-        }
-
-    private:
-        typename Reader::iterator                              _pos;
-        _detail::basic_string_view<typename Reader::char_type> _str;
-        std::size_t                                            _idx;
-    };
+private:
+    typename Reader::iterator                              _pos;
+    _detail::basic_string_view<typename Reader::char_type> _str;
+    std::size_t                                            _idx;
 };
 
 /// Expected a character of the specified character class.
 struct expected_char_class
+{};
+template <typename Reader>
+class error<Reader, expected_char_class>
 {
-    template <typename Reader>
-    class error
+public:
+    constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
+    : _pos(pos), _name(name)
+    {}
+
+    constexpr auto position() const noexcept
     {
-    public:
-        constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
-        : _pos(pos), _name(name)
-        {}
+        return _pos;
+    }
 
-        constexpr auto position() const noexcept
-        {
-            return _pos;
-        }
+    constexpr _detail::string_view character_class() const noexcept
+    {
+        return _name;
+    }
 
-        constexpr _detail::string_view character_class() const noexcept
-        {
-            return _name;
-        }
-
-    private:
-        typename Reader::iterator _pos;
-        const char*               _name;
-    };
+private:
+    typename Reader::iterator _pos;
+    const char*               _name;
 };
+
+template <typename Input, typename Tag>
+using error_for = error<input_reader<Input>, Tag>;
 } // namespace lexy
 
 namespace lexy

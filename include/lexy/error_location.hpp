@@ -19,6 +19,10 @@ struct error_location
     lexeme<Encoding, Iterator> context;
 };
 
+template <typename Input>
+using error_location_for = error_location<typename input_reader<Input>::encoding,
+                                          typename input_reader<Input>::iterator>;
+
 template <typename Input, typename PatternCP, typename PatternNL>
 constexpr auto make_error_location(const Input& input, typename input_reader<Input>::iterator pos,
                                    PatternCP, PatternNL)

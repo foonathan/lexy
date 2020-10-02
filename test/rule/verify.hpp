@@ -13,8 +13,8 @@
 
 #include "../test_encoding.hpp"
 
-template <typename Error>
-using test_error = typename Error::template error<lexy::input_reader<test_input>>;
+template <typename Tag>
+using test_error = lexy::error_for<test_input, Tag>;
 
 template <typename Callback, typename Production = void>
 struct test_context

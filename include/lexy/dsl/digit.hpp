@@ -225,7 +225,7 @@ struct _zero : atom_base<_zero<Base>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Reader>(pos, "digit.zero");
+        return lexy::error<Reader, lexy::expected_char_class>(pos, "digit.zero");
     }
 };
 
@@ -248,9 +248,9 @@ struct _nzero : atom_base<_nzero<Base>>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
         if (Base::template match_zero<typename Reader::encoding>(reader.peek()))
-            return lexy::expected_char_class::error<Reader>(pos, "digit.non-zero");
+            return lexy::error<Reader, lexy::expected_char_class>(pos, "digit.non-zero");
         else
-            return lexy::expected_char_class::error<Reader>(pos, Base::name());
+            return lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
     }
 };
 
@@ -270,7 +270,7 @@ struct _digit : atom_base<_digit<Base>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Reader>(pos, Base::name());
+        return lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
     }
 
     //=== dsl ===//

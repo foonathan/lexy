@@ -5,6 +5,7 @@
 #ifndef LEXY_INPUT_STRING_INPUT_HPP_INCLUDED
 #define LEXY_INPUT_STRING_INPUT_HPP_INCLUDED
 
+#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -104,8 +105,8 @@ constexpr auto zstring_input(const CharT* str) noexcept
 template <typename Encoding = default_encoding>
 using string_lexeme = lexeme_for<string_input<Encoding>>;
 
-template <typename Error, typename Encoding = default_encoding>
-using string_error = typename Error::template error<input_reader<string_input<Encoding>>>;
+template <typename Tag, typename Encoding = default_encoding>
+using string_error = error_for<string_input<Encoding>, Tag>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_STRING_INPUT_HPP_INCLUDED

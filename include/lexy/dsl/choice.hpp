@@ -10,7 +10,7 @@
 
 namespace lexy
 {
-struct exhausted_choice : failure<exhausted_choice>
+struct exhausted_choice
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -30,7 +30,8 @@ struct _chc_parser<NextParser>
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
         typename Context::result_type
     {
-        return LEXY_MOV(context).error(reader, lexy::exhausted_choice::error<Reader>(reader.cur()));
+        return LEXY_MOV(context).error(reader,
+                                       lexy::error<Reader, lexy::exhausted_choice>(reader.cur()));
     }
 };
 template <typename NextParser, typename H, typename... T>

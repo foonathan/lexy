@@ -22,7 +22,7 @@ TEST_CASE("rule: require")
             return 0;
         }
 
-        constexpr int error(test_error<lexy::failure<tag>> e)
+        constexpr int error(test_error<tag> e)
         {
             assert(e.position() == str);
             return -1;
@@ -52,7 +52,7 @@ TEST_CASE("rule: prevent")
             return 0;
         }
 
-        constexpr int error(test_error<lexy::failure<tag>> e)
+        constexpr int error(test_error<tag> e)
         {
             assert(e.position() == str);
             return -1;

@@ -14,7 +14,7 @@
 namespace lexy
 {
 /// The reader ends before the closing delimiter was found.
-struct missing_delimiter : failure<missing_delimiter>
+struct missing_delimiter
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -45,7 +45,8 @@ struct _delim : rule_base
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
                     return LEXY_MOV(context)
-                        .error(reader, lexy::missing_delimiter::error<Reader>(begin, reader.cur()));
+                        .error(reader,
+                               lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
                 else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
                 {
                     // We have an escape character.
@@ -95,7 +96,8 @@ struct _delim<void, CodePoint, Close> : rule_base
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
                     return LEXY_MOV(context)
-                        .error(reader, lexy::missing_delimiter::error<Reader>(begin, reader.cur()));
+                        .error(reader,
+                               lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
                 else if (Close::matcher::match(reader))
                     // Done with the string.
                     break;
@@ -180,7 +182,7 @@ constexpr auto triple_backticked = delimited(LEXY_LIT("```"));
 
 namespace lexy
 {
-struct invalid_escape_sequence : failure<invalid_escape_sequence>
+struct invalid_escape_sequence
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -221,7 +223,8 @@ struct _escape
     LEXY_DSL_FUNC auto report_error(Context& context, Reader& reader, typename Reader::iterator pos)
         -> typename Context::result_type
     {
-        return LEXY_MOV(context).error(reader, lexy::invalid_escape_sequence::error<Reader>(pos));
+        return LEXY_MOV(context).error(reader,
+                                       lexy::error<Reader, lexy::invalid_escape_sequence>(pos));
     }
 
     //=== dsl ===//

@@ -32,8 +32,9 @@ struct _lit : atom_base<_lit<String>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
-        return lexy::expected_literal::error<Reader>(pos, String::get(),
-                                                     lexy::_detail::range_size(pos, reader.cur()));
+        return lexy::error<Reader, lexy::expected_literal>(pos, String::get(),
+                                                           lexy::_detail::range_size(pos,
+                                                                                     reader.cur()));
     }
 };
 

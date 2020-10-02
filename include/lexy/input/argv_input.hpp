@@ -201,8 +201,8 @@ namespace lexy
 template <typename Encoding = default_encoding>
 using argv_lexeme = lexeme_for<argv_input<Encoding>>;
 
-template <typename Error, typename Encoding = default_encoding>
-using argv_error = typename Error::template error<input_reader<argv_input<Encoding>>>;
+template <typename Tag, typename Encoding = default_encoding>
+using argv_error = error_for<argv_input<Encoding>, Tag>;
 } // namespace lexy
 
 namespace lexyd
@@ -229,7 +229,7 @@ struct _argvsep : atom_base<_argvsep>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Reader>(pos, "argv-separator");
+        return lexy::error<Reader, lexy::expected_char_class>(pos, "argv-separator");
     }
 };
 

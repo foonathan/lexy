@@ -21,7 +21,7 @@ struct _eof : atom_base<_eof>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::expected_char_class::error<Reader>(pos, "EOF");
+        return lexy::error<Reader, lexy::expected_char_class>(pos, "EOF");
     }
 
     template <typename Whitespace>

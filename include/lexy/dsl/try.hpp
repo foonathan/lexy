@@ -25,9 +25,7 @@ struct _try : rule_base
             if (auto pos = reader.cur(); Pattern::matcher::match(reader))
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(reader,
-                                               typename lexy::failure<Tag>::template error<Reader>(
-                                                   pos));
+                return LEXY_MOV(context).error(reader, lexy::error<Reader, Tag>(pos));
         }
     };
 };

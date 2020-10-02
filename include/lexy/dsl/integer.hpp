@@ -36,7 +36,7 @@ struct integer_traits<unbounded<T>>
     static constexpr auto is_bounded = false;
 };
 
-struct integer_overflow : lexy::failure<integer_overflow>
+struct integer_overflow
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -82,7 +82,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                                      const typename Reader::iterator begin, Args&&... args) ->
                 typename Context::result_type
             {
-                using error_type       = lexy::integer_overflow::error<Reader>;
+                using error_type       = lexy::error<Reader, lexy::integer_overflow>;
                 constexpr auto has_sep = !std::is_same_v<Sep, void>;
 
                 using traits         = lexy::integer_traits<T>;

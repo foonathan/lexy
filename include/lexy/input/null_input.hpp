@@ -5,6 +5,7 @@
 #ifndef LEXY_INPUT_NULL_INPUT_HPP_INCLUDED
 #define LEXY_INPUT_NULL_INPUT_HPP_INCLUDED
 
+#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -44,8 +45,8 @@ public:
 template <typename Encoding = default_encoding>
 using null_lexeme = lexeme_for<null_input<Encoding>>;
 
-template <typename Error, typename Encoding = default_encoding>
-using null_error = typename Error::template error<input_reader<null_input<Encoding>>>;
+template <typename Tag, typename Encoding = default_encoding>
+using null_error = error_for<null_input<Encoding>, Tag>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_NULL_INPUT_HPP_INCLUDED

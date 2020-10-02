@@ -24,7 +24,7 @@ struct _fail : atom_base<_fail<Tag>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return typename lexy::failure<Tag>::template error<Reader>(pos);
+        return typename lexy::error<Reader, Tag>(pos);
     }
 };
 
