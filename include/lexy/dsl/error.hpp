@@ -13,19 +13,29 @@
 namespace lexyd
 {
 template <typename Tag>
-struct _err : atom_base<_err<Tag>>
+struct _err : rule_base
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader&)
-    {
-        return false;
-    }
+    static constexpr auto has_matcher = true;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    struct matcher
     {
-        return typename lexy::error<Reader, Tag>(pos);
-    }
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader&)
+        {
+            return false;
+        }
+    };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
+            typename Context::result_type
+        {
+            return LEXY_MOV(context).error(reader, lexy::error<Reader, Tag>(reader.cur()));
+        }
+    };
 };
 
 /// Matches nothing, produces an error with the given tag.

@@ -6,6 +6,30 @@
 
 #include "verify.hpp"
 
+TEST_CASE("rule: error")
+{
+    struct tag;
+    constexpr auto rule = lexy::dsl::error<tag>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int error(test_error<tag> e)
+        {
+            assert(e.position() == str);
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
+
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == -1);
+}
+
 TEST_CASE("rule: require")
 {
     struct tag;
