@@ -113,8 +113,7 @@ struct _delim<void, CodePoint, Close> : rule_base
 
             // Add the lexeme as an argument.
             return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                     lexy::lexeme<typename Reader::encoding,
-                                                  typename Reader::iterator>(begin, pos));
+                                     lexy::lexeme<Reader>(begin, pos));
         }
     };
 };

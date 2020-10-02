@@ -11,29 +11,25 @@
 
 namespace lexy
 {
-template <typename Encoding, typename Iterator>
+template <typename Reader>
 struct error_location
 {
     std::size_t line, column;
     /// The entire line where the error occurred.
-    lexeme<Encoding, Iterator> context;
+    lexeme<Reader> context;
 };
 
 template <typename Input>
-using error_location_for = error_location<typename input_reader<Input>::encoding,
-                                          typename input_reader<Input>::iterator>;
+using error_location_for = error_location<input_reader<Input>>;
 
 template <typename Input, typename PatternCP, typename PatternNL>
 constexpr auto make_error_location(const Input& input, typename input_reader<Input>::iterator pos,
-                                   PatternCP, PatternNL)
+                                   PatternCP, PatternNL) -> error_location_for<Input>
 {
     static_assert(is_pattern<PatternCP> && is_pattern<PatternNL>);
 
-    auto reader      = input.reader();
-    using encoding   = typename decltype(reader)::encoding;
-    using iterator   = typename decltype(reader)::iterator;
-    using lexeme_t   = lexeme<encoding, iterator>;
-    using location_t = error_location<encoding, iterator>;
+    auto reader    = input.reader();
+    using encoding = typename decltype(reader)::encoding;
 
     // We start at the first line and first column.
     std::size_t cur_line   = 1;
@@ -63,7 +59,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
         {
             // We have an OOB error position, return what the current position (i.e. the end of the
             // file).
-            return location_t{cur_line, cur_column, lexeme_t(reader, line_start)};
+            return error_location_for<Input>{cur_line, cur_column, lexeme(reader, line_start)};
         }
         else
         {
@@ -97,7 +93,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
     }
 
     // We've found the right line and column number and the reader is at the end of the line.
-    return location_t{cur_line, cur_column, lexeme_t(reader, line_start)};
+    return error_location_for<Input>{cur_line, cur_column, lexeme(reader, line_start)};
 }
 } // namespace lexy
 

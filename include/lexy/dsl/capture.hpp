@@ -42,11 +42,8 @@ struct _cap : rule_base
 {
     static constexpr auto has_matcher = false;
 
-    template <typename Reader>
-    using _lexeme = lexy::lexeme<typename Reader::encoding, typename Reader::iterator>;
-
     template <typename NextParser>
-    using parser = _cap_parser<_lexeme, Rule, NextParser>;
+    using parser = _cap_parser<lexy::lexeme, Rule, NextParser>;
 };
 
 /// Captures whatever the rule matches as a lexeme.

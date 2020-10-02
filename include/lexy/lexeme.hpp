@@ -13,19 +13,17 @@
 
 namespace lexy
 {
-template <typename Encoding, typename Iterator>
+template <typename Reader>
 class lexeme
 {
 public:
-    using encoding  = Encoding;
+    using encoding  = typename Reader::encoding;
     using char_type = typename encoding::char_type;
-    using iterator  = Iterator;
+    using iterator  = typename Reader::iterator;
 
     constexpr lexeme() noexcept = default;
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
 
-    template <typename Reader,
-              typename = std::enable_if_t<std::is_same_v<typename Reader::iterator, Iterator>>>
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
     : _begin(begin), _end(reader.cur())
     {}
@@ -71,13 +69,8 @@ private:
     iterator _begin, _end;
 };
 
-template <typename Reader>
-lexeme(Reader, typename Reader::iterator)
-    -> lexeme<typename Reader::encoding, typename Reader::iterator>;
-
 template <typename Input>
-using lexeme_for
-    = lexeme<typename input_reader<Input>::encoding, typename input_reader<Input>::iterator>;
+using lexeme_for = lexeme<input_reader<Input>>;
 } // namespace lexy
 
 namespace lexy
@@ -87,8 +80,8 @@ struct _as_string
 {
     using return_type = String;
 
-    template <typename Encoding, typename Iterator>
-    constexpr String operator()(const lexeme<Encoding, Iterator>& lexeme) const
+    template <typename Reader>
+    constexpr String operator()(const lexeme<Reader>& lexeme) const
     {
         return lexeme.string_view();
     }
