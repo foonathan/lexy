@@ -1,0 +1,298 @@
+// Copyright (C) 2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#include <cinttypes>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <string>
+#include <variant>
+#include <vector>
+
+#include <lexy/dsl.hpp>        // lexy::dsl::*
+#include <lexy/input/file.hpp> // lexy::read_file
+#include <lexy/parse.hpp>      // lexy::parse
+
+#include "report_error.hpp" // lexy_ex::report_error
+
+// Datastructures for storing JSON.
+// Not really the point of the example, so as simple as possible.
+namespace ast
+{
+struct json_value;
+
+using json_null = std::nullptr_t;
+using json_bool = bool;
+
+struct json_number
+{
+    std::int64_t integer;
+    std::string  fraction;
+    std::int64_t exponent;
+
+    json_number(std::int64_t integer) : integer(integer), exponent(0) {}
+    json_number(std::int64_t integer, std::string fraction)
+    : integer(integer), fraction(std::move(fraction)), exponent(0)
+    {}
+    json_number(std::int64_t integer, std::int64_t exponent) : integer(integer), exponent(exponent)
+    {}
+    json_number(std::int64_t integer, std::string fraction, std::int64_t exponent)
+    : integer(integer), fraction(std::move(fraction)), exponent(exponent)
+    {}
+};
+
+using json_string = std::string;
+
+using json_array  = std::vector<json_value>;
+using json_object = std::map<std::string, json_value>;
+
+struct json_value
+{
+    std::variant<json_null, json_bool, json_number, json_string, json_array, json_object> v;
+
+    template <typename T>
+    json_value(T&& t) : v(std::forward<T>(t))
+    {}
+
+    void _indent(int level) const
+    {
+        for (auto i = 0; i < level; ++i)
+            std::fputc(' ', stdout);
+    }
+
+    void _print(json_null, int) const
+    {
+        std::fputs("null", stdout);
+    }
+    void _print(json_bool b, int) const
+    {
+        if (b)
+            std::fputs("true", stdout);
+        else
+            std::fputs("false", stdout);
+    }
+    void _print(const json_number& i, int) const
+    {
+        std::fprintf(stdout, "%" PRId64, i.integer);
+        if (!i.fraction.empty())
+            std::fprintf(stdout, ".%s", i.fraction.c_str());
+        if (i.exponent != 0)
+            std::fprintf(stdout, "e%" PRId64, i.exponent);
+    }
+    void _print(const json_string& str, int) const
+    {
+        std::fputc('"', stdout);
+        for (auto& c : str)
+            if (c == '"')
+                std::fputs(R"(\")", stdout);
+            else if (c == '\\')
+                std::fputs(R"(\\")", stdout);
+            else if (!std::isprint(c))
+                std::fprintf(stdout, "\\u%04x", c);
+            else
+                std::fputc(c, stdout);
+        std::fputc('"', stdout);
+    }
+    void _print(const json_array& array, int level) const
+    {
+        std::fputs("[\n", stdout);
+
+        auto first = true;
+        for (auto& elem : array)
+        {
+            if (first)
+                first = false;
+            else
+                std::fputs(",\n", stdout);
+
+            _indent(level + 1);
+            elem.print(level + 1);
+        }
+
+        std::fputs("\n", stdout);
+        _indent(level);
+        std::fputs("]", stdout);
+    }
+    void _print(const json_object& object, int level) const
+    {
+        std::fputs("{\n", stdout);
+
+        auto first = true;
+        for (auto& [key, value] : object)
+        {
+            if (first)
+                first = false;
+            else
+                std::fputs(",\n", stdout);
+
+            _indent(level + 1);
+            _print(key, level + 1);
+            std::fputs(" : ", stdout);
+            value.print(level + 1);
+        }
+
+        std::fputs("\n", stdout);
+        _indent(level);
+        std::fputs("}", stdout);
+    }
+
+    void print(int level = 0) const
+    {
+        std::visit([&](const auto& value) { _print(value, level); }, v);
+    }
+};
+} // namespace ast
+
+// The grammar of JSON.
+// Modelled after the specificaton of https://www.json.org.
+// It should be compliant except for the TODOs.
+namespace grammar
+{
+namespace dsl = lexy::dsl;
+
+// whitespace is a sequence of space, tab, carriage return, or newline.
+// Add your comment syntax here.
+constexpr auto ws = dsl::ascii::space / dsl::ascii::newline;
+
+struct json_value;
+
+// A json value that is a number.
+struct number
+{
+    // A signed integer parsed as int64_t.
+    struct integer
+    {
+        static constexpr auto rule
+            = dsl::minus_sign + dsl::integer<std::int64_t>(dsl::digits<>.no_leading_zero());
+        static constexpr auto value = lexy::as_integer<std::int64_t>;
+    };
+
+    // The fractional part of a number parsed as the string.
+    struct fraction
+    {
+        static constexpr auto rule  = dsl::lit_c<'.'> >> capture(dsl::digits<>);
+        static constexpr auto value = lexy::as_string<std::string>;
+    };
+
+    // The exponent of a number parsed as int64_t.
+    struct exponent
+    {
+        static constexpr auto rule = [] {
+            auto exp_char = dsl::lit_c<'e'> / dsl::lit_c<'E'>;
+            return exp_char >> dsl::sign + dsl::integer<std::int64_t>(dsl::digits<>);
+        }();
+        static constexpr auto value = lexy::as_integer<std::int64_t>;
+    };
+
+    static constexpr auto rule
+        = whitespaced(if_(dsl::lit_c<'-'> / dsl::digit<>)
+                          >> dsl::p<integer> + opt(dsl::p<fraction>) + opt(dsl::p<exponent>),
+                      ws);
+    static constexpr auto value = lexy::construct<ast::json_number>;
+};
+
+// A json value that is a string.
+struct string
+{
+    static constexpr auto rule = [] {
+        // TODO: unicode code points.
+        auto code_point = dsl::ascii::character;
+
+        // TODO: \uXXX
+        auto escape = dsl::backslash_escape.literal<'"'>()
+                          .literal<'\\'>()
+                          .literal<'/'>()
+                          .literal<'b'>(LEXY_ESCAPE_VALUE("\b"))
+                          .literal<'f'>(LEXY_ESCAPE_VALUE("\f"))
+                          .literal<'n'>(LEXY_ESCAPE_VALUE("\n"))
+                          .literal<'r'>(LEXY_ESCAPE_VALUE("\r"))
+                          .literal<'t'>(LEXY_ESCAPE_VALUE("\t"));
+
+        // String of code_point with specified escape sequences, surrounded by ".
+        return dsl::quoted[ws](code_point, escape);
+    }();
+
+    static constexpr auto list = lexy::as_list<ast::json_string>;
+};
+
+// A json value that is an array.
+struct array
+{
+    // A (potentially empty) list of json values, seperated by comma and surrouned by square
+    // brackets. Use trailing_sep() here to allow trailing commas.
+    static constexpr auto rule
+        = dsl::square_bracketed[ws].opt_list(dsl::recurse<json_value>, sep(dsl::comma[ws]));
+
+    static constexpr auto list = lexy::as_list<ast::json_array>;
+};
+
+// A json value that is an object.
+struct object
+{
+    static constexpr auto rule = [] {
+        auto item = dsl::p<string> + dsl::colon[ws] + dsl::recurse<json_value>;
+        // A (potentially empty) list of items, seperated by comma and surrouned by curly brackets.
+        // Use trailing_sep() here to allow trailing commas.
+        return dsl::curly_bracketed[ws].opt_list(item, sep(dsl::comma[ws]));
+    }();
+
+    static constexpr auto list = lexy::as_collection<ast::json_object>;
+};
+
+// A json value.
+struct json_value
+{
+    struct expected_json_value
+    {
+        static LEXY_CONSTEVAL auto name()
+        {
+            return "expected json value";
+        }
+    };
+
+    static constexpr auto rule = [] {
+        auto null   = LEXY_PUNCT("null")[ws] >> dsl::value_c<nullptr>;
+        auto true_  = LEXY_PUNCT("true")[ws] >> dsl::value_c<true>;
+        auto false_ = LEXY_PUNCT("false")[ws] >> dsl::value_c<false>;
+
+        auto primitive = null | true_ | false_ | dsl::p<number> | dsl::p<string>;
+        auto complex   = dsl::p<object> | dsl::p<array>;
+
+        return primitive | complex | dsl::else_ >> dsl::error<expected_json_value>;
+    }();
+
+    static constexpr auto value = lexy::construct<ast::json_value>;
+};
+
+// Entry point of the production.
+struct json
+{
+    static constexpr auto rule  = dsl::p<json_value> + dsl::eof[ws];
+    static constexpr auto value = lexy::construct<ast::json_value>;
+};
+} // namespace grammar
+
+int main(int argc, char** argv)
+{
+    if (argc < 2)
+    {
+        std::fprintf(stderr, "usage: %s <filename>", argv[0]);
+        return 1;
+    }
+
+    auto file = lexy::read_file(argv[1]);
+    if (!file)
+    {
+        std::fprintf(stderr, "file '%s' not found", argv[1]);
+        return 1;
+    }
+
+    auto& input = file.value();
+    auto  json  = lexy::parse<grammar::json>(input, lexy_ex::report_error);
+    if (!json)
+        return 2;
+
+    json.value().print();
+}
+
