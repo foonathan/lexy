@@ -25,14 +25,15 @@ using _production_value = decltype(Production::value);
 struct _no_parse_state
 {};
 
-template <typename Production, typename Input, typename State, typename Callback>
+template <typename Production, typename State, typename Input, typename Callback>
 class _parse_context
 {
     static_assert(std::is_lvalue_reference_v<State>);
 
 public:
-    constexpr explicit _parse_context(const Input& input, State state, Callback callback) noexcept
-    : _input(input), _state(state), _callback(callback)
+    constexpr explicit _parse_context(State state, const Input& input,
+                                      const input_reader<Input>& reader, Callback callback) noexcept
+    : _err_ctx(input, reader.cur()), _state(state), _callback(callback)
     {}
 
     _parse_context(const _parse_context&) = delete;
@@ -51,9 +52,10 @@ public:
                                typename Callback::return_type>;
 
     template <typename SubProduction>
-    constexpr auto sub_context()
+    constexpr auto sub_context(const input_reader<Input>& reader)
     {
-        return _parse_context<SubProduction, Input, State, Callback>(_input, _state, _callback);
+        return _parse_context<SubProduction, State, Input, Callback>(_state, _err_ctx.input(),
+                                                                     reader, _callback);
     }
 
     constexpr auto list_sink()
@@ -64,8 +66,8 @@ public:
     template <typename Reader, typename Error>
     constexpr auto error(const Reader&, Error&& error) &&
     {
-        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, Production{},
-                                                   _input, LEXY_FWD(error));
+        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, _err_ctx,
+                                                   LEXY_FWD(error));
     }
 
     template <typename... Args>
@@ -97,7 +99,7 @@ private:
     using _state_storage_type
         = std::conditional_t<std::is_same_v<State, _no_parse_state&>, _no_parse_state, State>;
 
-    const Input&                          _input;
+    error_context<Production, Input>      _err_ctx;
     LEXY_EMPTY_MEMBER _state_storage_type _state;
     LEXY_EMPTY_MEMBER Callback            _callback;
 
@@ -111,11 +113,11 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
     using rule = std::remove_const_t<decltype(Production::rule)>;
     // We make state an lvalue reference.
-    using context_t = _parse_context<Production, Input, State&, Callback>;
+    using context_t = _parse_context<Production, State&, Input, Callback>;
 
     auto reader = input.reader();
 
-    context_t context(input, state, callback);
+    context_t context(state, input, reader, callback);
     return rule::template parser<final_parser>::parse(context, reader);
 }
 
@@ -136,11 +138,11 @@ struct _state : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Production, typename Input, typename State, typename Callback,
+        template <typename Production, typename State, typename Input, typename Callback,
                   typename... Args>
-        LEXY_DSL_FUNC auto parse(lexy::_parse_context<Production, Input, State, Callback>& context,
+        LEXY_DSL_FUNC auto parse(lexy::_parse_context<Production, State, Input, Callback>& context,
                                  lexy::input_reader<Input>& reader, Args&&... args) ->
-            typename lexy::_parse_context<Production, Input, State, Callback>::result_type
+            typename lexy::_parse_context<Production, State, Input, Callback>::result_type
         {
             static_assert(!std::is_same_v<State, lexy::_no_parse_state&>,
                           "lexy::dsl::state requires passing a state to lexy::parse()");

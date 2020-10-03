@@ -117,11 +117,43 @@ using error_for = error<input_reader<Input>, Tag>;
 
 namespace lexy
 {
-template <typename Production>
-LEXY_CONSTEVAL _detail::string_view production_name(Production)
+// Contains information about the context of an error.
+template <typename Production, typename Input>
+class error_context
 {
-    return _detail::type_name<Production>();
-}
+public:
+    constexpr explicit error_context(const Input&                           input,
+                                     typename input_reader<Input>::iterator pos) noexcept
+    : _input(&input), _pos(pos)
+    {}
+    constexpr explicit error_context(Production, const Input& input,
+                                     typename input_reader<Input>::iterator pos) noexcept
+    : error_context(input, pos)
+    {}
+
+    // The input.
+    constexpr const Input& input() const noexcept
+    {
+        return *_input;
+    }
+
+    // The name of the production where the error occurred.
+    static LEXY_CONSTEVAL _detail::string_view production()
+    {
+        return _detail::type_name<Production>();
+    }
+
+    // The starting position of the production.
+    constexpr auto position() const noexcept
+    {
+        return _pos;
+    }
+
+private:
+    const Input*                           _input;
+    typename input_reader<Input>::iterator _pos;
+};
+
 } // namespace lexy
 
 #endif // LEXY_ERROR_HPP_INCLUDED

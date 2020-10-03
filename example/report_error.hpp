@@ -63,14 +63,29 @@ void _print_location_msg(const lexy::error_location<Reader>&,
                  e.character_class().data());
 }
 
-constexpr auto report_error = lexy::callback([](auto production, const auto& input,
-                                                const auto& error) {
-    auto location = lexy::make_error_location(input, error.position(), lexy::dsl::ascii::character,
-                                              lexy::dsl::newline);
+constexpr auto report_error = lexy::callback([](const auto& context, const auto& error) {
+    auto context_location
+        = lexy::make_error_location(context.input(), context.position(),
+                                    lexy::dsl::ascii::character, lexy::dsl::newline);
+    auto location = lexy::make_error_location(context.input(), error.position(),
+                                              lexy::dsl::ascii::character, lexy::dsl::newline);
 
-    auto prod_name = lexy::production_name(production);
+    auto prod_name = context.production();
     std::fprintf(stderr, "error: while parsing %.*s\n", int(prod_name.size()), prod_name.data());
-    _print_location(location);
+
+    if (location.line != context_location.line)
+    {
+        _print_location(context_location);
+        std::fputs("^ beginning here\n", stderr);
+        _print_location(location);
+    }
+    else
+    {
+        _print_location(context_location);
+        for (auto i = context_location.column; i != location.column; ++i)
+            std::fputc('~', stderr);
+    }
+
     _print_location_msg(location, error);
 });
 } // namespace lexy_ex

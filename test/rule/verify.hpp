@@ -24,7 +24,7 @@ struct test_context
     using result_type = lexy::result<int, int>;
 
     template <typename SubProduction>
-    constexpr auto sub_context()
+    constexpr auto sub_context(const lexy::input_reader<test_input>&)
     {
         return test_context<Callback, SubProduction>{str};
     }

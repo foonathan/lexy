@@ -5,7 +5,9 @@
 #ifndef LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
 #define LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
 
+#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {

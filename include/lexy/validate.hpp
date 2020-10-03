@@ -12,17 +12,21 @@
 namespace lexy
 {
 template <typename Production, typename Input, typename Callback>
-struct _validate_context
+class _validate_context
 {
-    const Input&               _input;
-    LEXY_EMPTY_MEMBER Callback _callback;
+public:
+    constexpr explicit _validate_context(const Input& input, const input_reader<Input>& reader,
+                                         Callback cb)
+    : _err_ctx(input, reader.cur()), _callback(cb)
+    {}
 
     using result_type = optional_error<typename Callback::return_type>;
 
     template <typename SubProduction>
-    constexpr auto sub_context()
+    constexpr auto sub_context(const input_reader<Input>& reader)
     {
-        return _validate_context<SubProduction, Input, Callback>{_input, _callback};
+        return _validate_context<SubProduction, Input, Callback>(_err_ctx.input(), reader,
+                                                                 _callback);
     }
 
     constexpr auto list_sink()
@@ -33,8 +37,8 @@ struct _validate_context
     template <typename Reader, typename Error>
     constexpr auto error(const Reader&, Error&& error) &&
     {
-        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, Production{},
-                                                   _input, LEXY_FWD(error));
+        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, _err_ctx,
+                                                   LEXY_FWD(error));
     }
 
     template <typename... Args>
@@ -42,6 +46,10 @@ struct _validate_context
     {
         return result_type(lexy::result_value);
     }
+
+private:
+    error_context<Production, Input> _err_ctx;
+    LEXY_EMPTY_MEMBER Callback       _callback;
 };
 
 template <typename Production, typename Input, typename Callback>
@@ -52,7 +60,7 @@ constexpr auto validate(const Input& input, Callback callback)
 
     auto reader = input.reader();
 
-    context_t context{input, callback};
+    context_t context(input, reader, callback);
     return rule::template parser<final_parser>::parse(context, reader);
 }
 } // namespace lexy

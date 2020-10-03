@@ -19,8 +19,8 @@ struct ParseContext
     using result_type = ...;
 
     /// Returns a sub-context for an inner production.
-    template <typename Production>
-    ParseContext sub_context();
+    template <typename Production, typename Reader>
+    ParseContext sub_context(const Reader& reader);
 
     /// Returns a sink to construct a list.
     Sink list_sink();

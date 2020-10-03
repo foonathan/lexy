@@ -47,6 +47,9 @@ using null_lexeme = lexeme_for<null_input<Encoding>>;
 
 template <typename Tag, typename Encoding = default_encoding>
 using null_error = error_for<null_input<Encoding>, Tag>;
+
+template <typename Production, typename Encoding = default_encoding>
+using null_error_context = error_context<Production, null_input<Encoding>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_NULL_INPUT_HPP_INCLUDED

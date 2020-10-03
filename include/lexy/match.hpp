@@ -15,8 +15,8 @@ struct _match_context
 {
     using result_type = lexy::result<void, void>;
 
-    template <typename SubProduction>
-    constexpr auto sub_context()
+    template <typename SubProduction, typename Reader>
+    constexpr auto sub_context(const Reader&)
     {
         return _match_context();
     }

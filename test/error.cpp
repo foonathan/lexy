@@ -5,14 +5,17 @@
 #include <lexy/error.hpp>
 
 #include <doctest.h>
+#include <lexy/input/string_input.hpp>
 
-TEST_CASE("production_name")
+TEST_CASE("error_context")
 {
-    // Simple test, _detail::type_name does all the heavy lifting.
     struct production
     {};
 
-    constexpr auto name = lexy::production_name(production{});
-    CHECK(name == "production");
+    static constexpr auto input   = lexy::zstring_input("abc");
+    constexpr auto        context = lexy::error_context(production{}, input, input.begin());
+    CHECK(&context.input() == &input);
+    CHECK(context.production() == "production");
+    CHECK(context.position() == input.begin());
 }
 

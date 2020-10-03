@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <lexy/_detail/memory_resource.hpp>
+#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -230,9 +231,13 @@ template <typename Encoding       = default_encoding,
           typename MemoryResource = _detail::default_memory_resource>
 using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
 
-template <typename Error, typename Encoding = default_encoding,
+template <typename Tag, typename Encoding = default_encoding,
           typename MemoryResource = _detail::default_memory_resource>
-using buffer_error = typename Error::template error<input_reader<buffer<Encoding, MemoryResource>>>;
+using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
+
+template <typename Production, typename Encoding = default_encoding,
+          typename MemoryResource = _detail::default_memory_resource>
+using buffer_error_context = error_context<Production, buffer<Encoding, MemoryResource>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BUFFER_HPP_INCLUDED

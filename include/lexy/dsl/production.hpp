@@ -21,7 +21,7 @@ struct _prd_parser
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
-        auto&& sub_context = context.template sub_context<Production>();
+        auto&& sub_context = context.template sub_context<Production>(reader);
 
         if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_context, reader))
         {
