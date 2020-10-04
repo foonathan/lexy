@@ -15,18 +15,18 @@ namespace lexyd
 template <typename NextParser>
 struct _list_done
 {
-    template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Sink& sink, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
+        typename Handler::result_type
     {
         if constexpr (std::is_same_v<typename Sink::return_type, void>)
         {
             LEXY_MOV(sink).finish();
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
         else
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
         }
     }
 };
@@ -35,12 +35,12 @@ struct _list_done
 template <typename NextParser, typename... ParentArgs>
 struct _list_item_done
 {
-    template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Sink& sink, ParentArgs&&... pargs,
-                             Args&&... args) -> typename Context::result_type
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, ParentArgs&&... pargs,
+                             Args&&... args) -> typename Handler::result_type
     {
         sink(LEXY_FWD(args)...); // Forward item args to the sink.
-        return NextParser::parse(context, reader, sink, LEXY_FWD(pargs)...); // Continue.
+        return NextParser::parse(handler, reader, sink, LEXY_FWD(pargs)...); // Continue.
     }
 };
 
@@ -50,51 +50,51 @@ struct _list_loop_parser;
 template <typename Item, typename NextParser>
 struct _list_loop_parser<Item, void, NextParser> // no separator
 {
-    template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Sink& sink, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
+        typename Handler::result_type
     {
         // We parse other items while the condition matches.
         if (Item::condition_matcher::match(reader))
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(context, reader, sink,
+            return Item::template then_parser<continuation>::parse(handler, reader, sink,
                                                                    LEXY_FWD(args)...);
         }
         else
         {
-            return _list_done<NextParser>::parse(context, reader, sink, LEXY_FWD(args)...);
+            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
         }
     }
 };
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser<Item, _sep<Sep>, NextParser> // normal separator
 {
-    template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Sink& sink, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
+        typename Handler::result_type
     {
         // We parse other items while the separator matches.
         if (Sep::matcher::match(reader))
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template parser<continuation>::parse(context, reader, sink,
+            return Item::template parser<continuation>::parse(handler, reader, sink,
                                                               LEXY_FWD(args)...);
         }
         else
         {
-            return _list_done<NextParser>::parse(context, reader, sink, LEXY_FWD(args)...);
+            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
         }
     }
 };
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
 {
-    template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Sink& sink, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
+        typename Handler::result_type
     {
         // We parse other items while the separator and condition matches.
         // If only the separator matches but not the condition, this means we've just read the
@@ -103,12 +103,12 @@ struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
         {
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(context, reader, sink,
+            return Item::template then_parser<continuation>::parse(handler, reader, sink,
                                                                    LEXY_FWD(args)...);
         }
         else
         {
-            return _list_done<NextParser>::parse(context, reader, sink, LEXY_FWD(args)...);
+            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
         }
     }
 };
@@ -124,18 +124,18 @@ struct _list : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            auto sink = context.list_sink();
+            auto sink = handler.list_sink();
 
             // We need the first item in either case.
             // So we parse it unconditionally, using the item done continuation to pass its
             // arguments to the sink. Once that's done we continue with the proper loop.
             using loop         = _list_loop_parser<Item, Sep, NextParser>;
             using continuation = _list_item_done<loop, Args...>;
-            return First::template parser<continuation>::parse(context, reader, sink,
+            return First::template parser<continuation>::parse(handler, reader, sink,
                                                                LEXY_FWD(args)...);
         }
     };

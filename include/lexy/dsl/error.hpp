@@ -29,11 +29,11 @@ struct _err : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
+            typename Handler::result_type
         {
-            return LEXY_MOV(context).error(reader, lexy::error<Reader, Tag>(reader.cur()));
+            return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(reader.cur()));
         }
     };
 };

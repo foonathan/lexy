@@ -33,29 +33,29 @@ struct _while : rule_base
     {
         struct _continuation
         {
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-                typename Context::result_type
+            template <typename Handler, typename Reader, typename... Args>
+            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+                typename Handler::result_type
             {
                 // After we've parsed then, we try again.
                 // Note that, as we're a pattern, we never add additional arguments.
-                return parser::parse(context, reader, LEXY_FWD(args)...);
+                return parser::parse(handler, reader, LEXY_FWD(args)...);
             }
         };
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             if constexpr (Branch::has_then)
             {
                 if (Branch::condition_matcher::match(reader))
                     // Try another iteration.
-                    return Branch::template then_parser<_continuation>::parse(context, reader,
+                    return Branch::template then_parser<_continuation>::parse(handler, reader,
                                                                               LEXY_FWD(args)...);
                 else
                     // Continue with next parser.
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             }
             else
             {
@@ -65,7 +65,7 @@ struct _while : rule_base
                 {
                 }
 
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             }
         }
     };

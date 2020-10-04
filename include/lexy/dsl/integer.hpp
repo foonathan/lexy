@@ -76,10 +76,10 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
     {
         struct _continuation
         {
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader,
+            template <typename Handler, typename Reader, typename... Args>
+            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader,
                                      const typename Reader::iterator begin, Args&&... args) ->
-                typename Context::result_type
+                typename Handler::result_type
             {
                 using error_type       = lexy::error<Reader, lexy::integer_overflow>;
                 constexpr auto has_sep = !std::is_same_v<Sep, void>;
@@ -104,7 +104,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                     {
                         if (cur == end)
                             // The number is zero.
-                            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
+                            return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
 
                         const auto value = Base::value(*cur++);
                         if (value == 0 || value >= Base::radix)
@@ -129,7 +129,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         {
                             if (cur == end)
                                 // No more digits.
-                                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
                             value = Base::value(*cur++);
@@ -152,7 +152,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         {
                             if (cur == end)
                                 // No more digits.
-                                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
                             value = Base::value(*cur++);
@@ -164,20 +164,20 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
 
                         // result *= radix
                         if (result > max_value / radix)
-                            return LEXY_MOV(context).error(reader, error_type(begin, end));
+                            return LEXY_MOV(handler).error(reader, error_type(begin, end));
                         result *= radix;
 
                         // result += value
                         if (result > integer(max_value - value))
-                            return LEXY_MOV(context).error(reader, error_type(begin, end));
+                            return LEXY_MOV(handler).error(reader, error_type(begin, end));
                         result += integer(value);
                     }
 
                     // If we're having any more digits, this is a guranteed overflow.
                     if (cur != end)
-                        return LEXY_MOV(context).error(reader, error_type(begin, end));
+                        return LEXY_MOV(handler).error(reader, error_type(begin, end));
 
-                    return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
                 }
                 else
                 {
@@ -190,7 +190,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         {
                             if (cur == end)
                                 // No more digits.
-                                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
                             value = Base::value(*cur++);
@@ -203,18 +203,18 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         result += integer(value);
                     }
 
-                    return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
                 }
             }
         };
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             // Parse the digit pattern with the special continuation.
             using digits = _digits<Base, Sep, LeadingZero>;
-            return digits::template parser<_continuation>::parse(context, reader, reader.cur(),
+            return digits::template parser<_continuation>::parse(handler, reader, reader.cur(),
                                                                  LEXY_FWD(args)...);
         }
     };

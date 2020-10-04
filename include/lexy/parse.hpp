@@ -26,18 +26,18 @@ struct _no_parse_state
 {};
 
 template <typename Production, typename State, typename Input, typename Callback>
-class _parse_context
+class _parse_handler
 {
     static_assert(std::is_lvalue_reference_v<State>);
 
 public:
-    constexpr explicit _parse_context(State state, const Input& input,
+    constexpr explicit _parse_handler(State state, const Input& input,
                                       const input_reader<Input>& reader, Callback callback) noexcept
     : _err_ctx(input, reader.cur()), _state(state), _callback(callback)
     {}
 
-    _parse_context(const _parse_context&) = delete;
-    _parse_context& operator=(const _parse_context&) = delete;
+    _parse_handler(const _parse_handler&) = delete;
+    _parse_handler& operator=(const _parse_handler&) = delete;
 
     static auto _result_value_cb()
     {
@@ -52,9 +52,9 @@ public:
                                typename Callback::return_type>;
 
     template <typename SubProduction>
-    constexpr auto sub_context(const input_reader<Input>& reader)
+    constexpr auto sub_handler(const input_reader<Input>& reader)
     {
-        return _parse_context<SubProduction, State, Input, Callback>(_state, _err_ctx.input(),
+        return _parse_handler<SubProduction, State, Input, Callback>(_state, _err_ctx.input(),
                                                                      reader, _callback);
     }
 
@@ -113,12 +113,12 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
     using rule = std::remove_const_t<decltype(Production::rule)>;
     // We make state an lvalue reference.
-    using context_t = _parse_context<Production, State&, Input, Callback>;
+    using handler_t = _parse_handler<Production, State&, Input, Callback>;
 
     auto reader = input.reader();
 
-    context_t context(state, input, reader, callback);
-    return rule::template parser<final_parser>::parse(context, reader);
+    handler_t handler(state, input, reader, callback);
+    return rule::template parser<final_parser>::parse(handler, reader);
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -140,26 +140,26 @@ struct _state : rule_base
     {
         template <typename Production, typename State, typename Input, typename Callback,
                   typename... Args>
-        LEXY_DSL_FUNC auto parse(lexy::_parse_context<Production, State, Input, Callback>& context,
+        LEXY_DSL_FUNC auto parse(lexy::_parse_handler<Production, State, Input, Callback>& handler,
                                  lexy::input_reader<Input>& reader, Args&&... args) ->
-            typename lexy::_parse_context<Production, State, Input, Callback>::result_type
+            typename lexy::_parse_handler<Production, State, Input, Callback>::result_type
         {
             static_assert(!std::is_same_v<State, lexy::_no_parse_state&>,
                           "lexy::dsl::state requires passing a state to lexy::parse()");
 
             if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., context._state);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., handler._state);
             else
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         lexy::_detail::invoke(Fn, context._state));
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                         lexy::_detail::invoke(Fn, handler._state));
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             // Not used with parse, ignore.
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 };

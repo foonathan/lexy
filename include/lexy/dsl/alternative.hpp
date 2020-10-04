@@ -37,14 +37,14 @@ struct _alt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             if (matcher::match(reader))
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(context).error(reader,
+                return LEXY_MOV(handler).error(reader,
                                                lexy::error<Reader, lexy::exhausted_alternatives>(
                                                    reader.cur()));
         }

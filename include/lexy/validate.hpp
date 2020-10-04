@@ -12,10 +12,10 @@
 namespace lexy
 {
 template <typename Production, typename Input, typename Callback>
-class _validate_context
+class _validate_handler
 {
 public:
-    constexpr explicit _validate_context(const Input& input, const input_reader<Input>& reader,
+    constexpr explicit _validate_handler(const Input& input, const input_reader<Input>& reader,
                                          Callback cb)
     : _err_ctx(input, reader.cur()), _callback(cb)
     {}
@@ -23,9 +23,9 @@ public:
     using result_type = optional_error<typename Callback::return_type>;
 
     template <typename SubProduction>
-    constexpr auto sub_context(const input_reader<Input>& reader)
+    constexpr auto sub_handler(const input_reader<Input>& reader)
     {
-        return _validate_context<SubProduction, Input, Callback>(_err_ctx.input(), reader,
+        return _validate_handler<SubProduction, Input, Callback>(_err_ctx.input(), reader,
                                                                  _callback);
     }
 
@@ -56,12 +56,12 @@ template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
 {
     using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using context_t = _validate_context<Production, Input, Callback>;
+    using handler_t = _validate_handler<Production, Input, Callback>;
 
     auto reader = input.reader();
 
-    context_t context(input, reader, callback);
-    return rule::template parser<final_parser>::parse(context, reader);
+    handler_t handler(input, reader, callback);
+    return rule::template parser<final_parser>::parse(handler, reader);
 }
 } // namespace lexy
 

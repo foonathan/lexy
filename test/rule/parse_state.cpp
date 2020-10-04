@@ -28,7 +28,7 @@ TEST_CASE("rule: parse_state")
 {
     using namespace parse_state;
 
-    SUBCASE("different context")
+    SUBCASE("different handler")
     {
         constexpr auto rule = lexy::dsl::parse_state;
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -93,7 +93,7 @@ TEST_CASE("rule: parse_state_member")
 {
     using namespace parse_state_member;
 
-    SUBCASE("different context")
+    SUBCASE("different handler")
     {
         constexpr auto rule = lexy::dsl::parse_state_member<&state::i>;
         CHECK(lexy::is_rule<decltype(rule)>);

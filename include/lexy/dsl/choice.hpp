@@ -26,30 +26,30 @@ struct _chc_parser;
 template <typename NextParser>
 struct _chc_parser<NextParser>
 {
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
+        typename Handler::result_type
     {
-        return LEXY_MOV(context).error(reader,
+        return LEXY_MOV(handler).error(reader,
                                        lexy::error<Reader, lexy::exhausted_choice>(reader.cur()));
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _chc_parser<NextParser, H, T...>
 {
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+        typename Handler::result_type
     {
         if constexpr (H::is_unconditional)
-            return H::template then_parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            return H::template then_parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
         else
         {
             if (H::condition_matcher::match(reader))
-                return H::template then_parser<NextParser>::parse(context, reader,
+                return H::template then_parser<NextParser>::parse(handler, reader,
                                                                   LEXY_FWD(args)...);
             else
-                return _chc_parser<NextParser, T...>::parse(context, reader, LEXY_FWD(args)...);
+                return _chc_parser<NextParser, T...>::parse(handler, reader, LEXY_FWD(args)...);
         }
     }
 };

@@ -14,13 +14,13 @@
 
 //=== rule ===//
 #if 0
-struct ParseContext
+struct Handler
 {
     using result_type = ...;
 
-    /// Returns a sub-context for an inner production.
+    /// Returns a sub-handler for an inner production.
     template <typename Production, typename Reader>
-    ParseContext sub_context(const Reader& reader);
+    ParseHandler sub_handler(const Reader& reader);
 
     /// Returns a sink to construct a list.
     Sink list_sink();
@@ -50,14 +50,14 @@ struct Rule : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args)
-            -> typename Context::result_type
+        template <typename Handler, typename Reader, typename ... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args)
+            -> typename Handler::result_type
         {
             if (/* match reader */)
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., /* rule arguments */);
             else
-                return LEXY_MOV(context).error(reader, /* error */);
+                return LEXY_MOV(handler).error(reader, /* error */);
         }
     };
 };
@@ -126,27 +126,27 @@ struct atom_base : _atom_base
         }
     };
 
-    template <typename Context, typename Reader>
-    LEXY_DSL_FUNC auto report_error(Context& context, Reader& reader, typename Reader::iterator pos)
-        -> typename Context::result_type
+    template <typename Handler, typename Reader>
+    LEXY_DSL_FUNC auto report_error(Handler& handler, Reader& reader, typename Reader::iterator pos)
+        -> typename Handler::result_type
     {
         if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
             LEXY_ASSERT(false, "can never be reached");
         else
-            return LEXY_MOV(context).error(reader, Atom::error(reader, pos));
+            return LEXY_MOV(handler).error(reader, Atom::error(reader, pos));
     }
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             if (auto pos = reader.cur(); Atom::match(reader))
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return report_error(context, reader, pos);
+                return report_error(handler, reader, pos);
         }
     };
 };
@@ -161,14 +161,14 @@ constexpr bool is_atom = std::is_base_of_v<dsl::_atom_base, T>;
 //=== infrastructure ===//
 namespace lexy
 {
-/// The final parser in the chain of NextParsers, forwarding everything to the context.
+/// The final parser in the chain of NextParsers, forwarding everything to the handler.
 struct final_parser
 {
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader&, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader&, Args&&... args) ->
+        typename Handler::result_type
     {
-        return LEXY_MOV(context).value(LEXY_FWD(args)...);
+        return LEXY_MOV(handler).value(LEXY_FWD(args)...);
     }
 };
 } // namespace lexy

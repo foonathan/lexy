@@ -11,14 +11,14 @@
 
 namespace lexy
 {
-struct _match_context
+struct _match_handler
 {
     using result_type = lexy::result<void, void>;
 
     template <typename SubProduction, typename Reader>
-    constexpr auto sub_context(const Reader&)
+    constexpr auto sub_handler(const Reader&)
     {
-        return _match_context();
+        return _match_handler();
     }
 
     constexpr auto list_sink()
@@ -44,8 +44,8 @@ LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule)
 {
     auto reader = input.reader();
 
-    _match_context context;
-    return !!Rule::template parser<final_parser>::parse(context, reader);
+    _match_handler handler;
+    return !!Rule::template parser<final_parser>::parse(handler, reader);
 }
 
 template <typename Production, typename Input>

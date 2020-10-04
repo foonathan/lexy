@@ -17,16 +17,16 @@ template <typename Tag>
 using test_error = lexy::error_for<test_input, Tag>;
 
 template <typename Callback, typename Production = void>
-struct test_context
+struct test_handler
 {
     const char* str;
 
     using result_type = lexy::result<int, int>;
 
     template <typename SubProduction>
-    constexpr auto sub_context(const lexy::input_reader<test_input>&)
+    constexpr auto sub_handler(const lexy::input_reader<test_input>&)
     {
-        return test_context<Callback, SubProduction>{str};
+        return test_handler<Callback, SubProduction>{str};
     }
 
     constexpr auto list_sink()
@@ -67,12 +67,12 @@ struct test_context
 
 struct test_final_parser
 {
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+        typename Handler::result_type
     {
         // We sneak in the final input position.
-        return LEXY_MOV(context).value(reader.cur(), LEXY_FWD(args)...);
+        return LEXY_MOV(handler).value(reader.cur(), LEXY_FWD(args)...);
     }
 };
 
@@ -82,8 +82,8 @@ constexpr int rule_matches(Rule, const char* str)
     auto input  = lexy::zstring_input<test_encoding>(str);
     auto reader = input.reader();
 
-    test_context<Callback> context{str};
-    auto result = Rule::template parser<test_final_parser>::parse(context, reader);
+    test_handler<Callback> handler{str};
+    auto result = Rule::template parser<test_final_parser>::parse(handler, reader);
     if (result)
         return result.value();
     else

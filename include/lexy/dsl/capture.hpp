@@ -16,23 +16,23 @@ struct _cap_parser
     template <typename... PrevArgs>
     struct _continuation
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, typename Reader::iterator begin,
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, typename Reader::iterator begin,
                                  PrevArgs&&... prev_args, Args&&... args) ->
-            typename Context::result_type
+            typename Handler::result_type
         {
             auto end = reader.cur();
-            return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
+            return NextParser::parse(handler, reader, LEXY_FWD(prev_args)...,
                                      Lexeme<Reader>(begin, end), LEXY_FWD(args)...);
         }
     };
 
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    template <typename Handler, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+        typename Handler::result_type
     {
         using continuation = _continuation<Args...>;
-        return Rule::template parser<continuation>::parse(context, reader, reader.cur(),
+        return Rule::template parser<continuation>::parse(handler, reader, reader.cur(),
                                                           LEXY_FWD(args)...);
     }
 };

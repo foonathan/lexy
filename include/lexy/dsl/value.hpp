@@ -17,11 +17,11 @@ struct _valc : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., Value);
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., Value);
         }
     };
 };
@@ -41,11 +41,11 @@ struct _valf : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., F());
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., F());
         }
     };
 };
@@ -65,11 +65,11 @@ struct _valt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., T());
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., T());
         }
     };
 };

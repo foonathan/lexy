@@ -33,18 +33,18 @@ struct _delim : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            auto sink = context.list_sink();
+            auto sink = handler.list_sink();
 
             const auto begin = reader.cur();
             while (true)
             {
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context)
+                    return LEXY_MOV(handler)
                         .error(reader,
                                lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
                 else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
@@ -52,7 +52,7 @@ struct _delim : rule_base
                     // We have an escape character.
                     if (!Escape::match_arg(sink, reader))
                         // Invalid escape sequence.
-                        return Escape::report_error(context, reader, pos);
+                        return Escape::report_error(handler, reader, pos);
                 }
                 else if (Close::matcher::match(reader))
                     // Done with the string.
@@ -66,12 +66,12 @@ struct _delim : rule_base
                             sink(*pos);
                     }
                     else
-                        return CodePoint::report_error(context, reader, pos);
+                        return CodePoint::report_error(handler, reader, pos);
                 }
             }
 
             // Add the final string as an argument.
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
         }
     };
 };
@@ -84,9 +84,9 @@ struct _delim<void, CodePoint, Close> : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
             const auto begin = reader.cur();
 
@@ -95,7 +95,7 @@ struct _delim<void, CodePoint, Close> : rule_base
             {
                 if (reader.peek() == Reader::encoding::eof())
                     // We're missing the final delimiter.
-                    return LEXY_MOV(context)
+                    return LEXY_MOV(handler)
                         .error(reader,
                                lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
                 else if (Close::matcher::match(reader))
@@ -105,14 +105,14 @@ struct _delim<void, CodePoint, Close> : rule_base
                 {
                     // Match a code point.
                     if (!CodePoint::match(reader))
-                        return CodePoint::report_error(context, reader, pos);
+                        return CodePoint::report_error(handler, reader, pos);
 
                     pos = reader.cur();
                 }
             }
 
             // Add the lexeme as an argument.
-            return NextParser::parse(context, reader, LEXY_FWD(args)...,
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                      lexy::lexeme<Reader>(begin, pos));
         }
     };
@@ -218,11 +218,11 @@ struct _escape
         return (EscapeArguments::try_match(sink, reader) || ...);
     }
 
-    template <typename Context, typename Reader>
-    LEXY_DSL_FUNC auto report_error(Context& context, Reader& reader, typename Reader::iterator pos)
-        -> typename Context::result_type
+    template <typename Handler, typename Reader>
+    LEXY_DSL_FUNC auto report_error(Handler& handler, Reader& reader, typename Reader::iterator pos)
+        -> typename Handler::result_type
     {
-        return LEXY_MOV(context).error(reader,
+        return LEXY_MOV(handler).error(reader,
                                        lexy::error<Reader, lexy::invalid_escape_sequence>(pos));
     }
 
