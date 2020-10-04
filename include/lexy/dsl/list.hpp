@@ -7,33 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-
-namespace lexyd
-{
-template <typename Pattern>
-struct _sep
-{};
-
-/// Defines a separator pattern for a list.
-template <typename Pattern>
-LEXY_CONSTEVAL auto sep(Pattern)
-{
-    static_assert(lexy::is_pattern<Pattern>);
-    return _sep<Pattern>{};
-}
-
-template <typename Pattern>
-struct _tsep
-{};
-
-/// Defines a separator pattern for a list that can be trailing.
-template <typename Pattern>
-LEXY_CONSTEVAL auto trailing_sep(Pattern)
-{
-    static_assert(lexy::is_pattern<Pattern>);
-    return _tsep<Pattern>{};
-}
-} // namespace lexyd
+#include <lexy/dsl/separator.hpp>
 
 namespace lexyd
 {

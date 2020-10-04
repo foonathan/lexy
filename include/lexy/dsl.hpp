@@ -26,6 +26,7 @@
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/punctuator.hpp>
+#include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>
 #include <lexy/dsl/success.hpp>
