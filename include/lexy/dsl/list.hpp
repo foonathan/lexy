@@ -39,7 +39,8 @@ struct _list_item_done
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, ParentArgs&&... pargs,
                              Args&&... args) -> typename Handler::result_type
     {
-        sink(LEXY_FWD(args)...); // Forward item args to the sink.
+        if constexpr (sizeof...(Args) > 0)
+            sink(LEXY_FWD(args)...); // Forward item args to the sink.
         return NextParser::parse(handler, reader, sink, LEXY_FWD(pargs)...); // Continue.
     }
 };
