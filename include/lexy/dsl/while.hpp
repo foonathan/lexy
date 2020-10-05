@@ -78,6 +78,20 @@ LEXY_CONSTEVAL auto while_(Pattern pattern)
     static_assert(lexy::is_pattern<Pattern>);
     return _while<decltype(branch(pattern))>{};
 }
+
+/// Matches the pattern at least once, then as often as possible.
+template <typename Pattern>
+LEXY_CONSTEVAL auto while_one(Pattern pattern)
+{
+    return pattern + while_(pattern);
+}
+
+/// Matches then once, then `while_(condition >> then)`.
+template <typename Then, typename Condition>
+LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
+{
+    return then + while_(condition >> then);
+}
 } // namespace lexyd
 
 #endif // LEXY_DSL_WHILE_HPP_INCLUDED

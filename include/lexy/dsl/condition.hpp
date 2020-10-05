@@ -70,7 +70,7 @@ struct _not : rule_base
         }
     };
 
-    // As parser, we don't actually do anything..
+    // As parser, we don't actually do anything.
     template <typename NextParser>
     using parser = NextParser;
 };
