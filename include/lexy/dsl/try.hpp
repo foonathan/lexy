@@ -12,7 +12,9 @@ namespace lexyd
 template <typename Tag, typename Pattern>
 struct _try : rule_base
 {
-    static constexpr auto has_matcher = false;
+    static constexpr auto has_matcher = true;
+
+    using matcher = typename Pattern::matcher;
 
     template <typename NextParser>
     struct parser
