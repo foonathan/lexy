@@ -22,6 +22,7 @@
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/position.hpp>
