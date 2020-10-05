@@ -38,36 +38,34 @@ struct _br : rule_base
     {
         return _br{};
     }
-
-    // If we add something on the left to a branch, we loose our branchy-ness.
-    template <typename Rule>
-    friend LEXY_CONSTEVAL auto operator+(Rule rule, _br)
-    {
-        return rule + Condition{} + Then{};
-    }
-    // If we add something on the right to a branch, we extend our then.
-    template <typename Rule>
-    friend LEXY_CONSTEVAL auto operator+(_br, Rule rule)
-    {
-        return _br<Condition, decltype(Then{} + rule)>{};
-    }
-
-    // A condition on the left extends our condition.
-    template <typename Pattern>
-    friend LEXY_CONSTEVAL auto operator>>(Pattern pattern, _br)
-    {
-        static_assert(lexy::is_pattern<Pattern>, "branch condition must be a pattern");
-        return _br<decltype(pattern + Condition{}), Then>{};
-    }
-    // A rule on the right extends our then.
-    template <typename Rule>
-    friend LEXY_CONSTEVAL auto operator>>(_br, Rule rule)
-    {
-        static_assert(lexy::is_pattern<Then>,
-                      "branch cannot be used as condition of another branch as it isn't a pattern");
-        return _br{} + rule;
-    }
 };
+
+// If we add something on the left to a branch, we loose the branchy-ness.
+template <typename Rule, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, Then>)
+{
+    return rule + Condition{} + Then{};
+}
+// If we add something on the right to a branch, we extend the then.
+template <typename Condition, typename Then, typename Rule>
+LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, Rule rule)
+{
+    return _br<Condition, decltype(Then{} + rule)>{};
+}
+// If we add two branches, we extend the then of the first one.
+template <typename C1, typename T1, typename C2, typename T2>
+LEXY_CONSTEVAL auto operator+(_br<C1, T1>, _br<C2, T2>)
+{
+    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
+}
+
+// A condition on the left extends the condition.
+template <typename Pattern, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator>>(Pattern pattern, _br<Condition, Then>)
+{
+    static_assert(lexy::is_pattern<Pattern>, "branch condition must be a pattern");
+    return _br<decltype(pattern + Condition{}), Then>{};
+}
 
 /// Parses `Then` only after `Condition` has matched.
 template <typename Condition, typename Then>
