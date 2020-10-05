@@ -8,27 +8,54 @@
 
 TEST_CASE("pattern: while")
 {
-    constexpr auto pattern = while_(LEXY_LIT("ab"));
-    CHECK(lexy::is_pattern<decltype(pattern)>);
+    SUBCASE("simple")
+    {
+        constexpr auto pattern = while_(LEXY_LIT("ab"));
+        CHECK(lexy::is_pattern<decltype(pattern)>);
 
-    constexpr auto empty = pattern_matches(pattern, "");
-    CHECK(empty);
-    CHECK(empty.match().empty());
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(empty);
+        CHECK(empty.match().empty());
 
-    constexpr auto a = pattern_matches(pattern, "a");
-    CHECK(a);
-    CHECK(a.match().empty());
+        constexpr auto a = pattern_matches(pattern, "a");
+        CHECK(a);
+        CHECK(a.match().empty());
 
-    constexpr auto ab = pattern_matches(pattern, "ab");
-    CHECK(ab);
-    CHECK(ab.match().string_view() == "ab");
+        constexpr auto ab = pattern_matches(pattern, "ab");
+        CHECK(ab);
+        CHECK(ab.match().string_view() == "ab");
 
-    constexpr auto abab = pattern_matches(pattern, "abab");
-    CHECK(abab);
-    CHECK(abab.match().string_view() == "abab");
+        constexpr auto abab = pattern_matches(pattern, "abab");
+        CHECK(abab);
+        CHECK(abab.match().string_view() == "abab");
 
-    constexpr auto ababab = pattern_matches(pattern, "ababab");
-    CHECK(ababab);
-    CHECK(ababab.match().string_view() == "ababab");
+        constexpr auto ababab = pattern_matches(pattern, "ababab");
+        CHECK(ababab);
+        CHECK(ababab.match().string_view() == "ababab");
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto pattern = while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(empty);
+        CHECK(empty.match().empty());
+
+        constexpr auto a = pattern_matches(pattern, "a");
+        CHECK(!a);
+        CHECK(a.match().empty());
+
+        constexpr auto abc = pattern_matches(pattern, "abc");
+        CHECK(abc);
+        CHECK(abc.match().string_view() == "abc");
+        constexpr auto abcabc = pattern_matches(pattern, "abcabc");
+        CHECK(abcabc);
+        CHECK(abcabc.match().string_view() == "abcabc");
+
+        constexpr auto abcabca = pattern_matches(pattern, "abcabca");
+        CHECK(!abcabca);
+        CHECK(abcabca.match().empty());
+    }
 }
 

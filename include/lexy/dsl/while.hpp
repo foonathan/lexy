@@ -20,8 +20,14 @@ struct _while : rule_base
         template <typename Reader>
         LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            while (Branch::matcher::match(reader))
+            auto save = reader;
+            while (Branch::condition_matcher::match(reader))
             {
+                if (!Branch::then::matcher::match(reader))
+                {
+                    reader = LEXY_MOV(save);
+                    return false;
+                }
             }
 
             return true;
