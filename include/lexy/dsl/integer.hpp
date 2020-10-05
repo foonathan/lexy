@@ -173,7 +173,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         result += integer(value);
                     }
 
-                    // If we're having any more digits, this is a guranteed overflow.
+                    // If we're having any more digits, this is a guaranteed overflow.
                     if (cur != end)
                         return LEXY_MOV(handler).error(reader, error_type(begin, end));
 
