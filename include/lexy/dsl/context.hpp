@@ -168,9 +168,11 @@ struct _ctx_top
         template <typename... Args>
         struct _continuation
         {
-            template <typename Handler, typename Reader>
+            // We're ignoring any values created by the rule.
+            //
+            template <typename Handler, typename Reader, typename... RuleArgs>
             LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args,
-                                     const _context<Reader>& popped) ->
+                                     const _context<Reader>& popped, RuleArgs&&...) ->
                 typename Handler::result_type
             {
                 auto pushed = _context<Reader>::get(LEXY_FWD(args)...);
