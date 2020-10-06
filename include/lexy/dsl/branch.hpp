@@ -50,43 +50,11 @@ struct _br : rule_base
     }
 };
 
-// If we add something on the left to a branch, we loose the branchy-ness.
-template <typename Rule, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, Then>)
+/// Turns a pattern into a branch.
+template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
+LEXY_CONSTEVAL auto branch(Pattern pattern)
 {
-    return rule + Condition{} + Then{};
-}
-// Disambiguation.
-template <typename... R, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, Then>)
-{
-    return _seq<R..., Condition, Then>{};
-}
-// If we add something on the right to a branch, we extend the then.
-template <typename Condition, typename Then, typename Rule>
-LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, Rule rule)
-{
-    return _br<Condition, decltype(Then{} + rule)>{};
-}
-// Disambiguation.
-template <typename Condition, typename Then, typename... R>
-LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, _seq<R...>)
-{
-    return _br<Condition, _seq<Then, R...>>{};
-}
-// If we add two branches, we extend the then of the first one.
-template <typename C1, typename T1, typename C2, typename T2>
-LEXY_CONSTEVAL auto operator+(_br<C1, T1>, _br<C2, T2>)
-{
-    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
-}
-
-// A condition on the left extends the condition.
-template <typename Pattern, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator>>(Pattern pattern, _br<Condition, Then>)
-{
-    static_assert(lexy::is_pattern<Pattern>, "branch condition must be a pattern");
-    return _br<decltype(pattern + Condition{}), Then>{};
+    return pattern >> success;
 }
 
 /// Parses `Then` only after `Condition` has matched.
@@ -97,11 +65,58 @@ LEXY_CONSTEVAL auto operator>>(Condition, Then)
     return _br<Condition, Then>{};
 }
 
-/// Turns a pattern into a branch.
-template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
-LEXY_CONSTEVAL auto branch(Pattern pattern)
+// A condition on the left extends the condition.
+template <typename Pattern, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator>>(Pattern pattern, _br<Condition, Then>)
 {
-    return pattern >> success;
+    static_assert(lexy::is_pattern<Pattern>, "branch condition must be a pattern");
+    return _br<decltype(pattern + Condition{}), Then>{};
+}
+
+// If a branch is used as condition, only its condition is the condition.
+template <typename Condition, typename Then, typename Rule>
+LEXY_CONSTEVAL auto operator>>(_br<Condition, Then>, Rule rule)
+{
+    return _br<Condition, decltype(Then{} + rule)>{};
+}
+// Disambiguation.
+template <typename C1, typename T1, typename C2, typename T2>
+LEXY_CONSTEVAL auto operator>>(_br<C1, T1>, _br<C2, T2>)
+{
+    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
+}
+
+// If we add something on the left to a branch, we loose the branchy-ness.
+template <typename Rule, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, Then>)
+{
+    return rule + Condition{} + Then{};
+}
+// Disambiguation.
+template <typename... R, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, Then>)
+{
+    return _seq<R...>{} + Condition{} + Then{};
+}
+
+// If we add something on the right to a branch, we extend the then.
+template <typename Condition, typename Then, typename Rule>
+LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, Rule rule)
+{
+    return _br<Condition, decltype(Then{} + rule)>{};
+}
+// Disambiguation.
+template <typename Condition, typename Then, typename... R>
+LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, _seq<R...>)
+{
+    return _br<Condition, decltype(Then{} + _seq<R...>{})>{};
+}
+
+// If we add two branches, we extend the then of the first one.
+template <typename C1, typename T1, typename C2, typename T2>
+LEXY_CONSTEVAL auto operator+(_br<C1, T1>, _br<C2, T2>)
+{
+    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
 }
 } // namespace lexyd
 

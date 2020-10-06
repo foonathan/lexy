@@ -10,6 +10,9 @@
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
 
+template <typename T>
+struct print;
+
 TEST_CASE("dsl::brackets")
 {
     // We want to make sure that inner does not have a matcher.
@@ -65,13 +68,27 @@ TEST_CASE("dsl::brackets")
 
         CHECK(lexy::match(lexy::zstring_input(" (abc )"), result + lexy::dsl::eof));
     }
+
     SUBCASE("opt")
     {
         constexpr auto o = LEXY_LIT("(");
         constexpr auto c = LEXY_LIT(")");
 
-        constexpr auto result     = lexy::dsl::parenthesized.opt(inner);
+        constexpr auto result     = brackets(o, c).opt(inner);
         constexpr auto equivalent = o >> opt(!c >> inner + c);
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+        CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+        CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+    }
+    SUBCASE("opt - branch")
+    {
+        constexpr auto o = LEXY_LIT("(");
+        constexpr auto c = LEXY_LIT(")") >> lexy::dsl::id<0>;
+
+        constexpr auto result = brackets(o, c).opt(inner);
+        constexpr auto equivalent
+            = o >> (!c.condition() >> inner + c | lexy::dsl::else_ >> c.then());
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
         CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -84,7 +101,7 @@ TEST_CASE("dsl::brackets")
 
         SUBCASE("no sep")
         {
-            constexpr auto result     = lexy::dsl::parenthesized.list(inner);
+            constexpr auto result     = brackets(o, c).list(inner);
             constexpr auto equivalent = o >> list(!c >> inner);
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
@@ -94,7 +111,7 @@ TEST_CASE("dsl::brackets")
         }
         SUBCASE("sep")
         {
-            constexpr auto result     = lexy::dsl::parenthesized.list(inner, sep(LEXY_LIT(",")));
+            constexpr auto result     = brackets(o, c).list(inner, sep(LEXY_LIT(",")));
             constexpr auto equivalent = o >> list(unless(c) >> inner, sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
@@ -105,10 +122,49 @@ TEST_CASE("dsl::brackets")
         }
         SUBCASE("trailing sep")
         {
-            constexpr auto result
-                = lexy::dsl::parenthesized.list(inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto result = brackets(o, c).list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
                 = o >> list(unless(c) >> inner, trailing_sep(LEXY_LIT(","))) + c;
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
+        }
+    }
+    SUBCASE("list - branch")
+    {
+        constexpr auto o = LEXY_LIT("(");
+        constexpr auto c = LEXY_LIT(")") >> lexy::dsl::id<0>;
+
+        SUBCASE("no sep")
+        {
+            constexpr auto result     = brackets(o, c).list(inner);
+            constexpr auto equivalent = o >> list(!c.condition() >> inner) + c.then();
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result + lexy::dsl::eof));
+        }
+        SUBCASE("sep")
+        {
+            constexpr auto result = brackets(o, c).list(inner, sep(LEXY_LIT(",")));
+            constexpr auto equivalent
+                = o >> list(unless(c.condition()) >> inner, sep(LEXY_LIT(","))) + c;
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
+        }
+        SUBCASE("trailing sep")
+        {
+            constexpr auto result = brackets(o, c).list(inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto equivalent
+                = o >> list(unless(c.condition()) >> inner, trailing_sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -124,7 +180,7 @@ TEST_CASE("dsl::brackets")
 
         SUBCASE("no sep")
         {
-            constexpr auto result     = lexy::dsl::parenthesized.opt_list(inner);
+            constexpr auto result     = brackets(o, c).opt_list(inner);
             constexpr auto equivalent = o >> opt(list(!c >> inner));
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
@@ -134,7 +190,7 @@ TEST_CASE("dsl::brackets")
         }
         SUBCASE("sep")
         {
-            constexpr auto result = lexy::dsl::parenthesized.opt_list(inner, sep(LEXY_LIT(",")));
+            constexpr auto result     = brackets(o, c).opt_list(inner, sep(LEXY_LIT(",")));
             constexpr auto equivalent = o >> opt(list(unless(c) >> inner, sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
@@ -145,8 +201,7 @@ TEST_CASE("dsl::brackets")
         }
         SUBCASE("trailing sep")
         {
-            constexpr auto result
-                = lexy::dsl::parenthesized.opt_list(inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto result = brackets(o, c).opt_list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
                 = o >> opt(list(unless(c) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
@@ -157,4 +212,45 @@ TEST_CASE("dsl::brackets")
             CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
         }
     }
+    SUBCASE("opt_list - branch")
+    {
+        constexpr auto o = LEXY_LIT("(");
+        constexpr auto c = LEXY_LIT(")") >> lexy::dsl::id<0>;
+
+        SUBCASE("no sep")
+        {
+            constexpr auto result     = brackets(o, c).opt_list(inner);
+            constexpr auto equivalent = o >> opt(list(!c.condition() >> inner)) + c.then();
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abcabc)"), result + lexy::dsl::eof));
+        }
+        SUBCASE("sep")
+        {
+            constexpr auto result = brackets(o, c).opt_list(inner, sep(LEXY_LIT(",")));
+            constexpr auto equivalent
+                = o >> opt(list(unless(c.condition()) >> inner, sep(LEXY_LIT(",")))) + c;
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(!lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
+        }
+        SUBCASE("trailing sep")
+        {
+            constexpr auto result = brackets(o, c).opt_list(inner, trailing_sep(LEXY_LIT(",")));
+            constexpr auto equivalent
+                = o >> opt(list(unless(c.condition()) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
+            CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+            CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc)"), result + lexy::dsl::eof));
+            CHECK(lexy::match(lexy::zstring_input("(abc,abc,)"), result + lexy::dsl::eof));
+        }
+    }
 }
+

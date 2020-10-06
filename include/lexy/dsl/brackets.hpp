@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
@@ -32,7 +33,9 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto operator()(R r) const
     {
-        return open(*this) >> r + close(*this);
+        auto o = open(*this);
+        auto c = close(*this);
+        return o >> r + c;
     }
 
     /// Matches `opt(r)` surrounded by brackets.
@@ -42,10 +45,11 @@ struct _brackets
     {
         auto o = open(*this);
         auto c = close(*this);
-        // We always match an open bracket.
-        // If in the condition of the option, we have matched the closing bracket, we have an empty
-        // option. Otherwise, if we didn't, we match the rule and then the closing bracket.
-        return o >> lexyd::opt(!c >> r + c);
+
+        if constexpr (lexy::is_pattern<decltype(c)>)
+            return o >> lexyd::opt(!c >> r + c);
+        else
+            return o >> (!c.condition() >> r + c | else_ >> c.then());
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -54,20 +58,23 @@ struct _brackets
     LEXY_CONSTEVAL auto list(R r) const
     {
         auto o = open(*this);
-        auto c = close(*this);
-        // We parse the list item while we're haven't matched the closing bracket.
-        // When we're done with the list, we will have consumed the closing bracket.
-        return o >> lexyd::list(!c >> r);
+        auto c = branch(close(*this));
+
+        // !c.condition() matches until we've consumed the branch condition.
+        // Then the list exits and we still need c.then().
+        return o >> lexyd::list(!c.condition() >> r) + c.then();
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto list(R r, S sep) const
     {
         auto o = open(*this);
-        auto c = close(*this);
-        // When we have a separator, it can influence whether or not we're trying to have another
-        // item. As such, we can't use !c - we can finish parsing the list without having matched
-        // the closing bracket. We use unless(c) and then parse c at the end.
-        return o >> lexyd::list(unless(c) >> r, sep) + c;
+        auto c = branch(close(*this));
+
+        // When we have a separator, we can't use ! in the condition.
+        // The seperator can decide whether we've reached the end of the list,
+        // in which case the ! won't match the closing bracket.
+        // We need unless() and match it at the end again.
+        return o >> lexyd::list(unless(c.condition()) >> r, sep) + c;
     }
 
     /// Matches `opt(list(r, sep))` surrounded by brackets.
@@ -76,17 +83,20 @@ struct _brackets
     LEXY_CONSTEVAL auto opt_list(R r) const
     {
         auto o = open(*this);
-        auto c = close(*this);
-        // See above.
-        return o >> lexyd::opt(lexyd::list(!c >> r));
+        auto c = branch(close(*this));
+
+        // Same as above, we're just allowing the list to exit before doing one item.
+        // As !c.condition() is also the condition for taking the optional, we still need c.then().
+        return o >> lexyd::opt(lexyd::list(!c.condition() >> r)) + c.then();
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
     {
         auto o = open(*this);
-        auto c = close(*this);
-        // See above.
-        return o >> lexyd::opt(lexyd::list(unless(c) >> r, sep)) + c;
+        auto c = branch(close(*this));
+
+        // As above, we can't use !c and reuse it as the condition for opt().
+        return o >> lexyd::opt(lexyd::list(unless(c.condition()) >> r, sep)) + c;
     }
 
     /// Matches the open bracket.
@@ -111,7 +121,7 @@ struct _brackets
 template <typename Open, typename Close>
 LEXY_CONSTEVAL auto brackets(Open, Close)
 {
-    static_assert(lexy::is_pattern<Open> && lexy::is_pattern<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _brackets<Open, Close, void>{};
 }
 

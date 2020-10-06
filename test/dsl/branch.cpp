@@ -25,6 +25,31 @@ TEST_CASE("dsl::branch()")
     }
 }
 
+TEST_CASE("dsl::_br operator>>")
+{
+    constexpr auto branch = LEXY_LIT("condition") >> LEXY_LIT("then");
+
+    SUBCASE("right")
+    {
+        constexpr auto result     = LEXY_LIT("prefix") >> branch;
+        constexpr auto equivalent = LEXY_LIT("prefix") + LEXY_LIT("condition") >> LEXY_LIT("then");
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    }
+    SUBCASE("left")
+    {
+        constexpr auto result     = branch >> LEXY_LIT("suffix");
+        constexpr auto equivalent = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("suffix");
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    }
+    SUBCASE("both")
+    {
+        constexpr auto result = branch >> branch;
+        constexpr auto equivalent
+            = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("condition") + LEXY_LIT("then");
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    }
+}
+
 TEST_CASE("dsl::_br operator+")
 {
     constexpr auto branch = LEXY_LIT("condition") >> LEXY_LIT("then");
@@ -47,14 +72,5 @@ TEST_CASE("dsl::_br operator+")
             = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("condition") + LEXY_LIT("then");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
     }
-}
-
-TEST_CASE("dsl::_br operator>>")
-{
-    constexpr auto branch = LEXY_LIT("condition") >> LEXY_LIT("then");
-
-    constexpr auto result     = LEXY_LIT("prefix") >> branch;
-    constexpr auto equivalent = LEXY_LIT("prefix") + LEXY_LIT("condition") >> LEXY_LIT("then");
-    CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 }
 
