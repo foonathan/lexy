@@ -31,7 +31,6 @@
 #include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>
-#include <lexy/dsl/success.hpp>
 #include <lexy/dsl/try.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/while.hpp>

@@ -26,6 +26,7 @@ struct _seq_parser<NextParser, H, T...>
 template <typename... R>
 struct _seq : rule_base
 {
+    static_assert(sizeof...(R) > 1);
     static constexpr auto has_matcher = (R::has_matcher && ...);
 
     struct matcher
@@ -45,6 +46,21 @@ struct _seq : rule_base
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
 };
+template <>
+struct _seq<> : atom_base<_seq<>>
+{
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader&)
+    {
+        return true;
+    }
+
+    template <typename Reader>
+    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
+};
+
+/// Matches the empty string, always succeeds.
+constexpr auto success = _seq<>{};
 
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator+(R, S)
@@ -54,17 +70,28 @@ LEXY_CONSTEVAL auto operator+(R, S)
 template <typename... R, typename S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
 {
-    return _seq<R..., S>{};
+    if constexpr (sizeof...(R) == 0)
+        return S{};
+    else
+        return _seq<R..., S>{};
 }
 template <typename R, typename... S>
 LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
 {
-    return _seq<R, S...>{};
+    if constexpr (sizeof...(S) == 0)
+        return R{};
+    else
+        return _seq<R, S...>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
 {
-    return _seq<R..., S...>{};
+    if constexpr (sizeof...(R) == 0)
+        return _seq<S...>{};
+    else if constexpr (sizeof...(S) == 0)
+        return _seq<R...>{};
+    else
+        return _seq<R..., S...>{};
 }
 } // namespace lexyd
 

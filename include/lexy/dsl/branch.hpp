@@ -8,7 +8,6 @@
 #include <lexy/_detail/detect.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/sequence.hpp>
-#include <lexy/dsl/success.hpp>
 
 namespace lexyd
 {
@@ -27,8 +26,9 @@ struct _br : rule_base
     //=== rule ===//
     static constexpr auto has_matcher = Then::has_matcher;
 
-    using _seq    = decltype(Condition{} + Then{});
-    using matcher = typename _seq::matcher;
+    using _seq = decltype(Condition{} + Then{});
+    struct matcher : _seq::matcher
+    {};
     template <typename NextParser>
     using parser = typename _seq::template parser<NextParser>;
 

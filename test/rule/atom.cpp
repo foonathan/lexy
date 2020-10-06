@@ -5,7 +5,7 @@
 #include <lexy/dsl/base.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/success.hpp>
+#include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("rule: atom")
 {
