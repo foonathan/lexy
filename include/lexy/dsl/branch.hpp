@@ -14,11 +14,9 @@ namespace lexyd
 template <typename Condition, typename Then>
 struct _br : rule_base
 {
-    using condition                        = Condition;
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
     using condition_matcher                = typename Condition::matcher;
 
-    using then                     = Then;
     static constexpr auto has_then = !std::is_same_v<const Then, decltype(success)>;
     template <typename NextParser>
     using then_parser = typename Then::template parser<NextParser>;
@@ -33,6 +31,18 @@ struct _br : rule_base
     using parser = typename _seq::template parser<NextParser>;
 
     //=== dsl ===//
+    /// Returns the condition of the branch.
+    static LEXY_CONSTEVAL auto condition()
+    {
+        return Condition{};
+    }
+
+    /// Returns the then of the branch.
+    static LEXY_CONSTEVAL auto then()
+    {
+        return Then{};
+    }
+
     // A branch is already a branch.
     friend LEXY_CONSTEVAL auto branch(_br)
     {
@@ -46,11 +56,23 @@ LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, Then>)
 {
     return rule + Condition{} + Then{};
 }
+// Disambiguation.
+template <typename... R, typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, Then>)
+{
+    return _seq<R..., Condition, Then>{};
+}
 // If we add something on the right to a branch, we extend the then.
 template <typename Condition, typename Then, typename Rule>
 LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, Rule rule)
 {
     return _br<Condition, decltype(Then{} + rule)>{};
+}
+// Disambiguation.
+template <typename Condition, typename Then, typename... R>
+LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, _seq<R...>)
+{
+    return _br<Condition, _seq<Then, R...>>{};
 }
 // If we add two branches, we extend the then of the first one.
 template <typename C1, typename T1, typename C2, typename T2>

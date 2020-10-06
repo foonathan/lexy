@@ -51,7 +51,7 @@ struct _prd : rule_base
     friend LEXY_CONSTEVAL auto branch(_prd)
     {
         using branch_rule = decltype(branch(_rule()));
-        return typename branch_rule::condition{} >> _prd<Production, typename branch_rule::then>{};
+        return branch_rule::condition() >> _prd<Production, decltype(branch_rule::then())>{};
     }
 };
 

@@ -23,7 +23,7 @@ struct _while : rule_base
             auto save = reader;
             while (Branch::condition_matcher::match(reader))
             {
-                if (!Branch::then::matcher::match(reader))
+                if (!decltype(Branch::then())::matcher::match(reader))
                 {
                     reader = LEXY_MOV(save);
                     return false;

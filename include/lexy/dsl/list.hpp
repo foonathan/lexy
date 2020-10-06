@@ -151,8 +151,7 @@ LEXY_CONSTEVAL auto list(Item item)
     using branch_rule = decltype(branch(item));
 
     // We turn the condition of the first item into a condition for the entire list.
-    return
-        typename branch_rule::condition{} >> _list<typename branch_rule::then, branch_rule, void>{};
+    return branch_rule::condition() >> _list<decltype(branch_rule::then()), branch_rule, void>{};
 }
 
 /// Creates a list of items with the specified separator.
@@ -164,8 +163,8 @@ LEXY_CONSTEVAL auto list(Item item, _sep<Pattern>)
         using branch_rule = decltype(branch(item));
 
         // We turn the condition of the first item into a condition for the entire list.
-        return typename branch_rule::condition{}
-               >> _list<typename branch_rule::then, branch_rule, _sep<Pattern>>{};
+        return branch_rule::condition()
+               >> _list<decltype(branch_rule::then()), branch_rule, _sep<Pattern>>{};
     }
     else
         // We don't have a condition.
@@ -181,8 +180,8 @@ LEXY_CONSTEVAL auto list(Item item, _tsep<Pattern>)
     using branch_rule = decltype(branch(item));
 
     // We turn the condition of the first item into a condition for the entire list.
-    return typename branch_rule::condition{}
-           >> _list<typename branch_rule::then, branch_rule, _tsep<Pattern>>{};
+    return branch_rule::condition()
+           >> _list<decltype(branch_rule::then()), branch_rule, _tsep<Pattern>>{};
 }
 } // namespace lexyd
 
