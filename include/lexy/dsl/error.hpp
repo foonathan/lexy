@@ -12,7 +12,7 @@
 
 namespace lexyd
 {
-template <typename Tag>
+template <typename Tag, typename Pattern>
 struct _err : rule_base
 {
     static constexpr auto has_matcher = true;
@@ -33,14 +33,29 @@ struct _err : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
             typename Handler::result_type
         {
+            if constexpr (!std::is_same_v<Pattern, void>)
+            {
+                if (auto begin = reader.cur(); Pattern::matcher::match(reader))
+                    return LEXY_MOV(handler).error(reader,
+                                                   lexy::error<Reader, Tag>(begin, reader.cur()));
+            }
+
             return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(reader.cur()));
         }
     };
+
+    /// Adds a pattern whose match will be part of the error location.
+    template <typename P>
+    LEXY_CONSTEVAL auto operator()(P) const
+    {
+        static_assert(lexy::is_pattern<P>);
+        return _err<Tag, P>{};
+    }
 };
 
 /// Matches nothing, produces an error with the given tag.
 template <typename Tag>
-constexpr auto error = _err<Tag>{};
+constexpr auto error = _err<Tag, void>{};
 } // namespace lexyd
 
 namespace lexyd

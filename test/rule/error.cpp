@@ -9,25 +9,60 @@
 TEST_CASE("rule: error")
 {
     struct tag;
-    constexpr auto rule = lexy::dsl::error<tag>;
-    CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
+    SUBCASE("no range")
     {
-        const char* str;
+        constexpr auto rule = lexy::dsl::error<tag>;
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-        constexpr int error(test_error<tag> e)
+        struct callback
         {
-            assert(e.position() == str);
-            return -1;
-        }
-    };
+            const char* str;
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
-    CHECK(empty == -1);
+            constexpr int error(test_error<tag> e)
+            {
+                assert(e.position() == str);
+                return -1;
+            }
+        };
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
-    CHECK(abc == -1);
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == -1);
+    }
+    SUBCASE("range")
+    {
+        constexpr auto rule = lexy::dsl::error<tag>(LEXY_LIT("abc"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int error(test_error<tag> e)
+            {
+                if (e.begin() != e.end())
+                {
+                    assert(e.begin() == str);
+                    assert(e.end() == lexy::_detail::string_view(str).end());
+                    return -1;
+                }
+                else
+                {
+                    assert(e.position() == str);
+                    return -2;
+                }
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -2);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == -1);
+    }
 }
 
 TEST_CASE("rule: require")
