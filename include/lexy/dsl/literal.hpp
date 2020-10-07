@@ -8,6 +8,7 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -35,6 +36,12 @@ struct _lit : atom_base<_lit<String>>
         return lexy::error<Reader, lexy::expected_literal>(pos, String::get(),
                                                            lexy::_detail::range_size(pos,
                                                                                      reader.cur()));
+    }
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(_lit<String>{}, ws);
     }
 };
 

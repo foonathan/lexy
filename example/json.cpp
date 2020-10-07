@@ -252,9 +252,9 @@ struct json_value
     };
 
     static constexpr auto rule = [] {
-        auto null   = LEXY_PUNCT("null")[ws] >> dsl::value_c<nullptr>;
-        auto true_  = LEXY_PUNCT("true")[ws] >> dsl::value_c<true>;
-        auto false_ = LEXY_PUNCT("false")[ws] >> dsl::value_c<false>;
+        auto null   = LEXY_LIT("null")[ws] >> dsl::value_c<nullptr>;
+        auto true_  = LEXY_LIT("true")[ws] >> dsl::value_c<true>;
+        auto false_ = LEXY_LIT("false")[ws] >> dsl::value_c<false>;
 
         auto primitive = null | true_ | false_ | dsl::p<number> | dsl::p<string>;
         auto complex   = dsl::p<object> | dsl::p<array>;
