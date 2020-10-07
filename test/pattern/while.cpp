@@ -5,6 +5,7 @@
 #include <lexy/dsl/while.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/condition.hpp>
 
 TEST_CASE("pattern: while")
 {
@@ -56,6 +57,27 @@ TEST_CASE("pattern: while")
         constexpr auto abcabca = pattern_matches(pattern, "abcabca");
         CHECK(!abcabca);
         CHECK(abcabca.match().empty());
+    }
+    SUBCASE("negative")
+    {
+        constexpr auto pattern = while_(!LEXY_LIT("a") >> LEXY_LIT("b"));
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(!empty);
+
+        constexpr auto a = pattern_matches(pattern, "a");
+        CHECK(a);
+        CHECK(a.match().string_view() == "a");
+        constexpr auto ba = pattern_matches(pattern, "ba");
+        CHECK(ba);
+        CHECK(ba.match().string_view() == "ba");
+        constexpr auto bba = pattern_matches(pattern, "bba");
+        CHECK(bba);
+        CHECK(bba.match().string_view() == "bba");
+
+        constexpr auto bb = pattern_matches(pattern, "bb");
+        CHECK(!bb);
     }
 }
 
