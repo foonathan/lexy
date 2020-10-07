@@ -32,6 +32,7 @@
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>
 #include <lexy/dsl/try.hpp>
+#include <lexy/dsl/until.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/while.hpp>
 #include <lexy/dsl/whitespace.hpp>

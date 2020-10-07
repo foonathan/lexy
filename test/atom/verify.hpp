@@ -65,6 +65,8 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
     else if constexpr (!std::is_same_v<error_type, void>)
         return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos),
                                              Atom::error(reader, pos));
+    else
+        assert(false);
 }
 
 #endif // TEST_ATOM_VERIFY_HPP_INCLUDED
