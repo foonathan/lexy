@@ -5,10 +5,11 @@
 #include <lexy/dsl/condition.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 
 TEST_CASE("rule: if_")
 {
-    constexpr auto rule = if_(LEXY_LIT("abc"));
+    constexpr auto rule = if_(LEXY_LIT("abc")) >> lexy::dsl::success;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -31,7 +32,7 @@ TEST_CASE("rule: if_")
 
 TEST_CASE("rule: unless")
 {
-    constexpr auto rule = unless(LEXY_LIT("abc"));
+    constexpr auto rule = unless(LEXY_LIT("abc")) >> lexy::dsl::success;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -54,7 +55,7 @@ TEST_CASE("rule: unless")
 
 TEST_CASE("rule: not")
 {
-    constexpr auto rule = !LEXY_LIT("abc");
+    constexpr auto rule = !LEXY_LIT("abc") >> lexy::dsl::success;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback

@@ -5,10 +5,11 @@
 #include <lexy/dsl/condition.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 
 TEST_CASE("pattern: if_")
 {
-    constexpr auto pattern = if_(LEXY_LIT("abc"));
+    constexpr auto pattern = if_(LEXY_LIT("abc")) >> lexy::dsl::success;
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");
@@ -21,7 +22,7 @@ TEST_CASE("pattern: if_")
 
 TEST_CASE("pattern: unless")
 {
-    constexpr auto pattern = unless(LEXY_LIT("abc"));
+    constexpr auto pattern = unless(LEXY_LIT("abc")) >> lexy::dsl::success;
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");
@@ -34,7 +35,7 @@ TEST_CASE("pattern: unless")
 
 TEST_CASE("pattern: not")
 {
-    constexpr auto pattern = !LEXY_LIT("abc");
+    constexpr auto pattern = !LEXY_LIT("abc") >> lexy::dsl::success;
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");

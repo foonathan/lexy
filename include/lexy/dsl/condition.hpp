@@ -29,6 +29,16 @@ struct _if : rule_base
     using parser = NextParser;
 };
 
+template <typename Pattern, bool Expected>
+struct _if_dsl
+{
+    template <typename Rule>
+    friend LEXY_CONSTEVAL auto operator>>(_if_dsl, Rule rule)
+    {
+        return _if<Pattern, Expected>{} >> rule;
+    }
+};
+
 /// Check if at this reader position, Pattern would match, but don't actually consume any characters
 /// if it does.
 /// Only used as a branch condition.
@@ -36,7 +46,7 @@ template <typename Pattern>
 LEXY_CONSTEVAL auto if_(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    return _if<Pattern, true>{};
+    return _if_dsl<Pattern, true>{};
 }
 
 /// Check if at this reader position, Pattern would not match, but don't actually consume any
@@ -46,7 +56,7 @@ template <typename Pattern>
 LEXY_CONSTEVAL auto unless(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    return _if<Pattern, false>{};
+    return _if_dsl<Pattern, false>{};
 }
 } // namespace lexyd
 
@@ -75,6 +85,16 @@ struct _not : rule_base
     using parser = NextParser;
 };
 
+template <typename Pattern>
+struct _not_dsl
+{
+    template <typename Rule>
+    friend LEXY_CONSTEVAL auto operator>>(_not_dsl, Rule rule)
+    {
+        return _not<Pattern>{} >> rule;
+    }
+};
+
 /// Check that Pattern doesn't match.
 /// This is used for something like `opt(!pattern >> rule)`, which is equivalent to `pattern |
 /// rule`.
@@ -82,7 +102,7 @@ template <typename Pattern>
 LEXY_CONSTEVAL auto operator!(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    return _not<Pattern>{};
+    return _not_dsl<Pattern>{};
 }
 } // namespace lexyd
 
