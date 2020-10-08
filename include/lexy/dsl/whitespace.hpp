@@ -7,32 +7,13 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/while.hpp>
 
 namespace lexyd
 {
 template <typename Rule, typename Whitespace>
-struct _ws : rule_base
+struct _ws : decltype(while_(Whitespace{}) + Rule{})
 {
-    using _whitespace = decltype(while_(Whitespace{}));
-
-    static constexpr auto has_matcher = Rule::has_matcher;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            _whitespace::matcher::match(reader);
-            return Rule::matcher::match(reader);
-        }
-    };
-
-    template <typename NextParser>
-    using parser =
-        typename _whitespace::template parser<typename Rule::template parser<NextParser>>;
-
     /// Make it a branch rule, if the rule is a branch rule.
     /// If the rule isn't a branch rule, we could make the whitespace the condition, but this is
     /// probably insufficient to identify the rule.
@@ -40,21 +21,9 @@ struct _ws : rule_base
     friend LEXY_CONSTEVAL auto branch(_ws)
     {
         // We just add another condition to the left of the branch rule.
-        return _whitespace{} >> branch(Rule{});
+        return while_(Whitespace{}) >> branch(Rule{});
     }
 };
-
-/// Capturing a whitespaced rule doesn't capture the whitespace.
-template <typename Rule, typename Whitespace>
-LEXY_CONSTEVAL auto capture(_ws<Rule, Whitespace>)
-{
-    return _ws<decltype(capture(Rule{})), Whitespace>{};
-}
-template <typename T, typename Rule, typename Whitespace>
-LEXY_CONSTEVAL auto capture(_ws<Rule, Whitespace>)
-{
-    return _ws<decltype(lexy::dsl::capture<T>(Rule{})), Whitespace>{};
-}
 
 /// Matches whitespace before parsing rule.
 template <typename Rule, typename Whitespace>
