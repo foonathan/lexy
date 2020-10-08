@@ -79,5 +79,34 @@ TEST_CASE("pattern: while")
         constexpr auto bb = pattern_matches(pattern, "bb");
         CHECK(!bb);
     }
+    SUBCASE("choice")
+    {
+        constexpr auto pattern = while_(LEXY_LIT("a") >> LEXY_LIT("bc") | LEXY_LIT("bc"));
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(empty);
+
+        constexpr auto a = pattern_matches(pattern, "a");
+        CHECK(!a);
+        CHECK(a.match().empty());
+        constexpr auto abc = pattern_matches(pattern, "abc");
+        CHECK(abc);
+        CHECK(abc.match().string_view() == "abc");
+
+        constexpr auto b = pattern_matches(pattern, "b");
+        CHECK(b);
+        CHECK(b.match().empty());
+        constexpr auto bc = pattern_matches(pattern, "bc");
+        CHECK(bc);
+        CHECK(bc.match().string_view() == "bc");
+
+        constexpr auto abc_bc = pattern_matches(pattern, "abcbc");
+        CHECK(abc_bc);
+        CHECK(abc_bc.match().string_view() == "abcbc");
+        constexpr auto abc_bc_a = pattern_matches(pattern, "abcbca");
+        CHECK(!abc_bc_a);
+        CHECK(abc_bc_a.match().empty());
+    }
 }
 
