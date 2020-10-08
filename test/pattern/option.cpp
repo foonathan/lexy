@@ -40,6 +40,7 @@ TEST_CASE("pattern: option")
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(!ab);
+        CHECK(ab.match().empty());
     }
 }
 

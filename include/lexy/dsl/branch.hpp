@@ -15,20 +15,19 @@ template <typename Condition, typename Then>
 struct _br : rule_base
 {
     static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
-    using condition_matcher                = typename Condition::matcher;
 
-    static constexpr auto has_then = !std::is_same_v<const Then, decltype(success)>;
+    using condition_matcher = typename Condition::matcher;
+    struct then_matcher : Then::matcher
+    {};
+
     template <typename NextParser>
     using then_parser = typename Then::template parser<NextParser>;
 
     //=== rule ===//
-    static constexpr auto has_matcher = Then::has_matcher;
+    static constexpr auto has_matcher = false;
 
-    using _seq = decltype(Condition{} + Then{});
-    struct matcher : _seq::matcher
-    {};
     template <typename NextParser>
-    using parser = typename _seq::template parser<NextParser>;
+    using parser = typename Condition::template parser<typename Then::template parser<NextParser>>;
 
     //=== dsl ===//
     /// Returns the condition of the branch.
@@ -140,8 +139,9 @@ namespace lexy
 template <typename Rule>
 using _detect_branch = decltype(branch(Rule{}));
 
-template <typename Rule>
-constexpr auto is_branch_rule = _detail::is_detected<_detect_branch, Rule>;
+/// Whether or not the type is a branch rule.
+template <typename T>
+constexpr auto is_branch_rule = is_rule<T>&& _detail::is_detected<_detect_branch, T>;
 } // namespace lexy
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED

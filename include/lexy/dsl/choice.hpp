@@ -40,7 +40,7 @@ struct _chc_matcher<H, T...>
 
         if (auto save = reader; as_branch::condition_matcher::match(reader))
         {
-            if (decltype(as_branch::then())::matcher::match(reader))
+            if (as_branch::then_matcher::match(reader))
                 return true;
             else
             {
@@ -91,7 +91,7 @@ struct _chc_parser<NextParser, H, T...>
 template <typename... R>
 struct _chc : rule_base
 {
-    static constexpr auto has_matcher = (R::has_matcher && ...);
+    static constexpr auto has_matcher = (decltype(branch(R()).then())::has_matcher&&...);
 
     using matcher = _chc_matcher<R...>;
 
@@ -102,20 +102,20 @@ struct _chc : rule_base
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator|(R, S)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
-    static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
+    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
+    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
     return _chc<R, S>{};
 }
 template <typename... R, typename S>
 LEXY_CONSTEVAL auto operator|(_chc<R...>, S)
 {
-    static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
+    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
     return _chc<R..., S>{};
 }
 template <typename R, typename... S>
 LEXY_CONSTEVAL auto operator|(R, _chc<S...>)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
+    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
     return _chc<R, S...>{};
 }
 template <typename... R, typename... S>

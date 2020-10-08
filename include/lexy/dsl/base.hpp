@@ -36,7 +36,8 @@ struct Handler
 
 struct Rule : rule_base
 {
-    // Whether or not the rule has a matcher, in which case it is a pattern.
+    // Whether or not the rule has a matcher.
+    // A rule with matcher is a pattern.
     static constexpr bool has_matcher;
 
     struct matcher

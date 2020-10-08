@@ -9,7 +9,7 @@
 
 TEST_CASE("pattern: if_")
 {
-    constexpr auto pattern = if_(LEXY_LIT("abc")) >> lexy::dsl::success;
+    constexpr auto pattern = lexy::dsl::_if<decltype(LEXY_LIT("abc")), true>{};
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");
@@ -22,7 +22,7 @@ TEST_CASE("pattern: if_")
 
 TEST_CASE("pattern: unless")
 {
-    constexpr auto pattern = unless(LEXY_LIT("abc")) >> lexy::dsl::success;
+    constexpr auto pattern = lexy::dsl::_if<decltype(LEXY_LIT("abc")), false>{};
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");
@@ -35,7 +35,7 @@ TEST_CASE("pattern: unless")
 
 TEST_CASE("pattern: not")
 {
-    constexpr auto pattern = !LEXY_LIT("abc") >> lexy::dsl::success;
+    constexpr auto pattern = lexy::dsl::_not<decltype(LEXY_LIT("abc"))>{};
     CHECK(lexy::is_pattern<decltype(pattern)>);
 
     constexpr auto empty = pattern_matches(pattern, "");
