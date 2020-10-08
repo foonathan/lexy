@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/whitespace.hpp>
 #include <lexy/result.hpp>
 
 namespace lexyd
@@ -53,6 +54,12 @@ struct _prd : rule_base
         using branch_rule = decltype(branch(_rule()));
         return branch_rule::condition() >> _prd<Production, decltype(branch_rule::then())>{};
     }
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(_prd{}, ws);
+    }
 };
 
 /// Parses the production.
@@ -67,6 +74,12 @@ struct _rec : rule_base
     template <typename NextParser>
     struct parser : _prd_parser<Production, _production_rule<Production>, NextParser>
     {};
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(_rec{}, ws);
+    }
 };
 
 /// Parses the production, recursively.
