@@ -52,7 +52,6 @@ TEST_CASE("rule: choice")
     {
         constexpr auto rule = LEXY_LIT("a") | LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

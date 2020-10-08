@@ -21,7 +21,39 @@ struct exhausted_choice
 
 namespace lexyd
 {
-template <typename NextParser, typename... B>
+template <typename... R>
+struct _chc_matcher
+{
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader&)
+    {
+        return false;
+    }
+};
+template <typename H, typename... T>
+struct _chc_matcher<H, T...>
+{
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
+    {
+        using as_branch = decltype(branch(H{}));
+
+        if (auto save = reader; as_branch::condition_matcher::match(reader))
+        {
+            if (decltype(as_branch::then())::matcher::match(reader))
+                return true;
+            else
+            {
+                reader = LEXY_MOV(save);
+                return false;
+            }
+        }
+
+        return _chc_matcher<T...>::match(reader);
+    }
+};
+
+template <typename NextParser, typename... R>
 struct _chc_parser;
 template <typename NextParser>
 struct _chc_parser<NextParser>
@@ -41,46 +73,50 @@ struct _chc_parser<NextParser, H, T...>
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
         typename Handler::result_type
     {
-        if constexpr (H::is_unconditional)
-            return H::template then_parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+        using as_branch = decltype(branch(H{}));
+        if constexpr (as_branch::is_unconditional)
+            return as_branch::template then_parser<NextParser>::parse(handler, reader,
+                                                                      LEXY_FWD(args)...);
         else
         {
-            if (H::condition_matcher::match(reader))
-                return H::template then_parser<NextParser>::parse(handler, reader,
-                                                                  LEXY_FWD(args)...);
+            if (as_branch::condition_matcher::match(reader))
+                return as_branch::template then_parser<NextParser>::parse(handler, reader,
+                                                                          LEXY_FWD(args)...);
             else
                 return _chc_parser<NextParser, T...>::parse(handler, reader, LEXY_FWD(args)...);
         }
     }
 };
 
-template <typename... B>
+template <typename... R>
 struct _chc : rule_base
 {
-    static constexpr auto has_matcher = false;
+    static constexpr auto has_matcher = (R::has_matcher && ...);
+
+    using matcher = _chc_matcher<R...>;
 
     template <typename NextParser>
-    using parser = _chc_parser<NextParser, B...>;
+    using parser = _chc_parser<NextParser, R...>;
 };
 
 template <typename R, typename S>
-LEXY_CONSTEVAL auto operator|(R r, S s)
+LEXY_CONSTEVAL auto operator|(R, S)
 {
     static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
     static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
-    return _chc<decltype(branch(r)), decltype(branch(s))>{};
+    return _chc<R, S>{};
 }
 template <typename... R, typename S>
-LEXY_CONSTEVAL auto operator|(_chc<R...>, S s)
+LEXY_CONSTEVAL auto operator|(_chc<R...>, S)
 {
     static_assert(lexy::is_branch_rule<S>, "choice alternatives must be branches");
-    return _chc<R..., decltype(branch(s))>{};
+    return _chc<R..., S>{};
 }
 template <typename R, typename... S>
-LEXY_CONSTEVAL auto operator|(R r, _chc<S...>)
+LEXY_CONSTEVAL auto operator|(R, _chc<S...>)
 {
     static_assert(lexy::is_branch_rule<R>, "choice alternatives must be branches");
-    return _chc<decltype(branch(r)), S...>{};
+    return _chc<R, S...>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator|(_chc<R...>, _chc<S...>)
