@@ -33,8 +33,8 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto operator()(R r) const
     {
-        auto o = open(*this);
-        auto c = close(*this);
+        auto o = open();
+        auto c = close();
         return o >> r + c;
     }
 
@@ -43,8 +43,8 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt(R r) const
     {
-        auto o = open(*this);
-        auto c = close(*this);
+        auto o = open();
+        auto c = close();
 
         if constexpr (lexy::is_pattern<decltype(c)>)
             return o >> lexyd::opt(!c >> r + c);
@@ -57,8 +57,8 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto list(R r) const
     {
-        auto o = open(*this);
-        auto c = branch(close(*this));
+        auto o = open();
+        auto c = branch(close());
 
         // !c.condition() matches until we've consumed the branch condition.
         // Then the list exits and we still need c.then().
@@ -67,8 +67,8 @@ struct _brackets
     template <typename R, typename S>
     LEXY_CONSTEVAL auto list(R r, S sep) const
     {
-        auto o = open(*this);
-        auto c = branch(close(*this));
+        auto o = open();
+        auto c = branch(close());
 
         // When we have a separator, we can't use ! in the condition.
         // The seperator can decide whether we've reached the end of the list,
@@ -82,8 +82,8 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
     {
-        auto o = open(*this);
-        auto c = branch(close(*this));
+        auto o = open();
+        auto c = branch(close());
 
         // Same as above, we're just allowing the list to exit before doing one item.
         // As !c.condition() is also the condition for taking the optional, we still need c.then().
@@ -92,15 +92,15 @@ struct _brackets
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
     {
-        auto o = open(*this);
-        auto c = branch(close(*this));
+        auto o = open();
+        auto c = branch(close());
 
         // As above, we can't use !c and reuse it as the condition for opt().
         return o >> lexyd::opt(lexyd::list(unless(c.condition()) >> r, sep)) + c;
     }
 
     /// Matches the open bracket.
-    friend LEXY_CONSTEVAL auto open(_brackets)
+    LEXY_CONSTEVAL auto open() const
     {
         if constexpr (std::is_same_v<Whitespace, void>)
             return Open{};
@@ -108,7 +108,7 @@ struct _brackets
             return whitespaced(Open{}, Whitespace{});
     }
     /// Matches the closing bracket.
-    friend LEXY_CONSTEVAL auto close(_brackets)
+    LEXY_CONSTEVAL auto close() const
     {
         if constexpr (std::is_same_v<Whitespace, void>)
             return Close{};
