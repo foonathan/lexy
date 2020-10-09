@@ -7,17 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 
-namespace lexy
-{
-struct missing_until_condition
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "missing until condition";
-    }
-};
-} // namespace lexy
-
 namespace lexyd
 {
 template <typename Condition>
@@ -42,27 +31,55 @@ struct _until_eof : atom_base<_until_eof<Condition>>
 };
 
 template <typename Condition>
-struct _until : atom_base<_until<Condition>>
+struct _until : rule_base
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    static constexpr auto has_matcher = true;
+
+    struct matcher
     {
-        while (!Condition::matcher::match(reader))
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            if (reader.peek() == Reader::encoding::eof())
-                return false;
+            auto save = reader;
 
-            reader.bump();
+            while (!Condition::matcher::match(reader))
+            {
+                if (reader.peek() == Reader::encoding::eof())
+                {
+                    reader = LEXY_MOV(save);
+                    return false;
+                }
+
+                reader.bump();
+            }
+
+            return true;
         }
+    };
 
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
+    template <typename NextParser>
+    struct parser
     {
-        return lexy::error<Reader, lexy::missing_until_condition>(pos, reader.cur());
-    }
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            while (!Condition::matcher::match(reader))
+            {
+                if (reader.peek() == Reader::encoding::eof())
+                {
+                    // We're trying to parse the condition now.
+                    // This will fail, but it will create an appropriate error.
+                    return Condition::template parser<NextParser>::parse(handler, reader,
+                                                                         LEXY_FWD(args)...);
+                }
+
+                reader.bump();
+            }
+
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
 
     /// Also accepts EOF as the closing condition.
     LEXY_CONSTEVAL auto or_eof() const
