@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/choice.hpp>
 
 namespace lexyd
 {
@@ -79,6 +80,11 @@ LEXY_CONSTEVAL auto opt(Rule rule)
         auto as_branch = branch(rule);
         return _opt<decltype(as_branch.condition()), decltype(as_branch.then())>{};
     }
+}
+template <typename... R>
+LEXY_CONSTEVAL auto opt(_chc<R...>)
+{
+    return _chc<R...>{} | else_ >> success;
 }
 } // namespace lexyd
 
