@@ -29,7 +29,6 @@ struct _ws : decltype(while_(Whitespace{}) + Rule{})
 template <typename Rule, typename Whitespace>
 LEXY_CONSTEVAL auto whitespaced(Rule, Whitespace)
 {
-    static_assert(lexy::is_pattern<Whitespace>, "whitespace must be a pattern");
     return _ws<Rule, Whitespace>{};
 }
 } // namespace lexyd
