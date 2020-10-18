@@ -157,7 +157,7 @@ struct context_eq_length
     }
 };
 
-template <typename Rule, typename Eq>
+template <typename Rule, typename Eq, typename Error>
 struct _ctx_top
 {
     static constexpr auto has_matcher = false;
@@ -181,7 +181,7 @@ struct _ctx_top
                     return NextParser::parse(handler, reader, LEXY_FWD(args)...);
                 else
                 {
-                    using error = lexy::error<Reader, lexy::context_mismatch>;
+                    using error = lexy::error<Reader, Error>;
                     return LEXY_MOV(handler).error(reader, error(popped.lexeme.begin(),
                                                                  popped.lexeme.end()));
                 }
@@ -197,6 +197,13 @@ struct _ctx_top
                                                                               LEXY_FWD(args)...);
         }
     };
+
+    /// Sets the error if the context doesn't match.
+    template <typename E>
+    LEXY_CONSTEVAL auto error()
+    {
+        return _ctx_top<Rule, Eq, E>{};
+    }
 };
 
 /// Captures what the Rule matches and checks that it is equal to the last context pushed onto the
@@ -205,8 +212,19 @@ struct _ctx_top
 template <typename Eq = context_eq, typename Rule>
 LEXY_CONSTEVAL auto context_top(Rule)
 {
-    return _ctx_top<Rule, Eq>{};
+    return _ctx_top<Rule, Eq, lexy::context_mismatch>{};
 }
+
+template <typename Rule, typename Eq, typename Error>
+struct _ctx_pop : decltype(_ctx_top<Rule, Eq, Error>{} + context_drop)
+{
+    /// Sets the error if the context doesn't match.
+    template <typename E>
+    LEXY_CONSTEVAL auto error()
+    {
+        return _ctx_pop<Rule, Eq, E>{};
+    }
+};
 
 /// Captures what the Rule matches and checks that it is equal to the last context pushed onto the
 /// stack.
@@ -214,7 +232,7 @@ LEXY_CONSTEVAL auto context_top(Rule)
 template <typename Eq = context_eq, typename Rule>
 LEXY_CONSTEVAL auto context_pop(Rule)
 {
-    return _ctx_top<Rule, Eq>{} + context_drop;
+    return _ctx_pop<Rule, Eq, lexy::context_mismatch>{};
 }
 } // namespace lexyd
 
