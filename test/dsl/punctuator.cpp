@@ -6,27 +6,20 @@
 
 #include <doctest.h>
 
-TEST_CASE("dsl punctuator whitespace")
-{
-    constexpr auto result     = lexy::dsl::period[LEXY_LIT(" ")];
-    constexpr auto equivalent = whitespaced(LEXY_LIT("."), LEXY_LIT(" "));
-    CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
-}
-
 TEST_CASE("dsl punctuators")
 {
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT(".")), decltype(lexy::dsl::period)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT(",")), decltype(lexy::dsl::comma)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT(":")), decltype(lexy::dsl::colon)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT(";")), decltype(lexy::dsl::semicolon)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT(".")), decltype(lexy::dsl::period)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT(",")), decltype(lexy::dsl::comma)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT(":")), decltype(lexy::dsl::colon)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT(";")), decltype(lexy::dsl::semicolon)>);
 
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("-")), decltype(lexy::dsl::hyphen)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("/")), decltype(lexy::dsl::slash)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("\\")), decltype(lexy::dsl::backslash)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("'")), decltype(lexy::dsl::apostrophe)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("-")), decltype(lexy::dsl::hyphen)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("/")), decltype(lexy::dsl::slash)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("\\")), decltype(lexy::dsl::backslash)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("'")), decltype(lexy::dsl::apostrophe)>);
 
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("#")), decltype(lexy::dsl::hash_sign)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("$")), decltype(lexy::dsl::dollar_sign)>);
-    CHECK(std::is_base_of_v<decltype(LEXY_LIT("@")), decltype(lexy::dsl::at_sign)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("#")), decltype(lexy::dsl::hash_sign)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("$")), decltype(lexy::dsl::dollar_sign)>);
+    CHECK(std::is_same_v<const decltype(LEXY_LIT("@")), decltype(lexy::dsl::at_sign)>);
 }
 

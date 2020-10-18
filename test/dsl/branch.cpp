@@ -4,8 +4,38 @@
 
 #include <lexy/dsl/branch.hpp>
 
-#include <doctest.h>
-#include <lexy/dsl/literal.hpp>
+#include "verify.hpp"
+#include <lexy/dsl/label.hpp>
+
+TEST_CASE("dsl::operator>>")
+{
+    constexpr auto rule = LEXY_LIT("a") >> lexy::dsl::label<struct lab>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int success(const char* cur, lexy::label<lab>)
+        {
+            assert(str + 1 == cur);
+            return 0;
+        }
+
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            assert(e.string() == "a");
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
+
+    constexpr auto success = rule_matches<callback>(rule, "a");
+    CHECK(success == 0);
+}
 
 TEST_CASE("dsl::branch()")
 {

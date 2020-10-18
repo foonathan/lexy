@@ -4,13 +4,30 @@
 
 #include <lexy/dsl/eof.hpp>
 
-#include <doctest.h>
-#include <lexy/dsl/literal.hpp>
+#include "verify.hpp"
 
-TEST_CASE("eof whitespace")
+TEST_CASE("dsl::eof")
 {
-    constexpr auto result     = lexy::dsl::eof[LEXY_LIT(" ")];
-    constexpr auto equivalent = whitespaced(lexy::dsl::eof, LEXY_LIT(" "));
-    CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    SUBCASE("basic")
+    {
+        constexpr auto atom = lexy::dsl::eof;
+        CHECK(lexy::is_atom<decltype(atom)>);
+
+        constexpr auto empty = atom_matches(atom, "");
+        CHECK(empty);
+        CHECK(empty.count == 0);
+
+        constexpr auto non_empty = atom_matches(atom, "abc");
+        CHECK(!non_empty);
+        CHECK(non_empty.count == 0);
+        CHECK(non_empty.error.position() == non_empty.input);
+        CHECK(non_empty.error.character_class() == "EOF");
+    }
+    SUBCASE("whitespace")
+    {
+        constexpr auto result     = lexy::dsl::eof[LEXY_LIT(" ")];
+        constexpr auto equivalent = whitespaced(lexy::dsl::eof, LEXY_LIT(" "));
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    }
 }
 

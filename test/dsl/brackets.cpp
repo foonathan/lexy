@@ -10,10 +10,7 @@
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
 
-template <typename T>
-struct print;
-
-TEST_CASE("dsl::brackets")
+TEST_CASE("dsl::bracketed")
 {
     // We want to make sure that inner does not have a matcher.
     constexpr auto inner = LEXY_LIT("abc") + lexy::dsl::id<0>;
