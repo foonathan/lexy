@@ -78,5 +78,38 @@ LEXY_CONSTEVAL auto prevent(Pattern pattern)
 }
 } // namespace lexyd
 
+namespace lexyd
+{
+template <typename Tag, typename Pattern>
+struct _try : rule_base
+{
+    static constexpr auto has_matcher = true;
+
+    using matcher = typename Pattern::matcher;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            if (auto pos = reader.cur(); Pattern::matcher::match(reader))
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+                return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(pos));
+        }
+    };
+};
+
+/// Tries to match the pattern, report a tagged failure if it doesn't match.
+template <typename Tag, typename Pattern>
+LEXY_CONSTEVAL auto try_(Pattern)
+{
+    static_assert(lexy::is_pattern<Pattern>);
+    return _try<Tag, Pattern>{};
+}
+} // namespace lexyd
+
 #endif // LEXY_DSL_ERROR_HPP_INCLUDED
 

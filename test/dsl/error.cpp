@@ -162,3 +162,49 @@ TEST_CASE("dsl::prevent")
     }
 }
 
+TEST_CASE("dsl::try_")
+{
+    struct error;
+
+    SUBCASE("pattern")
+    {
+        constexpr auto pattern = lexy::dsl::try_<error>(LEXY_LIT("abc"));
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(!empty);
+
+        constexpr auto abc = pattern_matches(pattern, "abc");
+        CHECK(abc);
+        CHECK(abc.match().string_view() == "abc");
+    }
+    SUBCASE("rule")
+    {
+        constexpr auto rule = lexy::dsl::try_<error>(LEXY_LIT("abc"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                assert(cur - str == 3);
+                return 0;
+            }
+
+            constexpr int error(test_error<error> e)
+            {
+                assert(e.position() == str);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 0);
+    }
+}
+
