@@ -83,7 +83,8 @@ struct _as_string
     template <typename Reader>
     constexpr String operator()(const lexeme<Reader>& lexeme) const
     {
-        return lexeme.string_view();
+        auto view = lexeme.string_view();
+        return String(view.data(), view.size());
     }
 };
 
