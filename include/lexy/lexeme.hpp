@@ -7,7 +7,6 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
-#include <lexy/_detail/string_view.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/input/base.hpp>
 
@@ -53,16 +52,19 @@ public:
         return static_cast<std::size_t>(_end - _begin);
     }
 
-    constexpr char_type operator[](std::size_t idx) noexcept
+    constexpr char_type operator[](std::size_t idx) const noexcept
     {
         LEXY_PRECONDITION(idx < size());
         return _begin[idx];
     }
 
-    constexpr auto string_view() const noexcept
+    template <typename String, typename = decltype(String(iterator(), iterator()))>
+    constexpr explicit operator String() const
     {
-        static_assert(std::is_pointer_v<iterator>);
-        return _detail::basic_string_view<char_type>(_begin, _end);
+        if constexpr (std::is_pointer_v<iterator>)
+            return String(data(), size());
+        else
+            return String(begin(), end());
     }
 
 private:
@@ -81,10 +83,9 @@ struct _as_string
     using return_type = String;
 
     template <typename Reader>
-    constexpr String operator()(const lexeme<Reader>& lexeme) const
+    constexpr String operator()(const lexeme<Reader>& lex) const
     {
-        auto view = lexeme.string_view();
-        return String(view.data(), view.size());
+        return String(lex);
     }
 };
 

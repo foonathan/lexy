@@ -77,8 +77,8 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
 //=== pattern ===//
 struct pattern_match_result
 {
-    bool                         _matches;
-    lexy::lexeme_for<test_input> _match;
+    bool                       _matches;
+    lexy::_detail::string_view _match;
 
     constexpr explicit operator bool() const
     {
@@ -100,7 +100,7 @@ constexpr auto pattern_matches(Pattern, const char* str)
     auto begin  = reader.cur();
     auto result = Pattern::matcher::match(reader);
     auto match  = lexy::lexeme(reader, begin);
-    return pattern_match_result{result, match};
+    return pattern_match_result{result, {match.data(), match.size()}};
 }
 
 //=== rule ===//

@@ -26,15 +26,15 @@ TEST_CASE("dsl::while_()")
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(ab);
-        CHECK(ab.match().string_view() == "ab");
+        CHECK(ab.match() == "ab");
 
         constexpr auto abab = pattern_matches(pattern, "abab");
         CHECK(abab);
-        CHECK(abab.match().string_view() == "abab");
+        CHECK(abab.match() == "abab");
 
         constexpr auto ababab = pattern_matches(pattern, "ababab");
         CHECK(ababab);
-        CHECK(ababab.match().string_view() == "ababab");
+        CHECK(ababab.match() == "ababab");
     }
     SUBCASE("simple rule")
     {
@@ -81,10 +81,10 @@ TEST_CASE("dsl::while_()")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
         constexpr auto abcabc = pattern_matches(pattern, "abcabc");
         CHECK(abcabc);
-        CHECK(abcabc.match().string_view() == "abcabc");
+        CHECK(abcabc.match() == "abcabc");
 
         constexpr auto abcabca = pattern_matches(pattern, "abcabca");
         CHECK(!abcabca);
@@ -136,13 +136,13 @@ TEST_CASE("dsl::while_()")
 
         constexpr auto a = pattern_matches(pattern, "a");
         CHECK(a);
-        CHECK(a.match().string_view() == "a");
+        CHECK(a.match() == "a");
         constexpr auto ba = pattern_matches(pattern, "ba");
         CHECK(ba);
-        CHECK(ba.match().string_view() == "ba");
+        CHECK(ba.match() == "ba");
         constexpr auto bba = pattern_matches(pattern, "bba");
         CHECK(bba);
-        CHECK(bba.match().string_view() == "bba");
+        CHECK(bba.match() == "bba");
 
         constexpr auto bb = pattern_matches(pattern, "bb");
         CHECK(!bb);
@@ -161,18 +161,18 @@ TEST_CASE("dsl::while_()")
         CHECK(a.match().empty());
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto b = pattern_matches(pattern, "b");
         CHECK(b);
         CHECK(b.match().empty());
         constexpr auto bc = pattern_matches(pattern, "bc");
         CHECK(bc);
-        CHECK(bc.match().string_view() == "bc");
+        CHECK(bc.match() == "bc");
 
         constexpr auto abc_bc = pattern_matches(pattern, "abcbc");
         CHECK(abc_bc);
-        CHECK(abc_bc.match().string_view() == "abcbc");
+        CHECK(abc_bc.match() == "abcbc");
         constexpr auto abc_bc_a = pattern_matches(pattern, "abcbca");
         CHECK(!abc_bc_a);
         CHECK(abc_bc_a.match().empty());

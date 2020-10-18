@@ -16,7 +16,7 @@ TEST_CASE("pattern: atom")
 
     constexpr auto abc = pattern_matches(pattern, "abc");
     CHECK(abc);
-    CHECK(abc.match().string_view() == "abc");
+    CHECK(abc.match() == "abc");
 }
 
 TEST_CASE("rule: atom")

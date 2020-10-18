@@ -19,19 +19,19 @@ TEST_CASE("dsl::operator/")
 
         constexpr auto abc = pattern_matches(rule, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto a = pattern_matches(rule, "a");
         CHECK(a);
-        CHECK(a.match().string_view() == "a");
+        CHECK(a.match() == "a");
 
         constexpr auto ab = pattern_matches(rule, "ab");
         CHECK(ab);
-        CHECK(ab.match().string_view() == "a");
+        CHECK(ab.match() == "a");
 
         constexpr auto def = pattern_matches(rule, "def");
         CHECK(def);
-        CHECK(def.match().string_view() == "def");
+        CHECK(def.match() == "def");
     }
     SUBCASE("rule")
     {

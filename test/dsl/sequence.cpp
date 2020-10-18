@@ -41,7 +41,7 @@ TEST_CASE("dsl::operator+")
 
         constexpr auto third = pattern_matches(pattern, "abcdef");
         CHECK(third);
-        CHECK(third.match().string_view() == "abcdef");
+        CHECK(third.match() == "abcdef");
     }
     SUBCASE("rule")
     {
@@ -58,7 +58,7 @@ TEST_CASE("dsl::operator+")
                                   lexy::lexeme_for<test_input> lex)
             {
                 assert(str + 3 == cur);
-                assert(lex.string_view() == "c");
+                assert(*lex.begin() == 'c');
                 return 0;
             }
 

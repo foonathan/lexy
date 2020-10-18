@@ -19,7 +19,7 @@ TEST_CASE("dsl::opt()")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(ab);
@@ -66,7 +66,7 @@ TEST_CASE("dsl::opt()")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(!ab);

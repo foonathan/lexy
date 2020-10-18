@@ -20,13 +20,13 @@ TEST_CASE("dsl::until()")
 
         constexpr auto zero = pattern_matches(rule, "!");
         CHECK(zero);
-        CHECK(zero.match().string_view() == "!");
+        CHECK(zero.match() == "!");
         constexpr auto one = pattern_matches(rule, "a!");
         CHECK(one);
-        CHECK(one.match().string_view() == "a!");
+        CHECK(one.match() == "a!");
         constexpr auto two = pattern_matches(rule, "xy!");
         CHECK(two);
-        CHECK(two.match().string_view() == "xy!");
+        CHECK(two.match() == "xy!");
 
         constexpr auto unterminated = pattern_matches(rule, "abc");
         CHECK(!unterminated);

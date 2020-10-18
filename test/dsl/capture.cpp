@@ -79,8 +79,8 @@ TEST_CASE("dsl::capture()")
             constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
                                   lexy::lexeme_for<test_input> inner)
             {
-                assert(outer.string_view() == "abc");
-                assert(inner.string_view() == "abc");
+                assert(lexy::_detail::string_view(outer) == "abc");
+                assert(lexy::_detail::string_view(inner) == "abc");
                 return 0;
             }
 
@@ -109,8 +109,8 @@ TEST_CASE("dsl::capture()")
             constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
                                   lexy::lexeme_for<test_input> inner)
             {
-                assert(inner.string_view() == "abc");
-                assert(outer.string_view() == "(abc)");
+                assert(lexy::_detail::string_view(outer) == "(abc)");
+                assert(lexy::_detail::string_view(inner) == "abc");
                 return 0;
             }
 

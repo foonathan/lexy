@@ -214,19 +214,19 @@ TEST_CASE("dsl::digits")
 
         constexpr auto zero = pattern_matches(pattern, "0");
         CHECK(zero);
-        CHECK(zero.match().string_view() == "0");
+        CHECK(zero.match() == "0");
 
         constexpr auto one = pattern_matches(pattern, "1");
         CHECK(one);
-        CHECK(one.match().string_view() == "1");
+        CHECK(one.match() == "1");
 
         constexpr auto one_zero_one = pattern_matches(pattern, "101");
         CHECK(one_zero_one);
-        CHECK(one_zero_one.match().string_view() == "101");
+        CHECK(one_zero_one.match() == "101");
 
         constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
         CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match().string_view() == "007");
+        CHECK(zero_zero_seven.match() == "007");
     }
     SUBCASE("no leading zero")
     {
@@ -238,15 +238,15 @@ TEST_CASE("dsl::digits")
 
         constexpr auto zero = pattern_matches(pattern, "0");
         CHECK(zero);
-        CHECK(zero.match().string_view() == "0");
+        CHECK(zero.match() == "0");
 
         constexpr auto one = pattern_matches(pattern, "1");
         CHECK(one);
-        CHECK(one.match().string_view() == "1");
+        CHECK(one.match() == "1");
 
         constexpr auto one_zero_one = pattern_matches(pattern, "101");
         CHECK(one_zero_one);
-        CHECK(one_zero_one.match().string_view() == "101");
+        CHECK(one_zero_one.match() == "101");
 
         constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
         CHECK(!zero_zero_seven);
@@ -261,25 +261,25 @@ TEST_CASE("dsl::digits")
 
         constexpr auto zero = pattern_matches(pattern, "0");
         CHECK(zero);
-        CHECK(zero.match().string_view() == "0");
+        CHECK(zero.match() == "0");
 
         constexpr auto one = pattern_matches(pattern, "1");
         CHECK(one);
-        CHECK(one.match().string_view() == "1");
+        CHECK(one.match() == "1");
 
         constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
         CHECK(one_zero_one);
-        CHECK(one_zero_one.match().string_view() == "1'01");
+        CHECK(one_zero_one.match() == "1'01");
 
         constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
         CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match().string_view() == "00'7");
+        CHECK(zero_zero_seven.match() == "00'7");
 
         constexpr auto leading_tick = pattern_matches(pattern, "'0");
         CHECK(!leading_tick);
         constexpr auto trailing_tick = pattern_matches(pattern, "0'");
         CHECK(trailing_tick);
-        CHECK(trailing_tick.match().string_view() == "0");
+        CHECK(trailing_tick.match() == "0");
     }
     SUBCASE("sep + no leading zero")
     {
@@ -292,15 +292,15 @@ TEST_CASE("dsl::digits")
 
         constexpr auto zero = pattern_matches(pattern, "0");
         CHECK(zero);
-        CHECK(zero.match().string_view() == "0");
+        CHECK(zero.match() == "0");
 
         constexpr auto one = pattern_matches(pattern, "1");
         CHECK(one);
-        CHECK(one.match().string_view() == "1");
+        CHECK(one.match() == "1");
 
         constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
         CHECK(one_zero_one);
-        CHECK(one_zero_one.match().string_view() == "1'01");
+        CHECK(one_zero_one.match() == "1'01");
 
         constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
         CHECK(!zero_zero_seven);
@@ -309,7 +309,7 @@ TEST_CASE("dsl::digits")
         CHECK(!leading_tick);
         constexpr auto trailing_tick = pattern_matches(pattern, "0'");
         CHECK(trailing_tick);
-        CHECK(trailing_tick.match().string_view() == "0");
+        CHECK(trailing_tick.match() == "0");
     }
 }
 

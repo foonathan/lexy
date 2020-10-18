@@ -20,10 +20,10 @@ TEST_CASE("dsl::operator-")
 
         constexpr auto a = pattern_matches(pattern, "a");
         CHECK(a);
-        CHECK(a.match().string_view() == "a");
+        CHECK(a.match() == "a");
         constexpr auto aaa = pattern_matches(pattern, "aaa");
         CHECK(aaa);
-        CHECK(aaa.match().string_view() == "aaa");
+        CHECK(aaa.match() == "aaa");
 
         constexpr auto aa = pattern_matches(pattern, "aa");
         CHECK(!aa);
@@ -80,7 +80,7 @@ TEST_CASE("dsl::operator-")
 
         constexpr auto aaa = pattern_matches(pattern, "aaa");
         CHECK(aaa);
-        CHECK(aaa.match().string_view() == "aaa");
+        CHECK(aaa.match() == "aaa");
     }
 }
 

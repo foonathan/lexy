@@ -21,8 +21,8 @@ namespace parse_value
 //=== AST ===//
 struct string_pair
 {
-    lexy::string_lexeme<> a;
-    lexy::string_lexeme<> b;
+    lexy::_detail::string_view a;
+    lexy::_detail::string_view b;
 };
 
 //=== grammar ===//
@@ -32,7 +32,7 @@ struct string_p
 {
     static constexpr auto rule = capture(dsl::ascii::alnum + while_(dsl::ascii::alnum));
 
-    static constexpr auto value = lexy::construct<lexy::string_lexeme<>>;
+    static constexpr auto value = lexy::as_string<lexy::_detail::string_view>;
 };
 
 struct string_pair_p
@@ -56,7 +56,7 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list = lexy::as_list<std::vector<lexy::string_lexeme<>>>;
+    static constexpr auto list = lexy::as_list<std::vector<lexy::_detail::string_view>>;
 };
 
 using prod = string_list_p;
@@ -72,7 +72,7 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list = lexy::as_list<std::vector<lexy::string_lexeme<>>>;
+    static constexpr auto list = lexy::as_list<std::vector<lexy::_detail::string_view>>;
     static constexpr auto value
         = lexy::callback<std::size_t>([] { return std::size_t(0); },
                                       [](const auto& vec) { return vec.size(); });
@@ -92,13 +92,13 @@ TEST_CASE("parse")
 
         constexpr auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
         CHECK(abc_abc);
-        CHECK(abc_abc.value().a.string_view() == "abc");
-        CHECK(abc_abc.value().b.string_view() == "abc");
+        CHECK(abc_abc.value().a == "abc");
+        CHECK(abc_abc.value().b == "abc");
 
         constexpr auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
         CHECK(abc_123);
-        CHECK(abc_123.value().a.string_view() == "abc");
-        CHECK(abc_123.value().b.string_view() == "123");
+        CHECK(abc_123.value().a == "abc");
+        CHECK(abc_123.value().b == "123");
     }
     SUBCASE("list")
     {
@@ -114,26 +114,26 @@ TEST_CASE("parse")
         auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
         CHECK(abc);
         CHECK(abc.value().size() == 1);
-        CHECK(abc.value().at(0).string_view() == "abc");
+        CHECK(abc.value().at(0) == "abc");
 
         auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
         CHECK(abc_abc);
         CHECK(abc_abc.value().size() == 2);
-        CHECK(abc_abc.value().at(0).string_view() == "abc");
-        CHECK(abc_abc.value().at(1).string_view() == "abc");
+        CHECK(abc_abc.value().at(0) == "abc");
+        CHECK(abc_abc.value().at(1) == "abc");
 
         auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
         CHECK(abc_123);
         CHECK(abc_123.value().size() == 2);
-        CHECK(abc_123.value().at(0).string_view() == "abc");
-        CHECK(abc_123.value().at(1).string_view() == "123");
+        CHECK(abc_123.value().at(0) == "abc");
+        CHECK(abc_123.value().at(1) == "123");
 
         auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"), lexy::noop);
         CHECK(abc_abc_123);
         CHECK(abc_abc_123.value().size() == 3);
-        CHECK(abc_abc_123.value().at(0).string_view() == "abc");
-        CHECK(abc_abc_123.value().at(1).string_view() == "abc");
-        CHECK(abc_abc_123.value().at(2).string_view() == "123");
+        CHECK(abc_abc_123.value().at(0) == "abc");
+        CHECK(abc_abc_123.value().at(1) == "abc");
+        CHECK(abc_abc_123.value().at(2) == "123");
     }
     SUBCASE("list_value")
     {

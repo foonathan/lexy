@@ -21,7 +21,7 @@ TEST_CASE("pattern: times")
 
         constexpr auto two = pattern_matches(pattern, "abcabc");
         CHECK(two);
-        CHECK(two.match().string_view() == "abcabc");
+        CHECK(two.match() == "abcabc");
     }
     SUBCASE("sep")
     {
@@ -35,14 +35,14 @@ TEST_CASE("pattern: times")
 
         constexpr auto two = pattern_matches(pattern, "abc,abc");
         CHECK(two);
-        CHECK(two.match().string_view() == "abc,abc");
+        CHECK(two.match() == "abc,abc");
 
         constexpr auto no_sep = pattern_matches(pattern, "abcabc");
         CHECK(!no_sep);
 
         constexpr auto trailing_sep = pattern_matches(pattern, "abc,abc,");
         CHECK(trailing_sep);
-        CHECK(trailing_sep.match().string_view() == "abc,abc");
+        CHECK(trailing_sep.match() == "abc,abc");
     }
     SUBCASE("trailing_sep")
     {
@@ -56,14 +56,14 @@ TEST_CASE("pattern: times")
 
         constexpr auto two = pattern_matches(pattern, "abc,abc");
         CHECK(two);
-        CHECK(two.match().string_view() == "abc,abc");
+        CHECK(two.match() == "abc,abc");
 
         constexpr auto no_sep = pattern_matches(pattern, "abcabc");
         CHECK(!no_sep);
 
         constexpr auto trailing_sep = pattern_matches(pattern, "abc,abc,");
         CHECK(trailing_sep);
-        CHECK(trailing_sep.match().string_view() == "abc,abc,");
+        CHECK(trailing_sep.match() == "abc,abc,");
     }
 }
 

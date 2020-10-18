@@ -176,7 +176,7 @@ TEST_CASE("dsl::try_")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
     }
     SUBCASE("rule")
     {

@@ -20,15 +20,15 @@ TEST_CASE("dsl::whitespaced()")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto space_abc = pattern_matches(pattern, " abc");
         CHECK(space_abc);
-        CHECK(space_abc.match().string_view() == " abc");
+        CHECK(space_abc.match() == " abc");
 
         constexpr auto space_space_abc = pattern_matches(pattern, "  abc");
         CHECK(space_space_abc);
-        CHECK(space_space_abc.match().string_view() == "  abc");
+        CHECK(space_space_abc.match() == "  abc");
     }
     SUBCASE("rule")
     {

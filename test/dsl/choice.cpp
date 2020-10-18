@@ -19,19 +19,19 @@ TEST_CASE("dsl::operator|")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto a = pattern_matches(pattern, "a");
         CHECK(a);
-        CHECK(a.match().string_view() == "a");
+        CHECK(a.match() == "a");
 
         constexpr auto ab = pattern_matches(pattern, "ab");
         CHECK(ab);
-        CHECK(ab.match().string_view() == "a");
+        CHECK(ab.match() == "a");
 
         constexpr auto def = pattern_matches(pattern, "def");
         CHECK(def);
-        CHECK(def.match().string_view() == "def");
+        CHECK(def.match() == "def");
     }
     SUBCASE("branch pattern")
     {
@@ -43,7 +43,7 @@ TEST_CASE("dsl::operator|")
 
         constexpr auto abc = pattern_matches(pattern, "abc");
         CHECK(abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
 
         constexpr auto a = pattern_matches(pattern, "a");
         CHECK(!a);

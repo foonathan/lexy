@@ -92,7 +92,7 @@ TEST_CASE("dsl::operator!")
 
         constexpr auto abc = pattern_matches(rule, "abc");
         CHECK(!abc);
-        CHECK(abc.match().string_view() == "abc");
+        CHECK(abc.match() == "abc");
     }
     SUBCASE("rule")
     {
