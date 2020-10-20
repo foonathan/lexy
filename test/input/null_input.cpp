@@ -13,5 +13,6 @@ TEST_CASE("null_input")
     auto reader = input.reader();
     CHECK(reader.cur() == nullptr);
     CHECK(reader.peek() == lexy::default_encoding::eof());
+    CHECK(reader.eof());
 }
 

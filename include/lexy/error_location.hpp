@@ -55,7 +55,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
             // Next column.
             ++cur_column;
         }
-        else if (reader.peek() == encoding::eof())
+        else if (reader.eof())
         {
             // We have an OOB error position, return what the current position (i.e. the end of the
             // file).
@@ -80,7 +80,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
             reader = LEXY_MOV(save);
             break;
         }
-        else if (reader.peek() == encoding::eof())
+        else if (reader.eof())
         {
             // Last line of the input.
             break;

@@ -15,7 +15,7 @@ struct _any : atom_base<_any>
     template <typename Reader>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        while (reader.peek() != Reader::encoding::eof())
+        while (!reader.eof())
             reader.bump();
         return true;
     }

@@ -162,6 +162,11 @@ public:
 
                 using iterator = const char_type*;
 
+                bool eof() const noexcept
+                {
+                    return *_cur == encoding::eof();
+                }
+
                 auto peek() const noexcept
                 {
                     // The last one will be EOF.

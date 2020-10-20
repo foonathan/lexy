@@ -17,7 +17,7 @@ struct _until_eof : atom_base<_until_eof<Condition>>
     {
         while (!Condition::matcher::match(reader))
         {
-            if (reader.peek() == Reader::encoding::eof())
+            if (reader.eof())
                 break;
 
             reader.bump();
@@ -44,7 +44,7 @@ struct _until : rule_base
 
             while (!Condition::matcher::match(reader))
             {
-                if (reader.peek() == Reader::encoding::eof())
+                if (reader.eof())
                 {
                     reader = LEXY_MOV(save);
                     return false;
@@ -66,7 +66,7 @@ struct _until : rule_base
         {
             while (!Condition::matcher::match(reader))
             {
-                if (reader.peek() == Reader::encoding::eof())
+                if (reader.eof())
                 {
                     // We're trying to parse the condition now.
                     // This will fail, but it will create an appropriate error.

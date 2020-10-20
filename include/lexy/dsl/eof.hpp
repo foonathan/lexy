@@ -15,7 +15,7 @@ struct _eof : atom_base<_eof>
     template <typename Reader>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        return reader.peek() == Reader::encoding::eof();
+        return reader.eof();
     }
 
     template <typename Reader>

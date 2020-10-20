@@ -37,6 +37,7 @@ TEST_CASE("read_file")
 
         auto reader = buffer.value().reader();
         CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
     }
     SUBCASE("small file")
     {
@@ -47,15 +48,19 @@ TEST_CASE("read_file")
 
         auto reader = buffer.value().reader();
         CHECK(reader.peek() == 'a');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'b');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'c');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
     }
     SUBCASE("big file")
     {
@@ -74,16 +79,19 @@ TEST_CASE("read_file")
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
+            CHECK(!reader.eof());
             reader.bump();
         }
 
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'b');
+            CHECK(!reader.eof());
             reader.bump();
         }
 
         CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
     }
     SUBCASE("custom encoding and resource")
     {
@@ -95,15 +103,19 @@ TEST_CASE("read_file")
 
         auto reader = buffer.value().reader();
         CHECK(reader.peek() == 'a');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'b');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'c');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == lexy::ascii_encoding::eof());
+        CHECK(reader.eof());
     }
 
     std::remove(test_file_name);

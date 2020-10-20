@@ -156,24 +156,33 @@ TEST_CASE("argv_input")
 
     CHECK(reader.peek() == 'a');
     CHECK(reader.cur() == lexy::argv_begin(argc, argv));
+    CHECK(!reader.eof());
 
     reader.bump();
     CHECK(reader.peek() == 'b');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == 'c');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == '\0');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == 'd');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == 'e');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == '\0');
+    CHECK(!reader.eof());
     reader.bump();
     CHECK(reader.peek() == 'f');
+    CHECK(!reader.eof());
 
     reader.bump();
     CHECK(reader.peek() == lexy::default_encoding::eof());
     CHECK(reader.cur() == lexy::argv_end(argc, argv));
+    CHECK(reader.eof());
 }
 

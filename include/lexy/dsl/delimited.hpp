@@ -42,11 +42,12 @@ struct _delim : rule_base
             const auto begin = reader.cur();
             while (true)
             {
-                if (reader.peek() == Reader::encoding::eof())
+                if (reader.eof())
+                {
                     // We're missing the final delimiter.
-                    return LEXY_MOV(handler)
-                        .error(reader,
-                               lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
+                    using error = lexy::error<Reader, lexy::missing_delimiter>;
+                    return LEXY_MOV(handler).error(reader, error(begin, reader.cur()));
+                }
                 else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
                 {
                     // We have an escape character.
@@ -93,14 +94,17 @@ struct _delim<void, CodePoint, Close> : rule_base
             auto pos = reader.cur();
             while (true)
             {
-                if (reader.peek() == Reader::encoding::eof())
+                if (reader.eof())
+                {
                     // We're missing the final delimiter.
-                    return LEXY_MOV(handler)
-                        .error(reader,
-                               lexy::error<Reader, lexy::missing_delimiter>(begin, reader.cur()));
+                    using error = lexy::error<Reader, lexy::missing_delimiter>;
+                    return LEXY_MOV(handler).error(reader, error(begin, reader.cur()));
+                }
                 else if (Close::matcher::match(reader))
+                {
                     // Done with the string.
                     break;
+                }
                 else
                 {
                     // Match a code point.

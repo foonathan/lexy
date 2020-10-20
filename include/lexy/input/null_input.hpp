@@ -25,6 +25,11 @@ public:
 
             using iterator = const char_type*;
 
+            constexpr bool eof() const noexcept
+            {
+                return true;
+            }
+
             constexpr auto peek() const noexcept
             {
                 return Encoding::eof();

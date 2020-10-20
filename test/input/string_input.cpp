@@ -29,6 +29,7 @@ TEST_CASE("string_input")
         CHECK(input.end() == nullptr);
         CHECK(input.reader().cur() == nullptr);
         CHECK(input.reader().peek() == lexy::default_encoding::eof());
+        CHECK(input.reader().eof());
 
         SUBCASE("range ctor")
         {
@@ -52,18 +53,22 @@ TEST_CASE("string_input")
         auto reader = input.reader();
         CHECK(reader.cur() == str);
         CHECK(reader.peek() == 'a');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.cur() == str + 1);
         CHECK(reader.peek() == 'b');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.cur() == str + 2);
         CHECK(reader.peek() == 'c');
+        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.cur() == str + 3);
         CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
     }
     SUBCASE("converting ctor")
     {

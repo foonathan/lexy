@@ -20,6 +20,9 @@ public:
     /// An iterator of char_type, not int_type.
     using iterator = ForwardIterator;
 
+    /// Checks whether the reader is at EOF.
+    bool eof() const;
+
     /// If the reader is at eof, returns Encoding::eof().
     /// Otherwise, returns Encoding::to_int_type(/* current character */).
     typename Encoding::int_type peek() const;
@@ -73,6 +76,11 @@ public:
 
     constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {}
+
+    constexpr bool eof() const noexcept
+    {
+        return _cur == _end;
+    }
 
     constexpr auto peek() const noexcept
     {
