@@ -9,6 +9,27 @@
 
 namespace lexyd
 {
+template <typename Pattern>
+struct _peek : rule_base
+{
+    static constexpr auto has_matcher = true;
+
+    struct matcher
+    {
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
+        {
+            auto copy = reader;
+            return Pattern::matcher::match(copy);
+        }
+    };
+
+    // As a parser, we parse the Pattern itself.
+    // This is only used to create the appropriate error.
+    template <typename NextParser>
+    using parser = typename Pattern::template parser<NextParser>;
+};
+
 template <typename Condition>
 struct _until_eof : atom_base<_until_eof<Condition>>
 {
@@ -88,13 +109,22 @@ struct _until : rule_base
     }
 };
 
-/// Matches anything, until Condition matches.
+/// Matches anything until Condition matches.
 /// Then matches Condition.
 template <typename Condition>
 LEXY_CONSTEVAL auto until(Condition)
 {
     static_assert(lexy::is_pattern<Condition>);
     return _until<Condition>{};
+}
+
+/// Matches anything until Condition matches.
+/// Then does not match Condition.
+template <typename Condition>
+LEXY_CONSTEVAL auto until_peek(Condition)
+{
+    static_assert(lexy::is_pattern<Condition>);
+    return _until<_peek<Condition>>{};
 }
 } // namespace lexyd
 
