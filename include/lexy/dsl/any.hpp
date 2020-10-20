@@ -19,13 +19,15 @@ struct _any : atom_base<_any>
             reader.bump();
         return true;
     }
+    template <typename Encoding, typename Iterator>
+    LEXY_DSL_FUNC bool match(lexy::_detail::range_reader<Encoding, Iterator, Iterator>& reader)
+    {
+        reader._make_eof();
+        return true;
+    }
 
     template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator)
-    {
-        LEXY_PRECONDITION(false);
-        return nullptr;
-    }
+    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
 };
 
 /// Matches anything and consumes all remaining characters.

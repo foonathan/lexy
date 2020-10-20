@@ -100,6 +100,12 @@ public:
         return _cur;
     }
 
+    constexpr void _make_eof() noexcept
+    {
+        static_assert(std::is_same_v<Iterator, Sentinel>);
+        _cur = _end;
+    }
+
 private:
     Iterator                   _cur;
     LEXY_EMPTY_MEMBER Sentinel _end;
