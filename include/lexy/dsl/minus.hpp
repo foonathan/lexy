@@ -38,7 +38,8 @@ struct _minus : rule_base
                 return false;
 
             // Then match Except on the same input.
-            if (auto copy = save; Except::matcher::match(copy) && copy.cur() == reader.cur())
+            if (auto partial = lexy::partial_reader(save, reader.cur());
+                Except::matcher::match(partial) && partial.eof())
             {
                 // It did, so we don't match after all.
                 reader = LEXY_MOV(save);
@@ -60,12 +61,12 @@ struct _minus : rule_base
             {
                 // At this point, we've matched the rule.
                 // Check, whether Except matches as well on the same input.
-                if (auto begin = save.cur();
-                    Except::matcher::match(save) && save.cur() == reader.cur())
+                if (auto partial = lexy::partial_reader(save, reader.cur());
+                    Except::matcher::match(partial) && partial.eof())
                 {
                     // It did, so we don't match after all.
                     using error = lexy::error<Reader, lexy::minus_failure>;
-                    return LEXY_MOV(handler).error(reader, error(begin, reader.cur()));
+                    return LEXY_MOV(handler).error(reader, error(save.cur(), reader.cur()));
                 }
 
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);

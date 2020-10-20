@@ -5,6 +5,7 @@
 #include <lexy/dsl/minus.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/while.hpp>
 
 TEST_CASE("dsl::operator-")
@@ -81,6 +82,25 @@ TEST_CASE("dsl::operator-")
         constexpr auto aaa = pattern_matches(pattern, "aaa");
         CHECK(aaa);
         CHECK(aaa.match() == "aaa");
+    }
+    SUBCASE("any")
+    {
+        constexpr auto pattern = while_(LEXY_LIT("a")) - lexy::dsl::any;
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(!empty);
+        CHECK(empty.match().empty());
+
+        constexpr auto a = pattern_matches(pattern, "a");
+        CHECK(!a);
+        CHECK(a.match().empty());
+        constexpr auto aa = pattern_matches(pattern, "aa");
+        CHECK(!aa);
+        CHECK(aa.match().empty());
+        constexpr auto aaa = pattern_matches(pattern, "aaa");
+        CHECK(!aaa);
+        CHECK(aaa.match().empty());
     }
 }
 
