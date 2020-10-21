@@ -5,6 +5,7 @@
 #include <lexy/_detail/buffer_builder.hpp>
 
 #include <doctest.h>
+#include <iterator>
 
 TEST_CASE("_detail::buffer_builder")
 {
@@ -72,5 +73,48 @@ TEST_CASE("_detail::buffer_builder")
     REQUIRE(buffer.read_size() == 0);
     REQUIRE(buffer.write_size() == buffer.capacity());
     REQUIRE(buffer.read_data() == buffer.write_data());
+}
+
+TEST_CASE("_detail::buffer_builder::stable_iterator")
+{
+    lexy::_detail::buffer_builder<char> buffer;
+    {
+        auto input = "012346789";
+        std::strcpy(buffer.write_data(), input);
+        buffer.commit(std::strlen(input));
+    }
+
+    using iterator = decltype(buffer)::stable_iterator;
+    CHECK(std::is_same_v<iterator::iterator_category, std::forward_iterator_tag>);
+
+    auto iter = iterator(buffer, 0);
+    CHECK(&*iter == buffer.read_data());
+
+    SUBCASE("no grow") {}
+    SUBCASE("grow")
+    {
+        buffer.grow();
+    }
+
+    auto end = iterator(buffer, buffer.read_size());
+    CHECK(iter != end);
+
+    ++iter;
+    CHECK(iter != end);
+    CHECK(&*iter == buffer.read_data() + 1);
+
+    iter++;
+    CHECK(iter != end);
+    CHECK(&*iter == buffer.read_data() + 2);
+
+    for (auto i = 3u; i < buffer.read_size(); ++i)
+    {
+        ++iter;
+        CHECK(iter != end);
+        CHECK(&*iter == buffer.read_data() + i);
+    }
+
+    ++iter;
+    CHECK(iter == end);
 }
 

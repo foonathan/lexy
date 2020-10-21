@@ -61,7 +61,7 @@ template <typename I, typename I2> // always worse match because two different p
 constexpr auto range_size(I begin, I2 end)
 {
     std::size_t result = 0;
-    while (begin++ != end)
+    for (auto cur = begin; cur != end; ++cur)
         ++result;
     return result;
 }
