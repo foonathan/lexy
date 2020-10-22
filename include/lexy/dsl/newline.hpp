@@ -6,6 +6,7 @@
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -39,10 +40,43 @@ struct _nl : atom_base<_nl>
     {
         return lexy::error<Reader, lexy::expected_char_class>(pos, "newline");
     }
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(*this, ws);
+    }
 };
 
 /// Matches a newline character.
 constexpr auto newline = _nl{};
+} // namespace lexyd
+
+namespace lexyd
+{
+struct _eol : atom_base<_eol>
+{
+    template <typename Reader>
+    LEXY_DSL_FUNC bool match(Reader& reader)
+    {
+        return reader.eof() || _nl::match(reader);
+    }
+
+    template <typename Reader>
+    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    {
+        return lexy::error<Reader, lexy::expected_char_class>(pos, "EOL");
+    }
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(*this, ws);
+    }
+};
+
+/// Matches the end of line (EOF or newline).
+constexpr auto eol = _eol{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED

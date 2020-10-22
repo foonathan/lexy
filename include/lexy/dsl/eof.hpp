@@ -27,7 +27,7 @@ struct _eof : atom_base<_eof>
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        return whitespaced(_eof{}, ws);
+        return whitespaced(*this, ws);
     }
 };
 
