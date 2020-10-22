@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/whitespace.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -233,6 +234,12 @@ struct _argvsep : atom_base<_argvsep>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
         return lexy::error<Reader, lexy::expected_char_class>(pos, "argv-separator");
+    }
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(*this, ws);
     }
 };
 
