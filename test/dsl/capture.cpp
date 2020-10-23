@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
-#include <string>
 
 TEST_CASE("dsl::capture()")
 {
@@ -124,35 +123,6 @@ TEST_CASE("dsl::capture()")
         CHECK(empty == -1);
 
         constexpr auto success = rule_matches<callback>(rule, "(abc)");
-        CHECK(success == 0);
-    }
-    SUBCASE("as string")
-    {
-        constexpr auto rule = lexy::dsl::capture<std::string>(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            int success(const char*, std::string lex)
-            {
-                assert(lex == "abc");
-                return 0;
-            }
-
-            int error(test_error<lexy::expected_literal> e)
-            {
-                assert(e.string() == "abc");
-                return -1;
-            }
-        };
-
-        const auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
-
-        const auto success = rule_matches<callback>(rule, "abc");
         CHECK(success == 0);
     }
 }

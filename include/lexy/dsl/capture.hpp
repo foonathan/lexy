@@ -52,25 +52,6 @@ LEXY_CONSTEVAL auto capture(Rule)
 {
     return _cap<Rule>{};
 }
-
-template <typename T, typename Rule>
-struct _capa : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename>
-    using _lexeme = T;
-
-    template <typename NextParser>
-    using parser = _cap_parser<_lexeme, Rule, NextParser>;
-};
-
-/// Captures whatever the rule matches as the specified type.
-template <typename T, typename Rule>
-LEXY_CONSTEVAL auto capture(Rule)
-{
-    return _capa<T, Rule>{};
-}
 } // namespace lexyd
 
 #endif // LEXY_DSL_CAPTURE_HPP_INCLUDED
