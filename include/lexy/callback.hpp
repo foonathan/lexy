@@ -134,6 +134,33 @@ LEXY_CONSTEVAL auto sink(Fns&&... fns)
 
 namespace lexy
 {
+template <typename First, typename Second>
+struct _compose
+{
+    LEXY_EMPTY_MEMBER First  first;
+    LEXY_EMPTY_MEMBER Second second;
+
+    using return_type = typename Second::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype(first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
+    {
+        return second(first(LEXY_FWD(args)...));
+    }
+};
+
+/// Composes two callbacks.
+template <typename First, typename Second, typename = typename First::return_type,
+          typename = typename Second::return_type>
+LEXY_CONSTEVAL auto operator|(First first, Second second)
+{
+    return _compose<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
+}
+} // namespace lexy
+
+namespace lexy
+{
 struct _noop
 {
     using return_type = void;

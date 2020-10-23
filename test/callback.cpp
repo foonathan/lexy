@@ -55,6 +55,19 @@ TEST_CASE("sink")
     CHECK(result == 4 + 'a');
 }
 
+TEST_CASE("callback compose")
+{
+    constexpr auto a = lexy::callback<int>([](int i) { return 2 * i; });
+    constexpr auto b
+        = lexy::callback<std::string>([](int i) { return std::string(std::size_t(i), 'a'); });
+    constexpr auto c
+        = lexy::callback<std::size_t>([](const std::string& str) { return str.size(); });
+
+    constexpr auto composed = a | b | c;
+    CHECK(composed(0) == 0);
+    CHECK(composed(8) == 16);
+}
+
 TEST_CASE("noop")
 {
     SUBCASE("callback")

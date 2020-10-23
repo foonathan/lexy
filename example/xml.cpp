@@ -148,8 +148,8 @@ struct text
 
         return capture(while_one(dsl::try_<invalid_character>(char_)));
     }();
-    static constexpr auto value = lexy::callback<ast::xml_node_ptr>(
-        [](auto text) { return std::make_unique<ast::xml_text>(std::string(text)); });
+    static constexpr auto value
+        = lexy::as_string<std::string> | lexy::new_<ast::xml_text, ast::xml_node_ptr>;
 };
 
 // A pre-defined entity reference.
@@ -189,8 +189,8 @@ struct cdata
         // And support only ASCII characters inside.
         return delim(dsl::ascii::character);
     }();
-    static constexpr auto value = lexy::callback<ast::xml_node_ptr>(
-        [](auto content) { return std::make_unique<ast::xml_cdata>(std::string(content)); });
+    static constexpr auto value
+        = lexy::as_string<std::string> | lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
 };
 
 // The name of a tag.
