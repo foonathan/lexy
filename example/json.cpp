@@ -213,7 +213,7 @@ struct string
         return dsl::quoted[ws](code_point, escape);
     }();
 
-    static constexpr auto list = lexy::as_list<ast::json_string>;
+    static constexpr auto list = lexy::as_string<ast::json_string>;
 };
 
 // A json value that is an array.
@@ -269,7 +269,7 @@ struct json_value
 struct json
 {
     static constexpr auto rule  = dsl::p<json_value> + dsl::eof[ws];
-    static constexpr auto value = lexy::construct<ast::json_value>;
+    static constexpr auto value = lexy::forward<ast::json_value>;
 };
 } // namespace grammar
 

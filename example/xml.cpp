@@ -177,8 +177,7 @@ struct reference
 
         return dsl::lit_c<'&'> >> reference + dsl::lit_c<';'>;
     }();
-    static constexpr auto value = lexy::callback<ast::xml_node_ptr>(
-        [](char c) { return std::make_unique<ast::xml_reference>(c); });
+    static constexpr auto value = lexy::new_<ast::xml_reference, ast::xml_node_ptr>;
 };
 
 // A CDATA section.
@@ -265,7 +264,7 @@ struct document
         auto ws_comment = ws | dsl::p<comment>;
         return dsl::p<element>[ws_comment] + dsl::eof[ws_comment];
     }();
-    static constexpr auto value = lexy::construct<ast::xml_node_ptr>;
+    static constexpr auto value = lexy::forward<ast::xml_node_ptr>;
 };
 } // namespace grammar
 

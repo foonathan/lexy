@@ -11,30 +11,6 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/value.hpp>
 
-namespace lexy
-{
-template <typename T>
-struct _int
-{
-    using return_type = T;
-
-    template <typename Integer>
-    constexpr T operator()(const Integer& value) const
-    {
-        return T(value);
-    }
-    template <typename Integer>
-    constexpr T operator()(int sign, const Integer& value) const
-    {
-        return T(sign * value);
-    }
-};
-
-// A callback that takes a sign and an integer and produces the signed integer.
-template <typename T>
-constexpr auto as_integer = _int<T>{};
-} // namespace lexy
-
 namespace lexyd
 {
 /// Matches a plus sign or nothing, producing +1.

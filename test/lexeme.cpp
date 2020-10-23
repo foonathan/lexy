@@ -26,18 +26,3 @@ TEST_CASE("lexeme")
     CHECK(lexeme[0] == 'a');
 }
 
-TEST_CASE("as_string")
-{
-    lexy::string_input input  = lexy::zstring_input("abc");
-    auto               reader = input.reader();
-
-    auto begin = reader.cur();
-    reader.bump();
-    reader.bump();
-    reader.bump();
-
-    lexy::lexeme lexeme(reader, begin);
-    std::string  result = lexy::as_string<std::string>(lexeme);
-    CHECK(result == "abc");
-}
-

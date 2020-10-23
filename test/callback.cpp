@@ -5,6 +5,8 @@
 #include <lexy/callback.hpp>
 
 #include <doctest.h>
+#include <lexy/input/string_input.hpp>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -69,6 +71,12 @@ TEST_CASE("noop")
     }
 }
 
+TEST_CASE("forward")
+{
+    auto cb = lexy::construct<int>;
+    CHECK(cb(0) == 0);
+}
+
 TEST_CASE("construct")
 {
     SUBCASE("single")
@@ -103,6 +111,43 @@ TEST_CASE("construct")
         auto result = cb(11, 3.14f);
         CHECK(result.a == 11);
         CHECK(result.b == 3.14f);
+    }
+}
+
+TEST_CASE("new_")
+{
+    SUBCASE("single")
+    {
+        auto cb = lexy::new_<int, std::unique_ptr<int>>;
+        CHECK(*cb(0) == 0);
+    }
+    SUBCASE("parens")
+    {
+        struct type
+        {
+            int   a;
+            float b;
+
+            type(int a, float b) : a(a), b(b) {}
+        };
+
+        auto                  cb     = lexy::new_<type, std::unique_ptr<type>>;
+        std::unique_ptr<type> result = cb(11, 3.14f);
+        CHECK(result->a == 11);
+        CHECK(result->b == 3.14f);
+    }
+    SUBCASE("braces")
+    {
+        struct type
+        {
+            int   a;
+            float b;
+        };
+
+        auto                  cb     = lexy::new_<type, std::unique_ptr<type>>;
+        std::unique_ptr<type> result = cb(11, 3.14f);
+        CHECK(result->a == 11);
+        CHECK(result->b == 3.14f);
     }
 }
 
@@ -141,3 +186,51 @@ TEST_CASE("as_collection")
         CHECK(result == std::set<std::string>{"a", "b", "c"});
     }
 }
+
+TEST_CASE("as_string")
+{
+    lexy::string_input input  = lexy::zstring_input("abc");
+    auto               reader = input.reader();
+
+    auto begin = reader.cur();
+    reader.bump();
+    reader.bump();
+    reader.bump();
+
+    const lexy::lexeme lexeme(reader, begin);
+
+    SUBCASE("callback")
+    {
+        std::string from_ptr_size = lexy::as_string<std::string>("abc", 2);
+        CHECK(from_ptr_size == "ab");
+
+        std::string from_lexeme = lexy::as_string<std::string>(lexeme);
+        CHECK(from_lexeme == "abc");
+
+        std::string from_lvalue = lexy::as_string<std::string>(from_lexeme);
+        CHECK(from_lvalue == "abc");
+        std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
+        CHECK(from_rvalue == "test");
+    }
+    SUBCASE("sink")
+    {
+        auto sink = lexy::as_string<std::string>.sink();
+        sink('a');
+        sink("bcd", 2);
+        sink(lexeme);
+        sink(std::string("hi"));
+
+        std::string result = LEXY_MOV(sink).finish();
+        CHECK(result == "abcabchi");
+    }
+}
+
+TEST_CASE("as_integer")
+{
+    int no_sign = lexy::as_integer<int>(42);
+    CHECK(no_sign == 42);
+
+    int sign = lexy::as_integer<int>(-1, 42);
+    CHECK(sign == -42);
+}
+

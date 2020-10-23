@@ -75,23 +75,5 @@ template <typename Input>
 using lexeme_for = lexeme<input_reader<Input>>;
 } // namespace lexy
 
-namespace lexy
-{
-template <typename String>
-struct _as_string
-{
-    using return_type = String;
-
-    template <typename Reader>
-    constexpr String operator()(const lexeme<Reader>& lex) const
-    {
-        return String(lex);
-    }
-};
-
-/// A callback that turns a lexeme into a string.
-template <typename String>
-constexpr auto as_string = _as_string<String>{};
-} // namespace lexy
-
 #endif // LEXY_LEXEME_HPP_INCLUDED
+

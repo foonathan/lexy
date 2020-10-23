@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -150,12 +151,31 @@ struct _noop
     constexpr void finish() && {}
 };
 
-/// A callback that does nothing.
+/// A callback with sink that does nothing.
 inline constexpr auto noop = _noop{};
 } // namespace lexy
 
 namespace lexy
 {
+template <typename T>
+struct _fwd
+{
+    using return_type = T;
+
+    constexpr T operator()(T&& t) const
+    {
+        return LEXY_MOV(t);
+    }
+    constexpr T operator()(const T& t) const
+    {
+        return t;
+    }
+};
+
+/// A callback that just forwards an existing object.
+template <typename T>
+constexpr auto forward = _fwd<T>{};
+
 template <typename T>
 struct _construct
 {
@@ -180,9 +200,45 @@ struct _construct
     }
 };
 
-/// A callback that constructs an object of type T.
+/// A callback that constructs an object of type T by forwarding the arguments.
 template <typename T>
-inline constexpr auto construct = _construct<T>{};
+constexpr auto construct = _construct<T>{};
+
+template <typename T, typename PtrT>
+struct _new
+{
+    using return_type = PtrT;
+
+    constexpr PtrT operator()(T&& t) const
+    {
+        auto ptr = new T(LEXY_MOV(t));
+        return PtrT(ptr);
+    }
+    constexpr PtrT operator()(const T& t) const
+    {
+        auto ptr = new T(t);
+        return PtrT(ptr);
+    }
+
+    template <typename... Args>
+    constexpr PtrT operator()(Args&&... args) const
+    {
+        if constexpr (std::is_constructible_v<T, Args&&...>)
+        {
+            auto ptr = new T(LEXY_FWD(args)...);
+            return PtrT(ptr);
+        }
+        else
+        {
+            auto ptr = new T{LEXY_FWD(args)...};
+            return PtrT(ptr);
+        }
+    }
+};
+
+/// A callback that constructs an object of type T on the heap by forwarding the arguments.
+template <typename T, typename PtrT = T*>
+constexpr auto new_ = _new<T, PtrT>{};
 } // namespace lexy
 
 namespace lexy
@@ -230,9 +286,11 @@ struct _list
     }
 };
 
-/// A callback that builds a list of things by calling `push_back()`.
+/// A callback with sink that creates a list of things (e.g. a `std::vector`, `std::list`, etc.).
+/// As a callback, it forwards the arguments to the initializer list constructor.
+/// As a sink, it repeatedly calls `push_back()` and `emplace_back()`.
 template <typename T>
-inline constexpr auto as_list = _list<T>{};
+constexpr auto as_list = _list<T>{};
 
 template <typename T>
 struct _collection
@@ -277,9 +335,125 @@ struct _collection
     }
 };
 
-/// A callback that builds a collection of things by calling `insert()`.
+/// A callback with sink that creates an unordered collection of things (e.g. a `std::set`,
+/// `std::unordered_map`, etc.). As a callback, it forwards the arguments to the initializer list
+/// constructor. As a sink, it repeatedly calls `insert()` and `emplace()`.
 template <typename T>
-inline constexpr auto as_collection = _collection<T>{};
+constexpr auto as_collection = _collection<T>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename String>
+struct _as_string
+{
+    using return_type = String;
+
+    constexpr String operator()(String&& str) const
+    {
+        return LEXY_MOV(str);
+    }
+    constexpr String operator()(const String& str) const
+    {
+        return str;
+    }
+
+    template <typename CharT>
+    constexpr auto operator()(const CharT* str, std::size_t length) const
+        -> decltype(String(str, length))
+    {
+        return String(str, length);
+    }
+
+    template <typename Reader>
+    constexpr String operator()(lexeme<Reader> lex) const
+    {
+        using iterator = typename lexeme<Reader>::iterator;
+        if constexpr (std::is_pointer_v<iterator>)
+            return String(lex.data(), lex.size());
+        else
+            return String(lex.begin(), lex.end());
+    }
+
+    struct _sink
+    {
+        String _result;
+
+        using return_type = String;
+
+        template <typename CharT>
+        auto operator()(CharT c) -> decltype(_result.push_back(c))
+        {
+            return _result.push_back(c);
+        }
+
+        void operator()(const String& str)
+        {
+            _result.append(str);
+        }
+        void operator()(String&& str)
+        {
+            _result.append(LEXY_MOV(str));
+        }
+
+        template <typename CharT>
+        auto operator()(const CharT* str, std::size_t length)
+            -> decltype(_result.append(str, length))
+        {
+            return _result.append(str, length);
+        }
+
+        template <typename Reader>
+        void operator()(lexeme<Reader> lex)
+        {
+            using iterator = typename lexeme<Reader>::iterator;
+            if constexpr (std::is_pointer_v<iterator>)
+                _result.append(lex.data(), lex.size());
+            else
+                _result.append(lex.begin(), lex.end());
+        }
+
+        String&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+    constexpr auto sink() const
+    {
+        return _sink{};
+    }
+};
+
+/// A callback with sink that creates a string (e.g. `std::string`).
+/// As a callback, it converts a lexeme into the string.
+/// As a sink, it repeatedly calls `.push_back()` for individual characters,
+/// or `.append()` for lexemes or other strings.
+template <typename String>
+constexpr auto as_string = _as_string<String>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename T>
+struct _int
+{
+    using return_type = T;
+
+    template <typename Integer>
+    constexpr T operator()(const Integer& value) const
+    {
+        return T(value);
+    }
+    template <typename Integer>
+    constexpr T operator()(int sign, const Integer& value) const
+    {
+        return T(sign * value);
+    }
+};
+
+// A callback that takes an optional sign and an integer and produces the signed integer.
+template <typename T>
+constexpr auto as_integer = _int<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED

@@ -205,8 +205,8 @@ struct _escape_lit
         if (!Pattern::matcher::match(reader))
             return false;
 
-        for (auto c : Replacement::get())
-            sink(c);
+        constexpr auto rep = Replacement::get();
+        sink(rep.data(), rep.size());
         return true;
     }
 };

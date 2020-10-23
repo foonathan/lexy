@@ -149,6 +149,10 @@ TEST_CASE("dsl::delimited()")
                     {
                         ++count;
                     }
+                    constexpr void operator()(const char*, std::size_t length)
+                    {
+                        count += length;
+                    }
 
                     constexpr int finish() &&
                     {
