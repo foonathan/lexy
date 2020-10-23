@@ -171,7 +171,7 @@ struct number
     // The fractional part of a number parsed as the string.
     struct fraction
     {
-        static constexpr auto rule  = dsl::lit_c<'.'> >> capture(dsl::digits<>);
+        static constexpr auto rule  = dsl::lit_c<'.'> >> dsl::capture(dsl::digits<>);
         static constexpr auto value = lexy::as_string<std::string>;
     };
 
@@ -186,9 +186,10 @@ struct number
     };
 
     static constexpr auto rule
-        = whitespaced(if_(dsl::lit_c<'-'> / dsl::digit<>)
-                          >> dsl::p<integer> + opt(dsl::p<fraction>) + opt(dsl::p<exponent>),
-                      ws);
+        = dsl::whitespaced(dsl::if_(dsl::lit_c<'-'> / dsl::digit<>)
+                               >> dsl::p<integer> + dsl::opt(dsl::p<fraction>)
+                                      + dsl::opt(dsl::p<exponent>),
+                           ws);
     static constexpr auto value = lexy::construct<ast::json_number>;
 };
 
@@ -234,7 +235,7 @@ struct object
         auto item = dsl::p<string> + dsl::colon[ws] + dsl::recurse<json_value>;
         // A (potentially empty) list of items, seperated by comma and surrouned by curly brackets.
         // Use trailing_sep() here to allow trailing commas.
-        return dsl::curly_bracketed[ws].opt_list(item, sep(dsl::comma[ws]));
+        return dsl::curly_bracketed[ws].opt_list(item, dsl::sep(dsl::comma[ws]));
     }();
 
     static constexpr auto list = lexy::as_collection<ast::json_object>;

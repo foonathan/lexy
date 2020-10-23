@@ -94,7 +94,7 @@ private:
 class xml_element final : public xml_node
 {
 public:
-    explicit xml_element(std::string tag, std::vector<xml_node_ptr> children)
+    explicit xml_element(std::string tag, std::vector<xml_node_ptr> children = {})
     : _tag(std::move(tag)), _children(std::move(children))
     {}
 
@@ -135,7 +135,7 @@ constexpr auto ws = dsl::ascii::space / dsl::ascii::newline;
 // Comment.
 struct comment
 {
-    static constexpr auto rule  = LEXY_LIT("<!--") >> until(LEXY_LIT("-->"));
+    static constexpr auto rule  = LEXY_LIT("<!--") >> dsl::until(LEXY_LIT("-->"));
     static constexpr auto value = lexy::noop;
 };
 
@@ -146,7 +146,7 @@ struct text
         // We only support ASCII.
         auto char_ = dsl::ascii::character - dsl::lit_c<'<'> - dsl::lit_c<'&'>;
 
-        return capture(while_one(dsl::try_<invalid_character>(char_)));
+        return dsl::capture(dsl::while_one(dsl::try_<invalid_character>(char_)));
     }();
     static constexpr auto value
         = lexy::as_string<std::string> | lexy::new_<ast::xml_text, ast::xml_node_ptr>;
@@ -165,9 +165,9 @@ struct reference
 
     static constexpr auto rule = [] {
         // The name of the reference is everything until ;, excluding the ;.
-        auto name = until_peek(dsl::lit_c<';'>);
+        auto name = dsl::until_peek(dsl::lit_c<';'>);
         // We then switch over the parsed name and create the appropriate character.
-        auto reference = switch_(name)
+        auto reference = dsl::switch_(name)
                              .case_(LEXY_LIT("quot") >> dsl::value_c<'"'>)
                              .case_(LEXY_LIT("amp") >> dsl::value_c<'&'>)
                              .case_(LEXY_LIT("apos") >> dsl::value_c<'\''>)
@@ -185,7 +185,7 @@ struct cdata
 {
     static constexpr auto rule = [] {
         // We define a string with custom delimiters.
-        auto delim = delimited(LEXY_LIT("<![CDATA["), LEXY_LIT("]]>"));
+        auto delim = dsl::delimited(LEXY_LIT("<![CDATA["), LEXY_LIT("]]>"));
         // And support only ASCII characters inside.
         return delim(dsl::ascii::character);
     }();
@@ -201,7 +201,7 @@ struct name
         auto head_char = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
         auto tail_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
 
-        return capture(dsl::try_<invalid_character>(head_char) + while_(tail_char));
+        return dsl::capture(dsl::try_<invalid_character>(head_char) + while_(tail_char));
     }();
 
     static constexpr auto value = lexy::as_string<std::string>;
@@ -220,8 +220,8 @@ struct element
 
     static constexpr auto rule = [] {
         // The brackets for surrounding the opening and closing tag.
-        auto open_tagged  = brackets(LEXY_LIT("<"), LEXY_LIT(">")[ws]);
-        auto close_tagged = brackets(LEXY_LIT("</"), LEXY_LIT(">")[ws]);
+        auto open_tagged  = dsl::brackets(LEXY_LIT("<"), LEXY_LIT(">")[ws]);
+        auto close_tagged = dsl::brackets(LEXY_LIT("</"), LEXY_LIT(">")[ws]);
 
         // The actual rule for the open and closing tag.
         // We use context_push to push a name, and then context_pop to pop it and check that it
@@ -230,7 +230,7 @@ struct element
         // We also allow an empty tag by checking for the closing characters, dropping the pushed
         // name and immediately returning from parsing.
         auto empty     = LEXY_LIT("/") >> LEXY_LIT(">") + dsl::context_drop + dsl::return_;
-        auto open_tag  = open_tagged(dsl::context_push(dsl::p<name>) + opt(empty));
+        auto open_tag  = open_tagged(dsl::context_push(dsl::p<name>) + dsl::opt(empty));
         auto close_tag = close_tagged(dsl::context_pop(dsl::p<name>).error<tag_mismatch>());
 
         // The content of the element.
@@ -240,20 +240,13 @@ struct element
               | dsl::p<reference> | dsl::else_ >> dsl::p<text>;
 
         // We match a (possibly empty) list of content surrounded itself by the open and close tag.
-        return brackets(open_tag, close_tag).opt_list(content);
+        return dsl::brackets(open_tag, close_tag).opt_list(content);
     }();
 
     // We collect the children as vector.
     static constexpr auto list = lexy::as_list<std::vector<ast::xml_node_ptr>>;
     // Then we construct the node.
-    static constexpr auto value = lexy::callback<ast::xml_node_ptr>(
-        [](std::string name) {
-            return std::make_unique<ast::xml_element>(std::move(name),
-                                                      std::vector<ast::xml_node_ptr>{});
-        },
-        [](std::string name, std::vector<ast::xml_node_ptr> children) {
-            return std::make_unique<ast::xml_element>(std::move(name), std::move(children));
-        });
+    static constexpr auto value = lexy::new_<ast::xml_element, ast::xml_node_ptr>;
 };
 
 // An XML document.
