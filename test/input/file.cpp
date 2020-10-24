@@ -13,8 +13,9 @@ constexpr auto test_file_name = "lexy-input-file.test.delete-me";
 
 void write_test_data(const char* data)
 {
-    lexy::_file_handle file(std::fopen(test_file_name, "wb"));
+    auto file = std::fopen(test_file_name, "wb");
     std::fputs(data, file);
+    std::fclose(file);
 }
 } // namespace
 
@@ -65,11 +66,12 @@ TEST_CASE("read_file")
     SUBCASE("big file")
     {
         {
-            lexy::_file_handle file(std::fopen(test_file_name, "wb"));
+            auto file = std::fopen(test_file_name, "wb");
             for (auto i = 0; i != 1024; ++i)
                 std::fputc('a', file);
             for (auto i = 0; i != 1024; ++i)
                 std::fputc('b', file);
+            std::fclose(file);
         }
 
         auto buffer = lexy::read_file(test_file_name);
@@ -115,6 +117,26 @@ TEST_CASE("read_file")
 
         reader.bump();
         CHECK(reader.peek() == lexy::ascii_encoding::eof());
+        CHECK(reader.eof());
+    }
+    SUBCASE("custom encoding and byte order")
+    {
+        const unsigned char data[] = {0xFF, 0xFE, 0x11, 0x22, 0x33, 0x44, 0x00};
+        write_test_data(reinterpret_cast<const char*>(data));
+
+        auto buffer = lexy::read_file<lexy::utf16_encoding>(test_file_name);
+        REQUIRE(buffer);
+
+        auto reader = buffer.value().reader();
+        CHECK(reader.peek() == 0x2211);
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 0x4433);
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == lexy::utf16_encoding::eof());
         CHECK(reader.eof());
     }
 

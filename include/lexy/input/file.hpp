@@ -5,45 +5,16 @@
 #ifndef LEXY_INPUT_FILE_HPP_INCLUDED
 #define LEXY_INPUT_FILE_HPP_INCLUDED
 
-#include <cerrno>
-#include <cstdio>
-#include <lexy/_detail/buffer_builder.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/input/buffer.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy
 {
-class _file_handle
-{
-public:
-    explicit _file_handle(std::FILE* file) noexcept : _file(file) {}
-
-    _file_handle(const _file_handle&) = delete;
-    _file_handle& operator=(const _file_handle&) = delete;
-
-    ~_file_handle() noexcept
-    {
-        if (_file)
-            std::fclose(_file);
-    }
-
-    operator std::FILE*() const noexcept
-    {
-        return _file;
-    }
-
-private:
-    std::FILE* _file;
-};
-
-} // namespace lexy
-
-namespace lexy
-{
 /// Errors that might occur while reading the file.
 enum class file_error
 {
+    _success,
     /// An internal OS error, such as failure to read from the file.
     os_error,
     /// The file was not found.
@@ -51,66 +22,50 @@ enum class file_error
     /// The file cannot be opened.
     permission_denied,
 };
+} // namespace lexy
 
-inline file_error _get_file_error() noexcept
+namespace lexy::_detail
 {
-    switch (errno)
-    {
-    case ENOENT:
-    case ENOTDIR:
-    case ELOOP:
-        return file_error::file_not_found;
+using file_callback = void (*)(void* user_data, const char* memory, std::size_t size);
 
-    case EACCES:
-    case EPERM:
-        return file_error::permission_denied;
+// Reads the entire contents of the specified file into memory.
+// On success, invokes the callback before freeing the memory.
+// On error, returns the error without invoking the callback.
+file_error read_file(const char* path, file_callback cb, void* user_data);
+} // namespace lexy::_detail
 
-    default:
-        return file_error::os_error;
-    }
-}
-
+namespace lexy
+{
 /// Reads the file at the specified path into a buffer.
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
-result<buffer<Encoding, MemoryResource>, file_error> read_file(
-    const char* path, MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
+template <typename Encoding          = default_encoding,
+          encoding_endianness Endian = encoding_endianness::bom,
+          typename MemoryResource    = _detail::default_memory_resource>
+auto read_file(const char*     path,
+               MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
+    -> result<buffer<Encoding, MemoryResource>, file_error>
 {
-    _file_handle file(std::fopen(path, "rb"));
-    if (!file)
-        return {lexy::result_error, _get_file_error()};
+    using buffer_type = buffer<Encoding, MemoryResource>;
 
-    using char_type = typename Encoding::char_type;
-    _detail::buffer_builder<char_type> buffer;
-    while (true)
+    struct user_data_t
     {
-        const auto buffer_size = buffer.write_size();
-        LEXY_ASSERT(buffer_size > 0, "buffer empty?!");
+        buffer_type     buffer;
+        MemoryResource* resource;
+    } user_data{buffer_type(resource), resource};
 
-        // Read into the entire write area of the buffer from the file,
-        // commiting what we've just read.
-        const auto read = std::fread(buffer.write_data(), sizeof(char_type), buffer_size, file);
-        buffer.commit(read);
+    auto error = _detail::read_file(
+        path,
+        [](void* _user_data, const char* memory, std::size_t size) {
+            auto user_data = static_cast<user_data_t*>(_user_data);
 
-        // Check whether we have exhausted the file.
-        if (read < buffer_size)
-        {
-            if (std::ferror(file))
-                // We have a read error.
-                return {lexy::result_error, file_error::os_error};
+            user_data->buffer
+                = lexy::make_buffer<Encoding, Endian>(memory, size, user_data->resource);
+        },
+        &user_data);
 
-            // We should have reached the end of the file.
-            LEXY_ASSERT(std::feof(file), "why did fread() not read enough?");
-            break;
-        }
-
-        // We've filled the entire buffer and need more space.
-        // This grow might be unnecessary if we're just so happen to reach EOF with the next
-        // input, but checking this requires reading more input.
-        buffer.grow();
-    }
-
-    return {lexy::result_value, buffer.read_data(), buffer.read_size(), resource};
+    if (error == file_error::_success)
+        return {lexy::result_value, LEXY_MOV(user_data.buffer)};
+    else
+        return {lexy::result_error, error};
 }
 } // namespace lexy
 

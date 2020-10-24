@@ -5,22 +5,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(lexy VERSION 0.0.0 LANGUAGES CXX)
 
-file(GLOB_RECURSE source_files LIST_DIRECTORIES false CONFIGURE_DEPENDS *.hpp) # TODO: temporary
-
-# main target
-add_library(lexy INTERFACE)
-add_library(foonathan::lexy ALIAS lexy)
-target_sources(lexy INTERFACE "$<BUILD_INTERFACE:${source_files}>")
-target_compile_features(lexy INTERFACE cxx_std_17)
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    target_include_directories(lexy INTERFACE
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                               $<INSTALL_INTERFACE:include/>)
-else()
-    target_include_directories(lexy SYSTEM INTERFACE
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                               $<INSTALL_INTERFACE:include/>)
-endif()
+add_subdirectory(src)
 
 # subdirectories
 option(LEXY_BUILD_TEST "build tests of lexy" OFF)

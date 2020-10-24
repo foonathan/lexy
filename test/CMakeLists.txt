@@ -24,7 +24,7 @@ endif()
 # define dummy target with all the options
 add_library(lexy_test_base INTERFACE)
 target_sources(lexy_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
-target_link_libraries(lexy_test_base INTERFACE lexy)
+target_link_libraries(lexy_test_base INTERFACE foonathan::lexy foonathan::lexy::file)
 target_include_directories(lexy_test_base INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(lexy_test_base INTERFACE -DDOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING=1)
 target_compile_options(lexy_test_base INTERFACE
