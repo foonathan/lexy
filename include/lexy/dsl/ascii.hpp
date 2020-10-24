@@ -26,6 +26,11 @@ struct _ascii : atom_base<_ascii<Predicate>>
     {
         return lexy::error<Reader, lexy::expected_char_class>(pos, Predicate::name());
     }
+
+    constexpr bool operator()(char c) const
+    {
+        return Predicate::template match<lexy::ascii_encoding>(int(c));
+    }
 };
 
 //=== control ===//

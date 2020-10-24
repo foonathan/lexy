@@ -11,6 +11,7 @@ TEST_CASE("dsl::ascii::*")
 {
     auto is = [](auto atom, char c) {
         auto result = atom_matches(atom, &c, 1);
+        CHECK(!!result == atom(c));
         if (result)
         {
             REQUIRE(result.count == 1);
