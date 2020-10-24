@@ -28,9 +28,39 @@ public:
     using char_type = typename encoding::char_type;
 
     //=== constructors ===//
+    /// Allows the creation of an uninitialized buffer that is then filled by the user.
+    class builder
+    {
+    public:
+        explicit builder(std::size_t     size,
+                         MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
+        : _buffer(resource)
+        {
+            _buffer._data = _buffer.allocate(size);
+            _buffer._size = size;
+        }
+
+        char_type* data() const noexcept
+        {
+            return _buffer._data;
+        }
+        std::size_t size() const noexcept
+        {
+            return _buffer._size;
+        }
+
+        buffer finish() && noexcept
+        {
+            return LEXY_MOV(_buffer);
+        }
+
+    private:
+        buffer _buffer;
+    };
+
     constexpr buffer() noexcept : buffer(_detail::get_memory_resource<MemoryResource>()) {}
 
-    constexpr buffer(MemoryResource* resource) noexcept
+    constexpr explicit buffer(MemoryResource* resource) noexcept
     : _resource(resource), _data(nullptr), _size(0)
     {}
 
@@ -230,6 +260,137 @@ buffer(const CharT*, std::size_t, MemoryResource*)
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
     -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>, MemoryResource>;
+
+//=== make_buffer ===//
+/// The endianness used by an encoding.
+enum class encoding_endianness
+{
+    /// Little endian.
+    little,
+    /// Big endian.
+    big,
+    /// Checks for a BOM and uses its endianness.
+    /// If there is no BOM, assumes big endian.
+    bom,
+};
+
+template <typename Encoding, encoding_endianness Endian>
+struct _make_buffer
+{
+    template <typename MemoryResource = _detail::default_memory_resource>
+    auto operator()(const void* _memory, std::size_t size,
+                    MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
+    {
+        constexpr auto native_endianness
+            = LEXY_IS_LITTLE_ENDIAN ? encoding_endianness::little : encoding_endianness::big;
+
+        using char_type = typename Encoding::char_type;
+        LEXY_PRECONDITION(size % sizeof(char_type) == 0);
+        auto memory = static_cast<const unsigned char*>(_memory);
+
+        if constexpr (sizeof(char_type) == 1 || Endian == native_endianness)
+        {
+            // No need to deal with endianness at all.
+            // The reinterpret_cast is technically UB, as we didn't create objects in memory,
+            // but until std::start_lifetime_as is added, there is nothing we can do.
+            return buffer<Encoding, MemoryResource>(reinterpret_cast<const char_type*>(memory),
+                                                    size / sizeof(char_type), resource);
+        }
+        else
+        {
+            typename buffer<Encoding, MemoryResource>::builder builder(size / sizeof(char_type),
+                                                                       resource);
+
+            const auto end = memory + size;
+            for (auto dest = builder.data(); memory != end; memory += sizeof(char_type))
+            {
+                constexpr auto is_char16 = std::is_same_v<char_type, char16_t>;
+                constexpr auto is_char32 = std::is_same_v<char_type, char32_t>;
+
+                // We convert each group of bytes to the appropriate value.
+                if constexpr (is_char16 && Endian == encoding_endianness::little)
+                    *dest++ = static_cast<char_type>((memory[0] << 0) | (memory[1] << 8));
+                else if constexpr (is_char32 && Endian == encoding_endianness::little)
+                    *dest++ = static_cast<char_type>((memory[0] << 0) | (memory[1] << 8)
+                                                     | (memory[2] << 16) | (memory[3] << 24));
+                else if constexpr (is_char16 && Endian == encoding_endianness::big)
+                    *dest++ = static_cast<char_type>((memory[0] << 8) | (memory[1] << 0));
+                else if constexpr (is_char32 && Endian == encoding_endianness::big)
+                    *dest++ = static_cast<char_type>((memory[0] << 24) | (memory[1] << 16)
+                                                     | (memory[2] << 8) | (memory[3] << 0));
+                else
+                    static_assert(_detail::error<Encoding>, "unhandled encoding/endianness");
+            }
+
+            return LEXY_MOV(builder).finish();
+        }
+    }
+};
+template <>
+struct _make_buffer<utf8_encoding, encoding_endianness::bom>
+{
+    template <typename MemoryResource = _detail::default_memory_resource>
+    auto operator()(const void* _memory, std::size_t size,
+                    MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
+    {
+        auto memory = static_cast<const unsigned char*>(_memory);
+
+        // We just skip over the BOM if there is one, it doesn't matter.
+        if (size >= 3 && memory[0] == 0xEF && memory[1] == 0xBB && memory[2] == 0xBF)
+        {
+            memory += 3;
+            size -= 3;
+        }
+
+        return _make_buffer<utf8_encoding, encoding_endianness::big>{}(memory, size, resource);
+    }
+};
+template <>
+struct _make_buffer<utf16_encoding, encoding_endianness::bom>
+{
+    template <typename MemoryResource = _detail::default_memory_resource>
+    auto operator()(const void* _memory, std::size_t size,
+                    MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
+    {
+        constexpr auto utf16_big    = _make_buffer<utf16_encoding, encoding_endianness::big>{};
+        constexpr auto utf16_little = _make_buffer<utf16_encoding, encoding_endianness::little>{};
+        auto           memory       = static_cast<const unsigned char*>(_memory);
+
+        if (size < 2)
+            return utf16_big(memory, size, resource);
+        if (memory[0] == 0xFF && memory[1] == 0xFE)
+            return utf16_little(memory + 2, size - 2, resource);
+        else if (memory[0] == 0xFE && memory[1] == 0xFF)
+            return utf16_big(memory + 2, size - 2, resource);
+        else
+            return utf16_big(memory, size, resource);
+    }
+};
+template <>
+struct _make_buffer<utf32_encoding, encoding_endianness::bom>
+{
+    template <typename MemoryResource = _detail::default_memory_resource>
+    auto operator()(const void* _memory, std::size_t size,
+                    MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
+    {
+        constexpr auto utf32_big    = _make_buffer<utf32_encoding, encoding_endianness::big>{};
+        constexpr auto utf32_little = _make_buffer<utf32_encoding, encoding_endianness::little>{};
+        auto           memory       = static_cast<const unsigned char*>(_memory);
+
+        if (size < 4)
+            return utf32_big(memory, size, resource);
+        else if (memory[0] == 0xFF && memory[1] == 0xFE && memory[2] == 0x00 && memory[3] == 0x00)
+            return utf32_little(memory + 4, size - 4, resource);
+        else if (memory[0] == 0x00 && memory[1] == 0x00 && memory[2] == 0xFE && memory[3])
+            return utf32_big(memory + 4, size - 4, resource);
+        else
+            return utf32_big(memory, size, resource);
+    }
+};
+
+/// Creates a buffer with the specified encoding/endianness from raw memory.
+template <typename Encoding, encoding_endianness Endianness>
+constexpr auto make_buffer = _make_buffer<Encoding, Endianness>{};
 
 //=== convenience typedefs ===//
 template <typename Encoding       = default_encoding,

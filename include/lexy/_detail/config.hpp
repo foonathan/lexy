@@ -90,6 +90,21 @@ using _char8_t = unsigned char;
 
 #endif
 
+//=== endianness ===//
+#ifndef LEXY_IS_LITTLE_ENDIAN
+#    if defined(__BYTE_ORDER__)
+#        if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#            define LEXY_IS_LITTLE_ENDIAN 1
+#        elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#            define LEXY_IS_LITTLE_ENDIAN 0
+#        else
+#            error "unsupported byte order"
+#        endif
+#    else
+#        error "unknown endianness"
+#    endif
+#endif
+
 //=== force inline ===//
 #ifndef LEXY_FORCE_INLINE
 #    if defined(__has_cpp_attribute) && __has_cpp_attribute(gnu::always_inline)

@@ -49,6 +49,10 @@ TEST_CASE("buffer")
 
         if constexpr (LEXY_HAS_EMPTY_MEMBER)
             CHECK(sizeof(ptr_size) == 2 * sizeof(void*));
+
+        lexy::buffer<>::builder builder(3);
+        std::memcpy(builder.data(), str, builder.size());
+        verify(LEXY_MOV(builder).finish());
     }
     SUBCASE("constructor, default encoding, custom resource")
     {
@@ -62,6 +66,10 @@ TEST_CASE("buffer")
         verify(view);
 
         CHECK(sizeof(ptr_size) == 3 * sizeof(char*));
+
+        decltype(ptr_size)::builder builder(3, std::pmr::new_delete_resource());
+        std::memcpy(builder.data(), str, builder.size());
+        verify(LEXY_MOV(builder).finish());
     }
     SUBCASE("constructor, custom encoding, default resource")
     {
@@ -99,6 +107,10 @@ TEST_CASE("buffer")
 
         const lexy::buffer<lexy::raw_encoding> view_conv(view_type{});
         verify(view_conv);
+
+        lexy::buffer<lexy::raw_encoding>::builder builder(3);
+        std::memcpy(builder.data(), str, builder.size());
+        verify(LEXY_MOV(builder).finish());
     }
     SUBCASE("constructor, custom encoding, custom resource")
     {
@@ -137,6 +149,10 @@ TEST_CASE("buffer")
 
         const buffer_type view_conv(view_type{}, std::pmr::new_delete_resource());
         verify(view_conv);
+
+        buffer_type::builder builder(3, std::pmr::new_delete_resource());
+        std::memcpy(builder.data(), str, builder.size());
+        verify(LEXY_MOV(builder).finish());
     }
 
     SUBCASE("copy constructor")
@@ -225,6 +241,171 @@ TEST_CASE("buffer")
         CHECK(reader.cur() == buffer.data() + 3);
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
+    }
+}
+
+TEST_CASE("make_buffer")
+{
+    const unsigned char no_bom_str[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+
+    SUBCASE("default_encoding")
+    {
+        auto little
+            = lexy::make_buffer<lexy::default_encoding,
+                                lexy::encoding_endianness::little>(no_bom_str, sizeof(no_bom_str));
+        CHECK(little.size() == 8);
+        CHECK(little.data()[0] == 0x00);
+        CHECK(little.data()[1] == 0x11);
+        CHECK(little.data()[2] == 0x22);
+        CHECK(little.data()[3] == 0x33);
+        CHECK(little.data()[4] == 0x44);
+
+        auto big
+            = lexy::make_buffer<lexy::default_encoding,
+                                lexy::encoding_endianness::big>(no_bom_str, sizeof(no_bom_str));
+        CHECK(big.size() == 8);
+        CHECK(big.data()[0] == 0x00);
+        CHECK(big.data()[1] == 0x11);
+        CHECK(big.data()[2] == 0x22);
+        CHECK(big.data()[3] == 0x33);
+        CHECK(big.data()[4] == 0x44);
+
+        auto bom
+            = lexy::make_buffer<lexy::default_encoding,
+                                lexy::encoding_endianness::bom>(no_bom_str, sizeof(no_bom_str));
+        CHECK(bom.size() == 8);
+        CHECK(bom.data()[0] == 0x00);
+        CHECK(bom.data()[1] == 0x11);
+        CHECK(bom.data()[2] == 0x22);
+        CHECK(bom.data()[3] == 0x33);
+        CHECK(bom.data()[4] == 0x44);
+    }
+    SUBCASE("utf8_encoding")
+    {
+        auto little
+            = lexy::make_buffer<lexy::utf8_encoding,
+                                lexy::encoding_endianness::little>(no_bom_str, sizeof(no_bom_str));
+        CHECK(little.size() == 8);
+        CHECK(little.data()[0] == 0x00);
+        CHECK(little.data()[1] == 0x11);
+        CHECK(little.data()[2] == 0x22);
+        CHECK(little.data()[3] == 0x33);
+        CHECK(little.data()[4] == 0x44);
+
+        auto big
+            = lexy::make_buffer<lexy::utf8_encoding,
+                                lexy::encoding_endianness::big>(no_bom_str, sizeof(no_bom_str));
+        CHECK(big.size() == 8);
+        CHECK(big.data()[0] == 0x00);
+        CHECK(big.data()[1] == 0x11);
+        CHECK(big.data()[2] == 0x22);
+        CHECK(big.data()[3] == 0x33);
+        CHECK(big.data()[4] == 0x44);
+
+        auto no_bom
+            = lexy::make_buffer<lexy::utf8_encoding,
+                                lexy::encoding_endianness::bom>(no_bom_str, sizeof(no_bom_str));
+        CHECK(no_bom.size() == 8);
+        CHECK(no_bom.data()[0] == 0x00);
+        CHECK(no_bom.data()[1] == 0x11);
+        CHECK(no_bom.data()[2] == 0x22);
+        CHECK(no_bom.data()[3] == 0x33);
+        CHECK(no_bom.data()[4] == 0x44);
+
+        const unsigned char bom_str[] = {0xEF, 0xBB, 0xBF, 0x00, 0x11, 0x22, 0x33, 0x44};
+
+        auto bom
+            = lexy::make_buffer<lexy::utf8_encoding, lexy::encoding_endianness::bom>(bom_str,
+                                                                                     sizeof(
+                                                                                         bom_str));
+        CHECK(bom.size() == 5);
+        CHECK(bom.data()[0] == 0x00);
+        CHECK(bom.data()[1] == 0x11);
+        CHECK(bom.data()[2] == 0x22);
+        CHECK(bom.data()[3] == 0x33);
+        CHECK(bom.data()[4] == 0x44);
+    }
+    SUBCASE("utf16_encoding")
+    {
+        auto little
+            = lexy::make_buffer<lexy::utf16_encoding,
+                                lexy::encoding_endianness::little>(no_bom_str, sizeof(no_bom_str));
+        CHECK(little.size() == 4);
+        CHECK(little.data()[0] == 0x1100);
+        CHECK(little.data()[1] == 0x3322);
+        CHECK(little.data()[2] == 0x5544);
+        CHECK(little.data()[3] == 0x7766);
+
+        auto big
+            = lexy::make_buffer<lexy::utf16_encoding,
+                                lexy::encoding_endianness::big>(no_bom_str, sizeof(no_bom_str));
+        CHECK(big.size() == 4);
+        CHECK(big.data()[0] == 0x0011);
+        CHECK(big.data()[1] == 0x2233);
+        CHECK(big.data()[2] == 0x4455);
+        CHECK(big.data()[3] == 0x6677);
+
+        auto no_bom
+            = lexy::make_buffer<lexy::utf16_encoding,
+                                lexy::encoding_endianness::bom>(no_bom_str, sizeof(no_bom_str));
+        CHECK(no_bom.size() == 4);
+        CHECK(no_bom.data()[0] == 0x0011);
+        CHECK(no_bom.data()[1] == 0x2233);
+        CHECK(no_bom.data()[2] == 0x4455);
+        CHECK(no_bom.data()[3] == 0x6677);
+
+        const unsigned char little_bom_str[] = {0xFF, 0xFE, 0x00, 0x11, 0x22, 0x33};
+        auto                little_bom       = lexy::make_buffer<lexy::utf16_encoding,
+                                            lexy::encoding_endianness::bom>(little_bom_str,
+                                                                            sizeof(little_bom_str));
+        CHECK(little_bom.size() == 2);
+        CHECK(little_bom.data()[0] == 0x1100);
+        CHECK(little_bom.data()[1] == 0x3322);
+
+        const unsigned char big_bom_str[] = {0xFE, 0xFF, 0x00, 0x11, 0x22, 0x33};
+        auto                big_bom
+            = lexy::make_buffer<lexy::utf16_encoding,
+                                lexy::encoding_endianness::bom>(big_bom_str, sizeof(big_bom_str));
+        CHECK(big_bom.size() == 2);
+        CHECK(big_bom.data()[0] == 0x0011);
+        CHECK(big_bom.data()[1] == 0x2233);
+    }
+    SUBCASE("utf32_encoding")
+    {
+        auto little
+            = lexy::make_buffer<lexy::utf32_encoding,
+                                lexy::encoding_endianness::little>(no_bom_str, sizeof(no_bom_str));
+        CHECK(little.size() == 2);
+        CHECK(little.data()[0] == 0x33221100);
+        CHECK(little.data()[1] == 0x77665544);
+
+        auto big
+            = lexy::make_buffer<lexy::utf32_encoding,
+                                lexy::encoding_endianness::big>(no_bom_str, sizeof(no_bom_str));
+        CHECK(big.size() == 2);
+        CHECK(big.data()[0] == 0x00112233);
+        CHECK(big.data()[1] == 0x44556677);
+
+        auto no_bom
+            = lexy::make_buffer<lexy::utf32_encoding,
+                                lexy::encoding_endianness::bom>(no_bom_str, sizeof(no_bom_str));
+        CHECK(no_bom.size() == 2);
+        CHECK(no_bom.data()[0] == 0x00112233);
+        CHECK(no_bom.data()[1] == 0x44556677);
+
+        const unsigned char little_bom_str[] = {0xFF, 0xFE, 0x00, 0x00, 0x00, 0x11, 0x22, 0x33};
+        auto                little_bom       = lexy::make_buffer<lexy::utf32_encoding,
+                                            lexy::encoding_endianness::bom>(little_bom_str,
+                                                                            sizeof(little_bom_str));
+        CHECK(little_bom.size() == 1);
+        CHECK(little_bom.data()[0] == 0x33221100);
+
+        const unsigned char big_bom_str[] = {0x00, 0x00, 0xFE, 0xFF, 0x00, 0x11, 0x22, 0x33};
+        auto                big_bom
+            = lexy::make_buffer<lexy::utf32_encoding,
+                                lexy::encoding_endianness::bom>(big_bom_str, sizeof(big_bom_str));
+        CHECK(big_bom.size() == 1);
+        CHECK(big_bom.data()[0] == 0x00112233);
     }
 }
 
