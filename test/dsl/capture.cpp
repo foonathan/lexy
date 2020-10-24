@@ -5,6 +5,7 @@
 #include <lexy/dsl/capture.hpp>
 
 #include "verify.hpp"
+#include <lexy/callback.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
@@ -78,8 +79,8 @@ TEST_CASE("dsl::capture()")
             constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
                                   lexy::lexeme_for<test_input> inner)
             {
-                assert(lexy::_detail::string_view(outer) == "abc");
-                assert(lexy::_detail::string_view(inner) == "abc");
+                assert(lexy::as_string<lexy::_detail::string_view>(outer) == "abc");
+                assert(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
                 return 0;
             }
 
@@ -108,8 +109,8 @@ TEST_CASE("dsl::capture()")
             constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
                                   lexy::lexeme_for<test_input> inner)
             {
-                assert(lexy::_detail::string_view(outer) == "(abc)");
-                assert(lexy::_detail::string_view(inner) == "abc");
+                assert(lexy::as_string<lexy::_detail::string_view>(outer) == "(abc)");
+                assert(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
                 return 0;
             }
 

@@ -202,25 +202,40 @@ TEST_CASE("as_collection")
 
 TEST_CASE("as_string")
 {
-    lexy::string_input input  = lexy::zstring_input("abc");
-    auto               reader = input.reader();
+    auto char_lexeme = [] {
+        auto input  = lexy::zstring_input("abc");
+        auto reader = input.reader();
 
-    auto begin = reader.cur();
-    reader.bump();
-    reader.bump();
-    reader.bump();
+        auto begin = reader.cur();
+        reader.bump();
+        reader.bump();
+        reader.bump();
 
-    const lexy::lexeme lexeme(reader, begin);
+        return lexy::lexeme(reader, begin);
+    }();
+    auto uchar_lexeme = [] {
+        auto input  = lexy::zstring_input<lexy::raw_encoding>("abc");
+        auto reader = input.reader();
+
+        auto begin = reader.cur();
+        reader.bump();
+        reader.bump();
+        reader.bump();
+
+        return lexy::lexeme(reader, begin);
+    }();
 
     SUBCASE("callback")
     {
         std::string from_ptr_size = lexy::as_string<std::string>("abc", 2);
         CHECK(from_ptr_size == "ab");
 
-        std::string from_lexeme = lexy::as_string<std::string>(lexeme);
-        CHECK(from_lexeme == "abc");
+        std::string from_char_lexeme = lexy::as_string<std::string>(char_lexeme);
+        CHECK(from_char_lexeme == "abc");
+        std::string from_uchar_lexeme = lexy::as_string<std::string>(uchar_lexeme);
+        CHECK(from_uchar_lexeme == "abc");
 
-        std::string from_lvalue = lexy::as_string<std::string>(from_lexeme);
+        std::string from_lvalue = lexy::as_string<std::string>(from_char_lexeme);
         CHECK(from_lvalue == "abc");
         std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
         CHECK(from_rvalue == "test");
@@ -230,11 +245,12 @@ TEST_CASE("as_string")
         auto sink = lexy::as_string<std::string>.sink();
         sink('a');
         sink("bcd", 2);
-        sink(lexeme);
+        sink(char_lexeme);
+        sink(uchar_lexeme);
         sink(std::string("hi"));
 
         std::string result = LEXY_MOV(sink).finish();
-        CHECK(result == "abcabchi");
+        CHECK(result == "abcabcabchi");
     }
 }
 

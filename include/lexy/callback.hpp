@@ -397,7 +397,16 @@ struct _as_string
     {
         using iterator = typename lexeme<Reader>::iterator;
         if constexpr (std::is_pointer_v<iterator>)
-            return String(lex.data(), lex.size());
+        {
+            using char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
+            static_assert(lexy::char_type_compatible_with_reader<Reader, char_type>,
+                          "cannot convert lexeme to this string type");
+
+            if constexpr (std::is_same_v<char_type, typename Reader::encoding::char_type>)
+                return String(lex.data(), lex.size());
+            else
+                return String(reinterpret_cast<const char_type*>(lex.data()), lex.size());
+        }
         else
             return String(lex.begin(), lex.end());
     }
@@ -435,7 +444,12 @@ struct _as_string
         {
             using iterator = typename lexeme<Reader>::iterator;
             if constexpr (std::is_pointer_v<iterator>)
-                _result.append(lex.data(), lex.size());
+            {
+                using char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
+                static_assert(lexy::char_type_compatible_with_reader<Reader, char_type>,
+                              "cannot convert lexeme to this string type");
+                _result.append(reinterpret_cast<const char_type*>(lex.data()), lex.size());
+            }
             else
                 _result.append(lex.begin(), lex.end());
         }

@@ -6,6 +6,7 @@
 
 #include <doctest.h>
 #include <lexy/_detail/string_view.hpp>
+#include <lexy/callback.hpp>
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/input/string_input.hpp>
@@ -19,7 +20,7 @@ struct str_context
     template <typename Reader>
     friend bool operator==(const lexy::lexeme<Reader>& lex, str_context context)
     {
-        return lexy::_detail::string_view(lex) == context.str;
+        return lexy::as_string<lexy::_detail::string_view>(lex) == context.str;
     }
 };
 } // namespace

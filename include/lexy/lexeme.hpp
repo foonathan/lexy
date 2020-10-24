@@ -58,15 +58,6 @@ public:
         return _begin[idx];
     }
 
-    template <typename String, typename = decltype(String(iterator(), iterator()))>
-    constexpr explicit operator String() const
-    {
-        if constexpr (std::is_pointer_v<iterator>)
-            return String(data(), size());
-        else
-            return String(begin(), end());
-    }
-
 private:
     iterator _begin, _end;
 };
