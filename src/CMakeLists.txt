@@ -18,6 +18,7 @@ set(header_files
         ${include_dir}/dsl/any.hpp
         ${include_dir}/dsl/ascii.hpp
         ${include_dir}/dsl/base.hpp
+        ${include_dir}/dsl/bom.hpp
         ${include_dir}/dsl/brackets.hpp
         ${include_dir}/dsl/branch.hpp
         ${include_dir}/dsl/capture.hpp
@@ -27,6 +28,7 @@ set(header_files
         ${include_dir}/dsl/delimited.hpp
         ${include_dir}/dsl/digit.hpp
         ${include_dir}/dsl/eof.hpp
+        ${include_dir}/dsl/encode.hpp
         ${include_dir}/dsl/error.hpp
         ${include_dir}/dsl/integer.hpp
         ${include_dir}/dsl/label.hpp

@@ -262,18 +262,6 @@ buffer(const View&, MemoryResource*)
     -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>, MemoryResource>;
 
 //=== make_buffer ===//
-/// The endianness used by an encoding.
-enum class encoding_endianness
-{
-    /// Little endian.
-    little,
-    /// Big endian.
-    big,
-    /// Checks for a BOM and uses its endianness.
-    /// If there is no BOM, assumes big endian.
-    bom,
-};
-
 template <typename Encoding, encoding_endianness Endian>
 struct _make_buffer
 {

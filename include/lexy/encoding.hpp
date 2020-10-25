@@ -10,6 +10,18 @@
 
 namespace lexy
 {
+/// The endianness used by an encoding.
+enum class encoding_endianness
+{
+    /// Little endian.
+    little,
+    /// Big endian.
+    big,
+    /// Checks for a BOM and uses its endianness.
+    /// If there is no BOM, assumes big endian.
+    bom,
+};
+
 /// An encoding where the input is some 8bit encoding (ASCII, UTF-8, extended ASCII etc.).
 struct default_encoding
 {
