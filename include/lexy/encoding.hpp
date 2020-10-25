@@ -104,6 +104,9 @@ struct utf16_encoding
         return static_cast<int_type>(c);
     }
 };
+template <>
+constexpr bool utf16_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
+                                                                 == sizeof(char16_t);
 
 /// An encoding where the input is assumed to be valid UTF-32.
 struct utf32_encoding
@@ -125,6 +128,9 @@ struct utf32_encoding
         return c;
     }
 };
+template <>
+constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
+                                                                 == sizeof(char32_t);
 
 /// An encoding where the input is just raw bytes, not characters.
 struct raw_encoding
