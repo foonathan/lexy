@@ -31,7 +31,7 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule)
 }
 
 template <std::size_t N, typename Rule, typename Pattern>
-LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern> sep)
+LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern, false> sep)
 {
     if constexpr (N == 1)
         return rule;
@@ -40,7 +40,7 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern> sep)
 }
 
 template <std::size_t N, typename Rule, typename Pattern>
-LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Pattern> sep)
+LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Pattern, false> sep)
 {
     if constexpr (N == 1)
         return rule + opt(Pattern{});

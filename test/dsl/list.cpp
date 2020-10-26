@@ -187,6 +187,72 @@ TEST_CASE("dsl::list() sep")
     CHECK(no_sep == 1);
 }
 
+TEST_CASE("dsl::list() sep capture")
+{
+    constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")).capture());
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr auto list()
+        {
+            struct b
+            {
+                int count = 0;
+
+                using return_type = int;
+
+                constexpr void operator()(lexy::id<0>)
+                {
+                    count += 3;
+                }
+                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                {
+                    assert(lex.size() == 1);
+                    ++count;
+                }
+
+                constexpr int finish() &&
+                {
+                    return count;
+                }
+            };
+            return b{};
+        }
+
+        constexpr int success(const char* cur, int count)
+        {
+            assert(cur - str == count);
+            return count;
+        }
+
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            assert(e.position() == str);
+            assert(e.string() == "abc");
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
+    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    CHECK(partial == -1);
+
+    constexpr auto one = rule_matches<callback>(rule, "abc");
+    CHECK(one == 3);
+    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    CHECK(two == 7);
+    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    CHECK(three == 11);
+
+    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    CHECK(no_sep == 3);
+}
+
 TEST_CASE("dsl::list() trailing_sep")
 {
     constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
@@ -252,6 +318,76 @@ TEST_CASE("dsl::list() trailing_sep")
 
     constexpr auto trailing = rule_matches<callback>(rule, "abc,");
     CHECK(trailing == 1);
+}
+
+TEST_CASE("dsl::list() trailing_sep capture")
+{
+    constexpr auto rule
+        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")).capture());
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr auto list()
+        {
+            struct b
+            {
+                int count = 0;
+
+                using return_type = int;
+
+                constexpr void operator()(lexy::id<0>)
+                {
+                    count += 3;
+                }
+                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                {
+                    assert(lex.size() == 1);
+                    ++count;
+                }
+
+                constexpr int finish() &&
+                {
+                    return count;
+                }
+            };
+            return b{};
+        }
+
+        constexpr int success(const char* cur, int count)
+        {
+            assert(cur - str == count);
+            return count;
+        }
+
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            assert(e.position() == str);
+            assert(e.string() == "abc");
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
+    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    CHECK(partial == -1);
+
+    constexpr auto one = rule_matches<callback>(rule, "abc");
+    CHECK(one == 3);
+    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    CHECK(two == 7);
+    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    CHECK(three == 11);
+
+    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    CHECK(no_sep == 3);
+
+    constexpr auto trailing = rule_matches<callback>(rule, "abc,");
+    CHECK(trailing == 4);
 }
 
 TEST_CASE("dsl::opt(list())")

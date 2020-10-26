@@ -8,6 +8,7 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/separator.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexyd
 {
@@ -131,16 +132,19 @@ struct _list_loop_parser<Item, void, NextParser> // no separator
         }
     }
 };
-template <typename Item, typename Sep, typename NextParser>
-struct _list_loop_parser<Item, _sep<Sep>, NextParser> // normal separator
+template <typename Item, typename Sep, bool Capture, typename NextParser>
+struct _list_loop_parser<Item, _sep<Sep, Capture>, NextParser> // normal separator
 {
     template <typename Handler, typename Reader, typename Sink, typename... Args>
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
         typename Handler::result_type
     {
         // We parse other items while the separator matches.
-        if (Sep::matcher::match(reader))
+        if (auto begin = reader.cur(); Sep::matcher::match(reader))
         {
+            if constexpr (Capture)
+                sink(lexy::lexeme(reader, begin));
+
             // We parse item, then the done continuation, and then we jump back here.
             using continuation = _list_item_done<_list_loop_parser, Args...>;
             return Item::template parser<continuation>::parse(handler, reader, sink,
@@ -152,27 +156,33 @@ struct _list_loop_parser<Item, _sep<Sep>, NextParser> // normal separator
         }
     }
 };
-template <typename Item, typename Sep, typename NextParser>
-struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
+template <typename Item, typename Sep, bool Capture, typename NextParser>
+struct _list_loop_parser<Item, _tsep<Sep, Capture>, NextParser> // trailing separator
 {
     template <typename Handler, typename Reader, typename Sink, typename... Args>
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
         typename Handler::result_type
     {
-        // We parse other items while the separator and condition matches.
-        // If only the separator matches but not the condition, this means we've just read the
-        // trailing separator.
-        if (Sep::matcher::match(reader) && Item::condition_matcher::match(reader))
+        // We parse other items while the separator matches.
+        if (auto begin = reader.cur(); Sep::matcher::match(reader))
         {
-            // We parse item, then the done continuation, and then we jump back here.
-            using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(handler, reader, sink,
-                                                                   LEXY_FWD(args)...);
+            if constexpr (Capture)
+                sink(lexy::lexeme(reader, begin));
+
+            // ... and the condition matches.
+            // If only the separator matches but not the condition, this means we've just read the
+            // trailing separator.
+            if (Item::condition_matcher::match(reader))
+            {
+                // We parse item, then the done continuation, and then we jump back here.
+                using continuation = _list_item_done<_list_loop_parser, Args...>;
+                return Item::template then_parser<continuation>::parse(handler, reader, sink,
+                                                                       LEXY_FWD(args)...);
+            }
         }
-        else
-        {
-            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
-        }
+
+        // One of the ifs above failed.
+        return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
     }
 };
 
@@ -214,8 +224,8 @@ LEXY_CONSTEVAL auto list(Item item)
 }
 
 /// Creates a list of items with the specified separator.
-template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto list(Item item, _sep<Pattern>)
+template <typename Item, typename Pattern, bool Capture>
+LEXY_CONSTEVAL auto list(Item item, _sep<Pattern, Capture>)
 {
     if constexpr (lexy::is_branch_rule<Item>)
     {
@@ -223,16 +233,16 @@ LEXY_CONSTEVAL auto list(Item item, _sep<Pattern>)
 
         // We turn the condition of the first item into a condition for the entire list.
         return branch_rule::condition()
-               >> _list<decltype(branch_rule::then()), branch_rule, _sep<Pattern>>{};
+               >> _list<decltype(branch_rule::then()), branch_rule, _sep<Pattern, Capture>>{};
     }
     else
         // We don't have a condition.
-        return _list<Item, Item, _sep<Pattern>>{};
+        return _list<Item, Item, _sep<Pattern, Capture>>{};
 }
 
 /// Creates a list of items with the specified separator that can be trailing.
-template <typename Item, typename Pattern>
-LEXY_CONSTEVAL auto list(Item item, _tsep<Pattern>)
+template <typename Item, typename Pattern, bool Capture>
+LEXY_CONSTEVAL auto list(Item item, _tsep<Pattern, Capture>)
 {
     static_assert(lexy::is_branch_rule<Item>,
                   "list() without a trailing separator requires a branch condition");
@@ -240,7 +250,7 @@ LEXY_CONSTEVAL auto list(Item item, _tsep<Pattern>)
 
     // We turn the condition of the first item into a condition for the entire list.
     return branch_rule::condition()
-           >> _list<decltype(branch_rule::then()), branch_rule, _tsep<Pattern>>{};
+           >> _list<decltype(branch_rule::then()), branch_rule, _tsep<Pattern, Capture>>{};
 }
 } // namespace lexyd
 
