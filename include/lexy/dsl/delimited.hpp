@@ -196,6 +196,21 @@ struct invalid_escape_sequence
 
 namespace lexyd
 {
+template <typename Pattern>
+struct _escape_cap
+{
+    template <typename Sink, typename Reader>
+    LEXY_DSL_FUNC bool try_match(Sink& sink, Reader& reader)
+    {
+        auto begin = reader.cur();
+        if (!Pattern::matcher::match(reader))
+            return false;
+
+        sink(lexy::lexeme(reader, begin));
+        return true;
+    }
+};
+
 template <typename Pattern, typename Replacement>
 struct _escape_lit
 {
@@ -231,6 +246,14 @@ struct _escape
     }
 
     //=== dsl ===//
+    /// Replace the escaped pattern with the matched lexeme.
+    template <typename Pattern>
+    LEXY_CONSTEVAL auto capture(Pattern) const
+    {
+        static_assert(lexy::is_pattern<Pattern>);
+        return _escape<EscapePattern, EscapeArguments..., _escape_cap<Pattern>>{};
+    }
+
     /// Replace the escaped pattern with the literal string value.
     template <typename Pattern, typename Replacement>
     LEXY_CONSTEVAL auto literal(Pattern, Replacement) const
