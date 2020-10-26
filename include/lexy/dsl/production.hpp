@@ -15,6 +15,12 @@ namespace lexyd
 template <typename Production>
 using _production_rule = std::remove_const_t<decltype(Production::rule)>;
 
+template <typename Rule, typename Handler, typename Reader>
+constexpr auto _parse(Handler& handler, Reader& reader) -> typename Handler::result_type
+{
+    return Rule::template parser<lexy::final_parser>::parse(handler, reader);
+}
+
 template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
@@ -24,7 +30,7 @@ struct _prd_parser
     {
         auto&& sub_handler = handler.template sub_handler<Production>(reader);
 
-        if (auto result = Rule::template parser<lexy::final_parser>::parse(sub_handler, reader))
+        if (auto result = _parse<Rule>(sub_handler, reader))
         {
             if constexpr (result.has_void_value())
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
