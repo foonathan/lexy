@@ -13,6 +13,7 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/combination.hpp>
 #include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/context.hpp>
 #include <lexy/dsl/delimited.hpp>

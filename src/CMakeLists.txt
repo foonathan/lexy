@@ -8,6 +8,7 @@ set(header_files
         ${include_dir}/_detail/buffer_builder.hpp
         ${include_dir}/_detail/config.hpp
         ${include_dir}/_detail/detect.hpp
+        ${include_dir}/_detail/integer_sequence.hpp
         ${include_dir}/_detail/invoke.hpp
         ${include_dir}/_detail/memory_resource.hpp
         ${include_dir}/_detail/nttp_string.hpp
@@ -23,6 +24,7 @@ set(header_files
         ${include_dir}/dsl/branch.hpp
         ${include_dir}/dsl/capture.hpp
         ${include_dir}/dsl/choice.hpp
+        ${include_dir}/dsl/combination.hpp
         ${include_dir}/dsl/condition.hpp
         ${include_dir}/dsl/context.hpp
         ${include_dir}/dsl/delimited.hpp
