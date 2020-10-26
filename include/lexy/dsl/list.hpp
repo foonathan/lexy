@@ -11,6 +11,50 @@
 
 namespace lexyd
 {
+// Continuation after a list item has been parsed.
+template <typename NextParser, typename... ParentArgs>
+struct _list_item_done
+{
+    template <typename Handler, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, ParentArgs&&... pargs,
+                             Args&&... args) -> typename Handler::result_type
+    {
+        if constexpr (sizeof...(Args) > 0)
+            sink(LEXY_FWD(args)...); // Forward item args to the sink.
+        return NextParser::parse(handler, reader, sink, LEXY_FWD(pargs)...); // Continue.
+    }
+};
+
+template <typename Rule>
+struct _list_item : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename Sink, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
+            typename Handler::result_type
+        {
+            using continuation = _list_item_done<NextParser, Args...>;
+            return Rule::template parser<continuation>::parse(handler, reader, sink,
+                                                              LEXY_FWD(args)...);
+        }
+    };
+};
+
+/// Parses the rule as a list item.
+/// Most be used inside of a `make_list()` rule.
+template <typename Rule>
+LEXY_CONSTEVAL auto item(Rule)
+{
+    return _list_item<Rule>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
 // Continuation after the entire list has been parsed.
 template <typename NextParser>
 struct _list_done
@@ -31,20 +75,38 @@ struct _list_done
     }
 };
 
-// Continuation after a list item has been parsed.
-template <typename NextParser, typename... ParentArgs>
-struct _list_item_done
+template <typename Rule>
+struct _mklist : rule_base
 {
-    template <typename Handler, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, ParentArgs&&... pargs,
-                             Args&&... args) -> typename Handler::result_type
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
     {
-        if constexpr (sizeof...(Args) > 0)
-            sink(LEXY_FWD(args)...); // Forward item args to the sink.
-        return NextParser::parse(handler, reader, sink, LEXY_FWD(pargs)...); // Continue.
-    }
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            auto sink = handler.list_sink();
+
+            using continuation = _list_done<NextParser>;
+            return Rule::template parser<continuation>::parse(handler, reader, sink,
+                                                              LEXY_FWD(args)...);
+        }
+    };
 };
 
+/// Matches the rule and stores its values using the list interface.
+/// Subrules marked as `item()` will be forwarded to the list sink.
+template <typename Rule>
+LEXY_CONSTEVAL auto make_list(Rule)
+{
+    return _mklist<Rule>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
 // Parses the next item if there is one.
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser;
@@ -113,10 +175,7 @@ struct _list_loop_parser<Item, _tsep<Sep>, NextParser> // trailing separator
         }
     }
 };
-} // namespace lexyd
 
-namespace lexyd
-{
 template <typename First, typename Item, typename Sep>
 struct _list : rule_base
 {

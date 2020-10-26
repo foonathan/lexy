@@ -9,6 +9,65 @@
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
+TEST_CASE("dsl::make_list()")
+{
+    constexpr auto rule
+        = make_list(LEXY_LIT("a") + item(lexy::dsl::id<0>) + LEXY_LIT("b")
+                    + lexy::dsl::id<1> + item(lexy::dsl::id<2> + LEXY_LIT("c") + lexy::dsl::id<3>));
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr auto list()
+        {
+            struct b
+            {
+                int count = 0;
+
+                using return_type = int;
+
+                constexpr void operator()(lexy::id<0>)
+                {
+                    assert(count == 0);
+                    ++count;
+                }
+                constexpr void operator()(lexy::id<2>, lexy::id<3>)
+                {
+                    assert(count == 1);
+                    ++count;
+                }
+
+                constexpr int finish() &&
+                {
+                    return count;
+                }
+            };
+            return b{};
+        }
+
+        constexpr int success(const char* cur, lexy::id<1>, int count)
+        {
+            assert(count == 2);
+            assert(cur - str == 3);
+            return 0;
+        }
+
+        constexpr int error(test_error<lexy::expected_literal>)
+        {
+            return -1;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
+
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 0);
+}
+
 TEST_CASE("dsl::list()")
 {
     constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
