@@ -128,6 +128,11 @@ struct _else
     {
         return success >> then;
     }
+    template <typename Condition, typename Then>
+    friend LEXY_CONSTEVAL auto operator>>(_else, _br<Condition, Then>)
+    {
+        return success >> Condition{} + Then{};
+    }
 };
 
 /// Takes the branch unconditionally.
