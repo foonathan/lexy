@@ -200,6 +200,39 @@ TEST_CASE("as_collection")
     }
 }
 
+TEST_CASE("as_aggregate")
+{
+    struct agg
+    {
+        int         i;
+        float       f;
+        const char* str;
+    };
+    static constexpr auto callback = lexy::as_aggregate<agg, &agg::i, &agg::f, &agg::str>;
+
+    SUBCASE("callback")
+    {
+        constexpr auto result = callback(3.14f, "hello", 42);
+        CHECK(result.i == 42);
+        CHECK(result.f == 3.14f);
+        CHECK(*result.str == 'h');
+    }
+    SUBCASE("sink")
+    {
+        constexpr auto result = [] {
+            auto sink = callback.sink();
+            sink(11);
+            sink("hello");
+            sink(3.14f);
+            sink(42);
+            return LEXY_MOV(sink).finish();
+        }();
+        CHECK(result.i == 42);
+        CHECK(result.f == 3.14f);
+        CHECK(*result.str == 'h');
+    }
+}
+
 TEST_CASE("as_string")
 {
     auto char_lexeme = [] {

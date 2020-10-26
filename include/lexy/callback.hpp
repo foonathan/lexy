@@ -371,6 +371,86 @@ constexpr auto as_collection = _collection<T>{};
 
 namespace lexy
 {
+template <typename MemPtr>
+struct _mem_ptr_member_type_impl;
+template <typename T, typename ClassT>
+struct _mem_ptr_member_type_impl<T ClassT::*>
+{
+    using type = T;
+};
+template <auto MemPtr>
+using _mem_ptr_member_type = typename _mem_ptr_member_type_impl<decltype(MemPtr)>::type;
+
+template <typename ClassT, auto... Members>
+struct _as_aggregate
+{
+    static_assert(std::is_aggregate_v<ClassT>);
+
+    template <typename Value>
+    static constexpr void _set_member(ClassT& obj, Value&& value)
+    {
+        static_assert((std::is_same_v<_mem_ptr_member_type<Members>, std::decay_t<Value>> || ...),
+                      "value does not have type of any member");
+
+        // We try to assign the value to each member in turn until one matches.
+        ([&] {
+            if constexpr (std::is_same_v<_mem_ptr_member_type<Members>, std::decay_t<Value>>)
+            {
+                obj.*Members = LEXY_FWD(value);
+                return true;
+            }
+            else
+                return false;
+        }()
+         || ...);
+    }
+
+    using return_type = ClassT;
+
+    template <typename... Args>
+    constexpr ClassT operator()(Args&&... args) const
+    {
+        ClassT result{};
+        // We forward each argument to one member.
+        (_set_member(result, LEXY_FWD(args)), ...);
+        return result;
+    }
+
+    struct _sink
+    {
+        ClassT _result{};
+
+        using return_type = ClassT;
+
+        template <typename Value>
+        constexpr void operator()(Value&& value)
+        {
+            _set_member(_result, LEXY_FWD(value));
+        }
+
+        constexpr ClassT&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+    constexpr auto sink() const
+    {
+        return _sink{};
+    }
+};
+
+/// A callback with sink that creates an aggregate.
+/// The aggregate must have members of distinct types whose member points are passed to the
+/// argument. Each value produced will be matched to the member of the same type.
+///
+/// If members are missing, they're value initialized.
+/// If members are specified more than once, the last value counts.
+template <typename ClassT, auto... Members>
+constexpr auto as_aggregate = _as_aggregate<ClassT, Members...>{};
+} // namespace lexy
+
+namespace lexy
+{
 template <typename String>
 struct _as_string
 {
