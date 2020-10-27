@@ -29,17 +29,7 @@ struct json_number
 {
     std::int64_t integer;
     std::string  fraction;
-    std::int64_t exponent;
-
-    json_number(std::int64_t integer) : integer(integer), exponent(0) {}
-    json_number(std::int64_t integer, std::string fraction)
-    : integer(integer), fraction(std::move(fraction)), exponent(0)
-    {}
-    json_number(std::int64_t integer, std::int64_t exponent) : integer(integer), exponent(exponent)
-    {}
-    json_number(std::int64_t integer, std::string fraction, std::int64_t exponent)
-    : integer(integer), fraction(std::move(fraction)), exponent(exponent)
-    {}
+    std::int16_t exponent;
 };
 
 using json_string = std::string;
@@ -78,7 +68,7 @@ struct json_value
         if (!i.fraction.empty())
             std::fprintf(stdout, ".%s", i.fraction.c_str());
         if (i.exponent != 0)
-            std::fprintf(stdout, "e%" PRId64, i.exponent);
+            std::fprintf(stdout, "e%" PRId16, i.exponent);
     }
     void _print(const json_string& str, int) const
     {
@@ -180,9 +170,9 @@ struct number
     {
         static constexpr auto rule = [] {
             auto exp_char = dsl::lit_c<'e'> / dsl::lit_c<'E'>;
-            return exp_char >> dsl::sign + dsl::integer<std::int64_t>(dsl::digits<>);
+            return exp_char >> dsl::sign + dsl::integer<std::int16_t>(dsl::digits<>);
         }();
-        static constexpr auto value = lexy::as_integer<std::int64_t>;
+        static constexpr auto value = lexy::as_integer<std::int16_t>;
     };
 
     static constexpr auto rule
@@ -190,7 +180,9 @@ struct number
                                >> dsl::p<integer> + dsl::opt(dsl::p<fraction>)
                                       + dsl::opt(dsl::p<exponent>),
                            ws);
-    static constexpr auto value = lexy::construct<ast::json_number>;
+    static constexpr auto value
+        = lexy::as_aggregate<ast::json_number, &ast::json_number::integer,
+                             &ast::json_number::fraction, &ast::json_number::exponent>;
 };
 
 // A json value that is a string.
