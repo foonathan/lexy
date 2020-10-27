@@ -208,7 +208,7 @@ TEST_CASE("as_aggregate")
         float       f;
         const char* str;
     };
-    static constexpr auto callback = lexy::as_aggregate<agg, &agg::i, &agg::f, &agg::str>;
+    static constexpr auto callback = lexy::as_aggregate<&agg::i, &agg::f, &agg::str>;
 
     SUBCASE("callback")
     {

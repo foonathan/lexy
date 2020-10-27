@@ -181,8 +181,8 @@ struct number
                                       + dsl::opt(dsl::p<exponent>),
                            ws);
     static constexpr auto value
-        = lexy::as_aggregate<ast::json_number, &ast::json_number::integer,
-                             &ast::json_number::fraction, &ast::json_number::exponent>;
+        = lexy::as_aggregate<&ast::json_number::integer, &ast::json_number::fraction,
+                             &ast::json_number::exponent>;
 };
 
 // A json value that is a string.

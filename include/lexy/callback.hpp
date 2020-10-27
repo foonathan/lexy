@@ -372,22 +372,30 @@ constexpr auto as_collection = _collection<T>{};
 namespace lexy
 {
 template <typename MemPtr>
-struct _mem_ptr_member_type_impl;
+struct _mem_ptr_type_impl;
 template <typename T, typename ClassT>
-struct _mem_ptr_member_type_impl<T ClassT::*>
+struct _mem_ptr_type_impl<T ClassT::*>
 {
-    using type = T;
+    using class_type  = ClassT;
+    using member_type = T;
 };
-template <auto MemPtr>
-using _mem_ptr_member_type = typename _mem_ptr_member_type_impl<decltype(MemPtr)>::type;
 
-template <typename ClassT, auto... Members>
+template <auto MemPtr>
+using _mem_ptr_class_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::class_type;
+template <auto MemPtr>
+using _mem_ptr_member_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::member_type;
+
+template <auto... Members>
 struct _as_aggregate
 {
-    static_assert(std::is_aggregate_v<ClassT>);
+    static_assert(sizeof...(Members) > 0);
+
+    // We assume all members have the same class and just inspect one of them (the last one) for it.
+    using return_type = std::decay_t<decltype((LEXY_DECLVAL(_mem_ptr_class_type<Members>), ...))>;
+    static_assert(std::is_aggregate_v<return_type>);
 
     template <typename Value>
-    static constexpr void _set_member(ClassT& obj, Value&& value)
+    static constexpr void _set_member(return_type& obj, Value&& value)
     {
         static_assert((std::is_same_v<_mem_ptr_member_type<Members>, std::decay_t<Value>> || ...),
                       "value does not have type of any member");
@@ -405,12 +413,10 @@ struct _as_aggregate
          || ...);
     }
 
-    using return_type = ClassT;
-
     template <typename... Args>
-    constexpr ClassT operator()(Args&&... args) const
+    constexpr auto operator()(Args&&... args) const
     {
-        ClassT result{};
+        return_type result{};
         // We forward each argument to one member.
         (_set_member(result, LEXY_FWD(args)), ...);
         return result;
@@ -418,9 +424,8 @@ struct _as_aggregate
 
     struct _sink
     {
-        ClassT _result{};
-
-        using return_type = ClassT;
+        using return_type = typename _as_aggregate::return_type;
+        return_type _result{};
 
         template <typename Value>
         constexpr void operator()(Value&& value)
@@ -428,7 +433,7 @@ struct _as_aggregate
             _set_member(_result, LEXY_FWD(value));
         }
 
-        constexpr ClassT&& finish() &&
+        constexpr auto&& finish() &&
         {
             return LEXY_MOV(_result);
         }
@@ -445,8 +450,8 @@ struct _as_aggregate
 ///
 /// If members are missing, they're value initialized.
 /// If members are specified more than once, the last value counts.
-template <typename ClassT, auto... Members>
-constexpr auto as_aggregate = _as_aggregate<ClassT, Members...>{};
+template <auto... Members>
+constexpr auto as_aggregate = _as_aggregate<Members...>{};
 } // namespace lexy
 
 namespace lexy
