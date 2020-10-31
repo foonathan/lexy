@@ -6,6 +6,7 @@
 #define LEXY_DSL_LABEL_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/branch.hpp>
 
 namespace lexy
 {
@@ -42,6 +43,20 @@ struct _lab : rule_base
             return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::label<Label>{});
         }
     };
+
+    template <typename Rule>
+    LEXY_CONSTEVAL auto operator()(Rule rule) const
+    {
+        if constexpr (lexy::is_branch_rule<Rule>)
+        {
+            auto as_branch = branch(rule);
+            return as_branch.condition() >> *this + as_branch.then();
+        }
+        else
+        {
+            return *this + rule;
+        }
+    }
 };
 
 /// Matches with the specified label.

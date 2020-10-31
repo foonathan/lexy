@@ -5,29 +5,90 @@
 #include <lexy/dsl/label.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/if.hpp>
 
 TEST_CASE("dsl::label")
 {
-    constexpr auto rule = lexy::dsl::label<struct lab>;
-    CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
-
-    struct callback
+    SUBCASE("simple")
     {
-        const char* str;
+        constexpr auto rule = lexy::dsl::label<struct lab>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
 
-        constexpr int success(const char* cur, lexy::label<lab>)
+        struct callback
         {
-            assert(str == cur);
-            return 0;
-        }
-    };
+            const char* str;
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
-    CHECK(empty == 0);
+            constexpr int success(const char* cur, lexy::label<lab>)
+            {
+                assert(str == cur);
+                return 0;
+            }
+        };
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
-    CHECK(string == 0);
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto string = rule_matches<callback>(rule, "abc");
+        CHECK(string == 0);
+    }
+    SUBCASE("operator()")
+    {
+        constexpr auto rule = lexy::dsl::label<struct lab>(LEXY_LIT("abc"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur, lexy::label<lab>)
+            {
+                assert(cur == str + 3);
+                return 0;
+            }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "abc");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto string = rule_matches<callback>(rule, "abc");
+        CHECK(string == 0);
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto rule = if_(lexy::dsl::label<struct lab>(LEXY_LIT("abc")));
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                assert(cur == str);
+                return 0;
+            }
+            constexpr int success(const char* cur, lexy::label<lab>)
+            {
+                assert(cur == str + 3);
+                return 1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto string = rule_matches<callback>(rule, "abc");
+        CHECK(string == 1);
+    }
 }
 
 TEST_CASE("dsl::id")
