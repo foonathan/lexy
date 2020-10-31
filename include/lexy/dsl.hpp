@@ -20,6 +20,7 @@
 #include <lexy/dsl/encode.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/error.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>

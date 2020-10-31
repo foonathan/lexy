@@ -5,8 +5,8 @@
 #include <lexy/dsl/whitespace.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/label.hpp>
-#include <lexy/dsl/option.hpp>
 
 TEST_CASE("dsl::whitespaced()")
 {
@@ -70,7 +70,7 @@ TEST_CASE("dsl::whitespaced()")
         CHECK(lexy::is_rule<decltype(rule_)>);
         CHECK(lexy::is_branch_rule<decltype(rule_)>);
 
-        constexpr auto rule = opt(rule_);
+        constexpr auto rule = if_(rule_);
 
         struct callback
         {

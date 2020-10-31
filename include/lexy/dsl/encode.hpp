@@ -8,7 +8,7 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/bom.hpp>
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/option.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace lexyd
@@ -204,7 +204,7 @@ struct _encode
             if constexpr (sizeof(typename Encoding::char_type) == 1)
             {
                 // The Endianness doesn't matter, just parse a BOM.
-                return opt(bom<Encoding, lexy::encoding_endianness::little>)
+                return if_(bom<Encoding, lexy::encoding_endianness::little>)
                        + _encode<Encoding, lexy::encoding_endianness::little>{}(rule);
             }
             else

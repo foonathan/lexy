@@ -7,37 +7,25 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/choice.hpp>
+
+namespace lexy
+{
+struct nullopt
+{
+    template <typename T, typename = std::enable_if_t<std::is_default_constructible_v<T>>>
+    constexpr operator T() const
+    {
+        return T();
+    }
+};
+} // namespace lexy
 
 namespace lexyd
 {
 template <typename Condition, typename Then>
 struct _opt : rule_base
 {
-    static constexpr auto has_matcher = Then::has_matcher;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            if (auto reset = reader; Condition::matcher::match(reader))
-            {
-                if (Then::matcher::match(reader))
-                    return true;
-                else
-                {
-                    reader = LEXY_MOV(reset);
-                    return false;
-                }
-            }
-            else
-            {
-                reader = LEXY_MOV(reset);
-                return true;
-            }
-        }
-    };
+    static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser
@@ -49,42 +37,20 @@ struct _opt : rule_base
             if (auto result = Condition::matcher::match(reader))
                 return Then::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
     };
 };
-template <typename Condition>
-struct _opt<Condition, void> : atom_base<_opt<Condition, void>>
-{
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        Condition::matcher::match(reader);
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
-};
 
 /// Matches the rule or nothing.
+/// In the latter case, produces a `nullopt` value.
 template <typename Rule>
 LEXY_CONSTEVAL auto opt(Rule rule)
 {
     static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
 
-    if constexpr (lexy::is_pattern<Rule>)
-        return _opt<Rule, void>{};
-    else
-    {
-        auto as_branch = branch(rule);
-        return _opt<decltype(as_branch.condition()), decltype(as_branch.then())>{};
-    }
-}
-template <typename... R>
-LEXY_CONSTEVAL auto opt(_chc<R...>)
-{
-    return _chc<R...>{} | else_ >> success;
+    auto as_branch = branch(rule);
+    return _opt<decltype(as_branch.condition()), decltype(as_branch.then())>{};
 }
 } // namespace lexyd
 

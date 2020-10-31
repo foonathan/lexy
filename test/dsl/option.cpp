@@ -5,27 +5,11 @@
 #include <lexy/dsl/option.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/value.hpp>
 
 TEST_CASE("dsl::opt()")
 {
     SUBCASE("pattern")
-    {
-        constexpr auto pattern = opt(LEXY_LIT("abc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(ab);
-        CHECK(ab.match().empty());
-    }
-    SUBCASE("rule")
     {
         constexpr auto rule = opt(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -34,15 +18,15 @@ TEST_CASE("dsl::opt()")
         {
             const char* str;
 
+            constexpr int success(const char* cur, lexy::nullopt)
+            {
+                assert(cur == str);
+                return 0;
+            }
             constexpr int success(const char* cur)
             {
-                if (cur == str)
-                    return 0;
-                else
-                {
-                    assert(cur - str == 3);
-                    return 1;
-                }
+                assert(cur == str + 3);
+                return 1;
             }
         };
 
@@ -55,41 +39,19 @@ TEST_CASE("dsl::opt()")
         constexpr auto partial = rule_matches<callback>(rule, "ab");
         CHECK(partial == 0);
     }
-    SUBCASE("pattern branch")
+    SUBCASE("branch")
     {
-        constexpr auto pattern = opt(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(!ab);
-        CHECK(ab.match().empty());
-    }
-    SUBCASE("rule branch")
-    {
-        constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::value_c<1>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            constexpr int success(const char* cur, int i)
             {
-                if (cur == str)
-                    return 0;
-                else
-                {
-                    assert(cur - str == 3);
-                    return 1;
-                }
+                assert(cur - str == 3 || cur == str);
+                return i;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)

@@ -229,8 +229,8 @@ struct element
         //
         // We also allow an empty tag by checking for the closing characters, dropping the pushed
         // name and immediately returning from parsing.
-        auto empty     = LEXY_LIT("/") >> LEXY_LIT(">") + dsl::context_drop + dsl::return_;
-        auto open_tag  = open_tagged(dsl::context_push(dsl::p<name>) + dsl::opt(empty));
+        auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::context_drop + dsl::return_);
+        auto open_tag = open_tagged(dsl::context_push(dsl::p<name>) + empty);
         auto close_tag = close_tagged(dsl::context_pop(dsl::p<name>).error<tag_mismatch>());
 
         // The content of the element.

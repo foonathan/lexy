@@ -6,8 +6,8 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/label.hpp>
-#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace p_basic
@@ -216,7 +216,7 @@ struct inner
 
 struct outer
 {
-    static constexpr auto rule = opt(LEXY_LIT("a") >> lexy::dsl::p<inner>);
+    static constexpr auto rule = if_(LEXY_LIT("a") >> lexy::dsl::p<inner>);
 };
 } // namespace recurse_indirect
 
@@ -224,7 +224,7 @@ namespace recurse_right
 {
 struct prod
 {
-    static constexpr auto rule = opt(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
+    static constexpr auto rule = if_(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
 };
 } // namespace recurse_right
 

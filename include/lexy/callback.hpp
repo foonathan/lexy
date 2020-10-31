@@ -38,16 +38,6 @@ struct _callback : _fn_as_base<Fns>...
     LEXY_CONSTEVAL explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
 
     using _fn_as_base<Fns>::operator()...;
-
-    // This is a fallback overload to create a nice error message if the callback isn't handling a
-    // case. The const volatile qualification ensures that it is worse than any other option, unless
-    // another callback is const volatile qualified (but who does that).
-    template <typename... Args>
-    constexpr return_type operator()(const Args&...) const volatile
-    {
-        static_assert(_detail::error<Args...>, "missing callback overload for Args...");
-        return LEXY_DECLVAL(return_type);
-    }
 };
 
 /// Creates a callback.

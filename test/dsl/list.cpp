@@ -484,14 +484,12 @@ TEST_CASE("dsl::opt(list()) sep")
             return b{};
         }
 
-        constexpr int success(const char* cur)
-        {
-            assert(cur == str);
-            return 0;
-        }
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == 4 * count - 1);
+            if (count == 0)
+                assert(cur == str);
+            else
+                assert(cur - str == 4 * count - 1);
             return count;
         }
 
@@ -551,14 +549,11 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
             return b{};
         }
 
-        constexpr int success(const char* cur)
-        {
-            assert(cur == str);
-            return 0;
-        }
         constexpr int success(const char* cur, int count)
         {
-            if (cur[-1] == ',')
+            if (count == 0)
+                assert(cur == str);
+            else if (cur[-1] == ',')
                 assert(cur - str == 4 * count);
             else
                 assert(cur - str == 4 * count - 1);

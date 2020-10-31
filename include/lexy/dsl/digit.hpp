@@ -307,7 +307,7 @@ LEXY_CONSTEVAL auto _make_digits()
         if constexpr (std::is_same_v<Sep, void>)
             return d + while_(d);
         else
-            return d + while_(opt(Sep{}) + d);
+            return d + while_(if_(Sep{}) + d);
     }
     else
     {
@@ -316,7 +316,7 @@ LEXY_CONSTEVAL auto _make_digits()
                    / (d.non_zero() + while_(d));
         else
             return (d.zero() + prevent<lexy::forbidden_leading_zero>(d))
-                   / (d.non_zero() + while_(opt(Sep{}) + d));
+                   / (d.non_zero() + while_(if_(Sep{}) + d));
     }
 }
 
