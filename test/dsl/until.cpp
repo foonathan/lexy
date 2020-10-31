@@ -5,6 +5,7 @@
 #include <lexy/dsl/until.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/peek.hpp>
 
 TEST_CASE("dsl::until()")
 {
@@ -90,9 +91,9 @@ TEST_CASE("dsl::until().or_eof()")
     CHECK(unterminated.count == 3);
 }
 
-TEST_CASE("dsl::until_peek()")
+TEST_CASE("dsl::until(peek())")
 {
-    constexpr auto rule = until_peek(LEXY_LIT("!"));
+    constexpr auto rule = until(peek(LEXY_LIT("!")));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_pattern<decltype(rule)>);
 
@@ -150,9 +151,9 @@ TEST_CASE("dsl::until_peek()")
     }
 }
 
-TEST_CASE("dsl::until_peek().or_eof()")
+TEST_CASE("dsl::until(peek()).or_eof()")
 {
-    constexpr auto atom = until_peek(LEXY_LIT("!")).or_eof();
+    constexpr auto atom = until(peek(LEXY_LIT("!"))).or_eof();
     CHECK(lexy::is_atom<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");

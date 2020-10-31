@@ -14,7 +14,6 @@
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/combination.hpp>
-#include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/context.hpp>
 #include <lexy/dsl/delimited.hpp>
 #include <lexy/dsl/digit.hpp>
@@ -27,7 +26,9 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
+#include <lexy/dsl/not.hpp>
 #include <lexy/dsl/option.hpp>
+#include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/punctuator.hpp>

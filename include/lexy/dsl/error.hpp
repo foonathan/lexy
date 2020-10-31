@@ -7,8 +7,9 @@
 
 #include <lexy/_detail/type_name.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/condition.hpp>
+#include <lexy/dsl/not.hpp>
 #include <lexy/dsl/option.hpp>
+#include <lexy/dsl/peek.hpp>
 
 namespace lexyd
 {
@@ -66,7 +67,7 @@ LEXY_CONSTEVAL auto require(Pattern pattern)
 {
     // If we don't get the pattern, we create a failure.
     // Otherwise, we match the empty string.
-    return opt(unless(pattern) >> error<Tag>);
+    return opt(peek(!pattern) >> error<Tag>);
 }
 
 /// Requires that lookahead does not match a pattern at a location.
@@ -74,7 +75,7 @@ template <typename Tag, typename Pattern>
 LEXY_CONSTEVAL auto prevent(Pattern pattern)
 {
     // Same as above, but we don't want to match the pattern.
-    return opt(if_(pattern) >> error<Tag>);
+    return opt(peek(pattern) >> error<Tag>);
 }
 } // namespace lexyd
 
@@ -97,7 +98,7 @@ struct _try : rule_base
             if (auto pos = reader.cur(); Pattern::matcher::match(reader))
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(pos));
+                return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(pos, reader.cur()));
         }
     };
 };

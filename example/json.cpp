@@ -176,7 +176,7 @@ struct number
     };
 
     static constexpr auto rule
-        = dsl::whitespaced(dsl::if_(dsl::lit_c<'-'> / dsl::digit<>)
+        = dsl::whitespaced(dsl::peek(dsl::lit_c<'-'> / dsl::digit<>)
                                >> dsl::p<integer> + dsl::opt(dsl::p<fraction>)
                                       + dsl::opt(dsl::p<exponent>),
                            ws);

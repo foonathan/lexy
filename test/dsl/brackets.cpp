@@ -109,7 +109,7 @@ TEST_CASE("dsl::bracketed")
         SUBCASE("sep")
         {
             constexpr auto result     = brackets(o, c).list(inner, sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> list(unless(c) >> inner, sep(LEXY_LIT(","))) + c;
+            constexpr auto equivalent = o >> list(peek(!c) >> inner, sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -121,7 +121,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> list(unless(c) >> inner, trailing_sep(LEXY_LIT(","))) + c;
+                = o >> list(peek(!c) >> inner, trailing_sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -149,7 +149,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).list(inner, sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> list(unless(c.condition()) >> inner, sep(LEXY_LIT(","))) + c;
+                = o >> list(peek(!c.condition()) >> inner, sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -161,7 +161,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> list(unless(c.condition()) >> inner, trailing_sep(LEXY_LIT(","))) + c;
+                = o >> list(peek(!c.condition()) >> inner, trailing_sep(LEXY_LIT(","))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -188,7 +188,7 @@ TEST_CASE("dsl::bracketed")
         SUBCASE("sep")
         {
             constexpr auto result     = brackets(o, c).opt_list(inner, sep(LEXY_LIT(",")));
-            constexpr auto equivalent = o >> opt(list(unless(c) >> inner, sep(LEXY_LIT(",")))) + c;
+            constexpr auto equivalent = o >> opt(list(peek(!c) >> inner, sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -200,7 +200,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).opt_list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> opt(list(unless(c) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
+                = o >> opt(list(peek(!c) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -228,7 +228,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).opt_list(inner, sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> opt(list(unless(c.condition()) >> inner, sep(LEXY_LIT(",")))) + c;
+                = o >> opt(list(peek(!c.condition()) >> inner, sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
@@ -240,7 +240,7 @@ TEST_CASE("dsl::bracketed")
         {
             constexpr auto result = brackets(o, c).opt_list(inner, trailing_sep(LEXY_LIT(",")));
             constexpr auto equivalent
-                = o >> opt(list(unless(c.condition()) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
+                = o >> opt(list(peek(!c.condition()) >> inner, trailing_sep(LEXY_LIT(",")))) + c;
             CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
             CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));

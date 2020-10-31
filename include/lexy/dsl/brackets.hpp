@@ -8,10 +8,11 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/not.hpp>
 #include <lexy/dsl/option.hpp>
+#include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
@@ -74,7 +75,7 @@ struct _brackets
         // The seperator can decide whether we've reached the end of the list,
         // in which case the ! won't match the closing bracket.
         // We need unless() and match it at the end again.
-        return o >> lexyd::list(unless(c.condition()) >> r, sep) + c;
+        return o >> lexyd::list(peek(!c.condition()) >> r, sep) + c;
     }
 
     /// Matches `opt(list(r, sep))` surrounded by brackets.
@@ -96,7 +97,7 @@ struct _brackets
         auto c = branch(close());
 
         // As above, we can't use !c and reuse it as the condition for opt().
-        return o >> lexyd::opt(lexyd::list(unless(c.condition()) >> r, sep)) + c;
+        return o >> lexyd::opt(lexyd::list(peek(!c.condition()) >> r, sep)) + c;
     }
 
     /// Matches the open bracket.

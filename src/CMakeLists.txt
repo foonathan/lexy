@@ -25,7 +25,6 @@ set(header_files
         ${include_dir}/dsl/capture.hpp
         ${include_dir}/dsl/choice.hpp
         ${include_dir}/dsl/combination.hpp
-        ${include_dir}/dsl/condition.hpp
         ${include_dir}/dsl/context.hpp
         ${include_dir}/dsl/delimited.hpp
         ${include_dir}/dsl/digit.hpp
@@ -36,7 +35,9 @@ set(header_files
         ${include_dir}/dsl/label.hpp
         ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
+        ${include_dir}/dsl/not.hpp
         ${include_dir}/dsl/option.hpp
+        ${include_dir}/dsl/peek.hpp
         ${include_dir}/dsl/position.hpp
         ${include_dir}/dsl/production.hpp
         ${include_dir}/dsl/punctuator.hpp

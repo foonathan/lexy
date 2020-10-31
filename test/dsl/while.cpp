@@ -5,8 +5,8 @@
 #include <lexy/dsl/while.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/condition.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/not.hpp>
 #include <lexy/match.hpp>
 
 TEST_CASE("dsl::while_()")

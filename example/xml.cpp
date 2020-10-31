@@ -165,7 +165,7 @@ struct reference
 
     static constexpr auto rule = [] {
         // The name of the reference is everything until ;, excluding the ;.
-        auto name = dsl::until_peek(dsl::lit_c<';'>);
+        auto name = dsl::until(dsl::peek(dsl::lit_c<';'>));
         // We then switch over the parsed name and create the appropriate character.
         auto reference = dsl::switch_(name)
                              .case_(LEXY_LIT("quot") >> dsl::value_c<'"'>)
@@ -236,7 +236,8 @@ struct element
         // The content of the element.
         auto content
             = dsl::p<comment> | dsl::p<cdata> // These also start with <, so put them first.
-              | if_(LEXY_LIT("<")) >> dsl::recurse<element> // We need a condition for recursion.
+              | dsl::peek(LEXY_LIT("<"))
+                    >> dsl::recurse<element> // We need a condition for recursion.
               | dsl::p<reference> | dsl::else_ >> dsl::p<text>;
 
         // We match a (possibly empty) list of content surrounded itself by the open and close tag.

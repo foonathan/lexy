@@ -2,13 +2,14 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/dsl/condition.hpp>
+#include <lexy/dsl/peek.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/not.hpp>
 
-TEST_CASE("dsl::if_()")
+TEST_CASE("dsl::peek()")
 {
-    constexpr auto rule = lexy::dsl::_if<decltype(LEXY_LIT("abc")), true>{};
+    constexpr auto rule = lexy::dsl::peek(LEXY_LIT("abc"));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_pattern<decltype(rule)>);
 
@@ -16,6 +17,7 @@ TEST_CASE("dsl::if_()")
     {
         constexpr auto empty = pattern_matches(rule, "");
         CHECK(!empty);
+        CHECK(empty.match().empty());
 
         constexpr auto abc = pattern_matches(rule, "abc");
         CHECK(abc);
@@ -32,19 +34,26 @@ TEST_CASE("dsl::if_()")
                 assert(cur == str);
                 return 0;
             }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "abc");
+                assert(e.position() == str);
+                return -1;
+            }
         };
 
         constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
+        CHECK(empty == -1);
 
         constexpr auto abc = rule_matches<callback>(rule, "abc");
         CHECK(abc == 0);
     }
 }
 
-TEST_CASE("dsl::unless()")
+TEST_CASE("dsl::peek(!)")
 {
-    constexpr auto rule = lexy::dsl::_if<decltype(LEXY_LIT("abc")), false>{};
+    constexpr auto rule = lexy::dsl::peek(!LEXY_LIT("abc"));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_pattern<decltype(rule)>);
 
@@ -56,6 +65,7 @@ TEST_CASE("dsl::unless()")
 
         constexpr auto abc = pattern_matches(rule, "abc");
         CHECK(!abc);
+        CHECK(abc.match().empty());
     }
     SUBCASE("rule")
     {
@@ -68,42 +78,11 @@ TEST_CASE("dsl::unless()")
                 assert(cur == str);
                 return 0;
             }
-        };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
-    }
-}
-
-TEST_CASE("dsl::operator!")
-{
-    constexpr auto rule = lexy::dsl::_not<decltype(LEXY_LIT("abc"))>{};
-    CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
-
-    SUBCASE("pattern")
-    {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(rule, "abc");
-        CHECK(!abc);
-        CHECK(abc.match() == "abc");
-    }
-    SUBCASE("rule")
-    {
-        struct callback
-        {
-            const char* str;
-
-            constexpr int success(const char* cur)
+            constexpr int error(test_error<lexy::unexpected> e)
             {
-                assert(cur == str);
-                return 0;
+                assert(e.position() == str);
+                return -1;
             }
         };
 
@@ -111,7 +90,7 @@ TEST_CASE("dsl::operator!")
         CHECK(empty == 0);
 
         constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
+        CHECK(abc == -1);
     }
 }
 
