@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/dsl/label.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy
@@ -375,52 +376,48 @@ using _mem_ptr_class_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::class
 template <auto MemPtr>
 using _mem_ptr_member_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::member_type;
 
-template <auto... Members>
+template <typename T>
 struct _as_aggregate
 {
-    static_assert(sizeof...(Members) > 0);
-
-    // We assume all members have the same class and just inspect one of them (the last one) for it.
-    using return_type = std::decay_t<decltype((LEXY_DECLVAL(_mem_ptr_class_type<Members>), ...))>;
+    using return_type = T;
     static_assert(std::is_aggregate_v<return_type>);
 
-    template <typename Value>
-    static constexpr void _set_member(return_type& obj, Value&& value)
+    template <typename Fn, typename H, typename... Tail>
+    constexpr void _set(T& result, lexy::member<Fn>, H&& value, Tail&&... tail) const
     {
-        static_assert((std::is_same_v<_mem_ptr_member_type<Members>, std::decay_t<Value>> || ...),
-                      "value does not have type of any member");
-
-        // We try to assign the value to each member in turn until one matches.
-        ([&] {
-            if constexpr (std::is_same_v<_mem_ptr_member_type<Members>, std::decay_t<Value>>)
-            {
-                obj.*Members = LEXY_FWD(value);
-                return true;
-            }
-            else
-                return false;
-        }()
-         || ...);
+        Fn()(result, LEXY_FWD(value));
+        if constexpr (sizeof...(Tail) > 0)
+            _set(result, LEXY_FWD(tail)...);
     }
 
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
+    template <typename Fn, typename... Args>
+    constexpr auto operator()(lexy::member<Fn> member, Args&&... args) const
     {
-        return_type result{};
-        // We forward each argument to one member.
-        (_set_member(result, LEXY_FWD(args)), ...);
+        static_assert(sizeof...(Args) % 2 == 1, "missing dsl::member rules");
+
+        T result{};
+        _set(result, member, LEXY_FWD(args)...);
+        return result;
+    }
+    template <typename... Args>
+    constexpr auto operator()(return_type&& result, Args&&... args) const
+    {
+        static_assert(sizeof...(Args) % 2 == 0, "missing dsl::member rules");
+
+        _set(result, LEXY_FWD(args)...);
         return result;
     }
 
     struct _sink
     {
-        using return_type = typename _as_aggregate::return_type;
-        return_type _result{};
+        T _result{};
 
-        template <typename Value>
-        constexpr void operator()(Value&& value)
+        using return_type = T;
+
+        template <typename Fn, typename Value>
+        constexpr void operator()(lexy::member<Fn>, Value&& value)
         {
-            _set_member(_result, LEXY_FWD(value));
+            Fn()(_result, LEXY_FWD(value));
         }
 
         constexpr auto&& finish() &&
@@ -435,13 +432,8 @@ struct _as_aggregate
 };
 
 /// A callback with sink that creates an aggregate.
-/// The aggregate must have members of distinct types whose member points are passed to the
-/// argument. Each value produced will be matched to the member of the same type.
-///
-/// If members are missing, they're value initialized.
-/// If members are specified more than once, the last value counts.
-template <auto... Members>
-constexpr auto as_aggregate = _as_aggregate<Members...>{};
+template <typename T>
+constexpr auto as_aggregate = _as_aggregate<T>{};
 } // namespace lexy
 
 namespace lexy
