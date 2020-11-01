@@ -7,6 +7,11 @@
 
 #include <lexy/dsl/base.hpp>
 
+namespace lexy
+{
+struct _match_handler;
+} // namespace lexy
+
 namespace lexyd
 {
 template <auto Value>
@@ -21,7 +26,10 @@ struct _valc : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., Value);
+            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., Value);
         }
     };
 };
@@ -45,7 +53,10 @@ struct _valf : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., F());
+            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., F());
         }
     };
 };
@@ -69,7 +80,10 @@ struct _valt : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., T());
+            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., T());
         }
     };
 };
