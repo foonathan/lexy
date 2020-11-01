@@ -26,6 +26,7 @@
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/lookahead.hpp>
+#include <lexy/dsl/match.hpp>
 #include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
 #include <lexy/dsl/not.hpp>

@@ -72,7 +72,16 @@ struct _delim : rule_base
             }
 
             // Add the final string as an argument.
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
+            if constexpr (std::is_void_v<typename decltype(sink)::return_type>)
+            {
+                LEXY_MOV(sink).finish();
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                         LEXY_MOV(sink).finish());
+            }
         }
     };
 };

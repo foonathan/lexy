@@ -55,7 +55,7 @@ struct _not : rule_base
 /// If this fails, it still has consumed the pattern.
 /// It is designed for something like `opt(!pattern >> then)`,
 /// which matches the pattern if we don't match then.
-template <typename Pattern>
+template <typename Pattern, typename = std::enable_if_t<lexy::is_rule<Pattern>>>
 LEXY_CONSTEVAL auto operator!(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);

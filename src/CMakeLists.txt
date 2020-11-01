@@ -36,6 +36,7 @@ set(header_files
         ${include_dir}/dsl/integer.hpp
         ${include_dir}/dsl/label.hpp
         ${include_dir}/dsl/lookahead.hpp
+        ${include_dir}/dsl/match.hpp
         ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
         ${include_dir}/dsl/not.hpp
