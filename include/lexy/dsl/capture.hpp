@@ -6,6 +6,7 @@
 #define LEXY_DSL_CAPTURE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexyd
@@ -44,6 +45,12 @@ struct _cap : rule_base
 
     template <typename NextParser>
     using parser = _cap_parser<lexy::lexeme, Rule, NextParser>;
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(*this, ws);
+    }
 };
 
 /// Captures whatever the rule matches as a lexeme.

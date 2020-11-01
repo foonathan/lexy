@@ -6,6 +6,7 @@
 #define LEXY_DSL_PEEK_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -47,6 +48,12 @@ struct _peek : rule_base
                                                                   LEXY_FWD(args)...);
         }
     };
+
+    template <typename Whitespace>
+    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    {
+        return whitespaced(*this, ws);
+    }
 };
 
 /// Check if at this reader position, Pattern would match, but don't actually consume any characters
