@@ -7,6 +7,29 @@
 #include "verify.hpp"
 #include <lexy/dsl/value.hpp>
 
+TEST_CASE("dsl::nullopt")
+{
+    constexpr auto rule = lexy::dsl::nullopt;
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int success(const char* cur, lexy::nullopt)
+        {
+            assert(cur == str);
+            return 0;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == 0);
+
+    constexpr auto string = rule_matches<callback>(rule, "abc");
+    CHECK(string == 0);
+}
+
 TEST_CASE("dsl::opt()")
 {
     SUBCASE("pattern")

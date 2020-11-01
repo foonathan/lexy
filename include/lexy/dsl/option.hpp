@@ -22,6 +22,27 @@ struct nullopt
 
 namespace lexyd
 {
+struct _nullopt : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::nullopt{});
+        }
+    };
+};
+
+constexpr auto nullopt = _nullopt{};
+} // namespace lexyd
+
+namespace lexyd
+{
 template <typename Condition, typename Then>
 struct _opt : rule_base
 {
