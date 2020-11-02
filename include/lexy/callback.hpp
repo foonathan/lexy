@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/config.hpp>
 #include <lexy/dsl/label.hpp>
+#include <lexy/encoding.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy
@@ -439,9 +440,13 @@ constexpr auto as_aggregate = _as_aggregate<T>{};
 namespace lexy
 {
 template <typename String>
+using _string_char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
+
+template <typename String, typename Encoding>
 struct _as_string
 {
     using return_type = String;
+    using _char_type  = _string_char_type<String>;
 
     constexpr String operator()(String&& str) const
     {
@@ -465,17 +470,27 @@ struct _as_string
         using iterator = typename lexeme<Reader>::iterator;
         if constexpr (std::is_pointer_v<iterator>)
         {
-            using char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
-            static_assert(lexy::char_type_compatible_with_reader<Reader, char_type>,
+            static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
                           "cannot convert lexeme to this string type");
 
-            if constexpr (std::is_same_v<char_type, typename Reader::encoding::char_type>)
+            if constexpr (std::is_same_v<_char_type, typename Reader::encoding::char_type>)
                 return String(lex.data(), lex.size());
             else
-                return String(reinterpret_cast<const char_type*>(lex.data()), lex.size());
+                return String(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
         }
         else
             return String(lex.begin(), lex.end());
+    }
+
+    constexpr String operator()(code_point cp) const
+    {
+        typename Encoding::char_type buffer[4] = {};
+        auto                         size      = Encoding::encode_code_point(cp, buffer, 4);
+
+        if constexpr (std::is_same_v<_char_type, typename Encoding::char_type>)
+            return (*this)(buffer, size);
+        else
+            return (*this)(reinterpret_cast<const _char_type*>(buffer), size);
     }
 
     struct _sink
@@ -512,13 +527,21 @@ struct _as_string
             using iterator = typename lexeme<Reader>::iterator;
             if constexpr (std::is_pointer_v<iterator>)
             {
-                using char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
-                static_assert(lexy::char_type_compatible_with_reader<Reader, char_type>,
+                static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
                               "cannot convert lexeme to this string type");
-                _result.append(reinterpret_cast<const char_type*>(lex.data()), lex.size());
+                _result.append(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
             }
             else
+            {
                 _result.append(lex.begin(), lex.end());
+            }
+        }
+
+        void operator()(code_point cp)
+        {
+            typename Encoding::char_type buffer[4] = {};
+            auto                         size      = Encoding::encode_code_point(cp, buffer, 4);
+            (*this)(reinterpret_cast<const _char_type*>(buffer), size);
         }
 
         String&& finish() &&
@@ -536,8 +559,8 @@ struct _as_string
 /// As a callback, it converts a lexeme into the string.
 /// As a sink, it repeatedly calls `.push_back()` for individual characters,
 /// or `.append()` for lexemes or other strings.
-template <typename String>
-constexpr auto as_string = _as_string<String>{};
+template <typename String, typename Encoding = deduce_encoding<_string_char_type<String>>>
+constexpr auto as_string = _as_string<String, Encoding>{};
 } // namespace lexy
 
 namespace lexy

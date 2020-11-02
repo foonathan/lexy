@@ -6,8 +6,49 @@
 #define LEXY_ENCODING_HPP_INCLUDED
 
 #include <cstdint>
+#include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 
+//=== code_point ===//
+namespace lexy
+{
+/// A unicode code point.
+class code_point
+{
+public:
+    constexpr explicit code_point(std::uint_least32_t value) noexcept : _value(value) {}
+
+    constexpr auto value() const noexcept
+    {
+        return _value;
+    }
+
+    //=== classification ===//
+    constexpr bool is_valid() const noexcept
+    {
+        if (_value > 0x10'FFFF)
+            return false; // Out of range.
+        else if (0xD800 <= _value && _value <= 0xDFFF)
+            return false; // UTF-16 surrogate.
+        else
+            return true;
+    }
+
+    constexpr bool is_ascii() const noexcept
+    {
+        return _value <= 0x7F;
+    }
+    constexpr bool is_bmp() const noexcept
+    {
+        return _value <= 0xFFFF;
+    }
+
+private:
+    std::uint_least32_t _value;
+};
+} // namespace lexy
+
+//=== encoding ===//
 namespace lexy
 {
 /// The endianness used by an encoding.
@@ -48,6 +89,16 @@ struct default_encoding
             return static_cast<int_type>(value);
         }
     }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+    {
+        LEXY_PRECONDITION(cp.is_ascii());
+        LEXY_PRECONDITION(size >= 1);
+
+        *buffer = static_cast<char_type>(cp.value());
+        return 1;
+    }
 };
 
 // An encoding where the input is assumed to be valid ASCII.
@@ -71,6 +122,16 @@ struct ascii_encoding
     {
         return static_cast<int_type>(c);
     }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+    {
+        LEXY_PRECONDITION(cp.is_ascii());
+        LEXY_PRECONDITION(size >= 1);
+
+        *buffer = static_cast<char_type>(cp.value());
+        return 1;
+    }
 };
 
 /// An encoding where the input is assumed to be valid UTF-8.
@@ -91,6 +152,60 @@ struct utf8_encoding
     static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
+    }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+    {
+        LEXY_PRECONDITION(cp.is_valid());
+
+        // Taken from http://www.herongyang.com/Unicode/UTF-8-UTF-8-Encoding-Algorithm.html.
+        if (cp.is_ascii())
+        {
+            LEXY_PRECONDITION(size >= 1);
+
+            *buffer = static_cast<char_type>(cp.value());
+            return 1;
+        }
+        else if (cp.value() <= 0x07'FF)
+        {
+            LEXY_PRECONDITION(size >= 2);
+
+            auto first  = (cp.value() >> 6) & 0x1F;
+            auto second = (cp.value() >> 0) & 0x3F;
+
+            buffer[0] = 0xC0 | static_cast<char_type>(first);
+            buffer[1] = 0x80 | static_cast<char_type>(second);
+            return 2;
+        }
+        else if (cp.value() <= 0xFF'FF)
+        {
+            LEXY_PRECONDITION(size >= 3);
+
+            auto first  = (cp.value() >> 12) & 0x0F;
+            auto second = (cp.value() >> 6) & 0x3F;
+            auto third  = (cp.value() >> 0) & 0x3F;
+
+            buffer[0] = 0xE0 | static_cast<char_type>(first);
+            buffer[1] = 0x80 | static_cast<char_type>(second);
+            buffer[2] = 0x80 | static_cast<char_type>(third);
+            return 3;
+        }
+        else
+        {
+            LEXY_PRECONDITION(size >= 4);
+
+            auto first  = (cp.value() >> 18) & 0x07;
+            auto second = (cp.value() >> 12) & 0x3F;
+            auto third  = (cp.value() >> 6) & 0x3F;
+            auto fourth = (cp.value() >> 0) & 0x3F;
+
+            buffer[0] = 0xF0 | static_cast<char_type>(first);
+            buffer[1] = 0x80 | static_cast<char_type>(second);
+            buffer[2] = 0x80 | static_cast<char_type>(third);
+            buffer[3] = 0x80 | static_cast<char_type>(fourth);
+            return 4;
+        }
     }
 };
 template <>
@@ -114,6 +229,34 @@ struct utf16_encoding
     static LEXY_CONSTEVAL int_type to_int_type(char_type c)
     {
         return static_cast<int_type>(c);
+    }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+    {
+        LEXY_PRECONDITION(cp.is_valid());
+
+        if (cp.is_bmp())
+        {
+            LEXY_PRECONDITION(size >= 1);
+
+            *buffer = static_cast<char_type>(cp.value());
+            return 1;
+        }
+        else
+        {
+            // Algorithm implemented from
+            // https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF.
+            LEXY_PRECONDITION(size >= 2);
+
+            auto u_prime       = cp.value() - 0x1'0000;
+            auto high_ten_bits = u_prime >> 10;
+            auto low_ten_bits  = u_prime & 0b11'1111'1111;
+
+            buffer[0] = static_cast<char_type>(0xD800 + high_ten_bits);
+            buffer[1] = static_cast<char_type>(0xDC00 + low_ten_bits);
+            return 2;
+        }
     }
 };
 template <>
@@ -139,6 +282,16 @@ struct utf32_encoding
     {
         return c;
     }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+    {
+        LEXY_PRECONDITION(cp.is_valid());
+        LEXY_PRECONDITION(size >= 1);
+
+        *buffer = static_cast<char_type>(cp.value());
+        return 1;
+    }
 };
 template <>
 constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
@@ -162,11 +315,16 @@ struct raw_encoding
     {
         return static_cast<int_type>(c);
     }
+
+    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
+                                                   std::size_t size)
+        = delete;
 };
 template <>
 constexpr bool raw_encoding::is_secondary_char_type<char> = true;
 } // namespace lexy
 
+//=== deduce_encoding ===//
 namespace lexy
 {
 template <typename CharT>
@@ -205,6 +363,7 @@ struct _deduce_encoding<unsigned char>
 };
 } // namespace lexy
 
+//=== impls ===//
 namespace lexy
 {
 template <typename Encoding, typename CharT>

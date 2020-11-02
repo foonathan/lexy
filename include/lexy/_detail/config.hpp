@@ -83,7 +83,7 @@ constexpr void swap(T& lhs, T& rhs)
 
 namespace lexy
 {
-using _char8_t = unsigned char;
+using _char8_t = char;
 } // namespace lexy
 
 #    define LEXY_CHAR8_T ::lexy::_char8_t

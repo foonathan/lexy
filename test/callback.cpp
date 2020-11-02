@@ -280,18 +280,26 @@ TEST_CASE("as_string")
         CHECK(from_lvalue == "abc");
         std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
         CHECK(from_rvalue == "test");
+
+        std::string from_ascii_cp = lexy::as_string<std::string>(lexy::code_point('a'));
+        CHECK(from_ascii_cp == "a");
+        std::string from_unicode_cp
+            = lexy::as_string<std::string, lexy::utf8_encoding>(lexy::code_point(0x00E4));
+        CHECK(from_unicode_cp == "\u00E4");
     }
     SUBCASE("sink")
     {
-        auto sink = lexy::as_string<std::string>.sink();
+        auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink();
         sink('a');
         sink("bcd", 2);
         sink(char_lexeme);
         sink(uchar_lexeme);
         sink(std::string("hi"));
+        sink(lexy::code_point('a'));
+        sink(lexy::code_point(0x00E4));
 
         std::string result = LEXY_MOV(sink).finish();
-        CHECK(result == "abcabcabchi");
+        CHECK(result == "abcabcabchia\u00E4");
     }
 }
 
