@@ -35,7 +35,8 @@ struct _peek : rule_base
                 -> typename Handler::result_type
             {
                 // We continue with the reader as it was before we parsed the pattern.
-                return NextParser::parse(handler, save, LEXY_FWD(args)...);
+                reader = LEXY_MOV(save);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             }
         };
 
