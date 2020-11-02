@@ -50,7 +50,7 @@ struct _brackets
         if constexpr (lexy::is_pattern<decltype(c)>)
             return o >> lexyd::opt(!c >> r + c);
         else
-            return o >> (!c.condition() >> r + c | else_ >> c.then());
+            return o >> (!c.condition() >> r + c | else_ >> nullopt + c.then());
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -71,10 +71,8 @@ struct _brackets
         auto o = open();
         auto c = branch(close());
 
-        // When we have a separator, we can't use ! in the condition.
-        // The seperator can decide whether we've reached the end of the list,
-        // in which case the ! won't match the closing bracket.
-        // We need unless() and match it at the end again.
+        // We can't use ! alone, as we might decide the list ends based on separator alone.
+        // As such we reset after the ! anyway and parse the entire condition again.
         return o >> lexyd::list(peek(!c.condition()) >> r, sep) + c;
     }
 

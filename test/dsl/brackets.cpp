@@ -83,9 +83,9 @@ TEST_CASE("dsl::bracketed")
         constexpr auto o = LEXY_LIT("(");
         constexpr auto c = LEXY_LIT(")") >> lexy::dsl::id<0>;
 
-        constexpr auto result = brackets(o, c).opt(inner);
-        constexpr auto equivalent
-            = o >> (!c.condition() >> inner + c | lexy::dsl::else_ >> c.then());
+        constexpr auto result     = brackets(o, c).opt(inner);
+        constexpr auto equivalent = o >> (!c.condition() >> inner + c
+                                          | lexy::dsl::else_ >> lexy::dsl::nullopt + c.then());
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
 
         CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
