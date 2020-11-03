@@ -248,10 +248,6 @@ struct utf8_encoding
 
     class code_point_decoder
     {
-        // Note that we don't care about overlong sequences,
-        // and invalid code points are detected at a later stage.
-        // As such, we just need to apply the masks on the leading bits.
-
         static constexpr auto payload_lead1 = 0b0111'1111;
         static constexpr auto payload_lead2 = 0b0001'1111;
         static constexpr auto payload_lead3 = 0b0000'1111;
@@ -272,6 +268,11 @@ struct utf8_encoding
                 _result = char32_t(c & payload_lead1);
                 return 0;
             }
+            else if (c == 0xC0 || c == 0xC1)
+            {
+                // These leading characters can only used for overlong ASCII.
+                return -1;
+            }
             else if ((c & ~payload_lead2) == pattern_lead2)
             {
                 _result = char32_t(c & payload_lead2);
@@ -280,11 +281,15 @@ struct utf8_encoding
             else if ((c & ~payload_lead3) == pattern_lead3)
             {
                 _result = char32_t(c & payload_lead3);
+                if (c == 0xE0)
+                    _min_cont_value = 0xA0;
                 return 2;
             }
             else if ((c & ~payload_lead4) == pattern_lead4)
             {
                 _result = char32_t(c & payload_lead4);
+                if (c == 0xF0)
+                    _min_cont_value = 0x90;
                 return 3;
             }
             else
@@ -297,9 +302,14 @@ struct utf8_encoding
         {
             if ((c & ~payload_cont) != pattern_cont)
                 return false; // Not a continuation byte.
+            else if (c < _min_cont_value)
+                return false; // Overlong sequence.
 
             _result <<= 6;
             _result |= char32_t(c & payload_cont);
+
+            // We're only having overlong sequences in the second byte, so overwrite.
+            _min_cont_value = 0x80;
             return true;
         }
 
@@ -314,6 +324,8 @@ struct utf8_encoding
 
     private:
         char32_t _result = {};
+        // The minimal continuation value to prevent overlong sequences.
+        int_type _min_cont_value = 0x80;
     };
 };
 template <>

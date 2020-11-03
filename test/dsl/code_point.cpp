@@ -95,6 +95,18 @@ TEST_CASE("dsl::code_point")
         // Begins with invalid byte.
         for (auto byte = 0xF8; byte <= 0xFF; ++byte)
             CHECK(match_utf8(byte) == -1);
+
+        // Two byte overlong sequence.
+        CHECK(match_utf8(0xC0, 0x84) == -1);
+        CHECK(match_utf8(0xC1, 0x84) == -1);
+
+        // Three byte overlong sequence.
+        CHECK(match_utf8(0xE0, 0x80, 0x80) == -2);
+        CHECK(match_utf8(0xE0, 0x84, 0x80) == -2);
+
+        // Four byte overlong sequence.
+        CHECK(match_utf8(0xF0, 0x80, 0x80, 0x80) == -2);
+        CHECK(match_utf8(0xF0, 0x89, 0x80, 0x80) == -2);
     }
     SUBCASE("ill-formed UTF-16")
     {
