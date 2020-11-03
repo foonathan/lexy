@@ -143,9 +143,7 @@ struct comment
 struct text
 {
     static constexpr auto rule = [] {
-        // We only support ASCII.
-        auto char_ = dsl::ascii::character - dsl::lit_c<'<'> - dsl::lit_c<'&'>;
-
+        auto char_ = dsl::code_point - dsl::lit_c<'<'> - dsl::lit_c<'&'>;
         return dsl::capture(dsl::while_one(dsl::try_<invalid_character>(char_)));
     }();
     static constexpr auto value
@@ -186,8 +184,7 @@ struct cdata
     static constexpr auto rule = [] {
         // We define a string with custom delimiters.
         auto delim = dsl::delimited(LEXY_LIT("<![CDATA["), LEXY_LIT("]]>"));
-        // And support only ASCII characters inside.
-        return delim(dsl::ascii::character);
+        return delim(dsl::code_point);
     }();
     static constexpr auto value
         = lexy::as_string<std::string> | lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
@@ -197,7 +194,7 @@ struct cdata
 struct name
 {
     static constexpr auto rule = [] {
-        // We only support ASCII.
+        // We only support ASCII here, as I'm too lazy to type all the code point ranges out.
         auto head_char = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
         auto tail_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
 
@@ -270,7 +267,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto file = lexy::read_file(argv[1]);
+    // We assume UTF-8 encoded input.
+    auto file = lexy::read_file<lexy::utf8_encoding>(argv[1]);
     if (!file)
     {
         std::fprintf(stderr, "file '%s' not found", argv[1]);

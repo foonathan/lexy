@@ -192,7 +192,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto file = lexy::read_file(argv[1]);
+    // Emails only support ASCII characters.
+    auto file = lexy::read_file<lexy::ascii_encoding>(argv[1]);
     if (!file)
     {
         std::fprintf(stderr, "file '%s' not found", argv[1]);
