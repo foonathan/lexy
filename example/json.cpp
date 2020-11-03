@@ -78,8 +78,8 @@ struct json_value
                 std::fputs(R"(\")", stdout);
             else if (c == '\\')
                 std::fputs(R"(\\")", stdout);
-            else if (!std::isprint(c))
-                std::fprintf(stdout, "\\u%04x", c);
+            else if (std::iscntrl(c))
+                std::fprintf(stdout, "\\x%02x", static_cast<unsigned char>(c));
             else
                 std::fputc(c, stdout);
         std::fputc('"', stdout);
@@ -187,8 +187,7 @@ struct number
 struct string
 {
     static constexpr auto rule = [] {
-        // TODO: unicode code points.
-        auto code_point = dsl::ascii::character;
+        auto code_point = dsl::code_point;
 
         // TODO: \uXXX
         auto escape = dsl::backslash_escape.literal<'"'>()
@@ -272,7 +271,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto file = lexy::read_file(argv[1]);
+    // We're requiring UTF-8 input.
+    auto file = lexy::read_file<lexy::utf8_encoding>(argv[1]);
     if (!file)
     {
         std::fprintf(stderr, "file '%s' not found", argv[1]);
