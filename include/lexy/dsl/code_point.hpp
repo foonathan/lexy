@@ -83,7 +83,10 @@ struct _cp_cap : rule_base
         {
             auto save = reader;
             if (auto result = _parse(reader); result.is_valid())
+            {
+                LEXY_PRECONDITION(result.is_scalar());
                 return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
+            }
             else
             {
                 reader = LEXY_MOV(save);
@@ -101,7 +104,9 @@ struct _cp : atom_base<_cp>
     template <typename Reader>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        return _cp_cap::_parse(reader).is_valid();
+        auto cp = _cp_cap::_parse(reader);
+        LEXY_PRECONDITION(!cp.is_valid() || cp.is_scalar());
+        return cp.is_valid();
     }
 
     template <typename Reader>

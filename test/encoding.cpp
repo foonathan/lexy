@@ -54,8 +54,8 @@ TEST_CASE("encode code point")
         for (auto c = 0u; c <= 0xFFFF; ++c)
         {
             auto cp = lexy::code_point(c);
-            if (!cp.is_valid())
-                continue; // Exclude surrogates.
+            if (cp.is_surrogate())
+                continue;
             CHECK(cp.is_bmp());
 
             CHECK(encode(lexy::utf16_encoding{}, cp)[0] == c);
@@ -138,8 +138,8 @@ TEST_CASE("decode code point")
         for (auto c = 0u; c <= 0xFFFF; ++c)
         {
             auto cp = lexy::code_point(c);
-            if (!cp.is_valid())
-                continue; // Exclude surrogates.
+            if (cp.is_surrogate())
+                continue;
 
             char16_t str16[] = {char16_t(c)};
             char32_t str32[] = {char32_t(c)};

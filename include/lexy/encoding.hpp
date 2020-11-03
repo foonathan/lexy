@@ -27,12 +27,15 @@ public:
     //=== classification ===//
     constexpr bool is_valid() const noexcept
     {
-        if (_value > 0x10'FFFF)
-            return false; // Out of range.
-        else if (0xD800 <= _value && _value <= 0xDFFF)
-            return false; // UTF-16 surrogate.
-        else
-            return true;
+        return _value <= 0x10'FFFF;
+    }
+    constexpr bool is_surrogate() const noexcept
+    {
+        return 0xD800 <= _value && _value <= 0xDFFF;
+    }
+    constexpr bool is_scalar() const noexcept
+    {
+        return is_valid() && !is_surrogate();
     }
 
     constexpr bool is_ascii() const noexcept
@@ -302,7 +305,11 @@ struct utf8_encoding
 
         auto finish() &&
         {
-            return code_point(_result);
+            auto cp = code_point(_result);
+            if (cp.is_surrogate())
+                // Surrogates are not allowed.
+                return code_point();
+            return cp;
         }
 
     private:
@@ -409,7 +416,9 @@ struct utf16_encoding
 
         auto finish() &&
         {
-            return code_point(_result);
+            auto cp = code_point(_result);
+            LEXY_PRECONDITION(!cp.is_surrogate());
+            return cp;
         }
 
     private:
@@ -467,7 +476,11 @@ struct utf32_encoding
 
         auto finish() &&
         {
-            return code_point(_result);
+            auto cp = code_point(_result);
+            if (cp.is_surrogate())
+                // Surrogates are not allowed.
+                return code_point();
+            return cp;
         }
 
     private:
