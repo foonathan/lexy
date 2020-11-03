@@ -102,39 +102,8 @@ struct default_encoding
 
     static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
                                                    std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_ascii());
-        LEXY_PRECONDITION(size >= 1);
-
-        *buffer = char_type(cp.value());
-        return 1;
-    }
-
-    class code_point_decoder
-    {
-    public:
-        int init(int_type c)
-        {
-            if (c == eof())
-                return -1;
-
-            _result = char32_t(c);
-            return 0;
-        }
-
-        bool next(int_type)
-        {
-            return false;
-        }
-
-        auto finish() &&
-        {
-            return code_point(_result);
-        }
-
-    private:
-        char32_t _result = {};
-    };
+        = delete;
+    class code_point_decoder;
 };
 
 // An encoding where the input is assumed to be valid ASCII.
@@ -188,7 +157,10 @@ struct ascii_encoding
 
         auto finish() &&
         {
-            return code_point(_result);
+            auto cp = code_point(_result);
+            if (!cp.is_ascii())
+                return code_point();
+            return cp;
         }
 
     private:

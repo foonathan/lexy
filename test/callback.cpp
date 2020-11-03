@@ -281,7 +281,8 @@ TEST_CASE("as_string")
         std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
         CHECK(from_rvalue == "test");
 
-        std::string from_ascii_cp = lexy::as_string<std::string>(lexy::code_point('a'));
+        std::string from_ascii_cp
+            = lexy::as_string<std::string, lexy::ascii_encoding>(lexy::code_point('a'));
         CHECK(from_ascii_cp == "a");
         std::string from_unicode_cp
             = lexy::as_string<std::string, lexy::utf8_encoding>(lexy::code_point(0x00E4));

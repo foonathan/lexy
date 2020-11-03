@@ -36,7 +36,6 @@ TEST_CASE("encode code point")
             CHECK(cp.is_valid());
             CHECK(cp.is_ascii());
 
-            CHECK(encode(lexy::default_encoding{}, cp)[0] == c);
             CHECK(encode(lexy::ascii_encoding{}, cp)[0] == c);
             CHECK(encode(lexy::utf8_encoding{}, cp)[0] == c);
             CHECK(encode(lexy::utf16_encoding{}, cp)[0] == c);
@@ -106,7 +105,6 @@ TEST_CASE("decode code point")
 
     SUBCASE("empty")
     {
-        CHECK(!decode(lexy::default_encoding{}, nullptr, 0).is_valid());
         CHECK(!decode(lexy::ascii_encoding{}, nullptr, 0).is_valid());
         CHECK(!decode(lexy::utf8_encoding{}, nullptr, 0).is_valid());
         CHECK(!decode(lexy::utf16_encoding{}, nullptr, 0).is_valid());
@@ -122,7 +120,6 @@ TEST_CASE("decode code point")
             char32_t str32[] = {char32_t(c)};
             auto     cp      = lexy::code_point(c);
 
-            CHECK(decode(lexy::default_encoding{}, str, 1) == cp);
             CHECK(decode(lexy::ascii_encoding{}, str, 1) == cp);
             CHECK(decode(lexy::utf8_encoding{}, str, 1) == cp);
             CHECK(decode(lexy::utf16_encoding{}, str16, 1) == cp);
