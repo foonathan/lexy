@@ -62,8 +62,8 @@ struct _chc_parser<NextParser>
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
         typename Handler::result_type
     {
-        return LEXY_MOV(handler).error(reader,
-                                       lexy::error<Reader, lexy::exhausted_choice>(reader.cur()));
+        auto e = lexy::make_error<Reader, lexy::exhausted_choice>(reader.cur());
+        return LEXY_MOV(handler).error(reader, e);
     }
 };
 template <typename NextParser, typename H, typename... T>

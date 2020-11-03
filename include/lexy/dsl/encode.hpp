@@ -14,13 +14,14 @@
 namespace lexyd
 {
 template <typename Reader, typename Encoding, lexy::encoding_endianness Endianness>
-struct _encoded_reader // ingle byte encodings
+struct _encoded_reader // Single byte encodings
 {
-    using encoding  = Encoding;
-    using char_type = typename encoding::char_type;
-    static_assert(sizeof(char_type) == 1);
+    static_assert(sizeof(typename Encoding::char_type) == 1);
 
-    using iterator = typename Reader::iterator;
+    using encoding         = Encoding;
+    using char_type        = typename encoding::char_type;
+    using iterator         = typename Reader::iterator;
+    using canonical_reader = _encoded_reader<Reader, Encoding, Endianness>;
 
     constexpr bool eof() const
     {
@@ -50,9 +51,10 @@ struct _encoded_reader // ingle byte encodings
 template <typename Reader, lexy::encoding_endianness Endianness>
 struct _encoded_reader<Reader, lexy::utf16_encoding, Endianness>
 {
-    using encoding  = lexy::utf16_encoding;
-    using char_type = typename encoding::char_type;
-    using iterator  = typename Reader::iterator;
+    using encoding         = lexy::utf16_encoding;
+    using char_type        = typename encoding::char_type;
+    using iterator         = typename Reader::iterator;
+    using canonical_reader = _encoded_reader<Reader, lexy::utf16_encoding, Endianness>;
 
     constexpr bool eof() const
     {
@@ -93,9 +95,10 @@ struct _encoded_reader<Reader, lexy::utf16_encoding, Endianness>
 template <typename Reader, lexy::encoding_endianness Endianness>
 struct _encoded_reader<Reader, lexy::utf32_encoding, Endianness>
 {
-    using encoding  = lexy::utf32_encoding;
-    using char_type = typename encoding::char_type;
-    using iterator  = typename Reader::iterator;
+    using encoding         = lexy::utf32_encoding;
+    using char_type        = typename encoding::char_type;
+    using iterator         = typename Reader::iterator;
+    using canonical_reader = _encoded_reader<Reader, lexy::utf32_encoding, Endianness>;
 
     constexpr bool eof() const
     {

@@ -15,6 +15,8 @@ namespace lexy
 template <typename Reader, typename Tag>
 class error
 {
+    static_assert(is_canonical_reader<Reader>);
+
 public:
     constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
     constexpr explicit error(typename Reader::iterator begin,
@@ -52,6 +54,8 @@ struct expected_literal
 template <typename Reader>
 class error<Reader, expected_literal>
 {
+    static_assert(is_canonical_reader<Reader>);
+
 public:
     constexpr explicit error(typename Reader::iterator                              pos,
                              _detail::basic_string_view<typename Reader::char_type> str,
@@ -91,6 +95,8 @@ struct expected_char_class
 template <typename Reader>
 class error<Reader, expected_char_class>
 {
+    static_assert(is_canonical_reader<Reader>);
+
 public:
     constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
     : _pos(pos), _name(name)
@@ -113,6 +119,12 @@ private:
 
 template <typename Input, typename Tag>
 using error_for = error<input_reader<Input>, Tag>;
+
+template <typename Reader, typename Tag, typename... Args>
+constexpr auto make_error(Args&&... args)
+{
+    return error<typename Reader::canonical_reader, Tag>(LEXY_FWD(args)...);
+}
 } // namespace lexy
 
 namespace lexy
@@ -153,7 +165,6 @@ private:
     const Input*                           _input;
     typename input_reader<Input>::iterator _pos;
 };
-
 } // namespace lexy
 
 #endif // LEXY_ERROR_HPP_INCLUDED

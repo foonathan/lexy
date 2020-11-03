@@ -24,7 +24,7 @@ struct _ascii : atom_base<_ascii<Predicate>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader, lexy::expected_char_class>(pos, Predicate::name());
+        return lexy::make_error<Reader, lexy::expected_char_class>(pos, Predicate::name());
     }
 
     constexpr bool operator()(char c) const

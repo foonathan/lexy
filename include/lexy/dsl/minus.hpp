@@ -65,8 +65,9 @@ struct _minus : rule_base
                     Except::matcher::match(partial) && partial.eof())
                 {
                     // It did, so we don't match after all.
-                    using error = lexy::error<Reader, lexy::minus_failure>;
-                    return LEXY_MOV(handler).error(reader, error(save.cur(), reader.cur()));
+                    auto e
+                        = lexy::make_error<Reader, lexy::minus_failure>(save.cur(), reader.cur());
+                    return LEXY_MOV(handler).error(reader, e);
                 }
 
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);

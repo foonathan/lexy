@@ -35,7 +35,7 @@ struct _match : atom_base<_match<Rule>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader, lexy::no_match>(pos);
+        return lexy::make_error<Reader, lexy::no_match>(pos);
     }
 
     template <typename Whitespace>

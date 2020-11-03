@@ -24,7 +24,8 @@ struct _cap_parser
         {
             auto end = reader.cur();
             return NextParser::parse(handler, reader, LEXY_FWD(prev_args)...,
-                                     Lexeme<Reader>(begin, end), LEXY_FWD(args)...);
+                                     Lexeme<typename Reader::canonical_reader>(begin, end),
+                                     LEXY_FWD(args)...);
         }
     };
 

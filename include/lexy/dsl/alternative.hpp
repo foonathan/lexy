@@ -44,9 +44,10 @@ struct _alt : rule_base
             if (matcher::match(reader))
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(handler).error(reader,
-                                               lexy::error<Reader, lexy::exhausted_alternatives>(
-                                                   reader.cur()));
+            {
+                auto e = lexy::make_error<Reader, lexy::exhausted_alternatives>(reader.cur());
+                return LEXY_MOV(handler).error(reader, e);
+            }
         }
     };
 };

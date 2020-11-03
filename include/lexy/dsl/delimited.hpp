@@ -45,8 +45,8 @@ struct _delim : rule_base
                 if (reader.eof())
                 {
                     // We're missing the final delimiter.
-                    using error = lexy::error<Reader, lexy::missing_delimiter>;
-                    return LEXY_MOV(handler).error(reader, error(begin, reader.cur()));
+                    auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
+                    return LEXY_MOV(handler).error(reader, e);
                 }
                 else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
                 {
@@ -106,8 +106,8 @@ struct _delim<void, CodePoint, Close> : rule_base
                 if (reader.eof())
                 {
                     // We're missing the final delimiter.
-                    using error = lexy::error<Reader, lexy::missing_delimiter>;
-                    return LEXY_MOV(handler).error(reader, error(begin, reader.cur()));
+                    auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
+                    return LEXY_MOV(handler).error(reader, e);
                 }
                 else if (Close::matcher::match(reader))
                 {
@@ -126,7 +126,7 @@ struct _delim<void, CodePoint, Close> : rule_base
 
             // Add the lexeme as an argument.
             return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                     lexy::lexeme<Reader>(begin, pos));
+                                     lexy::lexeme<typename Reader::canonical_reader>(begin, pos));
         }
     };
 };
@@ -250,8 +250,8 @@ struct _escape
     LEXY_DSL_FUNC auto report_error(Handler& handler, Reader& reader, typename Reader::iterator pos)
         -> typename Handler::result_type
     {
-        return LEXY_MOV(handler).error(reader,
-                                       lexy::error<Reader, lexy::invalid_escape_sequence>(pos));
+        auto e = lexy::make_error<Reader, lexy::invalid_escape_sequence>(pos);
+        return LEXY_MOV(handler).error(reader, e);
     }
 
     //=== dsl ===//

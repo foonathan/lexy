@@ -162,9 +162,10 @@ public:
     class input
     {
     public:
-        using encoding  = typename Prompt::encoding;
-        using char_type = typename encoding::char_type;
-        using iterator  = typename _detail::buffer_builder<char_type>::stable_iterator;
+        using encoding         = typename Prompt::encoding;
+        using char_type        = typename encoding::char_type;
+        using iterator         = typename _detail::buffer_builder<char_type>::stable_iterator;
+        using canonical_reader = input;
 
         auto reader() const&
         {

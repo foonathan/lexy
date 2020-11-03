@@ -38,7 +38,7 @@ struct _nl : atom_base<_nl>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader, lexy::expected_char_class>(pos, "newline");
+        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
     }
 
     template <typename Whitespace>
@@ -65,7 +65,7 @@ struct _eol : atom_base<_eol>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader, lexy::expected_char_class>(pos, "EOL");
+        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
     }
 
     template <typename Whitespace>

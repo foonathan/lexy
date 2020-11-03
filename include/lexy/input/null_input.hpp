@@ -20,10 +20,10 @@ public:
         class reader_type
         {
         public:
-            using encoding  = Encoding;
-            using char_type = typename encoding::char_type;
-
-            using iterator = const char_type*;
+            using encoding         = Encoding;
+            using char_type        = typename encoding::char_type;
+            using iterator         = const char_type*;
+            using canonical_reader = reader_type;
 
             constexpr bool eof() const noexcept
             {

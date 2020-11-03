@@ -42,9 +42,10 @@ struct _not : rule_base
             typename Handler::result_type
         {
             if (auto pos = reader.cur(); Pattern::matcher::match(reader))
-                return LEXY_MOV(handler).error(reader,
-                                               lexy::error<Reader, lexy::unexpected>(pos,
-                                                                                     reader.cur()));
+            {
+                auto e = lexy::make_error<Reader, lexy::unexpected>(pos, reader.cur());
+                return LEXY_MOV(handler).error(reader, e);
+            }
             else
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }

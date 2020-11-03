@@ -48,9 +48,8 @@ struct _switch_select<NextParser>
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
-        return LEXY_MOV(handler).error(reader,
-                                       lexy::error<Reader, lexy::exhausted_switch>(save.cur(),
-                                                                                   reader.cur()));
+        auto e = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
+        return LEXY_MOV(handler).error(reader, e);
     }
 };
 template <typename NextParser, typename H, typename... T>

@@ -92,7 +92,7 @@ struct _cp_cap : rule_base
                 reader = LEXY_MOV(save);
 
                 auto name = _cp_name<typename Reader::encoding>();
-                auto e    = lexy::error<Reader, lexy::expected_char_class>(reader.cur(), name);
+                auto e    = lexy::make_error<Reader, lexy::expected_char_class>(reader.cur(), name);
                 return LEXY_MOV(handler).error(reader, e);
             }
         }
@@ -112,8 +112,8 @@ struct _cp : atom_base<_cp>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader,
-                           lexy::expected_char_class>(pos, _cp_name<typename Reader::encoding>());
+        auto name = _cp_name<typename Reader::encoding>();
+        return lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
     }
 
     LEXY_CONSTEVAL auto capture() const

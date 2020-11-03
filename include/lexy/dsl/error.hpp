@@ -37,11 +37,14 @@ struct _err : rule_base
             if constexpr (!std::is_same_v<Pattern, void>)
             {
                 if (auto begin = reader.cur(); Pattern::matcher::match(reader))
-                    return LEXY_MOV(handler).error(reader,
-                                                   lexy::error<Reader, Tag>(begin, reader.cur()));
+                {
+                    auto e = lexy::make_error<Reader, Tag>(begin, reader.cur());
+                    return LEXY_MOV(handler).error(reader, e);
+                }
             }
 
-            return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(reader.cur()));
+            auto e = lexy::make_error<Reader, Tag>(reader.cur());
+            return LEXY_MOV(handler).error(reader, e);
         }
     };
 
@@ -98,7 +101,10 @@ struct _try : rule_base
             if (auto pos = reader.cur(); Pattern::matcher::match(reader))
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
-                return LEXY_MOV(handler).error(reader, lexy::error<Reader, Tag>(pos, reader.cur()));
+            {
+                auto e = lexy::make_error<Reader, Tag>(pos, reader.cur());
+                return LEXY_MOV(handler).error(reader, e);
+            }
         }
     };
 };

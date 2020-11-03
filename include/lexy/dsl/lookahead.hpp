@@ -69,7 +69,8 @@ struct _look : rule_base
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
             else
             {
-                auto e = lexy::error<Reader, lexy::lookahead_failure>(reader.cur(), copy.cur());
+                auto e
+                    = lexy::make_error<Reader, lexy::lookahead_failure>(reader.cur(), copy.cur());
                 return LEXY_MOV(handler).error(reader, e);
             }
         }

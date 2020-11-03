@@ -81,7 +81,8 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                                      const typename Reader::iterator begin, Args&&... args) ->
                 typename Handler::result_type
             {
-                using error_type       = lexy::error<Reader, lexy::integer_overflow>;
+                using error_type
+                    = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
                 constexpr auto has_sep = !std::is_same_v<Sep, void>;
 
                 using traits         = lexy::integer_traits<T>;

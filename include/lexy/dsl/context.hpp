@@ -75,8 +75,9 @@ struct _ctx_drop : rule_base
             LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args, Head&& head,
                                      Tail&&... tail) -> typename Handler::result_type
             {
-                constexpr auto head_is_context = _context<Reader>::template is<Head>;
-                constexpr auto tail_is_context = (_context<Reader>::template is<Tail> || ...);
+                using context_t                = _context<typename Reader::canonical_reader>;
+                constexpr auto head_is_context = context_t::template is<Head>;
+                constexpr auto tail_is_context = (context_t::template is<Tail> || ...);
 
                 if constexpr (head_is_context && !tail_is_context)
                 {
@@ -172,18 +173,18 @@ struct _ctx_top
             //
             template <typename Handler, typename Reader, typename... RuleArgs>
             LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args,
-                                     const _context<Reader>& popped, RuleArgs&&...) ->
-                typename Handler::result_type
+                                     const _context<typename Reader::canonical_reader>& popped,
+                                     RuleArgs&&...) -> typename Handler::result_type
             {
-                auto pushed = _context<Reader>::get(LEXY_FWD(args)...);
+                auto pushed = _context<typename Reader::canonical_reader>::get(LEXY_FWD(args)...);
                 if (Eq{}(pushed.lexeme, popped.lexeme))
                     // We've parsed the same argument that we've pushed, continue.
                     return NextParser::parse(handler, reader, LEXY_FWD(args)...);
                 else
                 {
-                    using error = lexy::error<Reader, Error>;
-                    return LEXY_MOV(handler).error(reader, error(popped.lexeme.begin(),
-                                                                 popped.lexeme.end()));
+                    auto e = lexy::make_error<Reader, Error>(popped.lexeme.begin(),
+                                                             popped.lexeme.end());
+                    return LEXY_MOV(handler).error(reader, e);
                 }
             }
         };

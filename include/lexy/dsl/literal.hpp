@@ -74,7 +74,7 @@ struct _lit : atom_base<_lit<String>>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
-        using error = lexy::error<Reader, lexy::expected_literal>;
+        using error = lexy::error<typename Reader::canonical_reader, lexy::expected_literal>;
         auto idx    = lexy::_detail::range_size(pos, reader.cur());
 
         using reader_char_type = typename Reader::encoding::char_type;

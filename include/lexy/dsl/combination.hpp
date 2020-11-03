@@ -95,8 +95,8 @@ struct _comb_rule : rule_base
             else
             {
                 using tag = std::conditional_t<std::is_void_v<E>, lexy::combination_duplicate, E>;
-                return LEXY_MOV(handler).error(reader,
-                                               lexy::error<Reader, tag>(state.pos, reader.cur()));
+                auto e    = lexy::make_error<Reader, tag>(state.pos, reader.cur());
+                return LEXY_MOV(handler).error(reader, e);
             }
         }
     };

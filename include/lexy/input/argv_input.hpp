@@ -233,7 +233,7 @@ struct _argvsep : atom_base<_argvsep>
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
     {
-        return lexy::error<Reader, lexy::expected_char_class>(pos, "argv-separator");
+        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
     }
 
     template <typename Whitespace>
