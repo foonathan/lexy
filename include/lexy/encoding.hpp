@@ -173,6 +173,7 @@ struct utf8_encoding
 {
     using char_type = LEXY_CHAR8_T;
     using int_type  = LEXY_CHAR8_T;
+    static_assert(std::is_unsigned_v<char_type>);
 
     template <typename OtherCharType>
     static constexpr bool is_secondary_char_type = false;
@@ -263,24 +264,22 @@ struct utf8_encoding
     public:
         int init(int_type c)
         {
-            // If we don't have char8_t, int_type might be signed.
-            auto byte = static_cast<unsigned char>(c);
-            if ((byte & ~payload_lead1) == pattern_lead1)
+            if ((c & ~payload_lead1) == pattern_lead1)
             {
                 _result = char32_t(c & payload_lead1);
                 return 0;
             }
-            else if ((byte & ~payload_lead2) == pattern_lead2)
+            else if ((c & ~payload_lead2) == pattern_lead2)
             {
                 _result = char32_t(c & payload_lead2);
                 return 1;
             }
-            else if ((byte & ~payload_lead3) == pattern_lead3)
+            else if ((c & ~payload_lead3) == pattern_lead3)
             {
                 _result = char32_t(c & payload_lead3);
                 return 2;
             }
-            else if ((byte & ~payload_lead4) == pattern_lead4)
+            else if ((c & ~payload_lead4) == pattern_lead4)
             {
                 _result = char32_t(c & payload_lead4);
                 return 3;
@@ -293,8 +292,7 @@ struct utf8_encoding
 
         bool next(int_type c)
         {
-            auto byte = static_cast<unsigned char>(c);
-            if ((byte & ~payload_cont) != pattern_cont)
+            if ((c & ~payload_cont) != pattern_cont)
                 return false; // Not a continuation byte.
 
             _result <<= 6;

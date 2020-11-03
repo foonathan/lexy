@@ -5,6 +5,7 @@
 #include <lexy/encoding.hpp>
 
 #include <doctest.h>
+#include <lexy/callback.hpp>
 #include <lexy/input/string_input.hpp>
 #include <string>
 
@@ -19,12 +20,17 @@ TEST_CASE("wchar_t encoding")
 TEST_CASE("encode code point")
 {
     auto encode = [](auto encoding, lexy::code_point cp) {
-        using char_type   = typename decltype(encoding)::char_type;
-        using string_type = std::basic_string<char_type>;
-
-        char_type buffer[4] = {};
-        auto      count     = encoding.encode_code_point(cp, buffer, 4);
-        return string_type(buffer, count);
+        if constexpr (std::is_same_v<decltype(encoding), lexy::utf8_encoding> && !LEXY_HAS_CHAR8_T)
+        {
+            using string_type = std::string;
+            return lexy::as_string<string_type, decltype(encoding)>(cp);
+        }
+        else
+        {
+            using char_type   = typename decltype(encoding)::char_type;
+            using string_type = std::basic_string<char_type>;
+            return lexy::as_string<string_type, decltype(encoding)>(cp);
+        }
     };
 
     SUBCASE("ASCII")
