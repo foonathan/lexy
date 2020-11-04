@@ -217,5 +217,21 @@ TEST_CASE("dsl::integer")
         CHECK(parse(rule, "0'0'F'F") == 255);
         CHECK(parse(rule, "0'0'F'F") == 255);
     }
+
+    SUBCASE("generic rule")
+    {
+        constexpr auto rule = lexy::dsl::integer<std::uint8_t, lexy::dsl::decimal>(
+            lexy::dsl::digit<> + lexy::dsl::digit<>);
+
+        for (auto i = 10; i < 100; ++i)
+            CHECK(parse(rule, std::to_string(i).c_str()) == i);
+    }
+    SUBCASE("n_digits")
+    {
+        constexpr auto rule = lexy::dsl::integer<std::uint8_t>(lexy::dsl::n_digits<2>);
+
+        for (auto i = 10; i < 100; ++i)
+            CHECK(parse(rule, std::to_string(i).c_str()) == i);
+    }
 }
 

@@ -20,6 +20,7 @@ struct integer_traits
     static_assert(_limits::is_integer);
 
     using integer_type = T;
+    using result_type  = T;
 
     static constexpr auto is_bounded = _limits::is_bounded;
     static constexpr auto max_value  = _limits::max();
@@ -32,6 +33,7 @@ template <typename T>
 struct integer_traits<unbounded<T>>
 {
     using integer_type               = T;
+    using result_type                = T;
     static constexpr auto is_bounded = false;
 };
 
@@ -64,10 +66,8 @@ static constexpr std::size_t _digit_count(unsigned radix, Integer value)
     return result;
 }
 
-template <typename Pattern, typename T>
-struct _integer;
-template <typename Base, typename Sep, bool LeadingZero, typename T>
-struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
+template <typename T, typename Pattern, typename Base, bool HasSep>
+struct _integer : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -83,7 +83,6 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
             {
                 using error_type
                     = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
-                constexpr auto has_sep = !std::is_same_v<Sep, void>;
 
                 using traits         = lexy::integer_traits<T>;
                 using integer        = typename traits::integer_type;
@@ -134,7 +133,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                                                          result);
 
                             value = Base::value(*cur++);
-                            if constexpr (!has_sep)
+                            if constexpr (!HasSep)
                                 break;
                             else if (value < Base::radix)
                                 break;
@@ -157,7 +156,7 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                                                          result);
 
                             value = Base::value(*cur++);
-                            if constexpr (!has_sep)
+                            if constexpr (!HasSep)
                                 break;
                             else if (value < Base::radix)
                                 break;
@@ -177,8 +176,6 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                     // If we're having any more digits, this is a guaranteed overflow.
                     if (cur != end)
                         return LEXY_MOV(handler).error(reader, error_type(begin, end));
-
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
                 }
                 else
                 {
@@ -203,9 +200,13 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
                         result *= radix;
                         result += integer(value);
                     }
-
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
                 }
+
+                if constexpr (std::is_same_v<typename traits::result_type, integer>)
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
+                else
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                             typename traits::result_type(LEXY_MOV(result)));
             }
         };
 
@@ -214,18 +215,28 @@ struct _integer<_digits<Base, Sep, LeadingZero>, T> : rule_base
             typename Handler::result_type
         {
             // Parse the digit pattern with the special continuation.
-            using digits = _digits<Base, Sep, LeadingZero>;
-            return digits::template parser<_continuation>::parse(handler, reader, reader.cur(),
-                                                                 LEXY_FWD(args)...);
+            return Pattern::template parser<_continuation>::parse(handler, reader, reader.cur(),
+                                                                  LEXY_FWD(args)...);
         }
     };
 };
 
 /// Parses the digits matched by the pattern into an integer type.
+template <typename T, typename Base, typename Pattern>
+LEXY_CONSTEVAL auto integer(Pattern)
+{
+    // We assume it has a separator.
+    return _integer<T, Pattern, Base, true>{};
+}
 template <typename T, typename Base, typename Sep, bool LeadingZero>
 LEXY_CONSTEVAL auto integer(_digits<Base, Sep, LeadingZero>)
 {
-    return _integer<_digits<Base, Sep, LeadingZero>, T>{};
+    return _integer<T, _digits<Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
+}
+template <typename T, std::size_t N, typename Base, typename Sep, bool LeadingZero>
+LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep, LeadingZero>)
+{
+    return _integer<T, _ndigits<N, Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
 }
 } // namespace lexyd
 
