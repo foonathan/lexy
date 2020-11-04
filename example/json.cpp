@@ -136,7 +136,7 @@ struct json_value
 
 // The grammar of JSON.
 // Modelled after the specificaton of https://www.json.org.
-// It should be compliant except for the TODOs.
+// It is compliant modulo bugs.
 namespace grammar
 {
 namespace dsl = lexy::dsl;
@@ -189,7 +189,6 @@ struct string
     static constexpr auto rule = [] {
         auto code_point = dsl::code_point;
 
-        // TODO: \uXXX
         auto escape = dsl::backslash_escape //
                           .lit_c<'"'>()
                           .lit_c<'\\'>()
@@ -198,13 +197,14 @@ struct string
                           .lit_c<'f'>(dsl::value_c<'\f'>)
                           .lit_c<'n'>(dsl::value_c<'\n'>)
                           .lit_c<'r'>(dsl::value_c<'\r'>)
-                          .lit_c<'t'>(dsl::value_c<'\t'>);
+                          .lit_c<'t'>(dsl::value_c<'\t'>)
+                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>);
 
         // String of code_point with specified escape sequences, surrounded by ".
         return dsl::quoted[ws](code_point, escape);
     }();
 
-    static constexpr auto list = lexy::as_string<ast::json_string>;
+    static constexpr auto list = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
 };
 
 // A json value that is an array.
