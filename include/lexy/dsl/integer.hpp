@@ -20,10 +20,57 @@ struct integer_traits
     static_assert(_limits::is_integer);
 
     using integer_type = T;
-    using result_type  = T;
 
     static constexpr auto is_bounded = _limits::is_bounded;
     static constexpr auto max_value  = _limits::max();
+
+    template <int Radix>
+    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    {
+        result *= Radix;
+        result += T(digit);
+    }
+    template <int Radix>
+    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    {
+        // result *= Radix
+        if (result > max_value / Radix)
+            return false;
+        result *= Radix;
+
+        // result += value
+        if (result > T(max_value - digit))
+            return false;
+        result += T(digit);
+
+        return true;
+    }
+};
+
+template <>
+struct integer_traits<code_point>
+{
+    using integer_type = code_point;
+
+    static constexpr auto is_bounded = true;
+    static constexpr auto max_value  = 0x10'FFFF;
+
+    template <int Radix>
+    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    {
+        std::uint_least32_t value = result.value();
+        integer_traits<std::uint_least32_t>::add_digit_unchecked<Radix>(value, digit);
+        result = code_point(value);
+    }
+    template <int Radix>
+    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    {
+        std::uint_least32_t value = result.value();
+        if (!integer_traits<std::uint_least32_t>::add_digit_checked<Radix>(value, digit))
+            return false;
+        result = code_point(value);
+        return result.is_valid();
+    }
 };
 
 template <typename T>
@@ -33,10 +80,24 @@ template <typename T>
 struct integer_traits<unbounded<T>>
 {
     using integer_type               = T;
-    using result_type                = T;
     static constexpr auto is_bounded = false;
-};
 
+    template <int Radix>
+    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    {
+        integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
+    }
+    template <int Radix>
+    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    {
+        integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
+        return true;
+    }
+};
+} // namespace lexy
+
+namespace lexy
+{
 struct integer_overflow
 {
     static LEXY_CONSTEVAL auto name()
@@ -86,7 +147,7 @@ struct _integer : rule_base
 
                 using traits         = lexy::integer_traits<T>;
                 using integer        = typename traits::integer_type;
-                constexpr auto radix = integer(Base::radix);
+                constexpr auto radix = Base::radix;
 
                 auto       cur    = begin;
                 const auto end    = reader.cur();
@@ -106,14 +167,14 @@ struct _integer : rule_base
                             // The number is zero.
                             return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
 
-                        const auto value = Base::value(*cur++);
-                        if (value == 0 || value >= Base::radix)
+                        const auto digit = Base::value(*cur++);
+                        if (digit == 0 || digit >= radix)
                             continue; // Zero or digit separator.
 
                         // Found the first non-zero digit.
                         // This can't overflow, we've asserted that the maximal value is at least
                         // base. We assign because we had zero and are only taking this line once.
-                        result = integer(value);
+                        result = integer(digit);
                         break;
                     }
                     // At this point, we've parsed exactly one non-zero digit.
@@ -124,7 +185,7 @@ struct _integer : rule_base
                          ++digit_count)
                     {
                         // Find the next digit.
-                        auto value = 0u;
+                        auto digit = 0u;
                         while (true)
                         {
                             if (cur == end)
@@ -132,22 +193,20 @@ struct _integer : rule_base
                                 return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
-                            value = Base::value(*cur++);
+                            digit = Base::value(*cur++);
                             if constexpr (!HasSep)
                                 break;
-                            else if (value < Base::radix)
+                            else if (digit < radix)
                                 break;
                         }
 
-                        // Add digit.
-                        result *= radix;
-                        result += integer(value);
+                        traits::template add_digit_unchecked<radix>(result, digit);
                     }
 
                     // Handle the final digit, if there is any, while checking for overflow.
                     {
                         // Find it.
-                        auto value = 0u;
+                        auto digit = 0u;
                         while (true)
                         {
                             if (cur == end)
@@ -155,22 +214,15 @@ struct _integer : rule_base
                                 return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
-                            value = Base::value(*cur++);
+                            digit = Base::value(*cur++);
                             if constexpr (!HasSep)
                                 break;
-                            else if (value < Base::radix)
+                            else if (digit < radix)
                                 break;
                         }
 
-                        // result *= radix
-                        if (result > max_value / radix)
+                        if (!traits::template add_digit_checked<radix>(result, digit))
                             return LEXY_MOV(handler).error(reader, error_type(begin, end));
-                        result *= radix;
-
-                        // result += value
-                        if (result > integer(max_value - value))
-                            return LEXY_MOV(handler).error(reader, error_type(begin, end));
-                        result += integer(value);
                     }
 
                     // If we're having any more digits, this is a guaranteed overflow.
@@ -183,7 +235,7 @@ struct _integer : rule_base
                     while (true)
                     {
                         // Find the next digit.
-                        auto value = 0u;
+                        auto digit = 0u;
                         while (true)
                         {
                             if (cur == end)
@@ -191,22 +243,16 @@ struct _integer : rule_base
                                 return NextParser::parse(handler, reader, LEXY_FWD(args)...,
                                                          result);
 
-                            value = Base::value(*cur++);
-                            if (value < Base::radix)
+                            digit = Base::value(*cur++);
+                            if (digit < Base::radix)
                                 break; // Found a digit.
                         }
 
-                        // Add it.
-                        result *= radix;
-                        result += integer(value);
+                        traits::template add_digit_unchecked<radix>(result, digit);
                     }
                 }
 
-                if constexpr (std::is_same_v<typename traits::result_type, integer>)
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
-                else
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                             typename traits::result_type(LEXY_MOV(result)));
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
             }
         };
 
@@ -238,6 +284,13 @@ LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep, LeadingZero>)
 {
     return _integer<T, _ndigits<N, Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
 }
+} // namespace lexyd
+
+namespace lexyd
+{
+/// Matches the number of a code point.
+template <std::size_t N, typename Base = hex>
+constexpr auto code_point_id = integer<lexy::code_point>(n_digits<N, Base>);
 } // namespace lexyd
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED

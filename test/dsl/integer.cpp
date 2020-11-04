@@ -235,3 +235,47 @@ TEST_CASE("dsl::integer")
     }
 }
 
+TEST_CASE("dsl::code_point_id")
+{
+    constexpr auto rule = lexy::dsl::code_point_id<6>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int success(const char* cur, lexy::code_point cp)
+        {
+            assert(cur == str + 6);
+            return int(cp.value());
+        }
+
+        constexpr int error(test_error<lexy::integer_overflow> e)
+        {
+            assert(e.message() == "integer overflow");
+            assert(e.begin() == str);
+            assert(e.end() == lexy::_detail::string_view(str).end());
+            return -1;
+        }
+        constexpr int error(test_error<lexy::expected_char_class>)
+        {
+            return -2;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -2);
+
+    constexpr auto latin_small_letter_e_with_acute = rule_matches<callback>(rule, "0000E9");
+    CHECK(latin_small_letter_e_with_acute == 0x0000E9);
+    constexpr auto euro_sign = rule_matches<callback>(rule, "0020AC");
+    CHECK(euro_sign == 0x20AC);
+    constexpr auto slightly_smiling_face = rule_matches<callback>(rule, "01F92D");
+    CHECK(slightly_smiling_face == 0x1F92D);
+
+    constexpr auto extra_digits = rule_matches<callback>(rule, "0000001");
+    CHECK(extra_digits == 0);
+    constexpr auto overflow = rule_matches<callback>(rule, "ABCDEF");
+    CHECK(overflow == -1);
+}
+
