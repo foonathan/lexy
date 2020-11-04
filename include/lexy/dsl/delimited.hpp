@@ -119,7 +119,12 @@ struct _delim_dsl
     template <typename Content>
     LEXY_CONSTEVAL auto _get(Content) const
     {
-        return open() >> _delb{} + opt(list(!close() >> _delc<Content>{})) + _dele{};
+        auto c = branch(close());
+
+        // We put the content in a list until the closing condition of the list matches.
+        auto l = list(!c.condition() >> _delc<Content>{});
+        // We surround the list with the logic that handles the positional stuff.
+        return open() >> _delb{} + opt(l) + _dele{} + c.then();
     }
 
     /// Sets the content.
@@ -160,7 +165,7 @@ struct _delim_dsl
 template <typename Open, typename Close>
 LEXY_CONSTEVAL auto delimited(Open, Close)
 {
-    static_assert(lexy::is_pattern<Open> && lexy::is_pattern<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _delim_dsl<Open, Close, void>{};
 }
 

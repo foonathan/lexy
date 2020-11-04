@@ -13,78 +13,159 @@ TEST_CASE("dsl::delimited()")
 {
     constexpr auto cp = lexy::dsl::ascii::character;
 
-    constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
-    CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
-    CHECK(lexy::is_branch_rule<decltype(rule)>);
-
-    struct callback
+    SUBCASE("pattern")
     {
-        const char* str;
+        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        constexpr auto list()
+        struct callback
         {
-            struct b
+            const char* str;
+
+            constexpr auto list()
             {
-                int count = 0;
-
-                using return_type = int;
-
-                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                struct b
                 {
-                    count += lex.size();
-                }
+                    int count = 0;
 
-                constexpr int finish() &&
+                    using return_type = int;
+
+                    constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                    {
+                        count += lex.size();
+                    }
+
+                    constexpr int finish() &&
+                    {
+                        return count;
+                    }
+                };
+                return b{};
+            }
+            constexpr int success(const char* cur, int count)
+            {
+                assert(cur - str == count + 2);
+                return count;
+            }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "(");
+                assert(e.position() == str);
+                return -1;
+            }
+            constexpr int error(test_error<lexy::missing_delimiter> e)
+            {
+                assert(e.begin() == str + 1);
+                assert(e.end() == lexy::_detail::string_view(str).end());
+                assert(e.message() == "missing delimiter");
+                return -2;
+            }
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                assert(e.character_class() == lexy::_detail::string_view("ASCII"));
+                return -3;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto zero = rule_matches<callback>(rule, "()");
+        CHECK(zero == 0);
+        constexpr auto one = rule_matches<callback>(rule, "(a)");
+        CHECK(one == 1);
+        constexpr auto two = rule_matches<callback>(rule, "(ab)");
+        CHECK(two == 2);
+        constexpr auto three = rule_matches<callback>(rule, "(abc)");
+        CHECK(three == 3);
+
+        constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
+        CHECK(unterminated == -2);
+
+        constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+        CHECK(invalid_ascii == -3);
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_c<0>,
+                                        LEXY_LIT(")") >> lexy::dsl::value_c<1>)(cp);
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr auto list()
+            {
+                struct b
                 {
-                    return count;
-                }
-            };
-            return b{};
-        }
-        constexpr int success(const char* cur, int count)
-        {
-            assert(cur - str == count + 2);
-            return count;
-        }
+                    int count = 0;
 
-        constexpr int error(test_error<lexy::expected_literal> e)
-        {
-            assert(e.string() == "(");
-            assert(e.position() == str);
-            return -1;
-        }
-        constexpr int error(test_error<lexy::missing_delimiter> e)
-        {
-            assert(e.begin() == str + 1);
-            assert(e.end() == lexy::_detail::string_view(str).end());
-            assert(e.message() == "missing delimiter");
-            return -2;
-        }
-        constexpr int error(test_error<lexy::expected_char_class> e)
-        {
-            assert(e.character_class() == lexy::_detail::string_view("ASCII"));
-            return -3;
-        }
-    };
+                    using return_type = int;
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
-    CHECK(empty == -1);
+                    constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                    {
+                        count += lex.size();
+                    }
 
-    constexpr auto zero = rule_matches<callback>(rule, "()");
-    CHECK(zero == 0);
-    constexpr auto one = rule_matches<callback>(rule, "(a)");
-    CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "(ab)");
-    CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "(abc)");
-    CHECK(three == 3);
+                    constexpr int finish() &&
+                    {
+                        return count;
+                    }
+                };
+                return b{};
+            }
+            constexpr int success(const char* cur, int open, int count, int close)
+            {
+                assert(cur - str == count + 2);
+                assert(open == 0);
+                assert(close == 1);
+                return count;
+            }
 
-    constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
-    CHECK(unterminated == -2);
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                assert(e.string() == "(");
+                assert(e.position() == str);
+                return -1;
+            }
+            constexpr int error(test_error<lexy::missing_delimiter> e)
+            {
+                assert(e.begin() == str + 1);
+                assert(e.end() == lexy::_detail::string_view(str).end());
+                assert(e.message() == "missing delimiter");
+                return -2;
+            }
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                assert(e.character_class() == lexy::_detail::string_view("ASCII"));
+                return -3;
+            }
+        };
 
-    constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
-    CHECK(invalid_ascii == -3);
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto zero = rule_matches<callback>(rule, "()");
+        CHECK(zero == 0);
+        constexpr auto one = rule_matches<callback>(rule, "(a)");
+        CHECK(one == 1);
+        constexpr auto two = rule_matches<callback>(rule, "(ab)");
+        CHECK(two == 2);
+        constexpr auto three = rule_matches<callback>(rule, "(abc)");
+        CHECK(three == 3);
+
+        constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
+        CHECK(unterminated == -2);
+
+        constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+        CHECK(invalid_ascii == -3);
+    }
 }
 
 TEST_CASE("predefined dsl::delimited")
