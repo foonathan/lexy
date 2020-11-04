@@ -21,9 +21,8 @@ namespace lexyd
 template <typename Open, typename Close, typename Whitespace>
 struct _brackets
 {
-    /// Sets the whitespace pattern.
-    template <typename Ws, typename Old = Whitespace,
-              typename = std::enable_if_t<std::is_void_v<Old>>>
+    /// Sets the whitespace.
+    template <typename Ws>
     LEXY_CONSTEVAL auto operator[](Ws) const
     {
         static_assert(lexy::is_pattern<Ws>, "whitespace must be a pattern");

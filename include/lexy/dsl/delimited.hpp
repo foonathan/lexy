@@ -6,10 +6,16 @@
 #define LEXY_DSL_DELIMITED_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/error.hpp>
+#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/not.hpp>
+#include <lexy/dsl/option.hpp>
+#include <lexy/dsl/peek.hpp>
+#include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
-#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -25,8 +31,7 @@ struct missing_delimiter
 
 namespace lexyd
 {
-template <typename Escape, typename CodePoint, typename Close>
-struct _delim : rule_base
+struct _delb : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -37,57 +42,54 @@ struct _delim : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            auto sink = handler.list_sink();
+            // Remember the beginning of the delimited for the error message.
+            return NextParser::parse(handler, reader, reader.cur(), LEXY_FWD(args)...);
+        }
+    };
+};
 
-            const auto begin = reader.cur();
-            while (true)
+template <typename Content>
+struct _delc : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            if (reader.eof())
             {
-                if (reader.eof())
-                {
-                    // We're missing the final delimiter.
-                    auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
-                    return LEXY_MOV(handler).error(reader, e);
-                }
-                else if (auto pos = reader.cur(); Escape::escape_matcher::match(reader))
-                {
-                    // We have an escape character.
-                    if (!Escape::match_arg(sink, reader))
-                        // Invalid escape sequence.
-                        return Escape::report_error(handler, reader, pos);
-                }
-                else if (Close::matcher::match(reader))
-                    // Done with the string.
-                    break;
-                else
-                {
-                    // Match a code point.
-                    if (auto pos = reader.cur(); CodePoint::match(reader))
+                // Find the beginning of the delimited; it was added somwhere in the arguments.
+                typename Reader::iterator begin;
+                ([&](const auto& arg) {
+                    using arg_type = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<arg_type, typename Reader::iterator>)
                     {
-                        for (auto end = reader.cur(); pos != end; ++pos)
-                            sink(*pos);
+                        begin = arg;
+                        return true;
                     }
                     else
-                        return CodePoint::report_error(handler, reader, pos);
-                }
-            }
+                        return false;
+                }(args)
+                 || ...);
 
-            // Add the final string as an argument.
-            if constexpr (std::is_void_v<typename decltype(sink)::return_type>)
-            {
-                LEXY_MOV(sink).finish();
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                // If we've reached EOF, it means we're missing the closing delimiter.
+                auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
+                return LEXY_MOV(handler).error(reader, e);
             }
             else
             {
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(sink).finish());
+                return Content::template parser<NextParser>::parse(handler, reader,
+                                                                   LEXY_FWD(args)...);
             }
         }
     };
 };
 
-template <typename CodePoint, typename Close>
-struct _delim<void, CodePoint, Close> : rule_base
+struct _dele : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -95,38 +97,11 @@ struct _delim<void, CodePoint, Close> : rule_base
     struct parser
     {
         template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, typename Reader::iterator,
+                                 Args&&... args) -> typename Handler::result_type
         {
-            const auto begin = reader.cur();
-
-            auto pos = reader.cur();
-            while (true)
-            {
-                if (reader.eof())
-                {
-                    // We're missing the final delimiter.
-                    auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
-                    return LEXY_MOV(handler).error(reader, e);
-                }
-                else if (Close::matcher::match(reader))
-                {
-                    // Done with the string.
-                    break;
-                }
-                else
-                {
-                    // Match a code point.
-                    if (!CodePoint::match(reader))
-                        return CodePoint::report_error(handler, reader, pos);
-
-                    pos = reader.cur();
-                }
-            }
-
-            // Add the lexeme as an argument.
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                     lexy::lexeme<typename Reader::canonical_reader>(begin, pos));
+            // Remove the saved beginning again.
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -134,35 +109,50 @@ struct _delim<void, CodePoint, Close> : rule_base
 template <typename Open, typename Close, typename Whitespace>
 struct _delim_dsl
 {
-    /// Specifies the atomic for a valid code point.
-    template <typename CodePoint>
-    LEXY_CONSTEVAL auto operator()(CodePoint) const
-    {
-        static_assert(lexy::is_atom<CodePoint>);
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Open{} >> _delim<void, CodePoint, Close>{};
-        else
-            return whitespaced(Open{}, Whitespace{}) >> _delim<void, CodePoint, Close>{};
-    }
-
-    /// Specifies the atomic for a valid code point and an escape sequence.
-    template <typename CodePoint, typename Escape>
-    LEXY_CONSTEVAL auto operator()(CodePoint, Escape) const
-    {
-        static_assert(lexy::is_atom<CodePoint>);
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Open{} >> _delim<Escape, CodePoint, Close>{};
-        else
-            return whitespaced(Open{}, Whitespace{}) >> _delim<Escape, CodePoint, Close>{};
-    }
-
-    /// Sets the whitespace pattern.
-    template <typename Ws, typename Old = Whitespace,
-              typename = std::enable_if_t<std::is_void_v<Old>>>
+    /// Sets the whitespace.
+    template <typename Ws>
     LEXY_CONSTEVAL auto operator[](Ws) const
     {
-        static_assert(lexy::is_pattern<Ws>, "whitespace must be a pattern");
         return _delim_dsl<Open, Close, Ws>{};
+    }
+
+    template <typename Content>
+    LEXY_CONSTEVAL auto _get(Content) const
+    {
+        return open() >> _delb{} + opt(list(!close() >> _delc<Content>{})) + _dele{};
+    }
+
+    /// Sets the content.
+    template <typename Content>
+    LEXY_CONSTEVAL auto operator()(Content content) const
+    {
+        if constexpr (lexy::is_pattern<Content>)
+            return _get(capture(content));
+        else
+            return _get(content);
+    }
+    template <typename Content, typename Escape>
+    LEXY_CONSTEVAL auto operator()(Content content, Escape escape) const
+    {
+        if constexpr (lexy::is_pattern<Content>)
+            return _get(escape | else_ >> capture(content));
+        else
+            return _get(escape | else_ >> content);
+    }
+
+    /// Matches the open delimiter.
+    LEXY_CONSTEVAL auto open() const
+    {
+        if constexpr (std::is_same_v<Whitespace, void>)
+            return Open{};
+        else
+            return whitespaced(Open{}, Whitespace{});
+    }
+    /// Matches the closing delimiter.
+    LEXY_CONSTEVAL auto close() const
+    {
+        // Close never has any whitespace.
+        return Close{};
     }
 };
 
@@ -205,89 +195,90 @@ struct invalid_escape_sequence
 
 namespace lexyd
 {
+template <typename Pattern, typename... Branches>
+LEXY_CONSTEVAL auto _escape_rule(Branches... branches)
+{
+    if constexpr (sizeof...(Branches) == 0)
+        return Pattern{};
+    else if constexpr ((decltype(branch(branches))::is_unconditional || ...))
+        return Pattern{} >> (branches | ...);
+    else
+        return Pattern{} >> (branches | ... | (else_ >> error<lexy::invalid_escape_sequence>));
+}
+
 template <typename Pattern>
 struct _escape_cap
 {
-    template <typename Sink, typename Reader>
-    LEXY_DSL_FUNC bool try_match(Sink& sink, Reader& reader)
-    {
-        auto begin = reader.cur();
-        if (!Pattern::matcher::match(reader))
-            return false;
+    static constexpr auto has_matcher = false;
 
-        sink(lexy::lexeme(reader, begin));
-        return true;
-    }
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            // We can be sure that the pattern matches here.
+            auto begin  = reader.cur();
+            auto result = Pattern::matcher::match(reader);
+            LEXY_PRECONDITION(result);
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                     lexy::lexeme(reader, begin));
+        }
+    };
 };
 
-template <typename Pattern, typename Replacement>
-struct _escape_lit
+template <typename EscapePattern, typename... Branches>
+struct _escape : decltype(_escape_rule<EscapePattern>(Branches{}...))
 {
-    template <typename Sink, typename Reader>
-    LEXY_DSL_FUNC bool try_match(Sink& sink, Reader& reader)
+    /// Adds a generic escape rule.
+    template <typename Branch>
+    LEXY_CONSTEVAL auto rule(Branch) const
     {
-        if (!Pattern::matcher::match(reader))
-            return false;
-
-        constexpr auto rep = Replacement::get();
-        sink(rep.data(), rep.size());
-        return true;
-    }
-};
-
-template <typename EscapePattern, typename... EscapeArguments>
-struct _escape
-{
-    using escape_matcher = typename EscapePattern::matcher;
-
-    template <typename Sink, typename Reader>
-    LEXY_DSL_FUNC bool match_arg(Sink& sink, Reader& reader)
-    {
-        return (EscapeArguments::try_match(sink, reader) || ...);
+        static_assert(lexy::is_branch_rule<Branch>);
+        return _escape<EscapePattern, Branches..., Branch>{};
     }
 
-    template <typename Handler, typename Reader>
-    LEXY_DSL_FUNC auto report_error(Handler& handler, Reader& reader, typename Reader::iterator pos)
-        -> typename Handler::result_type
-    {
-        auto e = lexy::make_error<Reader, lexy::invalid_escape_sequence>(pos);
-        return LEXY_MOV(handler).error(reader, e);
-    }
-
-    //=== dsl ===//
-    /// Replace the escaped pattern with the matched lexeme.
+    /// Adds an escape rule that captures the pattern.
     template <typename Pattern>
-    LEXY_CONSTEVAL auto capture(Pattern) const
+    LEXY_CONSTEVAL auto capture(Pattern pattern) const
     {
         static_assert(lexy::is_pattern<Pattern>);
-        return _escape<EscapePattern, EscapeArguments..., _escape_cap<Pattern>>{};
+        return rule(peek(pattern) >> _escape_cap<Pattern>{});
     }
 
-    /// Replace the escaped pattern with the literal string value.
-    template <typename Pattern, typename Replacement>
-    LEXY_CONSTEVAL auto literal(Pattern, Replacement) const
+#if LEXY_HAS_NTTP
+    /// Adds an escape rule that replaces the escaped string with the replacement.
+    template <lexy::_detail::string_literal Str, typename Value>
+    LEXY_CONSTEVAL auto lit(Value value)
     {
-        static_assert(lexy::is_pattern<Pattern>);
-        return _escape<EscapePattern, EscapeArguments..., _escape_lit<Pattern, Replacement>>{};
+        return rule(lexyd::lit<Str> >> value);
     }
-    template <auto C, typename Replacement>
-    LEXY_CONSTEVAL auto literal(Replacement rep) const
+    /// Adds an escape rule that replaces the escaped string with itself.
+    template <lexy::_detail::string_literal Str>
+    LEXY_CONSTEVAL auto lit()
     {
-        return literal(lit_c<C>, rep);
+        return lit<Str>(value_str<Str>);
     }
-    /// Replace the escaped literal with itself.
-    template <typename Replacement>
-    LEXY_CONSTEVAL auto literal(Replacement rep) const
+#endif
+
+    /// Adds an escape rule that replaces the escaped character with the replacement.
+    template <auto C, typename Value>
+    LEXY_CONSTEVAL auto lit_c(Value value) const
     {
-        return literal(_lit<Replacement>{}, rep);
+        return rule(lexyd::lit_c<C> >> value);
     }
+    /// Adds an escape rule that replaces the escape character with itself.
     template <auto C>
-    LEXY_CONSTEVAL auto literal() const
+    LEXY_CONSTEVAL auto lit_c() const
     {
-        return literal(lit_c<C>, lexy::_detail::type_char<C>{});
+        return lit_c<C>(value_c<C>);
     }
 };
 
+/// Creates an escape rule.
+/// The pattern is the initial pattern to begin,
+/// and then you can add rules that match after it.
 template <typename EscapePattern>
 LEXY_CONSTEVAL auto escape(EscapePattern)
 {
@@ -295,19 +286,8 @@ LEXY_CONSTEVAL auto escape(EscapePattern)
     return _escape<EscapePattern>{};
 }
 
-template <auto C>
-constexpr auto escape_value_c = lexy::_detail::type_char<C>{};
-
-#if LEXY_HAS_NTTP
-/// Defines the replacement string of a literal replacement.
-template <lexy::_detail::string_literal Str>
-constexpr auto escape_value = lexy::_detail::type_string<Str>;
-#endif
-
-#define LEXY_ESCAPE_VALUE(Str)                                                                     \
-    LEXY_NTTP_STRING(Str) {}
-
-constexpr auto backslash_escape = escape(LEXY_LIT("\\"));
+constexpr auto backslash_escape = escape(lit_c<'\\'>);
+constexpr auto dollar_escape    = escape(lit_c<'$'>);
 } // namespace lexyd
 
 #endif // LEXY_DSL_DELIMITED_HPP_INCLUDED

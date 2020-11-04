@@ -86,3 +86,32 @@ TEST_CASE("dsl::value_t")
     CHECK(string == 0);
 }
 
+TEST_CASE("dsl::value_str")
+{
+    constexpr auto rule = LEXY_VALUE_STR("abc");
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(!lexy::is_pattern<decltype(rule)>);
+
+#if LEXY_HAS_NTTP
+    CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::value_str<"abc">)>);
+#endif
+
+    struct callback
+    {
+        const char* str;
+
+        constexpr int success(const char* cur, const char* value, std::size_t length)
+        {
+            assert(str == cur);
+            assert(lexy::_detail::string_view(value, length) == "abc");
+            return 0;
+        }
+    };
+
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == 0);
+
+    constexpr auto string = rule_matches<callback>(rule, "abc");
+    CHECK(string == 0);
+}
+

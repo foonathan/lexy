@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_VALUE_HPP_INCLUDED
 #define LEXY_DSL_VALUE_HPP_INCLUDED
 
+#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 
 namespace lexy
@@ -91,6 +92,42 @@ struct _valt : rule_base
 /// Produces a default constructed value of the specified type without parsing anything.
 template <typename T>
 constexpr auto value_t = _valt<T>{};
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename String>
+struct _vals : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+            {
+                constexpr auto str = String::get();
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., str.data(),
+                                         str.size());
+            }
+        }
+    };
+};
+
+#if LEXY_HAS_NTTP
+/// Produces the string value.
+template <lexy::_detail::string_literal Str>
+constexpr auto value_str = _vals<lexy::_detail::type_string<Str>>{};
+#endif
+
+#define LEXY_VALUE_STR(Str)                                                                        \
+    ::lexyd::_vals<LEXY_NTTP_STRING(Str)> {}
 } // namespace lexyd
 
 #endif // LEXY_DSL_VALUE_HPP_INCLUDED

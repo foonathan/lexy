@@ -77,7 +77,7 @@ struct json_value
             if (c == '"')
                 std::fputs(R"(\")", stdout);
             else if (c == '\\')
-                std::fputs(R"(\\")", stdout);
+                std::fputs(R"(\\)", stdout);
             else if (std::iscntrl(c))
                 std::fprintf(stdout, "\\x%02x", static_cast<unsigned char>(c));
             else
@@ -190,14 +190,15 @@ struct string
         auto code_point = dsl::code_point;
 
         // TODO: \uXXX
-        auto escape = dsl::backslash_escape.literal<'"'>()
-                          .literal<'\\'>()
-                          .literal<'/'>()
-                          .literal<'b'>(LEXY_ESCAPE_VALUE("\b"))
-                          .literal<'f'>(LEXY_ESCAPE_VALUE("\f"))
-                          .literal<'n'>(LEXY_ESCAPE_VALUE("\n"))
-                          .literal<'r'>(LEXY_ESCAPE_VALUE("\r"))
-                          .literal<'t'>(LEXY_ESCAPE_VALUE("\t"));
+        auto escape = dsl::backslash_escape //
+                          .lit_c<'"'>()
+                          .lit_c<'\\'>()
+                          .lit_c<'/'>()
+                          .lit_c<'b'>(dsl::value_c<'\b'>)
+                          .lit_c<'f'>(dsl::value_c<'\f'>)
+                          .lit_c<'n'>(dsl::value_c<'\n'>)
+                          .lit_c<'r'>(dsl::value_c<'\r'>)
+                          .lit_c<'t'>(dsl::value_c<'\t'>);
 
         // String of code_point with specified escape sequences, surrounded by ".
         return dsl::quoted[ws](code_point, escape);

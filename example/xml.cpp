@@ -186,8 +186,8 @@ struct cdata
         auto delim = dsl::delimited(LEXY_LIT("<![CDATA["), LEXY_LIT("]]>"));
         return delim(dsl::code_point);
     }();
-    static constexpr auto value
-        = lexy::as_string<std::string> | lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
+    static constexpr auto list  = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
 };
 
 // The name of a tag.
@@ -231,11 +231,9 @@ struct element
         auto close_tag = close_tagged(dsl::context_pop(dsl::p<name>).error<tag_mismatch>());
 
         // The content of the element.
-        auto content
-            = dsl::p<comment> | dsl::p<cdata> // These also start with <, so put them first.
-              | dsl::peek(LEXY_LIT("<"))
-                    >> dsl::recurse<element> // We need a condition for recursion.
-              | dsl::p<reference> | dsl::else_ >> dsl::p<text>;
+        auto content = dsl::p<comment> | dsl::p<cdata>                     //
+                       | dsl::peek(LEXY_LIT("<")) >> dsl::recurse<element> //
+                       | dsl::p<reference> | dsl::else_ >> dsl::p<text>;
 
         // We match a (possibly empty) list of content surrounded itself by the open and close tag.
         return dsl::brackets(open_tag, close_tag).opt_list(content);

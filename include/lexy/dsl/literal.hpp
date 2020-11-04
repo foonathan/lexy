@@ -98,7 +98,7 @@ constexpr auto lit_c = _lit<lexy::_detail::type_char<C>>{};
 #if LEXY_HAS_NTTP
 /// Matches the literal string.
 template <lexy::_detail::string_literal Str>
-constexpr auto lit = _lit<lexy::_detail::type_string<Str>>;
+constexpr auto lit = _lit<lexy::_detail::type_string<Str>>{};
 #endif
 
 #define LEXY_LIT(Str)                                                                              \
