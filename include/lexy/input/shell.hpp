@@ -33,38 +33,38 @@ class Prompt
     /// Whether or not the user has closed the input.
     bool is_open() const;
 
+    struct read_line_callback
+    {
+        /// Reads at most `size` characters into the `buffer` until and including a newline.
+        /// Returns the number of characters read.
+        /// If the number of characters read is less than the size,
+        /// the entire line has been read or a read error occurs.
+        std::size_t operator()(char_type* buffer, std::size_t size); 
+
+        /// Called after the shell has finished reading.
+        void done() &&;
+    };
+
     /// Returns a callback object for reading the next line.
     auto read_line()
     {
-        struct callback
-        {
-            /// Reads at most `size` characters into the `buffer` until and including a newline.
-            /// Returns the number of characters read.
-            /// If the number of characters read is less than the size,
-            /// the entire line has been read or a read error occurs.
-            std::size_t operator()(char_type* buffer, std::size_t size); 
-
-            /// Called after the shell has finished reading.
-            void done() &&;
-        };
-
-        return callback{...};
+        return read_line_callback{...};
     }
+
+    struct write_message_callback
+    {
+        /// Writes the buffer.
+        void operator()(const char_type* buffer, std::size_t size); 
+
+        /// Called to finish writing.
+        void done() &&;
+    };
 
     /// Writes a message out.
     /// The arguments are passed by the user to indicate kinds of messages.
     auto write_message(Args&&... config_args)
     {
-        struct callback
-        {
-            /// Writes the buffer.
-            void operator()(const char_type* buffer, std::size_t size); 
-
-            /// Called to finish writing.
-            void done() &&;
-        };
-
-        return callback{...};
+        return write_message_callback{...};
     }
 };
 #endif
@@ -97,43 +97,41 @@ struct default_prompt
         return !std::feof(stdin) && !std::ferror(stdin);
     }
 
+    struct read_line_callback
+    {
+        std::size_t operator()(char_type* buffer, std::size_t size)
+        {
+            LEXY_PRECONDITION(size > 1);
+
+            auto memory = reinterpret_cast<char*>(buffer);
+            if (auto str = std::fgets(memory, int(size), stdin))
+                return std::strlen(str);
+            else
+                return 0;
+        }
+
+        void done() && {}
+    };
     auto read_line()
     {
-        struct callback
-        {
-            std::size_t operator()(char_type* buffer, std::size_t size)
-            {
-                LEXY_PRECONDITION(size > 1);
-
-                auto memory = reinterpret_cast<char*>(buffer);
-                if (auto str = std::fgets(memory, int(size), stdin))
-                    return std::strlen(str);
-                else
-                    return 0;
-            }
-
-            void done() && {}
-        };
-
-        return callback{};
+        return read_line_callback{};
     }
 
+    struct write_message_callback
+    {
+        void operator()(const char_type* buffer, std::size_t size)
+        {
+            std::fprintf(stdout, "%.*s", int(size), reinterpret_cast<const char*>(buffer));
+        }
+
+        void done() &&
+        {
+            std::putchar('\n');
+        }
+    };
     auto write_message()
     {
-        struct callback
-        {
-            void operator()(const char_type* buffer, std::size_t size)
-            {
-                std::fprintf(stdout, "%.*s", int(size), reinterpret_cast<const char*>(buffer));
-            }
-
-            void done() &&
-            {
-                std::putchar('\n');
-            }
-        };
-
-        return callback{};
+        return write_message_callback{};
     }
 };
 } // namespace lexy
@@ -233,53 +231,77 @@ public:
         return input(this);
     }
 
+    class writer
+    {
+    public:
+        writer(const writer&) = delete;
+        writer& operator=(const writer&) = delete;
+
+        ~writer() noexcept
+        {
+            LEXY_MOV(_writer).done();
+        }
+
+        writer& operator()(const char_type* str, std::size_t length)
+        {
+            _writer(str, length);
+            return *this;
+        }
+        writer& operator()(const char_type* str)
+        {
+            auto length = std::size_t(0);
+            for (auto ptr = str; *ptr; ++ptr)
+                ++length;
+            _writer(str, length);
+            return *this;
+        }
+        writer& operator()(char_type c)
+        {
+            _writer(&c, 1);
+            return *this;
+        }
+
+        template <typename CharT,
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+        writer& operator()(const CharT* str, std::size_t length)
+        {
+            return operator()(reinterpret_cast<const char_type*>(str), length);
+        }
+        template <typename CharT,
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+        writer& operator()(const CharT* str)
+        {
+            return operator()(reinterpret_cast<const char_type*>(str));
+        }
+        template <typename CharT,
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+        writer& operator()(CharT c)
+        {
+            return operator()(char_type(c));
+        }
+
+        writer& operator()(lexy::lexeme_for<input> lexeme)
+        {
+            // We know that the iterator is contiguous.
+            auto data = &*lexeme.begin();
+            _writer(data, lexeme.size());
+            return *this;
+        }
+
+    private:
+        explicit writer(typename Prompt::write_message_callback&& writer)
+        : _writer(LEXY_MOV(writer))
+        {}
+
+        LEXY_EMPTY_MEMBER typename Prompt::write_message_callback _writer;
+
+        friend shell;
+    };
+
     /// Writes a message out to the shell.
     template <typename... Args>
     auto write_message(Args&&... args)
     {
-        using prompt_writer = decltype(_prompt.write_message(LEXY_FWD(args)...));
-        class writer
-        {
-        public:
-            writer(const writer&) = delete;
-            writer& operator=(const writer&) = delete;
-
-            ~writer() noexcept
-            {
-                LEXY_MOV(_writer).done();
-            }
-
-            writer& operator()(const char_type* str, std::size_t length)
-            {
-                _writer(str, length);
-                return *this;
-            }
-            writer& operator()(const char_type* str)
-            {
-                _writer(str, std::strlen(str));
-                return *this;
-            }
-            writer& operator()(char_type c)
-            {
-                _writer(&c, 1);
-                return *this;
-            }
-
-            writer& operator()(lexy::lexeme_for<input> lexeme)
-            {
-                // We know that the iterator is contiguous.
-                auto data = &*lexeme.begin();
-                _writer(data, lexeme.size());
-                return *this;
-            }
-
-        private:
-            explicit writer(prompt_writer&& writer) : _writer(LEXY_MOV(writer)) {}
-
-            LEXY_EMPTY_MEMBER prompt_writer _writer;
-
-            friend shell;
-        };
         return writer{_prompt.write_message(LEXY_FWD(args)...)};
     }
 

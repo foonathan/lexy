@@ -188,8 +188,7 @@ struct string
 {
     static constexpr auto rule = [] {
         auto code_point = dsl::code_point;
-
-        auto escape = dsl::backslash_escape //
+        auto escape     = dsl::backslash_escape //
                           .lit_c<'"'>()
                           .lit_c<'\\'>()
                           .lit_c<'/'>()

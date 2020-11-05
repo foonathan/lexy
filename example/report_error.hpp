@@ -71,6 +71,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
                                               lexy::dsl::ascii::character, lexy::dsl::newline);
 
     auto prod_name = context.production();
+    std::fflush(stdout);
     std::fprintf(stderr, "error: while parsing %.*s\n", int(prod_name.size()), prod_name.data());
 
     if (location.line != context_location.line)
@@ -87,6 +88,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
     }
 
     _print_location_msg(location, error);
+    std::putc('\n', stderr);
 });
 } // namespace lexy_ex
 
