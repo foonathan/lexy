@@ -25,7 +25,6 @@ struct _brackets
     template <typename Ws>
     LEXY_CONSTEVAL auto operator[](Ws) const
     {
-        static_assert(lexy::is_pattern<Ws>, "whitespace must be a pattern");
         return _brackets<Open, Close, Ws>{};
     }
 

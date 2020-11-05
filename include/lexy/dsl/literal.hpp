@@ -88,7 +88,7 @@ struct _lit : atom_base<_lit<String>>
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        return whitespaced(_lit<String>{}, ws);
+        return whitespaced(*this, ws);
     }
 };
 

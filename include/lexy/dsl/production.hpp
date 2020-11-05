@@ -64,7 +64,7 @@ struct _prd : rule_base
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        return whitespaced(_prd{}, ws);
+        return whitespaced(*this, ws);
     }
 };
 
@@ -84,7 +84,7 @@ struct _rec : rule_base
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const
     {
-        return whitespaced(_rec{}, ws);
+        return whitespaced(*this, ws);
     }
 };
 
