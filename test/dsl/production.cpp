@@ -61,14 +61,14 @@ TEST_CASE("dsl::p")
             }
             constexpr int success(const char* cur, int result)
             {
-                assert(cur - str == 3);
-                assert(result == 0);
+                CONSTEXPR_CHECK(cur - str == 3);
+                CONSTEXPR_CHECK(result == 0);
                 return result;
             }
 
             constexpr int error(prod, test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -96,14 +96,14 @@ TEST_CASE("dsl::p")
             }
             constexpr int success(const char* cur, int result)
             {
-                assert(cur - str == 3);
-                assert(result == 0);
+                CONSTEXPR_CHECK(cur - str == 3);
+                CONSTEXPR_CHECK(result == 0);
                 return result;
             }
 
             constexpr int error(prod, test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -132,19 +132,19 @@ TEST_CASE("dsl::p")
 
             constexpr int success(const char* cur, int result)
             {
-                assert(lexy::_detail::string_view(str, cur) == "abc");
-                assert(result == 0);
+                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "abc");
+                CONSTEXPR_CHECK(result == 0);
                 return result;
             }
             constexpr int success(const char* cur, lexy::id<1>)
             {
-                assert(lexy::_detail::string_view(str, cur) == "def");
+                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
             }
 
             constexpr int error(test_error<lexy::exhausted_choice> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -179,19 +179,19 @@ TEST_CASE("dsl::p")
 
             constexpr int success(const char* cur, int result)
             {
-                assert(lexy::_detail::string_view(str, cur) == "abc");
-                assert(result == 0);
+                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "abc");
+                CONSTEXPR_CHECK(result == 0);
                 return result;
             }
             constexpr int success(const char* cur, lexy::id<1>)
             {
-                assert(lexy::_detail::string_view(str, cur) == "def");
+                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
             }
 
             constexpr int error(test_error<lexy::exhausted_choice> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -258,12 +258,12 @@ TEST_CASE("dsl::recurse")
 
             int error(inner, int)
             {
-                assert(false);
+                CONSTEXPR_CHECK(false);
                 return -1;
             }
             int error(outer, int)
             {
-                assert(false);
+                CONSTEXPR_CHECK(false);
                 return -1;
             }
         };
@@ -302,12 +302,12 @@ TEST_CASE("dsl::recurse")
 
             int error(prod, int)
             {
-                assert(false);
+                CONSTEXPR_CHECK(false);
                 return -1;
             }
             int error(int)
             {
-                assert(false);
+                CONSTEXPR_CHECK(false);
                 return -1;
             }
         };

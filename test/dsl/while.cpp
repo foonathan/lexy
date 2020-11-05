@@ -47,7 +47,7 @@ TEST_CASE("dsl::while_()")
 
             constexpr int success(const char* cur)
             {
-                assert((cur - str) % 3 == 0);
+                CONSTEXPR_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
         };
@@ -101,13 +101,13 @@ TEST_CASE("dsl::while_()")
 
             constexpr int success(const char* cur)
             {
-                assert((cur - str) % 3 == 0);
+                CONSTEXPR_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "bc");
+                CONSTEXPR_CHECK(e.string() == "bc");
                 return -1;
             }
         };
@@ -188,13 +188,13 @@ TEST_CASE("dsl::while_()")
 
             constexpr int success(const char* cur)
             {
-                assert((cur - str) % 3 == 0);
+                CONSTEXPR_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "bc");
+                CONSTEXPR_CHECK(e.string() == "bc");
                 return -1;
             }
         };

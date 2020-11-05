@@ -31,14 +31,14 @@ TEST_CASE("dsl::operator!")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::unexpected> e)
             {
-                assert(e.begin() == str);
-                assert(e.end() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
         };
@@ -61,14 +61,14 @@ TEST_CASE("dsl::operator!")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<tag> e)
             {
-                assert(e.begin() == str);
-                assert(e.end() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
         };

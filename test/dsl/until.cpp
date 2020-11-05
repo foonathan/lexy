@@ -46,8 +46,8 @@ TEST_CASE("dsl::until()")
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.position() == lexy::_detail::string_view(str).end());
-                assert(e.string() == "!");
+                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.string() == "!");
                 return -1;
             }
         };
@@ -130,8 +130,8 @@ TEST_CASE("dsl::until(peek())")
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.position() == lexy::_detail::string_view(str).end());
-                assert(e.string() == "!");
+                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.string() == "!");
                 return -1;
             }
         };

@@ -18,8 +18,8 @@ TEST_CASE("dsl::position")
 
         constexpr int success(const char* cur, const char* pos)
         {
-            assert(str == cur);
-            assert(cur == pos);
+            CONSTEXPR_CHECK(str == cur);
+            CONSTEXPR_CHECK(cur == pos);
             return 0;
         }
     };

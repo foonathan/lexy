@@ -34,7 +34,7 @@ TEST_CASE("dsl::context_*")
             }
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "-");
+                CONSTEXPR_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -77,7 +77,7 @@ TEST_CASE("dsl::context_*")
             }
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "-");
+                CONSTEXPR_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -119,7 +119,7 @@ TEST_CASE("dsl::context_*")
             }
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "-");
+                CONSTEXPR_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -185,7 +185,7 @@ TEST_CASE("dsl::context_*")
             }
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "-");
+                CONSTEXPR_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -229,7 +229,7 @@ TEST_CASE("dsl::context_*")
             }
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "-");
+                CONSTEXPR_CHECK(e.string() == "-");
                 return -2;
             }
         };

@@ -40,7 +40,7 @@ TEST_CASE("rule: parse_state")
 
             constexpr int success(const char* cur)
             {
-                assert(str == cur);
+                CONSTEXPR_CHECK(str == cur);
                 return 0;
             }
         };
@@ -105,7 +105,7 @@ TEST_CASE("rule: parse_state_member")
 
             constexpr int success(const char* cur)
             {
-                assert(str == cur);
+                CONSTEXPR_CHECK(str == cur);
                 return 0;
             }
         };

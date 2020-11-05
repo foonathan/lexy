@@ -4,6 +4,7 @@
 
 #include <lexy/dsl/code_point.hpp>
 
+#include "verify.hpp"
 #include <doctest.h>
 #include <lexy/input/string_input.hpp>
 #include <lexy/parse.hpp>
@@ -22,7 +23,7 @@ TEST_CASE("dsl::code_point")
             return int(reader.cur() - input.begin());
 
         auto error = atom.error(reader, input.begin());
-        assert(error.position() == input.begin());
+        CONSTEXPR_CHECK(error.position() == input.begin());
         return -int(reader.cur() - input.begin()) - 1;
     };
 

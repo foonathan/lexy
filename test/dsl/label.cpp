@@ -21,7 +21,7 @@ TEST_CASE("dsl::label")
 
             constexpr int success(const char* cur, lexy::label<lab>)
             {
-                assert(str == cur);
+                CONSTEXPR_CHECK(str == cur);
                 return 0;
             }
         };
@@ -44,13 +44,13 @@ TEST_CASE("dsl::label")
 
             constexpr int success(const char* cur, lexy::label<lab>)
             {
-                assert(cur == str + 3);
+                CONSTEXPR_CHECK(cur == str + 3);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -73,12 +73,12 @@ TEST_CASE("dsl::label")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
             constexpr int success(const char* cur, lexy::label<lab>)
             {
-                assert(cur == str + 3);
+                CONSTEXPR_CHECK(cur == str + 3);
                 return 1;
             }
         };
@@ -103,7 +103,7 @@ TEST_CASE("dsl::id")
         constexpr int success(const char* cur, lexy::id<0>)
         {
             static_assert(lexy::id<0>{} == 0);
-            assert(str == cur);
+            CONSTEXPR_CHECK(str == cur);
             return 0;
         }
     };
@@ -129,18 +129,18 @@ struct member_macro_callback
     template <typename Fn>
     constexpr int success(const char* cur, lexy::member<Fn>)
     {
-        assert(cur == str + 3);
+        CONSTEXPR_CHECK(cur == str + 3);
 
         test_type tt{};
         Fn()(tt, 42);
-        assert(tt.member == 42);
+        CONSTEXPR_CHECK(tt.member == 42);
 
         return 0;
     }
 
     constexpr int error(test_error<lexy::expected_literal> e)
     {
-        assert(e.string() == "abc");
+        CONSTEXPR_CHECK(e.string() == "abc");
         return -1;
     }
 };

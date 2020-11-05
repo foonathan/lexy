@@ -46,8 +46,8 @@ TEST_CASE("dsl::operator-")
 
             constexpr int error(test_error<lexy::minus_failure> e)
             {
-                assert(e.begin() == str);
-                assert(e.end() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
         };

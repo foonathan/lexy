@@ -49,12 +49,12 @@ TEST_CASE("dsl::operator/")
                 else if (match == "def")
                     return 2;
                 else
-                    assert(false);
+                    CONSTEXPR_CHECK(false);
             }
 
             constexpr int error(test_error<lexy::exhausted_alternatives> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };

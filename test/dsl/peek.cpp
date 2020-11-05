@@ -31,14 +31,14 @@ TEST_CASE("dsl::peek()")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.string() == "abc");
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -81,8 +81,8 @@ TEST_CASE("dsl::peek()")
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.string() == "abc");
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -122,13 +122,13 @@ TEST_CASE("dsl::peek(!)")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::unexpected> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };

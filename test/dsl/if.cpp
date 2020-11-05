@@ -40,7 +40,7 @@ TEST_CASE("dsl::if_()")
                     return 0;
                 else
                 {
-                    assert(cur - str == 3);
+                    CONSTEXPR_CHECK(cur - str == 3);
                     return 1;
                 }
             }
@@ -87,14 +87,14 @@ TEST_CASE("dsl::if_()")
                     return 0;
                 else
                 {
-                    assert(cur - str == 3);
+                    CONSTEXPR_CHECK(cur - str == 3);
                     return 1;
                 }
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "bc");
+                CONSTEXPR_CHECK(e.string() == "bc");
                 return -1;
             }
         };

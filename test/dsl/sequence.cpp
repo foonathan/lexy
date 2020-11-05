@@ -57,8 +57,8 @@ TEST_CASE("dsl::operator+")
             constexpr int success(const char*                  cur, lexy::label<lab>,
                                   lexy::lexeme_for<test_input> lex)
             {
-                assert(str + 3 == cur);
-                assert(*lex.begin() == 'c');
+                CONSTEXPR_CHECK(str + 3 == cur);
+                CONSTEXPR_CHECK(*lex.begin() == 'c');
                 return 0;
             }
 
@@ -71,7 +71,7 @@ TEST_CASE("dsl::operator+")
                 else if (e.string() == "c")
                     return -3;
 
-                assert(false);
+                CONSTEXPR_CHECK(false);
             }
         };
 

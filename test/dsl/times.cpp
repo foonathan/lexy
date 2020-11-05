@@ -80,15 +80,15 @@ TEST_CASE("rule: times")
 
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
-                assert(cur - str == 6);
-                assert(value[0] == 0);
-                assert(value[1] == 0);
+                CONSTEXPR_CHECK(cur - str == 6);
+                CONSTEXPR_CHECK(value[0] == 0);
+                CONSTEXPR_CHECK(value[1] == 0);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -112,9 +112,9 @@ TEST_CASE("rule: times")
 
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
-                assert(cur - str == 7);
-                assert(value[0] == 0);
-                assert(value[1] == 0);
+                CONSTEXPR_CHECK(cur - str == 7);
+                CONSTEXPR_CHECK(value[0] == 0);
+                CONSTEXPR_CHECK(value[1] == 0);
                 return 0;
             }
 
@@ -125,7 +125,7 @@ TEST_CASE("rule: times")
                 else if (e.string() == ",")
                     return -2;
                 else
-                    assert(false);
+                    CONSTEXPR_CHECK(false);
             }
         };
 
@@ -155,15 +155,15 @@ TEST_CASE("rule: times")
 
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
-                assert(value[0] == 0);
-                assert(value[1] == 0);
+                CONSTEXPR_CHECK(value[0] == 0);
+                CONSTEXPR_CHECK(value[1] == 0);
 
                 if (cur - str == 7)
                     return 0;
                 else if (cur - str == 8)
                     return 1; // trailing sep
                 else
-                    assert(false);
+                    CONSTEXPR_CHECK(false);
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
@@ -173,7 +173,7 @@ TEST_CASE("rule: times")
                 else if (e.string() == ",")
                     return -2;
                 else
-                    assert(false);
+                    CONSTEXPR_CHECK(false);
             }
         };
 

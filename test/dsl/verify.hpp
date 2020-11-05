@@ -5,7 +5,6 @@
 #ifndef TEST_DSL_VERIFY_HPP_INCLUDED
 #define TEST_DSL_VERIFY_HPP_INCLUDED
 
-#include <cassert>
 #include <doctest.h>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
@@ -13,6 +12,13 @@
 #include <lexy/result.hpp>
 
 #include "../test_encoding.hpp"
+
+[[noreturn]] inline bool constexpr_check_failure()
+{
+    throw 0;
+}
+
+#define CONSTEXPR_CHECK(x) ((x) ? true : constexpr_check_failure())
 
 //=== atom ===//
 template <typename Error>
@@ -71,7 +77,7 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
         return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos),
                                              Atom::error(reader, pos));
     else
-        assert(false);
+        CONSTEXPR_CHECK(false);
 }
 
 //=== pattern ===//

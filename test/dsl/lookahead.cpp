@@ -42,13 +42,13 @@ TEST_CASE("dsl::lookahead()")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::lookahead_failure> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };

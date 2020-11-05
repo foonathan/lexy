@@ -32,7 +32,7 @@ TEST_CASE("dsl::error")
 
             constexpr int error(test_error<tag> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -56,13 +56,13 @@ TEST_CASE("dsl::error")
             {
                 if (e.begin() != e.end())
                 {
-                    assert(e.begin() == str);
-                    assert(e.end() == lexy::_detail::string_view(str).end());
+                    CONSTEXPR_CHECK(e.begin() == str);
+                    CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
                     return -1;
                 }
                 else
                 {
-                    assert(e.position() == str);
+                    CONSTEXPR_CHECK(e.position() == str);
                     return -2;
                 }
             }
@@ -100,13 +100,13 @@ TEST_CASE("dsl::require")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<tag> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -143,13 +143,13 @@ TEST_CASE("dsl::prevent")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
 
             constexpr int error(test_error<tag> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -189,13 +189,13 @@ TEST_CASE("dsl::try_")
 
             constexpr int success(const char* cur)
             {
-                assert(cur - str == 3);
+                CONSTEXPR_CHECK(cur - str == 3);
                 return 0;
             }
 
             constexpr int error(test_error<error> e)
             {
-                assert(e.position() == str);
+                CONSTEXPR_CHECK(e.position() == str);
                 return -1;
             }
         };

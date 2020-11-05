@@ -32,13 +32,13 @@ TEST_CASE("rule: atom")
 
             constexpr int success(const char* cur)
             {
-                assert(cur - str == 3);
+                CONSTEXPR_CHECK(cur - str == 3);
                 return 0;
             }
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -60,7 +60,7 @@ TEST_CASE("rule: atom")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
         };

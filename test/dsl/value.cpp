@@ -18,7 +18,7 @@ TEST_CASE("dsl::value_c")
 
         constexpr int success(const char* cur, int i)
         {
-            assert(str == cur);
+            CONSTEXPR_CHECK(str == cur);
             return i;
         }
     };
@@ -50,7 +50,7 @@ TEST_CASE("dsl::value_f")
 
         constexpr int success(const char* cur, int i)
         {
-            assert(str == cur);
+            CONSTEXPR_CHECK(str == cur);
             return i;
         }
     };
@@ -74,7 +74,7 @@ TEST_CASE("dsl::value_t")
 
         constexpr int success(const char* cur, int i)
         {
-            assert(str == cur);
+            CONSTEXPR_CHECK(str == cur);
             return i;
         }
     };
@@ -102,8 +102,8 @@ TEST_CASE("dsl::value_str")
 
         constexpr int success(const char* cur, const char* value, std::size_t length)
         {
-            assert(str == cur);
-            assert(lexy::_detail::string_view(value, length) == "abc");
+            CONSTEXPR_CHECK(str == cur);
+            CONSTEXPR_CHECK(lexy::_detail::string_view(value, length) == "abc");
             return 0;
         }
     };

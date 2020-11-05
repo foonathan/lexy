@@ -23,7 +23,7 @@ TEST_CASE("dsl::plus_sign")
 
         constexpr int error(test_error<lexy::expected_char_class> e)
         {
-            assert(e.character_class() == lexy::_detail::string_view("EOF"));
+            CONSTEXPR_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
             return 0;
         }
     };
@@ -52,7 +52,7 @@ TEST_CASE("dsl::minus_sign")
 
         constexpr int error(test_error<lexy::expected_char_class> e)
         {
-            assert(e.character_class() == lexy::_detail::string_view("EOF"));
+            CONSTEXPR_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
             return 0;
         }
     };
@@ -76,13 +76,13 @@ TEST_CASE("dsl::sign")
 
         constexpr int success(const char* cur, int i)
         {
-            assert(*cur == '\0');
+            CONSTEXPR_CHECK(*cur == '\0');
             return i;
         }
 
         constexpr int error(test_error<lexy::expected_char_class> e)
         {
-            assert(e.character_class() == lexy::_detail::string_view("EOF"));
+            CONSTEXPR_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
             return 0;
         }
     };

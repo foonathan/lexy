@@ -19,13 +19,13 @@ TEST_CASE("dsl::operator>>")
 
         constexpr int success(const char* cur, lexy::label<lab>)
         {
-            assert(str + 1 == cur);
+            CONSTEXPR_CHECK(str + 1 == cur);
             return 0;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.string() == "a");
+            CONSTEXPR_CHECK(e.string() == "a");
             return -1;
         }
     };

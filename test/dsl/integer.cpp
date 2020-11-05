@@ -92,9 +92,9 @@ TEST_CASE("dsl::integer")
 
             constexpr int error(test_error<lexy::integer_overflow> e)
             {
-                assert(e.message() == "integer overflow");
-                assert(e.begin() == str);
-                assert(e.end() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.message() == "integer overflow");
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
             constexpr int error(test_error<lexy::expected_char_class>)
@@ -246,15 +246,15 @@ TEST_CASE("dsl::code_point_id")
 
         constexpr int success(const char* cur, lexy::code_point cp)
         {
-            assert(cur == str + 6);
+            CONSTEXPR_CHECK(cur == str + 6);
             return int(cp.value());
         }
 
         constexpr int error(test_error<lexy::integer_overflow> e)
         {
-            assert(e.message() == "integer overflow");
-            assert(e.begin() == str);
-            assert(e.end() == lexy::_detail::string_view(str).end());
+            CONSTEXPR_CHECK(e.message() == "integer overflow");
+            CONSTEXPR_CHECK(e.begin() == str);
+            CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
             return -1;
         }
         constexpr int error(test_error<lexy::expected_char_class>)

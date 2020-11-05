@@ -44,14 +44,14 @@ TEST_CASE("dsl::combination()")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(count == 2);
-            assert(cur - str == 3);
+            CONSTEXPR_CHECK(count == 2);
+            CONSTEXPR_CHECK(cur - str == 3);
             return *str;
         }
 
         constexpr int error(test_error<lexy::combination_duplicate> e)
         {
-            assert(e.end() - e.begin() == 1);
+            CONSTEXPR_CHECK(e.end() - e.begin() == 1);
             return -1;
         }
         constexpr int error(test_error<lexy::exhausted_choice>)
@@ -130,13 +130,13 @@ TEST_CASE("dsl::partial_combination()")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == count);
+            CONSTEXPR_CHECK(cur - str == count);
             return count;
         }
 
         constexpr int error(test_error<lexy::combination_duplicate> e)
         {
-            assert(e.end() - e.begin() == 1);
+            CONSTEXPR_CHECK(e.end() - e.begin() == 1);
             return -1;
         }
     };

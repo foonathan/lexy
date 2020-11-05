@@ -31,12 +31,12 @@ TEST_CASE("dsl::make_list()")
 
                 constexpr void operator()(lexy::id<0>)
                 {
-                    assert(count == 0);
+                    CONSTEXPR_CHECK(count == 0);
                     ++count;
                 }
                 constexpr void operator()(lexy::id<2>, lexy::id<3>)
                 {
-                    assert(count == 1);
+                    CONSTEXPR_CHECK(count == 1);
                     ++count;
                 }
 
@@ -50,8 +50,8 @@ TEST_CASE("dsl::make_list()")
 
         constexpr int success(const char* cur, lexy::id<1>, int count)
         {
-            assert(count == 2);
-            assert(cur - str == 3);
+            CONSTEXPR_CHECK(count == 2);
+            CONSTEXPR_CHECK(cur - str == 3);
             return 0;
         }
 
@@ -101,14 +101,14 @@ TEST_CASE("dsl::list()")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == 3 * count);
+            CONSTEXPR_CHECK(cur - str == 3 * count);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -159,14 +159,14 @@ TEST_CASE("dsl::list() sep")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == 4 * count - 1);
+            CONSTEXPR_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -211,7 +211,7 @@ TEST_CASE("dsl::list() sep capture")
                 }
                 constexpr void operator()(lexy::lexeme_for<test_input> lex)
                 {
-                    assert(lex.size() == 1);
+                    CONSTEXPR_CHECK(lex.size() == 1);
                     ++count;
                 }
 
@@ -225,14 +225,14 @@ TEST_CASE("dsl::list() sep capture")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == count);
+            CONSTEXPR_CHECK(cur - str == count);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -287,16 +287,16 @@ TEST_CASE("dsl::list() trailing_sep")
         constexpr int success(const char* cur, int count)
         {
             if (cur[-1] == ',')
-                assert(cur - str == 4 * count);
+                CONSTEXPR_CHECK(cur - str == 4 * count);
             else
-                assert(cur - str == 4 * count - 1);
+                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -345,7 +345,7 @@ TEST_CASE("dsl::list() trailing_sep capture")
                 }
                 constexpr void operator()(lexy::lexeme_for<test_input> lex)
                 {
-                    assert(lex.size() == 1);
+                    CONSTEXPR_CHECK(lex.size() == 1);
                     ++count;
                 }
 
@@ -359,14 +359,14 @@ TEST_CASE("dsl::list() trailing_sep capture")
 
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == count);
+            CONSTEXPR_CHECK(cur - str == count);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -423,19 +423,19 @@ TEST_CASE("dsl::opt(list())")
 
         constexpr int success(const char* cur)
         {
-            assert(cur == str);
+            CONSTEXPR_CHECK(cur == str);
             return 0;
         }
         constexpr int success(const char* cur, int count)
         {
-            assert(cur - str == 3 * count);
+            CONSTEXPR_CHECK(cur - str == 3 * count);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -487,16 +487,16 @@ TEST_CASE("dsl::opt(list()) sep")
         constexpr int success(const char* cur, int count)
         {
             if (count == 0)
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
             else
-                assert(cur - str == 4 * count - 1);
+                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -552,18 +552,18 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
         constexpr int success(const char* cur, int count)
         {
             if (count == 0)
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
             else if (cur[-1] == ',')
-                assert(cur - str == 4 * count);
+                CONSTEXPR_CHECK(cur - str == 4 * count);
             else
-                assert(cur - str == 4 * count - 1);
+                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
         constexpr int error(test_error<lexy::expected_literal> e)
         {
-            assert(e.position() == str);
-            assert(e.string() == "abc");
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
             return -1;
         }
     };

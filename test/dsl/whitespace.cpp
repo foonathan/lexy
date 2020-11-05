@@ -47,7 +47,7 @@ TEST_CASE("dsl::whitespaced()")
 
             constexpr int error(test_error<lexy::expected_literal> e)
             {
-                assert(e.string() == "abc");
+                CONSTEXPR_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -78,7 +78,7 @@ TEST_CASE("dsl::whitespaced()")
 
             constexpr int success(const char* cur)
             {
-                assert(cur == str);
+                CONSTEXPR_CHECK(cur == str);
                 return 0;
             }
             constexpr int success(const char* cur, lexy::id<0>)
