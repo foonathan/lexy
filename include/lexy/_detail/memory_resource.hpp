@@ -7,7 +7,6 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
-#include <memory_resource>
 #include <new>
 
 #if 0
