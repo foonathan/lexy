@@ -9,6 +9,7 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/separator.hpp>
 #include <lexy/lexeme.hpp>
+#include <lexy/result.hpp>
 
 namespace lexyd
 {
@@ -108,6 +109,41 @@ LEXY_CONSTEVAL auto make_list(Rule)
 
 namespace lexyd
 {
+// The handler used for parsing the list item.
+// It will package any error nicely and return it to us.
+template <typename Handler>
+struct _list_item_handler
+{
+    Handler& _handler;
+
+    using result_type = lexy::optional_error<typename Handler::result_type>;
+
+    template <typename SubProduction, typename Reader>
+    constexpr auto sub_handler(const Reader& reader)
+    {
+        return _handler.template sub_handler<SubProduction>(reader);
+    }
+
+    constexpr auto list_sink()
+    {
+        return _handler.sink();
+    }
+
+    template <typename Reader, typename Error>
+    constexpr auto error(const Reader& reader, Error&& error) &&
+    {
+        // We report errors to the normal handler.
+        return result_type(lexy::result_error, LEXY_MOV(_handler).error(reader, LEXY_FWD(error)));
+    }
+
+    template <typename... Args>
+    constexpr auto value(Args&&...) &&
+    {
+        // We create a default constructed result.
+        return result_type(lexy::result_value);
+    }
+};
+
 // Parses the next item if there is one.
 template <typename Item, typename Sep, typename NextParser>
 struct _list_loop_parser;
@@ -118,18 +154,20 @@ struct _list_loop_parser<Item, void, NextParser> // no separator
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
         typename Handler::result_type
     {
+        using continuation = _list_item_done<lexy::final_parser, Args...>;
+        _list_item_handler<Handler> item_handler{handler};
+
         // We parse other items while the condition matches.
-        if (Item::condition_matcher::match(reader))
+        while (Item::condition_matcher::match(reader))
         {
-            // We parse item, then the done continuation, and then we jump back here.
-            using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template then_parser<continuation>::parse(handler, reader, sink,
-                                                                   LEXY_FWD(args)...);
+            auto result = Item::template then_parser<continuation>::parse(item_handler, reader,
+                                                                          sink, LEXY_FWD(args)...);
+            if (result.has_error())
+                return LEXY_MOV(result).error();
         }
-        else
-        {
-            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
-        }
+
+        // We're done with the list, finish by finalizing the sink.
+        return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
     }
 };
 template <typename Item, typename Sep, bool Capture, typename NextParser>
@@ -139,21 +177,26 @@ struct _list_loop_parser<Item, _sep<Sep, Capture>, NextParser> // normal separat
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
         typename Handler::result_type
     {
-        // We parse other items while the separator matches.
-        if (auto begin = reader.cur(); Sep::matcher::match(reader))
+        using continuation = _list_item_done<lexy::final_parser, Args...>;
+        _list_item_handler<Handler> item_handler{handler};
+
+        while (true)
         {
+            auto begin = reader.cur();
+            if (!Sep::matcher::match(reader))
+                // No separator, done with the list.
+                break;
+
             if constexpr (Capture)
                 sink(lexy::lexeme(reader, begin));
 
-            // We parse item, then the done continuation, and then we jump back here.
-            using continuation = _list_item_done<_list_loop_parser, Args...>;
-            return Item::template parser<continuation>::parse(handler, reader, sink,
-                                                              LEXY_FWD(args)...);
+            auto result = Item::template parser<continuation>::parse(item_handler, reader, sink,
+                                                                     LEXY_FWD(args)...);
+            if (result.has_error())
+                return LEXY_MOV(result).error();
         }
-        else
-        {
-            return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
-        }
+
+        return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
     }
 };
 template <typename Item, typename Sep, bool Capture, typename NextParser>
@@ -163,25 +206,29 @@ struct _list_loop_parser<Item, _tsep<Sep, Capture>, NextParser> // trailing sepa
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Sink& sink, Args&&... args) ->
         typename Handler::result_type
     {
-        // We parse other items while the separator matches.
-        if (auto begin = reader.cur(); Sep::matcher::match(reader))
+        using continuation = _list_item_done<lexy::final_parser, Args...>;
+        _list_item_handler<Handler> item_handler{handler};
+
+        while (true)
         {
+            auto begin = reader.cur();
+            if (!Sep::matcher::match(reader))
+                // No separator, done with the list.
+                break;
+
             if constexpr (Capture)
                 sink(lexy::lexeme(reader, begin));
 
-            // ... and the condition matches.
-            // If only the separator matches but not the condition, this means we've just read the
-            // trailing separator.
-            if (Item::condition_matcher::match(reader))
-            {
-                // We parse item, then the done continuation, and then we jump back here.
-                using continuation = _list_item_done<_list_loop_parser, Args...>;
-                return Item::template then_parser<continuation>::parse(handler, reader, sink,
-                                                                       LEXY_FWD(args)...);
-            }
+            if (!Item::condition_matcher::match(reader))
+                // The condition didn't match, the separator above was the trailing one.
+                break;
+
+            auto result = Item::template then_parser<continuation>::parse(item_handler, reader,
+                                                                          sink, LEXY_FWD(args)...);
+            if (result.has_error())
+                return LEXY_MOV(result).error();
         }
 
-        // One of the ifs above failed.
         return _list_done<NextParser>::parse(handler, reader, sink, LEXY_FWD(args)...);
     }
 };

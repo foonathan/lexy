@@ -151,5 +151,17 @@ TEST_CASE("optional_error")
     CHECK(val.has_value());
     CHECK(!val.has_error());
     CHECK(val.has_void_error());
+
+    constexpr lexy::optional_value<int> val_implicit(42);
+    CHECK(val_implicit.has_value());
+    CHECK(!val_implicit.has_error());
+    CHECK(val_implicit.has_void_error());
+    CHECK(val_implicit.value() == 42);
+
+    constexpr lexy::optional_error<int> err_implicit(42);
+    CHECK(!err_implicit.has_value());
+    CHECK(err_implicit.has_error());
+    CHECK(err_implicit.has_void_value());
+    CHECK(err_implicit.error() == 42);
 }
 

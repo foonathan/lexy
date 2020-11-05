@@ -132,6 +132,13 @@ namespace lexy
 template <typename T, typename E>
 class result : _result_storage<T, E>
 {
+    static constexpr auto optional_tag = [] {
+        if constexpr (std::is_void_v<T>)
+            return result_error;
+        else
+            return result_value;
+    }();
+
 public:
     using value_type = typename _result_storage<T, E>::value_type;
     using error_type = typename _result_storage<T, E>::error_type;
@@ -148,12 +155,19 @@ public:
     : _result_storage<T, E>(result_error, LEXY_FWD(args)...)
     {}
 
-    /// Convertion from an errored result with a different value type.
+    /// Conversion from an errored result with a different value type.
     template <typename U>
     constexpr explicit result(const result<U, E>& other) : result(result_error, other.error())
     {}
     template <typename U>
     constexpr explicit result(result<U, E>&& other) : result(result_error, LEXY_MOV(other).error())
+    {}
+
+    /// Construct a value without tag if we don't have an error.
+    template <typename Arg, typename = std::enable_if_t<
+                                (std::is_constructible_v<T, Arg> || std::is_constructible_v<E, Arg>)
+                                || (std::is_void_v<T> || std::is_void_v<E>)>>
+    constexpr explicit result(Arg&& arg) : result(optional_tag, LEXY_FWD(arg))
     {}
 
     //=== access ===//
