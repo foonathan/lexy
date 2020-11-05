@@ -34,7 +34,7 @@ TEST_CASE("dsl::delimited()")
 
                     constexpr void operator()(lexy::lexeme_for<test_input> lex)
                     {
-                        count += lex.size();
+                        count += int(lex.size());
                     }
 
                     constexpr int finish() &&
@@ -110,7 +110,7 @@ TEST_CASE("dsl::delimited()")
 
                     constexpr void operator()(lexy::lexeme_for<test_input> lex)
                     {
-                        count += lex.size();
+                        count += int(lex.size());
                     }
 
                     constexpr int finish() &&
@@ -209,7 +209,7 @@ TEST_CASE("dsl::delimited with escape")
 
                 constexpr void operator()(lexy::lexeme_for<test_input> lex)
                 {
-                    count += lex.size();
+                    count += int(lex.size());
                 }
 
                 constexpr int finish() &&
