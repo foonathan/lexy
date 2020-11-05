@@ -8,11 +8,12 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/loop.hpp>
 
 namespace lexyd
 {
 template <typename Condition, typename Then>
-struct _while : rule_base
+struct _whl : rule_base
 {
     static constexpr auto has_matcher = Then::has_matcher;
 
@@ -35,45 +36,36 @@ struct _while : rule_base
         }
     };
 
-    template <typename NextParser>
-    struct parser
+    struct _rule : rule_base
     {
-        template <typename... Args>
-        struct _continuation
-        {
-            template <typename Handler, typename Reader, typename... Extra>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args, Extra&&...)
-                -> typename Handler::result_type
-            {
-                static_assert(sizeof...(Extra) == 0, "while_() must not create values");
+        static constexpr auto has_matcher = false;
 
-                // After we've parsed then, we try again.
-                return parser::parse(handler, reader, LEXY_FWD(args)...);
+        template <typename NextParser>
+        struct parser
+        {
+            template <typename Handler, typename Reader, typename... Args>
+            LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader,
+                                     Args&&... args) -> typename _loop_handler<Handler>::result_type
+            {
+                if (!Condition::matcher::match(reader))
+                    return LEXY_MOV(handler).break_();
+
+                return Then::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
             }
         };
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            if (Condition::matcher::match(reader))
-                // Try another iteration.
-                return Then::template parser<_continuation<Args...>>::parse(handler, reader,
-                                                                            LEXY_FWD(args)...);
-            else
-                // Continue with next parser.
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-        }
     };
+
+    template <typename NextParser>
+    using parser = typename _loop<_rule>::template parser<NextParser>;
 };
 
-template <typename Condition>
-struct _while<Condition, void> : atom_base<_while<Condition, void>>
+template <typename Pattern>
+struct _whl<Pattern, void> : atom_base<_whl<Pattern, void>>
 {
     template <typename Reader>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        while (Condition::matcher::match(reader))
+        while (Pattern::matcher::match(reader))
         {
         }
         return true;
@@ -83,8 +75,26 @@ struct _while<Condition, void> : atom_base<_while<Condition, void>>
     LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
 };
 
+/// Matches the pattern branch rule as often as possible.
+template <typename Rule>
+LEXY_CONSTEVAL auto while_(Rule rule)
+{
+    static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
+
+    if constexpr (lexy::is_pattern<Rule>)
+        return _whl<Rule, void>{};
+    else
+    {
+        auto b = branch(rule);
+        return _whl<decltype(b.condition()), decltype(b.then())>{};
+    }
+}
+} // namespace lexyd
+
+namespace lexyd
+{
 template <typename... R>
-struct _while_chc : rule_base
+struct _whlc : rule_base
 {
     using _choice                     = _chc<R...>;
     static constexpr auto has_matcher = _choice::has_matcher;
@@ -130,70 +140,25 @@ struct _while_chc : rule_base
     };
 
     template <typename NextParser>
-    struct parser
-    {
-        template <typename... Args>
-        struct _continuation
-        {
-            template <typename Handler, typename Reader, typename... Extra>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args, Extra&&...)
-                -> typename Handler::result_type
-            {
-                static_assert(sizeof...(Extra) == 0, "while_() must not create values");
-
-                // After we've parsed then, we try again.
-                return parser::parse(handler, reader, LEXY_FWD(args)...);
-            }
-        };
-
-        struct _break : rule_base
-        {
-            static constexpr auto has_matcher = false;
-
-            // We ignore the prescribed continuation and go to NextParser instead.
-            template <typename>
-            using parser = NextParser;
-        };
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            // We parse a choice that continues to the continuation which jumps back here again.
-            // However, if the choice didn't match, we parse _next_rule, which jumps to NextParser
-            // instead.
-            auto rule    = _choice{} | else_ >> _break{};
-            using parser = typename decltype(rule)::template parser<_continuation<Args...>>;
-            return parser::parse(handler, reader, LEXY_FWD(args)...);
-        }
-    };
+    using parser =
+        typename decltype(loop(_choice{} | else_ >> break_))::template parser<NextParser>;
 };
 
-/// Matches the pattern branch rule as often as possible.
-template <typename Rule>
-LEXY_CONSTEVAL auto while_(Rule rule)
-{
-    static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
-
-    if constexpr (lexy::is_pattern<Rule>)
-        return _while<Rule, void>{};
-    else
-    {
-        auto as_branch = branch(rule);
-        return _while<decltype(as_branch.condition()), decltype(as_branch.then())>{};
-    }
-}
+/// Matches the choice as often as possible.
 template <typename... R>
 LEXY_CONSTEVAL auto while_(_chc<R...>)
 {
-    return _while_chc<R...>{};
+    return _whlc<R...>{};
 }
+} // namespace lexyd
 
+namespace lexyd
+{
 /// Matches the rule at least once, then as often as possible.
 template <typename Rule>
 LEXY_CONSTEVAL auto while_one(Rule rule)
 {
-    if constexpr (lexy::is_pattern<Rule>)
+    if constexpr (lexy::is_branch_rule<Rule>)
         return rule >> while_(rule);
     else
         return rule + while_(rule);
@@ -203,7 +168,7 @@ LEXY_CONSTEVAL auto while_one(Rule rule)
 template <typename Then, typename Condition>
 LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
 {
-    if constexpr (lexy::is_pattern<Then>)
+    if constexpr (lexy::is_branch_rule<Then>)
         return then >> while_(condition >> then);
     else
         return then + while_(condition >> then);
@@ -211,3 +176,4 @@ LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
 } // namespace lexyd
 
 #endif // LEXY_DSL_WHILE_HPP_INCLUDED
+
