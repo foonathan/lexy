@@ -56,7 +56,7 @@ struct _lit : atom_base<_lit<String>>
     {
         CharT array[String::get().size()];
 
-        LEXY_CONSTEVAL _literal_storage_t()
+        LEXY_CONSTEVAL _literal_storage_t() : array()
         {
             auto i = 0u;
             for (auto c : String::get())
@@ -69,7 +69,7 @@ struct _lit : atom_base<_lit<String>>
         }
     };
     template <typename CharT>
-    static constexpr _literal_storage_t<CharT> _literal_storage;
+    static constexpr _literal_storage_t<CharT> _literal_storage = {};
 
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)

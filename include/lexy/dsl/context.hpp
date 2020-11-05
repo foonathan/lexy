@@ -27,7 +27,7 @@ struct _context
     template <typename... Args>
     static constexpr auto get(Args&&... args)
     {
-        _context<Reader> result;
+        _context<Reader> result{};
         // We're immediately invoking a lambda that sets result if the type matches for each
         // argument.
         (([&](auto&& arg) {
