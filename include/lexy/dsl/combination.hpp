@@ -8,6 +8,7 @@
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace lexy
@@ -26,6 +27,8 @@ namespace lexyd
 template <typename Reader, std::size_t N, typename Sink>
 struct _comb_state
 {
+    static constexpr auto max_count = N;
+
     // Whether or not the rule with the specified index was already matched.
     bool handled[N];
     // How many we already did.
@@ -36,40 +39,9 @@ struct _comb_state
     Sink sink;
 };
 
-// Loops back if necessary.
-template <typename CombChoice, typename NextParser>
-struct _comb_loop_parser
-{
-    template <typename Handler, typename Reader, std::size_t N, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, _comb_state<Reader, N, Sink>& state,
-                             Args&&... args) -> typename Handler::result_type
-    {
-        if (state.count == N)
-        {
-            // We've parsed each alternative exactly once, so we're done.
-            if constexpr (std::is_same_v<typename Sink::return_type, void>)
-            {
-                LEXY_MOV(state.sink).finish();
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(state.sink).finish());
-            }
-        }
-        else
-        {
-            // Parse one alternative, then recurse back.
-            return CombChoice::template parser<_comb_loop_parser>::parse(handler, reader, state,
-                                                                         LEXY_FWD(args)...);
-        }
-    }
-};
-
 // Added at the end of each branch to update the combination state.
 template <typename E, std::size_t Idx, typename... PrevArgs>
-struct _comb_rule : rule_base
+struct _comb_it : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -77,20 +49,22 @@ struct _comb_rule : rule_base
     struct parser
     {
         template <typename Handler, typename Reader, std::size_t N, typename Sink, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader,
+        LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader,
                                  _comb_state<Reader, N, Sink>& state, PrevArgs&&... pargs,
-                                 Args&&... args) -> typename Handler::result_type
+                                 Args&&... args) -> typename _loop_handler<Handler>::result_type
         {
             if (!state.handled[Idx])
             {
                 state.handled[Idx] = true;
                 state.count++;
                 state.pos = reader.cur();
-
                 if constexpr (sizeof...(Args) > 0)
                     state.sink(LEXY_FWD(args)...);
 
-                return NextParser::parse(handler, reader, state, LEXY_FWD(pargs)...);
+                if (state.count == state.max_count)
+                    return LEXY_MOV(handler).break_();
+                else
+                    return NextParser::parse(handler, reader, state, LEXY_FWD(pargs)...);
             }
             else
             {
@@ -102,7 +76,7 @@ struct _comb_rule : rule_base
     };
 };
 
-template <typename E, typename... R>
+template <bool Partial, typename E, typename... R>
 struct _comb : rule_base
 {
     static constexpr auto has_matcher = false;
@@ -113,8 +87,31 @@ struct _comb : rule_base
         template <typename... Args, std::size_t... Idx>
         static LEXY_CONSTEVAL auto _comb_choice(lexy::_detail::index_sequence<Idx...>)
         {
-            return ((R{} >> _comb_rule<E, Idx, Args...>{}) | ...);
+            if constexpr (Partial)
+                return ((R{} >> _comb_it<E, Idx, Args...>{}) | ... | (else_ >> break_));
+            else
+                return ((R{} >> _comb_it<E, Idx, Args...>{}) | ...);
         }
+
+        struct _continuation
+        {
+            template <typename Handler, typename Reader, typename Sink, typename... Args>
+            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader,
+                                     _comb_state<Reader, sizeof...(R), Sink>& state, Args&&... args)
+                -> typename Handler::result_type
+            {
+                if constexpr (std::is_same_v<typename Sink::return_type, void>)
+                {
+                    LEXY_MOV(state.sink).finish();
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                }
+                else
+                {
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                             LEXY_MOV(state.sink).finish());
+                }
+            }
+        };
 
         template <typename Handler, typename Reader, typename... Args>
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
@@ -122,14 +119,14 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            // We continue with the loop parser.
-            using comb_choice
-                = decltype(_comb_choice<Args...>(lexy::_detail::make_index_sequence<N>{}));
-            using continuation = _comb_loop_parser<comb_choice, NextParser>;
-
             using state_t = _comb_state<Reader, N, decltype(handler.list_sink())>;
             state_t state{{}, 0, reader.cur(), handler.list_sink()};
-            return continuation::parse(handler, reader, state, LEXY_FWD(args)...);
+
+            constexpr auto comb_choice
+                = _comb_choice<Args...>(lexy::_detail::make_index_sequence<N>{});
+            constexpr auto l = loop(comb_choice);
+            return decltype(l)::template parser<_continuation>::parse(handler, reader, state,
+                                                                      LEXY_FWD(args)...);
         }
     };
 };
@@ -140,63 +137,8 @@ template <typename Error = void, typename... R>
 LEXY_CONSTEVAL auto combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
-    return _comb<Error, R...>{};
+    return _comb<false, Error, R...>{};
 }
-} // namespace lexyd
-
-namespace lexyd
-{
-// Handles partial rules.
-struct _comb_else : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, std::size_t N, typename Sink, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader,
-                                 _comb_state<Reader, N, Sink>& state, Args&&... args) ->
-            typename Handler::result_type
-        {
-            // Setting the count to N terminates the loop.
-            state.count = N;
-            return NextParser::parse(handler, reader, state, LEXY_FWD(args)...);
-        }
-    };
-};
-
-template <typename E, typename... R>
-struct _comb_partial : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename... Args, std::size_t... Idx>
-        static LEXY_CONSTEVAL auto _comb_choice(lexy::_detail::index_sequence<Idx...>)
-        {
-            return ((R{} >> _comb_rule<E, Idx, Args...>{}) | ... | (else_ >> _comb_else{}));
-        }
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            constexpr auto N = sizeof...(R);
-
-            // We continue with the loop parser.
-            using comb_choice
-                = decltype(_comb_choice<Args...>(lexy::_detail::make_index_sequence<N>{}));
-            using continuation = _comb_loop_parser<comb_choice, NextParser>;
-
-            using state_t = _comb_state<Reader, N, decltype(handler.list_sink())>;
-            state_t state{{}, 0, reader.cur(), handler.list_sink()};
-            return continuation::parse(handler, reader, state, LEXY_FWD(args)...);
-        }
-    };
-};
 
 /// Matches some of the rules in an arbitrary order.
 /// Only matches a rule at most once.
@@ -204,7 +146,7 @@ template <typename Error = void, typename... R>
 LEXY_CONSTEVAL auto partial_combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
-    return _comb_partial<Error, R...>{};
+    return _comb<true, Error, R...>{};
 }
 } // namespace lexyd
 
