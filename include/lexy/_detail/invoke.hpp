@@ -9,33 +9,59 @@
 
 namespace lexy::_detail
 {
-template <typename ClassT, typename F, typename Object, typename... Args>
-constexpr decltype(auto) invoke(F ClassT::*f, Object&& object, Args&&... args)
+template <typename MemberPtr, bool = std::is_member_object_pointer_v<MemberPtr>>
+struct _mem_invoker;
+template <typename R, typename ClassT>
+struct _mem_invoker<R ClassT::*, true>
 {
-    if constexpr (std::is_member_function_pointer_v<decltype(f)>)
+    static constexpr decltype(auto) invoke(R ClassT::*f, ClassT& object)
     {
-        if constexpr (std::is_base_of_v<ClassT, std::decay_t<Object>>)
-            // Invoke member function via object.
-            return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
-        else
-            // Invoke member function via pointer.
-            return ((*LEXY_FWD(object)).*f)(LEXY_FWD(args)...);
+        return object.*f;
     }
-    else
+    static constexpr decltype(auto) invoke(R ClassT::*f, const ClassT& object)
     {
-        static_assert(std::is_member_object_pointer_v<decltype(f)> && sizeof...(Args) == 0);
+        return object.*f;
+    }
 
-        if constexpr (std::is_base_of_v<ClassT, std::decay_t<Object>>)
-            // Access via object.
-            return LEXY_FWD(object).*f;
-        else
-            // Access via pointer.
-            return (*LEXY_FWD(object)).*f;
+    template <typename Ptr>
+    static constexpr auto invoke(R ClassT::*f, Ptr&& ptr) -> decltype((*LEXY_FWD(ptr)).*f)
+    {
+        return (*LEXY_FWD(ptr)).*f;
     }
+};
+template <typename F, typename ClassT>
+struct _mem_invoker<F ClassT::*, false>
+{
+    template <typename ObjectT, typename... Args>
+    static constexpr auto _invoke(int, F ClassT::*f, ObjectT&& object, Args&&... args)
+        -> decltype((LEXY_FWD(object).*f)(LEXY_FWD(args)...))
+    {
+        return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
+    }
+    template <typename PtrT, typename... Args>
+    static constexpr auto _invoke(short, F ClassT::*f, PtrT&& ptr, Args&&... args)
+        -> decltype(((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...))
+    {
+        return ((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...);
+    }
+
+    template <typename... Args>
+    static constexpr auto invoke(F ClassT::*f, Args&&... args)
+        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
+    {
+        return _invoke(0, f, LEXY_FWD(args)...);
+    }
+};
+
+template <typename ClassT, typename F, typename... Args>
+constexpr auto invoke(F ClassT::*f, Args&&... args)
+    -> decltype(_mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...))
+{
+    return _mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...);
 }
 
 template <typename F, typename... Args>
-constexpr decltype(auto) invoke(F&& f, Args&&... args)
+constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(args)...))
 {
     return LEXY_FWD(f)(LEXY_FWD(args)...);
 }

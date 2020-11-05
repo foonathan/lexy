@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/invoke.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/lexeme.hpp>
@@ -20,9 +21,10 @@ struct _fn_holder
     constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(fn(LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
     {
-        return fn(LEXY_FWD(args)...);
+        return _detail::invoke(fn, LEXY_FWD(args)...);
     }
 };
 
@@ -46,8 +48,9 @@ struct _callback : _fn_as_base<Fns>...
 template <typename ReturnType = void, typename... Fns>
 LEXY_CONSTEVAL auto callback(Fns&&... fns)
 {
-    static_assert(((std::is_pointer_v<
-                        std::decay_t<Fns>> || std::is_empty_v<std::decay_t<Fns>>)&&...),
+    static_assert(((std::is_pointer_v<std::decay_t<Fns>>           //
+                    || std::is_member_pointer_v<std::decay_t<Fns>> //
+                    || std::is_empty_v<std::decay_t<Fns>>)&&...),
                   "only capture-less lambdas are allowed in a callback");
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }

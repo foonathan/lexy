@@ -41,6 +41,23 @@ TEST_CASE("callback")
         CHECK(callback(1) == 1);
         CHECK(callback(1, 2, 3) == 3);
     }
+    SUBCASE("member ptr")
+    {
+        struct foo
+        {
+            int member;
+
+            int fn(int i) const
+            {
+                return i;
+            }
+        };
+        foo obj{42};
+
+        constexpr auto callback = lexy::callback<int>(&foo::fn, &foo::member);
+        CHECK(callback(foo(), 4) == 4);
+        CHECK(callback(&obj) == 42);
+    }
 }
 
 TEST_CASE("sink")
