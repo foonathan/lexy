@@ -9,11 +9,11 @@
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
-TEST_CASE("dsl::make_list()")
+TEST_CASE("dsl::build_list()")
 {
-    constexpr auto rule
-        = make_list(LEXY_LIT("a") + item(lexy::dsl::id<0>) + LEXY_LIT("b")
-                    + lexy::dsl::id<1> + item(lexy::dsl::id<2> + LEXY_LIT("c") + lexy::dsl::id<3>));
+    constexpr auto rule = build_list(
+        LEXY_LIT("a") + item(lexy::dsl::id<0>) + LEXY_LIT("b")
+        + lexy::dsl::id<1> + item(lexy::dsl::id<2> + LEXY_LIT("c") + lexy::dsl::id<3>));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 

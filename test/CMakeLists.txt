@@ -71,6 +71,7 @@ set(tests
         dsl/list.cpp
         dsl/literal.cpp
         dsl/lookahead.cpp
+        dsl/loop.cpp
         dsl/match.cpp
         dsl/minus.cpp
         dsl/newline.cpp
