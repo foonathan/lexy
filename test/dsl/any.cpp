@@ -13,7 +13,7 @@ TEST_CASE("dsl::any")
     SUBCASE("basic")
     {
         constexpr auto atom = lexy::dsl::any;
-        CHECK(lexy::is_atom<decltype(atom)>);
+        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(empty);

@@ -106,10 +106,8 @@ class Atom : atom_base<Atom>
 
 namespace lexyd
 {
-struct _atom_base : rule_base
-{};
 template <typename Atom>
-struct atom_base : _atom_base
+struct atom_base : rule_base
 {
     static constexpr auto has_matcher = true;
 
@@ -152,12 +150,6 @@ struct atom_base : _atom_base
     };
 };
 } // namespace lexyd
-
-namespace lexy
-{
-template <typename T>
-constexpr bool is_atom = std::is_base_of_v<dsl::_atom_base, T>;
-} // namespace lexy
 
 //=== infrastructure ===//
 namespace lexy

@@ -11,7 +11,7 @@ TEST_CASE("atom: argv_separator")
     SUBCASE("non-argv_input")
     {
         constexpr auto atom = lexy::dsl::argv_separator;
-        CHECK(lexy::is_atom<decltype(atom)>);
+        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);

@@ -70,7 +70,7 @@ TEST_CASE("dsl::until()")
 TEST_CASE("dsl::until().or_eof()")
 {
     constexpr auto atom = until(LEXY_LIT("!")).or_eof();
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(empty);
@@ -154,7 +154,7 @@ TEST_CASE("dsl::until(peek())")
 TEST_CASE("dsl::until(peek()).or_eof()")
 {
     constexpr auto atom = until(peek(LEXY_LIT("!"))).or_eof();
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(empty);

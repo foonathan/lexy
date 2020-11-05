@@ -11,7 +11,7 @@
 TEST_CASE("dsl::match")
 {
     constexpr auto atom = match(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);

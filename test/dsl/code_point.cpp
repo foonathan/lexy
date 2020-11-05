@@ -11,7 +11,7 @@
 TEST_CASE("dsl::code_point")
 {
     static constexpr auto atom = lexy::dsl::code_point;
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     static constexpr auto match = [](auto encoding, auto str) LEXY_CONSTEVAL {
         auto input  = lexy::zstring_input<decltype(encoding)>(str);

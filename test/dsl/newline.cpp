@@ -9,7 +9,7 @@
 TEST_CASE("dsl::newline")
 {
     constexpr auto atom = lexy::dsl::newline;
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
@@ -40,7 +40,7 @@ TEST_CASE("dsl::newline")
 TEST_CASE("dsl::eol")
 {
     constexpr auto atom = lexy::dsl::eol;
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(empty);

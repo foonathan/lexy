@@ -117,7 +117,7 @@ TEST_CASE("dsl::hex")
 TEST_CASE("dsl::digit")
 {
     constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>;
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
@@ -147,7 +147,7 @@ TEST_CASE("dsl::digit")
 TEST_CASE("dsl::digit.zero()")
 {
     constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>.zero();
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
@@ -173,7 +173,7 @@ TEST_CASE("dsl::digit.zero()")
 TEST_CASE("dsl::digit.non_zero()")
 {
     constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>.non_zero();
-    CHECK(lexy::is_atom<decltype(atom)>);
+    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);

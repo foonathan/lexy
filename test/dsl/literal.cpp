@@ -11,7 +11,7 @@ TEST_CASE("dsl::lit")
     SUBCASE("basic")
     {
         constexpr auto atom = LEXY_LIT("abc");
-        CHECK(lexy::is_atom<decltype(atom)>);
+        CHECK(lexy::is_pattern<decltype(atom)>);
 #if LEXY_HAS_NTTP
         CHECK(std::is_same_v<decltype(atom), lexy::dsl::lit<"abc">>);
 #endif
