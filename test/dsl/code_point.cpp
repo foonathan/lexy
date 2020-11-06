@@ -62,7 +62,8 @@ TEST_CASE("dsl::code_point")
     SUBCASE("ill-formed UTF-8")
     {
         auto match_utf8 = [](auto... cs) {
-            LEXY_CHAR8_T array[] = {LEXY_CHAR8_T(cs)..., 0};
+            // We use the second 0 to silence a bogus warning about array bounds on GCC 8.
+            LEXY_CHAR8_T array[] = {LEXY_CHAR8_T(cs)..., 0, 0};
             return match(lexy::utf8_encoding{}, array);
         };
 
