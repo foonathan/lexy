@@ -5,7 +5,13 @@
 #include <lexy/input/file.hpp>
 
 #include <doctest.h>
-#include <memory_resource>
+
+#if defined(__has_include) && __has_include(<memory_resource>)
+#    include <memory_resource>
+#    define LEXY_HAS_RESOURCE 1
+#else
+#    define LEXY_HAS_RESOURCE 0
+#endif
 
 namespace
 {
@@ -95,6 +101,7 @@ TEST_CASE("read_file")
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
     }
+#if LEXY_HAS_RESOURCE
     SUBCASE("custom encoding and resource")
     {
         write_test_data("abc");
@@ -119,6 +126,7 @@ TEST_CASE("read_file")
         CHECK(reader.peek() == lexy::ascii_encoding::eof());
         CHECK(reader.eof());
     }
+#endif
     SUBCASE("custom encoding and byte order")
     {
         const unsigned char data[] = {0xFF, 0xFE, 0x11, 0x22, 0x33, 0x44, 0x00};

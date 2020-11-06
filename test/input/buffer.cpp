@@ -5,7 +5,13 @@
 #include <lexy/input/buffer.hpp>
 
 #include <doctest.h>
-#include <memory_resource>
+
+#if defined(__has_include) && __has_include(<memory_resource>)
+#    include <memory_resource>
+#    define LEXY_HAS_RESOURCE 1
+#else
+#    define LEXY_HAS_RESOURCE 0
+#endif
 
 TEST_CASE("buffer")
 {
@@ -54,6 +60,7 @@ TEST_CASE("buffer")
         std::memcpy(builder.data(), str, builder.size());
         verify(LEXY_MOV(builder).finish());
     }
+#if LEXY_HAS_RESOURCE
     SUBCASE("constructor, default encoding, custom resource")
     {
         const lexy::buffer ptr_size(str, 3, std::pmr::new_delete_resource());
@@ -71,6 +78,7 @@ TEST_CASE("buffer")
         std::memcpy(builder.data(), str, builder.size());
         verify(LEXY_MOV(builder).finish());
     }
+#endif
     SUBCASE("constructor, custom encoding, default resource")
     {
         static const auto ustr = reinterpret_cast<const unsigned char*>(str);
@@ -112,6 +120,7 @@ TEST_CASE("buffer")
         std::memcpy(builder.data(), str, builder.size());
         verify(LEXY_MOV(builder).finish());
     }
+#if LEXY_HAS_RESOURCE
     SUBCASE("constructor, custom encoding, custom resource")
     {
         static const auto ustr = reinterpret_cast<const unsigned char*>(str);
@@ -154,6 +163,7 @@ TEST_CASE("buffer")
         std::memcpy(builder.data(), str, builder.size());
         verify(LEXY_MOV(builder).finish());
     }
+#endif
 
     SUBCASE("copy constructor")
     {
