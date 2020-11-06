@@ -24,7 +24,8 @@ using make_index_sequence = __make_integer_seq<integer_sequence, std::size_t, Si
 template <std::size_t Size>
 using make_index_sequence = index_sequence<__integer_pack(Size)...>;
 #elif defined(_MSC_VER)
-#    error TODO
+template <std::size_t Size>
+using make_index_sequence = __make_integer_seq<integer_sequence, std::size_t, Size>;
 #else
 
 // Adapted from https://stackoverflow.com/a/32223343.
