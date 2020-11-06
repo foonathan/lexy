@@ -23,7 +23,6 @@ struct string_literal
         for (auto i = 0u; i != N; ++i)
             string[i] = str[i];
     }
-    LEXY_CONSTEVAL string_literal(CharT c) : string{c} {}
 
     LEXY_CONSTEVAL auto size() const
     {
@@ -32,8 +31,6 @@ struct string_literal
 };
 template <std::size_t N, typename CharT>
 string_literal(const CharT (&)[N]) -> string_literal<N - 1, CharT>;
-template <typename CharT>
-string_literal(CharT) -> string_literal<1, CharT>;
 
 template <auto Str>
 struct type_string
@@ -47,7 +44,17 @@ struct type_string
 };
 
 template <auto C>
-using type_char = type_string<string_literal<1, decltype(C)>(&C)>;
+struct type_char
+{
+    using char_type = std::decay_t<decltype(C)>;
+
+    static constexpr auto c = C;
+
+    static LEXY_CONSTEVAL auto get()
+    {
+        return basic_string_view<char_type>(&c, 1);
+    }
+};
 } // namespace lexy::_detail
 
 #    define LEXY_NTTP_STRING(Str) ::lexy::_detail::type_string<::lexy::_detail::string_literal(Str)>

@@ -36,7 +36,10 @@ constexpr void swap(T& lhs, T& rhs)
 
 //=== NTTP ===//
 #ifndef LEXY_HAS_NTTP
-#    if __cpp_nontype_template_parameter_class
+#    if defined(__GNUC__) && __GNUC__ <= 10
+  // GCC <= 10 has buggy support for NTTP string literals and CTAD
+#        define LEXY_HAS_NTTP 0
+#    elif __cpp_nontype_template_parameter_class
 #        define LEXY_HAS_NTTP 1
 #    else
 #        define LEXY_HAS_NTTP 0

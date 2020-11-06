@@ -13,7 +13,7 @@ TEST_CASE("dsl::lit")
         constexpr auto atom = LEXY_LIT("abc");
         CHECK(lexy::is_pattern<decltype(atom)>);
 #if LEXY_HAS_NTTP
-        CHECK(std::is_same_v<decltype(atom), lexy::dsl::lit<"abc">>);
+        CHECK(std::is_same_v<decltype(atom), decltype(lexy::dsl::lit<"abc">)>);
 #endif
 
         constexpr auto empty = atom_matches(atom, "");
