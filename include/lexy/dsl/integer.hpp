@@ -27,8 +27,7 @@ struct integer_traits
     template <int Radix>
     static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
     {
-        result *= Radix;
-        result += T(digit);
+        result = T(result * T(Radix) + T(digit));
     }
     template <int Radix>
     static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
@@ -36,12 +35,12 @@ struct integer_traits
         // result *= Radix
         if (result > max_value / Radix)
             return false;
-        result *= Radix;
+        result = T(result * Radix);
 
         // result += value
         if (result > T(max_value - digit))
             return false;
-        result += T(digit);
+        result = T(result + T(digit));
 
         return true;
     }
@@ -121,7 +120,7 @@ static constexpr std::size_t _digit_count(unsigned radix, Integer value)
     std::size_t result = 0;
     while (value > 0)
     {
-        value /= radix;
+        value = Integer(value / Integer(radix));
         ++result;
     }
     return result;

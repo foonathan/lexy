@@ -151,6 +151,8 @@ struct _lstl<Item, _sep<Sep, Capture>> : rule_base // normal separator
 
             if constexpr (Capture)
                 sink(lexy::lexeme(reader, begin));
+            else
+                (void)begin;
 
             using rule = decltype(item(Item{}));
             return rule::template parser<NextParser>::parse(handler, reader, sink,
@@ -176,6 +178,8 @@ struct _lstl<Item, _tsep<Sep, Capture>> : rule_base // trailing separator
             if (!Sep::matcher::match(reader))
                 // No separator, done with the list.
                 return LEXY_MOV(handler).break_();
+            else
+                (void)begin;
 
             if constexpr (Capture)
                 sink(lexy::lexeme(reader, begin));

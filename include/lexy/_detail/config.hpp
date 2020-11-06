@@ -110,22 +110,35 @@ using _char8_t = unsigned char;
 
 //=== force inline ===//
 #ifndef LEXY_FORCE_INLINE
-#    if defined(__has_cpp_attribute) && __has_cpp_attribute(gnu::always_inline)
-#        define LEXY_FORCE_INLINE [[gnu::always_inline]]
-#    else
+#    if defined(__has_cpp_attribute)
+#        if __has_cpp_attribute(gnu::always_inline)
+#            define LEXY_FORCE_INLINE [[gnu::always_inline]]
+#        endif
+#    endif
+#
+#    ifndef LEXY_FORCE_INLINE
 #        define LEXY_FORCE_INLINE inline
 #    endif
 #endif
 
 //=== empty_member ===//
 #ifndef LEXY_EMPTY_MEMBER
-#    if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address)
-#        define LEXY_HAS_EMPTY_MEMBER 1
+
+#    if defined(__has_cpp_attribute)
+#        if __has_cpp_attribute(no_unique_address)
+#            define LEXY_HAS_EMPTY_MEMBER 1
+#        endif
+#    endif
+#    ifndef LEXY_HAS_EMPTY_MEMBER
+#        define LEXY_HAS_EMPTY_MEMBER 0
+#    endif
+
+#    if LEXY_HAS_EMPTY_MEMBER
 #        define LEXY_EMPTY_MEMBER [[no_unique_address]]
 #    else
-#        define LEXY_HAS_EMPTY_MEMBER 0
 #        define LEXY_EMPTY_MEMBER
 #    endif
+
 #endif
 
 #endif // LEXY_DETAIL_CONFIG_HPP_INCLUDED

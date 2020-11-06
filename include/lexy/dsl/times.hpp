@@ -34,18 +34,28 @@ template <std::size_t N, typename Rule, typename Pattern>
 LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern, false> sep)
 {
     if constexpr (N == 1)
+    {
+        (void)sep;
         return rule;
+    }
     else
+    {
         return rule + Pattern{} + _gen_times<N - 1>(rule, sep);
+    }
 }
 
 template <std::size_t N, typename Rule, typename Pattern>
 LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Pattern, false> sep)
 {
     if constexpr (N == 1)
+    {
+        (void)sep;
         return rule + if_(Pattern{});
+    }
     else
+    {
         return rule + Pattern{} + _gen_times<N - 1>(rule, sep);
+    }
 }
 
 template <std::size_t N, typename Rule, typename Sep>
@@ -95,22 +105,22 @@ struct _times : rule_base
 
 /// Repeats the rule N times and collects the values into an array.
 template <std::size_t N, typename Rule>
-LEXY_CONSTEVAL auto times(Rule rule)
+LEXY_CONSTEVAL auto times(Rule)
 {
     static_assert(N > 0);
     if constexpr (lexy::is_pattern<Rule>)
-        return _gen_times<N>(rule);
+        return _gen_times<N>(Rule{});
     else
         return _times<N, Rule, void>{};
 }
 
 /// Repeates the rule N times separated by the separator and collects the values into an array.
 template <std::size_t N, typename Rule, typename Sep>
-LEXY_CONSTEVAL auto times(Rule rule, Sep sep)
+LEXY_CONSTEVAL auto times(Rule, Sep)
 {
     static_assert(N > 0);
     if constexpr (lexy::is_pattern<Rule>)
-        return _gen_times<N>(rule, sep);
+        return _gen_times<N>(Rule{}, Sep{});
     else
         return _times<N, Rule, Sep>{};
 }

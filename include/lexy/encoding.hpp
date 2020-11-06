@@ -123,7 +123,7 @@ struct ascii_encoding
         if constexpr (std::is_signed_v<char_type>)
             return int_type(-1);
         else
-            return int_type(0xFF);
+            return int_type(0xFFu);
     }
 
     static LEXY_CONSTEVAL int_type to_int_type(char_type c)

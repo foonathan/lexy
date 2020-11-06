@@ -125,16 +125,6 @@ struct atom_base : rule_base
         }
     };
 
-    template <typename Handler, typename Reader>
-    LEXY_DSL_FUNC auto report_error(Handler& handler, Reader& reader, typename Reader::iterator pos)
-        -> typename Handler::result_type
-    {
-        if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
-            LEXY_UNREACHABLE();
-        else
-            return LEXY_MOV(handler).error(reader, Atom::error(reader, pos));
-    }
-
     template <typename NextParser>
     struct parser
     {
@@ -142,10 +132,18 @@ struct atom_base : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            if (auto pos = reader.cur(); Atom::match(reader))
+            if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
+            {
+                Atom::match(reader);
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            }
             else
-                return report_error(handler, reader, pos);
+            {
+                if (auto pos = reader.cur(); Atom::match(reader))
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                else
+                    return LEXY_MOV(handler).error(reader, Atom::error(reader, pos));
+            }
         }
     };
 };

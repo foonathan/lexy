@@ -64,18 +64,20 @@ struct type_char
 namespace lexy::_detail
 {
 template <auto... Cs>
-struct type_string
+struct type_string;
+template <auto H, auto... Ts>
+struct type_string<H, Ts...>
 {
-    using char_type = decltype((Cs, ...));
+    using char_type = std::decay_t<decltype(H)>;
 
     struct _lazy
     {
-        static inline constexpr char_type str[] = {Cs...};
+        static inline constexpr char_type str[] = {H, Ts...};
     };
 
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<char_type>(_lazy::str, sizeof...(Cs));
+        return basic_string_view<char_type>(_lazy::str, sizeof...(Ts) + 1);
     }
 };
 
@@ -103,14 +105,14 @@ constexpr ::lexy::_detail::type_string<Cs...> operator""_lexy_string_udl()
 
 #    else // string<Cs...> macro implementation
 
-namespace lexy::string_detail
+namespace lexy::_detail
 {
 template <typename A, typename B>
 struct cat_;
 template <auto... C1, auto... C2>
-struct cat_<string<C1...>, string<C2...>>
+struct cat_<type_string<C1...>, type_string<C2...>>
 {
-    using type = string<C1..., C2...>;
+    using type = type_string<C1..., C2...>;
 };
 template <typename A, typename B>
 using cat = typename cat_<A, B>::type;
@@ -122,40 +124,39 @@ struct check_size
     using type = T;
 };
 
-} // namespace lexy::string_detail
+} // namespace lexy::_detail
 
 #        define LEXY_NTTP_STRING_LENGTH(Str) (sizeof(Str) / sizeof(Str[0]) - 1)
 
 // extract Ith character if not out of bounds
 #        define LEXY_NTTP_STRING1(Str, I)                                                          \
             ::std::conditional_t<(I < LEXY_NTTP_STRING_LENGTH(Str)),                               \
-                                 ::lexy::string_detail::string<(                                   \
+                                 ::lexy::_detail::type_string<(                                    \
                                      I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,        \
-                                 ::lexy::string_detail::string<>>
+                                 ::lexy::_detail::type_string<>>
 
 // recursively split the string in two
 #        define LEXY_NTTP_STRING2(Str, I)                                                          \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING1(Str, I), LEXY_NTTP_STRING1(Str, I + 1)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING1(Str, I), LEXY_NTTP_STRING1(Str, I + 1)>
 #        define LEXY_NTTP_STRING4(Str, I)                                                          \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING2(Str, I), LEXY_NTTP_STRING2(Str, I + 2)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING2(Str, I), LEXY_NTTP_STRING2(Str, I + 2)>
 #        define LEXY_NTTP_STRING8(Str, I)                                                          \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING4(Str, I), LEXY_NTTP_STRING4(Str, I + 4)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING4(Str, I), LEXY_NTTP_STRING4(Str, I + 4)>
 #        define LEXY_NTTP_STRING16(Str, I)                                                         \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING8(Str, I), LEXY_NTTP_STRING8(Str, I + 8)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING8(Str, I), LEXY_NTTP_STRING8(Str, I + 8)>
 #        define LEXY_NTTP_STRING32(Str, I)                                                         \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING16(Str, I), LEXY_NTTP_STRING16(Str, I + 16)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING16(Str, I), LEXY_NTTP_STRING16(Str, I + 16)>
 #        define LEXY_NTTP_STRING64(Str, I)                                                         \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING32(Str, I), LEXY_NTTP_STRING32(Str, I + 32)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING32(Str, I), LEXY_NTTP_STRING32(Str, I + 32)>
 #        define LEXY_NTTP_STRING128(Str, I)                                                        \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING64(Str, I), LEXY_NTTP_STRING64(Str, I + 64)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING64(Str, I), LEXY_NTTP_STRING64(Str, I + 64)>
 #        define LEXY_NTTP_STRING256(Str, I)                                                        \
-            ::lexy::string_detail::cat<LEXY_NTTP_STRING128(Str, I),                                \
-                                       LEXY_NTTP_STRING128(Str, I + 128)>
+            ::lexy::_detail::cat<LEXY_NTTP_STRING128(Str, I), LEXY_NTTP_STRING128(Str, I + 128)>
 
 // instantiate with overflow check
 #        define LEXY_NTTP_STRING(Str)                                                              \
-            ::lexy::string_detail::check_size<LEXY_NTTP_STRING256(Str, 0),                         \
-                                              LEXY_NTTP_STRING_LENGTH(Str), 256>::type
+            ::lexy::_detail::check_size<LEXY_NTTP_STRING256(Str, 0), LEXY_NTTP_STRING_LENGTH(Str), \
+                                        256>::type
 
 #    endif
 

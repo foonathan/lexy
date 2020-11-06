@@ -82,7 +82,10 @@ LEXY_CONSTEVAL auto while_(Rule rule)
     static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
 
     if constexpr (lexy::is_pattern<Rule>)
+    {
+        (void)rule;
         return _whl<Rule, void>{};
+    }
     else
     {
         auto b = branch(rule);

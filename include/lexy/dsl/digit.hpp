@@ -360,11 +360,11 @@ namespace lexyd
 template <std::size_t N, typename Base, typename Sep>
 LEXY_CONSTEVAL auto _make_digits()
 {
-    auto d = digit<Base>;
     if constexpr (N == 0)
         return success;
     else
     {
+        auto d = digit<Base>;
         if constexpr (std::is_same_v<Sep, void>)
             return d + _make_digits<N - 1, Base, Sep>();
         else
