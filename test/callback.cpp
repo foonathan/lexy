@@ -237,7 +237,7 @@ TEST_CASE("as_aggregate")
         CHECK(result.f == 3.14f);
         CHECK(*result.str == 'h');
 
-        constexpr auto result2 = callback(agg(result), member_f{}, 2.71, member_i{}, 11);
+        constexpr auto result2 = callback(agg(result), member_f{}, 2.71f, member_i{}, 11);
         CHECK(result2.i == 11);
         CHECK(result2.f == 2.71f);
         CHECK(*result2.str == 'h');

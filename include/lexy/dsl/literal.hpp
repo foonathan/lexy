@@ -26,7 +26,7 @@ struct _lit : atom_base<_lit<String>>
         // We then only allow ASCII characters in the string literal.
         for (auto c : String::get())
         {
-            auto value = encoding::to_int_type(c);
+            auto value = encoding::to_int_type(typename encoding::char_type(c));
             if (value < encoding::to_int_type(0) || value > encoding::to_int_type(0x7F))
                 return false;
         }
@@ -42,7 +42,7 @@ struct _lit : atom_base<_lit<String>>
 
         for (auto c : String::get())
         {
-            if (reader.peek() != Reader::encoding::to_int_type(c))
+            if (reader.peek() != Reader::encoding::to_int_type(typename Reader::char_type(c)))
                 return false;
             reader.bump();
         }

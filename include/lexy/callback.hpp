@@ -409,7 +409,7 @@ struct _as_aggregate
         static_assert(sizeof...(Args) % 2 == 0, "missing dsl::member rules");
 
         _set(result, LEXY_FWD(args)...);
-        return result;
+        return LEXY_MOV(result);
     }
 
     struct _sink

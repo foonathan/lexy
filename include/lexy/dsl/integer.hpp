@@ -25,13 +25,13 @@ struct integer_traits
     static constexpr auto max_value  = _limits::max();
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
     {
         result *= Radix;
         result += T(digit);
     }
     template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
     {
         // result *= Radix
         if (result > max_value / Radix)
@@ -56,14 +56,14 @@ struct integer_traits<code_point>
     static constexpr auto max_value  = 0x10'FFFF;
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
     {
         std::uint_least32_t value = result.value();
         integer_traits<std::uint_least32_t>::add_digit_unchecked<Radix>(value, digit);
         result = code_point(value);
     }
     template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
     {
         std::uint_least32_t value = result.value();
         if (!integer_traits<std::uint_least32_t>::add_digit_checked<Radix>(value, digit))
@@ -83,12 +83,12 @@ struct integer_traits<unbounded<T>>
     static constexpr auto is_bounded = false;
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, int digit)
+    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
     {
         integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
     }
     template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, int digit)
+    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
     {
         integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
         return true;
