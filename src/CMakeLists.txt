@@ -100,7 +100,7 @@ target_link_libraries(lexy_dev INTERFACE _lexy_base)
 target_include_directories(lexy_dev INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_compile_options(lexy_dev INTERFACE
                        # clang/GCC warnings
-                       $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+                       $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
                        -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion -Wno-unused-local-typedefs>
                        # disable annoying warnings
                        $<$<CXX_COMPILER_ID:GNU>: -Wno-parentheses -Wno-noexcept-type>
