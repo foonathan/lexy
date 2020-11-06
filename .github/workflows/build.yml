@@ -17,12 +17,6 @@ jobs:
           - clang8
           - clang50
         build_type: [Debug, Release]
-        std: ["-std=c++17"]
-        include:
-          - image: gcc10
-            std: "-std=c++20"
-          - image: clang10
-            std: "-std=c++20"
     
     runs-on: ubuntu-latest
     container:
@@ -37,7 +31,7 @@ jobs:
 
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CXX_FLAGS=${{matrix.std}}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
 
     - name: Build
       working-directory: build/
