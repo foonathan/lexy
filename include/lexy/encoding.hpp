@@ -176,7 +176,6 @@ struct utf8_encoding
 {
     using char_type = LEXY_CHAR8_T;
     using int_type  = LEXY_CHAR8_T;
-    static_assert(std::is_unsigned_v<char_type>);
 
     template <typename OtherCharType>
     static constexpr bool is_secondary_char_type = false;
