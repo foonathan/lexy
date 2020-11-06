@@ -10,25 +10,27 @@ jobs:
         image: [conanio/gcc10]
     
     runs-on: ubuntu-latest
-    container: ${{matrix.image}}
+    container:
+      image: ${{matrix.image}}
+      volumes: ${{runner.workspace}}:/home/conan
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
+      run: cmake -E make_directory build
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{runner.workspace}}/build
+      working-directory: build/
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
     - name: Build
       shell: bash
-      working-directory: ${{runner.workspace}}/build
+      working-directory: build/
       run: cmake --build . --config ${{matrix.build_type}}
 
     - name: Test
       shell: bash
-      working-directory: ${{runner.workspace}}/build
+      working-directory: build/
       run: ctest -C ${{matrix.build_type}}
