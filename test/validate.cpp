@@ -91,8 +91,8 @@ TEST_CASE("validate")
                 return -2;
             else if (error.string() == ")")
                 return -3;
-
-            CONSTEXPR_CHECK(false);
+            else
+                return -4;
         };
         constexpr auto callback = lexy::callback<int>(prod_a_error, prod_b_error);
 

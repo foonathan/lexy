@@ -35,7 +35,7 @@ struct _look : rule_base
             {
                 if (Needle::matcher::match(reader))
                     // We found the lookahead condition.
-                    return true;
+                    break;
                 else if (End::matcher::match(reader))
                     // We haven't found the lookahead condition and need to cancel.
                     return false;
@@ -46,7 +46,7 @@ struct _look : rule_base
                     reader.bump();
             }
 
-            LEXY_UNREACHABLE();
+            return true;
         }
         template <typename Reader>
         LEXY_DSL_FUNC bool match(Reader& reader)

@@ -70,8 +70,8 @@ TEST_CASE("dsl::operator+")
                     return -2;
                 else if (e.string() == "c")
                     return -3;
-
-                CONSTEXPR_CHECK(false);
+                else
+                    return -4;
             }
         };
 
