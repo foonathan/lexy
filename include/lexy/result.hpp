@@ -26,6 +26,8 @@ constexpr auto result_error = result_error_t{};
 
 namespace lexy
 {
+struct nullopt;
+
 template <typename T, typename E>
 struct _result_storage_trivial
 {
@@ -43,6 +45,7 @@ struct _result_storage_trivial
     constexpr _result_storage_trivial(result_value_t, Args&&... args)
     : _has_value(true), _value(LEXY_FWD(args)...)
     {}
+
     template <typename... Args>
     constexpr _result_storage_trivial(result_error_t, Args&&... args)
     : _has_value(false), _error(LEXY_FWD(args)...)
@@ -70,6 +73,19 @@ struct _result_storage_non_trivial
     _result_storage_non_trivial(result_error_t, Args&&... args)
     : _has_value(false), _error(LEXY_FWD(args)...)
     {}
+
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ == 9
+    // GCC 9 crashes when trying to convert nullopt to a value here.
+
+    template <typename Nullopt,
+              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
+    _result_storage_non_trivial(result_value_t, Nullopt&&) : _has_value(true), _value()
+    {}
+    template <typename Nullopt,
+              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
+    _result_storage_non_trivial(result_error_t, Nullopt&&) : _has_value(false), _error()
+    {}
+#endif
 
     _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
     : _has_value(other._has_value)
