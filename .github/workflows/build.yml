@@ -5,9 +5,18 @@ on: [push, pull_request]
 jobs:
   docker-build:
     strategy:
+      fail-fast: false
       matrix:
         build_type: [Debug, Release]
-        image: [conanio/gcc10, conanio/gcc9, conanio/gcc8, conanio/gcc7]
+        image:
+          - conanio/gcc10
+          - conanio/gcc9
+          - conanio/gcc8
+          - conanio/gcc7
+          - conanio/clang10
+          - conanio/clang9
+          - conanio/clang8
+          - conanio/clang5
     
     runs-on: ubuntu-latest
     container:
