@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{matrix.image}}
-      volumes: ["$GITHUB_WORKSPACE:/home/conan"]
+      options: --user root
 
     steps:
     - uses: actions/checkout@v2
