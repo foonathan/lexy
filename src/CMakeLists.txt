@@ -61,6 +61,7 @@ set(header_files
         ${include_dir}/input/argv_input.hpp
         ${include_dir}/input/base.hpp
         ${include_dir}/input/buffer.hpp
+        ${include_dir}/input/file.hpp
         ${include_dir}/input/null_input.hpp
         ${include_dir}/input/range_input.hpp
         ${include_dir}/input/shell.hpp
@@ -77,25 +78,41 @@ set(header_files
         ${include_dir}/result.hpp
         ${include_dir}/validate.hpp)
 
-# main target
-add_library(lexy INTERFACE)
-add_library(foonathan::lexy ALIAS lexy)
-target_sources(lexy INTERFACE "$<BUILD_INTERFACE:${header_files}>")
-target_compile_features(lexy INTERFACE cxx_std_17)
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    target_include_directories(lexy INTERFACE
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/>
-                               $<INSTALL_INTERFACE:../include/>)
-else()
-    target_include_directories(lexy SYSTEM INTERFACE
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/>
-                               $<INSTALL_INTERFACE:../include/>)
-endif()
+# Base target for common options.
+add_library(_lexy_base INTERFACE)
+target_sources(_lexy_base INTERFACE ${header_files})
+target_compile_features(_lexy_base INTERFACE cxx_std_17)
 
-# FILE I/O target
+# Core library.
+add_library(lexy_core INTERFACE)
+add_library(foonathan::lexy::core ALIAS lexy_core)
+target_link_libraries(lexy_core INTERFACE _lexy_base)
+target_include_directories(lexy_core SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+
+# Core library with warnings; for development only.
+add_library(lexy_dev INTERFACE)
+add_library(foonathan::lexy::dev ALIAS lexy_dev)
+target_link_libraries(lexy_dev INTERFACE _lexy_base)
+target_include_directories(lexy_dev INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_compile_options(lexy_dev INTERFACE
+                       # clang/GCC warnings
+                       $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+                       -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion -Wno-unused-local-typedefs>
+                       # disable annoying warnings
+                       $<$<CXX_COMPILER_ID:GNU>: -Wno-parentheses -Wno-noexcept-type>
+                       # MSVC warnings
+                       $<$<CXX_COMPILER_ID:MSVC>:
+                       /WX /W4 /wd4127>)
+
+
+# Link to have FILE I/O.
 add_library(lexy_file)
 add_library(foonathan::lexy::file ALIAS lexy_file)
-target_sources(lexy_file PUBLIC "$<BUILD_INTERFACE:${include_dir}/input/file.hpp>"
-                         PRIVATE input/file.cpp)
-target_link_libraries(lexy_file PUBLIC foonathan::lexy)
+target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
+target_sources(lexy_file PRIVATE input/file.cpp)
+
+# Umbrella target with all components.
+add_library(lexy INTERFACE)
+add_library(foonathan::lexy ALIAS lexy)
+target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file)
 
