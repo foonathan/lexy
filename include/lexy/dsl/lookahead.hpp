@@ -46,8 +46,7 @@ struct _look : rule_base
                     reader.bump();
             }
 
-            LEXY_ASSERT(false, "unreachable");
-            return false;
+            LEXY_UNREACHABLE();
         }
         template <typename Reader>
         LEXY_DSL_FUNC bool match(Reader& reader)

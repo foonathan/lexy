@@ -350,7 +350,7 @@ private:
             _buffer.grow();
         }
 
-        LEXY_ASSERT(false, "unreachable");
+        LEXY_UNREACHABLE();
     }
 
     _detail::buffer_builder<char_type> _buffer;

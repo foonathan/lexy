@@ -130,7 +130,7 @@ struct atom_base : rule_base
         -> typename Handler::result_type
     {
         if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
-            LEXY_ASSERT(false, "can never be reached");
+            LEXY_UNREACHABLE();
         else
             return LEXY_MOV(handler).error(reader, Atom::error(reader, pos));
     }
