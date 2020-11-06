@@ -8,12 +8,8 @@
 #include <cstring>
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/std.hpp>
 #include <new>
-
-namespace std
-{
-struct forward_iterator_tag;
-} // namespace std
 
 namespace lexy::_detail
 {

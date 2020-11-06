@@ -28,6 +28,7 @@ set(tests
         detail/invoke.cpp
         detail/nttp_string.cpp
         detail/stateless_lambda.cpp
+        detail/std.cpp
         detail/string_view.cpp
         detail/type_name.cpp
 

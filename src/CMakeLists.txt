@@ -13,6 +13,7 @@ set(header_files
         ${include_dir}/_detail/memory_resource.hpp
         ${include_dir}/_detail/nttp_string.hpp
         ${include_dir}/_detail/stateless_lambda.hpp
+        ${include_dir}/_detail/std.hpp
         ${include_dir}/_detail/string_view.hpp
         ${include_dir}/_detail/type_name.hpp
 

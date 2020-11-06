@@ -6,16 +6,11 @@
 #define LEXY_INPUT_ARGV_INPUT_HPP_INCLUDED
 
 #include <lexy/_detail/assert.hpp>
+#include <lexy/_detail/std.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
-
-namespace std
-{
-// It'll be fine...
-struct bidirectional_iterator_tag;
-} // namespace std
 
 namespace lexy
 {

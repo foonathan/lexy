@@ -5,6 +5,7 @@
 #ifndef LEXY_INPUT_FILE_HPP_INCLUDED
 #define LEXY_INPUT_FILE_HPP_INCLUDED
 
+#include <lexy/_detail/std.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/input/buffer.hpp>
 #include <lexy/result.hpp>
@@ -69,17 +70,11 @@ auto read_file(const char*     path,
 }
 } // namespace lexy
 
-// Technically not allowed, but I'm willing to take the risk.
-namespace std::filesystem
-{
-class path;
-} // namespace std::filesystem
-
 namespace lexy
 {
 template <typename Encoding       = default_encoding, typename Path,
           typename MemoryResource = _detail::default_memory_resource,
-          typename                = std::enable_if_t<std::is_same_v<Path, std::filesystem::path>>>
+          typename                = decltype(Path().c_str())>
 auto read_file(const Path&     path,
                MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
 {

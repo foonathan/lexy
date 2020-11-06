@@ -5,7 +5,6 @@
 #include <lexy/_detail/buffer_builder.hpp>
 
 #include <doctest.h>
-#include <iterator>
 
 TEST_CASE("_detail::buffer_builder")
 {
@@ -85,7 +84,6 @@ TEST_CASE("_detail::buffer_builder::stable_iterator")
     }
 
     using iterator = decltype(buffer)::stable_iterator;
-    CHECK(std::is_same_v<iterator::iterator_category, std::forward_iterator_tag>);
 
     auto iter = iterator(buffer, 0);
     CHECK(&*iter == buffer.read_data());
