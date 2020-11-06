@@ -103,6 +103,8 @@ using _char8_t = unsigned char;
 #        else
 #            error "unsupported byte order"
 #        endif
+#    elif defined(_MSC_VER)
+#        define LEXY_IS_LITTLE_ENDIAN 1
 #    else
 #        error "unknown endianness"
 #    endif
