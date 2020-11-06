@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-        image: [conanio/gcc10]
+        image: [conanio/gcc10, conanio/gcc9, conanio/gcc8, conanio/gcc7]
     
     runs-on: ubuntu-latest
     container:
@@ -20,17 +20,14 @@ jobs:
     - name: Create Build Environment
       run: cmake -E make_directory build
 
-    - name: Configure CMake
-      shell: bash
+    - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake $GITHUB_WORKSPACE -G"Ninja" -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
 
     - name: Build
-      shell: bash
       working-directory: build/
       run: cmake --build . --config ${{matrix.build_type}}
 
     - name: Test
-      shell: bash
       working-directory: build/
-      run: ctest -C ${{matrix.build_type}}
+      run: ctest -C ${{matrix.build_type}} --output-on-failure
