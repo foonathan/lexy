@@ -40,6 +40,16 @@ constexpr auto _type_name_impl()
     function.remove_suffix(suffix.length());
     return function;
 
+#elif defined(_MSC_VER)
+
+    constexpr auto prefix = string_view("auto __cdecl lexy::_detail::_type_name_impl<");
+    constexpr auto suffix = string_view(">(void)");
+
+    auto function = string_view(__FUNCSIG__);
+    function.remove_prefix(prefix.length());
+    function.remove_suffix(suffix.length());
+    return function;
+
 #else
 
     static_assert(_detail::error<T>,
