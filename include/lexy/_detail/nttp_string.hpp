@@ -23,6 +23,12 @@ struct string_literal
         for (auto i = 0u; i != N; ++i)
             string[i] = str[i];
     }
+    template <typename OtherCharT>
+    LEXY_CONSTEVAL string_literal(const OtherCharT* str) : string{}
+    {
+        for (auto i = 0u; i != N; ++i)
+            string[i] = CharT(str[i]);
+    }
 
     LEXY_CONSTEVAL auto size() const
     {
@@ -37,9 +43,22 @@ struct type_string
 {
     using char_type = std::decay_t<decltype(Str.string[0])>;
 
+    template <typename CharT>
+    struct _lazy
+    {
+        static inline constexpr string_literal<N, CharT> str = Str.string;
+    };
+
+    template <typename CharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<char_type>(Str.string, Str.size());
+        if constexpr (std::is_same_v<CharT, char_type>)
+            return basic_string_view<CharT>(Str.string, Str.size());
+        else
+        {
+            constexpr auto str = _lazy<CharT>::str;
+            return basic_string_viewCharT > (str.string, str.size());
+        }
     }
 };
 
@@ -48,11 +67,13 @@ struct type_char
 {
     using char_type = std::decay_t<decltype(C)>;
 
+    template <typename CharT>
     static constexpr auto c = C;
 
+    template <typename CharT>
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<char_type>(&c, 1);
+        return basic_string_view<CharT>(&c<CharT>, 1);
     }
 };
 } // namespace lexy::_detail
@@ -70,14 +91,16 @@ struct type_string<H, Ts...>
 {
     using char_type = std::decay_t<decltype(H)>;
 
+    template <typename CharT>
     struct _lazy
     {
-        static inline constexpr char_type str[] = {H, Ts...};
+        static inline constexpr CharT str[] = {CharT(H), CharT(Ts)...};
     };
 
+    template <typename CharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<char_type>(_lazy::str, sizeof...(Ts) + 1);
+        return basic_string_view<CharT>(_lazy<CharT>::str, sizeof...(Ts) + 1);
     }
 };
 

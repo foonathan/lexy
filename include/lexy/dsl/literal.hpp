@@ -50,27 +50,6 @@ struct _lit : atom_base<_lit<String>>
         return true;
     }
 
-    // We need to store the string in the correct char type for the error message.
-    template <typename CharT>
-    struct _literal_storage_t
-    {
-        CharT array[String::get().size()];
-
-        LEXY_CONSTEVAL _literal_storage_t() : array()
-        {
-            auto i = 0u;
-            for (auto c : String::get())
-                array[i++] = CharT(c);
-        }
-
-        LEXY_CONSTEVAL auto view() const
-        {
-            return lexy::_detail::basic_string_view<CharT>(array, String::get().size());
-        }
-    };
-    template <typename CharT>
-    static constexpr _literal_storage_t<CharT> _literal_storage = {};
-
     template <typename Reader>
     LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
     {
@@ -78,10 +57,7 @@ struct _lit : atom_base<_lit<String>>
         auto idx    = lexy::_detail::range_size(pos, reader.cur());
 
         using reader_char_type = typename Reader::encoding::char_type;
-        if constexpr (std::is_same_v<reader_char_type, typename String::char_type>)
-            return error(pos, String::get(), idx);
-        else
-            return error(pos, _literal_storage<reader_char_type>.view(), idx);
+        return error(pos, String::template get<reader_char_type>(), idx);
     }
 
     //=== dsl ===//
