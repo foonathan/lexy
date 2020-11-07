@@ -11,29 +11,58 @@
 
 namespace lexyd
 {
-/// The BOM for that particular encoding.
-/// Requires that there is a BOM for this encoding.
 template <typename Encoding, lexy::encoding_endianness Endianness>
-inline constexpr auto bom = success;
-
-template <lexy::encoding_endianness Endianness>
-inline constexpr auto bom<lexy::utf8_encoding, Endianness> = LEXY_LIT("\xEF\xBB\xBF");
-
+struct _bom_impl
+{
+    static constexpr auto value  = nullptr;
+    static constexpr auto length = 0u;
+};
+template <lexy::encoding_endianness DontCare>
+struct _bom_impl<lexy::utf8_encoding, DontCare>
+{
+    static constexpr unsigned char value[] = {0xEF, 0xBB, 0xBF};
+    static constexpr auto          length  = 3u;
+};
 template <>
-inline constexpr auto bom<lexy::utf16_encoding, lexy::encoding_endianness::little> = LEXY_LIT(
-    "\xFF\xFE");
-
+struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
+{
+    static constexpr unsigned char value[] = {0xFF, 0xFE};
+    static constexpr auto          length  = 2u;
+};
 template <>
-inline constexpr auto bom<lexy::utf16_encoding, lexy::encoding_endianness::big> = LEXY_LIT(
-    "\xFE\xFF");
-
+struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
+{
+    static constexpr unsigned char value[] = {0xFE, 0xFF};
+    static constexpr auto          length  = 2u;
+};
 template <>
-inline constexpr auto bom<lexy::utf32_encoding, lexy::encoding_endianness::little> = LEXY_LIT(
-    "\xFF\xFE\x00\x00");
-
+struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
+{
+    static constexpr unsigned char value[] = {0xFF, 0xFE, 0x00, 0x00};
+    static constexpr auto          length  = 4u;
+};
 template <>
-inline constexpr auto bom<lexy::utf32_encoding, lexy::encoding_endianness::big> = LEXY_LIT(
-    "\x00\x00\xFE\xFF");
+struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
+{
+    static constexpr unsigned char value[] = {0x00, 0x00, 0xFE, 0xFF};
+    static constexpr auto          length  = 4u;
+};
+
+template <typename Encoding, lexy::encoding_endianness Endianness>
+struct _bom : _lit<_bom<Encoding, Endianness>>
+{
+    using char_type = unsigned char;
+
+    static LEXY_CONSTEVAL auto get()
+    {
+        using impl = _bom_impl<Encoding, Endianness>;
+        return lexy::_detail::basic_string_view<unsigned char>(impl::value, impl::length);
+    }
+};
+
+/// The BOM for that particular encoding.
+template <typename Encoding, lexy::encoding_endianness Endianness>
+inline constexpr auto bom = _bom<Encoding, Endianness>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_BOM_HPP_INCLUDED
