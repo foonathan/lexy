@@ -28,8 +28,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
 {
     static_assert(is_pattern<PatternCP> && is_pattern<PatternNL>);
 
-    auto reader    = input.reader();
-    using encoding = typename decltype(reader)::encoding;
+    auto reader = input.reader();
 
     // We start at the first line and first column.
     std::size_t cur_line   = 1;

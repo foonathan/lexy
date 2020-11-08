@@ -99,16 +99,20 @@ add_library(lexy_dev INTERFACE)
 add_library(foonathan::lexy::dev ALIAS lexy_dev)
 target_link_libraries(lexy_dev INTERFACE _lexy_base)
 target_include_directories(lexy_dev INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_compile_options(lexy_dev INTERFACE
-                       # clang/GCC warnings
-                       $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-                       -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion -Wno-unused-local-typedefs>
-                       # disable annoying warnings
-                       $<$<CXX_COMPILER_ID:GNU>: -Wno-parentheses -Wno-noexcept-type>
-                       # MSVC warnings
-                       $<$<CXX_COMPILER_ID:MSVC>:
-                       /WX /W4 /wd4127>)
 
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+        target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS)
+    else()
+        target_compile_options(lexy_dev INTERFACE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
+    endif()
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    target_compile_options(lexy_dev INTERFACE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
+    # GCC doesn't like the operator precedence rules we're using for the DSL.
+    target_compile_options(lexy_dev INTERFACE -Wno-parentheses)
+    # GCC doesn't properly detect when local typedefs escape via the return type.
+    target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
+endif()
 
 # Link to have FILE I/O.
 add_library(lexy_file)
