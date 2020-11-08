@@ -42,7 +42,7 @@ struct json_value
     std::variant<json_null, json_bool, json_number, json_string, json_array, json_object> v;
 
     template <typename T>
-    json_value(T&& t) : v(std::forward<T>(t))
+    json_value(T t) : v(std::move(t))
     {}
 
     void _indent(int level) const

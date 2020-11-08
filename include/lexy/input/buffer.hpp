@@ -183,50 +183,48 @@ public:
     auto reader() const& noexcept
     {
         if constexpr (_has_sentinel)
-        {
-            class reader_type
-            {
-            public:
-                using encoding         = Encoding;
-                using char_type        = typename encoding::char_type;
-                using iterator         = const char_type*;
-                using canonical_reader = reader_type;
-
-                bool eof() const noexcept
-                {
-                    return *_cur == encoding::eof();
-                }
-
-                auto peek() const noexcept
-                {
-                    // The last one will be EOF.
-                    return *_cur;
-                }
-
-                void bump() noexcept
-                {
-                    ++_cur;
-                }
-
-                iterator cur() const noexcept
-                {
-                    return _cur;
-                }
-
-            private:
-                explicit reader_type(iterator begin) noexcept : _cur(begin) {}
-
-                iterator _cur;
-                friend buffer;
-            };
-
-            return reader_type(_data);
-        }
+            return _sentinel_reader(_data);
         else
             return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
     }
 
 private:
+    class _sentinel_reader
+    {
+    public:
+        using encoding         = Encoding;
+        using char_type        = typename encoding::char_type;
+        using iterator         = const char_type*;
+        using canonical_reader = _sentinel_reader;
+
+        bool eof() const noexcept
+        {
+            return *_cur == encoding::eof();
+        }
+
+        auto peek() const noexcept
+        {
+            // The last one will be EOF.
+            return *_cur;
+        }
+
+        void bump() noexcept
+        {
+            ++_cur;
+        }
+
+        iterator cur() const noexcept
+        {
+            return _cur;
+        }
+
+    private:
+        explicit _sentinel_reader(iterator begin) noexcept : _cur(begin) {}
+
+        iterator _cur;
+        friend buffer;
+    };
+
     char_type* allocate(std::size_t size) const
     {
         if constexpr (_has_sentinel)

@@ -14,8 +14,8 @@ namespace lexyd
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom_impl
 {
-    static constexpr auto value  = nullptr;
-    static constexpr auto length = 0u;
+    static constexpr const unsigned char* value  = nullptr;
+    static constexpr std::size_t          length = 0u;
 };
 template <lexy::encoding_endianness DontCare>
 struct _bom_impl<lexy::utf8_encoding, DontCare>
