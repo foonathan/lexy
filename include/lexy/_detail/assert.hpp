@@ -5,27 +5,46 @@
 #ifndef LEXY_DETAIL_ASSERT_HPP_INCLUDED
 #define LEXY_DETAIL_ASSERT_HPP_INCLUDED
 
-#include <cassert>
-#include <cstdlib>
+#include <lexy/_detail/config.hpp>
 
-#define LEXY_PRECONDITION(Expr) ((Expr) ? (void)0 : assert(0))
-#define LEXY_ASSERT(Expr, Msg) ((Expr) ? (void)0 : assert(false && Msg))
+#ifndef LEXY_ENABLE_ASSERT
 
-#ifdef NDEBUG
+// By default, enable assertions if NDEBUG is not defined.
 
-namespace lexy::_detail
-{
-[[noreturn]] inline void unreachable()
-{
-    std::abort();
-}
-} // namespace lexy::_detail
+#    if NDEBUG
+#        define LEXY_ENABLE_ASSERT 0
+#    else
+#        define LEXY_ENABLE_ASSERT 1
+#    endif
 
-#    define LEXY_UNREACHABLE() ::lexy::_detail::unreachable()
+#endif
+
+#if LEXY_ENABLE_ASSERT
+
+// We want assertions: use assert() if that's available, otherwise abort.
+// We don't use assert() directly as that's not constexpr.
+
+#    if NDEBUG
+
+#        include <cstdlib>
+#        define LEXY_PRECONDITION(Expr) ((Expr) ? void(0) : std::abort())
+#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : std::abort())
+
+#    else
+
+#        include <cassert>
+
+#        define LEXY_PRECONDITION(Expr) ((Expr) ? void(0) : assert(Expr))
+#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : assert((Expr) && Msg))
+
+#    endif
 
 #else
 
-#    define LEXY_UNREACHABLE() assert(false)
+// We don't want assertions.
+
+#    define LEXY_PRECONDITION(Expr) static_cast<void>(sizeof(Expr))
+#    define LEXY_ASSERT(Expr, Msg) static_cast<void>(sizeof(Expr))
 
 #endif
 
