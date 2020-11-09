@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/separator.hpp>
 #include <lexy/lexeme.hpp>
@@ -50,7 +51,20 @@ struct _it : rule_base
 template <typename Rule>
 LEXY_CONSTEVAL auto item(Rule)
 {
-    return _it<Rule>{};
+    if constexpr (lexy::is_branch_rule<Rule>)
+    {
+        auto b = branch(Rule{});
+        return b.condition() >> _it<decltype(b.then())>{};
+    }
+    else
+    {
+        return _it<Rule>{};
+    }
+}
+template <typename... Rs>
+LEXY_CONSTEVAL auto item(_chc<Rs...>)
+{
+    return (item(Rs{}) | ...);
 }
 } // namespace lexyd
 
@@ -105,11 +119,37 @@ LEXY_CONSTEVAL auto build_list(Rule)
 
 namespace lexyd
 {
-// This rule is being looped for the list.
-template <typename Item, typename Sep>
-struct _lstl;
+// Takes care of the separator logic in a list.
+template <typename Pattern, bool Capture>
+struct _lsts : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename Sink, typename... Args>
+        LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader, Sink& sink,
+                                 Args&&... args) -> typename _loop_handler<Handler>::result_type
+        {
+            auto begin = reader.cur();
+            if (!Pattern::matcher::match(reader))
+                // No separator, done with the list.
+                return LEXY_MOV(handler).break_();
+
+            if constexpr (Capture)
+                sink(lexy::lexeme(reader, begin));
+            else
+                (void)begin;
+
+            return NextParser::parse(handler, reader, sink, LEXY_FWD(args)...);
+        }
+    };
+};
+
+// Takes care of the item in a list if it's a branch.
 template <typename Item>
-struct _lstl<Item, void> : rule_base // no separator
+struct _lsti : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -132,68 +172,6 @@ struct _lstl<Item, void> : rule_base // no separator
         }
     };
 };
-template <typename Item, typename Sep, bool Capture>
-struct _lstl<Item, _sep<Sep, Capture>> : rule_base // normal separator
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename Sink, typename... Args>
-        LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader, Sink& sink,
-                                 Args&&... args) -> typename _loop_handler<Handler>::result_type
-        {
-            auto begin = reader.cur();
-            if (!Sep::matcher::match(reader))
-                // No separator, done with the list.
-                return LEXY_MOV(handler).break_();
-
-            if constexpr (Capture)
-                sink(lexy::lexeme(reader, begin));
-            else
-                (void)begin;
-
-            using rule = decltype(item(Item{}));
-            return rule::template parser<NextParser>::parse(handler, reader, sink,
-                                                            LEXY_FWD(args)...);
-        }
-    };
-};
-template <typename Item, typename Sep, bool Capture>
-struct _lstl<Item, _tsep<Sep, Capture>> : rule_base // trailing separator
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename Sink, typename... Args>
-        LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader, Sink& sink,
-                                 Args&&... args) -> typename _loop_handler<Handler>::result_type
-        {
-            using branch = decltype(branch(Item{}));
-
-            auto begin = reader.cur();
-            if (!Sep::matcher::match(reader))
-                // No separator, done with the list.
-                return LEXY_MOV(handler).break_();
-            else
-                (void)begin;
-
-            if constexpr (Capture)
-                sink(lexy::lexeme(reader, begin));
-
-            if (!branch::condition_matcher::match(reader))
-                // The condition didn't match, the separator above was the trailing one.
-                return LEXY_MOV(handler).break_();
-
-            using rule = decltype(item(branch::then()));
-            return rule::template parser<NextParser>::parse(handler, reader, sink,
-                                                            LEXY_FWD(args)...);
-        }
-    };
-};
 
 /// Creates a list of items without a separator.
 template <typename Item>
@@ -204,8 +182,15 @@ LEXY_CONSTEVAL auto list(Item it)
     auto b = branch(it);
 
     auto head = item(b.then());
-    auto tail = loop(_lstl<Item, void>{});
+    auto tail = loop(_lsti<Item>{});
     return b.condition() >> build_list(head + tail);
+}
+template <typename... Items>
+LEXY_CONSTEVAL auto list(_chc<Items...> choice)
+{
+    auto head = item(choice);
+    auto tail = loop(item(choice | else_ >> break_));
+    return build_list(head + tail);
 }
 
 /// Creates a list of items with the specified separator.
@@ -217,15 +202,22 @@ LEXY_CONSTEVAL auto list(Item it, _sep<Pattern, Capture>)
         auto b = branch(it);
 
         auto head = item(b.then());
-        auto tail = loop(_lstl<Item, _sep<Pattern, Capture>>{});
+        auto tail = loop(_lsts<Pattern, Capture>{} + item(it));
         return b.condition() >> build_list(head + tail);
     }
     else
     {
         auto head = item(it);
-        auto tail = loop(_lstl<Item, _sep<Pattern, Capture>>{});
+        auto tail = loop(_lsts<Pattern, Capture>{} + item(it));
         return build_list(head + tail);
     }
+}
+template <typename... Items, typename Pattern, bool Capture>
+LEXY_CONSTEVAL auto list(_chc<Items...> choice, _sep<Pattern, Capture>)
+{
+    auto head = item(choice);
+    auto tail = loop(_lsts<Pattern, Capture>{} + item(choice));
+    return build_list(head + tail);
 }
 
 /// Creates a list of items with the specified separator that can be trailing.
@@ -237,8 +229,15 @@ LEXY_CONSTEVAL auto list(Item it, _tsep<Pattern, Capture>)
     auto b = branch(it);
 
     auto head = item(b.then());
-    auto tail = loop(_lstl<Item, _tsep<Pattern, Capture>>{});
+    auto tail = loop(_lsts<Pattern, Capture>{} + _lsti<Item>{});
     return b.condition() >> build_list(head + tail);
+}
+template <typename... Items, typename Pattern, bool Capture>
+LEXY_CONSTEVAL auto list(_chc<Items...> choice, _tsep<Pattern, Capture>)
+{
+    auto head = item(choice);
+    auto tail = loop(_lsts<Pattern, Capture>{} + item(choice | else_ >> break_));
+    return build_list(head + tail);
 }
 } // namespace lexyd
 
