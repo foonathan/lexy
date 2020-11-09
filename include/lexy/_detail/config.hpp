@@ -8,6 +8,17 @@
 #include <cstddef>
 #include <type_traits>
 
+#if defined(LEXY_USER_CONFIG_HEADER)
+#    include LEXY_USER_CONFIG_HEADER
+#elif defined(__has_include)
+#    if __has_include(<lexy_user_config.hpp>)
+#        include <lexy_user_config.hpp>
+#    elif __has_include("lexy_user_config.hpp")
+#        include "lexy_user_config.hpp"
+#    endif
+#endif
+
+//=== move/fwd/declval/swap ===//
 namespace lexy::_detail
 {
 template <typename T>
@@ -44,14 +55,6 @@ constexpr void swap(T& lhs, T& rhs)
 #    else
 #        define LEXY_HAS_NTTP 0
 #    endif
-#endif
-
-#if LEXY_HAS_NTTP
-#    define LEXY_NTTP(T) T
-#    define LEXY_NTTP_TYPE_OF(Nttp) decltype(Nttp)
-#else
-#    define LEXY_NTTP(T) const T&
-#    define LEXY_NTTP_TYPE_OF(Nttp) std::remove_cv_t<std::remove_reference_t<decltype(Nttp)>>
 #endif
 
 //=== consteval ===//

@@ -32,6 +32,8 @@ using file_callback = void (*)(void* user_data, const char* memory, std::size_t 
 // Reads the entire contents of the specified file into memory.
 // On success, invokes the callback before freeing the memory.
 // On error, returns the error without invoking the callback.
+//
+// Do not change ABI, especially with different build configurations!
 file_error read_file(const char* path, file_callback cb, void* user_data);
 } // namespace lexy::_detail
 

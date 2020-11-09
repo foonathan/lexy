@@ -88,6 +88,14 @@ else()
     target_compile_features(_lexy_base INTERFACE cxx_std_17)
 endif()
 
+if (LEXY_USER_CONFIG_HEADER)
+    if(EXISTS ${LEXY_USER_CONFIG_HEADER})
+        target_compile_definitions(_lexy_base INTERFACE LEXY_USER_CONFIG_HEADER="${LEXY_USER_CONFIG_HEADER}")
+    else()
+        message(WARNING "User config header for lexy specified as '${LEXY_USER_CONFIG_HEADER}', but not found.")
+    endif()
+endif()
+
 # Core library.
 add_library(lexy_core INTERFACE)
 add_library(foonathan::lexy::core ALIAS lexy_core)
