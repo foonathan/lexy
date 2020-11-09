@@ -542,7 +542,15 @@ using deduce_encoding = typename _deduce_encoding<CharT>::type;
 template <>
 struct _deduce_encoding<char>
 {
+#if defined(LEXY_ENCODING_OF_CHAR)
+    using type = LEXY_ENCODING_OF_CHAR;
+    static_assert(std::is_same_v<type, default_encoding>      //
+                      || std::is_same_v<type, ascii_encoding> //
+                      || std::is_same_v<type, utf8_encoding>,
+                  "invalid value for LEXY_ENCODING_OF_CHAR");
+#else
     using type = default_encoding; // Don't know the exact encoding.
+#endif
 };
 
 #if LEXY_HAS_CHAR8_T
