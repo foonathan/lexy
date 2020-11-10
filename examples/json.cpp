@@ -186,8 +186,16 @@ struct number
 // A json value that is a string.
 struct string
 {
+    struct invalid_char
+    {
+        static LEXY_CONSTEVAL auto name()
+        {
+            return "invalid character in string literal";
+        }
+    };
+
     static constexpr auto rule = [] {
-        auto code_point = dsl::code_point;
+        auto code_point = dsl::try_<invalid_char>(dsl::code_point - dsl::ascii::control);
         auto escape     = dsl::backslash_escape //
                           .lit_c<'"'>()
                           .lit_c<'\\'>()
