@@ -44,8 +44,7 @@ struct _control
     template <typename Encoding, typename IntType>
     LEXY_DSL_FUNC bool match(IntType c)
     {
-        return (Encoding::to_int_type(0x0) <= c && c <= Encoding::to_int_type(0x8))
-               || (Encoding::to_int_type(0xE) <= c && c <= Encoding::to_int_type(0x1F))
+        return (Encoding::to_int_type(0x0) <= c && c <= Encoding::to_int_type(0x1F))
                || c == Encoding::to_int_type(0x7F);
     }
 };

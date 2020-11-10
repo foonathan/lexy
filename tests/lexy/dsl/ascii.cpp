@@ -32,9 +32,12 @@ TEST_CASE("dsl::ascii::*")
         INFO(code << " '" << c << "'");
         REQUIRE(is(character, c));
 
-        auto category_count = is(control, c) + is(blank, c) + is(newline, c) + is(other_space, c)
-                              + is(digit, c) + is(lower, c) + is(upper, c) + is(punct, c);
+        auto category_count = is(control, c) + (c == ' ') + is(digit, c) + is(lower, c)
+                              + is(upper, c) + is(punct, c);
         REQUIRE(category_count == 1);
+
+        if (is(space, c) && c != ' ')
+            REQUIRE(iscntrl(c));
 
         if (is(blank, c) || is(newline, c) || is(other_space, c))
             REQUIRE(is(space, c));
@@ -61,6 +64,7 @@ TEST_CASE("dsl::ascii::*")
         else
             REQUIRE(!is(print, c));
 
+        REQUIRE(is(control, c) == !!std::iscntrl(c));
         REQUIRE(is(blank, c) == !!std::isblank(c));
         REQUIRE(is(digit, c) == !!std::isdigit(c));
         REQUIRE(is(lower, c) == !!std::islower(c));
