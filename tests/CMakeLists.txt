@@ -26,9 +26,12 @@ add_library(lexy_test_base INTERFACE)
 target_sources(lexy_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/doctest_main.cpp)
 target_link_libraries(lexy_test_base INTERFACE foonathan::lexy::dev foonathan::lexy::file)
 target_include_directories(lexy_test_base INTERFACE ${CMAKE_BINARY_DIR})
-target_compile_definitions(lexy_test_base INTERFACE -DDOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING=1)
+target_compile_definitions(lexy_test_base INTERFACE DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING=1 LEXY_TEST)
 
 # Add the individual tests.
 add_subdirectory(lexy)
+add_subdirectory(examples)
+
 add_test(NAME unit_tests COMMAND lexy_test)
+add_test(NAME json COMMAND lexy_test_json)
 
