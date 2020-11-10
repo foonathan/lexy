@@ -216,6 +216,7 @@ struct command
 };
 } // namespace grammar
 
+#ifndef LEXY_TEST
 int main()
 {
     for (shell::interpreter intp; intp.shell.is_open();)
@@ -235,4 +236,5 @@ int main()
             break;
     }
 }
+#endif
 

@@ -8,6 +8,9 @@ target_link_libraries(lexy_test_email PRIVATE lexy_test_base)
 add_executable(lexy_test_json json.cpp)
 target_link_libraries(lexy_test_json PRIVATE lexy_test_base)
 
+add_executable(lexy_test_shell shell.cpp)
+target_link_libraries(lexy_test_shell PRIVATE lexy_test_base)
+
 add_executable(lexy_test_xml xml.cpp)
 target_link_libraries(lexy_test_xml PRIVATE lexy_test_base)
 

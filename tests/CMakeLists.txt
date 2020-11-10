@@ -35,5 +35,6 @@ add_subdirectory(examples)
 add_test(NAME unit_tests COMMAND lexy_test)
 add_test(NAME email COMMAND lexy_test_email)
 add_test(NAME json COMMAND lexy_test_json)
+add_test(NAME shell COMMAND lexy_test_shell)
 add_test(NAME xml COMMAND lexy_test_xml)
 
