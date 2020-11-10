@@ -257,6 +257,7 @@ struct document
 };
 } // namespace grammar
 
+#ifndef LEXY_TEST
 int main(int argc, char** argv)
 {
     if (argc < 2)
@@ -280,4 +281,5 @@ int main(int argc, char** argv)
 
     document.value()->print();
 }
+#endif
 
