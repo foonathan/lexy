@@ -184,6 +184,7 @@ struct message
 };
 } // namespace grammar
 
+#ifndef LEXY_TEST
 int main(int argc, char** argv)
 {
     if (argc < 2)
@@ -207,4 +208,5 @@ int main(int argc, char** argv)
 
     message.value().print();
 }
+#endif
 
