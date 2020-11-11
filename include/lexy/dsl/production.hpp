@@ -15,6 +15,7 @@ namespace lexyd
 template <typename Production>
 using _production_rule = std::remove_const_t<decltype(Production::rule)>;
 
+// Not inline: one function per production.
 template <typename Rule, typename Handler, typename Reader>
 constexpr auto _parse(Handler& handler, Reader& reader) -> typename Handler::result_type
 {

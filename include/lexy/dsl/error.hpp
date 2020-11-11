@@ -43,6 +43,7 @@ struct _err : rule_base
                 }
             }
 
+            // Pattern didn't match or we don't have one.
             auto e = lexy::make_error<Reader, Tag>(reader.cur());
             return LEXY_MOV(handler).error(reader, e);
         }

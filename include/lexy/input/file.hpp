@@ -72,17 +72,5 @@ auto read_file(const char*     path,
 }
 } // namespace lexy
 
-namespace lexy
-{
-template <typename Encoding       = default_encoding, typename Path,
-          typename MemoryResource = _detail::default_memory_resource,
-          typename                = decltype(Path().c_str())>
-auto read_file(const Path&     path,
-               MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
-{
-    return read_file(path.c_str(), resource);
-}
-} // namespace lexy
-
 #endif // LEXY_INPUT_FILE_HPP_INCLUDED
 

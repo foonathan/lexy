@@ -1,0 +1,34 @@
+[glossary]
+== Glossary
+
+[glossary]
+Branch::
+    A rule with a pattern condition and rule then used when making choices between multiple options in the parsing algorithm.
+
+Callback::
+    A function object with a `return_type` member typedef.
+
+Encoding::
+    Set of pre-defined classes that define the text encoding of the input.
+
+Error Callback::
+    The callback used to report errors.
+
+Grammar::
+    An entry production and all productions referenced by it.
+
+Input::
+    Defines the input that will be parsed.
+
+Pattern::
+    A special rule that can efficiently determine whether it would match on the current input.
+
+Production::
+    Building-block of a grammar consisting of a rule and an optional callback that produces the parsed value.
+
+Rule::
+    Matches a specific input and then produces a value or an error.
+
+Sink::
+    A type with a `sink()` method that then returns a function object that can be called multiple times.
+

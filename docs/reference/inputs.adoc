@@ -1,0 +1,798 @@
+== Inputs and Encodings
+
+An `Input` defines the input that will be parsed by `lexy`.
+It has a corresponding `Encoding` that controls, among other things, its character type and whether certain rules are available.
+The `Input` itself is unchanging and it produces a `Reader` which remembers the current position of the input during parsing.
+
+=== Encodings
+
+.`lexy/encoding.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    struct default_encoding;
+    struct ascii_encoding;
+    struct utf8_encoding;
+    struct utf16_encoding;
+    struct utf32_encoding;
+    struct raw_encoding;
+
+    template <typename CharT>
+    using deduce_encoding = /* see below */;
+
+    enum class encoding_endianness;
+}
+----
+
+An `Encoding` is a set of pre-defined policy classes that determine the text encoding of an input.
+
+Each encoding has a _primary character type_, which is the character type of the input.
+It can also have a _secondary character type_, which the input should accept, but internally convert to the primary character type.
+For example, `lexy::utf8_encoding`'s primary character type is `char8_t`, but it also accepts `char`.
+
+The encoding also has an _integer type_, which can store either any valid character (code unit to be precise) or a special EOF value, similar to `std::char_traits`.
+For some encodings, the integer type can be the same as the character type as not all values are valid code units.
+This allows optimizations.
+
+Certain rules can require a certain encodings.
+For example, `lexy::dsl::code_point` does not work with the `lexy::default_encoding`, and `lexy::dsl::encode` requires `lexy::raw_encoding`.
+
+==== The supported encodings
+
+`lexy::default_encoding`::
+    The encoding that will be used when no other encoding is specified.
+    Its character type is `char` and it can work with any 8-bit encoding (ASCII, UTF-8, extended ASCII etc.).
+    Only use this encoding if you don't know the exact encoding of your input.
+
+`lexy::ascii_encoding`::
+    Assumes the input is valid ASCII. Its character type is `char`.
+
+`lexy::utf8_encoding`::
+    Assumes the input is valid UTF-8. Its character type is `char8_t`, but it also accepts `char`.
+
+`lexy::utf16_encoding`::
+    Assumes the input is valid UTF-16. Its character type is `char16_t`, but it also accepts `wchar_t` on Windows.
+
+`lexy::utf32_encoding`::
+    Assumes the input is valid UTF-32. Its character type is `char32_t`, but it also accepts `wchar_t` on Linux.
+
+`lexy::raw_encoding`::
+    Does not assume the input is text. Its character type is `unsigned char`, but it also accepts `char`.
+    Use this encoding if you're not parsing text or if you're parsing text consisting of multiple encodings.
+
+NOTE: If you specify an encoding that does not match the inputs actual encoding, e.g. you say it is UTF-8 but in reality it is some Windows code page, the library will handle it by generating parse errors.
+The worst that can happen is that you'll get an unexpected EOF error because the input contains the character that is used to signal EOF in the encoding.
+
+==== Deducing encoding
+
+If you don't specify an encoding for your input, `lexy` can sometimes deduce it by matching the character type to the primary character type.
+For example, a string of `char8_t` will be deduce it to be `lexy::utf8_encoding`.
+If the character type is `char`, `lexy` will deduce `lexy::default_encoding` (unless that has been overriden by a build option).
+
+==== Encoding endianness
+
+[source,cpp]
+----
+enum class encoding_endianness
+{
+    little,
+    big,
+    bom,
+};
+----
+
+In-memory, UTF-16 and UTF-32 come in two flavors: big and little endian.
+Which version is used, can be specified with the `encoding_endianness` enumeration.
+This is only relevant when e.g. reading data from files.
+
+little::
+    The encoding is written using little endian.
+    For single-byte encodings, this has no effect.
+big::
+    The encoding is written using big endian.
+    For single-byte encodings, this has no effect.
+bom::
+    The endianness is determined using the byte-order mark (BOM) of the encoding.
+    If no BOM is present, defaults to big endian as per Unicode recommendation.
+    For UTF-8, this will skip the optional BOM, but has otherwise no effect.
+    For non-Unicode encodings, this has no effect.
+
+=== The pre-defined Inputs
+
+==== Null input
+
+.`lexy/input/null_input.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Encoding = default_encoding>
+    class null_input
+    {
+    public:
+        constexpr Reader reader() const& noexcept;
+    };
+
+    template <typename Encoding = default_encoding>
+    using null_lexeme = lexeme_for<null_input<Encoding>>;
+    template <typename Tag, typename Encoding = default_encoding>
+    using null_error = error_for<null_input<Encoding>, Tag>;
+    template <typename Production, typename Encoding = default_encoding>
+    using null_error_context = error_context<Production, null_input<Encoding>>;
+}
+----
+
+The class `lexy::null_input` is an input that is always empty.
+
+==== Range input
+
+.`lexy/input/range_input.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
+    class range_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = Iterator;
+
+        constexpr range_input() noexcept;
+        constexpr range_input(Iterator begin, Sentinel end) noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        constexpr Reader reader() const& noexcept;
+    };
+}
+----
+
+The class `lexy::range_input` is an input that represents the range `[begin, end)`.
+CTAD can be used to deduce the encoding from the value type of the iterator.
+
+NOTE: The input is a lightweight view and does not own any data.
+
+TIP: Use `lexy::string_input` instead if the range is contiguous.
+
+.Example
+[%collapsible]
+====
+Using the range input to parse content from a list.
+
+[source,cpp]
+----
+std::list<char8_t> list = …;
+
+// Create the input, deducing the encoding.
+auto input = lexy::range_input(list.begin(), list.end());
+----
+====
+
+==== String input
+
+.`lexy/input/string_input.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Encoding = default_encoding>
+    class string_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = const char_type*;
+
+        constexpr string_input() noexcept;
+
+        template <typename CharT>
+        constexpr string_input(const CharT* begin, const CharT* end) noexcept;
+        template <typename CharT>
+        constexpr string_input(const CharT* data, std::size_t size) noexcept;
+
+        template <typename View>
+        constexpr explicit string_input(const View& view) noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        constexpr Reader reader() const& noexcept;
+    };
+
+    template <typename Encoding, typename CharT>
+    constexpr auto zstring_input(const CharT* str) noexcept;
+    template <typename CharT>
+    constexpr auto zstring_input(const CharT* str) noexcept;
+
+    template <typename Encoding = default_encoding>
+    using string_lexeme = lexeme_for<string_input<Encoding>>;
+    template <typename Tag, typename Encoding = default_encoding>
+    using string_error = error_for<string_input<Encoding>, Tag>;
+    template <typename Production, typename Encoding = default_encoding>
+    using string_error_context = error_context<Production, string_input<Encoding>>;
+} // namespace lexy
+----
+
+The class `lexy::string_input` is an input that represents the string view defined by the constructors.
+CTAD can be used to deduce the encoding from the character type.
+
+NOTE: The input is a lightweight view and does not own any data.
+Use `lexy::buffer` if you want an owning version.
+
+===== Pointer constructor
+
+[source,cpp]
+----
+template <typename CharT>
+constexpr string_input(const CharT* begin, const CharT* end) noexcept; // <1>
+template <typename CharT>
+constexpr string_input(const CharT* data, std::size_t size) noexcept; // <2>
+----
+<1> The input is the contiguous range `[begin, end)`.
+<2> The input is the contiguous range `[data, data + size)`.
+
+`CharT` must be the primary or secondary character type of the encoding.
+
+===== View constructor
+
+[source,cpp]
+----
+template <typename View>
+constexpr explicit string_input(const View& view) noexcept;
+----
+
+The input is given by the `View`, which requires a `.data()` and `.size()` member.
+The character type of the `View` must be the primary or secondary character type of the encoding.
+
+===== Null-terminated string functions
+
+[source,cpp]
+----
+template <typename Encoding, typename CharT>
+constexpr auto zstring_input(const CharT* str) noexcept; // <1>
+template <typename CharT>
+constexpr auto zstring_input(const CharT* str) noexcept; // <2>
+----
+<1> Use the specified encoding.
+<2> Deduce the encoding from the character type.
+
+The input is given by the range `[str, end)`, where `end` is a pointer to the first null character of the string.
+The return type is an appropriate `lexy::string_input` instantiation.
+
+.Example
+[%collapsible]
+====
+Using the string input to parse content from a `std::string`.
+
+[source,cpp]
+----
+std::string str = …;
+auto input = lexy::string_input(str);
+----
+
+Using the string input to parse content from a string literal.
+
+[source,cpp]
+----
+auto input = lexy::zstring_input(u"Hello World!");
+----
+====
+
+==== Buffer Input
+
+.`lexy/input/buffer.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+template <typename Encoding       = default_encoding,
+          typename MemoryResource = /* default resource */>
+class buffer
+{
+public:
+    using encoding  = Encoding;
+    using char_type = typename encoding::char_type;
+
+    class builder;
+
+    constexpr buffer() noexcept;
+    constexpr explicit buffer(MemoryResource* resource) noexcept;
+
+    template <typename CharT>
+    explicit buffer(const CharT* data, std::size_t size,
+                    MemoryResource* resource = /* default resource */);
+    template <typename CharT>
+    explicit buffer(const CharT* begin, const CharT* end,
+                    MemoryResource* resource = /* default resource */);
+
+    template <typename View>
+    explicit buffer(const View&     view,
+                    MemoryResource* resource = /* default resource */);
+
+    buffer(const buffer& other, MemoryResource* resource);
+
+    const char_type* begin() const noexcept;
+    const char_type* end() const noexcept;
+
+    const char_type* data() const noexcept;
+
+    bool empty() const noexcept;
+
+    std::size_t size() const noexcept;
+    std::size_t length() const noexcept;
+
+    Reader reader() const& noexcept;
+};
+
+template <typename Encoding, encoding_endianness Endianness>
+constexpr auto make_buffer;
+
+template <typename Encoding       = default_encoding,
+          typename MemoryResource = /* default resource */>
+using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
+template <typename Tag, typename Encoding = default_encoding,
+          typename MemoryResource = /* default resource */>
+using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
+template <typename Production, typename Encoding = default_encoding,
+          typename MemoryResource = /* default resource */>
+using buffer_error_context = error_context<Production, buffer<Encoding, MemoryResource>>;
+}
+----
+
+The class `lexy::buffer` is an immutable, owning variant of `lexy::string_input`.
+The memory for the input is allocated using the `MemoryResource`, which is a class with the same interface as `std::pmr::memory_resource`.
+By default, it uses a `new` and `delete` for the allocation, just like `std::pmr::new_delete_resource`.
+Construction of the buffer is just like `lexy::string_input`, except for the additional `MemoryResource` parameter.
+Once a memory resource has been specified, it will not propagate on assignment.
+
+TIP: As the buffer owns the input, it can terminate it with the EOF character for encodings that have the same character and integer type.
+This eliminates the "is the reader at eof?"-branch during parsing.
+
+===== Builder
+
+[source,cpp]
+----
+class builder
+{
+public:
+    explicit builder(std::size_t     size,
+                     MemoryResource* resource = /* default resource */);
+
+    char_type* data() const noexcept;
+    std::size_t size() const noexcept;
+
+    buffer finish() && noexcept;
+};
+----
+
+The `builder` class separates the allocation and copying of the buffer data.
+This allows, for example, writing into the immutable buffer from a file.
+The constructor allocates memory for `size` characters, then `data()` gives a mutable pointer to that memory.
+
+===== Make buffer
+
+[source,cpp]
+----
+struct /* unspecified */
+{
+    auto operator()(const void* memory, std::size_t size) const;
+
+    template <typename MemoryResource>
+    auto operator()(const void* memory, std::size_t size, MemoryResource* resource) const;
+};
+
+template <typename Encoding, encoding_endianness Endianness>
+constexpr auto make_buffer = /* unspecified */;
+----
+
+`lexy::make_buffer` is a function object that constructs a `lexy::buffer` of the specified encoding from raw memory.
+If necessary, it will take care of the endianness conversion as instructed by the `lexy::encoding_endianness` enumeration.
+Any BOM, if present, will not be part of the input.
+
+.Example
+[%collapsible]
+====
+Using a buffer to parse content from a `std::string` using UTF-8.
+This enables the sentinel optimization.
+
+[source,cpp]
+----
+std::string str = …;
+auto input = lexy::buffer<lexy::utf8_encoding>(str);
+----
+
+Using a buffer to parse a memory-mapped file containing little endian UTF-16.
+
+[source,cpp]
+----
+auto ptr = mmap(…);
+
+constexpr auto make_utf16_little = lexy::make_buffer<lexy::utf16_encoding,
+                                        lexy::encoding_endianness::little>;
+auto input = make_utf16_little(ptr, length);
+----
+====
+
+==== File Input
+
+.`lexy/input/file.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    enum class file_error
+    {
+        os_error,
+        file_not_found,
+        permission_denied,
+    };
+
+    template <typename Encoding          = default_encoding,
+              encoding_endianness Endian = encoding_endianness::bom,
+              typename MemoryResource>
+    auto read_file(const char*     path,
+                   MemoryResource* resource = /* default resource */)
+        -> result<buffer<Encoding, MemoryResource>, file_error>;
+}
+----
+
+The function `lexy::read_file()` reads the file at the specified path using the specified encoding and endianness.
+On success, it returns a `lexy::result` containing a `lexy::buffer` with the file contents.
+On failure, it returns a `lexy::result` containing the error code.
+
+.Example
+[%collapsible]
+====
+Reading UTF-16 from a file with a BOM.
+
+[source,cpp]
+----
+auto result = lexy::read_file<lexy::utf16_encoding>("input.txt");
+if (!result)
+    throw my_file_read_error_exception(result.error()); // <1>
+
+auto input = std::move(result).value(); // <2>
+----
+<1> Throw an exception giving it the `lexy::file_error`.
+<2> Move the buffer out of the result and use it as input.
+====
+
+==== Shell Input
+
+.`lexy/input/shell.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Encoding = default_encoding>
+    struct default_prompt;
+
+    template <typename Prompt = default_prompt<>>
+    class shell
+    {
+    public:
+        using encoding    = typename Prompt::encoding;
+        using char_type   = typename encoding::char_type;
+        using prompt_type = Prompt;
+
+        shell();
+        explicit shell(Prompt prompt);
+
+        bool is_open() const noexcept;
+
+        Input prompt_for_input();
+
+        class writer;
+        template <typename... Args>
+        writer write_message(Args&&... args);
+
+        Prompt& get_prompt() noexcept;
+        const Prompt& get_prompt() const noexcept;
+    };
+
+    template <typename Prompt = default_prompt<>>
+    using shell_lexeme = /* unspecified */;
+    template <typename Tag, typename Prompt = default_prompt<>>
+    using shell_error = /* unspecified */;
+    template <typename Production, typename Prompt = default_prompt<>>
+    using shell_error_context = /* unspecified */;
+}
+----
+
+The class `lexy::shell` creates an interactive shell to ask for user input and write messages out.
+The exact behavior is controlled by the `Prompt`.
+By default, it uses `lexy::default_prompt` which reads from `stdin` and writes to `stdout`.
+
+WARNING: The interface of a `Prompt` is currently experimental.
+Refer to `lexy::default_prompt` if you want to write your own.
+
+===== State
+
+[source,cpp]
+----
+bool is_open() const noexcept;
+----
+
+A shell is initially open and can receive input, but the user can close the shell.
+For `lexy::default_prompt`, the shell is closed if the user enters EOF e.g. by pressing kbd:[Ctrl + D] under Linux.
+
+`is_open()` returns `false` if the user has closed it, and `true` otherwise.
+
+===== Input
+
+[source,cpp]
+----
+Input prompt_for_input();
+----
+
+A shell object is not itself an `Input`, but it can be used to create one.
+Calling `prompt_for_input()` will ask the user to enter some input, and then return an unspecified `Input` type that refers to that input.
+If parsing reaches the end of the input and the shell is still open, it will automatically ask the user for continuation input that will be appended to the current input.
+Once parsing of the input is done, `prompt_for_input()` can be called again to request new input from the user.
+
+WARNING: Calling `prompt_for_input()` again will invalidate all memory used by the previous input.
+
+The `lexy::default_prompt` asks for input by display `> ` and reading an entire line from `stdin`.
+If continuation input is requested, it will display `. ` and reads another line.
+
+===== Output
+
+[source,cpp]
+----
+class writer
+{
+public:
+    // non-copyable
+
+    template <typename CharT>
+    writer& operator()(const CharT* str, std::size_t length);
+    template <typename CharT>
+    writer& operator()(const CharT* str);
+    template <typename CharT>
+    writer& operator()(CharT c);
+
+    writer& operator()(lexy::lexeme_for</* input type */> lexeme);
+};
+
+template <typename... Args>
+writer write_message(Args&&... args);
+----
+
+Calling `write_message()` will prepare the prompt for displaying a message and returns a `writer` function object that can be used to specify the contents of the message.
+The arguments of `write_message()` are forwarded to the prompt and can be used to distinguish between e.g. normal and error messages.
+The `writer` can be invoked multiple times to give different parts of the message; the entire message is written out when the writer is destroyed.
+A `writer` can only write messages whose character type are the primary or secondary character type of the encoding.
+
+Using `lexy::default_prompt` does not require any message arguments and it will simply write the message to `stdout`, appending a newline at the end.
+
+.Example
+[%collapsible]
+====
+An interactive REPL.
+
+[source,cpp]
+----
+lexy::shell<> shell;
+while (shell.is_open())
+{
+    auto input = shell.prompt_for_input(); // <1>
+    auto result = lexy::parse<expression>(input, …); // <2>
+    if (result)
+        shell.write_message()(result.value()); // <3>
+}
+----
+<1> Ask the user to enter more input.
+<2> Parse the input, requesting continuation input if necessary.
+<3> Write the result.
+
+For a full example, see `examples/shell.cpp`.
+====
+
+==== Command-line argument Input
+
+.`lexy/input/argv_input.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    class argv_sentinel;
+    class argv_iterator;
+
+    constexpr argv_iterator argv_begin(int argc, char* argv[]) noexcept;
+    constexpr argv_iterator argv_end(int argc, char* argv[]) noexcept;
+
+    template <typename Encoding = default_encoding>
+    class argv_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = argv_iterator;
+
+        constexpr argv_input() = default;
+        constexpr argv_input(argv_iterator begin, argv_iterator end) noexcept;
+        constexpr argv_input(int argc, char* argv[]) noexcept;
+
+        constexpr Reader reader() const& noexcept;
+    };
+
+    template <typename Encoding = default_encoding>
+    using argv_lexeme = lexeme_for<argv_input<Encoding>>;
+    template <typename Tag, typename Encoding = default_encoding>
+    using argv_error = error_for<argv_input<Encoding>, Tag>;
+    template <typename Production, typename Encoding = default_encoding>
+    using argv_error_context = error_context<Production, argv_input<Encoding>>;
+}
+----
+
+The class `lexy::argv_input` is an input that uses the command-line arguments passed to `main()`.
+It excludes `argv[0]`, which is the executable name, and includes `\0` as a separator between command line arguments.
+
+NOTE: The input is a lightweight view and does not own any data.
+
+===== Command-line iterators
+
+[source,cpp]
+----
+class argv_sentinel;
+class argv_iterator;
+
+constexpr argv_iterator argv_begin(int argc, char* argv[]) noexcept;
+constexpr argv_iterator argv_end(int argc, char* argv[]) noexcept;
+----
+
+The `lexy::argv_iterator` is a bidirectional iterator iterating over the command-line arguments excluding the initial argument which is the executable name.
+It can be created using `argv_begin()` and `argv_end()`.
+
+.Example
+[%collapsible]
+====
+Use the command line arguments as input.
+
+[source,cpp]
+----
+int main(int argc, char* argv[])
+{
+    auto input = lexy::argv_input(argc, argv);
+    …
+}
+----
+
+If the program is invoked with `./a.out a 123 b`, the input will be `a\0123\0b`.
+
+====
+
+=== Lexemes
+
+A *lexeme* is a the part of the input matched by a rule.
+
+==== Lexeme
+
+.`lexy/lexeme.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Reader>
+    class lexeme
+    {
+    public:
+        using encoding  = typename Reader::encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = typename Reader::iterator;
+
+        constexpr lexeme() noexcept;
+        constexpr lexeme(iterator begin, iterator end) noexcept;
+
+        constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
+        : lexeme(begin, reader.cur())
+        {}
+
+        constexpr bool empty() const noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        // Only if the iterator is a pointer.
+        constexpr const char_type* data() const noexcept;
+
+        // Only if the iterator has `operator-`.
+        constexpr std::size_t size() const noexcept;
+
+        // Only if the iterator has `operator[]`.
+        constexpr char_type operator[](std::size_t idx) const noexcept;
+    };
+
+    template <typename Input>
+    using lexeme_for = lexeme<input_reader<Input>>;
+}
+----
+
+The class `lexy::lexeme` represents a sub-range of the input.
+For convenience, most inputs also provide convenience typedefs that can be used instead of `lexy::lexeme_for`.
+
+==== Code point
+
+.`lexy/encoding.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    class code_point
+    {
+    public:
+        constexpr code_point() noexcept;
+        constexpr explicit code_point(char32_t value) noexcept;
+
+        constexpr char32_t value() const noexcept;
+
+        constexpr bool is_valid() const noexcept;
+        constexpr bool is_surrogate() const noexcept;
+        constexpr bool is_scalar() const noexcept;
+
+        constexpr bool is_ascii() const noexcept;
+        constexpr bool is_bmp() const noexcept;
+
+        friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept;
+        friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept;
+    };
+}
+----
+
+The class `lexy::code_point` represents a single code point from the input.
+It is merely a wrapper over a `char32_t` that contains the numerical code.
+
+===== Constructors
+
+[source,cpp]
+----
+constexpr code_point() noexcept; // <1>
+constexpr explicit code_point(char32_t value) noexcept; <2>
+----
+<1> Creates an invalid code point.
+<2> Creates the specified code point. The value will be returned from `value()` unchanged.
+
+===== Validity
+
+[source,cpp]
+----
+constexpr bool is_valid() const noexcept; // <1>
+constexpr bool is_surrogate() const noexcept; // <2>
+constexpr bool is_scalar() const noexcept; // <3>
+----
+<1> Returns `true` if the code point is less than `0x10'FFFF`, `false` otherwise.
+<2> Returns `true` if the code point is a UTF-16 surrogate, `false` otherwise.
+<3> Returns `true` if the code point is valid and not a surrogate, `false` otherwise.
+
+===== Category
+
+[source,cpp]
+----
+constexpr bool is_ascii() const noexcept; // <1>
+constexpr bool is_bmp() const noexcept; // <2>
+----
+<1> Returns `true` if the code point is ASCII (7-bit value), `false` otherwise.
+<2> Returns `true` if the code point is in the Unicode BMP (16-bit value), `false` otherwise.
+
+=== Writing custom Inputs
+
+.The `Input` concept
+[source,cpp]
+----
+class Input
+{
+public:
+    Reader reader() const&;
+};
+----
+
+An `Input` is just a class with a `reader()` member function that returns a `Reader` to the beginning of the input.
+The type alias `lexy::input_reader<Reader>` returns the type of the corresponding reader.
+
+WARNING: The interface of a `Reader` is currently experimental.
+Refer to the comments in `lexy/input/base.hpp`.
+

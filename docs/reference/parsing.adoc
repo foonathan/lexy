@@ -1,0 +1,781 @@
+== Matching, parsing and validating
+
+.The `Production` concept
+[source,cpp]
+----
+struct Production
+{
+    static constexpr auto rule = …;
+
+    static constexpr auto value = …; // optional
+    static constexpr auto list  = …; // optional
+};
+----
+
+A `Production` is type containing a rule and optional callbacks that produce the value.
+A grammar contains an entry production where parsing begins and all productions referenced by it.
+
+TIP: It is recommended to put all productions of a grammar into a separate namespace.
+
+By passing the entry production of the grammar to `lexy::match()`, `lexy::parse()`, or `lexy::validate()`, the production is parsed.
+
+[discrete]
+=== Matching
+
+.`lexy/match.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Production, typename Input>
+    constexpr bool match(const Input& input);
+}
+----
+
+The function `lexy::match()` matches the `Production` on the given `input`.
+If the production accepts the input, returns `true`, otherwise, returns `false`.
+It will discard any values produced and does not give detailed information about why the production did not accept the input.
+
+NOTE: A production does not necessarily need to consume the entire input for it to match.
+Add `lexy::dsl::eof` to the end if the production should consume the entire input.
+
+[discrete]
+=== Validating
+
+.`lexy/validate.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Production, typename Input, typename Callback>
+    constexpr auto validate(const Input& input, Callback callback)
+        -> result</* see below */>;
+}
+----
+
+The function `lexy::validate()` validates that the `Production` matches on the given `input`.
+The return value is an `lexy::result<void, E>`, where `E` is the return type of `callback`.
+If the production accepts the input, returns an empty optional, otherwise, invokes the callback with the error information (see <<Error handling>>) and returns its result.
+It will discard any values produced.
+
+NOTE: A production does not necessarily need to consume the entire input for it to match.
+Add `lexy::dsl::eof` to the end if the production should consume the entire input.
+
+[discrete]
+=== Parsing
+
+.`lexy/parse.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Production, typename Input, typename Callback>
+    constexpr auto parse(const Input& input, Callback callback)
+        -> result</* see below */>;
+
+    template <typename Production, typename Input, typename State, typename Callback>
+    constexpr auto parse(const Input& input, State&& state, Callback callback)
+        -> result</* see below */>;
+}
+----
+
+The function `lexy::parse()` parses the `Production` on the given `input`.
+The return value is a `lexy::result<T, E>`, where `T` is the return type of the `Production::value` or `Production::list` callback,
+and `E` is the return type of the `callback`.
+If the production accepts the input, invokes `Production::value` or `Production::list` (see below) with the produced values and returns their result.
+Otherwise, invokes `callback` with the error information (see <<Error handling>>) and returns its result.
+
+The return value on success is determined using `Production::value` or `Production::list` depending on three cases:
+
+* `Production::rule` does not contain a list. Then all arguments will be forwarded to the `Production::value` callback whose result is returned.
+  The `Production::value` callback must be present.
+* `Production::rule` contains a list and no other rule produces a value. Then the `Production::list` callback will be used as sink for the list values.
+  If an additional `Production::value` callback is present, the result of the `Production::list` callback will be passed to the `Production::value` callback whose result is returned.
+  Otherwise, the result of the `Production::list` callback is the final result.
+  The `Production::list` callback must be present.
+* `Production::rule` contains a list and other rules produce values as well.
+  Then the `Production::list` callback will be used as sink for the list values.
+  The resulting value will be added to the list of other rule values in order, and all values forwarded to the `Production::value` callback whose result is returned.
+  Both `Production::value` and `Production::list` must be present.
+
+The second overload of `lexy::parse()` allows passing an arbitrary state argument.
+This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::parse_state_member` rules which can forward it to the `Production::value` callback.
+
+=== Result
+
+.`lexy/result.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    struct result_value_t {};
+    constexpr auto result_value = result_value_t{};
+
+    struct result_error_t {};
+    constexpr auto result_error = result_error_t{};
+
+    template <typename T, typename E>
+    class result
+    {
+    public:
+        using value_type = /* see below */;
+        using error_type = /* see below */;
+
+        constexpr result();
+
+        template <typename... Args>
+        constexpr result(result_value_t, Args&&... args);
+        template <typename... Args>
+        constexpr result(result_error_t, Args&&... args);
+
+        template <typename U>
+        constexpr explicit result(const result<U, E>& other);
+        template <typename U>
+        constexpr explicit result(result<U, E>&& other);
+
+        template <typename Arg>
+        constexpr explicit result(Arg&& arg);
+
+        constexpr explicit operator bool() const noexcept;
+        constexpr bool has_value() const noexcept;
+        constexpr bool has_error() const noexcept;
+
+        static constexpr bool has_void_value() noexcept;
+        static constexpr bool has_void_error() noexcept;
+
+        constexpr value_type& value() & noexcept;
+        constexpr const value_type& value() const& noexcept;
+        constexpr value_type&& value() && noexcept;
+        constexpr const value_type&& value() const&& noexcept;
+
+        constexpr error_type& error() & noexcept;
+        constexpr const error_type& error() const& noexcept;
+        constexpr error_type&& error() && noexcept;
+        constexpr const error_type&& error() const&& noexcept;
+    };
+}
+----
+
+The class `lexy::result<T, E>` stores either a value `T` or an error `E` and is used to return the result of parsing.
+`T` and `E` can be `void`; in that case it is internally translated to the tag types `result_value_t` or `result_error_t`, respectively, which is reflected in the `value_type` and `error_type` typedefs as well.
+
+TIP: `lexy::result<T, void>` is like `std::optional<T>` and `lexy::result<void, void>` is like `bool`.
+
+Once a result is created containing a value or error, it can never change that state.
+
+NOTE: `lexy::result` was created for use by the library only.
+While it can be used as a general purpose result monad (which we leverage for `lexy::read_file()`), it is better to us a designated library for it.
+
+[discrete]
+===== Creation
+
+[source,cpp]
+----
+constexpr result(); // <1>
+
+template <typename... Args>
+constexpr result(result_value_t, Args&&... args); // <2>
+template <typename... Args>
+constexpr result(result_error_t, Args&&... args); // <3>
+----
+<1> Creates a result containing a default constructed error.
+<2> Creates a result containing the value constructed by forwarding the arguments.
+<3> Creates a result containing the error constructed by forwarding the arguments.
+
+[discrete]
+===== Conversion
+
+[source,cpp]
+----
+template <typename U>
+constexpr explicit result(const result<U, E>& other); // <1>
+template <typename U>
+constexpr explicit result(result<U, E>&& other); // <2>
+
+template <typename Arg>
+constexpr explicit result(Arg&& arg); // <3>
+----
+<1> Converts an errored `result<U, E>` to a `result<T, E>` by copying the error.
+<2> Converts an errored `result<U, E>` to a `result<T, E>` by moving the error.
+<3> Only available for `result<T, void>` or `result<void, E>`. Constructs the value/error by forwarding the argument.
+
+[discrete]
+===== State
+
+[source,cpp]
+----
+constexpr explicit operator bool() const noexcept; // <1>
+constexpr bool has_value() const noexcept; // <2>
+constexpr bool has_error() const noexcept; // <3>
+
+static constexpr bool has_void_value() noexcept; // <4>
+static constexpr bool has_void_error() noexcept; // <5>
+----
+<1> Returns `true` if it contains a value, `false` otherwise.
+<2> Returns `true` if it contains a value, `false` otherwise.
+<3> Returns `true` if it contains an error, `false` otherwise.
+<4> Returns `true` if `T == void`, `false` otherwise.
+<5> Returns `true` if `E == void`, `false` otherwise.
+
+[discrete]
+===== Access
+
+[source,cpp]
+----
+constexpr value_type& value() & noexcept;
+constexpr const value_type& value() const& noexcept;
+constexpr value_type&& value() && noexcept;
+constexpr const value_type&& value() const&& noexcept;
+
+constexpr error_type& error() & noexcept;
+constexpr const error_type& error() const& noexcept;
+constexpr error_type&& error() && noexcept;
+constexpr const error_type&& error() const&& noexcept;
+----
+
+Returns the stored value or error, respectively.
+
+=== Callbacks
+
+.The `Callback` concept
+[source,cpp]
+----
+struct Callback
+{
+    using return_type = …;
+
+    return_type operator()(Args&&... args) const;
+};
+
+struct Sink
+{
+    class _sink // exposition only
+    {
+    public:
+        using return_type = …;
+
+        void operator()(Args&&... args);
+
+        return_type&& finish() &&;
+    };
+
+    _sink sink() const;
+};
+----
+
+A `Callback` is a function object whose return type is specified by a member typedef.
+A `Sink` is a type with a `sink()` member function that returns a callback.
+The callback can be invoked multiple times and the final value is return by calling `.finish()`.
+
+Callbacks are used by `lexy` to compute the parse result and handle error values.
+They can either be written manually implementing to the above concepts or composed from the pre-defined concepts.
+
+==== Callback adapters
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename ReturnType = void, typename... Fns>
+    consteval Callback callback(Fns&&... fns);
+}
+----
+
+Creates a callback with the given `ReturnType` from multiple functions.
+When calling the resulting callback, it will use overload resolution to determine the correct function to call.
+Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T, typename... Fns>
+    consteval Sink sink(Fns&&... fns);
+}
+----
+
+Creates a sink constructing the given `T` using the given functions.
+The sink will value-construct the `T` and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
+Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.
+
+.Example
+[%collapsible]
+====
+Creating a sink that will add all values.
+
+[source,cpp]
+----
+constexpr auto adder = lexy::sink<int>([](int& cur, int arg) { cur += arg; }); // <1>
+
+auto s = adder.sink(); // <2>
+s(1);
+s(2);
+s(3);
+auto result = std::move(s).finish();
+assert(result == 1 + 2 + 3);
+----
+<1> Define the sink.
+<2> Use it.
+====
+
+==== Callback composition
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename First, typename Second>
+    consteval auto operator|(First first, Second second);
+}
+----
+
+The result of `g | h`, where `g` and `h` are both callbacks, is another callback that first invokes `g` and then passes the result to `h`.
+
+NOTE: It does not compose sinks.
+
+.Example
+[%collapsible]
+====
+Build a string, then get its length.
+
+[source,cpp]
+----
+constexpr auto make_string = lexy::callback<std::string>([](const char* str) { return str; });
+constexpr auto string_length = lexy::callback<std::size_t>(&std::string::size);
+
+constexpr auto inefficient_strlen = make_string | string_length; // <1>
+
+assert(inefficient_strlen("1234") == 4); // <2>
+----
+<1> Compose the two callbacks.
+<2> Use it.
+====
+
+==== The no-op callback
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    constexpr auto noop = /* unspecified */;
+}
+----
+
+`lexy::noop` is both a callback and a sink.
+It ignores all arguments passed to it and its return type is `void`.
+
+.Example
+[%collapsible]
+====
+Parse the production, but do nothing on errors.
+
+[source,cpp]
+----
+auto result = lexy::parse<my_production>(my_input, lexy::noop); // <1>
+if (!result)
+    throw my_parse_error(); // <2>
+auto value = result.value(); // <3>
+----
+<1> Parse `my_production`. If an error occurs, just return a `result<T, void>` in the error state.
+<2> `lexy::noop` does not make errors disappear, they still need to be handled.
+<3> Do something with the parsed value.
+====
+
+==== Constructing objects
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr auto forward = /* unspecified */;
+
+    template <typename T>
+    constexpr auto construct = /* unspecified */;
+
+    template <typename T, typename PtrT = T*>
+    constexpr auto new_ = /* unspecified */;
+}
+----
+
+The callback `lexy::forward<T>` can accept either a `const T&` or a `T&&` and forwards it.
+It does not have a sink.
+
+The callback `lexy::construct<T>` constructs a `T` by forwarding all arguments to a suitable constructor.
+If the type does not have a constructor, it forwards all arguments using brace initialization.
+It does not have a sink.
+
+The callback `lexy::new_<T, PtrT>` works just like `lexy::construct<T>`, but it constructs the object on the heap by calling `new`.
+The resulting pointer is then converted to the specified `PtrT`.
+It does not have a sink.
+
+.Example
+[%collapsible]
+====
+A callback that creates a `std::unique_ptr<std::string>`.
+
+[source,cpp]
+----
+constexpr auto make_unique_str = lexy::new_<std::string, std::unique_ptr<std::string>>; // <1>
+
+constexpr auto make_unique_str2 = lexy::new_<std::string> | lexy::construct<std::unique_ptr<std::string>>; // <2>
+----
+<1> Specify a suitable `PtrT`.
+<2> Equivalent version that uses composition and `lexy::construct` instead.
+====
+
+==== Constructing lists
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr auto as_list = /* unspecified */;
+
+    template <typename T>
+    constexpr auto as_collection = /* unspecified */;
+}
+----
+
+`lexy::as_list<T>` is both a callback and a sink.
+As a callback, it forwards all arguments to the `std::initializer_list` constructor of `T` and returns the result.
+As a sink, it first default constructs a `T` and then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
+
+`lexy::as_collection<T>` is like `lexy::as_list<T>`, but instead of calling `push_back()` and `emplace_back()`, it calls `insert()` and `emplace()`.
+
+.Example
+[%collapsible]
+====
+Create a `std::vector<int>` and `std::set<int>`.
+
+[source,cpp]
+----
+constexpr auto as_int_vector = lexy::as_list<std::vector<int>>;
+constexpr auto as_int_set = lexy::as_collection<std::set<int>>;
+----
+====
+
+==== Constructing strings
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename String, typename Encoding = /* see below */>
+    constexpr auto as_string = /* unspecified */;
+}
+----
+
+`lexy::as_string<String, Encoding>` is both a callback and a sink.
+It constructs a `String` object in the given `Encoding`.
+If no encoding is specified, it deduces one from the character type of the string.
+
+As a callback, it constructs the string directly from the given argument.
+Then it accepts:
+
+* A reference to an existing `String` object, which is forwarded as the result.
+* A `const CharT*` and a `std::size_t`, where `CharT` is a compatible character type. The two arguments are forwarded to a `String` constructor.
+* A `lexy::lexeme<Reader> lex`, where `Reader::iterator` is a pointer.
+  The character type of the reader must be compatible with the encoding.
+  It constructs the string using `String(lex.data(), lex.size())` (potentially casting the pointer type if necessary).
+* A `lexy::lexeme<Reader> lex`, where `Reader::iterator` is not a pointer.
+  It constructs the string using `String(lex.begin(), lex.end())`.
+  The range constructor has to take care of any necessary character conversion.
+* A `lexy::code_point`. It is encoded into a local character array according to the specified `Encoding`.
+  Then the string is constructed using a two-argument `(const CharT*, std::size_t)` constructor.
+
+As a sink, it first default constructs the string.
+Then it will repeatedly append the following arguments:
+
+* A single `CharT`, which is convertible to the strings character type.
+  It is appended by calling `.push_back()`.
+* A reference to an existing `String` object, which is appended by calling `.append()`.
+* A `const CharT*` and a `std::size_t`, where `CharT` is a compatible character type.
+  The two arguments are forwarded to `.append()`.
+* A `lexy::lexeme<Reader> lex`, where `Reader::iterator` is a pointer.
+  The character type of the reader must be compatible with the encoding.
+  It is appended using `.append(lex.data(), lex.size())` (potentially casting the pointer type if necessary).
+* A `lexy::lexeme<Reader> lex`, where `Reader::iterator` is not a pointer.
+  It constructs the string using `.append(lex.begin(), lex.end())`.
+  The range append function has to take care of any necessary character conversion.
+* A `lexy::code_point`. It is encoded into a local character array according to the specified `Encoding`.
+  Then it is appended to the string using a two-argument `.append(const CharT*, std::size_t)` overload.
+
+.Example
+[%collapsible]
+====
+[source,cpp]
+----
+constexpr auto as_utf16_string = lexy::as_string<std::u16string>;                   // <1>
+constexpr auto as_utf8_string  = lexy::as_string<std::string, lexy::utf8_encoding>; // <2>
+----
+<1> Constructs a `std::u16string`, deducing the encoding as UTF-16.
+<2> Constructs a `std::string`, specifying the encoding as UTF-8.
+====
+
+==== Rule-specific callbacks
+
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr auto as_aggregate = /* unspecified */;
+
+    template <typename T>
+    constexpr auto as_integer = /* unspecified */;
+}
+----
+
+The callback and sink `lexy::as_aggregate<T>` is only used together with the `lexy::dsl::member` rule and documented there.
+
+The callback `lexy::as_integer<T>` constructs an integer type `T` and has two overloads:
+
+[source,cpp]
+----
+template <typename Integer>
+T operator()(const Integer& value) const; // <1>
+
+template <typename Integer>
+T operator()(int sign, const Integer& value) const; // <2>
+----
+<1> Returns `T(value)`.
+<2> Returns `T(sign * value)`.
+
+The second overload is meant to be used together with `lexy::dsl::sign` and related rules.
+
+=== Error handling
+
+Parsing errors are reported by constructing a `lexy::error` object and passing it to the error callback of `lexy::parse` and `lexy::validate` together with the `lexy::error_context`.
+
+As such, an error callback looks like this:
+
+[source, cpp]
+----
+class ErrorCallback
+{
+public:
+    using return_type = /* … */;
+
+    template <typename Production, typename Input, typename Tag>
+    return_type operator()(const lexy::error_context<Production, Input>& context,
+                           const lexy::error<lexy::input_reader<Input>, Tag>& error) const;
+};
+----
+
+Of course, overloading can be used to differentiate between various error types and contexts.
+
+==== Error types
+
+.`lexy/error.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Reader, typename Tag>
+    class error;
+
+    struct expected_literal {};
+    template <typename Reader>
+    class error<Reader, expected_literal>;
+
+    struct expected_char_class {};
+    template <typename Reader>
+    class error<Reader, expected_char_class>;
+
+    template <typename Input, typename Tag>
+    using error_for = error<input_reader<Input>, Tag>;
+
+    template <typename Reader, typename Tag, typename ... Args>
+    constexpr auto make_error(Args&&... args);
+}
+----
+
+All errors are represented by instantiations of `lexy::error<Reader, Tag>`.
+The `Tag` is an empty type that specifies the kind of error.
+There are specializations for two tags to store additional information.
+
+The function `lexy::make_error` constructs an error object given the reader and tag by forwarding all the arguments.
+
+===== Generic error
+
+[source,cpp]
+----
+template <typename Reader, typename Tag>
+class error
+{
+    using iterator = typename Reader::iterator;
+
+public:
+    constexpr explicit error(iterator pos) noexcept;
+    constexpr explicit error(iterator begin, iterator end) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr iterator begin() const noexcept;
+    constexpr iterator end() const noexcept;
+
+    constexpr /* see below */ message() const noexcept;
+};
+----
+
+The primary class template `lexy::error<Reader, Tag>` represents a generic error without additional metadata.
+It can either be constructed giving it a single position, then `position() == begin() == end()`;
+or a range of the input, then `position() == begin() <= end()`.
+
+The `message()` is determined using the `Tag`.
+By default, it returns the type name of `Tag` after removing the top-level namespace name.
+This can be overridden by defining either `Tag::name()` or `Tag::name`.
+The result is an unspecified type similar to `std::string_view`.
+
+===== Expected literal error
+
+[source,cpp]
+----
+struct expected_literal
+{};
+
+template <typename Reader>
+class error<Reader, expected_literal>
+{
+    using iterator    = typename Reader::iterator;
+    using string_view = /* see below */;
+
+public:
+    constexpr explicit error(iterator position,
+                             string_view string, std::size_t index) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr string_view string() const noexcept;
+    constexpr string_view::char_type character() const noexcept;
+
+    constexpr std::size_t index() const noexcept;
+};
+----
+
+A specialization of `lexy::error` is provided if `Tag == lexy::expected_literal`.
+It represents the error where a literal string was expected, but could not be matched.
+It is mainly raised by the `lexy::dsl::lit` rule.
+
+The error happens at a given `position()` and with a given `string()`.
+The `index()` is the index into the string where matching failed; e.g. `0` if the input starts with a different character, `2` if the first two characters matched, etc.
+The `character()` is the string character at that index.
+
+The unspecified `string_view` type is like `std::string_view`.
+Its character type must match the encoding of the `Reader`.
+
+===== Character class error
+
+[source,cpp]
+----
+struct expected_char_class
+{};
+
+template <typename Reader>
+class error<Reader, expected_char_class>
+{
+    using iterator = typename Reader::iterator;
+
+public:
+    constexpr explicit error(iterator position, const char* name) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr /* see below */ name() const noexcept;
+};
+----
+
+A specialization of `lexy::error` is provided if `Tag == lexy::expected_char_class`.
+It represents the error where any character from a given set of characters was expected, but could not be matched.
+It is raised by the `lexy::dsl::ascii::*` rules or `lexy::dsl::newline`, among others.
+
+The error happens at the given `position()` and a symbolic name of the character class is returned by `name()`.
+The return type of `name()` is an unspecified type similar to `std::string_view`.
+
+By convention, the name format used is `<group>.<name>` or `<name>`, where both `<group>` and `<name>` consist of characters.
+Examples include `newline`, `ASCII.alnum` and `digit.decimal`.
+
+==== Error context
+
+.`lexy/error.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Production, typename Input>
+    class error_context
+    {
+        using iterator = typename input_reader<Input>::iterator;
+
+    public:
+        constexpr explicit error_context(const Input& input, iterator pos) noexcept;
+
+        constexpr const Input& input() const noexcept;
+
+        static consteval /* see below */ production();
+
+        constexpr iterator position() const noexcept;
+    };
+}
+----
+
+The class `lexy::error_context<Production, Input>` contain information about the context where the error occurred.
+
+The entire input containing the error is returned by `input()`.
+
+The `Production` whose rule has raised the error is specified as template parameter and its name returned by `production()`.
+Like `lexy::error<Reader, Tag>::message()`, it returns the name of the type without the top level namespace name.
+This can be overridden by defining `Production::name()` or `Production::name`.
+The result is an unspecified type similar to `std::string_view`.
+
+The `position()` of the error context is the input position where the production started parsing.
+
+==== Error location
+
+.`lexy/error_location.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Reader>
+    struct error_location
+    {
+        std::size_t line, column;
+        lexeme<Reader> context;
+    };
+
+    template <typename Input>
+    using error_location_for = error_location<input_reader<Input>>;
+
+    template <typename Input, typename PatternCP, typename PatternNL>
+    constexpr auto make_error_location(const Input& input,
+                                       typename input_reader<Input>::iterator pos,
+                                       PatternCP code_point_pattern,
+                                       PatternNL newline_pattern)
+        -> error_location_for<Input>;
+}
+----
+
+The header `lexy/error_location.hpp` provides a utility function `lexy::make_error_location()` to convert an error position,
+which is always given via an iterator, into the traditional line/column format.
+
+The function takes the position into the input, as well as two patterns.
+It then determines the line and column by repeatedly parsing the two patterns until the error position is reached.
+Every time the `code_point_pattern` matches, the column is increased by one.
+Every time the `newline_pattern` matches, the column is reset to one and the line increased by one.
+If neither pattern matches, column is increased by one and the next code unit skipped.
+The final line and column number are returned, together with the `context` which is a lexeme containing the entire line where the error occurred.
+
+For ASCII encoded texts, the `code_point_pattern` is `lexy::dsl::ascii::character` and the `newline_pattern` is `lexy::dsl::newline`.
+For Unicode encoded texts, the `code_point_pattern` is `lexy::dsl::code_point` and the `newline_pattern` is `lexy::dsl::newline`.
+
