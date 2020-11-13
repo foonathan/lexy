@@ -20,7 +20,7 @@ public:
     : _err_ctx(input, reader.cur()), _callback(cb)
     {}
 
-    using result_type = optional_error<typename Callback::return_type>;
+    using result_type = result<void, typename Callback::return_type>;
 
     template <typename SubProduction>
     constexpr auto sub_handler(const input_reader<Input>& reader)

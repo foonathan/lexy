@@ -6,8 +6,6 @@
 #define LEXY_MATCH_HPP_INCLUDED
 
 #include <lexy/callback.hpp>
-#include <lexy/dsl/base.hpp>
-#include <lexy/dsl/whitespace.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy

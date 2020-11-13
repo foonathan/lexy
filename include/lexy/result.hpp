@@ -251,14 +251,6 @@ public:
         return LEXY_MOV(this->_error);
     }
 };
-
-/// Stores a T or nothing.
-template <typename T>
-using optional_value = result<T, void>;
-
-/// Stores an E or nothing.
-template <typename E>
-using optional_error = result<void, E>;
 } // namespace lexy
 
 #endif // LEXY_RESULT_HPP_INCLUDED

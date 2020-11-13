@@ -119,49 +119,46 @@ TEST_CASE("result")
     }
 }
 
-TEST_CASE("optional_value")
+TEST_CASE("result<int, void>")
 {
-    // Just a simple test necessary here.
+    CHECK(lexy::result<int, void>::has_void_error());
 
-    constexpr lexy::optional_value<int> def;
+    constexpr lexy::result<int, void> def;
     CHECK(!def);
     CHECK(!def.has_value());
     CHECK(def.has_error());
 
-    constexpr lexy::optional_value<int> val(lexy::result_value, 42);
+    constexpr lexy::result<int, void> val(lexy::result_value, 42);
     CHECK(val);
     CHECK(val.has_value());
     CHECK(!val.has_error());
     CHECK(val.value() == 42);
+
+    constexpr lexy::result<int, void> err(lexy::result_error);
+    CHECK(!err);
+    CHECK(!err.has_value());
+    CHECK(err.has_error());
 }
 
-TEST_CASE("optional_error")
+TEST_CASE("result<void, int>")
 {
-    // Just a simple test necessary here.
+    CHECK(lexy::result<void, int>::has_void_value());
 
-    constexpr lexy::optional_error<int> def;
+    constexpr lexy::result<void, int> def;
     CHECK(!def);
     CHECK(!def.has_value());
-    CHECK(def.has_void_value());
     CHECK(def.has_error());
     CHECK(def.error() == 0);
 
-    constexpr lexy::optional_value<int> val(lexy::result_value);
+    constexpr lexy::result<void, int> val(lexy::result_value);
     CHECK(val);
     CHECK(val.has_value());
     CHECK(!val.has_error());
-    CHECK(val.has_void_error());
 
-    constexpr lexy::optional_value<int> val_implicit(42);
-    CHECK(val_implicit.has_value());
-    CHECK(!val_implicit.has_error());
-    CHECK(val_implicit.has_void_error());
-    CHECK(val_implicit.value() == 42);
-
-    constexpr lexy::optional_error<int> err_implicit(42);
-    CHECK(!err_implicit.has_value());
-    CHECK(err_implicit.has_error());
-    CHECK(err_implicit.has_void_value());
-    CHECK(err_implicit.error() == 42);
+    constexpr lexy::result<void, int> err(lexy::result_error, 42);
+    CHECK(!err);
+    CHECK(!err.has_value());
+    CHECK(err.has_error());
+    CHECK(err.error() == 42);
 }
 

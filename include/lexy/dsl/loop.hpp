@@ -18,7 +18,7 @@ struct _loop_handler
     Handler& _handler;
     bool     _break;
 
-    using result_type = lexy::optional_error<typename Handler::result_type>;
+    using result_type = lexy::result<void, typename Handler::result_type>;
 
     template <typename SubProduction, typename Reader>
     constexpr auto sub_handler(const Reader& reader)
