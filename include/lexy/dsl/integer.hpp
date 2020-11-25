@@ -13,32 +13,53 @@
 
 namespace lexy
 {
+// Number of digits to express the given value.
+template <typename Integer>
+constexpr std::size_t _digit_count(int radix, Integer value)
+{
+    LEXY_PRECONDITION(value >= Integer(0));
+
+    if (value == 0)
+        return 1;
+
+    std::size_t result = 0;
+    while (value > 0)
+    {
+        value = Integer(value / Integer(radix));
+        ++result;
+    }
+    return result;
+}
+
 template <typename T>
 struct integer_traits
 {
     using _limits = std::numeric_limits<T>;
     static_assert(_limits::is_integer);
 
-    using integer_type = T;
+    using type = T;
 
     static constexpr auto is_bounded = _limits::is_bounded;
-    static constexpr auto max_value  = _limits::max();
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
+    static constexpr std::size_t max_digit_count = _digit_count(Radix, _limits::max());
+
+    template <int Radix>
+    static constexpr void add_digit_unchecked(type& result, unsigned digit)
     {
         result = T(result * T(Radix) + T(digit));
     }
     template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
+    static constexpr bool add_digit_checked(type& result, unsigned digit)
     {
         // result *= Radix
-        if (result > max_value / Radix)
+        constexpr auto max_per_radix = _limits::max() / Radix;
+        if (result > max_per_radix)
             return false;
         result = T(result * Radix);
 
         // result += value
-        if (result > T(max_value - digit))
+        if (result > T(_limits::max() - digit))
             return false;
         result = T(result + T(digit));
 
@@ -49,20 +70,22 @@ struct integer_traits
 template <>
 struct integer_traits<code_point>
 {
-    using integer_type = code_point;
+    using type = code_point;
 
     static constexpr auto is_bounded = true;
-    static constexpr auto max_value  = 0x10'FFFF;
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
+    static constexpr std::size_t max_digit_count = _digit_count(Radix, 0x10'FFFF);
+
+    template <int Radix>
+    static constexpr void add_digit_unchecked(type& result, unsigned digit)
     {
         std::uint_least32_t value = result.value();
         integer_traits<std::uint_least32_t>::add_digit_unchecked<Radix>(value, digit);
         result = code_point(value);
     }
     template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
+    static constexpr bool add_digit_checked(type& result, unsigned digit)
     {
         std::uint_least32_t value = result.value();
         if (!integer_traits<std::uint_least32_t>::add_digit_checked<Radix>(value, digit))
@@ -78,19 +101,13 @@ struct unbounded
 template <typename T>
 struct integer_traits<unbounded<T>>
 {
-    using integer_type               = T;
+    using type                       = typename integer_traits<T>::type;
     static constexpr auto is_bounded = false;
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(integer_type& result, unsigned digit)
+    static constexpr void add_digit_unchecked(type& result, unsigned digit)
     {
         integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
-    }
-    template <int Radix>
-    static constexpr bool add_digit_checked(integer_type& result, unsigned digit)
-    {
-        integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
-        return true;
     }
 };
 } // namespace lexy
@@ -108,24 +125,6 @@ struct integer_overflow
 
 namespace lexyd
 {
-// Number of digits to express the given value.
-template <typename Integer>
-static constexpr std::size_t _digit_count(unsigned radix, Integer value)
-{
-    LEXY_PRECONDITION(value >= Integer(0));
-
-    if (value == 0)
-        return 1;
-
-    std::size_t result = 0;
-    while (value > 0)
-    {
-        value = Integer(value / Integer(radix));
-        ++result;
-    }
-    return result;
-}
-
 template <typename T, typename Pattern, typename Base, bool HasSep>
 struct _integer : rule_base
 {
@@ -145,19 +144,17 @@ struct _integer : rule_base
                     = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
 
                 using traits         = lexy::integer_traits<T>;
-                using integer        = typename traits::integer_type;
+                using result_type    = typename traits::type;
                 constexpr auto radix = Base::radix;
 
                 auto       cur    = begin;
                 const auto end    = reader.cur();
-                auto       result = integer(0);
+                auto       result = result_type(0);
 
                 if constexpr (traits::is_bounded)
                 {
-                    constexpr auto max_value       = traits::max_value;
-                    constexpr auto max_digit_count = _digit_count(radix, max_value);
-                    static_assert(max_digit_count > 0);
-                    static_assert(max_value >= radix);
+                    constexpr auto max_digit_count = traits::template max_digit_count<radix>;
+                    static_assert(max_digit_count > 1);
 
                     // First skip over leading zeroes.
                     while (true)
@@ -171,9 +168,10 @@ struct _integer : rule_base
                             continue; // Zero or digit separator.
 
                         // Found the first non-zero digit.
-                        // This can't overflow, we've asserted that the maximal value is at least
-                        // base. We assign because we had zero and are only taking this line once.
-                        result = integer(digit);
+                        // This can't overflow, we've asserted that the maximal digit count is at
+                        // least one. We assign because we had zero and are only taking this line
+                        // once.
+                        result = result_type(digit);
                         break;
                     }
                     // At this point, we've parsed exactly one non-zero digit.
@@ -278,7 +276,7 @@ LEXY_CONSTEVAL auto integer(_digits<Base, Sep, LeadingZero>)
 {
     return _integer<T, _digits<Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
 }
-template <typename T, std::size_t N, typename Base, typename Sep, bool LeadingZero>
+template <typename T, typename Base, std::size_t N, typename Sep, bool LeadingZero>
 LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep, LeadingZero>)
 {
     return _integer<T, _ndigits<N, Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};

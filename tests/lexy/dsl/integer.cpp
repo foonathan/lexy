@@ -11,7 +11,7 @@
 
 TEST_CASE("lexyd::_digit_count")
 {
-    using lexyd::_digit_count;
+    using lexy::_digit_count;
 
     SUBCASE("base 2")
     {
