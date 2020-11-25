@@ -71,7 +71,7 @@ TEST_CASE("rule: times")
 {
     SUBCASE("no sep")
     {
-        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<0>);
+        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -81,8 +81,8 @@ TEST_CASE("rule: times")
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
                 CONSTEXPR_CHECK(cur - str == 6);
-                CONSTEXPR_CHECK(value[0] == 0);
-                CONSTEXPR_CHECK(value[1] == 0);
+                CONSTEXPR_CHECK(value[0] == 1);
+                CONSTEXPR_CHECK(value[1] == 1);
                 return 0;
             }
 
@@ -103,7 +103,7 @@ TEST_CASE("rule: times")
     }
     SUBCASE("sep")
     {
-        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<0>, sep(LEXY_LIT(",")));
+        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -113,8 +113,8 @@ TEST_CASE("rule: times")
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
                 CONSTEXPR_CHECK(cur - str == 7);
-                CONSTEXPR_CHECK(value[0] == 0);
-                CONSTEXPR_CHECK(value[1] == 0);
+                CONSTEXPR_CHECK(value[0] == 1);
+                CONSTEXPR_CHECK(value[1] == 1);
                 return 0;
             }
 
@@ -146,7 +146,7 @@ TEST_CASE("rule: times")
     SUBCASE("trailing_sep")
     {
         constexpr auto rule
-            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<0>, trailing_sep(LEXY_LIT(",")));
+            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, trailing_sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -155,8 +155,8 @@ TEST_CASE("rule: times")
 
             constexpr int success(const char* cur, lexy::twice<int> value)
             {
-                CONSTEXPR_CHECK(value[0] == 0);
-                CONSTEXPR_CHECK(value[1] == 0);
+                CONSTEXPR_CHECK(value[0] == 1);
+                CONSTEXPR_CHECK(value[1] == 1);
 
                 if (cur - str == 7)
                     return 0;
