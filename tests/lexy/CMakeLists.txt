@@ -38,6 +38,7 @@ set(tests
         dsl/lookahead.cpp
         dsl/loop.cpp
         dsl/match.cpp
+        dsl/member.cpp
         dsl/minus.cpp
         dsl/newline.cpp
         dsl/not.cpp
@@ -66,7 +67,7 @@ set(tests
         input/range_input.cpp
         input/shell.cpp
         input/string_input.cpp
-        
+
         callback.cpp
         encoding.cpp
         error.cpp
@@ -75,7 +76,7 @@ set(tests
         match.cpp
         parse.cpp
         result.cpp
-        validate.cpp 
+        validate.cpp
     )
 
 add_executable(lexy_test ${tests})

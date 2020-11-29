@@ -7,7 +7,7 @@
 
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/invoke.hpp>
-#include <lexy/dsl/label.hpp>
+#include <lexy/dsl/member.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/lexeme.hpp>
 

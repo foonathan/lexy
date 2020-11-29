@@ -3,7 +3,7 @@
 # found in the top-level directory of this distribution.
 
 set(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy)
-set(header_files 
+set(header_files
         ${include_dir}/_detail/assert.hpp
         ${include_dir}/_detail/buffer_builder.hpp
         ${include_dir}/_detail/config.hpp
@@ -40,6 +40,7 @@ set(header_files
         ${include_dir}/dsl/lookahead.hpp
         ${include_dir}/dsl/loop.hpp
         ${include_dir}/dsl/match.hpp
+        ${include_dir}/dsl/member.hpp
         ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
         ${include_dir}/dsl/not.hpp
