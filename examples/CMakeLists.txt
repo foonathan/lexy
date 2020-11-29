@@ -2,6 +2,11 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
+add_executable(lexy_example_tutorial)
+set_target_properties(lexy_example_tutorial PROPERTIES OUTPUT_NAME "tutorial")
+target_sources(lexy_example_tutorial PRIVATE tutorial.cpp report_error.hpp)
+target_link_libraries(lexy_example_tutorial PRIVATE foonathan::lexy::dev foonathan::lexy::file)
+
 add_executable(lexy_example_email)
 set_target_properties(lexy_example_email PROPERTIES OUTPUT_NAME "email")
 target_sources(lexy_example_email PRIVATE email.cpp report_error.hpp)
