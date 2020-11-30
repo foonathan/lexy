@@ -1,0 +1,1271 @@
+= `lexy` Tutorial
+:caption:
+:toc: left
+:toclevels: 1
+:icons: font
+:source-highlighter: highlightjs
+:highlightjs-theme: github
+:experimental:
+:github: https://github.com/foonathan/lexy
+
+This tutorial introduces you to the basics of {github}[`lexy`].
+Our goal is to parse some simple configuration file of a software package.
+
+A sample input file can look like this:
+
+.`package.config`
+----
+name    = lexy
+version = 0.0.0
+authors = ["Jonathan Müller"]
+----
+
+And we want to parse it into the following C++ data structure using `lexy`:
+
+.`PackageConfig`
+[source,cpp]
+----
+struct PackageVersion
+{
+    int major;
+    int minor;
+    int patch;
+};
+
+struct PackageConfig
+{
+    std::string              name;
+    PackageVersion           version;
+    std::vector<std::string> authors;
+};
+----
+
+The final source code can be found at `examples/tutorial.cpp`.
+
+****
+If anything in the tutorial could be improved (and there is probably a lot),
+please raise an issue or -- even better -- create a PR.
+Thank you!
+****
+
+== Overview
+
+To parse something we need to do three things.
+
+1. We define the _grammar_.
+   In C++, a grammar is contained in a namespace, usually called `grammar`.
++
+It contains one or more _productions_, which are empty structs with a `rule` member.
+Each production corresponds to one function of the generated recursive descent parser.
+They produce a single value of a user controlled type.
+Here, we could imagine at minimum a production for parsing a `PackageVersion` and another one for parsing a `PackageConfig`.
++
+The _rule_ of a production does all the heavy lifting.
+It describes what is valid input and what is not, how many characters are consumed by the input, and it will produce zero or more values.
+All values are then combined into the single result of the production using a separately specified _callback_.
+
+2. We create an `Input` object.
+It contains the concrete input we want to parse.
+The library provides different kinds of inputs, from the simple `lexy::string_input` which acts like a `std::string_view`,
+to the complex `lexy::shell`, which provides an interactive REPL.
++
+In this step, we also specify the _encoding_ of the input.
+This can be plain old ASCII, some Unicode encoding like UTF-8, or bytes as opposed to text.
+The encoding controls the behavior of many rules as it determines what valid code points are.
++
+When reading input from a file, we may also need to specify a given endianness or let the library figure it out using a byte-order mark.
+
+3. Once we have a grammar and input, we can parse it by calling `lexy::parse`.
+This will parse the input and convert it according to the rules of the grammar and converts it into the specified type.
+If an error occurs, it will invoke a callback we have specified with detailled error information.
+We can then either print it immediately, or store the error in some custom diagnostic object.
++
+We can also choose to simply validate the input using `lexy::validate`.
+Then we don't convert it to a value and only log error messages if it is ill-formed.
+
+As such, the general structure of the source code is as follows.
+
+.`examples/tutorial.cpp`
+[source,cpp]
+----
+#include <string>
+#include <vector>
+
+// <1>
+struct PackageVersion { … };
+struct PackageConfig { … };
+
+//=== grammar ===//
+#include <lexy/dsl.hpp> // lexy::dsl::*
+
+namespace grammar // <2>
+{
+    …
+
+    struct config { … };
+}
+
+//=== parsing ===//
+#include <lexy/input/file.hpp> // lexy::read_file
+#include <lexy/parse.hpp>      // lexy::parse
+
+int main()
+{
+    auto file = lexy::read_file<lexy::utf8_encoding>(filename); // <3>
+    if (!file)
+    { … }
+
+    auto& input = file.value();
+    auto result = lexy::parse<grammar::config>(input, report_error_callback); // <4>
+    if (!result)
+    { … }
+
+    PackageConfig config = result.value(); // <5>
+    …
+}
+----
+<1> The user code that defines the C++ data structures.
+    It does not need to know anything about `lexy`.
+<2> The grammar. It contains multiple productions, but the entry production is `grammar::config`.
+    This is the production we're parsing.
+<3> We want to read the config from a file, so we use `lexy::read_file`.
+    We specify that the file uses UTF-8 as the input encoding.
+    Reading a file can fail, so we need to handle that (not shown here).
+<4> Then we can parse our entry production using `lexy::parse`.
+    We give it our file input and a callback to invoke on errors (not shown here).
+    Parsing can fail, so we need to handle that (not shown here).
+<5> If everything succeeded, we can access our parsed config object and work with it.
+
+The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
+Refer to the documentation for further details on the surrounding infrastructure.
+
+== Parsing the package name
+
+We will create a separate production for each of the fields (name, version, authors).
+Let's start with the production for the name, as that is the simplest one.
+
+.Package name
+----
+name = lexy
+----
+
+Here, we're only concerned with the part after the equal sign, so the `lexy` in the example above.
+A package name follows the same rules as a C++ identifier, except that leading underscores are not allowed.
+As a regex, a name is described by `[a-zA-Z][a-zA-Z_0-9]*`, so one alpha character, followed by zero or more alphanumeric characters or underscores.
+
+How can we express this as a `lexy` rule?
+
+Every rule is defined in the namespace `lexy::dsl`.
+As this is rather lengthy, it is a good idea to use a namespace alias to shorten it.
+
+.The namespace alias
+[source,cpp]
+----
+namespace grammar
+{
+    namespace dsl = lexy::dsl; // <1>
+}
+----
+<1> A convenience alias, so we can write `dsl::foo` instead of `lexy::dsl::foo` when defining the grammar.
+
+Luckily for us, there are predefined rules for the various ASCII classifications.
+One of those, is the rule `dsl::ascii::alpha`: this rule matches one of `a-zA-Z` and consumes it from the input.
+We can put it in a production and parse it:
+
+.The `dsl::ascii::alpha` rule (https://godbolt.org/z/Kf9hd7[godbolt])
+[source,cpp]
+----
+struct alpha // <1>
+{
+    static constexpr auto rule = dsl::ascii::alpha; // <2>
+};
+----
+<1> The production that contains the rule.
+<2> The rule itself, it is a `static` constant.
+
+Likewise, `dsl::ascii::alnum` matches one of `a-zA-Z0-9`.
+To match a single underscore, we can use `dsl::lit_c<'_'>`.
+The latter rule matches and consumes the specified character.
+
+Of course, we don't want a single alpha(numeric) character or underscore,
+we want one alpha character followed by zero or more alphanumeric characters or underscores.
+For that, we need to combine rules.
+
+The simplest way to combine rules is using the sequence rule.
+The sequence rule matches one rule after the other in the specified order.
+It is implemented using an overload `operator+`:
+
+.The sequence rule (https://godbolt.org/z/3aTaK7[godbolt])
+[source,cpp]
+----
+// Match an alpha character, followed by an alphanumeric character, followed by a literal c.
+dsl::ascii::alpha + dsl::ascii::alnum + dsl::lit_c<'_'>
+----
+
+The sequence rule is alright, but it is static.
+How can we match a dynamic amount of alpha numeric characters after the initial alpha character?
+For that, we can use the while rule.
+The while rule takes a rule and matches it as often as possible.
+
+.The while rule (https://godbolt.org/z/h5jGnz[godbolt])
+[source,cpp]
+----
+// Match an alpha character, followed by zero or more alphanumeric characters.
+dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum)
+----
+
+****
+How does the while rule know how many times it should match the alphanumeric rule?
+We will get to that later, but the spoiler is: it just tries it over and over.
+For rules that only look at the next character of the input, such as `dsl::ascii::alnum`,
+this is not a problem, but for more complex rules it can involve expensive backtracking.
+
+But don't worry, backtracking happens in a very controlled way and can be prevented.
+****
+
+Now we're almost there!
+All we need is to allow the underscore as well as an alphanumeric character in the while loop.
+
+For that, we can use the alternative rule.
+The alternative rule tries to match the first rule.
+If that works, great.
+Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
+It is implemented using `operator/` (read "or").
+
+With all that, we can finally write our first production:
+
+.The `name` production (https://godbolt.org/z/bdn39v[godbolt])
+[source,cpp]
+----
+struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    static constexpr auto rule
+        = dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum / dsl::lit_c<'_'>);
+};
+----
+
+If we now only wanted to use `lexy::match` or `lexy::validate`, which don't produce a value, we would be done.
+But we want to use `lexy::parse`, so we need to specify the value we want from parsing a name.
+Here, we would like to get everything we've just matched and put it into a `std::string`.
+
+For that, we need to add a `static constexpr auto value` member to our production.
+It is initialized to a callback that will be called with all the values produced during the parsing of `rule`,
+and its job is to convert them into the single value that is the result of parsing the production (here the `std::string`).
+
+A callback in `lexy` is a function object (so a class with `operator()`) that also adds a `::return_type` member
+(otherwise, the library can't figure out the return type).
+The utility function `lexy::callback<T>()` creates a callback from one or more lambdas.
+
+So we need to add the `value` member and initialize to a callback that converts the values produced during parsing into a `std::string`.
+What values are produced by our rule?
+
+The answer is: none.
+`dsl::ascii::alpha`, `dsl::ascii::alnum` and `dsl::lit_c<'_'>` are all so called _patterns_.
+Patterns are rules that don't produce values (and participate in backtracking, more on that later).
+As we're only dealing with patterns, the sequence, while and alternative rules have detected that and are themselves only a patterns.
+So we don't get any values and loose all information about the characters we've just parsed.
+
+To prevent that, we can use the capture rule.
+It takes another rule and parses it, but remembers everything it consumed.
+It then produces a value, a `lexy::lexeme` which is like a `std::string_view` into the part of the input we've just consumed.
+We can then add a callback that converts a `lexy::lexeme` into the `std::string` we want.
+
+.The `name` production with `capture()` and value
+[source,cpp]
+----
+struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    // Captures it all into a lexeme.
+    static constexpr auto rule
+        = dsl::capture(dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum / dsl::lit_c<'_'>));
+
+    // The final value of this production is a std::string we've created from the lexeme.
+    static constexpr auto value
+        = lexy::callback<std::string>([](auto lexeme) { return std::string(lexeme.begin(), lexeme.end()); });
+};
+----
+
+To finish it up, there are two things we can improve.
+First, converting a `lexy::lexeme` to a `std::string` is an incredible common thing you want to do,
+so the library provides the callback `lexy::as_string<std::string>` for it.
+Second, the rule definition has become somewhat unreadable as its one big expression.
+We can use an immediately invoked lambda to improve that.
+
+.The final `name` production (https://godbolt.org/z/v7rPbs[godbolt])
+[source,cpp]
+----
+struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    // Captures it all into a lexeme.
+    static constexpr auto rule = [] {
+        auto lead_char     = dsl::ascii::alpha;
+        auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
+
+        return dsl::capture(lead_char + dsl::while_(trailing_char));
+    }();
+
+    // The final value of this production is a std::string we've created from the lexeme.
+    static constexpr auto value = lexy::as_string<std::string>;
+};
+----
+
+If now parse the `name` production, we will get a `std::string`.
+
+== Parsing the package version
+
+The next field is the version.
+
+.Package version
+----
+version = 0.0.0
+----
+
+Again, we're only concerned with the value after the equal sign for now.
+It consists of three numbers separated by dots, where a number is a non-empty sequence of digits.
+
+The rule `dsl::ascii::digit` matches one digit 0-9.
+To match an arbitrary amount of digits, we can again use the while rule.
+However, this would also allow zero digits, which we don't want.
+So instead we use `dsl::while_one(dsl::ascii::digit)`, which is equivalent to `dsl::ascii::digit + dsl::while_(dsl::ascii::digit)`:
+it needs at least one digit, and then zero or more.
+
+.Digits
+[source,cpp]
+----
+// Match one or more digits.
+dsl::while_one(dsl::ascii::digit)
+----
+
+Matching one or more digits is common, so there is a predefined rule for that: `dsl::digits`.
+It takes an optional template parameter to specify the base,
+for example `dsl::digits<dsl::octal>` would only match `0-7`,
+whereas `dsl::digits<dsl::hex_upper>` would match `0-9A-F`.
+If we don't specify a base, it defaults to `dsl::decimal`.
+
+.The digits rule (https://godbolt.org/z/6TnKeY[godbolt])
+[source,cpp]
+----
+// Match one or more decimal digits.
+dsl::digits<>
+----
+
+****
+`dsl::digits<>` actually provides a couple of additional features over the `dsl::while_one()`.
+For example, we could prevent leading zeros or automatically allow an optional digit separator.
+None of that is needed here, however.
+****
+
+Just like the version above that uses `dsl::while_one()`, `dsl::digits` is actually a pattern that does not produce any values.
+So how do we get the actual integer it represents?
+We could do the same thing we did with the `name` production: `dsl::capture()` the pattern and use a callback that parses the lexeme into an `int`.
+This is certainly possible, and `lexy` could even provide a `lexy::parse_integer` callback.
+
+But this is not the way it should be done.
+The reason for that is simple: integer overflow.
+`dsl::digits<>` matches an arbitrarily long digit sequence, which might not necessarily fit in the targeted integer type.
+`lexy` considers integer overflow a parse error, which can only be created by a rule.
+
+So it provides the `dsl::integer` rule.
+This rule takes a pattern that matches digits (such as `dsl::digits<>`!), matches it and converts the consumed digits into the specified integer type,
+taking care of overflow.
+While doing the conversion, it simply ignores any character that is not a digit, so you can use it even if you have some digit separator in there.
+What is or is not a digit as well as the base is again determined using the policy classes such as `dsl::octal` and `dsl::decimal`.
+When using `dsl::integer` together with `dsl::digits<>` you don't need to specify it, as it will just take the same base as the digit pattern.
+
+.The integer rule (https://godbolt.org/z/KnWjxY[godbolt])
+[source,cpp]
+----
+// Matches one or more decimal digits, then converts those into an `int`.
+dsl::integer<int>(dsl::digits<>)
+----
+
+Now we just use the integer rule and put it in sequence together with `dsl::lit_c<'.'>` to match the three numbers separated by integer.
+The resulting rule yields three `int`s that are used to construct the `PackageVersion`.
+
+.The `version` production
+[source,cpp]
+----
+struct version
+{
+    // Match three integers separated by dots.
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::lit_c<'.'>;
+
+        return number + dot + number + dot + number;
+    }();
+
+    // Construct a PackageVersion as the result of the production.
+    static constexpr auto value
+      = lexy::callback<PackageVersion>([](int a, int b, int c) {
+            return PackageVersion{a, b, c};
+        });
+};
+----
+
+We can again clean this up a bit.
+`lexy` predefines `dsl::period` to match a '.' character, which looks cleaner than `dsl::lit_c<'.'>`.
+Constructing a type from arguments is also a common callback, so it is provided as `lexy::construct<T>`, which does `T(args...)` if that's available and `T{args...}` otherwise.
+
+.The final `version` production (https://godbolt.org/z/G6KcsM[godbolt])
+[source,cpp]
+----
+struct version
+{
+    // Match three integers separated by dots.
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::period;
+
+        return number + dot + number + dot + number;
+    }();
+
+    // Construct a PackageVersion as the result of the production.
+    static constexpr auto value = lexy::construct<PackageVersion>;
+};
+----
+
+We can now use this production to parse `PackageVersion`.
+
+== Parsing one package author
+
+Before we go and parse the list of authors, we need to parse an individual one.
+
+.Package author
+----
+authors = ["Jonathan Müller"]
+----
+
+One author is just a quoted string.
+
+We can easily parse it using the tools we've already covered:
+
+.String parsing, first attempt
+[source,cpp]
+----
+struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    // We capture the content without the quotes.
+    static constexpr auto rule
+      = dsl::lit_c<'"'> + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c<'"'>;
+
+    // Convert the captured lexeme into a std::string.
+    static constexpr auto value = lexy::as_string<std::string>;
+};
+----
+
+However, this attempt does not quite work.
+First of all, we don't want _arbitrary_ code points in our string.
+It shouldn't contain characters like line breaks.
+More importantly, the rule can never succeed.
+
+To understand why, we need to talk about _branches_.
+
+== Branches: Making parse decisions
+
+Parsing is really easy when you know exactly what character is going to come next.
+All the complexity comes from making decisions about _what_ to parse.
+
+Let's say we want to write a rule that matches either a decimal integer literal (e.g. `123`) or a hexadecimal integer literal (e.g `1A`).
+If we have a literal that can be both decimal and hexadecimal, we'll just assume it's decimal.
+
+We can easily write a rule that matches a decimal integer, and another one that matches a hexadecimal integer.
+
+.Decimal or hexadecimal
+[source,cpp]
+----
+struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer<int>(dsl::digits<>);
+        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
+
+        return ???;
+    }();
+};
+----
+
+We want some rule that expresses "decimal or hex".
+We've already seen the alternative rule `/`.
+However, that one is actually a pattern and does not work with the non-pattern rules `dec` and `hex`.
+So we need a different rule to express "or" for non-pattern rules.
+
+But how does this rule know whether it should use try to match `dec` or `hex`?
+This is where the various parsing approaches fundamentally differ.
+
+****
+Some, like simple regex implementations use _backtracking_:
+We try one rule and parse it.
+If this leads to an error, we rewind the input -- we backtrack -- to the decision point and try a different rule.
+Sometimes we even go so far as to rewind even if we had succeeded, just because a different rule might match more input.
+
+Some, like parsing expression grammars (PEG), or `lexy`'s alternative rule `/` use backtracking in a more controlled form.
+There we first try to match the first alternative.
+If that works, great, otherwise we backtrack, and try the second one and so on.
+However, all alternatives are tried in a very predictable way and we never backtrack just to match more input.
+If a rule has matched, that's it, we're taking it.
+
+The traditional parse generators on the other hand, usually use table based parsing approaches.
+There the algorithm works completely differently and uses various reduction rules to determine the next input.
+This is completely opaque to the grammar writer, however.
+
+The only approach that works with lexy's designs is the controlled backtracking of PEG.
+However, this has a big disadvantage: backtracking is expensive and can lead to redundant work.
+
+Let's say we could write `dec / hex` and it would first try `dec` and then `hex`, backtracking if necessary.
+When faced with the input `123456789A` it will happily match `dec` until it reaches the `A`.
+Then it would stop, as `A` is not a decimal digit and return `123456789` as the result, which is incorrect.
+
+But if we tweak the `dec` rule to fail if it sees a non-decimal digit,
+it would still happily match `123456789` -- converting it into an integer at each step -- then sees the `A` and fail.
+We then rewind the input and do the same thing with the `hex` rule.
+It then does exactly the same as we just did with the `dec` rule for `123456789`, but can then handle the final `A` just fine.
+
+We had to parse `123456789` twice!
+****
+
+For `lexy`, we require a so called _branch_.
+A branch has a condition, which is a pattern, and a trailing rule, which does not need to be a pattern.
+Whenever the parsing algorithm needs to make a decision, it just tries to match the condition.
+Matching a pattern can be done efficiently and without doing additional work like parsing integers.
+Also, the grammar author has full control over what exactly is used as condition;
+it is not automatically determined by the library.
+A branch is taken if and only if the condition matches.
+If the rule then later one fails, this doesn't matter, the branch has already been taken and no backtracking is going to happen.
+
+We can add a condition to a rule using `operator>>`.
+The choice of two branches is then expressed using the choice rule with `operator|`.
+
+.The choice rule
+----
+// In C++, this has the operator precedence we want, which worked out nicely.
+condition1 >> rule1 | condition2 >> rule2 | ...
+----
+
+Each condition is tried in the order you've specified.
+As such, a choice directly corresponds to the following manual code.
+
+.Manual implementation of choice
+[source,cpp]
+----
+if (match(input, condition1)) // <1>
+  parse(input, rule1); // <2>
+else if (match(input, condition2))
+  parse(input, rule2);
+…
+----
+<1> If we match a condition, we take the branch.
+    Of course, this requires rewinding the input if the condition did not match.
+<2> When the condition did match, the input is not rewound and we can continue with the rule.
+
+For our `dec_or_hex` production, we only want to parse `dec` if we don't have a hexadecimal integer.
+To do that, we first need to match all decimal digits and then need to prevent that it is followed by a hexadecimal digit (as in `123456789A12`, which is `1-9` followed by a hexadecimal digit `A`):
+
+.Decimal or hexadecimal
+[source,cpp]
+----
+struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer<int>(dsl::digits<>);
+        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
+
+        auto dec_condition = dsl::digits<> + !dsl::digit<dsl::hex>; // <1>
+
+        return dec_condition >> dec | dsl::else_ >> hex;            // <2>
+    }();
+};
+----
+<1> We use `dsl::digits<>` to match all decimal digit first.
+    Then we fail if we encounter a hexadecimal digit.
+    `dsl::digit<dsl::hex>` (no trailing 's') matches a single hex digit,
+    but its parse success is negated using the `!` rule.
+<2> Once we have a condition, we can use the choice rule.
+    The special branch condition `dsl::else_` is always taken, so should be the last branch.
+    This is required to turn a rule into a branch without adding a condition, as we don't need one -- if it wasn't decimal, it needs to be hex.
+
+However, this doesn't work:
+the input is only rewound if the `dec_condition` does not match.
+If it did match, we've just consumed all the decimal digits!
+
+So we use `dsl::peek()`, which matches a pattern without consuming any input.
+
+.Decimal or hexadecimal (https://godbolt.org/z/KK4TYe[godbolt])
+[source,cpp]
+----
+struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer<int>(dsl::digits<>);
+        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
+
+        auto dec_condition
+          = dsl::peek(dsl::digits<> + !dsl::digit<dsl::hex>);
+
+        return dec_condition >> dec | dsl::else_ >> hex;
+    }();
+};
+----
+
+This works, but we couldn't avoid backtracking.
+However, this is simply because of the way the input is worked.
+We can't detect whether a number is decimal or hexadecimal without going over it!
+But at least, we have full control over how much backtracking is used and when.
+
+Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional rules.
+For example, hexadecimal numbers are usually prefixed with something like `0x`.
+This also allows writing a hexadecimal number using only decimal digits.
+
+If we have `0x` as a prefix, we can use that as the condition for the `hex` branch.
+It isn't even necessary for the actual value of the number, so no need to use `dsl::peek()` to rewind after the condition has matched.
+
+.Decimal or hexadecimal with prefix (https://godbolt.org/z/anj7dc[godbolt])
+[source,cpp]
+----
+struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer<int>(dsl::digits<>);
+        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
+
+        auto hex_condition = LEXY_LIT("0x"); // <1>
+
+        return hex_condition >> hex | dsl::else_ >> dec;
+    }();
+};
+----
+<1> `LEXY_LIT("0x")` is equivalent to `dsl::lit_c<'0'> + dsl::lit_c<'x'>`.
+    If we have C++20, we can even write `dsl::lit<"0x">` without needing a macro.
+
+Now we can match a decimal or hexadecimal number with very minimal, but still explicit, backtracking.
+
+Branches are not only used by the choice rule, they're used everywhere the parsing algorithm needs to make a decision.
+This includes `dsl::while_(rule)`: it needs to decide whether to match `rule` again.
+This is done by specifying a branch: `dsl::while_(condition >> rule)` only repeats `rule` if the `condition` pattern has matched.
+
+The reason we didn't need a branch before is because every pattern is implicitly a branch - one where the pattern itself is the entire condition.
+This means that `dsl::while_(pattern)` will rewind the input after `pattern` has failed to match again.
+Of course, if that is too expensive, we can explicitly add a condition here as well to control it more.
+
+== Parsing one package author - Continued
+
+Now we now how the algorithm makes decisions, we can understand why our previous attempt does not work:
+
+[source,cpp]
+----
+dsl::lit_c<'"'> + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c<'"'>
+----
+
+The while rule uses the branch condition to determine whether or not it should try another iteration.
+Here, our branch is the pattern `dsl::code_point`, so the entire pattern is used as condition.
+We repeat as long as we match code points, this includes the closing `"` character.
+
+****
+If we had the equivalent regex `".*"`, it would just work fine.
+The regex star operator only repeats the rule as often as its necessary to make the pattern work.
+
+Such "magic" is not done in `lexy`.
+It does exactly what you say it should do.
+****
+
+To fix this, we need a branch condition.
+We only want to match code points while we don't have the closing `"`.
+This can be implemented using the `!`-rule as condition, which matches a pattern but flips the result:
+it succeeds if the pattern didn't match, but fails if it did match.
+Note that on failure, the pattern has been consumed.
+This means that we don't need to parse the `"` after the loop has ended, as it's done by our condition.
+
+.String parsing, second attempt (https://godbolt.org/z/Y4qMz6[godbolt])
+[source,cpp]
+----
+struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    // We capture the content without the quotes.
+    static constexpr auto rule
+      = dsl::lit_c<'"'> + dsl::capture(dsl::while_(!dsl::lit_c<'"'> >> dsl::code_point));
+
+    // Convert the captured lexeme into a std::string.
+    static constexpr auto value = lexy::as_string<std::string>;
+};
+----
+
+Unfortunately, the branch condition is still captured, so we get a trailing `"` in our string.
+We need to wrap the condition in `dsl::peek()` so we don't consume the closing `"` and match it at the end...
+
+Luckily, parsing a quoted string is a common problem, so there is a predefined function in the library.
+We can use `dsl::quoted(dsl::code_point)` to match zero or more code points surrounded by quotes.
+The closing `"` is used as the condition to detect the end of the string, just like we've just implemented.
+
+`dsl::quoted()` works differently than the other rules we've seen so far.
+Every rule that produced a value like `dsl::capture()` or `dsl::integer` produces only a single value.
+`dsl::quoted()` on the other hand can produce arbitrarily many values, for example one per iteration.
+As such, the values are not all collected as a parameter pack and forwarded to a callback, but instead a _sink_ is used.
+
+A sink is a callback that can be invoked multiple times.
+Every time it is invoked, all arguments are somehow added to an internal value, which is retrieved by calling `.finish()`.
+This allows building a container or `std::string`.
+If we write `dsl::quoted(dsl::code_point)`, the sink will be invoked with the captured code point in each iteration.
+
+.String parsing, third attempt (https://godbolt.org/z/jYKbbq[godbolt])
+[source,cpp]
+----
+struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    static constexpr auto rule = dsl::quoted(dsl::code_point);       // <1>
+
+    // Add each captured code point to a std::string.
+    static constexpr auto list                                       // <2>
+      = lexy::sink<std::string>([](std::string& result, auto lexeme) // <3>
+                                {
+                                    result.append(lexeme.begin(), lexeme.end());
+                                });
+};
+----
+<1> We want code points surrounded by quotes.
+    `dsl::code_point` is a pattern, so it will be automatically `dsl::capture()`d for us in each iteration.
+<2> To provide a sink instead of a callback, we use `::list` instead of `::value`.
+<3> `lexy::sink` creates a sink for us.
+    It constructs an empty `std::string` and then invokes the lambda with each captured lexeme.
+    We then append that to the string.
+
+****
+`dsl::quoted()` isn't actually a function, but a function object.
+In the library, `dsl::quoted()` is defined as follows:
+
+[source,cpp]
+----
+constexpr auto quoted = dsl::delimited(dsl::lit_c<'"'>);
+----
+
+You can use `dsl::delimited()` to define your own delimiters by giving it a pattern and then give it the rule that is being delimited by it.
+****
+
+Constructing a `std::string` by repeatedly appending a `lexy::lexeme` is a common use case,
+so we can also use `lexy::as_string<std::string>` for it.
+`lexy::as_string` is not just a callback that will construct a string from one argument,
+but also a sink that will repeatedly append the arguments to the string.
+
+We also haven't forbidden input such as `"First line\nSecond line"`, where `\n` is a literal line break inside the string.
+To do that, we need to prevent certain code points from occurring in our string.
+We can do that using the minus rule implemented as `operator-`.
+`a - b` matches `a` but only succeeds if `b` did not match the input `a` just matched.
+With that, we can "subtract" certain character classes from our pattern.
+
+.String parsing, fourth attempt (https://godbolt.org/z/KMEfaq[godbolt])
+[source,cpp]
+----
+struct author
+{
+    // Match zero or more non-control code points ("characters") surrounded by quotation marks.
+    static constexpr auto rule = dsl::quoted(dsl::code_point - dsl::ascii::control);
+
+    // Construct a string from the quoted content.
+    static constexpr auto list = lexy::as_string<std::string>;
+};
+----
+
+Here, we've prevented all control characters from occurring inside the string.
+
+But what if we want to include a control character in the author's name (however, unlikely)?
+Or more importantly, how do we get a `"` in our string?
+`dsl::quoted()` will end once it reaches the final `"`.
+
+For that, we need escape sequences.
+They can be very conveniently defined using another rule and added to the string as the second argument.
+
+.String parsing, final attempt (https://godbolt.org/z/7onPn8[godbolt])
+[source,cpp]
+----
+struct author
+{
+    // Match zero or more non-control code points ("characters") surrounded by quotation marks.
+    // We allow `\"`, as well as `\u` and `\U` as escape sequences.
+    static constexpr auto rule = [] {
+        auto cp     = dsl::code_point - dsl::ascii::control;
+        auto escape = dsl::backslash_escape                                // <1>
+                          .lit_c<'"'>()                                    // <2>
+                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  // <3>
+                          .rule(dsl::lit_c<'U'> >> dsl::code_point_id<8>);
+
+        return dsl::quoted(cp, escape);
+    }();
+
+    // Construct a UTF-8 string from the quoted content.
+    static constexpr auto list = lexy::as_string<std::string, lexy::utf8_encoding>; // <4>
+};
+----
+<1> We use `\` as the escape character using `dsl::backslash_escape`.
+    Alternatively, we could have used `dsl::escape(dsl::lit_c<'\\'>)`.
+<2> We want `\"` to mean `"`.
+    Using `.lit_c<'"'>()` is equivalent to `.rule(dsl::lit_c<'"'> >> dsl::value_c<'"'>)`.
+    Whenever we encounter a `"` after the `\`, we produce the literal constant value `"`,
+    which will be added to our sink.
+<3> These two lines define `\uXXXX` and `\uXXXXXXXX` to specify character codes.
+    `dsl::code_point_id<N>` is just a convenience for a `dsl::integer` rule that parses a code point using `N` hex digits.
+<4> The `\u` and `\U` rules all produce a `lexy::code_point`.
+    `lexy::as_string` can only convert it back into a string, if we tell it the encoding we want.
+    So we add `lexy::utf8_encoding` as the second optional argument to enable that.
+
+== Parsing the package authors
+
+Now we know how to parse one author, but the field can take a list of authors surrounded by square brackets.
+
+.Package author
+----
+authors = ["Jonathan Müller"]
+----
+
+Before you try writing something with `dsl::while_()`, this won't actually work.
+The reason for that is that `dsl::while_()` does not work with rules that produce values, as `dsl::while_()` does not use a sink.
+Instead we need to use `dsl::list(rule, sep)`.
+This matches a (non-empty) list of `rule` separated by `sep`.
+
+.The list rule (https://godbolt.org/z/sGGWo3[godbolt])
+[source,cpp]
+----
+struct integer_list
+{
+    // Match a (non-empty) list of integers separated by commas.
+    static constexpr auto rule = dsl::list(dsl::integer<int>(dsl::digits<>),
+                                           dsl::sep(dsl::comma)); // <1>
+
+    // Add them all to a std::vector<int>.
+    static constexpr auto list = lexy::as_list<std::vector<int>>; // <2>
+};
+----
+<1> `dsl::comma` is just `dsl::lit_c<','>`.
+    We wrap it in `dsl::sep()` to indicate that this is a normal separator that is required between each item.
+<2> The list will pass each value to the sink.
+    Here, we've used `lexy::as_list`, which repeatedly calls `.push_back()`.
+
+How does the list know when to repeat an item?
+In general, this would require a branch whose condition will determine that.
+Here we don't need a branch, as our separator is `dsl::sep()`.
+As this separator can only occur between items, we're done with the list if we didn't match a separator after our item.
+
+If we wanted to use `dsl::trailing_sep()`, which allows an optional trailing separator, this is no longer possible.
+Then we need to add a condition to our list item, like `dsl::peek(dsl::digit<>)`.
+
+Using `dsl::list()`, implementing an `author_list` production is pretty straightforward.
+Our list item is `dsl::p<author>`.
+This rule parses the specified production and it will produce the value of the production.
+Here, the value is a `std::string` and we add that to our `std::vector<std::string>`.
+
+.The `author_list` production
+[source,cpp]
+----
+struct author_list
+{
+    // Match a comma separated (non-empty) list of authors surrounded by square brackets.
+    static constexpr auto rule
+      = dsl::lit_c<'['> + dsl::list(dsl::p<author>, dsl::sep(dsl::comma)) + dsl::lit_c<']'>;
+
+    // Collect all authors into a std::vector.
+    static constexpr auto list = lexy::as_list<std::vector<std::string>>;
+};
+----
+
+****
+If we wanted to use `dsl::trailing_sep()` or even no separator, we would need a branch.
+Luckily, `dsl::p` is a branch if the rule of the production is a branch,
+and `dsl::quoted()` is a branch whose condition is the initial `"`.
+As such, `dsl::p<author>` is a branch already.
+****
+
+Surrounding things with some sort of brackets is also quite common.
+As such, the library provides `dsl::brackets()` to define a set of open and closing brackets,
+which can then be applied to a rule.
+`dsl::square_bracketed` as `dsl::brackets(dsl::lit_c<'['>, dsl::lit_c<']'>)` is already predefined, so we can use it.
+
+Writing `dsl::square_bracketed(rule)` will match the `rule` surrounded by square brackets.
+For the specific case of `dsl::list()`, we can also use `dsl::square_bracketed.list(item, sep)` instead.
+This has the additional advantage that the closing bracket will be used as branch condition for the list item.
+
+.The final `author_list` production (https://godbolt.org/z/s86j1c[godbolt])
+[source,cpp]
+----
+struct author_list
+{
+    // Match a comma separated (non-empty) list of authors surrounded by square brackets.
+    static constexpr auto rule
+        = dsl::square_bracketed.list(dsl::p<author>, dsl::sep(dsl::comma));
+
+    // Collect all authors into a std::vector.
+    static constexpr auto list = lexy::as_list<std::vector<std::string>>;
+};
+----
+
+== Parsing the package config
+
+We can now put everything together and parse our config:
+
+.The `config` production
+[source,cpp]
+----
+struct config
+{
+    static constexpr auto rule = []{
+        auto make_field = [](auto name, auto rule) {              // <1>
+            return name + dsl::lit_c<'='> + rule + dsl::newline;  // <2>
+        };
+
+        auto name_field    = make_field(LEXY_LIT("name"), dsl::p<name>); // <3>
+        auto version_field = make_field(LEXY_LIT("version"), dsl::p<version>);
+        auto authors_field
+            = make_field(LEXY_LIT("authors"), dsl::p<author_list>);
+
+        return name_field + version_field + authors_field; // <4>
+    }();
+
+    static constexpr auto value = lexy::construct<PackageConfig>; // <5>
+};
+----
+<1> We define a little helper function that builds a rule that parses a field given its name and value.
+<2> Each field consists of the name, an equal sign, the value rule, and a newline matched by the `dsl::newline` pattern.
+<3> Define each field using the productions we've built above.
+<4> Match them all in order.
+<5> Construct the package config from the resulting `std::string`, `PackageVersion` and `std::vector<std::string>`.
+
+This works!
+
+We can now almost parse the sample input I've given above:
+
+.`package.config`
+----
+name=lexy
+version=0.0.0
+authors=["Jonathan Müller"]
+----
+
+We don't support whitespace between the elements.
+`lexy` does not skip whitespace until you tell it to (and more importantly, what the whitespace is).
+
+For that, we can use `dsl::whitespaced()`.
+It takes a rule and the whitespace pattern.
+It then matches the rule after it skipped any leading whitespace.
+For convenience, many rules provide an `operator[]` that does the same thing.
+
+So we first define our whitespace pattern as a global constant in our grammar:
+
+[source,cpp]
+----
+// Whitespace is ' ' and '\t'.
+constexpr auto ws = dsl::ascii::blank;
+----
+
+Then we add whitespace to the author list:
+
+[source,cpp]
+----
+struct author_list
+{
+    // We allow whitespace:
+    // - before the [ and ] brackets
+    // - before each author name
+    // - before the comma
+    static constexpr auto rule
+        = dsl::square_bracketed[ws].list(dsl::p<author>[ws], dsl::sep(dsl::comma[ws]));
+};
+----
+
+And to the field:
+
+[source,cpp]
+----
+auto make_field = [](auto name, auto rule) {
+    // We skip whitespace before and after the =,
+    // i.e. before the rule.
+    return name + dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline;
+};
+----
+
+Now we can parse the package config shown in the beginning of the tutorial!
+
+One final feature we might want to support is parsing fields in arbitrary order.
+This can be done with the `dsl::combination()` rule, which matches the specified set of rules once, but in any order.
+The values of each rule are passed to a sink, to prevent exponential template instantiations.
+This is a problem though: how can we know which value should be assigned to which member of our `PackageConfig`?
+
+We can specify a given member using `LEXY_MEM(name) = rule`.
+This says that the value produced by `rule` should be assigned to a member named `name`.
+The `lexy::as_aggregate<T>` sink then constructs a `T` object and processes all member assignments, in whatever order they might occur.
+
+.The final `config` production
+[source,cpp]
+----
+struct config
+{
+    static constexpr auto rule = [] {
+        auto make_field = [](auto name, auto rule) {
+            return name >> dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws]; // <1>
+        };
+
+        auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>); // <2>
+        auto version_field
+            = make_field(LEXY_LIT("version"), LEXY_MEM(version) = dsl::p<version>);
+        auto authors_field
+            = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p<author_list>);
+
+        return dsl::combination(name_field, version_field, authors_field); // <3>
+    }();
+
+    static constexpr auto list = lexy::as_aggregate<PackageConfig>; // <4>
+};
+----
+<1> `dsl::combination()` requires a branch condition to know which rule to parse.
+    Luckily, we can use the name of the field for that.
+<2> Each rule now contains the assignment to the appropriate member.
+<3> Instead of a sequence, we now have `dsl::combination()`.
+<4> We use `lexy::as_aggregate<PackageConfig>` as our sink.
+
+This will match each field exactly once, but in any order.
+
+== Error handling
+
+Our parser now handles all well-formed input, but what about wrong input?
+
+The first thing you might notice is that you can freely append stuff at the end of the config file.
+
+.`package.config`
+----
+name    = lexy
+version = 0.0.0
+authors = ["Jonathan Müller"]
+Hello World!
+asdfjlagnlwefhjlaghlhl
+----
+
+The reason for that is simple: when we parse a production, we only consume as much input as necessary for it and don't look at anything else.
+To prevent that, we need to use `dsl::eof`.
+This pattern only matches when we're at the end of the input.
+
+.Preventing trailing input
+[source,cpp]
+----
+struct config
+{
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination(name_field, version_field, authors_field)
+                + dsl::eof[dsl::ascii::space];
+    }();
+};
+----
+
+In order to allow arbitrary whitespace at the end, we use the `operator[]` to add it.
+Now input like the one given above, will raise an error.
+
+When the parsing algorithm fails to parse something, parsing stops and an error is raised.
+This error is passed to the error callback passed as second argument to `lexy::parse()` and `lexy::validate()`.
+The callback is invoked with two arguments.
+The first is a `lexy::error_context<Production, Input>`, which contains contextual information like the name and location of the production that failed.
+The second is a `lexy::error<Reader, Tag>`.
+It always is associated with a location, but can have additional information depending on the `Tag`.
+
+`lexy::error<Reader, lexy::expected_literal>`::
+  A `lexy::expected_literal` error is raised when we've instructed the parse algorithm to parse a literal sequence of characters, but it couldn't match those.
+  It contains information about the expected literal and at which position and character matching failed.
+`lexy::error<Reader, lexy::expected_char_class>`::
+  A `lexy::expected_char_class` error is raised when we've instructed the parse algorithm to parse one of a specified set of characters, but it couldn't match any of those.
+  It contains a user-friendly name of the character class.
+`lexy::error<Reader, Tag>`::
+  Otherwise, it is a generic error. The `Tag` is an empty class that can be given a message, which the error reports.
+  It is raised for example by a choice where no branch has matched.
+
+In the full source code found at `examples/tutorial.cpp`, the error callback is `lexy_ex::report_error`.
+This callback is not part of the library proper, but can be copied and adapted for your own needs.
+It simply formats the error nicely and prints it to `stderr`.
+
+By default, the error messages are pretty good.
+You can try various malformed input and see what the library reports.
+Some error messages are given.
+
+.Name that starts with an underscore.
+----
+error: while parsing name
+     |
+ 1: 8| name = _lexy
+     |        ^ expected 'ASCII.alpha' character
+----
+
+.Missing version number
+----
+error: while parsing version
+     |
+ 2:11| version = 0.0
+     |           ~~~^ expected '.'
+----
+
+.Author name not quoted.
+----
+error: while parsing author_list
+     |
+ 3:12| authors = [Jonathan Müller]
+     |            ^ expected '"'
+----
+
+.Missing closing string delimiter
+----
+error: while parsing author
+     |
+ 3:28| authors = ["Jonathan Müller]
+     |              ~~~~~~~~~~~~~~~^ invalid string character
+----
+
+=== Specifying custom error tags
+
+However, some generic errors are a bit confusing if you haven't written the grammar.
+For example, if you write a string literal that contains a control character, you get the generic `minus failure` error message.
+This can be improved using `dsl::try_`.
+This rule matches a pattern and reports an error with the specified tag if the pattern didn't match.
+
+.`author` production with `dsl::try_`
+[source,cpp]
+----
+struct author
+{
+    struct invalid_character // <1>
+    {
+        static constexpr auto name = "invalid string character"; // <2>
+    };
+
+    static constexpr auto rule = [] {
+        auto cp = dsl::try_<invalid_character>(dsl::code_point - dsl::ascii::control); // <3>
+
+        …
+    }();
+
+    …
+};
+----
+<1> The tag that will be associated with the error.
+<2> We override the default message (which would be `author::invalid_character`) to the more friendly `invalid string character`.
+<3> We apply `dsl::try_` to the content of the string.
+
+Likewise, if we specify the same field twice we get the generic `combination duplicate` error message.
+This can be improved by specifying a custom tag in our `dsl::combination()` call.
+
+.`config` production with tagged `dsl::combination()`
+[source,cpp]
+----
+struct config
+{
+    struct duplicate_field // <1>
+    {
+        static constexpr auto name = "duplicate config field"; // <2>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination<duplicate_field>(name_field, version_field, authors_field) // <3>
+               + dsl::eof[dsl::ascii::space];
+    }();
+};
+----
+<1> Define the tag.
+<2> Override the default message (`config::duplicate_field` would actually be ok).
+<3> Specify the error on failure.
+
+Now an invalid string character is reported as `invalid string character` and a duplicated config field as `duplicate config field`:
+
+.Duplicate config field error
+----
+error: while parsing config
+     |
+ 1: 1| name = lexy
+     | ^ beginning here
+     |
+ 3: 1| version = 0.0.0
+     | ^^^^^^^^^^^^^^^ duplicate config field
+----
+
+=== Using `dsl::require()` and `dsl::prevent()` to handle common mistakes
+
+There are more error messages that could be improved.
+For example, when you have a name like `my-package`, you get an "expected newline" error pointing to the first `-`, as that's where the name production stops parsing.
+We can improve that using `dsl::require()`.
+This rule raises an error with the specified tag if the pattern would not match at the input,
+but it doesn't actually consume anything.
+
+.`name` production with `dsl::require`
+[source,cpp]
+----
+struct name
+{
+    struct invalid_character // <1>
+    {
+        static constexpr auto name = "invalid name character"; // <2>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::capture(lead_char + dsl::while_(trailing_char))
+               + dsl::require<invalid_character>(dsl::ascii::space); // <3>
+    }();
+};
+----
+<1> Define a tag.
+<2> Give it a custom message.
+<3> Issue the error unless the name is followed by the required space character (either trailing whitespace or the newline).
+
+Now the error message looks like this instead.
+
+.Invalid name character error
+----
+error: while parsing name
+     |
+ 1:10| name = my-package
+     |        ~~^ invalid name character
+----
+
+Likewise, we can use `dsl::prevent()`, which fails if a pattern would match, if we were to specify a build string in our version.
+
+
+.`version` production with `dsl::prevent()`
+[source,cpp]
+----
+struct version
+{
+    struct forbidden_build_string // <1>
+    {
+        static constexpr auto name = "build string not supported"; // <2>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return number + dot + number + dot + number
+               + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>); // <3>
+    }();
+};
+----
+<1> Define a tag.
+<2> Give it a custom message.
+<3> Raise the error when the beginning of a build string is encountered.
+
+.Forbidden build string
+----
+error: while parsing version
+     |
+ 2:16| version = 0.0.0-alpha
+     |           ~~~~~^ build string not supported
+----
+
+Many more things can be done, once common errors are known.
+
+'''
+
+Congratulations, you've worked through your first parser!
+
+Now you know everything to get started with parsing your own input.
+Check out the reference documentation for specific rules.
+
