@@ -115,6 +115,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     else()
         target_compile_options(lexy_dev INTERFACE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
     endif()
+    # clang doesn't like operator prcedence rules we're using for the DSL.
+    target_compile_options(lexy_dev INTERFACE -Wno-shift-op-parentheses)
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
     # GCC doesn't like the operator precedence rules we're using for the DSL.
