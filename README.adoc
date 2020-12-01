@@ -1,6 +1,6 @@
 = `lexy`
 
-image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json[Project Status]
+image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json[Project Status,link=https://www.jonathanmueller.dev/project/]
 image:https://github.com/foonathan/lexy/workflows/Main%20CI/badge.svg[Build Status]
 image:https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4YNK41S9[codecov,link=https://codecov.io/gh/foonathan/lexy]
 
@@ -104,6 +104,10 @@ Error recovery::
 == FAQ
 
 Why should I use `lexy` over XYZ?::
+  `lexy` is closest to other PEG parsers.
+  However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
+  This is not the case for `lexy`, where backtracking is controlled using branch conditions.
+  
   http://boost-spirit.com/home/[Boost.Spirit]:::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
@@ -112,8 +116,6 @@ Why should I use `lexy` over XYZ?::
     PEGTL is very similar and was a big inspiration.
     The biggest difference is that `lexy` uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
     depending on your preference this can be an advantage or disadvantage.
-    PEGTL also has more implicit backtracking, so you need to be very careful with rules that have side-effects.
-    This is not the case for `lexy`, where backtracking is controlled using branch conditions.
   Handwritten Parsers:::
     Writing a handwritten parser is more manual work and error prone.
     `lexy` automates that away without having to sacrifice control.
