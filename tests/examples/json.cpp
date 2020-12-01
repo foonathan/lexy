@@ -4,7 +4,7 @@
 
 #include "../../examples/json.cpp"
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
 

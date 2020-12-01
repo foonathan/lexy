@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("LEXY_NTTP_STRING")
 {

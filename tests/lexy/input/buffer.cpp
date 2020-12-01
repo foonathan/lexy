@@ -4,7 +4,7 @@
 
 #include <lexy/input/buffer.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #if defined(__has_include) && __has_include(<memory_resource>)
 #    include <memory_resource>

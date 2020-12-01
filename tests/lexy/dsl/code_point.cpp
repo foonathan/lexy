@@ -5,7 +5,7 @@
 #include <lexy/dsl/code_point.hpp>
 
 #include "verify.hpp"
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/input/string_input.hpp>
 #include <lexy/parse.hpp>
 

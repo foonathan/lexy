@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/string_view.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("string_view")
 {

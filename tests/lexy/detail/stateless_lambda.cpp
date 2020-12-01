@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/stateless_lambda.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("_detail::stateless_lambda")
 {

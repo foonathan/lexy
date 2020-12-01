@@ -4,7 +4,7 @@
 
 #include <lexy/input/null_input.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("null_input")
 {

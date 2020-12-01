@@ -4,7 +4,7 @@
 
 #include <lexy/result.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <string>
 
 TEST_CASE("result")

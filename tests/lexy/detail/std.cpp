@@ -6,7 +6,7 @@
 
 #include <iterator>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("std forward declarations")
 {

@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/type_name.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 namespace
 {

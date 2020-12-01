@@ -4,7 +4,7 @@
 
 #include <lexy/encoding.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/callback.hpp>
 #include <lexy/input/string_input.hpp>
 #include <string>

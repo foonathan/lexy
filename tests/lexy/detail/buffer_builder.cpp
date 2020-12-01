@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/buffer_builder.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("_detail::buffer_builder")
 {

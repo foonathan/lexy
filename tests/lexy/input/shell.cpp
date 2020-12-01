@@ -4,7 +4,7 @@
 
 #include <lexy/input/shell.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 namespace
 {

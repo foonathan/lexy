@@ -4,7 +4,7 @@
 
 #include <lexy/_detail/integer_sequence.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("_detail::integer_sequence")
 {

@@ -5,5 +5,5 @@
 #include <lexy/_detail/config.hpp>
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include <doctest_main.h>
+#include <doctest/doctest.h>
 

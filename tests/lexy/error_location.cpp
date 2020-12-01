@@ -4,7 +4,7 @@
 
 #include <lexy/error_location.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/ascii.hpp>

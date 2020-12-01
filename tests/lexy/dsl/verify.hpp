@@ -5,7 +5,7 @@
 #ifndef TEST_DSL_VERIFY_HPP_INCLUDED
 #define TEST_DSL_VERIFY_HPP_INCLUDED
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/lexeme.hpp>
@@ -64,8 +64,8 @@ struct atom_match_result<void>
 template <typename Atom>
 constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
 {
-    auto input = size == std::size_t(-1) ? lexy::zstring_input<test_encoding>(str)
-                                         : lexy::string_input<test_encoding>(str, size);
+    auto input  = size == std::size_t(-1) ? lexy::zstring_input<test_encoding>(str)
+                                          : lexy::string_input<test_encoding>(str, size);
     auto reader = input.reader();
 
     auto pos         = reader.cur();

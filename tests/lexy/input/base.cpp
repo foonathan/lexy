@@ -4,7 +4,7 @@
 
 #include <lexy/input/base.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/input/string_input.hpp>
 
 TEST_CASE("partial_reader()")

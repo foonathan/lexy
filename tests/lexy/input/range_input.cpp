@@ -4,7 +4,7 @@
 
 #include <lexy/input/range_input.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 namespace
 {

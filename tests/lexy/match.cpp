@@ -4,7 +4,7 @@
 
 #include <lexy/match.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/input/string_input.hpp>

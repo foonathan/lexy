@@ -4,7 +4,7 @@
 
 #include <lexy/dsl/brackets.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/input/string_input.hpp>

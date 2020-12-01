@@ -4,7 +4,7 @@
 
 #include <lexy/input/string_input.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("string_input")
 {

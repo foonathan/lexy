@@ -4,7 +4,7 @@
 
 #include <lexy/dsl/punctuator.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 TEST_CASE("dsl punctuators")
 {
