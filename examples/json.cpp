@@ -250,7 +250,7 @@ struct json_value
     };
 
     static constexpr auto rule = [] {
-        auto null   = LEXY_LIT("null")[ws] >> dsl::value_c<nullptr>;
+        auto null   = LEXY_LIT("null")[ws] >> dsl::value_t<ast::json_null>;
         auto true_  = LEXY_LIT("true")[ws] >> dsl::value_c<true>;
         auto false_ = LEXY_LIT("false")[ws] >> dsl::value_c<false>;
 
