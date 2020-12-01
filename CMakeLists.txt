@@ -10,10 +10,18 @@ set(LEXY_USER_CONFIG_HEADER "" CACHE FILEPATH "The user config header for lexy."
 add_subdirectory(src)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    enable_testing()
+    option(LEXY_BUILD_TESTS "whether or not tests should be built" ON)
+    option(LEXY_BUILD_EXAMPLES "whether or not examples should be built" ON)
 
-    add_subdirectory(tests)
-    add_subdirectory(examples)
+    if(LEXY_BUILD_TESTS)
+        enable_testing()
+        add_subdirectory(tests)
+    endif()
+
+    if(LEXY_BUILD_EXAMPLES)
+        add_subdirectory(examples)
+    endif()
+
     add_subdirectory(docs)
 endif()
 
