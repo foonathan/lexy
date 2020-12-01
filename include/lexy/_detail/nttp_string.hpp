@@ -84,28 +84,26 @@ struct type_char
 
 namespace lexy::_detail
 {
-template <auto... Cs>
-struct type_string;
-template <auto H, auto... Ts>
-struct type_string<H, Ts...>
+template <typename CharT, CharT... Cs>
+struct type_string
 {
-    using char_type = std::decay_t<decltype(H)>;
+    using char_type = CharT;
 
-    template <typename CharT>
+    template <typename OtherCharT>
     struct _lazy
     {
-        static inline constexpr CharT str[] = {CharT(H), CharT(Ts)...};
+        static inline constexpr OtherCharT str[] = {OtherCharT(Cs)...};
     };
 
-    template <typename CharT = char_type>
+    template <typename OtherCharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<CharT>(_lazy<CharT>::str, sizeof...(Ts) + 1);
+        return basic_string_view<OtherCharT>(_lazy<OtherCharT>::str, sizeof...(Cs));
     }
 };
 
 template <auto C>
-using type_char = type_string<C>;
+using type_char = type_string<std::decay_t<decltype(C)>, C>;
 } // namespace lexy::_detail
 
 #    if defined(__GNUC__) // string<Cs...> literal implementation
@@ -117,7 +115,7 @@ using type_char = type_string<C>;
 #        endif
 
 template <typename CharT, CharT... Cs>
-constexpr ::lexy::_detail::type_string<Cs...> operator""_lexy_string_udl()
+constexpr ::lexy::_detail::type_string<CharT, Cs...> operator""_lexy_string_udl()
 {
     return {};
 }
@@ -132,10 +130,10 @@ namespace lexy::_detail
 {
 template <typename A, typename B>
 struct cat_;
-template <auto... C1, auto... C2>
-struct cat_<type_string<C1...>, type_string<C2...>>
+template <typename CharT, CharT... C1, CharT... C2>
+struct cat_<type_string<CharT, C1...>, type_string<CharT, C2...>>
 {
-    using type = type_string<C1..., C2...>;
+    using type = type_string<CharT, C1..., C2...>;
 };
 template <typename A, typename B>
 using cat = typename cat_<A, B>::type;
@@ -154,9 +152,10 @@ struct check_size
 // extract Ith character if not out of bounds
 #        define LEXY_NTTP_STRING1(Str, I)                                                          \
             ::std::conditional_t<(I < LEXY_NTTP_STRING_LENGTH(Str)),                               \
-                                 ::lexy::_detail::type_string<(                                    \
-                                     I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,        \
-                                 ::lexy::_detail::type_string<>>
+                                 ::lexy::_detail::type_string<                                     \
+                                     ::std::decay_t<decltype(Str[0])>,                             \
+                                     (I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,       \
+                                 ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>>>
 
 // recursively split the string in two
 #        define LEXY_NTTP_STRING2(Str, I)                                                          \
