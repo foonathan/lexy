@@ -4,13 +4,8 @@ image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%
 image:https://github.com/foonathan/lexy/workflows/Build%20and%20Test/badge.svg[Build Status]
 
 `lexy` is a parser combinator library for {cpp}17 and onwards.
-It allows you to write a parser by specifying it in a convenient {cpp} DSL.
-Instead of manually writing a recursive descent parser, you can describe your parser in this DSL and the library will generate it for you.
-The generated parser behaves just like you've specified in the grammar
--- it tries all alternatives in the order you said it should, it does not do backtracking unless you allow it, and it will fail with a custom error message when you instruct it to.
-Values and lexemes produced by the grammar are directly converted to your custom data structure without any intermediate copies or heap allocations,
-and parse errors are handled by a callback you have specified.
-This gives you all the flexibility of a hand-written parser without any loss of control and manual labor.
+It allows you to write a parser by specifying it in a convenient {cpp} DSL,
+which gives you all the flexibility and control of a handwritten parser without all the manual work.
 
 .IPv4 address parser: try it on https://godbolt.org/z/z1Pfaq[Compiler Explorer]
 [source,cpp]
