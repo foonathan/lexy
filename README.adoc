@@ -119,15 +119,15 @@ Why should I use `lexy` over XYZ?::
     You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.
 
 How bad are the compilation times?::
-  They're not as bad as you might expect (in debug mode, that is).
-  +
-  Compiling the example JSON parser with any of the lexy specific things removed,
-  i.e. just the datastructure built using `std::variant` and `std::map`, takes about one second one my machine.
-  The entire parser takes about two seconds if you disable force inline on the parse productions.
-  With force inline, it takes about five seconds.
-  +
-  Compile time benchmarks and optimizations are planned.
-  Keep in mind, that you can fully isolate `lexy` in a single translation unit that only needs to be touched when you change the parser.
+They're not as bad as you might expect (in debug mode, that is).
++
+Compiling the example JSON parser with any of the lexy specific things removed,
+i.e. just the datastructure built using `std::variant` and `std::map`, takes about one second one my machine.
+The entire parser takes about two seconds if you disable force inline on the parse productions.
+With force inline, it takes about five seconds.
++
+Compile time benchmarks and optimizations are planned.
+Keep in mind, that you can fully isolate `lexy` in a single translation unit that only needs to be touched when you change the parser.
 
 How bad are the {cpp} error messages if you mess something up?::
   They're certainly worse than the error message `lexy` gives you.
