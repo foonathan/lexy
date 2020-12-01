@@ -8,3 +8,6 @@ add_custom_target(lexy_docs_tutorial
 add_custom_target(lexy_docs_reference
     COMMAND asciidoctor -r ${CMAKE_CURRENT_SOURCE_DIR}/godbolt.rb -o reference.html ${CMAKE_CURRENT_SOURCE_DIR}/reference.adoc)
 
+add_custom_target(lexy_docs)
+add_dependencies(lexy_docs lexy_docs_tutorial lexy_docs_reference)
+
