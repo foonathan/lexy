@@ -28,7 +28,7 @@ struct _match : atom_base<_match<Rule>>
     template <typename Reader>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
-        lexy::_match_handler handler;
+        lexy::_match_handler handler{};
         return Rule::template parser<lexy::final_parser>::parse(handler, reader).has_value();
     }
 

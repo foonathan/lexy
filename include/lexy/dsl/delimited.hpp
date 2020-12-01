@@ -63,8 +63,8 @@ struct _delc : rule_base
             if (reader.eof())
             {
                 // Find the beginning of the delimited; it was added somwhere in the arguments.
-                typename Reader::iterator begin = {};
-                ([&](const auto& arg) {
+                typename Reader::iterator begin  = {};
+                auto                      lambda = [&](const auto& arg) {
                     using arg_type = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<arg_type, typename Reader::iterator>)
                     {
@@ -73,8 +73,8 @@ struct _delc : rule_base
                     }
                     else
                         return false;
-                }(args)
-                 || ...);
+                };
+                (lambda(args) || ...);
 
                 // If we've reached EOF, it means we're missing the closing delimiter.
                 auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());

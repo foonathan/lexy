@@ -22,7 +22,7 @@ public:
     using char_type = typename encoding::char_type;
     using iterator  = typename Reader::iterator;
 
-    constexpr lexeme() noexcept = default;
+    constexpr lexeme() noexcept : _begin(), _end() {}
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
 
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
