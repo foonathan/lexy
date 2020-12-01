@@ -28,6 +28,14 @@ target_link_libraries(lexy_test_base INTERFACE foonathan::lexy::dev foonathan::l
 target_include_directories(lexy_test_base INTERFACE ${CMAKE_BINARY_DIR})
 target_compile_definitions(lexy_test_base INTERFACE DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING=1 LEXY_TEST)
 
+# Add code coverage options to our test target.
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU|Clang")
+    if(NOT "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+        target_compile_options(lexy_test_base INTERFACE -O0 -g --coverage)
+        target_link_options(lexy_test_base INTERFACE --coverage)
+    endif()
+endif()
+
 # Add the individual tests.
 add_subdirectory(lexy)
 add_subdirectory(examples)

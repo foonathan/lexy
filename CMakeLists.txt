@@ -2,7 +2,7 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 project(lexy VERSION 0.0.0 LANGUAGES CXX)
 
 set(LEXY_USER_CONFIG_HEADER "" CACHE FILEPATH "The user config header for lexy.")
