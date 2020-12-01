@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.12">
+<title>lexy Tutorial</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment @import statement to use as custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;word-wrap:anywhere;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede;word-wrap:normal}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre).nobreak{word-wrap:normal}
+:not(pre).nowrap{white-space:nowrap}
+:not(pre).pre-wrap{white-space:pre-wrap}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:none;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details>summary:first-of-type{cursor:pointer;display:list-item;outline:none;margin-bottom:.75em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{-webkit-border-radius:4px;border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class="highlight"],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;padding-right:.5em}
+pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
+pre.pygments .lineno::before{content:"";margin-right:-.125em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content{margin-bottom:1.25em;word-wrap:anywhere}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>*>tr>*{border-width:1px}
+table.grid-cols>*>tr>*{border-width:0 1px}
+table.grid-rows>*>tr>*{border-width:1px 0}
+table.frame-all{border-width:1px}
+table.frame-ends{border-width:1px 0}
+table.frame-sides{border-width:0 1px}
+table.frame-none>colgroup+*>:first-child>*,table.frame-sides>colgroup+*>:first-child>*{border-top-width:0}
+table.frame-none>:last-child>:last-child>*,table.frame-sides>:last-child>:last-child>*{border-bottom-width:0}
+table.frame-none>*>tr>:first-child,table.frame-ends>*>tr>:first-child{border-left-width:0}
+table.frame-none>*>tr>:last-child,table.frame-ends>*>tr>:last-child{border-right-width:0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd),table.stripes-even tr:nth-of-type(even),table.stripes-hover tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+td.hdlist2{word-wrap:anywhere}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);-webkit-border-radius:50%;border-radius:50%;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#header,#content,#footnotes,#footer{max-width:none}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1><code>lexy</code> Tutorial</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_overview">Overview</a></li>
+<li><a href="#_parsing_the_package_name">Parsing the package name</a></li>
+<li><a href="#_parsing_the_package_version">Parsing the package version</a></li>
+<li><a href="#_parsing_one_package_author">Parsing one package author</a></li>
+<li><a href="#_branches_making_parse_decisions">Branches: Making parse decisions</a></li>
+<li><a href="#_parsing_one_package_author_continued">Parsing one package author - Continued</a></li>
+<li><a href="#_parsing_the_package_authors">Parsing the package authors</a></li>
+<li><a href="#_parsing_the_package_config">Parsing the package config</a></li>
+<li><a href="#_error_handling">Error handling</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This tutorial introduces you to the basics of <a href="https://github.com/foonathan/lexy"><code>lexy</code></a>.
+Our goal is to parse some simple configuration file of a software package.</p>
+</div>
+<div class="paragraph">
+<p>A sample input file can look like this:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>package.config</code></div>
+<div class="content">
+<pre>name    = lexy
+version = 0.0.0
+authors = ["Jonathan Müller"]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And we want to parse it into the following C++ data structure using <code>lexy</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>PackageConfig</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct PackageVersion
+{
+    int major;
+    int minor;
+    int patch;
+};
+
+struct PackageConfig
+{
+    std::string              name;
+    PackageVersion           version;
+    std::vector&lt;std::string&gt; authors;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The final source code can be found at <code>examples/tutorial.cpp</code>.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>If anything in the tutorial could be improved (and there is probably a lot),
+please raise an issue or&#8201;&#8212;&#8201;even better&#8201;&#8212;&#8201;create a PR.
+Thank you!</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_overview">Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To parse something we need to do three things.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>We define the <em>grammar</em>.
+In C++, a grammar is contained in a namespace, usually called <code>grammar</code>.</p>
+<div class="paragraph">
+<p>It contains one or more <em>productions</em>, which are empty structs with a <code>rule</code> member.
+Each production corresponds to one function of the generated recursive descent parser.
+They produce a single value of a user controlled type.
+Here, we could imagine at minimum a production for parsing a <code>PackageVersion</code> and another one for parsing a <code>PackageConfig</code>.</p>
+</div>
+<div class="paragraph">
+<p>The <em>rule</em> of a production does all the heavy lifting.
+It describes what is valid input and what is not, how many characters are consumed by the input, and it will produce zero or more values.
+All values are then combined into the single result of the production using a separately specified <em>callback</em>.</p>
+</div>
+</li>
+<li>
+<p>We create an <code>Input</code> object.
+It contains the concrete input we want to parse.
+The library provides different kinds of inputs, from the simple <code>lexy::string_input</code> which acts like a <code>std::string_view</code>,
+to the complex <code>lexy::shell</code>, which provides an interactive REPL.</p>
+<div class="paragraph">
+<p>In this step, we also specify the <em>encoding</em> of the input.
+This can be plain old ASCII, some Unicode encoding like UTF-8, or bytes as opposed to text.
+The encoding controls the behavior of many rules as it determines what valid code points are.</p>
+</div>
+<div class="paragraph">
+<p>When reading input from a file, we may also need to specify a given endianness or let the library figure it out using a byte-order mark.</p>
+</div>
+</li>
+<li>
+<p>Once we have a grammar and input, we can parse it by calling <code>lexy::parse</code>.
+This will parse the input and convert it according to the rules of the grammar and converts it into the specified type.
+If an error occurs, it will invoke a callback we have specified with detailled error information.
+We can then either print it immediately, or store the error in some custom diagnostic object.</p>
+<div class="paragraph">
+<p>We can also choose to simply validate the input using <code>lexy::validate</code>.
+Then we don&#8217;t convert it to a value and only log error messages if it is ill-formed.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>As such, the general structure of the source code is as follows.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>examples/tutorial.cpp</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">#include &lt;string&gt;
+#include &lt;vector&gt;
+
+<i class="conum" data-value="1"></i><b>(1)</b>
+struct PackageVersion { … };
+struct PackageConfig { … };
+
+//=== grammar ===//
+#include &lt;lexy/dsl.hpp&gt; // lexy::dsl::*
+
+namespace grammar <i class="conum" data-value="2"></i><b>(2)</b>
+{
+    …
+
+    struct config { … };
+}
+
+//=== parsing ===//
+#include &lt;lexy/input/file.hpp&gt; // lexy::read_file
+#include &lt;lexy/parse.hpp&gt;      // lexy::parse
+
+int main()
+{
+    auto file = lexy::read_file&lt;lexy::utf8_encoding&gt;(filename); <i class="conum" data-value="3"></i><b>(3)</b>
+    if (!file)
+    { … }
+
+    auto&amp; input = file.value();
+    auto result = lexy::parse&lt;grammar::config&gt;(input, report_error_callback); <i class="conum" data-value="4"></i><b>(4)</b>
+    if (!result)
+    { … }
+
+    PackageConfig config = result.value(); <i class="conum" data-value="5"></i><b>(5)</b>
+    …
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The user code that defines the C++ data structures.
+It does not need to know anything about <code>lexy</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The grammar. It contains multiple productions, but the entry production is <code>grammar::config</code>.
+This is the production we&#8217;re parsing.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>We want to read the config from a file, so we use <code>lexy::read_file</code>.
+We specify that the file uses UTF-8 as the input encoding.
+Reading a file can fail, so we need to handle that (not shown here).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Then we can parse our entry production using <code>lexy::parse</code>.
+We give it our file input and a callback to invoke on errors (not shown here).
+Parsing can fail, so we need to handle that (not shown here).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>If everything succeeded, we can access our parsed config object and work with it.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
+Refer to the documentation for further details on the surrounding infrastructure.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_the_package_name">Parsing the package name</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will create a separate production for each of the fields (name, version, authors).
+Let&#8217;s start with the production for the name, as that is the simplest one.</p>
+</div>
+<div class="listingblock">
+<div class="title">Package name</div>
+<div class="content">
+<pre>name = lexy</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, we&#8217;re only concerned with the part after the equal sign, so the <code>lexy</code> in the example above.
+A package name follows the same rules as a C++ identifier, except that leading underscores are not allowed.
+As a regex, a name is described by <code>[a-zA-Z][a-zA-Z_0-9]*</code>, so one alpha character, followed by zero or more alphanumeric characters or underscores.</p>
+</div>
+<div class="paragraph">
+<p>How can we express this as a <code>lexy</code> rule?</p>
+</div>
+<div class="paragraph">
+<p>Every rule is defined in the namespace <code>lexy::dsl</code>.
+As this is rather lengthy, it is a good idea to use a namespace alias to shorten it.</p>
+</div>
+<div class="listingblock">
+<div class="title">The namespace alias</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace grammar
+{
+    namespace dsl = lexy::dsl; <i class="conum" data-value="1"></i><b>(1)</b>
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>A convenience alias, so we can write <code>dsl::foo</code> instead of <code>lexy::dsl::foo</code> when defining the grammar.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Luckily for us, there are predefined rules for the various ASCII classifications.
+One of those, is the rule <code>dsl::ascii::alpha</code>: this rule matches one of <code>a-zA-Z</code> and consumes it from the input.
+We can put it in a production and parse it:</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>dsl::ascii::alpha</code> rule (<a href="https://godbolt.org/z/Kf9hd7">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct alpha <i class="conum" data-value="1"></i><b>(1)</b>
+{
+    static constexpr auto rule = dsl::ascii::alpha; <i class="conum" data-value="2"></i><b>(2)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The production that contains the rule.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The rule itself, it is a <code>static</code> constant.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Likewise, <code>dsl::ascii::alnum</code> matches one of <code>a-zA-Z0-9</code>.
+To match a single underscore, we can use <code>dsl::lit_c&lt;'_'&gt;</code>.
+The latter rule matches and consumes the specified character.</p>
+</div>
+<div class="paragraph">
+<p>Of course, we don&#8217;t want a single alpha(numeric) character or underscore,
+we want one alpha character followed by zero or more alphanumeric characters or underscores.
+For that, we need to combine rules.</p>
+</div>
+<div class="paragraph">
+<p>The simplest way to combine rules is using the sequence rule.
+The sequence rule matches one rule after the other in the specified order.
+It is implemented using an overload <code>operator+</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">The sequence rule (<a href="https://godbolt.org/z/3aTaK7">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match an alpha character, followed by an alphanumeric character, followed by a literal c.
+dsl::ascii::alpha + dsl::ascii::alnum + dsl::lit_c&lt;'_'&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The sequence rule is alright, but it is static.
+How can we match a dynamic amount of alpha numeric characters after the initial alpha character?
+For that, we can use the while rule.
+The while rule takes a rule and matches it as often as possible.</p>
+</div>
+<div class="listingblock">
+<div class="title">The while rule (<a href="https://godbolt.org/z/h5jGnz">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match an alpha character, followed by zero or more alphanumeric characters.
+dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum)</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>How does the while rule know how many times it should match the alphanumeric rule?
+We will get to that later, but the spoiler is: it just tries it over and over.
+For rules that only look at the next character of the input, such as <code>dsl::ascii::alnum</code>,
+this is not a problem, but for more complex rules it can involve expensive backtracking.</p>
+</div>
+<div class="paragraph">
+<p>But don&#8217;t worry, backtracking happens in a very controlled way and can be prevented.</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re almost there!
+All we need is to allow the underscore as well as an alphanumeric character in the while loop.</p>
+</div>
+<div class="paragraph">
+<p>For that, we can use the alternative rule.
+The alternative rule tries to match the first rule.
+If that works, great.
+Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
+It is implemented using <code>operator/</code> (read "or").</p>
+</div>
+<div class="paragraph">
+<p>With all that, we can finally write our first production:</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>name</code> production (<a href="https://godbolt.org/z/bdn39v">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    static constexpr auto rule
+        = dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum / dsl::lit_c&lt;'_'&gt;);
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The production is now almost done.
+We can use <code>lexy::validate()</code> to give it some input and raise an error if it does not match the rule,
+or we can use <code>lexy::match()</code> to just give us a <code>true</code>/<code>false</code> result.
+But we want to <code>lexy::parse()</code> it and get a <code>std::string</code>.
+To implement that, we need to do two things.</p>
+</div>
+<div class="paragraph">
+<p>First, we need to remember everything we&#8217;ve just matched by the rule, so we can convert that into the <code>std::string</code> later on.
+This is done using <code>dsl::capture()</code>.
+This rule takes another rule as input and parses it.
+However, it is also the first rule that produces a value.
+When parsing a <code>dsl::capture()</code> rule, we get a <code>lexy::lexeme</code> (basically a <code>std::string_view</code>) that views all the input the rule has matched.
+This is exactly what we want to turn into our <code>std::string</code>.</p>
+</div>
+<div class="paragraph">
+<p>Second, we need to specify what value our production should return when it&#8217;s parsed.
+When we <code>lexy::parse()</code> a production, we parse the rule of the production.
+As we have just seen, this can produce one or more values, like <code>lexy::lexeme</code>.
+All those value are then forwarded to a callback which constructs the result of the parse operation.</p>
+</div>
+<div class="paragraph">
+<p>A <em>callback</em> is just a function object (so a class with <code>operator()</code>) that also has a <code>return_type</code> typedef.
+We can easily build one using the utility function <code>lexy::callback&lt;T&gt;()</code> which takes one or more lambdas and creates a callback that returns a <code>T</code>.
+A callback is added to a production using a <code>static constexpr auto value</code> member.</p>
+</div>
+<div class="paragraph">
+<p>So we need to wrap our rule in <code>dsl::capture()</code>, so we actually get a value for our callback,
+and then add a callback that takes the lexeme and converts it into a <code>std::string</code> which is the final result of parsing the production.</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>name</code> production with <code>capture()</code> and value</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    // Captures it all into a lexeme.
+    static constexpr auto rule
+        = dsl::capture(dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum / dsl::lit_c&lt;'_'&gt;));
+
+    // The final value of this production is a std::string we've created from the lexeme.
+    static constexpr auto value
+        = lexy::callback&lt;std::string&gt;([](auto lexeme) { return std::string(lexeme.begin(), lexeme.end()); });
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To finish it up, there are two things we can improve.
+First, converting a <code>lexy::lexeme</code> to a <code>std::string</code> is an incredible common thing you want to do,
+so the library provides the callback <code>lexy::as_string&lt;std::string&gt;</code> for it.
+Second, the rule definition has become somewhat unreadable as its one big expression.
+We can use an immediately invoked lambda to improve that.</p>
+</div>
+<div class="listingblock">
+<div class="title">The final <code>name</code> production (<a href="https://godbolt.org/z/v7rPbs">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct name
+{
+    // Match an alpha character, followed by zero or more alphanumeric characters or underscores.
+    // Captures it all into a lexeme.
+    static constexpr auto rule = [] {
+        auto lead_char     = dsl::ascii::alpha;
+        auto trailing_char = dsl::ascii::alnum / dsl::lit_c&lt;'_'&gt;;
+
+        return dsl::capture(lead_char + dsl::while_(trailing_char));
+    }();
+
+    // The final value of this production is a std::string we've created from the lexeme.
+    static constexpr auto value = lexy::as_string&lt;std::string&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If now parse the <code>name</code> production, we will get a <code>std::string</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_the_package_version">Parsing the package version</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The next field is the version.</p>
+</div>
+<div class="listingblock">
+<div class="title">Package version</div>
+<div class="content">
+<pre>version = 0.0.0</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Again, we&#8217;re only concerned with the value after the equal sign for now.
+It consists of three numbers separated by dots, where a number is a non-empty sequence of digits.</p>
+</div>
+<div class="paragraph">
+<p>The rule <code>dsl::ascii::digit</code> matches one digit 0-9.
+To match an arbitrary amount of digits, we can again use the while rule.
+However, this would also allow zero digits, which we don&#8217;t want.
+So instead we use <code>dsl::while_one(dsl::ascii::digit)</code>, which is equivalent to <code>dsl::ascii::digit + dsl::while_(dsl::ascii::digit)</code>:
+it needs at least one digit, and then zero or more.</p>
+</div>
+<div class="listingblock">
+<div class="title">Digits</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match one or more digits.
+dsl::while_one(dsl::ascii::digit)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Matching one or more digits is common, so there is a predefined rule for that: <code>dsl::digits</code>.
+It takes an optional template parameter to specify the base,
+for example <code>dsl::digits&lt;dsl::octal&gt;</code> would only match <code>0-7</code>,
+whereas <code>dsl::digits&lt;dsl::hex_upper&gt;</code> would match <code>0-9A-F</code>.
+If we don&#8217;t specify a base, it defaults to <code>dsl::decimal</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">The digits rule (<a href="https://godbolt.org/z/6TnKeY">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match one or more decimal digits.
+dsl::digits&lt;&gt;</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><code>dsl::digits&lt;&gt;</code> actually provides a couple of additional features over the <code>dsl::while_one()</code>.
+For example, we could prevent leading zeros or automatically allow an optional digit separator.
+None of that is needed here, however.</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Just like with the <code>name</code> production, neither <code>dsl::digits&lt;&gt;</code> nor <code>dsl::while_one()</code> actually produce a value when parsed.
+To get the actual integer represented by the digits, we can do the same thing as we did before:
+Use <code>dsl::capture(dsl::digits&lt;&gt;)</code> to match digits and get a <code>lexy::lexeme</code>, then use a callback that takes the lexeme and converts it into an <code>int</code>.
+However, this approach does not work due to the possibility of integer overflow:
+<code>dsl::digits&lt;&gt;</code> matches an arbitrarily long sequence of digits, but only a subset of those are <code>int`s.
+`lexy</code> considers integer overflow a parse error, which can only be raised by a rule.</p>
+</div>
+<div class="paragraph">
+<p>So instead we can use the <code>dsl::integer&lt;T&gt;()</code> rule.
+Just like <code>dsl::capture()</code>, it takes another rule and matches it.
+The resulting digits are then captured, but not as a <code>lexy::lexeme</code> but as the specified integer <code>T</code>.</p>
+</div>
+<div class="paragraph">
+<p>While doing the conversion, <code>dsl::integer</code> ignores any character that is not a digit, so you can use it even if you have digit separators in your rule.
+What is or is not a digit, as well as the base used for conversion, is again determined using the policy classes <code>dsl::decimal</code>, <code>dsl::octal</code>, and so on.
+You can specify them manually using <code>dsl::integer&lt;int, dsl::decimal&gt;(my_digit_rule)</code>, but if your digit rule is <code>dsl::digits&lt;&gt;</code>, the base is detected automatically.</p>
+</div>
+<div class="paragraph">
+<p>The following sample production matches a single <code>int</code> using <code>dsl::integer</code> and <code>dsl::digits</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">The integer rule (<a href="https://godbolt.org/z/KnWjxY">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct integer
+{
+    // Matches one or more decimal digits, then converts those into an `int`.
+    static constexpr auto rule = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;)
+
+    // The rule produces a single value, the parsed `int`.
+    // We simply forward that one to use as the result of parsing the `integer` production.
+    static constexpr auto value = lexy::forward&lt;int&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can just use the integer rule and put it in sequence together with <code>dsl::lit_c&lt;'.'&gt;</code> to match the three numbers separated by integer.
+If we match a sequence of rules, where some produce values, all values are preserved and forwarded to the callback in the same order.
+The <code>dsl::lit_c</code> rule does not produce any values, so our callback will be invoked with three values: the ints from each <code>dsl::integer</code> rule.
+We then use a callback that takes those three integers and constructs the <code>PackageVersion</code> as the result.</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>version</code> production</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    // Match three integers separated by dots.
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::lit_c&lt;'.'&gt;;
+
+        // Each number rule produces an int, each dot rule produces nothing.
+        return number + dot + number + dot + number;
+    }();
+
+    // Construct a PackageVersion as the result of the production.
+    static constexpr auto value
+      = lexy::callback&lt;PackageVersion&gt;([](int a, int b, int c) {
+            // a is the result of the first number rule, b of the second, c of the third.
+            return PackageVersion{a, b, c};
+        });
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can again clean this up a bit.
+<code>lexy</code> predefines <code>dsl::period</code> to match a '.' character, which looks cleaner than <code>dsl::lit_c&lt;'.'&gt;</code>.
+Constructing a type from arguments is also a common callback, so it is provided as <code>lexy::construct&lt;T&gt;</code>, which does <code>T(args&#8230;&#8203;)</code> if that compiles and <code>T{args&#8230;&#8203;}</code> otherwise.</p>
+</div>
+<div class="listingblock">
+<div class="title">The final <code>version</code> production (<a href="https://godbolt.org/z/G6KcsM">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    // Match three integers separated by dots.
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::period;
+
+        return number + dot + number + dot + number;
+    }();
+
+    // Construct a PackageVersion as the result of the production.
+    static constexpr auto value = lexy::construct&lt;PackageVersion&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can now use this production to parse <code>PackageVersion</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_one_package_author">Parsing one package author</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we go and parse the list of authors, we need to parse an individual one.</p>
+</div>
+<div class="listingblock">
+<div class="title">Package author</div>
+<div class="content">
+<pre>authors = ["Jonathan Müller"]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>One author is just a quoted string.</p>
+</div>
+<div class="paragraph">
+<p>We can easily parse it using the tools we&#8217;ve already covered:</p>
+</div>
+<div class="listingblock">
+<div class="title">String parsing, first attempt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    // We capture the content without the quotes.
+    static constexpr auto rule
+      = dsl::lit_c&lt;'"'&gt; + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c&lt;'"'&gt;;
+
+    // Convert the captured lexeme into a std::string.
+    static constexpr auto value = lexy::as_string&lt;std::string&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>However, this attempt does not quite work.
+First of all, we don&#8217;t want <em>arbitrary</em> code points in our string.
+It shouldn&#8217;t contain characters like line breaks.
+More importantly, the rule can never succeed.</p>
+</div>
+<div class="paragraph">
+<p>To understand why, we need to talk about <em>branches</em>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_branches_making_parse_decisions">Branches: Making parse decisions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Parsing is really easy when you know exactly what character is going to come next.
+All the complexity comes from making decisions about <em>what</em> to parse.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s say we want to write a rule that matches either a decimal integer literal (e.g. <code>123</code>) or a hexadecimal integer literal (e.g <code>1A</code>).
+If we have a literal that can be both decimal and hexadecimal, we&#8217;ll just assume it&#8217;s decimal.
+The example is a bit contrived, but let&#8217;s just bear with me.</p>
+</div>
+<div class="paragraph">
+<p>We can easily write a rule that matches a decimal integer, and another one that matches a hexadecimal integer.</p>
+</div>
+<div class="listingblock">
+<div class="title">Decimal or hexadecimal</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
+
+        return ???;
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We want some rule that expresses "decimal or hex".
+We&#8217;ve already seen the alternative rule <code>/</code>.
+However, that one doesn&#8217;t actually work with <code>dsl::integer</code>, for reasons I&#8217;ll explain shortly.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s suppose it <em>would</em> work and we write <code>dec / hex</code>.
+This would first try to match <code>dec</code>.
+If that fails at some point, it rewinds the input&#8201;&#8212;&#8201;it <em>backtracks</em>&#8201;&#8212;&#8201;to the original position.
+It then discards the partially constructed integer that was going to be produced by <code>dec</code>,
+and matches <code>hex</code> instead.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s consider an input like <code>123456789A</code>.
+The <code>dec</code> rule is perfectly happy with it until it reaches the <code>A</code>.
+<code>A</code> is no longer a decimal digit, so it stops and returns <code>123456789</code> as the result, which is wrong.
+When parsing then continues after our <code>dec_or_hex</code> production, it will certainly fail due to the unexpected <code>A</code> still remaining on the input.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>123456789A</code></div>
+<div class="content">
+<pre>123456789A
+---------^ no longer a digit, exit</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>So let&#8217;s say we fix our <code>dec</code> rule that it will fail instead of succeeding to early when it sees the <code>A</code> (or any other non-decimal hex digit).
+Then the alternative rule will go and backtrack to match the <code>hex</code> rule.
+However, for that we&#8217;re doing the same work twice!
+The first thing the <code>hex</code> rule does is match <code>123456789</code> <em>again</em>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>123456789A</code> with the revised <code>dec</code> rule</div>
+<div class="content">
+<pre>123456789A
+---------^ hex digit, backtrack
+
+123456789A
+^ start here again
+
+123456789A
+----------^ ok, we're done</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Furthermore, let&#8217;s say our <code>dec</code> rule would introduce side effects like printing the integer as it parses it,
+or is expensive such as performing heap allocation to store a big integer type.
+Backtracking means that side effects would happen even though the rule was never parsed, and expensive work is done unnecessarily.</p>
+</div>
+<div class="paragraph">
+<p>As such, <code>lexy</code> made the design decision to only backtrack simple rules and only when you&#8217;ve explicitly opt-in to that.</p>
+</div>
+<div class="paragraph">
+<p>A "simple rule" is called a <em>pattern</em>.
+Such a rule cannot produce a value&#8201;&#8212;&#8201;as this can be expensive and/or produce side-effects&#8201;&#8212;&#8201;and provides a special interface to efficiently determine "would this rule match at this input?".
+The alternative rule then only takes pattern, as backtracking a pattern is not a problem.</p>
+</div>
+<div class="paragraph">
+<p>Most rules we&#8217;ve seen so fare are actually patterns: <code>dsl::ascii::*</code>, <code>dsl::lit_c</code>, and <code>dsl::digits&lt;&gt;</code>.
+Combinator rules such as sequence <code>+</code> and <code>dsl::while_()</code> are patterns when all arguments are patterns.
+The only non-pattern rules we&#8217;ve seen are <code>dsl::capture()</code> and <code>dsl::integer&lt;T&gt;()</code>, as both produce values.</p>
+</div>
+<div class="paragraph">
+<p>Every time <code>lexy</code> needs to make a decision between one or more rules, it requires a pattern.
+This is the case for the alternative rule <code>/</code>, but also <code>dsl::while_()</code>.
+The latter needs to decide: do I match the repeated rule again, or am I done?
+So it requires a pattern.
+If the pattern matches again, the rule is repeated, otherwise, it backtracks the failed match and is done.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>dsl::while_(dsl::lit_c&lt;'a'&gt; + dsl::lit_c&lt;'b'&gt;)</code></div>
+<div class="content">
+<pre>ababa
+^ start, try to match ab
+
+ababa
+--^ that worked, try to match it again
+
+ababa
+----^ that worked, try to match it again
+
+ababa
+-----^ that did not work, we're missing a `b`, backtrack!
+
+ababa
+----^ done, next character on input is `a`</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>So how can we implement <code>dec</code> or <code>hex</code>?
+As both are non-pattern rules, we can&#8217;t use the alternative rule <code>/</code>.</p>
+</div>
+<div class="paragraph">
+<p>For that, we need to specify a so-called <em>branch</em>.
+A branch is a rule associated with a pattern, the branch condition.
+The parsing algorithm will take a branch when its condition matches&#8201;&#8212;&#8201;this can be done efficiently.
+Once a branch is taken, it never backtracks again.</p>
+</div>
+<div class="paragraph">
+<p>Every pattern is a branch where the pattern is the condition and there is no associated rule.
+Rules such as <code>dsl::while_()</code> that need to make a decision thus work with patterns or branches.
+We can construct a branch using an <code>operator&gt;&gt;</code> overload: <code>condition &gt;&gt; rule</code>.
+Then we can use it, to for example specify when exactly we want another repetition of a while loop.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>dsl::while_(dsl::lit_c&lt;'a'&gt; &gt;&gt; dsl::lit_c&lt;'b'&gt; + dsl::lit_c&lt;'c'&gt;)</code></div>
+<div class="content">
+<pre>abcabcabd
+^ start, try to match the condition
+
+abcabcabd
+-^ condition matched, we take the branch
+
+abcabcabd
+---^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+----^ condition matched, we take the branch
+
+abcabcabd
+------^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+-------^ condition matched, we take the branch
+
+abcabcabd
+--------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The simple alternative rule <code>/</code> on the other hand, does not support branches.
+Instead we have to use a choice rule implemented using <code>operator|</code>.
+This also tries to match one of multiple rules in the order they were specified,
+but it uses the branch condition to determine which one should be taken.</p>
+</div>
+<div class="listingblock">
+<div class="title">The choice rule</div>
+<div class="content">
+<pre>// In C++, this has the operator precedence we want, which worked out nicely.
+condition1 &gt;&gt; rule1 | condition2 &gt;&gt; rule2 | ...</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Such a choice corresponds to the following pseudo-code.</p>
+</div>
+<div class="listingblock">
+<div class="title">Manual implementation of choice</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">if (match(input, condition1)) <i class="conum" data-value="1"></i><b>(1)</b>
+  parse(input, rule1); <i class="conum" data-value="2"></i><b>(2)</b>
+else if (match(input, condition2))
+  parse(input, rule2);
+…</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>If we match a condition, we take the branch.
+Of course, this requires backtracking if the condition did not match.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>When the condition did match, the input is not rewound and we can continue with the rule.
+If any errors occur now, it&#8217;s too late&#8201;&#8212;&#8201;we&#8217;ve committed to this branch and issue an error.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For our <code>dec_or_hex</code> production, we only want to parse <code>dec</code> if we don&#8217;t have a hexadecimal integer.
+To do that, we first need to match all decimal digits and then need to prevent that it is followed by a hexadecimal digit (as in <code>123456789A12</code>, which is <code>1-9</code> followed by a hexadecimal digit <code>A</code>):</p>
+</div>
+<div class="listingblock">
+<div class="title">Decimal or hexadecimal</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
+
+        auto dec_condition = dsl::digits&lt;&gt; + !dsl::digit&lt;dsl::hex&gt;; <i class="conum" data-value="1"></i><b>(1)</b>
+
+        return dec_condition &gt;&gt; dec | dsl::else_ &gt;&gt; hex;            <i class="conum" data-value="2"></i><b>(2)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We use <code>dsl::digits&lt;&gt;</code> to match all decimal digit first.
+Then we fail if we encounter a hexadecimal digit.
+<code>dsl::digit&lt;dsl::hex&gt;</code> (no trailing 's') matches a single hex digit,
+but its parse success is negated using the <code>!</code> rule.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Once we have a condition, we can use the choice rule.
+The special branch condition <code>dsl::else_</code> is always taken, so should be the last branch.
+This is required to turn a rule into a branch without adding a condition, as we don&#8217;t need one&#8201;&#8212;&#8201;if it wasn&#8217;t decimal, it needs to be hex.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>However, this doesn&#8217;t work:
+the input is only rewound if the <code>dec_condition</code> does not match.
+If it did match, we continue with the <code>dec</code> rule but we&#8217;ve just consumed all the decimal digits!</p>
+</div>
+<div class="paragraph">
+<p>So we use <code>dsl::peek()</code>, which matches a pattern without consuming any input.</p>
+</div>
+<div class="listingblock">
+<div class="title">Decimal or hexadecimal (<a href="https://godbolt.org/z/KK4TYe">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
+
+        auto dec_condition
+          = dsl::peek(dsl::digits&lt;&gt; + !dsl::digit&lt;dsl::hex&gt;);
+
+        return dec_condition &gt;&gt; dec | dsl::else_ &gt;&gt; hex;
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>123456789A</code></div>
+<div class="content">
+<pre>123456789A
+^ start with the `dec_condition`
+
+123456789A
+---------^ at this point, it sees the A and fails
+
+123456789A
+^ backtrack back to beginning
+
+123456789A
+----------^ successfully parsed the `hex` rule (if we ignore the integer overflow)</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>123456789</code></div>
+<div class="content">
+<pre>123456789
+^ start with the `dec_condition`
+
+123456789
+---------^ no more digits, but also not a hex digit: condition succeeded
+
+123456789
+^ the peek rule rewinds the input
+
+123456789A
+----------^ successfully parsed the `dec` rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This works.
+Note that we couldn&#8217;t avoid backtracking.
+However, the backtracking was done explicitly by giving a branch condition.
+We thus have full control over how much backtracking is used and when.</p>
+</div>
+<div class="paragraph">
+<p>Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional requirements on the input.
+For example, hexadecimal numbers are usually prefixed with something like <code>0x</code>.
+This also allows writing a hexadecimal number using only decimal digits, which makes the example less contrived.</p>
+</div>
+<div class="paragraph">
+<p>If we have <code>0x</code> as a prefix, we can use that as the condition for the <code>hex</code> branch.
+It isn&#8217;t even necessary for the actual value of the number, so no need to use <code>dsl::peek()</code> to rewind after the condition has matched.</p>
+</div>
+<div class="listingblock">
+<div class="title">Decimal or hexadecimal with prefix (<a href="https://godbolt.org/z/anj7dc">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
+{
+    static constexpr auto rule = []{
+        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
+
+        auto hex_condition = LEXY_LIT("0x"); <i class="conum" data-value="1"></i><b>(1)</b>
+
+        return hex_condition &gt;&gt; hex | dsl::else_ &gt;&gt; dec;
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>LEXY_LIT("0x")</code> is equivalent to <code>dsl::lit_c&lt;'0'&gt; + dsl::lit_c&lt;'x'&gt;</code>.
+If we have C++20, we can even write <code>dsl::lit&lt;"0x"&gt;</code> without needing a macro.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now we can match a decimal or hexadecimal number.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>0x42</code></div>
+<div class="content">
+<pre>0x42
+^ try to match `hex_condition` first
+
+0x42
+--^ it succeeded, take the branch
+
+0x42
+----^ successfully parsed hexadecimal number</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>007</code></div>
+<div class="content">
+<pre>007
+^ try to match `hex_condition` first
+
+007
+-^ error, this should be x
+
+007
+^ backtrack after failed condition
+
+007
+---^ successfully parsed decimal number</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_one_package_author_continued">Parsing one package author - Continued</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we know how the algorithm makes decisions, we can understand why our previous attempt does not work:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">dsl::lit_c&lt;'"'&gt; + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c&lt;'"'&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The while rule uses the branch condition to determine whether or not it should try another iteration.
+Here, our branch is the pattern <code>dsl::code_point</code>, so the entire pattern is used as condition.
+We repeat as long as we match code points, this includes the closing <code>"</code> character.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>If we had the equivalent regex <code>".*"</code>, it would just work fine.
+The regex star operator only repeats the rule as often as its necessary to make the pattern work.</p>
+</div>
+<div class="paragraph">
+<p>Such "magic" is not done in <code>lexy</code>.
+It does exactly what you say it should do.</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>To fix this, we need a branch condition.
+We only want to match code points while we don&#8217;t have the closing <code>"</code>.
+This can be implemented using the <code>!</code>-rule as condition, which matches a pattern but flips the result:
+it succeeds if the pattern didn&#8217;t match, but fails if it did match.
+Note that on failure, the pattern has been consumed.
+This means that we don&#8217;t need to parse the <code>"</code> after the loop has ended, as it&#8217;s done by our condition.</p>
+</div>
+<div class="listingblock">
+<div class="title">String parsing, second attempt (<a href="https://godbolt.org/z/Y4qMz6">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    // We capture the content without the quotes.
+    static constexpr auto rule
+      = dsl::lit_c&lt;'"'&gt; + dsl::capture(dsl::while_(!dsl::lit_c&lt;'"'&gt; &gt;&gt; dsl::code_point));
+
+    // Convert the captured lexeme into a std::string.
+    static constexpr auto value = lexy::as_string&lt;std::string&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unfortunately, the branch condition is still captured, so we get a trailing <code>"</code> in our string.
+We need to wrap the condition in <code>dsl::peek()</code> so we don&#8217;t consume the closing <code>"</code> and match it at the end&#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>Luckily, parsing a quoted string is a common problem, so there is a predefined function in the library.
+We can use <code>dsl::quoted(dsl::code_point)</code> to match zero or more code points surrounded by quotes.
+The closing <code>"</code> is used as the condition to detect the end of the string, just like we&#8217;ve just implemented.</p>
+</div>
+<div class="paragraph">
+<p><code>dsl::quoted()</code> works differently than the other rules we&#8217;ve seen so far.
+Every rule that produced a value like <code>dsl::capture()</code> or <code>dsl::integer</code> produces only a single value.
+<code>dsl::quoted()</code> on the other hand can produce arbitrarily many values, for example one per iteration.
+As such, the values are not all collected as a parameter pack and forwarded to a callback, but instead a <em>sink</em> is used.</p>
+</div>
+<div class="paragraph">
+<p>A sink is a callback that can be invoked multiple times.
+Every time it is invoked, all arguments are somehow added to an internal value, which is retrieved by calling <code>.finish()</code>.
+This allows building a container or <code>std::string</code>.
+If we write <code>dsl::quoted(dsl::code_point)</code>, the sink will be invoked with the captured code point in each iteration.</p>
+</div>
+<div class="listingblock">
+<div class="title">String parsing, third attempt (<a href="https://godbolt.org/z/jYKbbq">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    // Match zero or more code points ("characters") surrounded by quotation marks.
+    static constexpr auto rule = dsl::quoted(dsl::code_point);       <i class="conum" data-value="1"></i><b>(1)</b>
+
+    // Add each captured code point to a std::string.
+    static constexpr auto list                                       <i class="conum" data-value="2"></i><b>(2)</b>
+      = lexy::sink&lt;std::string&gt;([](std::string&amp; result, auto lexeme) <i class="conum" data-value="3"></i><b>(3)</b>
+                                {
+                                    result.append(lexeme.begin(), lexeme.end());
+                                });
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We want code points surrounded by quotes.
+<code>dsl::code_point</code> is a pattern, so it will be automatically `dsl::capture()`d for us in each iteration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>To provide a sink instead of a callback, we use <code>::list</code> instead of <code>::value</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>lexy::sink</code> creates a sink for us.
+It constructs an empty <code>std::string</code> and then invokes the lambda with each captured lexeme.
+We then append that to the string.</td>
+</tr>
+</table>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><code>dsl::quoted()</code> isn&#8217;t actually a function, but a function object.
+In the library, <code>dsl::quoted()</code> is defined as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr auto quoted = dsl::delimited(dsl::lit_c&lt;'"'&gt;);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can use <code>dsl::delimited()</code> to define your own delimiters by giving it a pattern and then give it the rule that is being delimited by it.</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Constructing a <code>std::string</code> by repeatedly appending a <code>lexy::lexeme</code> is a common use case,
+so we can also use <code>lexy::as_string&lt;std::string&gt;</code> for it.
+<code>lexy::as_string</code> is not just a callback that will construct a string from one argument,
+but also a sink that will repeatedly append the arguments to the string.</p>
+</div>
+<div class="paragraph">
+<p>We also haven&#8217;t forbidden input such as <code>"First line\nSecond line"</code>, where <code>\n</code> is a literal line break inside the string.
+To do that, we need to prevent certain code points from occurring in our string.
+We can do that using the minus rule implemented as <code>operator-</code>.
+<code>a - b</code> matches <code>a</code> but only succeeds if <code>b</code> did not match the input <code>a</code> just matched.
+With that, we can "subtract" certain character classes from our pattern.</p>
+</div>
+<div class="listingblock">
+<div class="title">String parsing, fourth attempt (<a href="https://godbolt.org/z/KMEfaq">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    // Match zero or more non-control code points ("characters") surrounded by quotation marks.
+    static constexpr auto rule = dsl::quoted(dsl::code_point - dsl::ascii::control);
+
+    // Construct a string from the quoted content.
+    static constexpr auto list = lexy::as_string&lt;std::string&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, we&#8217;ve prevented all control characters from occurring inside the string.</p>
+</div>
+<div class="paragraph">
+<p>But what if we want to include a control character in the author&#8217;s name (however, unlikely)?
+Or more importantly, how do we get a <code>"</code> in our string?
+<code>dsl::quoted()</code> will end once it reaches the final <code>"</code>.</p>
+</div>
+<div class="paragraph">
+<p>For that, we need escape sequences.
+They can be very conveniently defined using another rule and added to the string as the second argument.</p>
+</div>
+<div class="listingblock">
+<div class="title">String parsing, final attempt (<a href="https://godbolt.org/z/7onPn8">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    // Match zero or more non-control code points ("characters") surrounded by quotation marks.
+    // We allow `\"`, as well as `\u` and `\U` as escape sequences.
+    static constexpr auto rule = [] {
+        auto cp     = dsl::code_point - dsl::ascii::control;
+        auto escape = dsl::backslash_escape                                <i class="conum" data-value="1"></i><b>(1)</b>
+                          .lit_c&lt;'"'&gt;()                                    <i class="conum" data-value="2"></i><b>(2)</b>
+                          .rule(dsl::lit_c&lt;'u'&gt; &gt;&gt; dsl::code_point_id&lt;4&gt;)  <i class="conum" data-value="3"></i><b>(3)</b>
+                          .rule(dsl::lit_c&lt;'U'&gt; &gt;&gt; dsl::code_point_id&lt;8&gt;);
+
+        return dsl::quoted(cp, escape);
+    }();
+
+    // Construct a UTF-8 string from the quoted content.
+    static constexpr auto list = lexy::as_string&lt;std::string, lexy::utf8_encoding&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We use <code>\</code> as the escape character using <code>dsl::backslash_escape</code>.
+Alternatively, we could have used <code>dsl::escape(dsl::lit_c&lt;'\\'&gt;)</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>We want <code>\"</code> to mean <code>"</code>.
+Using <code>.lit_c&lt;'"'&gt;()</code> is equivalent to <code>.rule(dsl::lit_c&lt;'"'&gt; &gt;&gt; dsl::value_c&lt;'"'&gt;)</code>.
+Whenever we encounter a <code>"</code> after the <code>\</code>, we produce the literal constant value <code>"</code>,
+which will be added to our sink.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>These two lines define <code>\uXXXX</code> and <code>\uXXXXXXXX</code> to specify character codes.
+<code>dsl::code_point_id&lt;N&gt;</code> is just a convenience for a <code>dsl::integer</code> rule that parses a code point using <code>N</code> hex digits.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The <code>\u</code> and <code>\U</code> rules all produce a <code>lexy::code_point</code>.
+<code>lexy::as_string</code> can only convert it back into a string, if we tell it the encoding we want.
+So we add <code>lexy::utf8_encoding</code> as the second optional argument to enable that.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_the_package_authors">Parsing the package authors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we know how to parse one author, but the field can take a list of authors surrounded by square brackets.</p>
+</div>
+<div class="listingblock">
+<div class="title">Package author</div>
+<div class="content">
+<pre>authors = ["Jonathan Müller"]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Before you try writing something with <code>dsl::while_()</code>, this won&#8217;t actually work.
+The reason for that is that <code>dsl::while_()</code> does not work with rules that produce values, as <code>dsl::while_()</code> does not use a sink.
+Instead we need to use <code>dsl::list(rule, sep)</code>.
+This matches a (non-empty) list of <code>rule</code> separated by <code>sep</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">The list rule (<a href="https://godbolt.org/z/sGGWo3">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct integer_list
+{
+    // Match a (non-empty) list of integers separated by commas.
+    static constexpr auto rule = dsl::list(dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;),
+                                           dsl::sep(dsl::comma)); <i class="conum" data-value="1"></i><b>(1)</b>
+
+    // Add them all to a std::vector&lt;int&gt;.
+    static constexpr auto list = lexy::as_list&lt;std::vector&lt;int&gt;&gt;; <i class="conum" data-value="2"></i><b>(2)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>dsl::comma</code> is just <code>dsl::lit_c&lt;','&gt;</code>.
+We wrap it in <code>dsl::sep()</code> to indicate that this is a normal separator that is required between each item.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The list will pass each value to the sink.
+Here, we&#8217;ve used <code>lexy::as_list</code>, which repeatedly calls <code>.push_back()</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>How does the list know when to repeat an item?
+In general, this would require a branch whose condition will determine that.
+Here we don&#8217;t need a branch, as our separator is <code>dsl::sep()</code>.
+As this separator can only occur between items, we&#8217;re done with the list if we didn&#8217;t match a separator after our item.</p>
+</div>
+<div class="paragraph">
+<p>If we wanted to use <code>dsl::trailing_sep()</code>, which allows an optional trailing separator, this is no longer possible.
+Then we need to add a condition to our list item, like <code>dsl::peek(dsl::digit&lt;&gt;)</code>.</p>
+</div>
+<div class="paragraph">
+<p>Using <code>dsl::list()</code>, implementing an <code>author_list</code> production is pretty straightforward.
+Our list item is <code>dsl::p&lt;author&gt;</code>.
+This rule parses the specified production and it will produce the value of the production.
+Here, the value is a <code>std::string</code> and we add that to our <code>std::vector&lt;std::string&gt;</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>author_list</code> production</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author_list
+{
+    // Match a comma separated (non-empty) list of authors surrounded by square brackets.
+    static constexpr auto rule
+      = dsl::lit_c&lt;'['&gt; + dsl::list(dsl::p&lt;author&gt;, dsl::sep(dsl::comma)) + dsl::lit_c&lt;']'&gt;;
+
+    // Collect all authors into a std::vector.
+    static constexpr auto list = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
+};</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>If we wanted to use <code>dsl::trailing_sep()</code> or even no separator, we would need a branch.
+Luckily, <code>dsl::p</code> is a branch if the rule of the production is a branch,
+and <code>dsl::quoted()</code> is a branch whose condition is the initial <code>"</code>.
+As such, <code>dsl::p&lt;author&gt;</code> is a branch already.</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Surrounding things with some sort of brackets is also quite common.
+As such, the library provides <code>dsl::brackets()</code> to define a set of open and closing brackets,
+which can then be applied to a rule.
+<code>dsl::square_bracketed</code> as <code>dsl::brackets(dsl::lit_c&lt;'['&gt;, dsl::lit_c&lt;']'&gt;)</code> is already predefined, so we can use it.</p>
+</div>
+<div class="paragraph">
+<p>Writing <code>dsl::square_bracketed(rule)</code> will match the <code>rule</code> surrounded by square brackets.
+For the specific case of <code>dsl::list()</code>, we can also use <code>dsl::square_bracketed.list(item, sep)</code> instead.
+This has the additional advantage that the closing bracket will be used as branch condition for the list item.</p>
+</div>
+<div class="listingblock">
+<div class="title">The final <code>author_list</code> production (<a href="https://godbolt.org/z/s86j1c">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author_list
+{
+    // Match a comma separated (non-empty) list of authors surrounded by square brackets.
+    static constexpr auto rule
+        = dsl::square_bracketed.list(dsl::p&lt;author&gt;, dsl::sep(dsl::comma));
+
+    // Collect all authors into a std::vector.
+    static constexpr auto list = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
+};</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parsing_the_package_config">Parsing the package config</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We can now put everything together and parse our config:</p>
+</div>
+<div class="listingblock">
+<div class="title">The <code>config</code> production</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    static constexpr auto rule = []{
+        auto make_field = [](auto name, auto rule) {              <i class="conum" data-value="1"></i><b>(1)</b>
+            return name + dsl::lit_c&lt;'='&gt; + rule + dsl::newline;  <i class="conum" data-value="2"></i><b>(2)</b>
+        };
+
+        auto name_field    = make_field(LEXY_LIT("name"), dsl::p&lt;name&gt;); <i class="conum" data-value="3"></i><b>(3)</b>
+        auto version_field = make_field(LEXY_LIT("version"), dsl::p&lt;version&gt;);
+        auto authors_field
+            = make_field(LEXY_LIT("authors"), dsl::p&lt;author_list&gt;);
+
+        return name_field + version_field + authors_field; <i class="conum" data-value="4"></i><b>(4)</b>
+    }();
+
+    static constexpr auto value = lexy::construct&lt;PackageConfig&gt;; <i class="conum" data-value="5"></i><b>(5)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We define a little helper function that builds a rule that parses a field given its name and value.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Each field consists of the name, an equal sign, the value rule, and a newline matched by the <code>dsl::newline</code> pattern.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Define each field using the productions we&#8217;ve built above.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Match them all in order.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Construct the package config from the resulting <code>std::string</code>, <code>PackageVersion</code> and <code>std::vector&lt;std::string&gt;</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This works!</p>
+</div>
+<div class="paragraph">
+<p>We can now almost parse the sample input I&#8217;ve given above:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>package.config</code></div>
+<div class="content">
+<pre>name=lexy
+version=0.0.0
+authors=["Jonathan Müller"]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We don&#8217;t support whitespace between the elements.
+<code>lexy</code> does not skip whitespace until you tell it to (and more importantly, what the whitespace is).</p>
+</div>
+<div class="paragraph">
+<p>For that, we can use <code>dsl::whitespaced()</code>.
+It takes a rule and the whitespace pattern.
+It then matches the rule after it skipped any leading whitespace.
+For convenience, many rules provide an <code>operator[]</code> that does the same thing.</p>
+</div>
+<div class="paragraph">
+<p>So we first define our whitespace pattern as a global constant in our grammar:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Whitespace is ' ' and '\t'.
+constexpr auto ws = dsl::ascii::blank;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then we add whitespace to the author list:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author_list
+{
+    // We allow whitespace:
+    // - before the [ and ] brackets
+    // - before each author name
+    // - before the comma
+    static constexpr auto rule
+        = dsl::square_bracketed[ws].list(dsl::p&lt;author&gt;[ws], dsl::sep(dsl::comma[ws]));
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And to the field:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">auto make_field = [](auto name, auto rule) {
+    // We skip whitespace before and after the =,
+    // i.e. before the rule.
+    return name + dsl::lit_c&lt;'='&gt;[ws] + dsl::whitespaced(rule, ws) + dsl::newline;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can parse the package config shown in the beginning of the tutorial!</p>
+</div>
+<div class="paragraph">
+<p>One final feature we might want to support is parsing fields in arbitrary order.
+This can be done with the <code>dsl::combination()</code> rule, which matches the specified set of rules once, but in any order.
+The values of each rule are passed to a sink, to prevent exponential template instantiations.
+This is a problem though: how can we know which value should be assigned to which member of our <code>PackageConfig</code>?</p>
+</div>
+<div class="paragraph">
+<p>We can specify a given member using <code>LEXY_MEM(name) = rule</code>.
+This says that the value produced by <code>rule</code> should be assigned to a member named <code>name</code>.
+The <code>lexy::as_aggregate&lt;T&gt;</code> sink then constructs a <code>T</code> object and processes all member assignments, in whatever order they might occur.</p>
+</div>
+<div class="listingblock">
+<div class="title">The final <code>config</code> production</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    static constexpr auto rule = [] {
+        auto make_field = [](auto name, auto rule) {
+            return name &gt;&gt; dsl::lit_c&lt;'='&gt;[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws]; <i class="conum" data-value="1"></i><b>(1)</b>
+        };
+
+        auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p&lt;name&gt;); <i class="conum" data-value="2"></i><b>(2)</b>
+        auto version_field
+            = make_field(LEXY_LIT("version"), LEXY_MEM(version) = dsl::p&lt;version&gt;);
+        auto authors_field
+            = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p&lt;author_list&gt;);
+
+        return dsl::combination(name_field, version_field, authors_field); <i class="conum" data-value="3"></i><b>(3)</b>
+    }();
+
+    static constexpr auto list = lexy::as_aggregate&lt;PackageConfig&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>dsl::combination()</code> requires a branch condition to know which rule to parse.
+Luckily, we can use the name of the field for that.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Each rule now contains the assignment to the appropriate member.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Instead of a sequence, we now have <code>dsl::combination()</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>We use <code>lexy::as_aggregate&lt;PackageConfig&gt;</code> as our sink.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This will match each field exactly once, but in any order.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_error_handling">Error handling</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Our parser now handles all well-formed input, but what about wrong input?</p>
+</div>
+<div class="paragraph">
+<p>The first thing you might notice is that you can freely append stuff at the end of the config file.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>package.config</code></div>
+<div class="content">
+<pre>name    = lexy
+version = 0.0.0
+authors = ["Jonathan Müller"]
+Hello World!
+asdfjlagnlwefhjlaghlhl</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The reason for that is simple: when we parse a production, we only consume as much input as necessary for it and don&#8217;t look at anything else.
+To prevent that, we need to use <code>dsl::eof</code>.
+This pattern only matches when we&#8217;re at the end of the input.</p>
+</div>
+<div class="listingblock">
+<div class="title">Preventing trailing input</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination(name_field, version_field, authors_field)
+                + dsl::eof[dsl::ascii::space];
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In order to allow arbitrary whitespace at the end, we use the <code>operator[]</code> to add it.
+Now input like the one given above, will raise an error.</p>
+</div>
+<div class="paragraph">
+<p>When the parsing algorithm fails to parse something, parsing stops and an error is raised.
+This error is passed to the error callback passed as second argument to <code>lexy::parse()</code> and <code>lexy::validate()</code>.
+The callback is invoked with two arguments.
+The first is a <code>lexy::error_context&lt;Production, Input&gt;</code>, which contains contextual information like the name and location of the production that failed.
+The second is a <code>lexy::error&lt;Reader, Tag&gt;</code>.
+It always is associated with a location, but can have additional information depending on the <code>Tag</code>.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>lexy::error&lt;Reader, lexy::expected_literal&gt;</code></dt>
+<dd>
+<p>A <code>lexy::expected_literal</code> error is raised when we&#8217;ve instructed the parse algorithm to parse a literal sequence of characters, but it couldn&#8217;t match those.
+It contains information about the expected literal and at which position and character matching failed.</p>
+</dd>
+<dt class="hdlist1"><code>lexy::error&lt;Reader, lexy::expected_char_class&gt;</code></dt>
+<dd>
+<p>A <code>lexy::expected_char_class</code> error is raised when we&#8217;ve instructed the parse algorithm to parse one of a specified set of characters, but it couldn&#8217;t match any of those.
+It contains a user-friendly name of the character class.</p>
+</dd>
+<dt class="hdlist1"><code>lexy::error&lt;Reader, Tag&gt;</code></dt>
+<dd>
+<p>Otherwise, it is a generic error. The <code>Tag</code> is an empty class that can be given a message, which the error reports.
+It is raised for example by a choice where no branch has matched.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>In the full source code found at <code>examples/tutorial.cpp</code>, the error callback is <code>lexy_ex::report_error</code>.
+This callback is not part of the library proper, but can be copied and adapted for your own needs.
+It simply formats the error nicely and prints it to <code>stderr</code>.</p>
+</div>
+<div class="paragraph">
+<p>By default, the error messages are pretty good.
+You can try various malformed input and see what the library reports.
+Some error messages are given.</p>
+</div>
+<div class="listingblock">
+<div class="title">Name that starts with an underscore.</div>
+<div class="content">
+<pre>error: while parsing name
+     |
+ 1: 8| name = _lexy
+     |        ^ expected 'ASCII.alpha' character</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Missing version number</div>
+<div class="content">
+<pre>error: while parsing version
+     |
+ 2:11| version = 0.0
+     |           ~~~^ expected '.'</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Author name not quoted.</div>
+<div class="content">
+<pre>error: while parsing author_list
+     |
+ 3:12| authors = [Jonathan Müller]
+     |            ^ expected '"'</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Missing closing string delimiter</div>
+<div class="content">
+<pre>error: while parsing author
+     |
+ 3:28| authors = ["Jonathan Müller]
+     |              ~~~~~~~~~~~~~~~^ invalid string character</pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_specifying_custom_error_tags">Specifying custom error tags</h3>
+<div class="paragraph">
+<p>However, some generic errors are a bit confusing if you haven&#8217;t written the grammar.
+For example, if you write a string literal that contains a control character, you get the generic <code>minus failure</code> error message.
+This can be improved using <code>dsl::try_</code>.
+This rule matches a pattern and reports an error with the specified tag if the pattern didn&#8217;t match.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>author</code> production with <code>dsl::try_</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
+{
+    struct invalid_character <i class="conum" data-value="1"></i><b>(1)</b>
+    {
+        static constexpr auto name = "invalid string character"; <i class="conum" data-value="2"></i><b>(2)</b>
+    };
+
+    static constexpr auto rule = [] {
+        auto cp = dsl::try_&lt;invalid_character&gt;(dsl::code_point - dsl::ascii::control); <i class="conum" data-value="3"></i><b>(3)</b>
+
+        …
+    }();
+
+    …
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The tag that will be associated with the error.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>We override the default message (which would be <code>author::invalid_character</code>) to the more friendly <code>invalid string character</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>We apply <code>dsl::try_</code> to the content of the string.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Likewise, if we specify the same field twice we get the generic <code>combination duplicate</code> error message.
+This can be improved by specifying a custom tag in our <code>dsl::combination()</code> call.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>config</code> production with tagged <code>dsl::combination()</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    struct duplicate_field <i class="conum" data-value="1"></i><b>(1)</b>
+    {
+        static constexpr auto name = "duplicate config field"; <i class="conum" data-value="2"></i><b>(2)</b>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination&lt;duplicate_field&gt;(name_field, version_field, authors_field) <i class="conum" data-value="3"></i><b>(3)</b>
+               + dsl::eof[dsl::ascii::space];
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define the tag.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Override the default message (<code>config::duplicate_field</code> would actually be ok).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Specify the error on failure.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now an invalid string character is reported as <code>invalid string character</code> and a duplicated config field as <code>duplicate config field</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Duplicate config field error</div>
+<div class="content">
+<pre>error: while parsing config
+     |
+ 1: 1| name = lexy
+     | ^ beginning here
+     |
+ 3: 1| version = 0.0.0
+     | ^^^^^^^^^^^^^^^ duplicate config field</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_dslrequire_and_dslprevent_to_handle_common_mistakes">Using <code>dsl::require()</code> and <code>dsl::prevent()</code> to handle common mistakes</h3>
+<div class="paragraph">
+<p>There are more error messages that could be improved.
+For example, when you have a name like <code>my-package</code>, you get an "expected newline" error pointing to the first <code>-</code>, as that&#8217;s where the name production stops parsing.
+We can improve that using <code>dsl::require()</code>.
+This rule raises an error with the specified tag if the pattern would not match at the input,
+but it doesn&#8217;t actually consume anything.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>name</code> production with <code>dsl::require</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct name
+{
+    struct invalid_character <i class="conum" data-value="1"></i><b>(1)</b>
+    {
+        static constexpr auto name = "invalid name character"; <i class="conum" data-value="2"></i><b>(2)</b>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::capture(lead_char + dsl::while_(trailing_char))
+               + dsl::require&lt;invalid_character&gt;(dsl::ascii::space); <i class="conum" data-value="3"></i><b>(3)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define a tag.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Give it a custom message.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Issue the error unless the name is followed by the required space character (either trailing whitespace or the newline).</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now the error message looks like this instead.</p>
+</div>
+<div class="listingblock">
+<div class="title">Invalid name character error</div>
+<div class="content">
+<pre>error: while parsing name
+     |
+ 1:10| name = my-package
+     |        ~~^ invalid name character</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Likewise, we can use <code>dsl::prevent()</code>, which fails if a pattern would match, if we were to specify a build string in our version.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>version</code> production with <code>dsl::prevent()</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    struct forbidden_build_string <i class="conum" data-value="1"></i><b>(1)</b>
+    {
+        static constexpr auto name = "build string not supported"; <i class="conum" data-value="2"></i><b>(2)</b>
+    };
+
+    static constexpr auto rule = [] {
+        …
+
+        return number + dot + number + dot + number
+               + dsl::prevent&lt;forbidden_build_string&gt;(dsl::lit_c&lt;'-'&gt;); <i class="conum" data-value="3"></i><b>(3)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define a tag.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Give it a custom message.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Raise the error when the beginning of a build string is encountered.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Forbidden build string</div>
+<div class="content">
+<pre>error: while parsing version
+     |
+ 2:16| version = 0.0.0-alpha
+     |           ~~~~~^ build string not supported</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Many more things can be done, once common errors are known.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>Congratulations, you&#8217;ve worked through your first parser!</p>
+</div>
+<div class="paragraph">
+<p>Now you know everything to get started with parsing your own input.
+Check out the reference documentation for specific rules.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2020-12-01 14:22:17 +0100
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
+<script>
+if (!hljs.initHighlighting.called) {
+  hljs.initHighlighting.called = true
+  ;[].slice.call(document.querySelectorAll('pre.highlight > code')).forEach(function (el) { hljs.highlightBlock(el) })
+}
+</script>
+</body>
+</html>
