@@ -245,31 +245,30 @@ struct name
 };
 ----
 
-If we now only wanted to use `lexy::match` or `lexy::validate`, which don't produce a value, we would be done.
-But we want to use `lexy::parse`, so we need to specify the value we want from parsing a name.
-Here, we would like to get everything we've just matched and put it into a `std::string`.
+The production is now almost done.
+We can use `lexy::validate()` to give it some input and raise an error if it does not match the rule,
+or we can use `lexy::match()` to just give us a `true`/`false` result.
+But we want to `lexy::parse()` it and get a `std::string`.
+To implement that, we need to do two things.
 
-For that, we need to add a `static constexpr auto value` member to our production.
-It is initialized to a callback that will be called with all the values produced during the parsing of `rule`,
-and its job is to convert them into the single value that is the result of parsing the production (here the `std::string`).
+First, we need to remember everything we've just matched by the rule, so we can convert that into the `std::string` later on.
+This is done using `dsl::capture()`.
+This rule takes another rule as input and parses it.
+However, it is also the first rule that produces a value.
+When parsing a `dsl::capture()` rule, we get a `lexy::lexeme` (basically a `std::string_view`) that views all the input the rule has matched.
+This is exactly what we want to turn into our `std::string`.
 
-A callback in `lexy` is a function object (so a class with `operator()`) that also adds a `::return_type` member
-(otherwise, the library can't figure out the return type).
-The utility function `lexy::callback<T>()` creates a callback from one or more lambdas.
+Second, we need to specify what value our production should return when it's parsed.
+When we `lexy::parse()` a production, we parse the rule of the production.
+As we have just seen, this can produce one or more values, like `lexy::lexeme`.
+All those value are then forwarded to a callback which constructs the result of the parse operation.
 
-So we need to add the `value` member and initialize to a callback that converts the values produced during parsing into a `std::string`.
-What values are produced by our rule?
+A _callback_ is just a function object (so a class with `operator()`) that also has a `return_type` typedef.
+We can easily build one using the utility function `lexy::callback<T>()` which takes one or more lambdas and creates a callback that returns a `T`.
+A callback is added to a production using a `static constexpr auto value` member.
 
-The answer is: none.
-`dsl::ascii::alpha`, `dsl::ascii::alnum` and `dsl::lit_c<'_'>` are all so called _patterns_.
-Patterns are rules that don't produce values (and participate in backtracking, more on that later).
-As we're only dealing with patterns, the sequence, while and alternative rules have detected that and are themselves only a patterns.
-So we don't get any values and loose all information about the characters we've just parsed.
-
-To prevent that, we can use the capture rule.
-It takes another rule and parses it, but remembers everything it consumed.
-It then produces a value, a `lexy::lexeme` which is like a `std::string_view` into the part of the input we've just consumed.
-We can then add a callback that converts a `lexy::lexeme` into the `std::string` we want.
+So we need to wrap our rule in `dsl::capture()`, so we actually get a value for our callback,
+and then add a callback that takes the lexeme and converts it into a `std::string` which is the final result of parsing the production.
 
 .The `name` production with `capture()` and value
 [source,cpp]
@@ -358,32 +357,41 @@ For example, we could prevent leading zeros or automatically allow an optional d
 None of that is needed here, however.
 ****
 
-Just like the version above that uses `dsl::while_one()`, `dsl::digits` is actually a pattern that does not produce any values.
-So how do we get the actual integer it represents?
-We could do the same thing we did with the `name` production: `dsl::capture()` the pattern and use a callback that parses the lexeme into an `int`.
-This is certainly possible, and `lexy` could even provide a `lexy::parse_integer` callback.
+Just like with the `name` production, neither `dsl::digits<>` nor `dsl::while_one()` actually produce a value when parsed.
+To get the actual integer represented by the digits, we can do the same thing as we did before:
+Use `dsl::capture(dsl::digits<>)` to match digits and get a `lexy::lexeme`, then use a callback that takes the lexeme and converts it into an `int`.
+However, this approach does not work due to the possibility of integer overflow:
+`dsl::digits<>` matches an arbitrarily long sequence of digits, but only a subset of those are `int`s.
+`lexy` considers integer overflow a parse error, which can only be raised by a rule.
 
-But this is not the way it should be done.
-The reason for that is simple: integer overflow.
-`dsl::digits<>` matches an arbitrarily long digit sequence, which might not necessarily fit in the targeted integer type.
-`lexy` considers integer overflow a parse error, which can only be created by a rule.
+So instead we can use the `dsl::integer<T>()` rule.
+Just like `dsl::capture()`, it takes another rule and matches it.
+The resulting digits are then captured, but not as a `lexy::lexeme` but as the specified integer `T`.
 
-So it provides the `dsl::integer` rule.
-This rule takes a pattern that matches digits (such as `dsl::digits<>`!), matches it and converts the consumed digits into the specified integer type,
-taking care of overflow.
-While doing the conversion, it simply ignores any character that is not a digit, so you can use it even if you have some digit separator in there.
-What is or is not a digit as well as the base is again determined using the policy classes such as `dsl::octal` and `dsl::decimal`.
-When using `dsl::integer` together with `dsl::digits<>` you don't need to specify it, as it will just take the same base as the digit pattern.
+While doing the conversion, `dsl::integer` ignores any character that is not a digit, so you can use it even if you have digit separators in your rule.
+What is or is not a digit, as well as the base used for conversion, is again determined using the policy classes `dsl::decimal`, `dsl::octal`, and so on.
+You can specify them manually using `dsl::integer<int, dsl::decimal>(my_digit_rule)`, but if your digit rule is `dsl::digits<>`, the base is detected automatically.
+
+The following sample production matches a single `int` using `dsl::integer` and `dsl::digits`.
 
 .The integer rule (https://godbolt.org/z/KnWjxY[godbolt])
 [source,cpp]
 ----
-// Matches one or more decimal digits, then converts those into an `int`.
-dsl::integer<int>(dsl::digits<>)
+struct integer
+{
+    // Matches one or more decimal digits, then converts those into an `int`.
+    static constexpr auto rule = dsl::integer<int>(dsl::digits<>)
+
+    // The rule produces a single value, the parsed `int`.
+    // We simply forward that one to use as the result of parsing the `integer` production.
+    static constexpr auto value = lexy::forward<int>;
+};
 ----
 
-Now we just use the integer rule and put it in sequence together with `dsl::lit_c<'.'>` to match the three numbers separated by integer.
-The resulting rule yields three `int`s that are used to construct the `PackageVersion`.
+Now we can just use the integer rule and put it in sequence together with `dsl::lit_c<'.'>` to match the three numbers separated by integer.
+If we match a sequence of rules, where some produce values, all values are preserved and forwarded to the callback in the same order.
+The `dsl::lit_c` rule does not produce any values, so our callback will be invoked with three values: the ints from each `dsl::integer` rule.
+We then use a callback that takes those three integers and constructs the `PackageVersion` as the result.
 
 .The `version` production
 [source,cpp]
@@ -395,12 +403,14 @@ struct version
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::lit_c<'.'>;
 
+        // Each number rule produces an int, each dot rule produces nothing.
         return number + dot + number + dot + number;
     }();
 
     // Construct a PackageVersion as the result of the production.
     static constexpr auto value
       = lexy::callback<PackageVersion>([](int a, int b, int c) {
+            // a is the result of the first number rule, b of the second, c of the third.
             return PackageVersion{a, b, c};
         });
 };
@@ -408,7 +418,7 @@ struct version
 
 We can again clean this up a bit.
 `lexy` predefines `dsl::period` to match a '.' character, which looks cleaner than `dsl::lit_c<'.'>`.
-Constructing a type from arguments is also a common callback, so it is provided as `lexy::construct<T>`, which does `T(args...)` if that's available and `T{args...}` otherwise.
+Constructing a type from arguments is also a common callback, so it is provided as `lexy::construct<T>`, which does `T(args...)` if that compiles and `T{args...}` otherwise.
 
 .The final `version` production (https://godbolt.org/z/G6KcsM[godbolt])
 [source,cpp]
@@ -472,6 +482,7 @@ All the complexity comes from making decisions about _what_ to parse.
 
 Let's say we want to write a rule that matches either a decimal integer literal (e.g. `123`) or a hexadecimal integer literal (e.g `1A`).
 If we have a literal that can be both decimal and hexadecimal, we'll just assume it's decimal.
+The example is a bit contrived, but let's just bear with me.
 
 We can easily write a rule that matches a decimal integer, and another one that matches a hexadecimal integer.
 
@@ -491,54 +502,123 @@ struct dec_or_hex
 
 We want some rule that expresses "decimal or hex".
 We've already seen the alternative rule `/`.
-However, that one is actually a pattern and does not work with the non-pattern rules `dec` and `hex`.
-So we need a different rule to express "or" for non-pattern rules.
+However, that one doesn't actually work with `dsl::integer`, for reasons I'll explain shortly.
 
-But how does this rule know whether it should use try to match `dec` or `hex`?
-This is where the various parsing approaches fundamentally differ.
+Let's suppose it _would_ work and we write `dec / hex`.
+This would first try to match `dec`.
+If that fails at some point, it rewinds the input -- it _backtracks_ -- to the original position.
+It then discards the partially constructed integer that was going to be produced by `dec`,
+and matches `hex` instead.
 
-****
-Some, like simple regex implementations use _backtracking_:
-We try one rule and parse it.
-If this leads to an error, we rewind the input -- we backtrack -- to the decision point and try a different rule.
-Sometimes we even go so far as to rewind even if we had succeeded, just because a different rule might match more input.
+Let's consider an input like `123456789A`.
+The `dec` rule is perfectly happy with it until it reaches the `A`.
+`A` is no longer a decimal digit, so it stops and returns `123456789` as the result, which is wrong.
+When parsing then continues after our `dec_or_hex` production, it will certainly fail due to the unexpected `A` still remaining on the input.
 
-Some, like parsing expression grammars (PEG), or `lexy`'s alternative rule `/` use backtracking in a more controlled form.
-There we first try to match the first alternative.
-If that works, great, otherwise we backtrack, and try the second one and so on.
-However, all alternatives are tried in a very predictable way and we never backtrack just to match more input.
-If a rule has matched, that's it, we're taking it.
+.Parsing `123456789A`
+----
+123456789A
+---------^ no longer a digit, exit
+----
 
-The traditional parse generators on the other hand, usually use table based parsing approaches.
-There the algorithm works completely differently and uses various reduction rules to determine the next input.
-This is completely opaque to the grammar writer, however.
+So let's say we fix our `dec` rule that it will fail instead of succeeding to early when it sees the `A` (or any other non-decimal hex digit).
+Then the alternative rule will go and backtrack to match the `hex` rule.
+However, for that we're doing the same work twice!
+The first thing the `hex` rule does is match `123456789` _again_.
 
-The only approach that works with lexy's designs is the controlled backtracking of PEG.
-However, this has a big disadvantage: backtracking is expensive and can lead to redundant work.
+.Parsing `123456789A` with the revised `dec` rule
+----
+123456789A
+---------^ hex digit, backtrack
 
-Let's say we could write `dec / hex` and it would first try `dec` and then `hex`, backtracking if necessary.
-When faced with the input `123456789A` it will happily match `dec` until it reaches the `A`.
-Then it would stop, as `A` is not a decimal digit and return `123456789` as the result, which is incorrect.
+123456789A
+^ start here again
 
-But if we tweak the `dec` rule to fail if it sees a non-decimal digit,
-it would still happily match `123456789` -- converting it into an integer at each step -- then sees the `A` and fail.
-We then rewind the input and do the same thing with the `hex` rule.
-It then does exactly the same as we just did with the `dec` rule for `123456789`, but can then handle the final `A` just fine.
+123456789A
+----------^ ok, we're done
+----
 
-We had to parse `123456789` twice!
-****
 
-For `lexy`, we require a so called _branch_.
-A branch has a condition, which is a pattern, and a trailing rule, which does not need to be a pattern.
-Whenever the parsing algorithm needs to make a decision, it just tries to match the condition.
-Matching a pattern can be done efficiently and without doing additional work like parsing integers.
-Also, the grammar author has full control over what exactly is used as condition;
-it is not automatically determined by the library.
-A branch is taken if and only if the condition matches.
-If the rule then later one fails, this doesn't matter, the branch has already been taken and no backtracking is going to happen.
+Furthermore, let's say our `dec` rule would introduce side effects like printing the integer as it parses it,
+or is expensive such as performing heap allocation to store a big integer type.
+Backtracking means that side effects would happen even though the rule was never parsed, and expensive work is done unnecessarily.
 
-We can add a condition to a rule using `operator>>`.
-The choice of two branches is then expressed using the choice rule with `operator|`.
+As such, `lexy` made the design decision to only backtrack simple rules and only when you've explicitly opt-in to that.
+
+A "simple rule" is called a _pattern_.
+Such a rule cannot produce a value -- as this can be expensive and/or produce side-effects -- and provides a special interface to efficiently determine "would this rule match at this input?".
+The alternative rule then only takes pattern, as backtracking a pattern is not a problem.
+
+Most rules we've seen so fare are actually patterns: `dsl::ascii::*`, `dsl::lit_c`, and `dsl::digits<>`.
+Combinator rules such as sequence `+` and `dsl::while_()` are patterns when all arguments are patterns.
+The only non-pattern rules we've seen are `dsl::capture()` and `dsl::integer<T>()`, as both produce values.
+
+Every time `lexy` needs to make a decision between one or more rules, it requires a pattern.
+This is the case for the alternative rule `/`, but also `dsl::while_()`.
+The latter needs to decide: do I match the repeated rule again, or am I done?
+So it requires a pattern.
+If the pattern matches again, the rule is repeated, otherwise, it backtracks the failed match and is done.
+
+.Parsing `dsl::while_(dsl::lit_c<'a'> + dsl::lit_c<'b'>)`
+----
+ababa
+^ start, try to match ab
+
+ababa
+--^ that worked, try to match it again
+
+ababa
+----^ that worked, try to match it again
+
+ababa
+-----^ that did not work, we're missing a `b`, backtrack!
+
+ababa
+----^ done, next character on input is `a`
+----
+
+
+So how can we implement `dec` or `hex`?
+As both are non-pattern rules, we can't use the alternative rule `/`.
+
+For that, we need to specify a so-called _branch_.
+A branch is a rule associated with a pattern, the branch condition.
+The parsing algorithm will take a branch when its condition matches -- this can be done efficiently.
+Once a branch is taken, it never backtracks again.
+
+Every pattern is a branch where the pattern is the condition and there is no associated rule.
+Rules such as `dsl::while_()` that need to make a decision thus work with patterns or branches.
+We can construct a branch using an `operator>>` overload: `condition >> rule`.
+Then we can use it, to for example specify when exactly we want another repetition of a while loop.
+
+.Parsing `dsl::while_(dsl::lit_c<'a'> >> dsl::lit_c<'b'> + dsl::lit_c<'c'>)`
+----
+abcabcabd
+^ start, try to match the condition
+
+abcabcabd
+-^ condition matched, we take the branch
+
+abcabcabd
+---^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+----^ condition matched, we take the branch
+
+abcabcabd
+------^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+-------^ condition matched, we take the branch
+
+abcabcabd
+--------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken
+----
+
+The simple alternative rule `/` on the other hand, does not support branches.
+Instead we have to use a choice rule implemented using `operator|`.
+This also tries to match one of multiple rules in the order they were specified,
+but it uses the branch condition to determine which one should be taken.
 
 .The choice rule
 ----
@@ -546,8 +626,7 @@ The choice of two branches is then expressed using the choice rule with `operato
 condition1 >> rule1 | condition2 >> rule2 | ...
 ----
 
-Each condition is tried in the order you've specified.
-As such, a choice directly corresponds to the following manual code.
+Such a choice corresponds to the following pseudo-code.
 
 .Manual implementation of choice
 [source,cpp]
@@ -559,8 +638,9 @@ else if (match(input, condition2))
 …
 ----
 <1> If we match a condition, we take the branch.
-    Of course, this requires rewinding the input if the condition did not match.
+    Of course, this requires backtracking if the condition did not match.
 <2> When the condition did match, the input is not rewound and we can continue with the rule.
+    If any errors occur now, it's too late -- we've committed to this branch and issue an error.
 
 For our `dec_or_hex` production, we only want to parse `dec` if we don't have a hexadecimal integer.
 To do that, we first need to match all decimal digits and then need to prevent that it is followed by a hexadecimal digit (as in `123456789A12`, which is `1-9` followed by a hexadecimal digit `A`):
@@ -590,7 +670,7 @@ struct dec_or_hex
 
 However, this doesn't work:
 the input is only rewound if the `dec_condition` does not match.
-If it did match, we've just consumed all the decimal digits!
+If it did match, we continue with the `dec` rule but we've just consumed all the decimal digits!
 
 So we use `dsl::peek()`, which matches a pattern without consuming any input.
 
@@ -611,14 +691,44 @@ struct dec_or_hex
 };
 ----
 
-This works, but we couldn't avoid backtracking.
-However, this is simply because of the way the input is worked.
-We can't detect whether a number is decimal or hexadecimal without going over it!
-But at least, we have full control over how much backtracking is used and when.
+.Parsing `123456789A`
+----
+123456789A
+^ start with the `dec_condition`
 
-Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional rules.
+123456789A
+---------^ at this point, it sees the A and fails
+
+123456789A
+^ backtrack back to beginning
+
+123456789A
+----------^ successfully parsed the `hex` rule (if we ignore the integer overflow)
+----
+
+.Parsing `123456789`
+----
+123456789
+^ start with the `dec_condition`
+
+123456789
+---------^ no more digits, but also not a hex digit: condition succeeded
+
+123456789
+^ the peek rule rewinds the input
+
+123456789A
+----------^ successfully parsed the `dec` rule
+----
+
+This works.
+Note that we couldn't avoid backtracking.
+However, the backtracking was done explicitly by giving a branch condition.
+We thus have full control over how much backtracking is used and when.
+
+Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional requirements on the input.
 For example, hexadecimal numbers are usually prefixed with something like `0x`.
-This also allows writing a hexadecimal number using only decimal digits.
+This also allows writing a hexadecimal number using only decimal digits, which makes the example less contrived.
 
 If we have `0x` as a prefix, we can use that as the condition for the `hex` branch.
 It isn't even necessary for the actual value of the number, so no need to use `dsl::peek()` to rewind after the condition has matched.
@@ -641,19 +751,38 @@ struct dec_or_hex
 <1> `LEXY_LIT("0x")` is equivalent to `dsl::lit_c<'0'> + dsl::lit_c<'x'>`.
     If we have C++20, we can even write `dsl::lit<"0x">` without needing a macro.
 
-Now we can match a decimal or hexadecimal number with very minimal, but still explicit, backtracking.
+Now we can match a decimal or hexadecimal number.
 
-Branches are not only used by the choice rule, they're used everywhere the parsing algorithm needs to make a decision.
-This includes `dsl::while_(rule)`: it needs to decide whether to match `rule` again.
-This is done by specifying a branch: `dsl::while_(condition >> rule)` only repeats `rule` if the `condition` pattern has matched.
+.Parsing `0x42`
+----
+0x42
+^ try to match `hex_condition` first
 
-The reason we didn't need a branch before is because every pattern is implicitly a branch - one where the pattern itself is the entire condition.
-This means that `dsl::while_(pattern)` will rewind the input after `pattern` has failed to match again.
-Of course, if that is too expensive, we can explicitly add a condition here as well to control it more.
+0x42
+--^ it succeeded, take the branch
+
+0x42
+----^ successfully parsed hexadecimal number
+----
+
+.Parsing `007`
+----
+007
+^ try to match `hex_condition` first
+
+007
+-^ error, this should be x
+
+007
+^ backtrack after failed condition
+
+007
+---^ successfully parsed decimal number
+----
 
 == Parsing one package author - Continued
 
-Now we now how the algorithm makes decisions, we can understand why our previous attempt does not work:
+Now we know how the algorithm makes decisions, we can understand why our previous attempt does not work:
 
 [source,cpp]
 ----
