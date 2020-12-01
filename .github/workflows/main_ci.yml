@@ -1,6 +1,8 @@
-name: Build and Test
+name: Main CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
 
 jobs:
   linux:
@@ -18,7 +20,7 @@ jobs:
           - clang7
           - clang60
         build_type: [Debug, Release]
-    
+
     runs-on: ubuntu-latest
     container:
       image: conanio/${{matrix.image}}
@@ -47,7 +49,7 @@ jobs:
             - '10'
             - '11'
             - '12'
-    
+
     runs-on: macos-latest
 
     steps:
@@ -63,7 +65,7 @@ jobs:
       run: cmake $GITHUB_WORKSPACE
     - name: Build
       working-directory: build/
-      run: cmake --build . 
+      run: cmake --build .
     - name: Test
       working-directory: build/
       run: ctest --output-on-failure
@@ -73,7 +75,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
-    
+
     runs-on: windows-latest
 
     steps:
@@ -91,4 +93,4 @@ jobs:
     - name: Test
       working-directory: build/
       run: ctest -C ${{matrix.build_type}} --output-on-failure
- 
+
