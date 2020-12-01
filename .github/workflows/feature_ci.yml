@@ -13,7 +13,7 @@ jobs:
         image:
           # List: https://github.com/conan-io/conan-docker-tools
           - gcc10
-          - gcc8
+          - gcc7
           - clang10
           - clang60
 

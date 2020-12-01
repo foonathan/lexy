@@ -162,7 +162,7 @@ or setting the `LEXY_USER_CONFIG_HEADER` CMake option to a header path.
 This header can then override many of the detections in `lexy/_detail/config.hpp`.
 Refer to that header for details.
 
-The library is continuously tested on GCC 8 or higher, clang 6 or higher, as well as clang-cl.
+The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as clang-cl.
 It requires {cpp}17 support, but works best with {cpp}20.
 Building the tests with MSVC fails, but simple examples might work.
 If you want to use it on Windows, it is recommended to use clang-cl instead.
