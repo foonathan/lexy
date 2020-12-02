@@ -11,8 +11,15 @@
 
 namespace lexy::_detail
 {
+template <typename, typename = void>
+struct _detect_name_f : std::false_type
+{};
+
 template <typename T>
-using _detect_name_f = decltype(T::name());
+struct _detect_name_f<T, void_t<decltype(T::name())>>
+: std::is_convertible<decltype(T::name()), string_view>
+{};
+
 template <typename T>
 using _detect_name_v = decltype(T::name);
 
@@ -62,7 +69,7 @@ constexpr auto _type_name_impl()
 template <typename T>
 LEXY_CONSTEVAL string_view type_name(int namespace_count = 1)
 {
-    if constexpr (_detail::is_detected<_detect_name_f, T>)
+    if constexpr (_detect_name_f<T>::value)
         return string_view(T::name());
     else if constexpr (_detail::is_detected<_detect_name_v, T>)
         return string_view(T::name);
@@ -85,4 +92,3 @@ LEXY_CONSTEVAL string_view type_name(int namespace_count = 1)
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
-
