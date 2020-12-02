@@ -45,25 +45,60 @@ struct integer_traits
     static constexpr std::size_t max_digit_count = _digit_count(Radix, _limits::max());
 
     template <int Radix>
-    static constexpr void add_digit_unchecked(type& result, unsigned digit)
+    static constexpr void add_digit_unchecked(T& result, unsigned digit)
     {
         result = T(result * T(Radix) + T(digit));
     }
+
     template <int Radix>
-    static constexpr bool add_digit_checked(type& result, unsigned digit)
+    static constexpr bool add_digit_checked(T& result, unsigned digit)
     {
-        // result *= Radix
-        constexpr auto max_per_radix = _limits::max() / Radix;
-        if (result > max_per_radix)
-            return false;
-        result = T(result * Radix);
+        constexpr auto can_use_unsigned = [] {
+            if constexpr (!std::is_integral_v<T>)
+                // If it's not a built-in integer, be careful and don't do it.
+                return false;
+            else if constexpr (sizeof(T) >= sizeof(unsigned))
+                // If it's bigger than unsigned, we can't use unsigned.
+                return false;
+            else
+            {
+                // We can do it if the worst-case does not overflow unsigned.
+                auto worst_case = static_cast<unsigned>(_limits::max());
+                return integer_traits<unsigned>::add_digit_checked<Radix>(worst_case, Radix - 1);
+            }
+        }();
 
-        // result += value
-        if (result > T(_limits::max() - digit))
-            return false;
-        result = T(result + T(digit));
+        // Check whether we can do an optimization for small integers,
+        // where we do the operation on unsigned and check later.
+        if constexpr (can_use_unsigned)
+        {
+            // This can't overflow, we've checked it above.
+            auto value = static_cast<unsigned>(result) * Radix + digit;
 
-        return true;
+            // Check whether the final value can fit.
+            if (value > static_cast<unsigned>(_limits::max()))
+                return false;
+            else
+            {
+                result = static_cast<T>(value);
+                return true;
+            }
+        }
+        else
+        {
+            // result *= Radix
+            constexpr auto max_per_radix = _limits::max() / Radix;
+            if (result > max_per_radix)
+                return false;
+            result = T(result * Radix);
+
+            // result += digit
+            if (result > T(_limits::max() - digit))
+                return false;
+            result = T(result + T(digit));
+
+            return true;
+        }
     }
 };
 
