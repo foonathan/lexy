@@ -125,141 +125,159 @@ struct integer_overflow
 
 namespace lexyd
 {
-template <typename T, typename Pattern, typename Base, bool HasSep>
-struct _integer : rule_base
+template <typename T>
+constexpr bool _is_bounded = lexy::integer_traits<T>::is_bounded;
+
+// Parses T in the Base while checking for overflow.
+template <typename T, typename Base>
+struct _unbounded_integer_parser
+{
+    using traits      = lexy::integer_traits<T>;
+    using result_type = typename traits::type;
+
+    static constexpr auto radix = Base::radix;
+
+    template <typename Iterator>
+    static constexpr bool parse(result_type& result, Iterator cur, Iterator end)
+    {
+        // Just parse digits until we've run out of digits.
+        while (cur != end)
+        {
+            auto digit = Base::value(*cur++);
+            if (digit >= Base::radix)
+                // Skip digit separator.
+                continue;
+
+            traits::template add_digit_unchecked<radix>(result, digit);
+        }
+
+        return true;
+    }
+};
+
+// Parses T in the Base without checking for overflow.
+template <typename T, typename Base, bool AssumeOnlyDigits>
+struct _bounded_integer_parser
+{
+    using traits      = lexy::integer_traits<T>;
+    using result_type = typename traits::type;
+
+    static constexpr auto radix = Base::radix;
+
+    template <typename Iterator>
+    static constexpr unsigned find_digit(Iterator& cur, Iterator end)
+    {
+        auto digit = 0u;
+        while (true)
+        {
+            if (cur == end)
+                // No more digits.
+                return unsigned(-1);
+
+            digit = Base::value(*cur++);
+            if constexpr (AssumeOnlyDigits)
+                break;
+            else if (digit < Base::radix)
+                break;
+        }
+        return digit;
+    }
+
+    template <typename Iterator>
+    static constexpr bool parse(result_type& result, Iterator cur, Iterator end)
+    {
+        constexpr auto max_digit_count = traits::template max_digit_count<radix>;
+        static_assert(max_digit_count > 1,
+                      "integer must be able to store all possible digit values");
+
+        // Skip leading zeroes.
+        while (true)
+        {
+            if (cur == end)
+                return true; // We only had zeroes.
+
+            const auto digit = Base::value(*cur++);
+            if (digit == 0 || digit >= radix)
+                continue; // Zero or digit separator.
+
+            // First non-zero digit, so we can assign it instead of adding.
+            result = result_type(digit);
+            break;
+        }
+        // At this point, we've parsed exactly one non-zero digit.
+
+        // Handle max_digit_count - 1 digits without checking for overflow.
+        // We cannot overflow, as the maximal value has one digit more.
+        for (std::size_t digit_count = 1; digit_count < max_digit_count - 1; ++digit_count)
+        {
+            auto digit = find_digit(cur, end);
+            if (digit == unsigned(-1))
+                return true;
+
+            traits::template add_digit_unchecked<radix>(result, digit);
+        }
+
+        // Handle the final digit, if there is any, while checking for overflow.
+        {
+            auto digit = find_digit(cur, end);
+            if (digit == unsigned(-1))
+                return true;
+
+            if (!traits::template add_digit_checked<radix>(result, digit))
+                return false;
+        }
+
+        // If we've reached this point, we've parsed the maximal number of digits allowed.
+        // Now we can only fail if there are still digits left.
+        return cur == end;
+    }
+};
+
+// Continuation of integer that assumes the pattern is already dealt with.
+template <typename T, typename Base, bool AssumeOnlyDigits>
+struct _int_p : rule_base
+{
+    using integer_parser
+        = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
+                             _unbounded_integer_parser<T, Base>>;
+
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename Iterator, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Iterator begin, Args&&... args)
+            -> typename Handler::result_type
+        {
+            using error_type
+                = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
+
+            auto result = typename integer_parser::result_type(0);
+            if (integer_parser::parse(result, begin, reader.cur()))
+                return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
+            else
+                return LEXY_MOV(handler).error(reader, error_type(begin, reader.cur()));
+        }
+    };
+};
+
+// Captures the pattern which is then parsed.
+// Must be followed by _int_p.
+template <typename Pattern>
+struct _int_c : rule_base
 {
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser
     {
-        struct _continuation
-        {
-            template <typename Handler, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader,
-                                     const typename Reader::iterator begin, Args&&... args) ->
-                typename Handler::result_type
-            {
-                using error_type
-                    = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
-
-                using traits         = lexy::integer_traits<T>;
-                using result_type    = typename traits::type;
-                constexpr auto radix = Base::radix;
-
-                auto       cur    = begin;
-                const auto end    = reader.cur();
-                auto       result = result_type(0);
-
-                if constexpr (traits::is_bounded)
-                {
-                    constexpr auto max_digit_count = traits::template max_digit_count<radix>;
-                    static_assert(max_digit_count > 1);
-
-                    // First skip over leading zeroes.
-                    while (true)
-                    {
-                        if (cur == end)
-                            // The number is zero.
-                            return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
-
-                        const auto digit = Base::value(*cur++);
-                        if (digit == 0 || digit >= radix)
-                            continue; // Zero or digit separator.
-
-                        // Found the first non-zero digit.
-                        // This can't overflow, we've asserted that the maximal digit count is at
-                        // least one. We assign because we had zero and are only taking this line
-                        // once.
-                        result = result_type(digit);
-                        break;
-                    }
-                    // At this point, we've parsed exactly one non-zero digit.
-
-                    // Handle max_digit_count - 1 digits without checking for overflow.
-                    // We cannot overflow, as the maximal value has one digit more.
-                    for (std::size_t digit_count = 1; digit_count < max_digit_count - 1;
-                         ++digit_count)
-                    {
-                        // Find the next digit.
-                        auto digit = 0u;
-                        while (true)
-                        {
-                            if (cur == end)
-                                // No more digits.
-                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                                         result);
-
-                            digit = Base::value(*cur++);
-                            if constexpr (!HasSep)
-                                break;
-                            else if (digit < radix)
-                                break;
-                        }
-
-                        traits::template add_digit_unchecked<radix>(result, digit);
-                    }
-
-                    // Handle the final digit, if there is any, while checking for overflow.
-                    {
-                        // Find it.
-                        auto digit = 0u;
-                        while (true)
-                        {
-                            if (cur == end)
-                                // No more digits.
-                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                                         result);
-
-                            digit = Base::value(*cur++);
-                            if constexpr (!HasSep)
-                                break;
-                            else if (digit < radix)
-                                break;
-                        }
-
-                        if (!traits::template add_digit_checked<radix>(result, digit))
-                            return LEXY_MOV(handler).error(reader, error_type(begin, end));
-                    }
-
-                    // If we're having any more digits, this is a guaranteed overflow.
-                    if (cur != end)
-                        return LEXY_MOV(handler).error(reader, error_type(begin, end));
-                }
-                else
-                {
-                    // For an unbounded integer, we just parse digits until we're out of digits.
-                    while (true)
-                    {
-                        // Find the next digit.
-                        auto digit = 0u;
-                        while (true)
-                        {
-                            if (cur == end)
-                                // No more digits.
-                                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                                         result);
-
-                            digit = Base::value(*cur++);
-                            if (digit < Base::radix)
-                                break; // Found a digit.
-                        }
-
-                        traits::template add_digit_unchecked<radix>(result, digit);
-                    }
-                }
-
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
-            }
-        };
-
         template <typename Handler, typename Reader, typename... Args>
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            // Parse the digit pattern with the special continuation.
-            return Pattern::template parser<_continuation>::parse(handler, reader, reader.cur(),
-                                                                  LEXY_FWD(args)...);
+            return Pattern::template parser<NextParser>::parse(handler, reader, reader.cur(),
+                                                               LEXY_FWD(args)...);
         }
     };
 };
@@ -268,18 +286,17 @@ struct _integer : rule_base
 template <typename T, typename Base, typename Pattern>
 LEXY_CONSTEVAL auto integer(Pattern)
 {
-    // We assume it has a separator.
-    return _integer<T, Pattern, Base, true>{};
+    return _int_c<Pattern>{} + _int_p<T, Base, false>{};
 }
 template <typename T, typename Base, typename Sep, bool LeadingZero>
 LEXY_CONSTEVAL auto integer(_digits<Base, Sep, LeadingZero>)
 {
-    return _integer<T, _digits<Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
+    return _int_c<_digits<Base, Sep, LeadingZero>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep, bool LeadingZero>
 LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep, LeadingZero>)
 {
-    return _integer<T, _ndigits<N, Base, Sep, LeadingZero>, Base, !std::is_void_v<Sep>>{};
+    return _int_c<_ndigits<N, Base, Sep, LeadingZero>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
 }
 } // namespace lexyd
 
