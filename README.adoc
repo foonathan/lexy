@@ -8,7 +8,7 @@ image:https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4
 It allows you to write a parser by specifying it in a convenient {cpp} DSL,
 which gives you all the flexibility and control of a handwritten parser without all the manual work.
 
-.IPv4 address parser: try it on https://godbolt.org/z/z1Pfaq[Compiler Explorer]
+.IPv4 address parser: try it on https://godbolt.org/z/b83Gsr[Compiler Explorer]
 [source,cpp]
 ----
 #include <lexy/dsl.hpp>
@@ -24,7 +24,7 @@ struct ipv4_address
         auto octet = dsl::integer<std::uint8_t>(dsl::digits<>);
 
         // Match four of them separated by periods.
-        return dsl::times<4>(octet, dsl::sep(dsl::period));
+        return dsl::times<4>(octet, dsl::sep(dsl::period)) + dsl::eof;
     }();
 
     // How the matched output is being stored.
@@ -113,7 +113,7 @@ Why should I use `lexy` over XYZ?::
     Otherwise, it is just a different implementation with a different flavor.
     Use `lexy` if you like `lexy` more.
 +
-For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/s9xd7e
+For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/Pv53Y8
   
   https://github.com/taocpp/PEGTL[PEGTL]:::
     PEGTL is very similar and was a big inspiration.
