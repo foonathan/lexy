@@ -112,6 +112,8 @@ Why should I use `lexy` over XYZ?::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
     Use `lexy` if you like `lexy` more.
++
+    For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/s9xd7e
   https://github.com/taocpp/PEGTL[PEGTL]:::
     PEGTL is very similar and was a big inspiration.
     The biggest difference is that `lexy` uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
@@ -125,7 +127,7 @@ How bad are the compilation times?::
 They're not as bad as you might expect (in debug mode, that is).
 +
 Compiling the example JSON parser with any of the lexy specific things removed,
-i.e. just the datastructure built using `std::variant` and `std::map`, takes about one second one my machine.
+i.e. just the datastructure built using `std::variant` and `std::map`, takes about one second on my machine.
 The entire parser takes about two seconds if you disable force inline on the parse productions.
 With force inline, it takes about five seconds.
 +
