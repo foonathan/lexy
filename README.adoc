@@ -113,7 +113,8 @@ Why should I use `lexy` over XYZ?::
     Otherwise, it is just a different implementation with a different flavor.
     Use `lexy` if you like `lexy` more.
 +
-    For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/s9xd7e
+For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/s9xd7e
+  
   https://github.com/taocpp/PEGTL[PEGTL]:::
     PEGTL is very similar and was a big inspiration.
     The biggest difference is that `lexy` uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
