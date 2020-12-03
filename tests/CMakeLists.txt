@@ -20,8 +20,10 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU|Clang")
         target_link_options(lexy_test_base INTERFACE --coverage)
     endif()
 elseif(MSVC)
-    # need a conforming preprocessor for stringifying escape characters
-    target_compile_options(lexy_test_base INTERFACE /Zc:preprocessor)
+    target_compile_options(lexy_test_base INTERFACE
+        /Zc:preprocessor	# need a conforming preprocessor for stringifying escape characters
+        "/utf-8"	# use utf-8 instead of current code page
+	)
 endif()
 
 # Add the individual tests.
