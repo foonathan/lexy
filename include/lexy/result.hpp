@@ -74,13 +74,19 @@ struct _result_storage_non_trivial
     : _has_value(false), _error(LEXY_FWD(args)...)
     {}
 
+#if !defined(__clang__) && ((defined(__GNUC__) && __GNUC__ == 9) || defined(_MSC_VER))
     // GCC 9 crashes and MSVC fails to resolve ambiguous overloads when trying to convert nullopt to
     // a value here.
 
-    _result_storage_non_trivial(result_value_t, const nullopt&) : _has_value(true), _value() {}
-    _result_storage_non_trivial(result_value_t, nullopt&&) : _has_value(true), _value() {}
-    _result_storage_non_trivial(result_error_t, const nullopt&) : _has_value(false), _error() {}
-    _result_storage_non_trivial(result_error_t, nullopt&&) : _has_value(false), _error() {}
+    template <typename Nullopt,
+              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
+    _result_storage_non_trivial(result_value_t, Nullopt&&) : _has_value(true), _value()
+    {}
+    template <typename Nullopt,
+              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
+    _result_storage_non_trivial(result_error_t, Nullopt&&) : _has_value(false), _error()
+    {}
+#endif
 
     _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
     : _has_value(other._has_value)
