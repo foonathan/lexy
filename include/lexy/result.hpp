@@ -78,7 +78,9 @@ struct _result_storage_non_trivial
     // a value here.
 
     _result_storage_non_trivial(result_value_t, const nullopt&) : _has_value(true), _value() {}
+    _result_storage_non_trivial(result_value_t, nullopt&&) : _has_value(true), _value() {}
     _result_storage_non_trivial(result_error_t, const nullopt&) : _has_value(false), _error() {}
+    _result_storage_non_trivial(result_error_t, nullopt&&) : _has_value(false), _error() {}
 
     _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
     : _has_value(other._has_value)
