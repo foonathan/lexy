@@ -1240,14 +1240,6 @@ error: while parsing author_list
      |            ^ expected '"'
 ----
 
-.Missing closing string delimiter
-----
-error: while parsing author
-     |
- 3:28| authors = ["Jonathan Müller]
-     |              ~~~~~~~~~~~~~~~^ invalid string character
-----
-
 === Specifying custom error tags
 
 However, some generic errors are a bit confusing if you haven't written the grammar.
@@ -1304,6 +1296,14 @@ struct config
 <3> Specify the error on failure.
 
 Now an invalid string character is reported as `invalid string character` and a duplicated config field as `duplicate config field`:
+
+.Missing closing string delimiter
+----
+error: while parsing author
+     |
+ 3:28| authors = ["Jonathan Müller]
+     |              ~~~~~~~~~~~~~~~^ invalid string character
+----
 
 .Duplicate config field error
 ----
