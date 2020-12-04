@@ -378,19 +378,8 @@ LEXY_CONSTEVAL auto _make_digits()
             return if_(Sep{}) + d + _make_digits<N - 1, Base, Sep>();
     }
 }
-
-template <std::size_t N, typename Base, typename Sep, bool LeadingZero>
-LEXY_CONSTEVAL auto _make_digits()
-{
-    auto d = digit<Base>;
-    if constexpr (LeadingZero)
-        return d + _make_digits<N - 1, Base, Sep>();
-    else
-        return d.non_zero() + _make_digits<N - 1, Base, Sep>();
-}
-
-template <std::size_t N, typename Base, typename Sep, bool LeadingZero>
-struct _ndigits : decltype(_make_digits<N, Base, Sep, LeadingZero>())
+template <std::size_t N, typename Base, typename Sep>
+struct _ndigits : decltype(_make_digits<N, Base, Sep>())
 {
     static_assert(N > 1);
 
@@ -398,18 +387,13 @@ struct _ndigits : decltype(_make_digits<N, Base, Sep, LeadingZero>())
     LEXY_CONSTEVAL auto sep(Pattern) const
     {
         static_assert(lexy::is_pattern<Pattern>);
-        return _ndigits<N, Base, Pattern, LeadingZero>{};
-    }
-
-    LEXY_CONSTEVAL auto no_leading_zero() const
-    {
-        return _ndigits<N, Base, Sep, false>{};
+        return _ndigits<N, Base, Pattern>{};
     }
 };
 
 /// Matches exactly N digits.
 template <std::size_t N, typename Base = decimal>
-constexpr auto n_digits = _ndigits<N, Base, void, true>{};
+constexpr auto n_digits = _ndigits<N, Base, void>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_DIGIT_HPP_INCLUDED

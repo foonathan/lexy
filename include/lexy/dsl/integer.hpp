@@ -328,10 +328,10 @@ LEXY_CONSTEVAL auto integer(_digits<Base, Sep, LeadingZero>)
 {
     return _int_c<_digits<Base, Sep, LeadingZero>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
 }
-template <typename T, typename Base, std::size_t N, typename Sep, bool LeadingZero>
-LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep, LeadingZero>)
+template <typename T, typename Base, std::size_t N, typename Sep>
+LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep>)
 {
-    return _int_c<_ndigits<N, Base, Sep, LeadingZero>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
+    return _int_c<_ndigits<N, Base, Sep>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
 }
 } // namespace lexyd
 

@@ -339,27 +339,6 @@ TEST_CASE("dsl::n_digits")
         CHECK(four_digits);
         CHECK(four_digits.match() == "123");
     }
-    SUBCASE("no leading zero")
-    {
-        constexpr auto pattern = lexy::dsl::n_digits<3>.no_leading_zero();
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(!zero);
-
-        constexpr auto one_zero_one = pattern_matches(pattern, "101");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "101");
-
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
-        CHECK(!zero_zero_seven);
-
-        constexpr auto four_digits = pattern_matches(pattern, "1234");
-        CHECK(four_digits);
-        CHECK(four_digits.match() == "123");
-    }
     SUBCASE("sep")
     {
         constexpr auto pattern = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
@@ -377,34 +356,6 @@ TEST_CASE("dsl::n_digits")
         constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
         CHECK(zero_zero_seven);
         CHECK(zero_zero_seven.match() == "00'7");
-
-        constexpr auto leading_tick = pattern_matches(pattern, "'0");
-        CHECK(!leading_tick);
-        constexpr auto trailing_tick = pattern_matches(pattern, "123'");
-        CHECK(trailing_tick);
-        CHECK(trailing_tick.match() == "123");
-
-        constexpr auto four_digits = pattern_matches(pattern, "1'2'3'4");
-        CHECK(four_digits);
-        CHECK(four_digits.match() == "1'2'3");
-    }
-    SUBCASE("sep + no leading zero")
-    {
-        constexpr auto pattern
-            = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(!zero);
-
-        constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "1'01");
-
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
-        CHECK(!zero_zero_seven);
 
         constexpr auto leading_tick = pattern_matches(pattern, "'0");
         CHECK(!leading_tick);

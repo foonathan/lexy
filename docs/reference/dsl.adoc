@@ -1582,13 +1582,10 @@ However, the digit separator can be an arbitrarily complex pattern.
 n_digits<N, Base> : Pattern
 
 n_digits<N, Base>.sep(pattern)      : Pattern
-n_digits<N, Base>.no_leading_zero() : Pattern
 ----
 
 The `n_digits` pattern matches exactly `N` digits in the specified base or `decimal` if no base was specified.
 Calling `.sep()` allows adding a digit separator pattern that can be present at any point between two digits, but is not required.
-Calling `.no_leading_zero()` raises an error if one or more leading zeros are encountered.
-The calls to `.sep()` and `.no_leading_zero()` can be chained.
 
 [horizontal]
 Matches::
@@ -1597,15 +1594,14 @@ Matches::
   It is consumed if it was matched, but it does not fail if no separator was present.
   If a separator is matched without a following digit, it fails.
   Separators do not count towards the digit count.
-  If `.no_leading_zero()` was called, fails if the first digit was zero and it is followed by another digit or separator.
 Errors::
   All errors raised by `digit<Base>`, which can happen if less than `N` digits are available.
   Raises a generic error with tag `lexy::forbidden_leading_zero` if a leading zero was matched.
 
-[godbolt,cpp,id=o4Y7Eq]
+[godbolt,cpp,id=1YcrGa]
 ----
-// Matches 4 upper-case hexadecimal digits seperated by ' without leading zeroes.
-dsl::n_digits<4, dsl::hex_upper>.sep(dsl::digit_sep_tick).no_leading_zero()
+// Matches 4 upper-case hexadecimal digits seperated by '.
+dsl::n_digits<4, dsl::hex_upper>.sep(dsl::digit_sep_tick)
 ----
 
 [discrete]
