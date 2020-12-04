@@ -64,6 +64,11 @@ jobs:
       run: ctest --output-on-failure
 
   windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        toolset: ['v142', 'ClangCL']
+
     runs-on: windows-latest
 
     steps:
@@ -74,7 +79,7 @@ jobs:
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -T ClangCL
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -T ${{matrix.toolset}}
     - name: Build
       working-directory: build/
       run: cmake --build . --config Debug
