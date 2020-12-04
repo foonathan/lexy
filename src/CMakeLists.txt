@@ -123,6 +123,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -Wno-parentheses)
     # GCC doesn't properly detect when local typedefs escape via the return type.
     target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
+elseif(MSVC)
+    target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS)
 endif()
 
 # Link to have FILE I/O.
