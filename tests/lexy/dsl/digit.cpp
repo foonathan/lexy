@@ -308,8 +308,10 @@ TEST_CASE("dsl::digits")
         constexpr auto leading_tick = pattern_matches(pattern, "'0");
         CHECK(!leading_tick);
         constexpr auto trailing_tick = pattern_matches(pattern, "0'");
-        CHECK(trailing_tick);
-        CHECK(trailing_tick.match() == "0");
+        CHECK(!trailing_tick);
+
+        constexpr auto zero_tick_one = pattern_matches(pattern, "0'1");
+        CHECK(!zero_tick_one);
     }
 }
 

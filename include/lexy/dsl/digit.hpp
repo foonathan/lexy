@@ -324,7 +324,14 @@ LEXY_CONSTEVAL auto _make_digits()
     }
     else
     {
-        auto zero     = d.zero() + prevent<lexy::forbidden_leading_zero>(d);
+        auto digit_or_sep = [d] {
+            if constexpr (std::is_same_v<Sep, void>)
+                return d;
+            else
+                return d / Sep{};
+        }();
+
+        auto zero     = d.zero() + prevent<lexy::forbidden_leading_zero>(digit_or_sep);
         auto non_zero = d.non_zero() + tail;
         return zero / non_zero;
     }
