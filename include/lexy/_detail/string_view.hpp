@@ -108,6 +108,12 @@ public:
         else
             return basic_string_view(_ptr + pos, length);
     }
+
+    constexpr bool starts_with(basic_string_view prefix) const
+    {
+        return substr(0, prefix.size()) == prefix;
+    }
+
     constexpr std::size_t find(basic_string_view str, std::size_t pos = 0) const noexcept
     {
         for (auto i = pos; i < length(); ++i)

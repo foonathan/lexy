@@ -48,6 +48,12 @@ constexpr auto _type_name_impl()
     auto function = string_view(__FUNCSIG__);
     function.remove_prefix(prefix.length());
     function.remove_suffix(suffix.length());
+
+    if (auto s = string_view("struct "); function.starts_with(s))
+        function.remove_prefix(s.length());
+    else if (auto c = string_view("class "); function.starts_with(c))
+        function.remove_prefix(c.length());
+
     return function;
 
 #else

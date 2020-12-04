@@ -20,5 +20,8 @@ TEST_CASE("string_view")
     REQUIRE(str.find("a", 1) == std::size_t(-1));
     REQUIRE(str.find('b') == 1);
     REQUIRE(str.find('a', 1) == std::size_t(-1));
+
+    REQUIRE(str.starts_with("ab"));
+    REQUIRE(!str.starts_with("abcdef"));
 }
 
