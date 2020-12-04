@@ -3,8 +3,9 @@
 # found in the top-level directory of this distribution.
 
 # Fetch doctest.
+message(STATUS "Fetching doctest")
 include(FetchContent)
-FetchContent_Declare(doctest GIT_REPOSITORY https://github.com/onqtam/doctest)
+FetchContent_Declare(doctest URL https://github.com/onqtam/doctest/archive/2.4.1.zip)
 FetchContent_MakeAvailable(doctest)
 
 # A generic test target.
