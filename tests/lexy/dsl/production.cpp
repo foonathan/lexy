@@ -42,6 +42,13 @@ struct prod
 };
 } // namespace p_branch_branch
 
+// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
+#if !defined(__clang__) && defined(_MSC_VER)
+#    define TEST_CONSTEXPR
+#else
+#    define TEST_CONSTEXPR constexpr
+#endif
+
 TEST_CASE("dsl::p")
 {
     SUBCASE("basic")
@@ -317,10 +324,9 @@ TEST_CASE("dsl::recurse")
 
         constexpr auto a = rule_matches<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        TEST_CONSTEXPR auto aa = rule_matches<callback>(rule, "aa");
         CHECK(aa == 2);
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        TEST_CONSTEXPR auto aaa = rule_matches<callback>(rule, "aaa");
         CHECK(aaa == 3);
     }
 }
-
