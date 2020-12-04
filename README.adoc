@@ -107,7 +107,7 @@ Why should I use `lexy` over XYZ?::
   `lexy` is closest to other PEG parsers.
   However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
   This is not the case for `lexy`, where backtracking is controlled using branch conditions.
-  
+ 
   http://boost-spirit.com/home/[Boost.Spirit]:::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
@@ -168,10 +168,8 @@ or setting the `LEXY_USER_CONFIG_HEADER` CMake option to a header path.
 This header can then override many of the detections in `lexy/_detail/config.hpp`.
 Refer to that header for details.
 
-The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as clang-cl.
+The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as MSVC and clang-cl.
 It requires {cpp}17 support, but works best with {cpp}20.
-Building the tests with MSVC fails, but simple examples might work.
-If you want to use it on Windows, it is recommended to use clang-cl instead.
 
 == Documentation
 
