@@ -5667,15 +5667,12 @@ However, the digit separator can be an arbitrarily complex pattern.</p>
 <div class="content">
 <pre>n_digits&lt;N, Base&gt; : Pattern
 
-n_digits&lt;N, Base&gt;.sep(pattern)      : Pattern
-n_digits&lt;N, Base&gt;.no_leading_zero() : Pattern</pre>
+n_digits&lt;N, Base&gt;.sep(pattern)      : Pattern</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>The <code>n_digits</code> pattern matches exactly <code>N</code> digits in the specified base or <code>decimal</code> if no base was specified.
-Calling <code>.sep()</code> allows adding a digit separator pattern that can be present at any point between two digits, but is not required.
-Calling <code>.no_leading_zero()</code> raises an error if one or more leading zeros are encountered.
-The calls to <code>.sep()</code> and <code>.no_leading_zero()</code> can be chained.</p>
+Calling <code>.sep()</code> allows adding a digit separator pattern that can be present at any point between two digits, but is not required.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -5688,8 +5685,7 @@ Matches
 If a separator was added, it tries to match it after every digit.
 It is consumed if it was matched, but it does not fail if no separator was present.
 If a separator is matched without a following digit, it fails.
-Separators do not count towards the digit count.
-If <code>.no_leading_zero()</code> was called, fails if the first digit was zero and it is followed by another digit or separator.</p>
+Separators do not count towards the digit count.</p>
 </td>
 </tr>
 <tr>
@@ -5703,14 +5699,14 @@ Raises a generic error with tag <code>lexy::forbidden_leading_zero</code> if a l
 </tr>
 </table>
 </div>
-<details id="o4Y7Eq">
+<details id="1YcrGa">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/o4Y7Eq" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/1YcrGa" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Matches 4 upper-case hexadecimal digits seperated by ' without leading zeroes.
-dsl::n_digits&lt;4, dsl::hex_upper&gt;.sep(dsl::digit_sep_tick).no_leading_zero()</code></pre>
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Matches 4 upper-case hexadecimal digits seperated by '.
+dsl::n_digits&lt;4, dsl::hex_upper&gt;.sep(dsl::digit_sep_tick)</code></pre>
 </div>
 </div>
 </div>
@@ -6636,7 +6632,7 @@ Refer to the existing rules if you want to add your own.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-01 14:22:17 +0100
+Last updated 2020-12-04 22:20:41 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

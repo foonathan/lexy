@@ -2020,15 +2020,6 @@ Some error messages are given.</p>
      |            ^ expected '"'</pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="title">Missing closing string delimiter</div>
-<div class="content">
-<pre>error: while parsing author
-     |
- 3:28| authors = ["Jonathan Müller]
-     |              ~~~~~~~~~~~~~~~^ invalid string character</pre>
-</div>
-</div>
 <div class="sect2">
 <h3 id="_specifying_custom_error_tags">Specifying custom error tags</h3>
 <div class="paragraph">
@@ -2114,6 +2105,15 @@ This can be improved by specifying a custom tag in our <code>dsl::combination()<
 </div>
 <div class="paragraph">
 <p>Now an invalid string character is reported as <code>invalid string character</code> and a duplicated config field as <code>duplicate config field</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Missing closing string delimiter</div>
+<div class="content">
+<pre>error: while parsing author
+     |
+ 3:28| authors = ["Jonathan Müller]
+     |              ~~~~~~~~~~~~~~~^ invalid string character</pre>
+</div>
 </div>
 <div class="listingblock">
 <div class="title">Duplicate config field error</div>
@@ -2248,7 +2248,7 @@ Check out the reference documentation for specific rules.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-01 14:22:17 +0100
+Last updated 2020-12-04 22:20:41 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
