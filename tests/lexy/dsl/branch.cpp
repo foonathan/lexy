@@ -41,14 +41,17 @@ TEST_CASE("dsl::branch()")
 {
     SUBCASE("pattern")
     {
-        CHECK(lexy::is_branch_rule<decltype(LEXY_LIT("abc"))>);
+        constexpr auto abc = LEXY_LIT("abc");
+        CHECK(lexy::is_branch_rule<decltype(abc)>);
         constexpr auto result     = branch(LEXY_LIT("abc"));
         constexpr auto equivalent = LEXY_LIT("abc") >> lexy::dsl::success;
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
     }
     SUBCASE("branch")
     {
-        CHECK(lexy::is_branch_rule<decltype(LEXY_LIT("abc") >> LEXY_LIT("def"))>);
+        constexpr auto abc = LEXY_LIT("abc");
+        constexpr auto def = LEXY_LIT("def");
+        CHECK(lexy::is_branch_rule<decltype(abc >> def)>);
         constexpr auto result     = branch(LEXY_LIT("abc") >> LEXY_LIT("def"));
         constexpr auto equivalent = LEXY_LIT("abc") >> LEXY_LIT("def");
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
@@ -103,4 +106,3 @@ TEST_CASE("dsl::_br operator+")
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
     }
 }
-

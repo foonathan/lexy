@@ -86,7 +86,7 @@ LEXY_CONSTEVAL auto prevent(Pattern pattern)
 namespace lexyd
 {
 template <typename Tag, typename Pattern>
-struct _try : rule_base
+struct _try_ : rule_base
 {
     static constexpr auto has_matcher = true;
 
@@ -115,9 +115,8 @@ template <typename Tag, typename Pattern>
 LEXY_CONSTEVAL auto try_(Pattern)
 {
     static_assert(lexy::is_pattern<Pattern>);
-    return _try<Tag, Pattern>{};
+    return _try_<Tag, Pattern>{};
 }
 } // namespace lexyd
 
 #endif // LEXY_DSL_ERROR_HPP_INCLUDED
-

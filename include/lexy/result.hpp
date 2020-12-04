@@ -74,8 +74,9 @@ struct _result_storage_non_trivial
     : _has_value(false), _error(LEXY_FWD(args)...)
     {}
 
-#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ == 9
-    // GCC 9 crashes when trying to convert nullopt to a value here.
+#if !defined(__clang__) && ((defined(__GNUC__) && __GNUC__ == 9) || defined(_MSC_VER))
+    // GCC 9 crashes and MSVC fails to resolve ambiguous overloads when trying to convert nullopt to
+    // a value here.
 
     template <typename Nullopt,
               typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>

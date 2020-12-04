@@ -24,7 +24,8 @@ struct _lit : atom_base<_lit<String>>
 
         // The string and the input have incompatible character types.
         // We then only allow ASCII characters in the string literal.
-        for (auto c : String::get())
+        auto str = String::get();
+        for (auto c : str)
         {
             auto value = encoding::to_int_type(typename encoding::char_type(c));
             if (value < encoding::to_int_type(0) || value > encoding::to_int_type(0x7F))
@@ -40,7 +41,8 @@ struct _lit : atom_base<_lit<String>>
         static_assert(_string_compatible<Reader>(),
                       "literal contains characters not compatible with input encoding");
 
-        for (auto c : String::get())
+        auto str = String::get();
+        for (auto c : str)
         {
             if (reader.peek() != Reader::encoding::to_int_type(typename Reader::char_type(c)))
                 return false;
@@ -82,4 +84,3 @@ constexpr auto lit = _lit<lexy::_detail::type_string<Str>>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED
-

@@ -29,7 +29,7 @@ struct _prd_parser
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
         typename Handler::result_type
     {
-        auto&& sub_handler = handler.template sub_handler<Production>(reader);
+        auto sub_handler = handler.template sub_handler<Production>(reader);
 
         if (auto result = _parse<Rule>(sub_handler, reader))
         {
@@ -97,4 +97,3 @@ constexpr auto recurse = _rec<Production>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED
-

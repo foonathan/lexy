@@ -12,7 +12,7 @@
 namespace lexy::_detail
 {
 template <typename T>
-using _detect_name_f = decltype(T::name());
+using _detect_name_f = std::enable_if_t<std::is_convertible_v<decltype(T::name()), string_view>>;
 template <typename T>
 using _detect_name_v = decltype(T::name);
 
@@ -85,4 +85,3 @@ LEXY_CONSTEVAL string_view type_name(int namespace_count = 1)
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
-
