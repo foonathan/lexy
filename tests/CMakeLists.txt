@@ -4,7 +4,8 @@
 
 # Fetch doctest.
 include(FetchContent)
-FetchContent_Declare(doctest GIT_REPOSITORY https://github.com/onqtam/doctest)
+set(FETCHCONTENT_QUIET FALSE)
+FetchContent_Declare(doctest GIT_REPOSITORY https://github.com/onqtam/doctest GIT_PROGRESS TRUE)
 FetchContent_MakeAvailable(doctest)
 
 # A generic test target.
