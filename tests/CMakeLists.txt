@@ -14,16 +14,10 @@ target_sources(lexy_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/doctest_main
 target_link_libraries(lexy_test_base INTERFACE foonathan::lexy::dev foonathan::lexy::file doctest)
 target_compile_definitions(lexy_test_base INTERFACE DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING=1 LEXY_TEST)
 
-# Add code coverage options to our test target.
-if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU|Clang")
-    if(NOT "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
-        target_compile_options(lexy_test_base INTERFACE -O0 -g --coverage)
-        target_link_options(lexy_test_base INTERFACE --coverage)
-    endif()
-elseif(MSVC)
+if(MSVC)
     target_compile_options(lexy_test_base INTERFACE
         /Zc:preprocessor    # need a conforming preprocessor for stringifying escape characters
-        "/utf-8"    # use utf-8 instead of current code page
+        "/utf-8"            # use utf-8 instead of current code page
     )
 endif()
 
