@@ -31,10 +31,12 @@ jobs:
     - uses: actions/checkout@v2
     - name: Create Build Environment
       run: cmake -E make_directory build
+    - name: Install ninja
+      run: type ninja || apt-get -qq update && apt-get install -y ninja-build
 
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
     - name: Build
       working-directory: build/
       run: cmake --build .
@@ -60,10 +62,12 @@ jobs:
         xcode-version: ${{matrix.xcode}}
     - name: Create Build Environment
       run: cmake -E make_directory build
+    - name: Install ninja
+      run: brew install ninja
 
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE
+      run: cmake -GNinja $GITHUB_WORKSPACE
     - name: Build
       working-directory: build/
       run: cmake --build .
