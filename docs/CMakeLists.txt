@@ -14,7 +14,7 @@ add_custom_target(lexy_docs_reference
             ${CMAKE_CURRENT_SOURCE_DIR}/reference.adoc)
 
 add_custom_target(lexy_docs_benchmark_json
-    COMMAND asciidoctor -o ${html_output_dir}/html/benchmark_json.html
+    COMMAND asciidoctor -o ${html_output_dir}/benchmark_json.html
             ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_json.adoc)
 
 add_custom_target(lexy_docs)
