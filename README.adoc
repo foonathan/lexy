@@ -141,9 +141,8 @@ How bad are the {cpp} error messages if you mess something up?::
   Besides providing an external tool to filter those error messages, there is nothing I can do about that.
 
 How fast is it?::
-  The library is currently not optimized and does not feature benchmarks.
-  However, as it just parses what you specify, performance should be comparable to the corresponding hand-written parser.
-  In preliminary benchmarks, I can validate JSON in ~400MB/s.
+  Benchmarks are available in the `benchmarks/` directory.
+  A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available https://foonathan.net/lexy/benchmark_json.html[here].
 
 Why is it called lexy?::
   I previously had a tokenizer library called `foonathan/lex`.
