@@ -8,6 +8,7 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <new>
+#include <variant>
 
 namespace lexy
 {
@@ -26,120 +27,28 @@ constexpr auto result_error = result_error_t{};
 
 namespace lexy
 {
-struct nullopt;
+template<typename T, typename U>
+using _result_t = std::conditional_t<std::is_void_v<T>, U, T>;
 
 template <typename T, typename E>
-struct _result_storage_trivial
-{
-    using value_type = T;
-    using error_type = E;
-
+class _result_storage: protected std::variant<_result_t<T, result_value_t>,
+                                              _result_t<E, result_error_t>> {
+protected:
+    using value_type = _result_t<T, result_value_t>;
+    using error_type = _result_t<E, result_error_t>;
     bool _has_value;
-    union
-    {
-        T _value;
-        E _error;
-    };
 
-    template <typename... Args>
-    constexpr _result_storage_trivial(result_value_t, Args&&... args)
-    : _has_value(true), _value(LEXY_FWD(args)...)
-    {}
+    using parent = std::variant<value_type, error_type>;
 
-    template <typename... Args>
-    constexpr _result_storage_trivial(result_error_t, Args&&... args)
-    : _has_value(false), _error(LEXY_FWD(args)...)
-    {}
+    template<typename ...Args>
+    constexpr _result_storage(result_value_t, Args&&... args)
+    : parent{std::in_place_index_t<0>{}, std::forward<Args>(args)...}, _has_value(true) {}
+
+    template<typename ...Args>
+    constexpr _result_storage(result_error_t, Args&&... args)
+    : parent{std::in_place_index_t<1>{}, std::forward<Args>(args)...}, _has_value(false) {}
 };
 
-template <typename T, typename E>
-struct _result_storage_non_trivial
-{
-    using value_type = T;
-    using error_type = E;
-
-    bool _has_value;
-    union
-    {
-        T _value;
-        E _error;
-    };
-
-    template <typename... Args>
-    _result_storage_non_trivial(result_value_t, Args&&... args)
-    : _has_value(true), _value(LEXY_FWD(args)...)
-    {}
-    template <typename... Args>
-    _result_storage_non_trivial(result_error_t, Args&&... args)
-    : _has_value(false), _error(LEXY_FWD(args)...)
-    {}
-
-#if !defined(__clang__) && ((defined(__GNUC__) && __GNUC__ == 9) || defined(_MSC_VER))
-    // GCC 9 crashes and MSVC fails to resolve ambiguous overloads when trying to convert nullopt to
-    // a value here.
-
-    template <typename Nullopt,
-              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_value_t, Nullopt&&) : _has_value(true), _value()
-    {}
-    template <typename Nullopt,
-              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_error_t, Nullopt&&) : _has_value(false), _error()
-    {}
-#endif
-
-    _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
-    : _has_value(other._has_value)
-    {
-        if (_has_value)
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
-        else
-            ::new (static_cast<void*>(&_error)) E(LEXY_MOV(other._error));
-    }
-
-    ~_result_storage_non_trivial() noexcept
-    {
-        if (_has_value)
-            _value.~T();
-        else
-            _error.~E();
-    }
-
-    _result_storage_non_trivial& operator=(_result_storage_non_trivial&& other) noexcept
-    {
-        if (_has_value && other._has_value)
-        {
-            _value = LEXY_MOV(other._value);
-        }
-        else if (_has_value && !other._has_value)
-        {
-            _value.~T();
-            ::new (static_cast<void*>(&_error)) E(LEXY_MOV(other._error));
-            _has_value = false;
-        }
-        else if (!_has_value && other._has_value)
-        {
-            _error.~E();
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
-            _has_value = true;
-        }
-        else // !_has_value && !other._has_value
-        {
-            _error = LEXY_MOV(other._error);
-        }
-
-        return *this;
-    }
-};
-
-template <typename T, typename E>
-using _result_storage_impl
-    = std::conditional_t<std::is_trivially_copyable_v<T> && std::is_trivially_copyable_v<E>,
-                         _result_storage_trivial<T, E>, _result_storage_non_trivial<T, E>>;
-template <typename T, typename E>
-using _result_storage
-    = _result_storage_impl<std::conditional_t<std::is_void_v<T>, result_value_t, T>,
-                           std::conditional_t<std::is_void_v<E>, result_error_t, E>>;
 } // namespace lexy
 
 namespace lexy
@@ -213,43 +122,43 @@ public:
     constexpr value_type& value() & noexcept
     {
         LEXY_PRECONDITION(has_value());
-        return this->_value;
+        return std::get<0>(*this);
     }
     constexpr const value_type& value() const& noexcept
     {
         LEXY_PRECONDITION(has_value());
-        return this->_value;
+        return std::get<0>(*this);
     }
     constexpr value_type&& value() && noexcept
     {
         LEXY_PRECONDITION(has_value());
-        return LEXY_MOV(this->_value);
+        return LEXY_MOV(std::get<0>(*this));
     }
     constexpr const value_type&& value() const&& noexcept
     {
         LEXY_PRECONDITION(has_value());
-        return LEXY_MOV(this->_value);
+        return LEXY_MOV(std::get<0>(*this));
     }
 
     constexpr error_type& error() & noexcept
     {
         LEXY_PRECONDITION(has_error());
-        return this->_error;
+        return std::get<1>(*this);
     }
     constexpr const error_type& error() const& noexcept
     {
         LEXY_PRECONDITION(has_error());
-        return this->_error;
+        return std::get<1>(*this);
     }
     constexpr error_type&& error() && noexcept
     {
         LEXY_PRECONDITION(has_error());
-        return LEXY_MOV(this->_error);
+        return LEXY_MOV(std::get<1>(*this));
     }
     constexpr const error_type&& error() const&& noexcept
     {
         LEXY_PRECONDITION(has_error());
-        return LEXY_MOV(this->_error);
+        return LEXY_MOV(std::get<1>(*this));
     }
 };
 } // namespace lexy
