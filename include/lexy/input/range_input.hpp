@@ -31,7 +31,7 @@ public:
         return _begin;
     }
 
-    constexpr iterator end() const noexcept
+    constexpr Sentinel end() const noexcept
     {
         return _end;
     }
