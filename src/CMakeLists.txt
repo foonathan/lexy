@@ -60,6 +60,14 @@ set(header_files
         ${include_dir}/dsl/while.hpp
         ${include_dir}/dsl/whitespace.hpp
 
+        ${include_dir}/engine/any.hpp
+        ${include_dir}/engine/base.hpp
+        ${include_dir}/engine/char_class.hpp
+        ${include_dir}/engine/eof.hpp
+        ${include_dir}/engine/failure.hpp
+        ${include_dir}/engine/literal.hpp
+        ${include_dir}/engine/success.hpp
+
         ${include_dir}/input/argv_input.hpp
         ${include_dir}/input/base.hpp
         ${include_dir}/input/buffer.hpp

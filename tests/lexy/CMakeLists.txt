@@ -59,6 +59,13 @@ set(tests
         dsl/while.cpp
         dsl/whitespace.cpp
 
+        engine/any.cpp
+        engine/char_class.cpp
+        engine/eof.cpp
+        engine/failure.cpp
+        engine/literal.cpp
+        engine/success.cpp
+
         input/argv_input.cpp
         input/base.cpp
         input/buffer.cpp
