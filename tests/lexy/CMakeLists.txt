@@ -61,6 +61,7 @@ set(tests
 
         engine/any.cpp
         engine/char_class.cpp
+        engine/code_point.cpp
         engine/eof.cpp
         engine/failure.cpp
         engine/literal.cpp

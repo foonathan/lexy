@@ -63,6 +63,7 @@ set(header_files
         ${include_dir}/engine/any.hpp
         ${include_dir}/engine/base.hpp
         ${include_dir}/engine/char_class.hpp
+        ${include_dir}/engine/code_point.hpp
         ${include_dir}/engine/eof.hpp
         ${include_dir}/engine/failure.hpp
         ${include_dir}/engine/literal.hpp

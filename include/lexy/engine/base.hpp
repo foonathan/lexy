@@ -23,16 +23,35 @@ struct Matcher : engine_matcher_base
     template <typename Reader>
     static error_code match(Reader& reader);
 };
+
+/// Parses something, i.e. consumes and input and returns a result or error.
+struct Parser : engine_parser_base
+{
+    /// The error code of the match operation.
+    /// A value constructed `error_code` corresponds to success.
+    enum class error_code;
+
+    /// Tries to match the input of the reader.
+    /// If it works, consumes all matched input and returns the result leaving error code unchanged.
+    /// Otherwise, leaves the reader at the position of the error, sets the error and returns some partial result.
+    template <typename Reader>
+    static auto parse(error_code& ec, Reader& reader);
+};
 #endif
 
 namespace lexy
 {
 struct engine_matcher_base
 {};
+struct engine_parser_base
+{};
 
 /// Whether or not the engine is a matcher.
 template <typename Engine>
 constexpr bool engine_is_matcher = std::is_base_of_v<engine_matcher_base, Engine>;
+/// Whether or not the engine is a parser.
+template <typename Engine>
+constexpr bool engine_is_parser = std::is_base_of_v<engine_parser_base, Engine>;
 
 /// Whether or not the engine can fail on the given input.
 template <typename Engine, typename Reader>
