@@ -124,3 +124,167 @@ TEST_CASE("engine_char_set")
     }
 }
 
+namespace
+{
+constexpr auto table = [] {
+    lexy::ascii_table<3> table;
+
+    for (char c = 0; c < 0x20; ++c)
+        table.insert(c, 0);
+    for (char c = 0x20; c < 0x40; ++c)
+        table.insert(c, 1);
+
+    for (char c = 0x40; c < 0x60; ++c)
+    {
+        table.insert(c, 0);
+        table.insert(c, 2);
+    }
+
+    return table;
+}();
+}
+
+TEST_CASE("engine_ascii_table")
+{
+    SUBCASE("table interface")
+    {
+        for (char c = 0; c < 0x20; ++c)
+        {
+            CHECK(table.contains<lexy::default_encoding, 0>(c));
+            CHECK(!table.contains<lexy::default_encoding, 1>(c));
+            CHECK(!table.contains<lexy::default_encoding, 2>(c));
+        }
+
+        for (char c = 0x20; c < 0x40; ++c)
+        {
+            CHECK(!table.contains<lexy::default_encoding, 0>(c));
+            CHECK(table.contains<lexy::default_encoding, 1>(c));
+            CHECK(!table.contains<lexy::default_encoding, 2>(c));
+        }
+
+        for (char c = 0x40; c < 0x60; ++c)
+        {
+            CHECK(table.contains<lexy::default_encoding, 0>(c));
+            CHECK(!table.contains<lexy::default_encoding, 1>(c));
+            CHECK(table.contains<lexy::default_encoding, 2>(c));
+        }
+
+        for (auto c = 0x60; c < 0xFF; ++c)
+        {
+            CHECK(!table.contains<lexy::default_encoding, 0>(c));
+            CHECK(!table.contains<lexy::default_encoding, 1>(c));
+            CHECK(!table.contains<lexy::default_encoding, 2>(c));
+        }
+    }
+
+    SUBCASE("category 1")
+    {
+        using engine = lexy::engine_ascii_table<table, 1>;
+        CHECK(lexy::engine_is_matcher<engine>);
+
+        constexpr auto empty = engine_matches<engine>("");
+        CHECK(!empty);
+        CHECK(empty.count == 0);
+
+        for (auto c = 0x00; c < 0x20; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+
+        for (auto c = 0x20; c < 0x40; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(result);
+            CHECK(result.count == 1);
+        }
+
+        for (auto c = 0x40; c < 0xFF; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+    }
+    SUBCASE("category 1 or 2")
+    {
+        using engine = lexy::engine_ascii_table<table, 1, 2>;
+        CHECK(lexy::engine_is_matcher<engine>);
+
+        constexpr auto empty = engine_matches<engine>("");
+        CHECK(!empty);
+        CHECK(empty.count == 0);
+
+        for (auto c = 0x00; c < 0x20; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+
+        for (auto c = 0x20; c < 0x60; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(result);
+            CHECK(result.count == 1);
+        }
+
+        for (auto c = 0x60; c < 0xFF; ++c)
+        {
+            const char str[] = {char(c), char(c), char(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+    }
+
+    SUBCASE("category 1 in UTF-16")
+    {
+        using engine = lexy::engine_ascii_table<table, 1>;
+        CHECK(lexy::engine_is_matcher<engine>);
+
+        constexpr auto empty = engine_matches<engine>(u"");
+        CHECK(!empty);
+        CHECK(empty.count == 0);
+
+        for (auto c = 0x00; c < 0x20; ++c)
+        {
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+
+        for (auto c = 0x20; c < 0x40; ++c)
+        {
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(result);
+            CHECK(result.count == 1);
+        }
+
+        for (auto c = 0x40; c < 0xFFFF; ++c)
+        {
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+
+            auto result = engine_matches<engine>(str);
+            CHECK(!result);
+            CHECK(result.count == 0);
+        }
+    }
+}
+

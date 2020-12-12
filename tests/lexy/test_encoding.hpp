@@ -18,6 +18,10 @@ struct test_encoding
         {
             return value;
         }
+        constexpr explicit operator std::size_t() const noexcept
+        {
+            return std::size_t(value);
+        }
 
         friend constexpr bool operator==(int_type a, int_type b) noexcept
         {

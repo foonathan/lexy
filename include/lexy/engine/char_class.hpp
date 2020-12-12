@@ -5,6 +5,7 @@
 #ifndef LEXY_ENGINE_CHAR_CLASS_HPP_INCLUDED
 #define LEXY_ENGINE_CHAR_CLASS_HPP_INCLUDED
 
+#include <climits>
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/engine/base.hpp>
 
@@ -105,6 +106,100 @@ struct engine_char_set : engine_matcher_base
     }
 };
 
+} // namespace lexy
+
+namespace lexy
+{
+template <std::size_t Bits>
+auto _int_n_t_impl()
+{
+    if constexpr (Bits <= CHAR_BIT)
+        return static_cast<unsigned char>(0);
+    else if constexpr (Bits <= sizeof(unsigned short) * CHAR_BIT)
+        return static_cast<unsigned short>(0);
+    else if constexpr (Bits <= sizeof(unsigned int) * CHAR_BIT)
+        return static_cast<unsigned int>(0);
+    else if constexpr (Bits <= sizeof(unsigned long) * CHAR_BIT)
+        return static_cast<unsigned long>(0);
+    else if constexpr (Bits <= sizeof(unsigned long long) * CHAR_BIT)
+        return static_cast<unsigned long long>(0);
+    else
+        static_assert(Bits <= sizeof(unsigned long long) * CHAR_BIT, "ASCII table to big");
+}
+template <std::size_t Bits>
+using _int_n_t = decltype(_int_n_t_impl<Bits>());
+
+/// A lookup table for ASCII characters.
+template <std::size_t CategoryCount>
+class ascii_table
+{
+    using int_n = _int_n_t<CategoryCount>;
+
+public:
+    LEXY_CONSTEVAL ascii_table() : _table() {}
+
+    /// Adds the character to the given category.
+    template <typename CharT>
+    LEXY_CONSTEVAL ascii_table& insert(CharT c, std::size_t category)
+    {
+        auto as_unsigned = static_cast<unsigned char>(c);
+        LEXY_PRECONDITION(as_unsigned <= 0x7F);
+        LEXY_PRECONDITION(category < CategoryCount);
+
+        // Set the given bit.
+        _table[as_unsigned] |= int_n(1 << category);
+
+        return *this;
+    }
+
+    /// Checks whether the character is in the given categories.
+    template <typename Encoding, std::size_t... Categories>
+    constexpr bool contains(typename Encoding::int_type i) const
+    {
+        static_assert(((Categories < CategoryCount) && ...));
+        constexpr auto mask = ((1 << Categories) | ...);
+
+        if (Encoding::to_int_type(0x00) <= i && i <= Encoding::to_int_type(0x7F))
+        {
+            auto index = static_cast<std::size_t>(i);
+            return (_table[index] & mask) != 0;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+private:
+    int_n _table[0x80];
+};
+
+/// Matches one of the specified categories of the ASCII table.
+template <const auto& Table, std::size_t... Categories>
+struct engine_ascii_table : engine_matcher_base
+{
+    static_assert(sizeof...(Categories) > 0);
+
+    enum class error_code
+    {
+        error = 1,
+    };
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        auto cur = reader.peek();
+        if (Table.template contains<typename Reader::encoding, Categories...>(cur))
+        {
+            reader.bump();
+            return error_code();
+        }
+        else
+        {
+            return error_code::error;
+        }
+    }
+};
 } // namespace lexy
 
 #endif // LEXY_ENGINE_CHAR_CLASS_HPP_INCLUDED
