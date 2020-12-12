@@ -66,6 +66,7 @@ set(tests
         engine/failure.cpp
         engine/literal.cpp
         engine/success.cpp
+        engine/trie.cpp
 
         input/argv_input.cpp
         input/base.cpp

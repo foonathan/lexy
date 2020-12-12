@@ -68,6 +68,7 @@ set(header_files
         ${include_dir}/engine/failure.hpp
         ${include_dir}/engine/literal.hpp
         ${include_dir}/engine/success.hpp
+        ${include_dir}/engine/trie.hpp
 
         ${include_dir}/input/argv_input.hpp
         ${include_dir}/input/base.hpp

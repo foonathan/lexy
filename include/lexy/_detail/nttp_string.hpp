@@ -101,6 +101,17 @@ struct type_string
         return basic_string_view<OtherCharT>(_lazy<OtherCharT>::str, sizeof...(Cs));
     }
 };
+template <typename CharT>
+struct type_string<CharT>
+{
+    using char_type = CharT;
+
+    template <typename OtherCharT = char_type>
+    static LEXY_CONSTEVAL auto get()
+    {
+        return basic_string_view<OtherCharT>();
+    }
+};
 
 template <auto C>
 using type_char = type_string<std::decay_t<decltype(C)>, C>;
