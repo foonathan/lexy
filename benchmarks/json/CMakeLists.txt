@@ -62,3 +62,11 @@ endif()
 target_sources(lexy_benchmark_json PRIVATE rapidjson.cpp)
 target_include_directories(lexy_benchmark_json PRIVATE ${rapidjson_SOURCE_DIR}/include)
 
+# Compare with Boost.JSON.
+find_package(Boost COMPONENTS json)
+if (Boost_FOUND)
+    target_sources(lexy_benchmark_json PRIVATE boost.cpp)
+    target_link_libraries(lexy_benchmark_json PRIVATE Boost::json)
+    target_compile_definitions(lexy_benchmark_json PRIVATE LEXY_HAS_BOOST_JSON)
+endif()
+

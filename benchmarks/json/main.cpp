@@ -12,6 +12,7 @@ bool json_lexy(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_nlohmann(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_rapid(const lexy::buffer<lexy::utf8_encoding>& input);
+bool json_boost(const lexy::buffer<lexy::utf8_encoding>& input);
 
 auto get_data(const char* file_name)
 {
@@ -82,6 +83,8 @@ const char* output_suffix()
     A JSON validator using https://github.com/nlohmann/json[JSON for Modern C++] implemented by `nlohmann::json::accept()`.
 `rapidjson`::
     A JSON validator using https://github.com/Tencent/rapidjson[rapidjson] implemented using a SAX parser with the `rapidjson::BaseReaderHandler`.
+`Boost.JSON`::
+    A JSON validator using https://github.com/boostorg/json[Boost.JSON] implemented using a custom parse handler.
 
 .The inputs
 `canada.json`::
@@ -118,6 +121,9 @@ int main()
         b.run("pegtl", [&] { return json_pegtl(data); });
         b.run("nlohmann/json", [&] { return json_nlohmann(data); });
         b.run("rapidjson", [&] { return json_rapid(data); });
+#ifdef LEXY_HAS_BOOST_JSON
+        b.run("Boost.JSON", [&] { return json_boost(data); });
+#endif
 
         b.render(output_template(), out);
     };
