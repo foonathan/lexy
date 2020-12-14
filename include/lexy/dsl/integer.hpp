@@ -323,15 +323,37 @@ LEXY_CONSTEVAL auto integer(Pattern)
 {
     return _int_c<Pattern>{} + _int_p<T, Base, false>{};
 }
-template <typename T, typename Base, typename Sep, bool LeadingZero>
-LEXY_CONSTEVAL auto integer(_digits<Base, Sep, LeadingZero>)
+
+template <typename T, typename Base>
+LEXY_CONSTEVAL auto integer(_digits<Base>)
 {
-    return _int_c<_digits<Base, Sep, LeadingZero>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
+    return _int_c<_digits<Base>>{} + _int_p<T, Base, true>{};
+}
+template <typename T, typename Base, typename Sep>
+LEXY_CONSTEVAL auto integer(_digits_s<Base, Sep>)
+{
+    return _int_c<_digits_s<Base, Sep>>{} + _int_p<T, Base, false>{};
+}
+template <typename T, typename Base>
+LEXY_CONSTEVAL auto integer(_digits_t<Base>)
+{
+    return _int_c<_digits_t<Base>>{} + _int_p<T, Base, true>{};
+}
+template <typename T, typename Base, typename Sep>
+LEXY_CONSTEVAL auto integer(_digits_st<Base, Sep>)
+{
+    return _int_c<_digits_st<Base, Sep>>{} + _int_p<T, Base, false>{};
+}
+
+template <typename T, typename Base, std::size_t N>
+LEXY_CONSTEVAL auto integer(_ndigits<N, Base>)
+{
+    return _int_c<_ndigits<N, Base>>{} + _int_p<T, Base, true>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
-LEXY_CONSTEVAL auto integer(_ndigits<N, Base, Sep>)
+LEXY_CONSTEVAL auto integer(_ndigits_s<N, Base, Sep>)
 {
-    return _int_c<_ndigits<N, Base, Sep>>{} + _int_p<T, Base, std::is_void_v<Sep>>{};
+    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true>{};
 }
 } // namespace lexyd
 

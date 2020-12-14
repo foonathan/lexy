@@ -5,14 +5,10 @@
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
 #define LEXY_DSL_DIGIT_HPP_INCLUDED
 
-#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/option.hpp>
-#include <lexy/dsl/sequence.hpp>
-#include <lexy/dsl/while.hpp>
 #include <lexy/engine/char_class.hpp>
+#include <lexy/engine/digits.hpp>
 
 //=== bases ===//
 namespace lexyd
@@ -298,56 +294,112 @@ struct forbidden_leading_zero
 
 namespace lexyd
 {
-template <typename Base, typename Sep, bool LeadingZero>
-LEXY_CONSTEVAL auto _make_digits()
+template <typename Base, typename Sep>
+struct _digits_st : token_base<_digits_st<Base, Sep>>
 {
-    constexpr auto d = digit<Base>;
+    using token_engine
+        = lexy::engine_digits_trimmed_sep<typename Base::digit_set, _zero::token_engine,
+                                          typename Sep::token_engine>;
 
-    auto tail = [d] {
-        if constexpr (std::is_same_v<Sep, void>)
-            return while_(d);
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader& reader,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
+    {
+        if (ec == token_engine::error_code::leading_zero)
+        {
+            auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            return LEXY_MOV(handler).error(err);
+        }
         else
-            return while_(if_(Sep{}) + d);
-    }();
-
-    if constexpr (LeadingZero)
-    {
-        return d + tail;
+        {
+            auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+            return LEXY_MOV(handler).error(err);
+        }
     }
-    else
-    {
-        auto digit_or_sep = [d] {
-            if constexpr (std::is_same_v<Sep, void>)
-                return d;
-            else
-                return d / Sep{};
-        }();
+};
 
-        auto zero     = d.zero() + prevent<lexy::forbidden_leading_zero>(digit_or_sep);
-        auto non_zero = d.non_zero() + tail;
-        return zero / non_zero;
-    }
-}
-
-template <typename Base, typename Sep, bool LeadingZero>
-struct _digits : decltype(_make_digits<Base, Sep, LeadingZero>())
+template <typename Base, typename Sep>
+struct _digits_s : token_base<_digits_s<Base, Sep>>
 {
-    template <typename Pattern>
-    LEXY_CONSTEVAL auto sep(Pattern) const
+    using token_engine
+        = lexy::engine_digits_sep<typename Base::digit_set, typename Sep::token_engine>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        static_assert(lexy::is_pattern<Pattern>);
-        return _digits<Base, Pattern, LeadingZero>{};
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        return LEXY_MOV(handler).error(err);
     }
 
     LEXY_CONSTEVAL auto no_leading_zero() const
     {
-        return _digits<Base, Sep, false>{};
+        return _digits_st<Base, Sep>{};
+    }
+};
+
+template <typename Base>
+struct _digits_t : token_base<_digits_t<Base>>
+{
+    using token_engine = lexy::engine_digits_trimmed<typename Base::digit_set, _zero::token_engine>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader& reader,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
+    {
+        if (ec == token_engine::error_code::leading_zero)
+        {
+            auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            return LEXY_MOV(handler).error(err);
+        }
+        else
+        {
+            auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+            return LEXY_MOV(handler).error(err);
+        }
+    }
+
+    template <typename Token>
+    LEXY_CONSTEVAL auto sep(Token) const
+    {
+        static_assert(lexy::is_token<Token>);
+        return _digits_st<Base, Token>{};
+    }
+};
+
+template <typename Base>
+struct _digits : token_base<_digits<Base>>
+{
+    using token_engine = lexy::engine_digits<typename Base::digit_set>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
+    {
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        return LEXY_MOV(handler).error(err);
+    }
+
+    template <typename Token>
+    LEXY_CONSTEVAL auto sep(Token) const
+    {
+        static_assert(lexy::is_token<Token>);
+        return _digits_s<Base, Token>{};
+    }
+
+    LEXY_CONSTEVAL auto no_leading_zero() const
+    {
+        return _digits_t<Base>{};
     }
 };
 
 /// Matches a non-empty list of digits.
 template <typename Base = decimal>
-constexpr auto digits = _digits<Base, void, true>{};
+constexpr auto digits = _digits<Base>{};
 
 constexpr auto digit_sep_underscore = LEXY_LIT("_");
 constexpr auto digit_sep_tick       = LEXY_LIT("'");
@@ -357,35 +409,48 @@ constexpr auto digit_sep_tick       = LEXY_LIT("'");
 namespace lexyd
 {
 template <std::size_t N, typename Base, typename Sep>
-LEXY_CONSTEVAL auto _make_digits()
+struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
 {
-    if constexpr (N == 0)
-        return success;
-    else
+    using token_engine
+        = lexy::engine_ndigits_sep<N, typename Base::digit_set, typename Sep::token_engine>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        auto d = digit<Base>;
-        if constexpr (std::is_same_v<Sep, void>)
-            return d + _make_digits<N - 1, Base, Sep>();
-        else
-            return if_(Sep{}) + d + _make_digits<N - 1, Base, Sep>();
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        return LEXY_MOV(handler).error(err);
     }
-}
-template <std::size_t N, typename Base, typename Sep>
-struct _ndigits : decltype(_make_digits<N, Base, Sep>())
+};
+
+template <std::size_t N, typename Base>
+struct _ndigits : token_base<_ndigits<N, Base>>
 {
     static_assert(N > 1);
 
-    template <typename Pattern>
-    LEXY_CONSTEVAL auto sep(Pattern) const
+    using token_engine = lexy::engine_ndigits<N, typename Base::digit_set>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        static_assert(lexy::is_pattern<Pattern>);
-        return _ndigits<N, Base, Pattern>{};
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        return LEXY_MOV(handler).error(err);
+    }
+
+    template <typename Token>
+    LEXY_CONSTEVAL auto sep(Token) const
+    {
+        static_assert(lexy::is_token<Token>);
+        return _ndigits_s<N, Base, Token>{};
     }
 };
 
 /// Matches exactly N digits.
 template <std::size_t N, typename Base = decimal>
-constexpr auto n_digits = _ndigits<N, Base, void>{};
+constexpr auto n_digits = _ndigits<N, Base>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_DIGIT_HPP_INCLUDED

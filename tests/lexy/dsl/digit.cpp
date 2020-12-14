@@ -281,8 +281,7 @@ TEST_CASE("dsl::digits")
         constexpr auto leading_tick = pattern_matches(pattern, "'0");
         CHECK(!leading_tick);
         constexpr auto trailing_tick = pattern_matches(pattern, "0'");
-        CHECK(trailing_tick);
-        CHECK(trailing_tick.match() == "0");
+        CHECK(!trailing_tick);
     }
     SUBCASE("sep + no leading zero")
     {
