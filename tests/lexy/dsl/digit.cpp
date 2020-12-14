@@ -117,6 +117,32 @@ TEST_CASE("dsl::hex")
                        'f', 'A', 'B', 'C', 'D', 'E', 'F');
 }
 
+TEST_CASE("dsl::zero")
+{
+    constexpr auto atom = lexy::dsl::zero;
+    CHECK(lexy::is_pattern<decltype(atom)>);
+
+    constexpr auto empty = atom_matches(atom, "");
+    CHECK(!empty);
+    CHECK(empty.count == 0);
+    // CHECK(empty.error.position() == empty.input);
+    // CHECK(empty.error.character_class() == "digit.zero");
+
+    constexpr auto zero = atom_matches(atom, "0");
+    CHECK(zero);
+    CHECK(zero.count == 1);
+
+    constexpr auto zero_zero = atom_matches(atom, "00");
+    CHECK(zero_zero);
+    CHECK(zero_zero.count == 1);
+
+    constexpr auto nine = atom_matches(atom, "9");
+    CHECK(!nine);
+    CHECK(nine.count == 0);
+    // CHECK(nine.error.position() == nine.input);
+    // CHECK(nine.error.character_class() == "digit.zero");
+}
+
 TEST_CASE("dsl::digit")
 {
     constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>;
@@ -145,64 +171,6 @@ TEST_CASE("dsl::digit")
     CHECK(nine.count == 0);
     // CHECK(nine.error.position() == nine.input);
     // CHECK(nine.error.character_class() == "digit.octal");
-}
-
-TEST_CASE("dsl::digit.zero()")
-{
-    constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>.zero();
-    CHECK(lexy::is_pattern<decltype(atom)>);
-
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(!empty);
-    CHECK(empty.count == 0);
-    // CHECK(empty.error.position() == empty.input);
-    // CHECK(empty.error.character_class() == "digit.zero");
-
-    constexpr auto zero = atom_matches(atom, "0");
-    CHECK(zero);
-    CHECK(zero.count == 1);
-
-    constexpr auto zero_zero = atom_matches(atom, "00");
-    CHECK(zero_zero);
-    CHECK(zero_zero.count == 1);
-
-    constexpr auto nine = atom_matches(atom, "9");
-    CHECK(!nine);
-    CHECK(nine.count == 0);
-    // CHECK(nine.error.position() == nine.input);
-    // CHECK(nine.error.character_class() == "digit.zero");
-}
-
-TEST_CASE("dsl::digit.non_zero()")
-{
-    constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>.non_zero();
-    CHECK(lexy::is_pattern<decltype(atom)>);
-
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(!empty);
-    CHECK(empty.count == 0);
-    // CHECK(empty.error.position() == empty.input);
-    // CHECK(empty.error.character_class() == "digit.octal");
-
-    constexpr auto six = atom_matches(atom, "6");
-    CHECK(six);
-    CHECK(six.count == 1);
-
-    constexpr auto three_seven = atom_matches(atom, "37");
-    CHECK(three_seven);
-    CHECK(three_seven.count == 1);
-
-    constexpr auto nine = atom_matches(atom, "9");
-    CHECK(!nine);
-    CHECK(nine.count == 0);
-    // CHECK(nine.error.position() == nine.input);
-    // CHECK(nine.error.character_class() == "digit.octal");
-
-    constexpr auto zero = atom_matches(atom, "0");
-    CHECK(!zero);
-    CHECK(zero.count == 0);
-    // CHECK(zero.error.position() == zero.input);
-    // CHECK(zero.error.character_class() == "digit.non-zero");
 }
 
 TEST_CASE("dsl::digits")

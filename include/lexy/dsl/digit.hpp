@@ -213,41 +213,8 @@ struct _zero : token_base<_zero>
     }
 };
 
-template <typename Base>
-struct _nzero : token_base<_nzero<Base>>
-{
-    struct token_engine : lexy::engine_matcher_base
-    {
-        enum class error_code
-        {
-            not_a_digit = 1,
-            zero        = 2,
-        };
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            using encoding = typename Reader::encoding;
-
-            if (reader.peek() == encoding::to_int_type('0'))
-                return error_code::zero;
-            else if (!lexy::engine_try_match<typename Base::digit_set>(reader))
-                return error_code::not_a_digit;
-            else
-                return error_code();
-        }
-    };
-
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler&                          handler, const Reader&,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
-    {
-        auto name = ec == token_engine::error_code::zero ? "digit.zero" : Base::Name();
-        auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
-        return LEXY_MOV(handler).error(err);
-    }
-};
+/// Matches the zero digit.
+constexpr auto zero = _zero{};
 
 template <typename Base>
 struct _digit : token_base<_digit<Base>>
@@ -261,17 +228,6 @@ struct _digit : token_base<_digit<Base>>
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
         return LEXY_MOV(handler).error(err);
-    }
-
-    //=== dsl ===//
-    LEXY_CONSTEVAL auto zero() const
-    {
-        return _zero{};
-    }
-
-    LEXY_CONSTEVAL auto non_zero() const
-    {
-        return _nzero<Base>{};
     }
 };
 
