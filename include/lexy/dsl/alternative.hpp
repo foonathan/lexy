@@ -46,7 +46,7 @@ struct _alt : rule_base
             else
             {
                 auto e = lexy::make_error<Reader, lexy::exhausted_alternatives>(reader.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
         }
     };

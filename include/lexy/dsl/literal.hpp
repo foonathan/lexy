@@ -9,11 +9,12 @@
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
+#include <lexy/engine/literal.hpp>
 
 namespace lexyd
 {
 template <typename String>
-struct _lit : atom_base<_lit<String>>
+struct _lit : token_base<_lit<String>>
 {
     template <typename Reader>
     static LEXY_CONSTEVAL bool _string_compatible()
@@ -35,31 +36,22 @@ struct _lit : atom_base<_lit<String>>
         return true;
     }
 
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    // TODO: string compatibility check
+    static constexpr auto _trie = lexy::linear_trie<String>;
+    using token_engine          = lexy::engine_literal<_trie>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler&                          handler, const Reader&,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
     {
-        static_assert(_string_compatible<Reader>(),
-                      "literal contains characters not compatible with input encoding");
-
-        auto str = String::get();
-        for (auto c : str)
-        {
-            if (reader.peek() != Reader::encoding::to_int_type(typename Reader::char_type(c)))
-                return false;
-            reader.bump();
-        }
-
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
-    {
-        using error = lexy::error<typename Reader::canonical_reader, lexy::expected_literal>;
-        auto idx    = lexy::_detail::range_size(pos, reader.cur());
-
         using reader_char_type = typename Reader::encoding::char_type;
-        return error(pos, String::template get<reader_char_type>(), idx);
+        constexpr auto string  = String::template get<reader_char_type>();
+
+        auto err
+            = lexy::make_error<Reader, lexy::expected_literal>(pos, string,
+                                                               token_engine::index_from_error(ec));
+        return LEXY_MOV(handler).error(err);
     }
 
     //=== dsl ===//

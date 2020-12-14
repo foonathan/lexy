@@ -10,21 +10,32 @@
 namespace lexyd::ascii
 {
 template <typename Predicate>
-struct _ascii : atom_base<_ascii<Predicate>>
+struct _ascii : token_base<_ascii<Predicate>>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    struct token_engine : lexy::engine_matcher_base
     {
-        if (!Predicate::template match<typename Reader::encoding>(reader.peek()))
-            return false;
-        reader.bump();
-        return true;
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (!Predicate::template match<typename Reader::encoding>(reader.peek()))
+                return error_code::error;
+            reader.bump();
+            return error_code();
+        }
+    };
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, Predicate::name());
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Predicate::name());
+        return LEXY_MOV(handler).error(err);
     }
 
     constexpr bool operator()(char c) const

@@ -12,6 +12,7 @@
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/while.hpp>
+#include <lexy/engine/char_class.hpp>
 
 //=== bases ===//
 namespace lexyd
@@ -25,17 +26,7 @@ struct binary
         return "digit.binary";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
-    {
-        return c == Encoding::to_int_type('0') || c == Encoding::to_int_type('1');
-    }
-
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+    using digit_set = lexy::engine_char_range<'0', '1'>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -53,17 +44,7 @@ struct octal
         return "digit.octal";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
-    {
-        return c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('7');
-    }
-
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+    using digit_set = lexy::engine_char_range<'0', '7'>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -81,17 +62,7 @@ struct decimal
         return "digit.decimal";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
-    {
-        return c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9');
-    }
-
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+    using digit_set = lexy::engine_char_range<'0', '9'>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -109,18 +80,25 @@ struct hex_lower
         return "digit.hex-lower";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
+    struct digit_set : lexy::engine_matcher_base
     {
-        return (c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9'))
-               || (c >= Encoding::to_int_type('a') && c <= Encoding::to_int_type('f'));
-    }
+        using dec   = lexy::engine_char_range<'0', '9'>;
+        using lower = lexy::engine_char_range<'a', 'f'>;
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<lower>(reader))
+                return error_code();
+            else
+                return error_code::error;
+        }
+    };
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -143,18 +121,25 @@ struct hex_upper
         return "digit.hex-upper";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
+    struct digit_set : lexy::engine_matcher_base
     {
-        return (c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9'))
-               || (c >= Encoding::to_int_type('A') && c <= Encoding::to_int_type('F'));
-    }
+        using dec   = lexy::engine_char_range<'0', '9'>;
+        using upper = lexy::engine_char_range<'A', 'F'>;
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<upper>(reader))
+                return error_code();
+            else
+                return error_code::error;
+        }
+    };
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -177,19 +162,27 @@ struct hex
         return "digit.hex";
     }
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match(IntType c)
+    struct digit_set : lexy::engine_matcher_base
     {
-        return (c >= Encoding::to_int_type('0') && c <= Encoding::to_int_type('9'))
-               || (c >= Encoding::to_int_type('A') && c <= Encoding::to_int_type('F'))
-               || (c >= Encoding::to_int_type('a') && c <= Encoding::to_int_type('f'));
-    }
+        using dec   = lexy::engine_char_range<'0', '9'>;
+        using lower = lexy::engine_char_range<'a', 'f'>;
+        using upper = lexy::engine_char_range<'A', 'F'>;
 
-    template <typename Encoding, typename IntType>
-    LEXY_DSL_FUNC bool match_zero(IntType c)
-    {
-        return c == Encoding::to_int_type('0');
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<lower>(reader)
+                || lexy::engine_try_match<upper>(reader))
+                return error_code();
+            else
+                return error_code::error;
+        }
+    };
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -209,76 +202,75 @@ struct hex
 //=== digit ===//
 namespace lexyd
 {
-template <typename Base>
-struct _zero : atom_base<_zero<Base>>
+struct _zero : token_base<_zero>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        if (!Base::template match<typename Reader::encoding>(reader.peek()))
-            return false;
-        else if (!Base::template match_zero<typename Reader::encoding>(reader.peek()))
-            return false;
+    static constexpr auto _trie = lexy::linear_trie<LEXY_NTTP_STRING("0")>;
+    using token_engine          = lexy::engine_literal<_trie>;
 
-        reader.bump();
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "digit.zero");
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "digit.zero");
+        return LEXY_MOV(handler).error(err);
     }
 };
 
 template <typename Base>
-struct _nzero : atom_base<_nzero<Base>>
+struct _nzero : token_base<_nzero<Base>>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    struct token_engine : lexy::engine_matcher_base
     {
-        if (!Base::template match<typename Reader::encoding>(reader.peek()))
-            return false;
-        else if (Base::template match_zero<typename Reader::encoding>(reader.peek()))
-            return false;
+        enum class error_code
+        {
+            not_a_digit = 1,
+            zero        = 2,
+        };
 
-        reader.bump();
-        return true;
-    }
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            using encoding = typename Reader::encoding;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos)
+            if (reader.peek() == encoding::to_int_type('0'))
+                return error_code::zero;
+            else if (!lexy::engine_try_match<typename Base::digit_set>(reader))
+                return error_code::not_a_digit;
+            else
+                return error_code();
+        }
+    };
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler&                          handler, const Reader&,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
     {
-        if (Base::template match_zero<typename Reader::encoding>(reader.peek()))
-            return lexy::make_error<Reader, lexy::expected_char_class>(pos, "digit.non-zero");
-        else
-            return lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto name = ec == token_engine::error_code::zero ? "digit.zero" : Base::Name();
+        auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
+        return LEXY_MOV(handler).error(err);
     }
 };
 
 template <typename Base>
-struct _digit : atom_base<_digit<Base>>
+struct _digit : token_base<_digit<Base>>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        if (!Base::template match<typename Reader::encoding>(reader.peek()))
-            return false;
+    using token_engine = typename Base::digit_set;
 
-        reader.bump();
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        return LEXY_MOV(handler).error(err);
     }
 
     //=== dsl ===//
     LEXY_CONSTEVAL auto zero() const
     {
-        return _zero<Base>{};
+        return _zero{};
     }
 
     LEXY_CONSTEVAL auto non_zero() const

@@ -73,7 +73,7 @@ constexpr auto make_error_location(const Input& input, typename input_reader<Inp
     while (true)
     {
         auto save = reader;
-        if (PatternNL::match(reader))
+        if (PatternNL::matcher::match(reader))
         {
             // We've found the final newline, reset to previous position.
             reader = LEXY_MOV(save);

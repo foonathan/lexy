@@ -76,7 +76,7 @@ struct _delc : rule_base
 
                 // If we've reached EOF, it means we're missing the closing delimiter.
                 auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
             else
             {

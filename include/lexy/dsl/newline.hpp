@@ -5,40 +5,25 @@
 #ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
+#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
+#include <lexy/engine/trie.hpp>
 
 namespace lexyd
 {
-struct _nl : atom_base<_nl>
+struct _nl : token_base<_nl>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        if (auto cur = reader.peek(); cur == Reader::encoding::to_int_type('\n'))
-        {
-            reader.bump();
-            return true;
-        }
-        else if (cur == Reader::encoding::to_int_type('\r'))
-        {
-            reader.bump();
-            if (reader.peek() == Reader::encoding::to_int_type('\n'))
-            {
-                reader.bump();
-                return true;
-            }
+    static constexpr auto _trie
+        = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
+    using token_engine = lexy::engine_trie<_trie>;
 
-            return false; // Single '\r' not allowed.
-        }
-        else
-            return false;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
+        return LEXY_MOV(handler).error(err);
     }
 
     template <typename Whitespace>
@@ -54,18 +39,28 @@ constexpr auto newline = _nl{};
 
 namespace lexyd
 {
-struct _eol : atom_base<_eol>
+struct _eol : token_base<_eol>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    struct token_engine : lexy::engine_matcher_base
     {
-        return reader.eof() || _nl::match(reader);
-    }
+        using error_code = _nl::token_engine::error_code;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (reader.eof())
+                return error_code();
+            else
+                return _nl::token_engine::match(reader);
+        }
+    };
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
+        return LEXY_MOV(handler).error(err);
     }
 
     template <typename Whitespace>

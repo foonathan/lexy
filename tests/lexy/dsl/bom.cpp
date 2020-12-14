@@ -27,7 +27,7 @@ TEST_CASE("dsl::bom")
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
         CHECK(empty.count == 0);
-        CHECK(empty.error.character_class() == "BOM.UTF-8");
+        // CHECK(empty.error.character_class() == "BOM.UTF-8");
 
         static constexpr char str[] = {char(0xEF), char(0xBB), char(0xBF)};
         constexpr auto        bom   = atom_matches(atom, str, 3);
@@ -43,7 +43,7 @@ TEST_CASE("dsl::bom")
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
         CHECK(empty.count == 0);
-        CHECK(empty.error.character_class() == "BOM.UTF-16-LE");
+        // CHECK(empty.error.character_class() == "BOM.UTF-16-LE");
 
         static constexpr char str[] = {char(0xFF), char(0xFE)};
         constexpr auto        bom   = atom_matches(atom, str, 2);
@@ -58,7 +58,7 @@ TEST_CASE("dsl::bom")
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
         CHECK(empty.count == 0);
-        CHECK(empty.error.character_class() == "BOM.UTF-16-BE");
+        // CHECK(empty.error.character_class() == "BOM.UTF-16-BE");
 
         static constexpr char str[] = {char(0xFE), char(0xFF)};
         constexpr auto        bom   = atom_matches(atom, str, 2);
@@ -74,7 +74,7 @@ TEST_CASE("dsl::bom")
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
         CHECK(empty.count == 0);
-        CHECK(empty.error.character_class() == "BOM.UTF-32-LE");
+        // CHECK(empty.error.character_class() == "BOM.UTF-32-LE");
 
         static constexpr char str[] = {char(0xFF), char(0xFE), 0, 0};
         constexpr auto        bom   = atom_matches(atom, str, 4);
@@ -89,7 +89,7 @@ TEST_CASE("dsl::bom")
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
         CHECK(empty.count == 0);
-        CHECK(empty.error.character_class() == "BOM.UTF-32-BE");
+        // CHECK(empty.error.character_class() == "BOM.UTF-32-BE");
 
         static constexpr char str[] = {0, 0, char(0xFE), char(0xFF)};
         constexpr auto        bom   = atom_matches(atom, str, 4);

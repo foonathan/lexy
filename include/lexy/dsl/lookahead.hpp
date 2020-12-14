@@ -70,7 +70,7 @@ struct _look : rule_base
             {
                 auto e
                     = lexy::make_error<Reader, lexy::lookahead_failure>(reader.cur(), copy.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
         }
     };

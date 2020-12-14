@@ -16,8 +16,8 @@ TEST_CASE("dsl::match")
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
     CHECK(empty.count == 0);
-    CHECK(empty.error.message() == "no match");
-    CHECK(empty.error.position() == empty.input);
+    // CHECK(empty.error.message() == "no match");
+    // CHECK(empty.error.position() == empty.input);
 
     constexpr auto one = atom_matches(atom, "abc");
     CHECK(one);

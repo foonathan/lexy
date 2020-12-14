@@ -292,7 +292,7 @@ struct _int_p : rule_base
             if (integer_parser::parse(result, begin, reader.cur()))
                 return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
             else
-                return LEXY_MOV(handler).error(reader, error_type(begin, reader.cur()));
+                return LEXY_MOV(handler).error(error_type(begin, reader.cur()));
         }
     };
 };

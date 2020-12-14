@@ -67,7 +67,7 @@ struct _minus : rule_base
                     // It did, so we don't match after all.
                     auto e
                         = lexy::make_error<Reader, lexy::minus_failure>(save.cur(), reader.cur());
-                    return LEXY_MOV(handler).error(reader, e);
+                    return LEXY_MOV(handler).error(e);
                 }
 
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);

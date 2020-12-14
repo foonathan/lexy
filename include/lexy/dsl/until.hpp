@@ -10,24 +10,45 @@
 namespace lexyd
 {
 template <typename Condition>
-struct _until_eof : atom_base<_until_eof<Condition>>
+struct _until_eof : rule_base
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    static constexpr auto has_matcher = true;
+
+    struct matcher
     {
-        while (!Condition::matcher::match(reader))
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
         {
-            if (reader.eof())
-                break;
+            while (!Condition::matcher::match(reader))
+            {
+                if (reader.eof())
+                    break;
 
-            reader.bump();
+                reader.bump();
+            }
+
+            return true;
         }
+    };
 
-        return true;
-    }
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            while (!Condition::matcher::match(reader))
+            {
+                if (reader.eof())
+                    break;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
+                reader.bump();
+            }
+
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
 };
 
 template <typename Condition>

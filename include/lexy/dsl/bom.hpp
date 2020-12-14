@@ -6,6 +6,7 @@
 #define LEXY_DSL_BOM_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/engine/literal.hpp>
 
 namespace lexyd
 {
@@ -17,8 +18,10 @@ struct _bom_impl
 
     static constexpr auto name = "";
 
-    static constexpr const unsigned char* value  = nullptr;
-    static constexpr std::size_t          length = 0u;
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view<unsigned char>();
+    }
 };
 template <lexy::encoding_endianness DontCare>
 struct _bom_impl<lexy::utf8_encoding, DontCare>
@@ -27,6 +30,11 @@ struct _bom_impl<lexy::utf8_encoding, DontCare>
 
     static constexpr unsigned char value[] = {0xEF, 0xBB, 0xBF};
     static constexpr auto          length  = 3u;
+
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view(value, length);
+    }
 };
 template <>
 struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
@@ -35,6 +43,11 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
 
     static constexpr unsigned char value[] = {0xFF, 0xFE};
     static constexpr auto          length  = 2u;
+
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view(value, length);
+    }
 };
 template <>
 struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
@@ -43,6 +56,11 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
 
     static constexpr unsigned char value[] = {0xFE, 0xFF};
     static constexpr auto          length  = 2u;
+
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view(value, length);
+    }
 };
 template <>
 struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
@@ -51,6 +69,11 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
 
     static constexpr unsigned char value[] = {0xFF, 0xFE, 0x00, 0x00};
     static constexpr auto          length  = 4u;
+
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view(value, length);
+    }
 };
 template <>
 struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
@@ -59,32 +82,28 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 
     static constexpr unsigned char value[] = {0x00, 0x00, 0xFE, 0xFF};
     static constexpr auto          length  = 4u;
+
+    static constexpr auto get()
+    {
+        return lexy::_detail::basic_string_view(value, length);
+    }
 };
 
 template <typename Encoding, lexy::encoding_endianness Endianness>
-struct _bom : atom_base<_bom<Encoding, Endianness>>
+struct _bom : token_base<_bom<Encoding, Endianness>>
 {
-    using _impl = _bom_impl<Encoding, Endianness>;
+    using _impl                 = _bom_impl<Encoding, Endianness>;
+    static constexpr auto _trie = lexy::linear_trie<_impl>;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    using token_engine = lexy::engine_literal<_trie>;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        constexpr auto string
-            = lexy::_detail::basic_string_view<unsigned char>(_impl::value, _impl::length);
-        for (auto c : string)
-        {
-            if (reader.peek() != Reader::encoding::to_int_type(typename Reader::char_type(c)))
-                return false;
-            reader.bump();
-        }
-
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
-    {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, _impl::name);
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, _impl::name);
+        return LEXY_MOV(handler).error(err);
     }
 };
 

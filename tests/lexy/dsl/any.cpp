@@ -23,26 +23,5 @@ TEST_CASE("dsl::any")
         CHECK(non_empty);
         CHECK(non_empty.count == 3);
     }
-
-    SUBCASE("no sentinel") // specialized match() overload
-    {
-        const char                           str[] = {'a', 'b', 'c'};
-        lexy::buffer<lexy::default_encoding> input(str, 3);
-
-        auto reader = input.reader();
-        CHECK(reader.cur() == input.begin());
-        lexy::dsl::any.match(reader);
-        CHECK(reader.cur() == input.end());
-    }
-    SUBCASE("sentinel") // generic match() overload
-    {
-        const char                         str[] = {'a', 'b', 'c'};
-        lexy::buffer<lexy::ascii_encoding> input(str, 3);
-
-        auto reader = input.reader();
-        CHECK(reader.cur() == input.begin());
-        lexy::dsl::any.match(reader);
-        CHECK(reader.cur() == input.end());
-    }
 }
 

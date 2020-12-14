@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/engine/base.hpp>
 #include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 
@@ -26,8 +27,8 @@ struct Handler
     Sink list_sink();
 
     /// Called when an error ocurred.
-    template <typename Reader, typename Error>
-    result_type error(const Reader& reader, Error&& error) &&;
+    template <typename Error>
+    result_type error(Error&& error) &&;
 
     /// Called when parsing was succesful.
     template <typename ... Args>
@@ -64,19 +65,24 @@ struct Rule : rule_base
 };
 #endif
 
-// We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
 struct rule_base
+{};
+
+struct _token_base : rule_base
 {};
 } // namespace lexyd
 
 namespace lexy
 {
+// We use a shorthand namespace to decrease symbol size.
 namespace dsl = lexyd;
 
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
+template <typename T>
+constexpr bool is_token = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
 constexpr bool is_pattern = [] {
@@ -85,73 +91,7 @@ constexpr bool is_pattern = [] {
     else
         return false;
 }();
-} // namespace lexy
 
-//=== atom ===//
-#if 0
-class Atom : atom_base<Atom>
-{
-    // Try to match and consume characters.
-    // Returns true, if match succesful and leave reader after the consumed characters.
-    // Otherwise, return false and leaves reader at the error position.
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader);
-
-    // Returns an error object describing the error.
-    // The reader is in the state the match function left it, `pos` is the position before calling match.
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader& reader, typename Reader::iterator pos);
-};
-#endif
-
-namespace lexyd
-{
-template <typename Atom>
-struct atom_base : rule_base
-{
-    static constexpr auto has_matcher = true;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            auto reset = reader;
-            if (Atom::match(reader))
-                return true;
-
-            reader = LEXY_MOV(reset);
-            return false;
-        }
-    };
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            if constexpr (std::is_same_v<decltype(Atom::error(reader, reader.cur())), void>)
-            {
-                Atom::match(reader);
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                if (auto pos = reader.cur(); Atom::match(reader))
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-                else
-                    return LEXY_MOV(handler).error(reader, Atom::error(reader, pos));
-            }
-        }
-    };
-};
-} // namespace lexyd
-
-//=== infrastructure ===//
-namespace lexy
-{
 /// The final parser in the chain of NextParsers, forwarding everything to the handler.
 struct final_parser
 {
@@ -163,6 +103,50 @@ struct final_parser
     }
 };
 } // namespace lexy
+
+//=== token ===//
+namespace lexyd
+{
+template <typename Derived>
+struct token_base : _token_base
+{
+    static constexpr auto has_matcher = true;
+
+    struct matcher
+    {
+        template <typename Reader>
+        LEXY_DSL_FUNC bool match(Reader& reader)
+        {
+            return lexy::engine_try_match<typename Derived::token_engine>(reader);
+        }
+    };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            using token_engine = typename Derived::token_engine;
+            if constexpr (lexy::engine_can_fail<token_engine, Reader>)
+            {
+                auto position = reader.cur();
+                if (auto ec = token_engine::match(reader);
+                    ec == typename token_engine::error_code())
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                else
+                    return Derived::token_error(handler, reader, ec, position);
+            }
+            else
+            {
+                token_engine::match(reader);
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            }
+        }
+    };
+};
+} // namespace lexyd
 
 #endif // LEXY_DSL_BASE_HPP_INCLUDED
 

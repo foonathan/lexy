@@ -38,13 +38,13 @@ struct _err : rule_base
                 if (auto begin = reader.cur(); Pattern::matcher::match(reader))
                 {
                     auto e = lexy::make_error<Reader, Tag>(begin, reader.cur());
-                    return LEXY_MOV(handler).error(reader, e);
+                    return LEXY_MOV(handler).error(e);
                 }
             }
 
             // Pattern didn't match or we don't have one.
             auto e = lexy::make_error<Reader, Tag>(reader.cur());
-            return LEXY_MOV(handler).error(reader, e);
+            return LEXY_MOV(handler).error(e);
         }
     };
 
@@ -103,7 +103,7 @@ struct _try_ : rule_base
             else
             {
                 auto e = lexy::make_error<Reader, Tag>(pos, reader.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
         }
     };

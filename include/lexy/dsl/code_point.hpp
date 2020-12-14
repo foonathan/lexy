@@ -6,6 +6,7 @@
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/engine/code_point.hpp>
 
 namespace lexyd
 {
@@ -26,52 +27,6 @@ constexpr auto _cp_name()
 
 struct _cp_cap : rule_base
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC lexy::code_point _parse(Reader& reader)
-    {
-        using decoder_t = typename Reader::encoding::code_point_decoder;
-        decoder_t decoder;
-
-        switch (decoder.init(reader.peek()))
-        {
-        case 0:
-            break;
-
-        case 3:
-            reader.bump();
-            if (!decoder.next(reader.peek()))
-                return {};
-            // fallthrough
-        case 2:
-            reader.bump();
-            if (!decoder.next(reader.peek()))
-                return {};
-            // fallthrough
-        case 1:
-            reader.bump();
-            if (!decoder.next(reader.peek()))
-                return {};
-            break;
-
-        case -1:
-            return {};
-        default:
-            LEXY_PRECONDITION(false);
-            return {};
-        }
-
-        // We only accept valid code points.
-        auto cp = LEXY_MOV(decoder).finish();
-        if (!cp.is_valid())
-            return {};
-
-        // Consume final code unit.
-        // This has to be done after the validity check,
-        // because for UTF-32, eof creates an invalid code point.
-        reader.bump();
-        return cp;
-    }
-
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
@@ -82,7 +37,10 @@ struct _cp_cap : rule_base
             typename Handler::result_type
         {
             auto save = reader;
-            if (auto result = _parse(reader); result.is_valid())
+
+            lexy::engine_cp_auto::error_code ec{};
+            auto                             result = lexy::engine_cp_auto::parse(ec, reader);
+            if (ec == lexy::engine_cp_auto::error_code())
             {
                 LEXY_PRECONDITION(result.is_scalar());
                 return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
@@ -93,27 +51,23 @@ struct _cp_cap : rule_base
 
                 auto name = _cp_name<typename Reader::encoding>();
                 auto e    = lexy::make_error<Reader, lexy::expected_char_class>(reader.cur(), name);
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
         }
     };
 };
 
-struct _cp : atom_base<_cp>
+struct _cp : token_base<_cp>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        auto cp = _cp_cap::_parse(reader);
-        LEXY_PRECONDITION(!cp.is_valid() || cp.is_scalar());
-        return cp.is_valid();
-    }
+    using token_engine = lexy::engine_cp_auto;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
         auto name = _cp_name<typename Reader::encoding>();
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
+        auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
+        return LEXY_MOV(handler).error(err);
     }
 
     LEXY_CONSTEVAL auto capture() const

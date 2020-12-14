@@ -21,23 +21,14 @@
 #define CONSTEXPR_CHECK(x) ((x) ? true : constexpr_check_failure())
 
 //=== atom ===//
-template <typename Error>
 struct atom_match_result
 {
     bool        matches;
     const char* input;
     std::size_t count;
-    union
-    {
-        bool  success;
-        Error error;
-    };
 
-    constexpr explicit atom_match_result(const char* input, std::size_t count)
-    : matches(true), input(input), count(count), success()
-    {}
-    constexpr explicit atom_match_result(const char* input, std::size_t count, Error error)
-    : matches(false), input(input), count(count), error(error)
+    constexpr explicit atom_match_result(bool matches, const char* input, std::size_t count)
+    : matches(matches), input(input), count(count)
     {}
 
     constexpr explicit operator bool() const noexcept
@@ -45,22 +36,8 @@ struct atom_match_result
         return matches;
     }
 };
-template <>
-struct atom_match_result<void>
-{
-    const char* input;
-    std::size_t count;
 
-    constexpr explicit atom_match_result(const char* input, std::size_t count)
-    : input(input), count(count)
-    {}
-
-    constexpr explicit operator bool() const noexcept
-    {
-        return true;
-    }
-};
-
+// TODO: temporary until the test are replaced using parse tree comparison
 template <typename Atom>
 constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
 {
@@ -68,16 +45,11 @@ constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_
                                           : lexy::string_input<test_encoding>(str, size);
     auto reader = input.reader();
 
-    auto pos         = reader.cur();
-    using error_type = decltype(Atom::error(reader, pos));
+    auto begin  = reader.cur();
+    auto result = lexy::engine_try_match<typename Atom::token_engine>(reader);
+    auto end    = reader.cur();
 
-    if (Atom::match(reader))
-        return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos));
-    else if constexpr (!std::is_same_v<error_type, void>)
-        return atom_match_result<error_type>(str, std::size_t(reader.cur() - pos),
-                                             Atom::error(reader, pos));
-    else
-        CONSTEXPR_CHECK(false);
+    return atom_match_result(result, str, std::size_t(end - begin));
 }
 
 //=== pattern ===//
@@ -132,7 +104,7 @@ struct test_handler
     }
 
     template <typename Error>
-    constexpr auto error(const lexy::input_reader<test_input>&, Error&& error) &&
+    constexpr auto error(Error&& error) &&
     {
         if constexpr (std::is_same_v<Production, void>)
         {

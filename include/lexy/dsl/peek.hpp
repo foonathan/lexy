@@ -106,7 +106,7 @@ struct _peekn : rule_base
             if (auto pos = copy.cur(); Pattern::matcher::match(copy))
             {
                 auto e = lexy::make_error<Reader, lexy::unexpected>(pos, copy.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
 
             return NextParser::parse(handler, reader, LEXY_FWD(args)...);

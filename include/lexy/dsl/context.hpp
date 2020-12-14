@@ -184,7 +184,7 @@ struct _ctx_top
                 {
                     auto e = lexy::make_error<Reader, Error>(popped.lexeme.begin(),
                                                              popped.lexeme.end());
-                    return LEXY_MOV(handler).error(reader, e);
+                    return LEXY_MOV(handler).error(e);
                 }
             }
         };

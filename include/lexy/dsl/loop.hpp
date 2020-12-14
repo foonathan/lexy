@@ -31,11 +31,11 @@ struct _loop_handler
         return _handler.sink();
     }
 
-    template <typename Reader, typename Error>
-    constexpr auto error(const Reader& reader, Error&& error) &&
+    template <typename Error>
+    constexpr auto error(Error&& error) &&
     {
         // We report errors to the normal handler.
-        return result_type(lexy::result_error, LEXY_MOV(_handler).error(reader, LEXY_FWD(error)));
+        return result_type(lexy::result_error, LEXY_MOV(_handler).error(LEXY_FWD(error)));
     }
 
     constexpr auto value() &&

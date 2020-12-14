@@ -15,7 +15,12 @@ namespace lexyd
 template <typename Condition, typename Then>
 struct _whl : rule_base
 {
-    static constexpr auto has_matcher = Then::has_matcher;
+    static constexpr auto has_matcher = [] {
+        if constexpr (std::is_void_v<Then>)
+            return true;
+        else
+            return Then::has_matcher;
+    }();
 
     struct matcher
     {
@@ -25,10 +30,13 @@ struct _whl : rule_base
             auto save = reader;
             while (Condition::matcher::match(reader))
             {
-                if (!Then::matcher::match(reader))
+                if constexpr (!std::is_void_v<Then>)
                 {
-                    reader = LEXY_MOV(save);
-                    return false;
+                    if (!Then::matcher::match(reader))
+                    {
+                        reader = LEXY_MOV(save);
+                        return false;
+                    }
                 }
             }
 
@@ -49,31 +57,19 @@ struct _whl : rule_base
                 if (!Condition::matcher::match(reader))
                     break;
 
-                using continuation = _loop_iter_parser<Args...>;
-                auto result = Then::template parser<continuation>::parse(loop_handler, reader,
-                                                                         LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                if constexpr (!std::is_void_v<Then>)
+                {
+                    using continuation = _loop_iter_parser<Args...>;
+                    auto result = Then::template parser<continuation>::parse(loop_handler, reader,
+                                                                             LEXY_FWD(args)...);
+                    if (!result)
+                        return LEXY_MOV(result).error();
+                }
             }
 
             return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
-};
-
-template <typename Pattern>
-struct _whl<Pattern, void> : atom_base<_whl<Pattern, void>>
-{
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        while (Pattern::matcher::match(reader))
-        {}
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
 };
 
 /// Matches the pattern branch rule as often as possible.

@@ -23,19 +23,33 @@ struct no_match
 namespace lexyd
 {
 template <typename Rule>
-struct _match : atom_base<_match<Rule>>
+struct _match : token_base<_match<Rule>>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
+    struct token_engine : lexy::engine_matcher_base
     {
-        lexy::_match_handler handler{};
-        return Rule::template parser<lexy::final_parser>::parse(handler, reader).has_value();
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            lexy::_match_handler handler{};
+            if (Rule::template parser<lexy::final_parser>::parse(handler, reader).has_value())
+                return error_code();
+            else
+                return error_code::error;
+        }
+    };
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::no_match>(pos);
+        auto err = lexy::make_error<Reader, lexy::no_match>(pos);
+        return LEXY_MOV(handler).error(err);
     }
 
     template <typename Whitespace>

@@ -63,7 +63,7 @@ struct _chc_parser<NextParser>
         typename Handler::result_type
     {
         auto e = lexy::make_error<Reader, lexy::exhausted_choice>(reader.cur());
-        return LEXY_MOV(handler).error(reader, e);
+        return LEXY_MOV(handler).error(e);
     }
 };
 template <typename NextParser, typename H, typename... T>

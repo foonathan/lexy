@@ -206,29 +206,39 @@ using argv_error_context = error_context<Production, argv_input<Encoding>>;
 
 namespace lexyd
 {
-struct _argvsep : atom_base<_argvsep>
+struct _argvsep : token_base<_argvsep>
 {
     template <typename Encoding>
     using _argv_reader = lexy::_detail::range_reader<Encoding, lexy::argv_iterator>;
 
-    template <typename Encoding>
-    LEXY_DSL_FUNC bool match(_argv_reader<Encoding>& reader)
+    struct token_engine : lexy::engine_matcher_base
     {
-        if (reader.peek() != Encoding::to_int_type('\0'))
-            return false;
-        reader.bump();
-        return true;
-    }
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader&)
-    {
-        return false;
-    }
+        enum class error_code
+        {
+            error = 1,
+        };
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+        template <typename Encoding>
+        static constexpr error_code match(_argv_reader<Encoding>& reader)
+        {
+            if (reader.peek() != Encoding::to_int_type('\0'))
+                return error_code::error;
+            reader.bump();
+            return error_code();
+        }
+        template <typename Reader>
+        static constexpr error_code match(Reader&)
+        {
+            return error_code::error;
+        }
+    };
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
+        return LEXY_MOV(handler).error(err);
     }
 
     template <typename Whitespace>

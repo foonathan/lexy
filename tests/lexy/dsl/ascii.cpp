@@ -20,7 +20,6 @@ TEST_CASE("dsl::ascii::*")
         else
         {
             REQUIRE(result.count == 0);
-            REQUIRE(result.error.position() == result.input);
             return false;
         }
     };

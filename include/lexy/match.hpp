@@ -25,8 +25,8 @@ struct _match_handler
         return noop.sink();
     }
 
-    template <typename Reader, typename Error>
-    constexpr auto error(const Reader&, Error&&) &&
+    template <typename Error>
+    constexpr auto error(Error&&) &&
     {
         return result_type();
     }

@@ -5,29 +5,14 @@
 #ifndef LEXY_DSL_ANY_HPP_INCLUDED
 #define LEXY_DSL_ANY_HPP_INCLUDED
 
-#include <lexy/_detail/assert.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/engine/any.hpp>
 
 namespace lexyd
 {
-struct _any : atom_base<_any>
+struct _any : token_base<_any>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        while (!reader.eof())
-            reader.bump();
-        return true;
-    }
-    template <typename Encoding, typename Iterator>
-    LEXY_DSL_FUNC bool match(lexy::_detail::range_reader<Encoding, Iterator, Iterator>& reader)
-    {
-        reader._make_eof();
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
+    using token_engine = lexy::engine_any;
 };
 
 /// Matches anything and consumes all remaining characters.

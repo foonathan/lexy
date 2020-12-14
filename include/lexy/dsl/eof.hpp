@@ -7,21 +7,20 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
+#include <lexy/engine/eof.hpp>
 
 namespace lexyd
 {
-struct _eof : atom_base<_eof>
+struct _eof : token_base<_eof>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader& reader)
-    {
-        return reader.eof();
-    }
+    using token_engine = lexy::engine_eof;
 
-    template <typename Reader>
-    LEXY_DSL_FUNC auto error(const Reader&, typename Reader::iterator pos)
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        return lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
+        return LEXY_MOV(handler).error(err);
     }
 
     template <typename Whitespace>

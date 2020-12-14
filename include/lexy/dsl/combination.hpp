@@ -70,7 +70,7 @@ struct _comb_it : rule_base
             {
                 using tag = std::conditional_t<std::is_void_v<E>, lexy::combination_duplicate, E>;
                 auto e    = lexy::make_error<Reader, tag>(state.pos, reader.cur());
-                return LEXY_MOV(handler).error(reader, e);
+                return LEXY_MOV(handler).error(e);
             }
         }
     };

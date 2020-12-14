@@ -34,8 +34,8 @@ public:
         return noop.sink();
     }
 
-    template <typename Reader, typename Error>
-    constexpr auto error(const Reader&, Error&& error) &&
+    template <typename Error>
+    constexpr auto error(Error&& error) &&
     {
         return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, _err_ctx,
                                                    LEXY_FWD(error));

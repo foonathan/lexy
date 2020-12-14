@@ -6,6 +6,7 @@
 #define LEXY_DSL_SEQUENCE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/engine/success.hpp>
 
 namespace lexyd
 {
@@ -47,16 +48,9 @@ struct _seq : rule_base
     using parser = typename _seq_parser<NextParser, R...>::type;
 };
 template <>
-struct _seq<> : atom_base<_seq<>>
+struct _seq<> : token_base<_seq<>>
 {
-    template <typename Reader>
-    LEXY_DSL_FUNC bool match(Reader&)
-    {
-        return true;
-    }
-
-    template <typename Reader>
-    LEXY_DSL_FUNC void error(const Reader&, typename Reader::iterator);
+    using token_engine = lexy::engine_success;
 };
 
 /// Matches the empty string, always succeeds.

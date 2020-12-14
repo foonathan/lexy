@@ -72,23 +72,23 @@ TEST_CASE("dsl::until().or_eof()")
     constexpr auto atom = until(LEXY_LIT("!")).or_eof();
     CHECK(lexy::is_pattern<decltype(atom)>);
 
-    constexpr auto empty = atom_matches(atom, "");
+    constexpr auto empty = pattern_matches(atom, "");
     CHECK(empty);
-    CHECK(empty.count == 0);
+    CHECK(empty.match().empty());
 
-    constexpr auto zero = atom_matches(atom, "!");
+    constexpr auto zero = pattern_matches(atom, "!");
     CHECK(zero);
-    CHECK(zero.count == 1);
-    constexpr auto one = atom_matches(atom, "a!");
+    CHECK(zero.match().size() == 1);
+    constexpr auto one = pattern_matches(atom, "a!");
     CHECK(one);
-    CHECK(one.count == 2);
-    constexpr auto two = atom_matches(atom, "xy!");
+    CHECK(one.match().size() == 2);
+    constexpr auto two = pattern_matches(atom, "xy!");
     CHECK(two);
-    CHECK(two.count == 3);
+    CHECK(two.match().size() == 3);
 
-    constexpr auto unterminated = atom_matches(atom, "abc");
+    constexpr auto unterminated = pattern_matches(atom, "abc");
     CHECK(unterminated);
-    CHECK(unterminated.count == 3);
+    CHECK(unterminated.match().size() == 3);
 }
 
 TEST_CASE("dsl::until(peek())")
@@ -156,22 +156,22 @@ TEST_CASE("dsl::until(peek()).or_eof()")
     constexpr auto atom = until(peek(LEXY_LIT("!"))).or_eof();
     CHECK(lexy::is_pattern<decltype(atom)>);
 
-    constexpr auto empty = atom_matches(atom, "");
+    constexpr auto empty = pattern_matches(atom, "");
     CHECK(empty);
-    CHECK(empty.count == 0);
+    CHECK(empty.match().size() == 0);
 
-    constexpr auto zero = atom_matches(atom, "!");
+    constexpr auto zero = pattern_matches(atom, "!");
     CHECK(zero);
-    CHECK(zero.count == 0);
-    constexpr auto one = atom_matches(atom, "a!");
+    CHECK(zero.match().size() == 0);
+    constexpr auto one = pattern_matches(atom, "a!");
     CHECK(one);
-    CHECK(one.count == 1);
-    constexpr auto two = atom_matches(atom, "xy!");
+    CHECK(one.match().size() == 1);
+    constexpr auto two = pattern_matches(atom, "xy!");
     CHECK(two);
-    CHECK(two.count == 2);
+    CHECK(two.match().size() == 2);
 
-    constexpr auto unterminated = atom_matches(atom, "abc");
+    constexpr auto unterminated = pattern_matches(atom, "abc");
     CHECK(unterminated);
-    CHECK(unterminated.count == 3);
+    CHECK(unterminated.match().size() == 3);
 }
 
