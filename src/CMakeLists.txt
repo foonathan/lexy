@@ -4,6 +4,7 @@
 
 set(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy)
 set(header_files
+        ${include_dir}/_detail/ascii_table.hpp
         ${include_dir}/_detail/assert.hpp
         ${include_dir}/_detail/buffer_builder.hpp
         ${include_dir}/_detail/config.hpp

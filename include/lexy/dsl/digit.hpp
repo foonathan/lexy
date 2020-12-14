@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
 #define LEXY_DSL_DIGIT_HPP_INCLUDED
 
+#include <lexy/_detail/ascii_table.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/engine/char_class.hpp>
@@ -58,7 +59,8 @@ struct decimal
         return "digit.decimal";
     }
 
-    using digit_set = lexy::engine_char_range<'0', '9'>;
+    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                               lexy::_detail::ascii_table_digit>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -76,25 +78,8 @@ struct hex_lower
         return "digit.hex-lower";
     }
 
-    struct digit_set : lexy::engine_matcher_base
-    {
-        using dec   = lexy::engine_char_range<'0', '9'>;
-        using lower = lexy::engine_char_range<'a', 'f'>;
-
-        enum class error_code
-        {
-            error = 1,
-        };
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<lower>(reader))
-                return error_code();
-            else
-                return error_code::error;
-        }
-    };
+    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                               lexy::_detail::ascii_table_hex_lower>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -117,25 +102,8 @@ struct hex_upper
         return "digit.hex-upper";
     }
 
-    struct digit_set : lexy::engine_matcher_base
-    {
-        using dec   = lexy::engine_char_range<'0', '9'>;
-        using upper = lexy::engine_char_range<'A', 'F'>;
-
-        enum class error_code
-        {
-            error = 1,
-        };
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<upper>(reader))
-                return error_code();
-            else
-                return error_code::error;
-        }
-    };
+    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                               lexy::_detail::ascii_table_hex_upper>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
@@ -158,27 +126,9 @@ struct hex
         return "digit.hex";
     }
 
-    struct digit_set : lexy::engine_matcher_base
-    {
-        using dec   = lexy::engine_char_range<'0', '9'>;
-        using lower = lexy::engine_char_range<'a', 'f'>;
-        using upper = lexy::engine_char_range<'A', 'F'>;
-
-        enum class error_code
-        {
-            error = 1,
-        };
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            if (lexy::engine_try_match<dec>(reader) || lexy::engine_try_match<lower>(reader)
-                || lexy::engine_try_match<upper>(reader))
-                return error_code();
-            else
-                return error_code::error;
-        }
-    };
+    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                               lexy::_detail::ascii_table_hex_lower,
+                                               lexy::_detail::ascii_table_hex_upper>;
 
     template <typename CharT>
     LEXY_DSL_FUNC unsigned value(CharT c)
