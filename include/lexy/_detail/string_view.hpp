@@ -149,7 +149,7 @@ public:
         return !(lhs == rhs);
     }
 
-protected:
+private:
     const CharT* _ptr;
     std::size_t  _size;
 };

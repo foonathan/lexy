@@ -5,95 +5,92 @@
 #ifndef LEXY_ENGINE_LITERAL_HPP_INCLUDED
 #define LEXY_ENGINE_LITERAL_HPP_INCLUDED
 
+#include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/engine/base.hpp>
 
 namespace lexy
 {
-/// Matches the literal `String::get()`.
+template <typename CharT, std::size_t NodeCount>
+struct _ltrie
+{
+    LEXY_CONSTEVAL bool empty() const
+    {
+        return NodeCount == 0;
+    }
+
+    LEXY_CONSTEVAL auto node_sequence() const
+    {
+        return lexy::_detail::make_index_sequence<NodeCount>{};
+    }
+
+    template <typename Encoding>
+    LEXY_CONSTEVAL auto transition(std::size_t node) const
+    {
+        auto c = static_cast<typename Encoding::char_type>(_transition[node]);
+        return Encoding::to_int_type(c);
+    }
+
+    CharT _transition[NodeCount == 0 ? 1 : NodeCount];
+};
+
 template <typename String>
+LEXY_CONSTEVAL auto _make_ltrie()
+{
+    constexpr auto string = String::get();
+
+    using ltrie_t = _ltrie<typename decltype(string)::char_type, string.size()>;
+    ltrie_t result{};
+
+    for (auto idx = 0u; idx != string.size(); ++idx)
+        result._transition[idx] = string[idx];
+
+    return result;
+}
+
+/// Produces a linear trie, i.e. one that consists of only one string.
+template <typename String>
+constexpr auto linear_trie = _make_ltrie<String>();
+
+/// Matches the linear trie.
+template <const auto& LTrie>
 struct engine_literal : engine_matcher_base
 {
     enum class error_code
     {
-        error = 1,
     };
+
+    static LEXY_CONSTEVAL error_code index_to_error(std::size_t idx)
+    {
+        return error_code(idx + 1);
+    }
+
+    static constexpr std::size_t index_from_error(error_code ec)
+    {
+        return std::size_t(ec) - 1;
+    }
+
+    template <typename Reader, std::size_t... Nodes>
+    static constexpr auto _transition(Reader& reader, lexy::_detail::index_sequence<Nodes...>)
+    {
+        using encoding = typename Reader::encoding;
+
+        auto result = error_code();
+        (void)((reader.peek() == LTrie.template transition<encoding>(Nodes)
+                    ? (reader.bump(), true)
+                    : (result = index_to_error(Nodes), false))
+               && ...);
+        return result;
+    }
 
     template <typename Reader>
     static constexpr error_code match(Reader& reader)
     {
-        using encoding        = typename Reader::encoding;
-        constexpr auto string = String::get();
-
-        if constexpr (string.size() == 1)
-        {
-            if (reader.peek() != encoding::to_int_type(string[0]))
-                return error_code::error;
-            reader.bump();
-
-            return error_code();
-        }
-        else if constexpr (string.size() == 2)
-        {
-            if (reader.peek() != encoding::to_int_type(string[0]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[1]))
-                return error_code::error;
-            reader.bump();
-
-            return error_code();
-        }
-        else if constexpr (string.size() == 3)
-        {
-            if (reader.peek() != encoding::to_int_type(string[0]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[1]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[2]))
-                return error_code::error;
-            reader.bump();
-
-            return error_code();
-        }
-        else if constexpr (string.size() == 4)
-        {
-            if (reader.peek() != encoding::to_int_type(string[0]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[1]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[2]))
-                return error_code::error;
-            reader.bump();
-
-            if (reader.peek() != encoding::to_int_type(string[3]))
-                return error_code::error;
-            reader.bump();
-
-            return error_code();
-        }
-        else
-        {
-            for (auto c : string)
-            {
-                if (reader.peek() != encoding::to_int_type(c))
-                    return error_code::error;
-
-                reader.bump();
-            }
-
-            return error_code();
-        }
+        return _transition(reader, LTrie.node_sequence());
     }
 };
+
+template <const auto& LTrie, typename Reader>
+inline constexpr bool engine_can_fail<engine_literal<LTrie>, Reader> = !LTrie.empty();
 } // namespace lexy
 
 #endif // LEXY_ENGINE_LITERAL_HPP_INCLUDED
