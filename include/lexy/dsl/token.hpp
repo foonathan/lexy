@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_DSL_MATCH_HPP_INCLUDED
-#define LEXY_DSL_MATCH_HPP_INCLUDED
+#ifndef LEXY_DSL_TOKEN_HPP_INCLUDED
+#define LEXY_DSL_TOKEN_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
@@ -11,11 +11,11 @@
 
 namespace lexy
 {
-struct no_match
+struct missing_token
 {
     static LEXY_CONSTEVAL auto name()
     {
-        return "no match";
+        return "missing token";
     }
 };
 } // namespace lexy
@@ -23,7 +23,7 @@ struct no_match
 namespace lexyd
 {
 template <typename Rule>
-struct _match : token_base<_match<Rule>>
+struct _token : token_base<_token<Rule>>
 {
     struct token_engine : lexy::engine_matcher_base
     {
@@ -48,7 +48,7 @@ struct _match : token_base<_match<Rule>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::no_match>(pos);
+        auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
         return LEXY_MOV(handler).error(err);
     }
 
@@ -59,13 +59,13 @@ struct _match : token_base<_match<Rule>>
     }
 };
 
-/// Turns the arbitrary rule into a pattern by matching it without producing any values.
+/// Turns the arbitrary rule into a token by matching it without producing any values.
 template <typename Rule>
-LEXY_CONSTEVAL auto match(Rule)
+LEXY_CONSTEVAL auto token(Rule)
 {
-    return _match<Rule>{};
+    return _token<Rule>{};
 }
 } // namespace lexyd
 
-#endif // LEXY_DSL_MATCH_HPP_INCLUDED
+#endif // LEXY_DSL_TOKEN_HPP_INCLUDED
 

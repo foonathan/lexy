@@ -126,7 +126,7 @@ struct address
 
         // We're only having a named address if we can match the optional phrase followed by an
         // angle bracket.
-        auto name_addr_condition = dsl::match(dsl::opt(dsl::p<phrase>) + LEXY_LIT("<")[ws]);
+        auto name_addr_condition = dsl::token(dsl::opt(dsl::p<phrase>) + LEXY_LIT("<")[ws]);
 
         // An address spec without a name.
         auto unnamed_addr = dsl::nullopt + addr_spec;

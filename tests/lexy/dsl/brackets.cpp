@@ -8,8 +8,8 @@
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
-#include <lexy/dsl/match.hpp>
 #include <lexy/dsl/option.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/while.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
@@ -74,7 +74,7 @@ TEST_CASE("dsl::bracketed")
     {
         constexpr auto o      = LEXY_LIT("(");
         constexpr auto c      = LEXY_LIT(")");
-        constexpr auto result = brackets(o, c).while_(match(inner));
+        constexpr auto result = brackets(o, c).while_(token(inner));
 
         CHECK(lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));
@@ -85,7 +85,7 @@ TEST_CASE("dsl::bracketed")
     {
         constexpr auto o      = LEXY_LIT("(");
         constexpr auto c      = LEXY_LIT(")");
-        constexpr auto result = brackets(o, c).while_one(match(inner));
+        constexpr auto result = brackets(o, c).while_one(token(inner));
 
         CHECK(!lexy::match(lexy::zstring_input("()"), result + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("(abc)"), result + lexy::dsl::eof));

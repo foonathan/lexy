@@ -28,7 +28,6 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/lookahead.hpp>
 #include <lexy/dsl/loop.hpp>
-#include <lexy/dsl/match.hpp>
 #include <lexy/dsl/member.hpp>
 #include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
@@ -44,6 +43,7 @@
 #include <lexy/dsl/switch.hpp>
 #include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/times.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/until.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/while.hpp>

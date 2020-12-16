@@ -2,15 +2,15 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/dsl/match.hpp>
+#include <lexy/dsl/token.hpp>
 
 #include "verify.hpp"
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/value.hpp>
 
-TEST_CASE("dsl::match")
+TEST_CASE("dsl::token")
 {
-    constexpr auto atom = match(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
+    constexpr auto atom = token(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
     CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");

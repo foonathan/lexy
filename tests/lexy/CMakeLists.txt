@@ -37,7 +37,6 @@ set(tests
         dsl/literal.cpp
         dsl/lookahead.cpp
         dsl/loop.cpp
-        dsl/match.cpp
         dsl/member.cpp
         dsl/minus.cpp
         dsl/newline.cpp
@@ -54,6 +53,7 @@ set(tests
         dsl/switch.cpp
         dsl/terminator.cpp
         dsl/times.cpp
+        dsl/token.cpp
         dsl/until.cpp
         dsl/value.cpp
         dsl/while.cpp

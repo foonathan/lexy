@@ -40,7 +40,6 @@ set(header_files
         ${include_dir}/dsl/label.hpp
         ${include_dir}/dsl/lookahead.hpp
         ${include_dir}/dsl/loop.hpp
-        ${include_dir}/dsl/match.hpp
         ${include_dir}/dsl/member.hpp
         ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
@@ -56,6 +55,7 @@ set(header_files
         ${include_dir}/dsl/switch.hpp
         ${include_dir}/dsl/terminator.hpp
         ${include_dir}/dsl/times.hpp
+        ${include_dir}/dsl/token.hpp
         ${include_dir}/dsl/until.hpp
         ${include_dir}/dsl/value.hpp
         ${include_dir}/dsl/while.hpp

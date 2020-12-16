@@ -9,8 +9,8 @@
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/match.hpp>
 #include <lexy/dsl/option.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/while.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
@@ -32,7 +32,7 @@ TEST_CASE("dsl::terminator")
 
     SUBCASE("while")
     {
-        constexpr auto result = terminator.while_(match(inner));
+        constexpr auto result = terminator.while_(token(inner));
 
         CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
@@ -41,7 +41,7 @@ TEST_CASE("dsl::terminator")
     }
     SUBCASE("while_one")
     {
-        constexpr auto result = terminator.while_one(match(inner));
+        constexpr auto result = terminator.while_one(token(inner));
 
         CHECK(!lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
         CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
