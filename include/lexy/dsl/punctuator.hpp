@@ -10,19 +10,24 @@
 
 namespace lexyd
 {
-constexpr auto period    = LEXY_LIT(".");
-constexpr auto comma     = LEXY_LIT(",");
-constexpr auto colon     = LEXY_LIT(":");
-constexpr auto semicolon = LEXY_LIT(";");
+#define LEXY_PUNCT(Name, String)                                                                   \
+    struct _##Name : ::lexyd::_lit<LEXY_NTTP_STRING(String)>                                       \
+    {};                                                                                            \
+    inline constexpr auto Name = _##Name {}
 
-constexpr auto hyphen     = LEXY_LIT("-");
-constexpr auto slash      = LEXY_LIT("/");
-constexpr auto backslash  = LEXY_LIT("\\");
-constexpr auto apostrophe = LEXY_LIT("'");
+LEXY_PUNCT(period, ".");
+LEXY_PUNCT(comma, ",");
+LEXY_PUNCT(colon, ":");
+LEXY_PUNCT(semicolon, ";");
 
-constexpr auto hash_sign   = LEXY_LIT("#");
-constexpr auto dollar_sign = LEXY_LIT("$");
-constexpr auto at_sign     = LEXY_LIT("@");
+LEXY_PUNCT(hyphen, "-");
+LEXY_PUNCT(slash, "/");
+LEXY_PUNCT(backslash, "\\");
+LEXY_PUNCT(apostrophe, "'");
+
+LEXY_PUNCT(hash_sign, "#");
+LEXY_PUNCT(dollar_sign, "$");
+LEXY_PUNCT(at_sign, "@");
 } // namespace lexyd
 
 #endif // LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
