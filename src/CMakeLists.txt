@@ -76,6 +76,7 @@ set(header_files
         ${include_dir}/engine/minus.hpp
         ${include_dir}/engine/trie.hpp
         ${include_dir}/engine/until.hpp
+        ${include_dir}/engine/while.hpp
 
         ${include_dir}/input/argv_input.hpp
         ${include_dir}/input/base.hpp

@@ -72,6 +72,7 @@ set(tests
         engine/minus.cpp
         engine/trie.cpp
         engine/until.cpp
+        engine/while.cpp
 
         input/argv_input.cpp
         input/base.cpp
