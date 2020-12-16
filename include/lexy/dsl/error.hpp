@@ -5,10 +5,8 @@
 #ifndef LEXY_DSL_ERROR_HPP_INCLUDED
 #define LEXY_DSL_ERROR_HPP_INCLUDED
 
-#include <lexy/_detail/type_name.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/if.hpp>
-#include <lexy/dsl/peek.hpp>
+#include <lexy/dsl/token.hpp>
 
 namespace lexyd
 {
@@ -98,21 +96,43 @@ constexpr auto error = _err<Tag, void>{};
 
 namespace lexyd
 {
-/// Requires that lookahead will match a pattern at a location.
-template <typename Tag, typename Pattern>
-LEXY_CONSTEVAL auto require(Pattern pattern)
+template <bool Expected, typename Token, typename Tag>
+struct _require : rule_base
 {
-    // If we don't get the pattern, we create a failure.
-    // Otherwise, we match the empty string.
-    return if_(peek_not(pattern) >> error<Tag>);
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            if (lexy::engine_peek<typename Token::token_engine>(reader) == Expected)
+                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            else
+            {
+                auto err = lexy::make_error<Reader, Tag>(reader.cur());
+                return LEXY_MOV(handler).error(err);
+            }
+        }
+    };
+};
+
+/// Requires that lookahead will match a rule at a location.
+template <typename Tag, typename Rule>
+LEXY_CONSTEVAL auto require(Rule rule)
+{
+    auto t = token(rule);
+    return _require<true, decltype(t), Tag>{};
 }
 
-/// Requires that lookahead does not match a pattern at a location.
-template <typename Tag, typename Pattern>
-LEXY_CONSTEVAL auto prevent(Pattern pattern)
+/// Requires that lookahead does not match a rule at a location.
+template <typename Tag, typename Rule>
+LEXY_CONSTEVAL auto prevent(Rule rule)
 {
-    // Same as above, but we don't want to match the pattern.
-    return if_(peek(pattern) >> error<Tag>);
+    auto t = token(rule);
+    return _require<false, decltype(t), Tag>{};
 }
 } // namespace lexyd
 

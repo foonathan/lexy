@@ -114,7 +114,7 @@ TEST_CASE("dsl::error")
 TEST_CASE("dsl::require")
 {
     struct tag;
-    constexpr auto rule = lexy::dsl::require<tag>(LEXY_LIT("abc"));
+    constexpr auto rule = lexy::dsl::require<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -144,7 +144,7 @@ TEST_CASE("dsl::require")
 TEST_CASE("dsl::prevent")
 {
     struct tag;
-    constexpr auto rule = lexy::dsl::prevent<tag>(LEXY_LIT("abc"));
+    constexpr auto rule = lexy::dsl::prevent<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
