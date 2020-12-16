@@ -37,17 +37,27 @@ LEXY_CONSTEVAL auto token_base<Derived>::error() const
 
 namespace lexyd
 {
-template <typename Tag, typename Pattern>
+template <typename Tag, typename Token>
 struct _err : rule_base
 {
-    static constexpr auto has_matcher = true;
+    static constexpr auto has_matcher = false;
 
-    struct matcher
+    static constexpr auto is_branch = true;
+
+    template <typename Reader>
+    struct branch_matcher
     {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader&)
+        static constexpr auto is_unconditional = true;
+
+        constexpr bool match(Reader&)
         {
-            return false;
+            return true;
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -58,27 +68,26 @@ struct _err : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
             typename Handler::result_type
         {
-            if constexpr (!std::is_same_v<Pattern, void>)
+            auto begin = reader.cur();
+            auto end   = reader.cur();
+            if constexpr (!std::is_same_v<Token, void>)
             {
-                if (auto begin = reader.cur(); Pattern::matcher::match(reader))
-                {
-                    auto e = lexy::make_error<Reader, Tag>(begin, reader.cur());
-                    return LEXY_MOV(handler).error(e);
-                }
+                auto copy = reader;
+                Token::token_engine::match(copy);
+                end = copy.cur();
             }
 
-            // Pattern didn't match or we don't have one.
-            auto e = lexy::make_error<Reader, Tag>(reader.cur());
-            return LEXY_MOV(handler).error(e);
+            auto err = lexy::make_error<Reader, Tag>(begin, end);
+            return LEXY_MOV(handler).error(err);
         }
     };
 
-    /// Adds a pattern whose match will be part of the error location.
-    template <typename P>
-    LEXY_CONSTEVAL auto operator()(P) const
+    /// Adds a rule whose match will be part of the error location.
+    template <typename Rule>
+    LEXY_CONSTEVAL auto operator()(Rule rule) const
     {
-        static_assert(lexy::is_pattern<P>);
-        return _err<Tag, P>{};
+        auto t = token(rule);
+        return _err<Tag, decltype(t)>{};
     }
 };
 

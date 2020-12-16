@@ -202,7 +202,7 @@ LEXY_CONSTEVAL auto _escape_rule(Branches... branches)
     if constexpr (sizeof...(Branches) == 0)
         return Pattern{};
     else
-        return Pattern{} >> (branches | ... | (else_ >> error<lexy::invalid_escape_sequence>));
+        return Pattern{} >> (branches | ... | error<lexy::invalid_escape_sequence>);
 }
 
 template <typename Pattern>

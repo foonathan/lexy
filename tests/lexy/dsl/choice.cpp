@@ -5,6 +5,7 @@
 #include <lexy/dsl/choice.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::operator|")
@@ -106,6 +107,46 @@ TEST_CASE("dsl::operator|")
 
         constexpr auto abc = rule_matches<callback>(rule, "abc");
         CHECK(abc == 0);
+    }
+    SUBCASE("error")
+    {
+        struct tag;
+        constexpr auto rule
+            = LEXY_LIT("abc")
+                  >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1> | lexy::dsl::error<tag>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur, lexy::id<0>)
+            {
+                auto match = lexy::_detail::string_view(str, cur);
+                CONSTEXPR_CHECK(match == "abc");
+                return 0;
+            }
+            constexpr int success(const char* cur, lexy::id<1>)
+            {
+                auto match = lexy::_detail::string_view(str, cur);
+                CONSTEXPR_CHECK(match == "def");
+                return 1;
+            }
+
+            constexpr int error(test_error<tag> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = verify<callback>(rule, "abc");
+        CHECK(abc == 0);
+        constexpr auto def = verify<callback>(rule, "def");
+        CHECK(def == 1);
     }
 }
 
