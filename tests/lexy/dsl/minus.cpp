@@ -6,33 +6,34 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/any.hpp>
-#include <lexy/dsl/while.hpp>
+#include <lexy/dsl/until.hpp>
 
 TEST_CASE("dsl::operator-")
 {
     SUBCASE("pattern")
     {
-        constexpr auto pattern = while_(LEXY_LIT("a")) - LEXY_LIT("aa");
+        constexpr auto pattern = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
         CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
+        CHECK(!empty);
+        constexpr auto zero = pattern_matches(pattern, "!");
+        CHECK(zero);
+        CHECK(zero.match() == "!");
 
-        constexpr auto a = pattern_matches(pattern, "a");
+        constexpr auto a = pattern_matches(pattern, "a!");
         CHECK(a);
-        CHECK(a.match() == "a");
-        constexpr auto aaa = pattern_matches(pattern, "aaa");
+        CHECK(a.match() == "a!");
+        constexpr auto aaa = pattern_matches(pattern, "aaa!");
         CHECK(aaa);
-        CHECK(aaa.match() == "aaa");
+        CHECK(aaa.match() == "aaa!");
 
-        constexpr auto aa = pattern_matches(pattern, "aa");
+        constexpr auto aa = pattern_matches(pattern, "aa!");
         CHECK(!aa);
-        CHECK(aa.match().empty());
     }
     SUBCASE("rule")
     {
-        constexpr auto rule = while_(LEXY_LIT("a")) - LEXY_LIT("aa");
+        constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -44,61 +45,72 @@ TEST_CASE("dsl::operator-")
                 return int(cur - str);
             }
 
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.string() == "!");
+                return -1;
+            }
             constexpr int error(test_error<lexy::minus_failure> e)
             {
                 CONSTEXPR_CHECK(e.begin() == str);
                 CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                return -1;
+                return -2;
             }
         };
 
         constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
+        CHECK(empty == -1);
+        constexpr auto zero = rule_matches<callback>(rule, "!");
+        CHECK(zero == 1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
-        CHECK(a == 1);
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
-        CHECK(aaa == 3);
+        constexpr auto a = rule_matches<callback>(rule, "a!");
+        CHECK(a == 2);
+        constexpr auto aaa = rule_matches<callback>(rule, "aaa!");
+        CHECK(aaa == 4);
 
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
-        CHECK(aa == -1);
+        constexpr auto aa = rule_matches<callback>(rule, "aa!");
+        CHECK(aa == -2);
     }
     SUBCASE("sequence")
     {
-        constexpr auto pattern = while_(LEXY_LIT("a")) - LEXY_LIT("a") - LEXY_LIT("aa");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto a = pattern_matches(pattern, "a");
-        CHECK(!a);
-        CHECK(a.match().empty());
-        constexpr auto aa = pattern_matches(pattern, "aa");
-        CHECK(!aa);
-        CHECK(aa.match().empty());
-
-        constexpr auto aaa = pattern_matches(pattern, "aaa");
-        CHECK(aaa);
-        CHECK(aaa.match() == "aaa");
-    }
-    SUBCASE("any")
-    {
-        constexpr auto pattern = while_(LEXY_LIT("a")) - lexy::dsl::any;
+        constexpr auto pattern = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
         CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
-        CHECK(empty.match().empty());
+        constexpr auto zero = pattern_matches(pattern, "!");
+        CHECK(zero);
+        CHECK(zero.match() == "!");
 
-        constexpr auto a = pattern_matches(pattern, "a");
+        constexpr auto a = pattern_matches(pattern, "a!");
         CHECK(!a);
         CHECK(a.match().empty());
-        constexpr auto aa = pattern_matches(pattern, "aa");
+        constexpr auto aa = pattern_matches(pattern, "aa!");
         CHECK(!aa);
         CHECK(aa.match().empty());
-        constexpr auto aaa = pattern_matches(pattern, "aaa");
+
+        constexpr auto aaa = pattern_matches(pattern, "aaa!");
+        CHECK(aaa);
+        CHECK(aaa.match() == "aaa!");
+    }
+    SUBCASE("any")
+    {
+        constexpr auto pattern = until(LEXY_LIT("!")) - lexy::dsl::any;
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(!empty);
+        constexpr auto zero = pattern_matches(pattern, "!");
+        CHECK(!zero);
+
+        constexpr auto a = pattern_matches(pattern, "a!");
+        CHECK(!a);
+        CHECK(a.match().empty());
+        constexpr auto aa = pattern_matches(pattern, "aa!");
+        CHECK(!aa);
+        CHECK(aa.match().empty());
+        constexpr auto aaa = pattern_matches(pattern, "aaa!");
         CHECK(!aaa);
         CHECK(aaa.match().empty());
     }

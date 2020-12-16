@@ -6,6 +6,7 @@
 #define LEXY_DSL_MINUS_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/engine/minus.hpp>
 
 namespace lexy
 {
@@ -21,76 +22,42 @@ struct minus_failure
 
 namespace lexyd
 {
-template <typename Rule, typename Except>
-struct _minus : rule_base
+template <typename Token, typename... Excepts>
+struct _minus : token_base<_minus<Token, Excepts...>>
 {
-    static constexpr auto has_matcher = Rule::has_matcher;
+    using token_engine
+        = lexy::engine_minus<typename Token::token_engine, typename Excepts::token_engine...>;
 
-    struct matcher
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader& reader,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
     {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
+        if (ec == token_engine::error_code::minus_failure)
         {
-            auto save = reader;
-
-            // First check whether the original rule matched.
-            if (!Rule::matcher::match(reader))
-                return false;
-
-            // Then match Except on the same input.
-            if (auto partial = lexy::partial_reader(save, reader.cur());
-                Except::matcher::match(partial) && partial.eof())
-            {
-                // It did, so we don't match after all.
-                reader = LEXY_MOV(save);
-                return false;
-            }
-
-            return true;
+            auto err = lexy::make_error<Reader, lexy::minus_failure>(pos, reader.cur());
+            return LEXY_MOV(handler).error(err);
         }
-    };
-
-    template <typename NextParser>
-    struct parser
-    {
-        struct _continuation
+        else
         {
-            template <typename Handler, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Reader save, Args&&... args)
-                -> typename Handler::result_type
-            {
-                // At this point, we've matched the rule.
-                // Check, whether Except matches as well on the same input.
-                if (auto partial = lexy::partial_reader(save, reader.cur());
-                    Except::matcher::match(partial) && partial.eof())
-                {
-                    // It did, so we don't match after all.
-                    auto e
-                        = lexy::make_error<Reader, lexy::minus_failure>(save.cur(), reader.cur());
-                    return LEXY_MOV(handler).error(e);
-                }
-
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            }
-        };
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            // Parse the Rule, but remember the current input by copying the reader.
-            return Rule::template parser<_continuation>::parse(handler, reader, Reader(reader),
-                                                               LEXY_FWD(args)...);
+            return Token::token_error(handler, reader, token_engine::error_to_matcher(ec), pos);
         }
-    };
+    }
 };
 
-/// Matches Rule unless Except matches on the input Rule matched.
-template <typename Rule, typename Except>
-LEXY_CONSTEVAL auto operator-(Rule, Except)
+/// Matches Token unless Except matches on the input Token matched.
+template <typename Token, typename Except>
+LEXY_CONSTEVAL auto operator-(Token, Except)
 {
-    static_assert(lexy::is_pattern<Except>);
-    return _minus<Rule, Except>{};
+    static_assert(lexy::is_token<Token>);
+    static_assert(lexy::is_token<Except>);
+    return _minus<Token, Except>{};
+}
+template <typename Token, typename... E, typename Except>
+LEXY_CONSTEVAL auto operator-(_minus<Token, E...>, Except)
+{
+    static_assert(lexy::is_token<Except>);
+    return _minus<Token, E..., Except>{};
 }
 } // namespace lexyd
 
