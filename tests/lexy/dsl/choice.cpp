@@ -40,12 +40,12 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
-        constexpr auto def = rule_matches<callback>(rule, "def");
+        constexpr auto def = verify<callback>(rule, "def");
         CHECK(def == 1);
     }
     SUBCASE("ordered")
@@ -71,12 +71,12 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 0);
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
     }
     SUBCASE("else")
@@ -102,10 +102,10 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
     }
     SUBCASE("error")

@@ -5,36 +5,11 @@
 #include <lexy/dsl/while.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/literal.hpp>
 #include <lexy/match.hpp>
 
 TEST_CASE("dsl::while_()")
 {
-    SUBCASE("simple pattern")
-    {
-        constexpr auto pattern = while_(LEXY_LIT("ab"));
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto a = pattern_matches(pattern, "a");
-        CHECK(a);
-        CHECK(a.match().empty());
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(ab);
-        CHECK(ab.match() == "ab");
-
-        constexpr auto abab = pattern_matches(pattern, "abab");
-        CHECK(abab);
-        CHECK(abab.match() == "abab");
-
-        constexpr auto ababab = pattern_matches(pattern, "ababab");
-        CHECK(ababab);
-        CHECK(ababab.match() == "ababab");
-    }
-    SUBCASE("simple rule")
+    SUBCASE("token")
     {
         constexpr auto rule = while_(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -50,17 +25,17 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "abcabc");
+        constexpr auto two = verify<callback>(rule, "abcabc");
         CHECK(two == 2);
-        constexpr auto three = rule_matches<callback>(rule, "abcabcabc");
+        constexpr auto three = verify<callback>(rule, "abcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = rule_matches<callback>(rule, "abcab");
+        constexpr auto partial = verify<callback>(rule, "abcab");
         CHECK(partial == 1);
     }
 
@@ -86,17 +61,17 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "abcabc");
+        constexpr auto two = verify<callback>(rule, "abcabc");
         CHECK(two == 2);
-        constexpr auto three = rule_matches<callback>(rule, "abcabcabc");
+        constexpr auto three = verify<callback>(rule, "abcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = rule_matches<callback>(rule, "abcab");
+        constexpr auto partial = verify<callback>(rule, "abcab");
         CHECK(partial == -1);
     }
 
@@ -122,30 +97,70 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "abcbbc");
+        constexpr auto two = verify<callback>(rule, "abcbbc");
         CHECK(two == 2);
-        constexpr auto three = rule_matches<callback>(rule, "bbcabcabc");
+        constexpr auto three = verify<callback>(rule, "bbcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = rule_matches<callback>(rule, "abcab");
+        constexpr auto partial = verify<callback>(rule, "abcab");
         CHECK(partial == -1);
     }
 }
 
 TEST_CASE("dsl::while_one()")
 {
-    constexpr auto result     = while_one(LEXY_LIT("abc"));
-    constexpr auto equivalent = LEXY_LIT("abc") >> while_(LEXY_LIT("abc"));
-    CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    SUBCASE("token")
+    {
+        constexpr auto rule = while_one(LEXY_LIT("abc"));
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-    CHECK(!lexy::match(lexy::zstring_input(""), result));
-    CHECK(lexy::match(lexy::zstring_input("abc"), result));
-    CHECK(lexy::match(lexy::zstring_input("abcabc"), result));
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                CONSTEXPR_CHECK((cur - str) % 3 == 0);
+                return int(cur - str) / 3;
+            }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.string() == "abc");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto one = verify<callback>(rule, "abc");
+        CHECK(one == 1);
+        constexpr auto two = verify<callback>(rule, "abcabc");
+        CHECK(two == 2);
+        constexpr auto three = verify<callback>(rule, "abcabcabc");
+        CHECK(three == 3);
+
+        constexpr auto partial = verify<callback>(rule, "abcab");
+        CHECK(partial == 1);
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto result = while_one(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        constexpr auto equivalent
+            = LEXY_LIT("a") >> LEXY_LIT("bc") + while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+
+        CHECK(!lexy::match(lexy::zstring_input(""), result));
+        CHECK(lexy::match(lexy::zstring_input("abc"), result));
+        CHECK(lexy::match(lexy::zstring_input("abcabc"), result));
+    }
 }
 
 TEST_CASE("dsl::do_while()")

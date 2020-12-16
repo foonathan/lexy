@@ -23,10 +23,10 @@ TEST_CASE("dsl::nullopt")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 0);
 }
 
@@ -52,15 +52,15 @@ TEST_CASE("dsl::opt()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto success = rule_matches<callback>(rule, "abc");
+    constexpr auto success = verify<callback>(rule, "abc");
     CHECK(success == 1);
 
-    constexpr auto condition = rule_matches<callback>(rule, "a");
+    constexpr auto condition = verify<callback>(rule, "a");
     CHECK(condition == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 }
 

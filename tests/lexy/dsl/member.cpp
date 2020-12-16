@@ -46,10 +46,10 @@ TEST_CASE("dsl::member")
 
         using callback = member_macro_callback;
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("macro")
@@ -59,11 +59,11 @@ TEST_CASE("dsl::member")
 
         using callback = member_macro_callback;
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
         // Not constexpr in C++17 due to the use of reinterpret_cast in stateless lambda.
-        /* constexpr */ auto string = rule_matches<callback>(rule, "abc");
+        /* constexpr */ auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
 }

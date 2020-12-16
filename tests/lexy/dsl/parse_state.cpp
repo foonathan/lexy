@@ -44,10 +44,10 @@ TEST_CASE("rule: parse_state")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("parse rvalue")
@@ -108,10 +108,10 @@ TEST_CASE("rule: parse_state_member")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("parse rvalue")

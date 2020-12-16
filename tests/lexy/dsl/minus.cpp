@@ -10,10 +10,11 @@
 
 TEST_CASE("dsl::operator-")
 {
-    SUBCASE("rule")
+    SUBCASE("basic")
     {
         constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
         struct callback
         {
@@ -38,58 +39,101 @@ TEST_CASE("dsl::operator-")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
-        constexpr auto zero = rule_matches<callback>(rule, "!");
+        constexpr auto zero = verify<callback>(rule, "!");
         CHECK(zero == 1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a!");
+        constexpr auto a = verify<callback>(rule, "a!");
         CHECK(a == 2);
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa!");
+        constexpr auto aaa = verify<callback>(rule, "aaa!");
         CHECK(aaa == 4);
 
-        constexpr auto aa = rule_matches<callback>(rule, "aa!");
+        constexpr auto aa = verify<callback>(rule, "aa!");
         CHECK(aa == -2);
     }
     SUBCASE("sequence")
     {
-        constexpr auto pattern = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
+        constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "!");
-        CHECK(zero);
-        CHECK(zero.match() == "!");
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto a = pattern_matches(pattern, "a!");
-        CHECK(!a);
-        CHECK(a.match().empty());
-        constexpr auto aa = pattern_matches(pattern, "aa!");
-        CHECK(!aa);
-        CHECK(aa.match().empty());
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto aaa = pattern_matches(pattern, "aaa!");
-        CHECK(aaa);
-        CHECK(aaa.match() == "aaa!");
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.string() == "!");
+                return -1;
+            }
+            constexpr int error(test_error<lexy::minus_failure> e)
+            {
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -2;
+            }
+        };
+
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+        constexpr auto zero = verify<callback>(rule, "!");
+        CHECK(zero == 1);
+
+        constexpr auto a = verify<callback>(rule, "a!");
+        CHECK(a == -2);
+        constexpr auto aa = verify<callback>(rule, "aa!");
+        CHECK(aa == -2);
+
+        constexpr auto aaa = verify<callback>(rule, "aaa!");
+        CHECK(aaa == 4);
     }
     SUBCASE("any")
     {
-        constexpr auto pattern = until(LEXY_LIT("!")) - lexy::dsl::any;
+        constexpr auto rule = until(LEXY_LIT("!")) - lexy::dsl::any;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "!");
-        CHECK(!zero);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto a = pattern_matches(pattern, "a!");
-        CHECK(!a);
-        CHECK(a.match().empty());
-        constexpr auto aa = pattern_matches(pattern, "aa!");
-        CHECK(!aa);
-        CHECK(aa.match().empty());
-        constexpr auto aaa = pattern_matches(pattern, "aaa!");
-        CHECK(!aaa);
-        CHECK(aaa.match().empty());
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
+
+            constexpr int error(test_error<lexy::expected_literal> e)
+            {
+                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+                CONSTEXPR_CHECK(e.string() == "!");
+                return -1;
+            }
+            constexpr int error(test_error<lexy::minus_failure> e)
+            {
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -2;
+            }
+        };
+
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+        constexpr auto zero = verify<callback>(rule, "!");
+        CHECK(zero == -2);
+
+        constexpr auto a = verify<callback>(rule, "a!");
+        CHECK(a == -2);
+        constexpr auto aa = verify<callback>(rule, "aa!");
+        CHECK(aa == -2);
+        constexpr auto aaa = verify<callback>(rule, "aaa!");
+        CHECK(aaa == -2);
     }
 }
 

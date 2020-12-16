@@ -11,6 +11,7 @@ TEST_CASE("dsl::until()")
 {
     constexpr auto rule = until(LEXY_LIT("!"));
     CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
     struct callback
     {
@@ -29,40 +30,47 @@ TEST_CASE("dsl::until()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto zero = rule_matches<callback>(rule, "!");
+    constexpr auto zero = verify<callback>(rule, "!");
     CHECK(zero == 1);
-    constexpr auto one = rule_matches<callback>(rule, "a!");
+    constexpr auto one = verify<callback>(rule, "a!");
     CHECK(one == 2);
-    constexpr auto two = rule_matches<callback>(rule, "ab!");
+    constexpr auto two = verify<callback>(rule, "ab!");
     CHECK(two == 3);
 
-    constexpr auto unterminated = rule_matches<callback>(rule, "abc");
+    constexpr auto unterminated = verify<callback>(rule, "abc");
     CHECK(unterminated == -1);
 }
 
 TEST_CASE("dsl::until().or_eof()")
 {
-    constexpr auto atom = until(LEXY_LIT("!")).or_eof();
+    constexpr auto rule = until(LEXY_LIT("!")).or_eof();
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-    constexpr auto empty = pattern_matches(atom, "");
-    CHECK(empty);
-    CHECK(empty.match().empty());
+    struct callback
+    {
+        const char* str;
 
-    constexpr auto zero = pattern_matches(atom, "!");
-    CHECK(zero);
-    CHECK(zero.match().size() == 1);
-    constexpr auto one = pattern_matches(atom, "a!");
-    CHECK(one);
-    CHECK(one.match().size() == 2);
-    constexpr auto two = pattern_matches(atom, "xy!");
-    CHECK(two);
-    CHECK(two.match().size() == 3);
+        constexpr int success(const char* cur)
+        {
+            return int(cur - str);
+        }
+    };
 
-    constexpr auto unterminated = pattern_matches(atom, "abc");
-    CHECK(unterminated);
-    CHECK(unterminated.match().size() == 3);
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == 0);
+
+    constexpr auto zero = verify<callback>(rule, "!");
+    CHECK(zero == 1);
+    constexpr auto one = verify<callback>(rule, "a!");
+    CHECK(one == 2);
+    constexpr auto two = verify<callback>(rule, "xy!");
+    CHECK(two == 3);
+
+    constexpr auto unterminated = verify<callback>(rule, "abc");
+    CHECK(unterminated == 3);
 }
 

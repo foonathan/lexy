@@ -5,55 +5,253 @@
 #include <lexy/dsl/code_point.hpp>
 
 #include "verify.hpp"
-#include <doctest/doctest.h>
-#include <lexy/input/string_input.hpp>
 #include <lexy/parse.hpp>
 
 TEST_CASE("dsl::code_point")
 {
-    // TODO: do some basic tests that the correct engine is used
-}
+    constexpr auto rule = lexy::dsl::code_point;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-namespace
-{
-struct production
-{
-    static constexpr auto rule  = lexy::dsl::code_point.capture();
-    static constexpr auto value = lexy::forward<lexy::code_point>;
-};
-} // namespace
+    // Only basic sanity checks needed, the actual engine is tested extensively.
+
+    SUBCASE("ASCII")
+    {
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                CONSTEXPR_CHECK(cur == str + 1);
+                return 0;
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "ASCII.code_point");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback, lexy::ascii_encoding>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::ascii_encoding>(rule, "a");
+        CHECK(cp == 0);
+    }
+    SUBCASE("UTF-8")
+    {
+        struct callback
+        {
+            const LEXY_CHAR8_T* str;
+
+            constexpr int success(const LEXY_CHAR8_T* cur)
+            {
+                return int(cur - str);
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-8.code_point");
+                return -1;
+            }
+        };
+
+#if LEXY_HAS_CHAR8_T
+        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, u8"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, u8"ä");
+        CHECK(cp == 2);
+#else
+        auto empty_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"");
+        auto empty     = verify<callback, lexy::utf8_encoding>(rule, empty_str);
+        CHECK(empty == -1);
+
+        auto cp_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"ä");
+        auto cp     = verify<callback, lexy::utf8_encoding>(rule, cp_str);
+        CHECK(cp == 2);
+#endif
+    }
+    SUBCASE("UTF-16")
+    {
+        struct callback
+        {
+            const char16_t* str;
+
+            constexpr int success(const char16_t* cur)
+            {
+                return int(cur - str);
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-16.code_point");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback, lexy::utf16_encoding>(rule, u"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf16_encoding>(rule, u"ä");
+        CHECK(cp == 1);
+    }
+    SUBCASE("UTF-32")
+    {
+        struct callback
+        {
+            const char32_t* str;
+
+            constexpr int success(const char32_t* cur)
+            {
+                return int(cur - str);
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-32.code_point");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback, lexy::utf32_encoding>(rule, U"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf32_encoding>(rule, U"ä");
+        CHECK(cp == 1);
+    }
+}
 
 TEST_CASE("dsl::code_point.capture()")
 {
-    constexpr auto parse = [](auto encoding, auto str) LEXY_CONSTEVAL {
-        auto input  = lexy::zstring_input<decltype(encoding)>(str);
-        auto result = lexy::parse<production>(input, lexy::noop);
-        if (result)
-            return result.value();
-        else
-            return lexy::code_point();
-    };
+    constexpr auto rule = lexy::dsl::code_point.capture();
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-    // Just very basic tests necessary, same logic as above.
+    // Only basic sanity checks needed, the actual engine is tested extensively.
 
-    CHECK(parse(lexy::ascii_encoding{}, "a").value() == 'a');
-    CHECK(parse(lexy::utf8_encoding{}, u8"a") == lexy::code_point('a'));
-    CHECK(parse(lexy::utf16_encoding{}, u"a") == lexy::code_point('a'));
-    CHECK(parse(lexy::utf32_encoding{}, U"a") == lexy::code_point('a'));
+    SUBCASE("ASCII")
+    {
+        struct callback
+        {
+            const char* str;
 
-    CHECK(parse(lexy::ascii_encoding{}, "\u00E4") == lexy::code_point());
-    CHECK(parse(lexy::utf8_encoding{}, u8"\u00E4") == lexy::code_point(0x00E4));
-    CHECK(parse(lexy::utf16_encoding{}, u"\u00E4") == lexy::code_point(0x00E4));
-    CHECK(parse(lexy::utf32_encoding{}, U"\u00E4") == lexy::code_point(0x00E4));
+            constexpr int success(const char*, lexy::code_point cp)
+            {
+                return int(cp.value());
+            }
 
-    CHECK(parse(lexy::ascii_encoding{}, "\u20AC") == lexy::code_point());
-    CHECK(parse(lexy::utf8_encoding{}, u8"\u20AC") == lexy::code_point(0x20AC));
-    CHECK(parse(lexy::utf16_encoding{}, u"\u20AC") == lexy::code_point(0x20AC));
-    CHECK(parse(lexy::utf32_encoding{}, U"\u20AC") == lexy::code_point(0x20AC));
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "ASCII.code_point");
+                return -1;
+            }
+        };
 
-    CHECK(parse(lexy::ascii_encoding{}, "\U0001F642") == lexy::code_point());
-    CHECK(parse(lexy::utf8_encoding{}, u8"\U0001F642") == lexy::code_point(0x1F642));
-    CHECK(parse(lexy::utf16_encoding{}, u"\U0001F642") == lexy::code_point(0x1F642));
-    CHECK(parse(lexy::utf32_encoding{}, U"\U0001F642") == lexy::code_point(0x1F642));
+        constexpr auto empty = verify<callback, lexy::ascii_encoding>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::ascii_encoding>(rule, "a");
+        CHECK(cp == 0x61);
+    }
+    SUBCASE("UTF-8")
+    {
+        struct callback
+        {
+            const LEXY_CHAR8_T* str;
+
+            constexpr int success(const LEXY_CHAR8_T*, lexy::code_point cp)
+            {
+                return int(cp.value());
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-8.code_point");
+                return -1;
+            }
+        };
+
+#if LEXY_HAS_CHAR8_T
+        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, u8"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, u8"ä");
+        CHECK(cp == 0xE4);
+#else
+        auto empty_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"");
+        auto empty     = verify<callback, lexy::utf8_encoding>(rule, empty_str);
+        CHECK(empty == -1);
+
+        auto cp_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"ä");
+        auto cp     = verify<callback, lexy::utf8_encoding>(rule, cp_str);
+        CHECK(cp == 0xE4);
+#endif
+    }
+    SUBCASE("UTF-16")
+    {
+        struct callback
+        {
+            const char16_t* str;
+
+            constexpr int success(const char16_t*, lexy::code_point cp)
+            {
+                return int(cp.value());
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-16.code_point");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback, lexy::utf16_encoding>(rule, u"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf16_encoding>(rule, u"ä");
+        CHECK(cp == 0xE4);
+    }
+    SUBCASE("UTF-32")
+    {
+        struct callback
+        {
+            const char32_t* str;
+
+            constexpr int success(const char32_t*, lexy::code_point cp)
+            {
+                return int(cp.value());
+            }
+
+            constexpr int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "UTF-32.code_point");
+                return -1;
+            }
+        };
+
+        constexpr auto empty = verify<callback, lexy::utf32_encoding>(rule, U"");
+        CHECK(empty == -1);
+
+        constexpr auto cp = verify<callback, lexy::utf32_encoding>(rule, U"ä");
+        CHECK(cp == 0xE4);
+    }
 }
 

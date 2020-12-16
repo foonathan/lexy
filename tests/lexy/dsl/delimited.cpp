@@ -71,22 +71,22 @@ TEST_CASE("dsl::delimited()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto zero = rule_matches<callback>(rule, "()");
+        constexpr auto zero = verify<callback>(rule, "()");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "(a)");
+        constexpr auto one = verify<callback>(rule, "(a)");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "(ab)");
+        constexpr auto two = verify<callback>(rule, "(ab)");
         CHECK(two == 2);
-        constexpr auto three = rule_matches<callback>(rule, "(abc)");
+        constexpr auto three = verify<callback>(rule, "(abc)");
         CHECK(three == 3);
 
-        constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
+        constexpr auto unterminated = verify<callback>(rule, "(abc");
         CHECK(unterminated == -2);
 
-        constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+        constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
         CHECK(invalid_ascii == -3);
     }
     SUBCASE("branch")
@@ -151,22 +151,22 @@ TEST_CASE("dsl::delimited()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto zero = rule_matches<callback>(rule, "()");
+        constexpr auto zero = verify<callback>(rule, "()");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "(a)");
+        constexpr auto one = verify<callback>(rule, "(a)");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "(ab)");
+        constexpr auto two = verify<callback>(rule, "(ab)");
         CHECK(two == 2);
-        constexpr auto three = rule_matches<callback>(rule, "(abc)");
+        constexpr auto three = verify<callback>(rule, "(abc)");
         CHECK(three == 3);
 
-        constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
+        constexpr auto unterminated = verify<callback>(rule, "(abc");
         CHECK(unterminated == -2);
 
-        constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+        constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
         CHECK(invalid_ascii == -3);
     }
 }
@@ -252,25 +252,25 @@ TEST_CASE("dsl::delimited with escape")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto zero = rule_matches<callback>(rule, "()");
+    constexpr auto zero = verify<callback>(rule, "()");
     CHECK(zero == 0);
-    constexpr auto one = rule_matches<callback>(rule, "(a)");
+    constexpr auto one = verify<callback>(rule, "(a)");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "(ab)");
+    constexpr auto two = verify<callback>(rule, "(ab)");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "(abc)");
+    constexpr auto three = verify<callback>(rule, "(abc)");
     CHECK(three == 3);
 
-    constexpr auto unterminated = rule_matches<callback>(rule, "(abc");
+    constexpr auto unterminated = verify<callback>(rule, "(abc");
     CHECK(unterminated == -2);
 
-    constexpr auto invalid_ascii = rule_matches<callback>(rule, "(ab\xFF");
+    constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
     CHECK(invalid_ascii == -3);
 
-    constexpr auto escape = rule_matches<callback>(rule, "(a$bc$))");
+    constexpr auto escape = verify<callback>(rule, "(a$bc$))");
     CHECK(escape == 4);
 }
 
@@ -305,13 +305,13 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "$abc");
+        constexpr auto abc = verify<callback>(rule, "$abc");
         CHECK(abc == 0);
 
-        constexpr auto invalid = rule_matches<callback>(rule, "$ab");
+        constexpr auto invalid = verify<callback>(rule, "$ab");
         CHECK(invalid == -2);
     }
     SUBCASE("multiple rules")
@@ -338,15 +338,15 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "$a");
+        constexpr auto a = verify<callback>(rule, "$a");
         CHECK(a == 1);
-        constexpr auto b = rule_matches<callback>(rule, "$b");
+        constexpr auto b = verify<callback>(rule, "$b");
         CHECK(b == 2);
 
-        constexpr auto invalid = rule_matches<callback>(rule, "$c");
+        constexpr auto invalid = verify<callback>(rule, "$c");
         CHECK(invalid == 0);
     }
     SUBCASE(".capture()")
@@ -377,15 +377,15 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "$a");
+        constexpr auto a = verify<callback>(rule, "$a");
         CHECK(a == 'a');
-        constexpr auto b = rule_matches<callback>(rule, "$b");
+        constexpr auto b = verify<callback>(rule, "$b");
         CHECK(b == 'b');
 
-        constexpr auto invalid = rule_matches<callback>(rule, "$\xFF");
+        constexpr auto invalid = verify<callback>(rule, "$\xFF");
         CHECK(invalid == -2);
     }
 #if LEXY_HAS_NTTP
@@ -417,13 +417,13 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "$a");
+        constexpr auto a = verify<callback>(rule, "$a");
         CHECK(a == 'a');
 
-        constexpr auto invalid = rule_matches<callback>(rule, "$b");
+        constexpr auto invalid = verify<callback>(rule, "$b");
         CHECK(invalid == -2);
     }
 #endif
@@ -455,13 +455,13 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "$a");
+        constexpr auto a = verify<callback>(rule, "$a");
         CHECK(a == 'a');
 
-        constexpr auto invalid = rule_matches<callback>(rule, "$b");
+        constexpr auto invalid = verify<callback>(rule, "$b");
         CHECK(invalid == -2);
     }
 }

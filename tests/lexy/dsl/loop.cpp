@@ -27,17 +27,17 @@ TEST_CASE("dsl::loop()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "a!");
+    constexpr auto one = verify<callback>(rule, "a!");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "aa!");
+    constexpr auto two = verify<callback>(rule, "aa!");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "aaa!");
+    constexpr auto three = verify<callback>(rule, "aaa!");
     CHECK(three == 3);
 
-    constexpr auto unterminated = rule_matches<callback>(rule, "aaa");
+    constexpr auto unterminated = verify<callback>(rule, "aaa");
     CHECK(unterminated == -1);
 }
 

@@ -10,22 +10,34 @@
 
 TEST_CASE("dsl::token")
 {
-    constexpr auto atom = token(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
+    constexpr auto rule = token(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(!empty);
-    CHECK(empty.count == 0);
-    // CHECK(empty.error.message() == "no match");
-    // CHECK(empty.error.position() == empty.input);
+    struct callback
+    {
+        const char* str;
 
-    constexpr auto one = atom_matches(atom, "abc");
-    CHECK(one);
-    CHECK(one.count == 3);
-    constexpr auto two = atom_matches(atom, "abcabc");
-    CHECK(two);
-    CHECK(two.count == 6);
-    constexpr auto three = atom_matches(atom, "abcabcabc");
-    CHECK(three);
-    CHECK(three.count == 9);
+        constexpr int success(const char* cur)
+        {
+            return int(cur - str);
+        }
+
+        constexpr int error(test_error<lexy::missing_token> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            return -1;
+        }
+    };
+
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == -1);
+
+    constexpr auto one = verify<callback>(rule, "abc");
+    CHECK(one == 3);
+    constexpr auto two = verify<callback>(rule, "abcabc");
+    CHECK(two == 6);
+    constexpr auto three = verify<callback>(rule, "abcabcabc");
+    CHECK(three == 9);
 }
 

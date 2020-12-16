@@ -11,6 +11,7 @@ TEST_CASE(".error()")
     struct error;
     constexpr auto rule = LEXY_LIT("abc").error<error>();
     CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
     struct callback
     {
@@ -29,10 +30,10 @@ TEST_CASE(".error()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 0);
 }
 
@@ -56,10 +57,10 @@ TEST_CASE("dsl::error")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == -1);
     }
     SUBCASE("range")
@@ -87,10 +88,10 @@ TEST_CASE("dsl::error")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == -1);
     }
 }
@@ -118,10 +119,10 @@ TEST_CASE("dsl::require")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 0);
 }
 
@@ -148,10 +149,10 @@ TEST_CASE("dsl::prevent")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == -1);
 }
 

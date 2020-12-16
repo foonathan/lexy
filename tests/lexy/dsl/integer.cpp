@@ -103,7 +103,7 @@ TEST_CASE("dsl::integer")
             }
         };
 
-        return rule_matches<callback>(rule, str);
+        return verify<callback>(rule, str);
     };
 
     SUBCASE("base 10, uint8_t")
@@ -263,19 +263,19 @@ TEST_CASE("dsl::code_point_id")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -2);
 
-    constexpr auto latin_small_letter_e_with_acute = rule_matches<callback>(rule, "0000E9");
+    constexpr auto latin_small_letter_e_with_acute = verify<callback>(rule, "0000E9");
     CHECK(latin_small_letter_e_with_acute == 0x0000E9);
-    constexpr auto euro_sign = rule_matches<callback>(rule, "0020AC");
+    constexpr auto euro_sign = verify<callback>(rule, "0020AC");
     CHECK(euro_sign == 0x20AC);
-    constexpr auto slightly_smiling_face = rule_matches<callback>(rule, "01F92D");
+    constexpr auto slightly_smiling_face = verify<callback>(rule, "01F92D");
     CHECK(slightly_smiling_face == 0x1F92D);
 
-    constexpr auto extra_digits = rule_matches<callback>(rule, "0000001");
+    constexpr auto extra_digits = verify<callback>(rule, "0000001");
     CHECK(extra_digits == 0);
-    constexpr auto overflow = rule_matches<callback>(rule, "ABCDEF");
+    constexpr auto overflow = verify<callback>(rule, "ABCDEF");
     CHECK(overflow == -1);
 }
 

@@ -32,15 +32,15 @@ TEST_CASE("dsl::whitespaced()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
 
-        constexpr auto space_abc = rule_matches<callback>(rule, " abc");
+        constexpr auto space_abc = verify<callback>(rule, " abc");
         CHECK(space_abc == 1);
-        constexpr auto space_space_abc = rule_matches<callback>(rule, "  abc");
+        constexpr auto space_space_abc = verify<callback>(rule, "  abc");
         CHECK(space_space_abc == 2);
     }
     SUBCASE("branch")
@@ -66,15 +66,15 @@ TEST_CASE("dsl::whitespaced()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 3);
 
-        constexpr auto space_abc = rule_matches<callback>(rule, " abc");
+        constexpr auto space_abc = verify<callback>(rule, " abc");
         CHECK(space_abc == 4);
-        constexpr auto space_space_abc = rule_matches<callback>(rule, "  abc");
+        constexpr auto space_space_abc = verify<callback>(rule, "  abc");
         CHECK(space_space_abc == 5);
     }
 }

@@ -22,83 +22,20 @@
 
 #define CONSTEXPR_CHECK(x) ((x) ? true : constexpr_check_failure())
 
-//=== atom ===//
-struct atom_match_result
-{
-    bool        matches;
-    const char* input;
-    std::size_t count;
-
-    constexpr explicit atom_match_result(bool matches, const char* input, std::size_t count)
-    : matches(matches), input(input), count(count)
-    {}
-
-    constexpr explicit operator bool() const noexcept
-    {
-        return matches;
-    }
-};
-
-// TODO: temporary until the test are replaced using parse tree comparison
-template <typename Atom>
-constexpr auto atom_matches(Atom, const char* str, std::size_t size = std::size_t(-1))
-{
-    auto input  = size == std::size_t(-1) ? lexy::zstring_input<test_encoding>(str)
-                                          : lexy::string_input<test_encoding>(str, size);
-    auto reader = input.reader();
-
-    auto begin  = reader.cur();
-    auto result = lexy::engine_try_match<typename Atom::token_engine>(reader);
-    auto end    = reader.cur();
-
-    return atom_match_result(result, str, std::size_t(end - begin));
-}
-
-//=== pattern ===//
-struct pattern_match_result
-{
-    bool                       _matches;
-    lexy::_detail::string_view _match;
-
-    constexpr explicit operator bool() const
-    {
-        return _matches;
-    }
-
-    constexpr auto match() const
-    {
-        return _match;
-    }
-};
-
-template <typename Pattern>
-constexpr auto pattern_matches(Pattern pattern, const char* str)
-{
-    using token = decltype(lexy::dsl::token(pattern));
-    auto input  = lexy::zstring_input<test_encoding>(str);
-    auto reader = input.reader();
-
-    auto begin  = reader.cur();
-    auto result = lexy::engine_try_match<typename token::token_engine>(reader);
-    auto match  = lexy::lexeme(reader, begin);
-    return pattern_match_result{result, {match.data(), match.size()}};
-}
-
-//=== rule ===//
 template <typename Tag>
 using test_error = lexy::error_for<test_input, Tag>;
 
-template <typename Callback, typename Production = void>
+template <typename Callback, typename CharT, typename Production = void>
 struct test_handler
 {
-    const char* str;
+    const CharT* str;
 
     using result_type = lexy::result<int, int>;
 
     template <typename SubProduction>
     constexpr auto sub_handler(const lexy::input_reader<test_input>&)
     {
-        return test_handler<Callback, SubProduction>{str};
+        return test_handler<Callback, CharT, SubProduction>{str};
     }
 
     constexpr auto list_sink()
@@ -148,18 +85,25 @@ struct test_final_parser
     }
 };
 
-template <typename Callback, typename Rule>
-constexpr int rule_matches(Rule, const char* str)
+template <typename Callback, typename Encoding, typename CharT, typename Rule>
+constexpr int verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
 {
-    auto input  = lexy::zstring_input<test_encoding>(str);
+    auto input  = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
+                                          : lexy::string_input<Encoding>(str, size);
     auto reader = input.reader();
 
-    test_handler<Callback> handler{str};
+    test_handler<Callback, CharT> handler{str};
     auto result = Rule::template parser<test_final_parser>::parse(handler, reader);
     if (result)
         return result.value();
     else
         return result.error();
+}
+
+template <typename Callback, typename Rule>
+constexpr int verify(Rule rule, const char* str, std::size_t size = std::size_t(-1))
+{
+    return verify<Callback, test_encoding>(rule, str, size);
 }
 
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED

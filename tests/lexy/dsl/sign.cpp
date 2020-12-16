@@ -28,11 +28,11 @@ TEST_CASE("dsl::plus_sign")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == +1);
-    constexpr auto plus = rule_matches<callback>(rule, "+");
+    constexpr auto plus = verify<callback>(rule, "+");
     CHECK(plus == +1);
-    constexpr auto minus = rule_matches<callback>(rule, "-");
+    constexpr auto minus = verify<callback>(rule, "-");
     CHECK(minus == 0);
 }
 
@@ -57,11 +57,11 @@ TEST_CASE("dsl::minus_sign")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == +1);
-    constexpr auto plus = rule_matches<callback>(rule, "+");
+    constexpr auto plus = verify<callback>(rule, "+");
     CHECK(plus == 0);
-    constexpr auto minus = rule_matches<callback>(rule, "-");
+    constexpr auto minus = verify<callback>(rule, "-");
     CHECK(minus == -1);
 }
 
@@ -87,11 +87,11 @@ TEST_CASE("dsl::sign")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == +1);
-    constexpr auto plus = rule_matches<callback>(rule, "+");
+    constexpr auto plus = verify<callback>(rule, "+");
     CHECK(plus == +1);
-    constexpr auto minus = rule_matches<callback>(rule, "-");
+    constexpr auto minus = verify<callback>(rule, "-");
     CHECK(minus == -1);
 }
 

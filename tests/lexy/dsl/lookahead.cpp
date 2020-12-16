@@ -32,19 +32,19 @@ TEST_CASE("dsl::lookahead()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto nothing = rule_matches<callback>(rule, "abc");
+    constexpr auto nothing = verify<callback>(rule, "abc");
     CHECK(nothing == -1);
 
-    constexpr auto nothing_newline = rule_matches<callback>(rule, "abc\n");
+    constexpr auto nothing_newline = verify<callback>(rule, "abc\n");
     CHECK(nothing_newline == -1);
 
-    constexpr auto something = rule_matches<callback>(rule, "abc!def\n");
+    constexpr auto something = verify<callback>(rule, "abc!def\n");
     CHECK(something == 0);
 
-    constexpr auto something_after = rule_matches<callback>(rule, "abc\n!def\n");
+    constexpr auto something_after = verify<callback>(rule, "abc\n!def\n");
     CHECK(something_after == -1);
 }
 

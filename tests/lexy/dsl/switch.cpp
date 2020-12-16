@@ -36,15 +36,15 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        constexpr auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        constexpr auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == -1);
     }
     SUBCASE("ordered")
@@ -73,14 +73,14 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        constexpr auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 1);
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        constexpr auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == 1);
     }
     SUBCASE("default")
@@ -108,15 +108,15 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        constexpr auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        constexpr auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == 0);
     }
     SUBCASE("error")
@@ -145,15 +145,15 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        constexpr auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        constexpr auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == -1);
     }
 }

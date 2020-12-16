@@ -16,7 +16,6 @@ set(tests
         dsl/any.cpp
         dsl/argv_input.cpp
         dsl/ascii.cpp
-        dsl/atom.cpp
         dsl/bom.cpp
         dsl/brackets.cpp
         dsl/branch.cpp

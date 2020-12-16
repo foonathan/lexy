@@ -60,31 +60,31 @@ TEST_CASE("dsl::combination()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -2);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 'a');
-    constexpr auto acb = rule_matches<callback>(rule, "acb");
+    constexpr auto acb = verify<callback>(rule, "acb");
     CHECK(acb == 'a');
-    constexpr auto bac = rule_matches<callback>(rule, "bac");
+    constexpr auto bac = verify<callback>(rule, "bac");
     CHECK(bac == 'b');
-    constexpr auto bca = rule_matches<callback>(rule, "bca");
+    constexpr auto bca = verify<callback>(rule, "bca");
     CHECK(bca == 'b');
-    constexpr auto cab = rule_matches<callback>(rule, "cab");
+    constexpr auto cab = verify<callback>(rule, "cab");
     CHECK(cab == 'c');
-    constexpr auto cba = rule_matches<callback>(rule, "cba");
+    constexpr auto cba = verify<callback>(rule, "cba");
     CHECK(cba == 'c');
 
-    constexpr auto aab = rule_matches<callback>(rule, "aab");
+    constexpr auto aab = verify<callback>(rule, "aab");
     CHECK(aab == -1);
-    constexpr auto aba = rule_matches<callback>(rule, "aba");
+    constexpr auto aba = verify<callback>(rule, "aba");
     CHECK(aba == -1);
 
-    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    constexpr auto ab = verify<callback>(rule, "ab");
     CHECK(ab == -2);
 
-    constexpr auto abca = rule_matches<callback>(rule, "abca");
+    constexpr auto abca = verify<callback>(rule, "abca");
     CHECK(abca == 'a');
 }
 
@@ -141,48 +141,48 @@ TEST_CASE("dsl::partial_combination()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto a = rule_matches<callback>(rule, "a");
+    constexpr auto a = verify<callback>(rule, "a");
     CHECK(a == 1);
-    constexpr auto b = rule_matches<callback>(rule, "b");
+    constexpr auto b = verify<callback>(rule, "b");
     CHECK(b == 1);
-    constexpr auto c = rule_matches<callback>(rule, "c");
+    constexpr auto c = verify<callback>(rule, "c");
     CHECK(c == 1);
 
-    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    constexpr auto ab = verify<callback>(rule, "ab");
     CHECK(ab == 2);
-    constexpr auto ba = rule_matches<callback>(rule, "ba");
+    constexpr auto ba = verify<callback>(rule, "ba");
     CHECK(ba == 2);
-    constexpr auto ac = rule_matches<callback>(rule, "ac");
+    constexpr auto ac = verify<callback>(rule, "ac");
     CHECK(ac == 2);
-    constexpr auto ca = rule_matches<callback>(rule, "ca");
+    constexpr auto ca = verify<callback>(rule, "ca");
     CHECK(ca == 2);
-    constexpr auto bc = rule_matches<callback>(rule, "bc");
+    constexpr auto bc = verify<callback>(rule, "bc");
     CHECK(bc == 2);
-    constexpr auto cb = rule_matches<callback>(rule, "cb");
+    constexpr auto cb = verify<callback>(rule, "cb");
     CHECK(cb == 2);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 3);
-    constexpr auto acb = rule_matches<callback>(rule, "acb");
+    constexpr auto acb = verify<callback>(rule, "acb");
     CHECK(acb == 3);
-    constexpr auto bac = rule_matches<callback>(rule, "bac");
+    constexpr auto bac = verify<callback>(rule, "bac");
     CHECK(bac == 3);
-    constexpr auto bca = rule_matches<callback>(rule, "bca");
+    constexpr auto bca = verify<callback>(rule, "bca");
     CHECK(bca == 3);
-    constexpr auto cab = rule_matches<callback>(rule, "cab");
+    constexpr auto cab = verify<callback>(rule, "cab");
     CHECK(cab == 3);
-    constexpr auto cba = rule_matches<callback>(rule, "cba");
+    constexpr auto cba = verify<callback>(rule, "cba");
     CHECK(cba == 3);
 
-    constexpr auto aab = rule_matches<callback>(rule, "aab");
+    constexpr auto aab = verify<callback>(rule, "aab");
     CHECK(aab == -1);
-    constexpr auto aba = rule_matches<callback>(rule, "aba");
+    constexpr auto aba = verify<callback>(rule, "aba");
     CHECK(aba == -1);
 
-    constexpr auto abca = rule_matches<callback>(rule, "abca");
+    constexpr auto abca = verify<callback>(rule, "abca");
     CHECK(abca == 3);
 }
 

@@ -35,10 +35,10 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto success = rule_matches<callback>(rule, "abc");
+        constexpr auto success = verify<callback>(rule, "abc");
         CHECK(success == 0);
     }
     SUBCASE("capture label")
@@ -59,10 +59,10 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("directly nested")
@@ -89,10 +89,10 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto success = rule_matches<callback>(rule, "abc");
+        constexpr auto success = verify<callback>(rule, "abc");
         CHECK(success == 0);
     }
     SUBCASE("indirectly nested")
@@ -118,10 +118,10 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto success = rule_matches<callback>(rule, "(abc)");
+        constexpr auto success = verify<callback>(rule, "(abc)");
         CHECK(success == 0);
     }
     SUBCASE("branch")
@@ -146,10 +146,10 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto success = rule_matches<callback>(rule, "abc");
+        constexpr auto success = verify<callback>(rule, "abc");
         CHECK(success == 1);
     }
     SUBCASE("whitespace")
@@ -175,13 +175,13 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto success = rule_matches<callback>(rule, "abc");
+        constexpr auto success = verify<callback>(rule, "abc");
         CHECK(success == 0);
 
-        constexpr auto with_space = rule_matches<callback>(rule, "  abc");
+        constexpr auto with_space = verify<callback>(rule, "  abc");
         CHECK(with_space == 0);
     }
 }

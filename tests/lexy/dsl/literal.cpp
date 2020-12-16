@@ -8,37 +8,44 @@
 
 TEST_CASE("dsl::lit")
 {
-    SUBCASE("basic")
-    {
-        constexpr auto atom = LEXY_LIT("abc");
+    constexpr auto rule = LEXY_LIT("abc");
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
+
 #if LEXY_HAS_NTTP
-        CHECK(std::is_same_v<decltype(atom), decltype(lexy::dsl::lit<"abc">)>);
+    CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::lit<"abc">)>);
 #endif
 
-        constexpr auto empty = atom_matches(atom, "");
-        CHECK(!empty);
-        CHECK(empty.count == 0);
-        // CHECK(empty.error.position() == empty.input);
-        // CHECK(empty.error.string() == "abc");
-        // CHECK(empty.error.character() == 'a');
+    struct callback
+    {
+        const char* str;
 
-        constexpr auto partial = atom_matches(atom, "ab");
-        CHECK(!partial);
-        // CHECK(partial.error.position() == partial.input);
-        // CHECK(partial.error.string() == "abc");
-        // CHECK(partial.error.character() == 'c');
+        constexpr int success(const char* cur)
+        {
+            CONSTEXPR_CHECK(str + 3 == cur);
+            return 0;
+        }
 
-        constexpr auto correct = atom_matches(atom, "abc");
-        CHECK(correct);
-        CHECK(correct.count == 3);
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.string() == "abc");
+            CONSTEXPR_CHECK(e.string()[e.index()] == e.character());
+            return -int(e.index()) - 1;
+        }
+    };
 
-        constexpr auto extra = atom_matches(atom, "abcdef");
-        CHECK(extra);
-        CHECK(extra.count == 3);
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto with_ws    = LEXY_LIT("abc")[LEXY_LIT(" ")];
-        constexpr auto equivalent = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
-        CHECK(std::is_same_v<decltype(with_ws), decltype(equivalent)>);
-    }
+    constexpr auto a = verify<callback>(rule, "a");
+    CHECK(a == -2);
+    constexpr auto ab = verify<callback>(rule, "ab");
+    CHECK(ab == -3);
+
+    constexpr auto abc = verify<callback>(rule, "abc");
+    CHECK(abc == 0);
+    constexpr auto abcd = verify<callback>(rule, "abcd");
+    CHECK(abcd == 0);
 }
 

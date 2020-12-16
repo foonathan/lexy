@@ -10,64 +10,42 @@
 
 TEST_CASE("dsl::operator+")
 {
-    SUBCASE("pattern")
+    constexpr auto rule
+        = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
     {
-        constexpr auto pattern = LEXY_LIT("abc") + LEXY_LIT("d") + LEXY_LIT("ef");
+        const char* str;
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto first_partial = pattern_matches(pattern, "ab");
-        CHECK(!first_partial);
-        constexpr auto first = pattern_matches(pattern, "abc");
-        CHECK(!first);
-        constexpr auto second = pattern_matches(pattern, "abcd");
-        CHECK(!second);
-
-        constexpr auto third = pattern_matches(pattern, "abcdef");
-        CHECK(third);
-        CHECK(third.match() == "abcdef");
-    }
-    SUBCASE("rule")
-    {
-        constexpr auto rule
-            = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        constexpr int success(const char* cur, lexy::label<lab>, lexy::lexeme_for<test_input> lex)
         {
-            const char* str;
+            CONSTEXPR_CHECK(str + 3 == cur);
+            CONSTEXPR_CHECK(*lex.begin() == 'c');
+            return 0;
+        }
 
-            constexpr int success(const char*                  cur, lexy::label<lab>,
-                                  lexy::lexeme_for<test_input> lex)
-            {
-                CONSTEXPR_CHECK(str + 3 == cur);
-                CONSTEXPR_CHECK(*lex.begin() == 'c');
-                return 0;
-            }
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            if (e.string() == "a")
+                return -1;
+            else if (e.string() == "b")
+                return -2;
+            else if (e.string() == "c")
+                return -3;
+            else
+                return -4;
+        }
+    };
 
-            constexpr int error(test_error<lexy::expected_literal> e)
-            {
-                if (e.string() == "a")
-                    return -1;
-                else if (e.string() == "b")
-                    return -2;
-                else if (e.string() == "c")
-                    return -3;
-                else
-                    return -4;
-            }
-        };
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == -1);
+    constexpr auto a = verify<callback>(rule, "a");
+    CHECK(a == -2);
+    constexpr auto ab = verify<callback>(rule, "ab");
+    CHECK(ab == -3);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
-        constexpr auto a = rule_matches<callback>(rule, "a");
-        CHECK(a == -2);
-        constexpr auto ab = rule_matches<callback>(rule, "ab");
-        CHECK(ab == -3);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
-    }
+    constexpr auto abc = verify<callback>(rule, "abc");
+    CHECK(abc == 0);
 }
 

@@ -12,6 +12,7 @@ TEST_CASE("dsl::_trie")
     constexpr auto rule = lexy::dsl::_trie<LEXY_NTTP_STRING("abc"), LEXY_NTTP_STRING("a"),
                                            LEXY_NTTP_STRING("def")>{};
     CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
     struct callback
     {
@@ -37,18 +38,18 @@ TEST_CASE("dsl::_trie")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 0);
 
-    constexpr auto a = rule_matches<callback>(rule, "a");
+    constexpr auto a = verify<callback>(rule, "a");
     CHECK(a == 1);
-    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    constexpr auto ab = verify<callback>(rule, "ab");
     CHECK(ab == 1);
 
-    constexpr auto def = rule_matches<callback>(rule, "def");
+    constexpr auto def = verify<callback>(rule, "def");
     CHECK(def == 2);
 }
 
@@ -57,6 +58,7 @@ TEST_CASE("dsl::_alt")
     constexpr auto rule = lexy::dsl::_alt<decltype(LEXY_LIT("abc")), decltype(LEXY_LIT("a")),
                                           decltype(LEXY_LIT("ab")), decltype(LEXY_LIT("def"))>{};
     CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
     struct callback
     {
@@ -82,18 +84,18 @@ TEST_CASE("dsl::_alt")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 0);
 
-    constexpr auto a = rule_matches<callback>(rule, "a");
+    constexpr auto a = verify<callback>(rule, "a");
     CHECK(a == 1);
-    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    constexpr auto ab = verify<callback>(rule, "ab");
     CHECK(ab == 1);
 
-    constexpr auto def = rule_matches<callback>(rule, "def");
+    constexpr auto def = verify<callback>(rule, "def");
     CHECK(def == 2);
 }
 

@@ -21,10 +21,10 @@ TEST_CASE("dsl::return")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    constexpr auto abc = verify<callback>(rule, "abc");
     CHECK(abc == 0);
 }
 

@@ -33,12 +33,12 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = rule_matches<callback>(rule, "");
+        constexpr auto zero = verify<callback>(rule, "");
         CHECK(zero == -1);
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == -1);
 
-        constexpr auto two = rule_matches<callback>(rule, "abcabc");
+        constexpr auto two = verify<callback>(rule, "abcabc");
         CHECK(two == 0);
     }
     SUBCASE("sep")
@@ -69,18 +69,18 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = rule_matches<callback>(rule, "");
+        constexpr auto zero = verify<callback>(rule, "");
         CHECK(zero == -1);
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == -2);
 
-        constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+        constexpr auto two = verify<callback>(rule, "abc,abc");
         CHECK(two == 0);
 
-        constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+        constexpr auto no_sep = verify<callback>(rule, "abcabc");
         CHECK(no_sep == -2);
 
-        constexpr auto trailing_sep = rule_matches<callback>(rule, "abc,abc,");
+        constexpr auto trailing_sep = verify<callback>(rule, "abc,abc,");
         CHECK(trailing_sep == 0);
     }
     SUBCASE("trailing_sep")
@@ -117,18 +117,18 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = rule_matches<callback>(rule, "");
+        constexpr auto zero = verify<callback>(rule, "");
         CHECK(zero == -1);
-        constexpr auto one = rule_matches<callback>(rule, "abc");
+        constexpr auto one = verify<callback>(rule, "abc");
         CHECK(one == -2);
 
-        constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+        constexpr auto two = verify<callback>(rule, "abc,abc");
         CHECK(two == 0);
 
-        constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+        constexpr auto no_sep = verify<callback>(rule, "abcabc");
         CHECK(no_sep == -2);
 
-        constexpr auto trailing_sep = rule_matches<callback>(rule, "abc,abc,");
+        constexpr auto trailing_sep = verify<callback>(rule, "abc,abc,");
         CHECK(trailing_sep == 1);
     }
 }

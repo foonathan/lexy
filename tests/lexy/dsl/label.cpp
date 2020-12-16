@@ -25,10 +25,10 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("operator()")
@@ -53,10 +53,10 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
     SUBCASE("branch")
@@ -80,10 +80,10 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto string = rule_matches<callback>(rule, "abc");
+        constexpr auto string = verify<callback>(rule, "abc");
         CHECK(string == 1);
     }
 }
@@ -105,10 +105,10 @@ TEST_CASE("dsl::id")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 0);
 }
 

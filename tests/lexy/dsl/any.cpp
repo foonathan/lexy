@@ -5,19 +5,27 @@
 #include <lexy/dsl/any.hpp>
 
 #include "verify.hpp"
-#include <lexy/input/buffer.hpp>
-#include <lexy/match.hpp>
 
 TEST_CASE("dsl::any")
 {
-    constexpr auto atom = lexy::dsl::any;
+    constexpr auto rule = lexy::dsl::any;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(empty);
-    CHECK(empty.count == 0);
+    struct callback
+    {
+        const char* str;
 
-    constexpr auto non_empty = atom_matches(atom, "abc");
-    CHECK(non_empty);
-    CHECK(non_empty.count == 3);
+        constexpr int success(const char* cur)
+        {
+            return int(cur - str);
+        }
+    };
+
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == 0);
+
+    constexpr auto non_empty = verify<callback>(rule, "abc");
+    CHECK(non_empty == 3);
 }
 

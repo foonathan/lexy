@@ -39,19 +39,19 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto zero = rule_matches<callback>(rule, "-");
+        constexpr auto zero = verify<callback>(rule, "-");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "*-*");
+        constexpr auto one = verify<callback>(rule, "*-*");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "*+-*+");
+        constexpr auto two = verify<callback>(rule, "*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = rule_matches<callback>(rule, "**-*");
+        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = rule_matches<callback>(rule, "**-*+");
+        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
         CHECK(char_mismatch == -1);
     }
     SUBCASE("push + pop - length_eq")
@@ -82,19 +82,19 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto zero = rule_matches<callback>(rule, "-");
+        constexpr auto zero = verify<callback>(rule, "-");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "*-*");
+        constexpr auto one = verify<callback>(rule, "*-*");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "*+-*+");
+        constexpr auto two = verify<callback>(rule, "*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = rule_matches<callback>(rule, "**-*");
+        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = rule_matches<callback>(rule, "**-*+");
+        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
         CHECK(char_mismatch == 2);
     }
     SUBCASE("push + top + pop")
@@ -124,19 +124,19 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto zero = rule_matches<callback>(rule, "--");
+        constexpr auto zero = verify<callback>(rule, "--");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "*-*-*");
+        constexpr auto one = verify<callback>(rule, "*-*-*");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "*+-*+-*+");
+        constexpr auto two = verify<callback>(rule, "*+-*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = rule_matches<callback>(rule, "**-*-**");
+        constexpr auto length_mismatch = verify<callback>(rule, "**-*-**");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = rule_matches<callback>(rule, "**-**-*+");
+        constexpr auto char_mismatch = verify<callback>(rule, "**-**-*+");
         CHECK(char_mismatch == -1);
     }
     SUBCASE("push + drop")
@@ -154,11 +154,11 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
-        constexpr auto one = rule_matches<callback>(rule, "*");
+        constexpr auto one = verify<callback>(rule, "*");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "*+");
+        constexpr auto two = verify<callback>(rule, "*+");
         CHECK(two == 2);
     }
 
@@ -190,21 +190,21 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto zero_zero = rule_matches<callback>(rule, "---");
+        constexpr auto zero_zero = verify<callback>(rule, "---");
         CHECK(zero_zero == 0);
-        constexpr auto zero_one = rule_matches<callback>(rule, "-+-+-");
+        constexpr auto zero_one = verify<callback>(rule, "-+-+-");
         CHECK(zero_one == 2);
-        constexpr auto one_one = rule_matches<callback>(rule, "*-*-*-*");
+        constexpr auto one_one = verify<callback>(rule, "*-*-*-*");
         CHECK(one_one == 4);
-        constexpr auto two_one = rule_matches<callback>(rule, "**-*-*-**");
+        constexpr auto two_one = verify<callback>(rule, "**-*-*-**");
         CHECK(two_one == 6);
 
-        constexpr auto mismatch_outer = rule_matches<callback>(rule, "**-+-+-*");
+        constexpr auto mismatch_outer = verify<callback>(rule, "**-+-+-*");
         CHECK(mismatch_outer == -1);
-        constexpr auto mismatch_inner = rule_matches<callback>(rule, "**-+-++-**");
+        constexpr auto mismatch_inner = verify<callback>(rule, "**-+-++-**");
         CHECK(mismatch_inner == -1);
     }
     SUBCASE("pop discards values")
@@ -234,19 +234,19 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -2);
 
-        constexpr auto zero = rule_matches<callback>(rule, "-");
+        constexpr auto zero = verify<callback>(rule, "-");
         CHECK(zero == 0);
-        constexpr auto one = rule_matches<callback>(rule, "*-*");
+        constexpr auto one = verify<callback>(rule, "*-*");
         CHECK(one == 1);
-        constexpr auto two = rule_matches<callback>(rule, "*+-*+");
+        constexpr auto two = verify<callback>(rule, "*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = rule_matches<callback>(rule, "**-*");
+        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = rule_matches<callback>(rule, "**-*+");
+        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
         CHECK(char_mismatch == -1);
     }
 }

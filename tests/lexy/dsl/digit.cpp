@@ -119,163 +119,262 @@ TEST_CASE("dsl::hex")
 
 TEST_CASE("dsl::zero")
 {
-    constexpr auto atom = lexy::dsl::zero;
+    constexpr auto rule = lexy::dsl::zero;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(!empty);
-    CHECK(empty.count == 0);
-    // CHECK(empty.error.position() == empty.input);
-    // CHECK(empty.error.character_class() == "digit.zero");
+    struct callback
+    {
+        const char* str;
 
-    constexpr auto zero = atom_matches(atom, "0");
-    CHECK(zero);
-    CHECK(zero.count == 1);
+        constexpr int success(const char* cur)
+        {
+            CONSTEXPR_CHECK(cur == str + 1);
+            return 0;
+        }
 
-    constexpr auto zero_zero = atom_matches(atom, "00");
-    CHECK(zero_zero);
-    CHECK(zero_zero.count == 1);
+        constexpr int error(test_error<lexy::expected_char_class> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.character_class() == "digit.zero");
+            return -1;
+        }
+    };
 
-    constexpr auto nine = atom_matches(atom, "9");
-    CHECK(!nine);
-    CHECK(nine.count == 0);
-    // CHECK(nine.error.position() == nine.input);
-    // CHECK(nine.error.character_class() == "digit.zero");
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == -1);
+
+    constexpr auto zero = verify<callback>(rule, "0");
+    CHECK(zero == 0);
+    constexpr auto zero_zero = verify<callback>(rule, "00");
+    CHECK(zero_zero == 0);
+
+    constexpr auto nine = verify<callback>(rule, "9");
+    CHECK(nine == -1);
 }
 
 TEST_CASE("dsl::digit")
 {
-    constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>;
+    constexpr auto rule = lexy::dsl::digit<lexy::dsl::octal>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
 
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(!empty);
-    CHECK(empty.count == 0);
-    // CHECK(empty.error.position() == empty.input);
-    // CHECK(empty.error.character_class() == "digit.octal");
+    struct callback
+    {
+        const char* str;
 
-    constexpr auto zero = atom_matches(atom, "0");
-    CHECK(zero);
-    CHECK(zero.count == 1);
+        constexpr int success(const char* cur)
+        {
+            CONSTEXPR_CHECK(cur == str + 1);
+            return *str - '0';
+        }
 
-    constexpr auto six = atom_matches(atom, "6");
-    CHECK(six);
-    CHECK(six.count == 1);
+        constexpr int error(test_error<lexy::expected_char_class> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            CONSTEXPR_CHECK(e.character_class() == "digit.octal");
+            return -1;
+        }
+    };
 
-    constexpr auto three_seven = atom_matches(atom, "37");
-    CHECK(three_seven);
-    CHECK(three_seven.count == 1);
+    constexpr auto empty = verify<callback>(rule, "");
+    CHECK(empty == -1);
 
-    constexpr auto nine = atom_matches(atom, "9");
-    CHECK(!nine);
-    CHECK(nine.count == 0);
-    // CHECK(nine.error.position() == nine.input);
-    // CHECK(nine.error.character_class() == "digit.octal");
+    constexpr auto zero = verify<callback>(rule, "0");
+    CHECK(zero == 0);
+
+    constexpr auto six = verify<callback>(rule, "6");
+    CHECK(six == 6);
+
+    constexpr auto three_seven = verify<callback>(rule, "37");
+    CHECK(three_seven == 3);
+
+    constexpr auto nine = verify<callback>(rule, "9");
+    CHECK(nine == -1);
 }
 
 TEST_CASE("dsl::digits")
 {
     SUBCASE("basic")
     {
-        constexpr auto pattern = lexy::dsl::digits<>;
+        constexpr auto rule = lexy::dsl::digits<>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(zero);
-        CHECK(zero.match() == "0");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto one = pattern_matches(pattern, "1");
-        CHECK(one);
-        CHECK(one.match() == "1");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+        };
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "101");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "101");
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
-        CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match() == "007");
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == 1);
+
+        constexpr auto one = verify<callback>(rule, "1");
+        CHECK(one == 1);
+
+        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        CHECK(one_zero_one == 3);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        CHECK(zero_zero_seven == 3);
     }
     SUBCASE("no leading zero")
     {
-        constexpr auto pattern = lexy::dsl::digits<>.no_leading_zero();
+        constexpr auto rule = lexy::dsl::digits<>.no_leading_zero();
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(zero);
-        CHECK(zero.match() == "0");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto one = pattern_matches(pattern, "1");
-        CHECK(one);
-        CHECK(one.match() == "1");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+            constexpr int error(test_error<lexy::forbidden_leading_zero> e)
+            {
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == str + 1);
+                return -2;
+            }
+        };
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "101");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "101");
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
-        CHECK(!zero_zero_seven);
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == 1);
+
+        constexpr auto one = verify<callback>(rule, "1");
+        CHECK(one == 1);
+
+        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        CHECK(one_zero_one == 3);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        CHECK(zero_zero_seven == -2);
     }
     SUBCASE("sep")
     {
-        constexpr auto pattern = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
+        constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(zero);
-        CHECK(zero.match() == "0");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto one = pattern_matches(pattern, "1");
-        CHECK(one);
-        CHECK(one.match() == "1");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+        };
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "1'01");
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
-        CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match() == "00'7");
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == 1);
 
-        constexpr auto leading_tick = pattern_matches(pattern, "'0");
-        CHECK(!leading_tick);
-        constexpr auto trailing_tick = pattern_matches(pattern, "0'");
-        CHECK(!trailing_tick);
+        constexpr auto one = verify<callback>(rule, "1");
+        CHECK(one == 1);
+
+        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        CHECK(one_zero_one == 4);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        CHECK(zero_zero_seven == 4);
+
+        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        CHECK(leading_tick == -1);
+        constexpr auto trailing_tick = verify<callback>(rule, "0'");
+        CHECK(trailing_tick == -1);
     }
     SUBCASE("sep + no leading zero")
     {
-        constexpr auto pattern
-            = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
+        constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
+        constexpr auto equivalent
+            = lexy::dsl::digits<>.no_leading_zero().sep(lexy::dsl::digit_sep_tick);
+        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
 
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(zero);
-        CHECK(zero.match() == "0");
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto one = pattern_matches(pattern, "1");
-        CHECK(one);
-        CHECK(one.match() == "1");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "1'01");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+            constexpr int error(test_error<lexy::forbidden_leading_zero> e)
+            {
+                CONSTEXPR_CHECK(e.begin() == str);
+                CONSTEXPR_CHECK(e.end() == str + 1);
+                return -2;
+            }
+        };
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
-        CHECK(!zero_zero_seven);
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
 
-        constexpr auto leading_tick = pattern_matches(pattern, "'0");
-        CHECK(!leading_tick);
-        constexpr auto trailing_tick = pattern_matches(pattern, "0'");
-        CHECK(!trailing_tick);
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == 1);
 
-        constexpr auto zero_tick_one = pattern_matches(pattern, "0'1");
-        CHECK(!zero_tick_one);
+        constexpr auto one = verify<callback>(rule, "1");
+        CHECK(one == 1);
+
+        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        CHECK(one_zero_one == 4);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        CHECK(zero_zero_seven == -2);
+
+        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        CHECK(leading_tick == -1);
+        constexpr auto trailing_tick = verify<callback>(rule, "0'");
+        CHECK(trailing_tick == -2);
+
+        constexpr auto zero_tick_one = verify<callback>(rule, "0'1");
+        CHECK(zero_tick_one == -2);
     }
 }
 
@@ -283,51 +382,82 @@ TEST_CASE("dsl::n_digits")
 {
     SUBCASE("basic")
     {
-        constexpr auto pattern = lexy::dsl::n_digits<3>;
+        constexpr auto rule = lexy::dsl::n_digits<3>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(!zero);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "101");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "101");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "007");
-        CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match() == "007");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+        };
 
-        constexpr auto four_digits = pattern_matches(pattern, "1234");
-        CHECK(four_digits);
-        CHECK(four_digits.match() == "123");
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == -1);
+
+        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        CHECK(one_zero_one == 3);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        CHECK(zero_zero_seven == 3);
+
+        constexpr auto four_digits = verify<callback>(rule, "1234");
+        CHECK(four_digits == 3);
     }
     SUBCASE("sep")
     {
-        constexpr auto pattern = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
+        constexpr auto rule = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "0");
-        CHECK(!zero);
+        struct callback
+        {
+            const char* str;
 
-        constexpr auto one_zero_one = pattern_matches(pattern, "1'01");
-        CHECK(one_zero_one);
-        CHECK(one_zero_one.match() == "1'01");
+            constexpr int success(const char* cur)
+            {
+                return int(cur - str);
+            }
 
-        constexpr auto zero_zero_seven = pattern_matches(pattern, "00'7");
-        CHECK(zero_zero_seven);
-        CHECK(zero_zero_seven.match() == "00'7");
+            constexpr int error(test_error<lexy::expected_char_class> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                return -1;
+            }
+        };
 
-        constexpr auto leading_tick = pattern_matches(pattern, "'0");
-        CHECK(!leading_tick);
-        constexpr auto trailing_tick = pattern_matches(pattern, "123'");
-        CHECK(trailing_tick);
-        CHECK(trailing_tick.match() == "123");
+        constexpr auto empty = verify<callback>(rule, "");
+        CHECK(empty == -1);
+        constexpr auto zero = verify<callback>(rule, "0");
+        CHECK(zero == -1);
 
-        constexpr auto four_digits = pattern_matches(pattern, "1'2'3'4");
-        CHECK(four_digits);
-        CHECK(four_digits.match() == "1'2'3");
+        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        CHECK(one_zero_one == 4);
+
+        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        CHECK(zero_zero_seven == 4);
+
+        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        CHECK(leading_tick == -1);
+        constexpr auto trailing_tick = verify<callback>(rule, "123'");
+        CHECK(trailing_tick == 3);
+
+        constexpr auto four_digits = verify<callback>(rule, "1'2'3'4");
+        CHECK(four_digits == 5);
     }
 }
 

@@ -79,10 +79,10 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
     }
     SUBCASE("pattern")
@@ -113,10 +113,10 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
     }
     SUBCASE("branch")
@@ -153,12 +153,12 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
-        constexpr auto def = rule_matches<callback>(rule, "def");
+        constexpr auto def = verify<callback>(rule, "def");
         CHECK(def == 1);
     }
     SUBCASE("branch in branch")
@@ -199,12 +199,12 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == -1);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        constexpr auto abc = verify<callback>(rule, "abc");
         CHECK(abc == 0);
-        constexpr auto def = rule_matches<callback>(rule, "def");
+        constexpr auto def = verify<callback>(rule, "def");
         CHECK(def == 1);
     }
 }
@@ -271,14 +271,14 @@ TEST_CASE("dsl::recurse")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
+        constexpr auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 2);
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
+        constexpr auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == 3);
     }
     SUBCASE("right recursion")
@@ -315,14 +315,14 @@ TEST_CASE("dsl::recurse")
             }
         };
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
+        constexpr auto empty = verify<callback>(rule, "");
         CHECK(empty == 0);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
+        constexpr auto a = verify<callback>(rule, "a");
         CHECK(a == 1);
-        TEST_CONSTEXPR auto aa = rule_matches<callback>(rule, "aa");
+        TEST_CONSTEXPR auto aa = verify<callback>(rule, "aa");
         CHECK(aa == 2);
-        TEST_CONSTEXPR auto aaa = rule_matches<callback>(rule, "aaa");
+        TEST_CONSTEXPR auto aaa = verify<callback>(rule, "aaa");
         CHECK(aaa == 3);
     }
 }

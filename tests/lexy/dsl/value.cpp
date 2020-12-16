@@ -22,10 +22,10 @@ TEST_CASE("dsl::value_c")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 42);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 42);
 }
 
@@ -53,10 +53,10 @@ TEST_CASE("dsl::value_f")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 42);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 42);
 }
 
@@ -76,10 +76,10 @@ TEST_CASE("dsl::value_t")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 0);
 }
 
@@ -104,10 +104,10 @@ TEST_CASE("dsl::value_str")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
 
-    constexpr auto string = rule_matches<callback>(rule, "abc");
+    constexpr auto string = verify<callback>(rule, "abc");
     CHECK(string == 0);
 }
 

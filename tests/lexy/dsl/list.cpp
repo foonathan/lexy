@@ -54,16 +54,16 @@ TEST_CASE("dsl::list()")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abcabc");
+    constexpr auto two = verify<callback>(rule, "abcabc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abcabcabc");
+    constexpr auto three = verify<callback>(rule, "abcabcabc");
     CHECK(three == 3);
 }
 
@@ -111,19 +111,19 @@ TEST_CASE("dsl::list() sep")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 1);
 }
 
@@ -176,19 +176,19 @@ TEST_CASE("dsl::list() sep capture")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 3);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 7);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 11);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 3);
 }
 
@@ -239,22 +239,22 @@ TEST_CASE("dsl::list() trailing_sep")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 1);
 
-    constexpr auto trailing = rule_matches<callback>(rule, "abc,");
+    constexpr auto trailing = verify<callback>(rule, "abc,");
     CHECK(trailing == 1);
 }
 
@@ -308,22 +308,22 @@ TEST_CASE("dsl::list() trailing_sep capture")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == -1);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 3);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 7);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 11);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 3);
 
-    constexpr auto trailing = rule_matches<callback>(rule, "abc,");
+    constexpr auto trailing = verify<callback>(rule, "abc,");
     CHECK(trailing == 4);
 }
 
@@ -376,16 +376,16 @@ TEST_CASE("dsl::opt(list())")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == 0);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abcabc");
+    constexpr auto two = verify<callback>(rule, "abcabc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abcabcabc");
+    constexpr auto three = verify<callback>(rule, "abcabcabc");
     CHECK(three == 3);
 }
 
@@ -436,19 +436,19 @@ TEST_CASE("dsl::opt(list()) sep")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == 0);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 1);
 }
 
@@ -502,22 +502,22 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == 0);
-    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    constexpr auto partial = verify<callback>(rule, "ab");
     CHECK(partial == 0);
 
-    constexpr auto one = rule_matches<callback>(rule, "abc");
+    constexpr auto one = verify<callback>(rule, "abc");
     CHECK(one == 1);
-    constexpr auto two = rule_matches<callback>(rule, "abc,abc");
+    constexpr auto two = verify<callback>(rule, "abc,abc");
     CHECK(two == 2);
-    constexpr auto three = rule_matches<callback>(rule, "abc,abc,abc");
+    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = rule_matches<callback>(rule, "abcabc");
+    constexpr auto no_sep = verify<callback>(rule, "abcabc");
     CHECK(no_sep == 1);
 
-    constexpr auto trailing = rule_matches<callback>(rule, "abc,");
+    constexpr auto trailing = verify<callback>(rule, "abc,");
     CHECK(trailing == 1);
 }
 

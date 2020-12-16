@@ -29,10 +29,10 @@ TEST_CASE("dsl::operator>>")
         }
     };
 
-    constexpr auto empty = rule_matches<callback>(rule, "");
+    constexpr auto empty = verify<callback>(rule, "");
     CHECK(empty == -1);
 
-    constexpr auto success = rule_matches<callback>(rule, "a");
+    constexpr auto success = verify<callback>(rule, "a");
     CHECK(success == 0);
 }
 
