@@ -190,7 +190,7 @@ struct _print : _ascii<_print>
         static constexpr auto match(Reader& reader)
         {
             using encoding = typename Reader::encoding;
-            if (reader.peek() == encoding::to_int_type(' '))
+            if (reader.peek() == lexy::_char_to_int_type<encoding>(' '))
             {
                 reader.bump();
                 return error_code();

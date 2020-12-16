@@ -16,27 +16,6 @@ namespace lexyd
 template <typename String>
 struct _lit : token_base<_lit<String>>
 {
-    template <typename Reader>
-    static LEXY_CONSTEVAL bool _string_compatible()
-    {
-        using encoding = typename Reader::encoding;
-        if (lexy::char_type_compatible_with_reader<Reader, typename String::char_type>)
-            return true;
-
-        // The string and the input have incompatible character types.
-        // We then only allow ASCII characters in the string literal.
-        auto str = String::get();
-        for (auto c : str)
-        {
-            auto value = encoding::to_int_type(typename encoding::char_type(c));
-            if (value < encoding::to_int_type(0) || value > encoding::to_int_type(0x7F))
-                return false;
-        }
-
-        return true;
-    }
-
-    // TODO: string compatibility check
     static constexpr auto _trie = lexy::linear_trie<String>;
     using token_engine          = lexy::engine_literal<_trie>;
 

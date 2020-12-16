@@ -221,7 +221,7 @@ struct _argvsep : token_base<_argvsep>
         template <typename Encoding>
         static constexpr error_code match(_argv_reader<Encoding>& reader)
         {
-            if (reader.peek() != Encoding::to_int_type('\0'))
+            if (reader.peek() != lexy::_char_to_int_type<Encoding>('\0'))
                 return error_code::error;
             reader.bump();
             return error_code();

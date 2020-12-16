@@ -90,7 +90,7 @@ struct default_encoding
         return -1;
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         if constexpr (std::is_unsigned_v<char_type>)
             // We can just convert it to int directly.
@@ -106,7 +106,6 @@ struct default_encoding
     static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
                                                    std::size_t size)
         = delete;
-    class code_point_decoder;
 };
 
 // An encoding where the input is assumed to be valid ASCII.
@@ -126,7 +125,7 @@ struct ascii_encoding
             return int_type(0xFFu);
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
     }
@@ -186,7 +185,7 @@ struct utf8_encoding
         return int_type(0xFF);
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
     }
@@ -345,7 +344,7 @@ struct utf16_encoding
         return int_type(-1);
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
     }
@@ -455,7 +454,7 @@ struct utf32_encoding
         return int_type(0xFFFF'FFFF);
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         return c;
     }
@@ -516,7 +515,7 @@ struct raw_encoding
         return -1;
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c)
+    static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
     }
@@ -584,6 +583,46 @@ namespace lexy
 template <typename Encoding, typename CharT>
 using _require_secondary_char_type
     = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
+
+template <typename CharT>
+constexpr bool _is_ascii(CharT c)
+{
+    if constexpr (std::is_signed_v<CharT>)
+        return 0 <= c && c <= 0x7F;
+    else
+        return c <= 0x7F;
+}
+
+template <typename Encoding, typename CharT>
+LEXY_CONSTEVAL auto _char_to_int_type(CharT c)
+{
+    using encoding_char_type = typename Encoding::char_type;
+
+    if constexpr (std::is_same_v<CharT, encoding_char_type>)
+        return Encoding::to_int_type(c);
+    else if constexpr (std::is_same_v<CharT, unsigned char> && sizeof(encoding_char_type) == 1)
+    {
+        // We allow using unsigned char to express raw bytes, if we have a byte-only input.
+        // This enables the BOM rule.
+        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+    }
+#if !LEXY_HAS_CHAR8_T
+    else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<Encoding, lexy::utf8_encoding>)
+    {
+        // If we don't have char8_t, `LEXY_LIT(u8"ä")` would have the type char, not LEXY_CHAR8_T
+        // (which is unsigned char). So we disable checking in that case, to allow such usage. Note
+        // that this prevents catching `LEXY_LIT("ä")`, but there is nothing we can do.
+        return Encoding::to_int_type(static_cast<LEXY_CHAR8_T>(c));
+    }
+#endif
+    else
+    {
+        LEXY_ASSERT(_is_ascii(c), "character type of string literal didn't match, "
+                                  "so only ASCII characters are supported");
+        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+    }
+}
 } // namespace lexy
 
 #endif // LEXY_ENCODING_HPP_INCLUDED
+

@@ -168,7 +168,7 @@ struct engine_trie : engine_matcher_base
             // Check the character of each transition.
             // If it matches, we advance by one and go to that node.
             // As soon as we do that, we return true to short circuit the search.
-            (void)((cur == encoding::to_int_type(Trie.transition_char(Node, Transitions))
+            (void)((cur == _char_to_int_type<encoding>(Trie.transition_char(Node, Transitions))
                         ? (reader.bump(), result = transition<Transitions>::match(reader), true)
                         : false)
                    || ...);

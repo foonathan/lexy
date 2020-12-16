@@ -26,8 +26,7 @@ struct _ltrie
     template <typename Encoding>
     LEXY_CONSTEVAL auto transition(std::size_t node) const
     {
-        auto c = static_cast<typename Encoding::char_type>(_transition[node]);
-        return Encoding::to_int_type(c);
+        return _char_to_int_type<Encoding>(_transition[node]);
     }
 
     CharT _transition[NodeCount == 0 ? 1 : NodeCount];

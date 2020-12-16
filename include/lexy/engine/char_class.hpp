@@ -26,7 +26,7 @@ struct engine_char_range : engine_matcher_base
         using encoding = typename Reader::encoding;
 
         auto cur = reader.peek();
-        if (encoding::to_int_type(Min) <= cur && cur <= encoding::to_int_type(Max))
+        if (_char_to_int_type<encoding>(Min) <= cur && cur <= _char_to_int_type<encoding>(Max))
         {
             reader.bump();
             return error_code();
@@ -50,8 +50,7 @@ struct _strie
     template <typename Encoding>
     LEXY_CONSTEVAL auto transition(std::size_t transition) const
     {
-        auto c = static_cast<typename Encoding::char_type>(_transition[transition]);
-        return Encoding::to_int_type(c);
+        return _char_to_int_type<Encoding>(_transition[transition]);
     }
 
     CharT _transition[TransitionCount == 0 ? 1 : TransitionCount];
@@ -159,7 +158,7 @@ public:
         static_assert(((Categories < CategoryCount) && ...));
         constexpr auto mask = ((1 << Categories) | ...);
 
-        if (Encoding::to_int_type(0x00) <= i && i <= Encoding::to_int_type(0x7F))
+        if (_char_to_int_type<Encoding>(0x00) <= i && i <= _char_to_int_type<Encoding>(0x7F))
         {
             auto index = static_cast<std::size_t>(i);
             return (_table[index] & mask) != 0;
