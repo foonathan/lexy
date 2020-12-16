@@ -16,6 +16,8 @@ namespace lexyd
 template <typename String>
 struct _lit : token_base<_lit<String>>
 {
+    using string = String;
+
     static constexpr auto _trie = lexy::linear_trie<String>;
     using token_engine          = lexy::engine_literal<_trie>;
 

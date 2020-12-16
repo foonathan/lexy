@@ -92,8 +92,8 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom : token_base<_bom<Encoding, Endianness>>
 {
-    using _impl                 = _bom_impl<Encoding, Endianness>;
-    static constexpr auto _trie = lexy::linear_trie<_impl>;
+    using string                = _bom_impl<Encoding, Endianness>;
+    static constexpr auto _trie = lexy::linear_trie<string>;
 
     using token_engine = lexy::engine_literal<_trie>;
 
@@ -102,7 +102,7 @@ struct _bom : token_base<_bom<Encoding, Endianness>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, _impl::name);
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, string::name);
         return LEXY_MOV(handler).error(err);
     }
 };
