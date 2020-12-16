@@ -162,18 +162,18 @@ struct reference
     };
 
     static constexpr auto rule = [] {
-        // The name of the reference is everything until ;, excluding the ;.
-        auto name = dsl::until(dsl::peek(dsl::lit_c<';'>));
+        // The name of the reference is everything until (and including) ;.
+        auto name = dsl::until(dsl::lit_c<';'>);
         // We then switch over the parsed name and create the appropriate character.
         auto reference = dsl::switch_(name)
-                             .case_(LEXY_LIT("quot") >> dsl::value_c<'"'>)
-                             .case_(LEXY_LIT("amp") >> dsl::value_c<'&'>)
-                             .case_(LEXY_LIT("apos") >> dsl::value_c<'\''>)
-                             .case_(LEXY_LIT("lt") >> dsl::value_c<'<'>)
-                             .case_(LEXY_LIT("gt") >> dsl::value_c<'>'>)
+                             .case_(LEXY_LIT("quot;") >> dsl::value_c<'"'>)
+                             .case_(LEXY_LIT("amp;") >> dsl::value_c<'&'>)
+                             .case_(LEXY_LIT("apos;") >> dsl::value_c<'\''>)
+                             .case_(LEXY_LIT("lt;") >> dsl::value_c<'<'>)
+                             .case_(LEXY_LIT("gt;") >> dsl::value_c<'>'>)
                              .error<unknown_entity>(); // The error when nothing matches.
 
-        return dsl::lit_c<'&'> >> reference + dsl::lit_c<';'>;
+        return dsl::lit_c<'&'> >> reference;
     }();
     static constexpr auto value = lexy::new_<ast::xml_reference, ast::xml_node_ptr>;
 };
