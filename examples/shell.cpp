@@ -99,7 +99,7 @@ namespace dsl = lexy::dsl;
 struct argument;
 
 // Arguments are separated by ' ' or '\t' or by a backslash followed by newline.
-constexpr auto arg_sep = dsl::while_one(dsl::ascii::blank / (dsl::backslash + dsl::newline));
+constexpr auto arg_sep = dsl::while_one(dsl::ascii::blank | dsl::backslash + dsl::newline);
 
 // Characters allowed in a bare argument or command name.
 constexpr auto bare_char = dsl::ascii::alnum;

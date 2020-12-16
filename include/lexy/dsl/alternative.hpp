@@ -20,55 +20,53 @@ struct exhausted_alternatives
 
 namespace lexyd
 {
-template <typename... P>
-struct _alt : rule_base
+template <typename... Tokens>
+struct _alt : token_base<_alt<Tokens...>>
 {
-    static constexpr auto has_matcher = true;
-
-    struct matcher
+    struct token_engine : lexy::engine_matcher_base
     {
+        enum class error_code
+        {
+            error = 1
+        };
+
         template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
+        static constexpr error_code match(Reader& reader)
         {
-            return (P::matcher::match(reader) || ...);
+            if ((lexy::engine_try_match<typename Tokens::token_engine>(reader) || ...))
+                return error_code();
+            else
+                return error_code::error;
         }
     };
 
-    template <typename NextParser>
-    struct parser
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader&,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            if (matcher::match(reader))
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            else
-            {
-                auto e = lexy::make_error<Reader, lexy::exhausted_alternatives>(reader.cur());
-                return LEXY_MOV(handler).error(e);
-            }
-        }
-    };
+        auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
+        return LEXY_MOV(handler).error(err);
+    }
 };
 
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator/(R, S)
 {
-    static_assert(lexy::is_pattern<R>);
-    static_assert(lexy::is_pattern<S>);
+    static_assert(lexy::is_token<R>);
+    static_assert(lexy::is_token<S>);
     return _alt<R, S>{};
 }
 template <typename... R, typename S>
 LEXY_CONSTEVAL auto operator/(_alt<R...>, S)
 {
-    static_assert(lexy::is_pattern<S>);
+    static_assert(lexy::is_token<S>);
     return _alt<R..., S>{};
 }
 template <typename R, typename... S>
 LEXY_CONSTEVAL auto operator/(R, _alt<S...>)
 {
-    static_assert(lexy::is_pattern<R>);
+    static_assert(lexy::is_token<R>);
     return _alt<R, S...>{};
 }
 template <typename... R, typename... S>
