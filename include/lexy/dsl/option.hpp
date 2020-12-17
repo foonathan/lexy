@@ -43,7 +43,7 @@ constexpr auto nullopt = _nullopt{};
 
 namespace lexyd
 {
-template <typename Condition, typename Then>
+template <typename Branch>
 struct _opt : rule_base
 {
     static constexpr auto has_matcher = false;
@@ -55,8 +55,9 @@ struct _opt : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            if (auto result = Condition::matcher::match(reader))
-                return Then::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+            lexy::branch_matcher<Branch, Reader> branch{};
+            if (branch.match(reader))
+                return branch.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
             else
                 return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
@@ -66,12 +67,10 @@ struct _opt : rule_base
 /// Matches the rule or nothing.
 /// In the latter case, produces a `nullopt` value.
 template <typename Rule>
-LEXY_CONSTEVAL auto opt(Rule rule)
+LEXY_CONSTEVAL auto opt(Rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
-
-    auto as_branch = branch(rule);
-    return _opt<decltype(as_branch.condition()), decltype(as_branch.then())>{};
+    static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
+    return _opt<Rule>{};
 }
 } // namespace lexyd
 
@@ -89,11 +88,10 @@ struct _optt : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            using branch = decltype(branch(Terminator()));
-            if (auto result = branch::condition_matcher::match(reader))
-                return branch::template then_parser<NextParser>::parse(handler, reader,
-                                                                       LEXY_FWD(args)...,
-                                                                       lexy::nullopt{});
+            lexy::branch_matcher<Terminator, Reader> term{};
+            if (term.match(reader))
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                       lexy::nullopt{});
             else
                 // Note: we don't add the terminator.
                 // This has to be done by the parent rule, if necessary.

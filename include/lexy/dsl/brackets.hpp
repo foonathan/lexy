@@ -97,7 +97,7 @@ struct _brackets
 template <typename Open, typename Close>
 LEXY_CONSTEVAL auto brackets(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
     return _brackets<Open, Close, void>{};
 }
 
@@ -110,3 +110,4 @@ constexpr auto parenthesized = round_bracketed;
 } // namespace lexyd
 
 #endif // LEXY_DSL_BRACKETS_HPP_INCLUDED
+

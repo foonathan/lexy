@@ -10,33 +10,10 @@
 
 namespace lexyd
 {
-template <typename Condition, typename Then>
+template <typename Branch>
 struct _if : rule_base
 {
-    static constexpr auto has_matcher = Then::has_matcher;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            if (auto reset = reader; Condition::matcher::match(reader))
-            {
-                if (Then::matcher::match(reader))
-                    return true;
-                else
-                {
-                    reader = LEXY_MOV(reset);
-                    return false;
-                }
-            }
-            else
-            {
-                reader = LEXY_MOV(reset);
-                return true;
-            }
-        }
-    };
+    static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser
@@ -45,8 +22,9 @@ struct _if : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            if (auto result = Condition::matcher::match(reader))
-                return Then::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+            lexy::branch_matcher<Branch, Reader> branch{};
+            if (branch.match(reader))
+                return branch.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
             else
                 return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
@@ -55,12 +33,10 @@ struct _if : rule_base
 
 /// If the branch condition matches, matches the branch then.
 template <typename Branch>
-LEXY_CONSTEVAL auto if_(Branch b)
+LEXY_CONSTEVAL auto if_(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>, "if_() requires a branch condition");
-
-    auto as_branch = branch(b);
-    return _if<decltype(as_branch.condition()), decltype(as_branch.then())>{};
+    static_assert(lexy::is_branch<Branch>, "if_() requires a branch condition");
+    return _if<Branch>{};
 }
 } // namespace lexyd
 

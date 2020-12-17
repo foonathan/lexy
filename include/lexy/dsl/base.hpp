@@ -68,7 +68,19 @@ struct Rule : rule_base
 namespace lexyd
 {
 struct rule_base
-{};
+{
+    static constexpr auto is_branch = false;
+};
+
+struct branch_base : rule_base
+{
+    static constexpr auto is_branch = true;
+
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    using parser = NextParser;
+};
 
 struct _token_base : rule_base
 {};
@@ -85,12 +97,23 @@ template <typename T>
 constexpr bool is_token = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
+constexpr bool is_branch = [] {
+    if constexpr (is_rule<T>)
+        return T::is_branch;
+    else
+        return false;
+}();
+
+template <typename T>
 constexpr bool is_pattern = [] {
     if constexpr (is_rule<T>)
         return T::has_matcher;
     else
         return false;
 }();
+
+template <typename Branch, typename Reader>
+using branch_matcher = typename Branch::template branch_matcher<Reader>;
 
 /// The final parser in the chain of NextParsers, forwarding everything to the handler.
 struct final_parser
@@ -118,6 +141,25 @@ struct token_base : _token_base
         LEXY_DSL_FUNC bool match(Reader& reader)
         {
             return lexy::engine_try_match<typename Derived::token_engine>(reader);
+        }
+    };
+
+    static constexpr auto is_branch = true;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        static constexpr auto is_unconditional = false;
+
+        constexpr bool match(Reader& reader)
+        {
+            return lexy::engine_try_match<typename Derived::token_engine>(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 

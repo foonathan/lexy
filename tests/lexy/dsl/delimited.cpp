@@ -20,7 +20,7 @@ TEST_CASE("dsl::delimited()")
         constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -101,7 +101,7 @@ TEST_CASE("dsl::delimited()")
                                         LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -198,7 +198,7 @@ TEST_CASE("dsl::delimited with escape")
                                                           .capture(lexy::dsl::ascii::character));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
-    CHECK(lexy::is_branch_rule<decltype(rule)>);
+    CHECK(lexy::is_branch<decltype(rule)>);
 
     struct callback
     {
@@ -283,7 +283,7 @@ TEST_CASE("dsl::escape")
     SUBCASE(".rule()")
     {
         constexpr auto rule = escape.rule(LEXY_LIT("abc") >> lexy::dsl::value_c<0>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -322,7 +322,7 @@ TEST_CASE("dsl::escape")
         constexpr auto rule = escape.rule(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
                                   .rule(LEXY_LIT("b") >> lexy::dsl::value_c<2>)
                                   .rule(lexy::dsl::else_ >> lexy::dsl::value_c<0>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -355,7 +355,7 @@ TEST_CASE("dsl::escape")
     SUBCASE(".capture()")
     {
         constexpr auto rule = escape.capture(lexy::dsl::ascii::character);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -433,7 +433,7 @@ TEST_CASE("dsl::escape")
     SUBCASE(".lit_c()")
     {
         constexpr auto rule = escape.lit_c<'a'>();
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {

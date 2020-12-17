@@ -46,7 +46,7 @@ struct _term
     template <typename Rule>
     LEXY_CONSTEVAL auto while_one(Rule rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
+        if constexpr (lexy::is_branch<Rule>)
             return rule >> while_(rule);
         else
             return rule + while_(rule);
@@ -100,7 +100,7 @@ struct _term
 template <typename Branch>
 LEXY_CONSTEVAL auto terminator(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    static_assert(lexy::is_branch<Branch>);
     return _term<Branch, void>{};
 }
 } // namespace lexyd

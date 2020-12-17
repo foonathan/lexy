@@ -8,23 +8,6 @@
 
 TEST_CASE("dsl::if_()")
 {
-    SUBCASE("pattern")
-    {
-        constexpr auto pattern = if_(LEXY_LIT("abc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(ab);
-        CHECK(ab.match().empty());
-    }
     SUBCASE("rule")
     {
         constexpr auto rule = if_(LEXY_LIT("abc"));
@@ -55,24 +38,7 @@ TEST_CASE("dsl::if_()")
         constexpr auto partial = rule_matches<callback>(rule, "ab");
         CHECK(partial == 0);
     }
-    SUBCASE("pattern branch")
-    {
-        constexpr auto pattern = if_(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(!ab);
-        CHECK(ab.match().empty());
-    }
-    SUBCASE("rule branch")
+    SUBCASE("branch")
     {
         constexpr auto rule = if_(LEXY_LIT("a") >> LEXY_LIT("bc"));
         CHECK(lexy::is_rule<decltype(rule)>);

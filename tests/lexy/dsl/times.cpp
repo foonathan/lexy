@@ -7,67 +7,7 @@
 #include "verify.hpp"
 #include <lexy/dsl/value.hpp>
 
-TEST_CASE("pattern: times")
-{
-    SUBCASE("no sep")
-    {
-        constexpr auto pattern = twice(LEXY_LIT("abc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto zero = pattern_matches(pattern, "");
-        CHECK(!zero);
-        constexpr auto one = pattern_matches(pattern, "abc");
-        CHECK(!one);
-
-        constexpr auto two = pattern_matches(pattern, "abcabc");
-        CHECK(two);
-        CHECK(two.match() == "abcabc");
-    }
-    SUBCASE("sep")
-    {
-        constexpr auto pattern = twice(LEXY_LIT("abc"), sep(LEXY_LIT(",")));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto zero = pattern_matches(pattern, "");
-        CHECK(!zero);
-        constexpr auto one = pattern_matches(pattern, "abc");
-        CHECK(!one);
-
-        constexpr auto two = pattern_matches(pattern, "abc,abc");
-        CHECK(two);
-        CHECK(two.match() == "abc,abc");
-
-        constexpr auto no_sep = pattern_matches(pattern, "abcabc");
-        CHECK(!no_sep);
-
-        constexpr auto trailing_sep = pattern_matches(pattern, "abc,abc,");
-        CHECK(trailing_sep);
-        CHECK(trailing_sep.match() == "abc,abc");
-    }
-    SUBCASE("trailing_sep")
-    {
-        constexpr auto pattern = twice(LEXY_LIT("abc"), trailing_sep(LEXY_LIT(",")));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto zero = pattern_matches(pattern, "");
-        CHECK(!zero);
-        constexpr auto one = pattern_matches(pattern, "abc");
-        CHECK(!one);
-
-        constexpr auto two = pattern_matches(pattern, "abc,abc");
-        CHECK(two);
-        CHECK(two.match() == "abc,abc");
-
-        constexpr auto no_sep = pattern_matches(pattern, "abcabc");
-        CHECK(!no_sep);
-
-        constexpr auto trailing_sep = pattern_matches(pattern, "abc,abc,");
-        CHECK(trailing_sep);
-        CHECK(trailing_sep.match() == "abc,abc,");
-    }
-}
-
-TEST_CASE("rule: times")
+TEST_CASE("times")
 {
     SUBCASE("no sep")
     {

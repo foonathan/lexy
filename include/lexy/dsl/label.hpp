@@ -29,6 +29,9 @@ using id = label<std::integral_constant<int, Id>>;
 
 namespace lexyd
 {
+template <typename Label, typename Rule>
+struct _labr;
+
 template <typename Label>
 struct _lab : rule_base
 {
@@ -46,18 +49,50 @@ struct _lab : rule_base
     };
 
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator()(Rule rule) const
+    LEXY_CONSTEVAL auto operator()(Rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-        {
-            auto as_branch = branch(rule);
-            return as_branch.condition() >> *this + as_branch.then();
-        }
-        else
-        {
-            return *this + rule;
-        }
+        return _labr<Label, Rule>{};
     }
+};
+
+template <typename Label, typename Rule>
+struct _labr : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    static constexpr auto is_branch = lexy::is_branch<Rule>;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        lexy::branch_matcher<Rule, Reader> _impl;
+
+        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            return _impl.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return _impl.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                    lexy::label<Label>{});
+        }
+    };
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            return Rule::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...,
+                                                            lexy::label<Label>{});
+        }
+    };
 };
 
 /// Matches with the specified label.

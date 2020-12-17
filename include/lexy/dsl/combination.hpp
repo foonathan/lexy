@@ -136,7 +136,7 @@ struct _comb : rule_base
 template <typename Error = void, typename... R>
 LEXY_CONSTEVAL auto combination(R...)
 {
-    static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
+    static_assert((lexy::is_branch<R> && ...), "combination() requires a branch rule");
     return _comb<false, Error, R...>{};
 }
 
@@ -145,7 +145,7 @@ LEXY_CONSTEVAL auto combination(R...)
 template <typename Error = void, typename... R>
 LEXY_CONSTEVAL auto partial_combination(R...)
 {
-    static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
+    static_assert((lexy::is_branch<R> && ...), "partial_combination() requires a branch rule");
     return _comb<true, Error, R...>{};
 }
 } // namespace lexyd

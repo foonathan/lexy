@@ -15,15 +15,28 @@ namespace lexyd
 template <typename Rule, typename Whitespace>
 struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
 {
-    /// Make it a branch rule, if the rule is a branch rule.
-    /// If the rule isn't a branch rule, we could make the whitespace the condition, but this is
-    /// probably insufficient to identify the rule.
-    template <typename R = Rule, typename = std::enable_if_t<lexy::is_branch_rule<R>>>
-    friend LEXY_CONSTEVAL auto branch(_ws)
+    static constexpr bool is_branch = lexy::is_branch<Rule>;
+
+    template <typename Reader>
+    struct branch_matcher
     {
-        // We just add another condition to the left of the branch rule.
-        return token(while_(Whitespace{})) >> branch(Rule{});
-    }
+        lexy::branch_matcher<Rule, Reader> _impl;
+
+        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            using ws = decltype(token(while_(Whitespace{})));
+            ws::matcher::match(reader);
+            return _impl.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return _impl.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+        }
+    };
 
     template <typename Tag>
     LEXY_CONSTEVAL auto error() const

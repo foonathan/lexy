@@ -9,56 +9,11 @@
 
 TEST_CASE("dsl::operator|")
 {
-    SUBCASE("pattern")
-    {
-        constexpr auto pattern = LEXY_LIT("abc") | LEXY_LIT("a") | LEXY_LIT("ab") | LEXY_LIT("def");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto a = pattern_matches(pattern, "a");
-        CHECK(a);
-        CHECK(a.match() == "a");
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(ab);
-        CHECK(ab.match() == "a");
-
-        constexpr auto def = pattern_matches(pattern, "def");
-        CHECK(def);
-        CHECK(def.match() == "def");
-    }
-    SUBCASE("branch pattern")
-    {
-        constexpr auto pattern = LEXY_LIT("a") >> LEXY_LIT("bc") | LEXY_LIT("a") | LEXY_LIT("ab");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto a = pattern_matches(pattern, "a");
-        CHECK(!a);
-        CHECK(a.match().empty());
-
-        constexpr auto ab = pattern_matches(pattern, "ab");
-        CHECK(!ab);
-        CHECK(ab.match().empty());
-    }
-    SUBCASE("branch rule")
+    SUBCASE("branch")
     {
         constexpr auto rule
             = LEXY_LIT("abc") >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -92,7 +47,7 @@ TEST_CASE("dsl::operator|")
         constexpr auto def = rule_matches<callback>(rule, "def");
         CHECK(def == 1);
     }
-    SUBCASE("ordered rule")
+    SUBCASE("ordered")
     {
         constexpr auto rule = LEXY_LIT("a") | LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -128,7 +83,6 @@ TEST_CASE("dsl::operator|")
         constexpr auto rule
             = LEXY_LIT("abc") >> lexy::dsl::id<0> | lexy::dsl::else_ >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

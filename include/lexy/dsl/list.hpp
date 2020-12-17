@@ -89,13 +89,13 @@ struct _lstl<Item, void> : rule_base
         {
             while (true)
             {
-                using branch = decltype(branch(Item{}));
-                if (!branch::condition_matcher::match(reader))
+                lexy::branch_matcher<Item, Reader> branch{};
+                if (!branch.match(reader))
                     // No longer match additional items, done with list.
                     break;
 
-                using item_parser = typename branch::template then_parser<lexy::final_parser>;
-                auto result       = item_parser::parse(list_handler, reader, LEXY_FWD(args)...);
+                auto result = branch.template parse<lexy::final_parser>(list_handler, reader,
+                                                                        LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -167,13 +167,13 @@ struct _lstl<Item, _tsep<Sep, Capture>> : rule_base
                 else
                     (void)begin;
 
-                using branch = decltype(branch(Item{}));
-                if (!branch::condition_matcher::match(reader))
+                lexy::branch_matcher<Item, Reader> branch{};
+                if (!branch.match(reader))
                     // No longer match additional items, done with list.
                     break;
 
-                using item_parser = typename branch::template then_parser<lexy::final_parser>;
-                auto result       = item_parser::parse(list_handler, reader, LEXY_FWD(args)...);
+                auto result = branch.template parse<lexy::final_parser>(list_handler, reader,
+                                                                        LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -184,12 +184,44 @@ struct _lstl<Item, _tsep<Sep, Capture>> : rule_base
     };
 };
 
-// Parse the initial item of the list after obtaining the handler, sink etc.
-// Then continue with the specified loop production.
-template <typename Item, typename Cont>
-struct _lsth : rule_base
+// Parse the entire list, i.e. head followed by loop.
+template <typename Item, typename Sep>
+struct _lst : rule_base
 {
     static constexpr auto has_matcher = false;
+
+    static constexpr auto is_branch = lexy::is_branch<Item>;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        lexy::branch_matcher<Item, Reader> _impl;
+
+        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            return _impl.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            // Obtain sink and create list handler.
+            auto                                            sink = handler.list_sink();
+            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+
+            // Parse the initial item.
+            auto result
+                = _impl.template parse<lexy::final_parser>(list_handler, reader, LEXY_FWD(args)...);
+            if (!result)
+                return LEXY_MOV(result).error();
+
+            // Continue with the rest of the items.
+            using continuation = typename _lstl<Item, Sep>::template parser<NextParser>;
+            return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
+        }
+    };
 
     template <typename NextParser>
     struct parser
@@ -209,30 +241,10 @@ struct _lsth : rule_base
                 return LEXY_MOV(result).error();
 
             // Continue with the rest of the items.
-            return Cont::template parser<NextParser>::parse(list_handler, reader,
-                                                            LEXY_FWD(args)...);
+            using continuation = typename _lstl<Item, Sep>::template parser<NextParser>;
+            return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
         }
     };
-};
-
-// Parse the entire list, i.e. head followed by loop.
-template <typename Item, typename Sep>
-struct _lst : rule_base
-{
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    using parser = typename _lsth<Item, _lstl<Item, Sep>>::template parser<NextParser>;
-
-    template <typename It = Item, typename = std::enable_if_t<lexy::is_branch_rule<It>>>
-    friend LEXY_CONSTEVAL auto branch(_lst)
-    {
-        auto b = branch(Item{});
-
-        using tail = _lstl<Item, Sep>;
-        using head = _lsth<decltype(b.then()), tail>;
-        return b.condition() >> head{};
-    }
 };
 } // namespace lexyd
 
@@ -242,8 +254,7 @@ namespace lexyd
 template <typename Item>
 LEXY_CONSTEVAL auto list(Item)
 {
-    static_assert(lexy::is_branch_rule<Item>,
-                  "list() without a separator requires a branch condition");
+    static_assert(lexy::is_branch<Item>, "list() without a separator requires a branch condition");
     return _lst<Item, void>{};
 }
 
@@ -258,7 +269,7 @@ LEXY_CONSTEVAL auto list(Item, _sep<Pattern, Capture>)
 template <typename Item, typename Pattern, bool Capture>
 LEXY_CONSTEVAL auto list(Item, _tsep<Pattern, Capture>)
 {
-    static_assert(lexy::is_branch_rule<Item>,
+    static_assert(lexy::is_branch<Item>,
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Pattern, Capture>>{};
 }
@@ -280,8 +291,6 @@ struct _lstt<Terminator, Item, void> : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            using branch = decltype(branch(Terminator()));
-
             auto                                            sink = handler.list_sink();
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
@@ -291,21 +300,27 @@ struct _lstt<Terminator, Item, void> : rule_base
             if (!result)
                 return LEXY_MOV(result).error();
 
-            while (true)
+            // Parse remaining items.
+            lexy::branch_matcher<Terminator, Reader> term{};
+            while (!term.match(reader))
             {
-                if (branch::condition_matcher::match(reader))
-                    break;
-
                 auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
                                                                                LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
 
-            using continuation = typename branch::template then_parser<NextParser>;
-            return decltype(list_handler)::template parser<continuation>::parse(list_handler,
-                                                                                reader,
-                                                                                LEXY_FWD(args)...);
+            // Get value.
+            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                       LEXY_MOV(sink).finish());
+            }
         }
     };
 };
@@ -321,8 +336,6 @@ struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            using branch = decltype(branch(Terminator()));
-
             auto                                            sink = handler.list_sink();
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
@@ -332,11 +345,10 @@ struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
             if (!result)
                 return LEXY_MOV(result).error();
 
-            while (true)
+            // Parse remaining items.
+            lexy::branch_matcher<Terminator, Reader> term{};
+            while (!term.match(reader))
             {
-                if (branch::condition_matcher::match(reader))
-                    break;
-
                 // Parse separator.
                 auto begin = reader.cur();
                 result     = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
@@ -357,10 +369,17 @@ struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
                     return LEXY_MOV(result).error();
             }
 
-            using continuation = typename branch::template then_parser<NextParser>;
-            return decltype(list_handler)::template parser<continuation>::parse(list_handler,
-                                                                                reader,
-                                                                                LEXY_FWD(args)...);
+            // Get value.
+            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                       LEXY_MOV(sink).finish());
+            }
         }
     };
 };
@@ -376,8 +395,6 @@ struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            using branch = decltype(branch(Terminator()));
-
             auto                                            sink = handler.list_sink();
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
@@ -387,11 +404,10 @@ struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
             if (!result)
                 return LEXY_MOV(result).error();
 
-            while (true)
+            // Parse remaining items.
+            lexy::branch_matcher<Terminator, Reader> term{};
+            while (!term.match(reader))
             {
-                if (branch::condition_matcher::match(reader))
-                    break;
-
                 // Parse separator.
                 auto begin = reader.cur();
                 result     = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
@@ -405,7 +421,7 @@ struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
                 else
                     (void)begin;
 
-                if (branch::condition_matcher::match(reader))
+                if (term.match(reader))
                     break;
 
                 // Parse item.
@@ -415,10 +431,17 @@ struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
                     return LEXY_MOV(result).error();
             }
 
-            using continuation = typename branch::template then_parser<NextParser>;
-            return decltype(list_handler)::template parser<continuation>::parse(list_handler,
-                                                                                reader,
-                                                                                LEXY_FWD(args)...);
+            // Get value.
+            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                       LEXY_MOV(sink).finish());
+            }
         }
     };
 };

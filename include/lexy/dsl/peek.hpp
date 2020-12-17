@@ -25,6 +25,26 @@ struct _peek : rule_base
         }
     };
 
+    static constexpr auto is_branch = true;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        static constexpr auto is_unconditional = false;
+
+        constexpr bool match(Reader& reader)
+        {
+            auto copy = reader;
+            return Pattern::matcher::match(copy);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
+
     template <typename NextParser>
     struct parser
     {
@@ -92,6 +112,26 @@ struct _peekn : rule_base
         {
             auto copy = reader;
             return !Pattern::matcher::match(copy);
+        }
+    };
+
+    static constexpr auto is_branch = true;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        static constexpr auto is_unconditional = false;
+
+        constexpr bool match(Reader& reader) const
+        {
+            auto copy = reader;
+            return Pattern::matcher::match(copy);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 

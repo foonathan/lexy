@@ -161,7 +161,7 @@ struct _delim_dsl
 template <typename Open, typename Close>
 LEXY_CONSTEVAL auto delimited(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
     return _delim_dsl<Open, Close, void>{};
 }
 
@@ -169,7 +169,7 @@ LEXY_CONSTEVAL auto delimited(Open, Close)
 template <typename Delim>
 LEXY_CONSTEVAL auto delimited(Delim)
 {
-    static_assert(lexy::is_pattern<Delim>);
+    static_assert(lexy::is_branch<Delim>);
     return _delim_dsl<Delim, Delim, void>{};
 }
 
@@ -201,8 +201,6 @@ LEXY_CONSTEVAL auto _escape_rule(Branches... branches)
 {
     if constexpr (sizeof...(Branches) == 0)
         return Pattern{};
-    else if constexpr ((decltype(branch(branches))::is_unconditional || ...))
-        return Pattern{} >> (branches | ...);
     else
         return Pattern{} >> (branches | ... | (else_ >> error<lexy::invalid_escape_sequence>));
 }
@@ -236,7 +234,7 @@ struct _escape : decltype(_escape_rule<EscapePattern>(Branches{}...))
     template <typename Branch>
     LEXY_CONSTEVAL auto rule(Branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>);
+        static_assert(lexy::is_branch<Branch>);
         return _escape<EscapePattern, Branches..., Branch>{};
     }
 

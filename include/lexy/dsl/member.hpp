@@ -31,10 +31,32 @@ using make_member_ptr = member<_mem_ptr_fn<Ptr>>;
 
 namespace lexyd
 {
-template <typename Fn>
+template <typename Fn, typename Rule>
 struct _mem : rule_base
 {
     static constexpr auto has_matcher = false;
+
+    static constexpr auto is_branch = lexy::is_branch<Rule>;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        lexy::branch_matcher<Rule, Reader> _impl;
+
+        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            return _impl.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return _impl.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                                                    lexy::member<Fn>{});
+        }
+    };
 
     template <typename NextParser>
     struct parser
@@ -43,7 +65,8 @@ struct _mem : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::member<Fn>{});
+            return Rule::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...,
+                                                            lexy::member<Fn>{});
         }
     };
 };
@@ -54,21 +77,11 @@ struct _mem_dsl
     LEXY_CONSTEVAL _mem_dsl(Fn = {}) {}
 
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator=(Rule rule) const
+    LEXY_CONSTEVAL auto operator=(Rule) const
     {
-        using lambda   = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
+        using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
                                           lexy::_detail::stateless_lambda<Fn>>;
-        using mem_rule = _mem<lambda>;
-
-        if constexpr (lexy::is_branch_rule<Rule>)
-        {
-            auto as_branch = branch(rule);
-            return as_branch.condition() >> mem_rule{} + as_branch.then();
-        }
-        else
-        {
-            return mem_rule{} + rule;
-        }
+        return _mem<lambda, Rule>{};
     }
 };
 

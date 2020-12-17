@@ -48,8 +48,8 @@ struct _switch_select<NextParser>
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
-        auto e = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
-        return LEXY_MOV(handler).error(e);
+        auto err = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
+        return LEXY_MOV(handler).error(err);
     }
 };
 template <typename NextParser, typename H, typename... T>
@@ -59,37 +59,21 @@ struct _switch_select<NextParser, H, T...>
     LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Reader save, Args&&... args) ->
         typename Handler::result_type
     {
-        using cont      = _switch_continue<NextParser>;
-        using as_branch = decltype(branch(H{}));
+        using cont = _switch_continue<NextParser>;
 
         // We only want to read what the value has matched.
-        auto partial = lexy::partial_reader(save, reader.cur());
+        auto partial         = lexy::partial_reader(save, reader.cur());
+        using branch_matcher = lexy::branch_matcher<H, decltype(partial)>;
 
-        if constexpr (lexy::is_pattern<H>)
+        if constexpr (branch_matcher::is_unconditional)
         {
-            // We need this to catch `dsl::success` on its own, otherwise, it will be treated as an
-            // unconditional branch `else_ >> success`. This is not true, as it needs to consume the
-            // entire pattern, but the branch logic doesn't know it.
-
-            if (H::matcher::match(partial) && partial.eof())
-                // We can continue directly, it's a pattern.
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            else
-                return _switch_select<NextParser, T...>::parse(handler, reader, save,
-                                                               LEXY_FWD(args)...);
-        }
-        else if constexpr (as_branch::is_unconditional)
-        {
-            // We take it directly.
-            return as_branch::template then_parser<cont>::parse(handler, partial, reader,
-                                                                LEXY_FWD(args)...);
+            return H::template parser<cont>::parse(handler, partial, reader, LEXY_FWD(args)...);
         }
         else
         {
-            if (as_branch::condition_matcher::match(partial) && partial.eof())
-                // We have matched the entire value, continue with normal parsing.
-                return as_branch::template then_parser<cont>::parse(handler, partial, reader,
-                                                                    LEXY_FWD(args)...);
+            branch_matcher branch{};
+            if (branch.match(partial) && partial.eof())
+                return branch.template parse<cont>(handler, partial, reader, LEXY_FWD(args)...);
             else
                 return _switch_select<NextParser, T...>::parse(handler, reader, save,
                                                                LEXY_FWD(args)...);
@@ -122,7 +106,7 @@ struct _switch : rule_base
     template <typename Branch>
     LEXY_CONSTEVAL auto case_(Branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>, "switch case must be a branch");
+        static_assert(lexy::is_branch<Branch>, "switch case must be a branch");
         return _switch<Rule, Cases..., Branch>{};
     }
 

@@ -49,18 +49,42 @@ struct _prd : rule_base
 {
     using _rule = std::conditional_t<std::is_void_v<Rule>, _production_rule<Production>, Rule>;
 
+    static constexpr bool is_branch = lexy::is_branch<_rule>;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        lexy::branch_matcher<_rule, Reader> _impl;
+
+        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            return _impl.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            auto sub_handler = handler.template sub_handler<Production>(reader);
+
+            if (auto result = _impl.template parse<lexy::final_parser>(sub_handler, reader))
+            {
+                if constexpr (result.has_void_value())
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                else
+                    return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                                             LEXY_MOV(result).value());
+            }
+            else
+                return typename Handler::result_type(LEXY_MOV(result));
+        }
+    };
+
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     using parser = _prd_parser<Production, _rule, NextParser>;
-
-    // Allow using the production as a branch, if its rule is a branch rule.
-    template <typename R = _rule, typename = std::enable_if_t<lexy::is_branch_rule<R>>>
-    friend LEXY_CONSTEVAL auto branch(_prd)
-    {
-        using branch_rule = decltype(branch(_rule()));
-        return branch_rule::condition() >> _prd<Production, decltype(branch_rule::then())>{};
-    }
 
     template <typename Whitespace>
     LEXY_CONSTEVAL auto operator[](Whitespace ws) const

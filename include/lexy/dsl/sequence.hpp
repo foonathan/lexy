@@ -44,6 +44,25 @@ struct _seq : rule_base
         }
     };
 
+    static constexpr bool is_branch = has_matcher;
+
+    template <typename Reader>
+    struct branch_matcher
+    {
+        static constexpr auto is_unconditional = false;
+
+        constexpr bool match(Reader& reader)
+        {
+            return matcher::match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
+
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
 };

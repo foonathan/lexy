@@ -5,149 +5,156 @@
 #ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
 #define LEXY_DSL_BRANCH_HPP_INCLUDED
 
-#include <lexy/_detail/detect.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace lexyd
 {
-template <typename Condition, typename Then>
+template <typename Condition, typename... R>
 struct _br : rule_base
 {
-    static constexpr auto is_unconditional = std::is_same_v<const Condition, decltype(success)>;
+    static_assert(sizeof...(R) >= 0);
 
-    using condition_matcher = typename Condition::matcher;
-    struct then_matcher : Then::matcher
-    {};
+    static constexpr bool is_branch = true;
 
-    template <typename NextParser>
-    using then_parser = typename Then::template parser<NextParser>;
+    template <typename Reader>
+    struct branch_matcher
+    {
+        lexy::branch_matcher<Condition, Reader> _condition;
 
-    //=== rule ===//
+        static constexpr auto is_unconditional = decltype(_condition)::is_unconditional;
+
+        constexpr bool match(Reader& reader)
+        {
+            return _condition.match(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            using continuation = typename _seq_parser<NextParser, R...>::type;
+            return _condition.template parse<continuation>(handler, reader, LEXY_FWD(args)...);
+        }
+    };
+
     static constexpr auto has_matcher = false;
 
     template <typename NextParser>
-    using parser = typename Condition::template parser<typename Then::template parser<NextParser>>;
-
-    //=== dsl ===//
-    /// Returns the condition of the branch.
-    static LEXY_CONSTEVAL auto condition()
-    {
-        return Condition{};
-    }
-
-    /// Returns the then of the branch.
-    static LEXY_CONSTEVAL auto then()
-    {
-        return Then{};
-    }
-
-    // A branch is already a branch.
-    friend LEXY_CONSTEVAL auto branch(_br)
-    {
-        return _br{};
-    }
+    using parser = typename _seq_parser<NextParser, Condition, R...>::type;
 };
 
-/// Turns a pattern into a branch.
-template <typename Pattern, typename = std::enable_if_t<lexy::is_pattern<Pattern>>>
-LEXY_CONSTEVAL auto branch(Pattern pattern)
-{
-    return pattern >> success;
-}
-
+//=== operator>> ===//
 /// Parses `Then` only after `Condition` has matched.
 template <typename Condition, typename Then>
 LEXY_CONSTEVAL auto operator>>(Condition, Then)
 {
-    static_assert(lexy::is_pattern<Condition>, "branch condition must be a pattern");
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
     return _br<Condition, Then>{};
 }
-
-// A condition on the left extends the condition.
-template <typename Pattern, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator>>(Pattern pattern, _br<Condition, Then>)
+template <typename Condition, typename... R>
+LEXY_CONSTEVAL auto operator>>(Condition, _seq<R...>)
 {
-    static_assert(lexy::is_pattern<Pattern>, "branch condition must be a pattern");
-    return _br<decltype(pattern + Condition{}), Then>{};
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    if constexpr (sizeof...(R) == 0)
+        return Condition{};
+    else
+        return _br<Condition, R...>{};
+}
+template <typename Condition, typename C, typename... R>
+LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
+{
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    return _br<Condition, C, R...>{};
 }
 
-// If a branch is used as condition, only its condition is the condition.
-template <typename Condition, typename Then, typename Rule>
-LEXY_CONSTEVAL auto operator>>(_br<Condition, Then>, Rule rule)
+// Prevent nested branches in `_br`'s condition.
+template <typename C, typename... R, typename Then>
+LEXY_CONSTEVAL auto operator>>(_br<C, R...>, Then)
 {
-    return _br<Condition, decltype(Then{} + rule)>{};
+    return C{} >> _seq<R..., Then>{};
 }
+template <typename C, typename... R, typename... S>
+LEXY_CONSTEVAL auto operator>>(_br<C, R...>, _seq<S...>)
+{
+    if constexpr (sizeof...(S) == 0)
+        return _br<C, R...>{};
+    else
+        return C{} >> _seq<R..., S...>{};
+}
+
 // Disambiguation.
-template <typename C1, typename T1, typename C2, typename T2>
-LEXY_CONSTEVAL auto operator>>(_br<C1, T1>, _br<C2, T2>)
+template <typename C1, typename... R, typename C2, typename... S>
+LEXY_CONSTEVAL auto operator>>(_br<C1, R...>, _br<C2, S...>)
 {
-    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
+    return _br<C1, R..., C2, S...>{};
 }
 
+//=== operator+ ===//
 // If we add something on the left to a branch, we loose the branchy-ness.
-template <typename Rule, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, Then>)
+template <typename Rule, typename Condition, typename... R>
+LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, R...>)
 {
-    return rule + Condition{} + Then{};
+    return rule + _seq<Condition, R...>{};
 }
 // Disambiguation.
-template <typename... R, typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, Then>)
+template <typename... R, typename Condition, typename... S>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, S...>)
 {
-    return _seq<R...>{} + Condition{} + Then{};
+    if constexpr (sizeof...(R) == 0)
+        return _seq<Condition, S...>{};
+    else
+        return _seq<R...>{} + _seq<Condition, S...>{};
 }
 
 // If we add something on the right to a branch, we extend the then.
-template <typename Condition, typename Then, typename Rule>
-LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, Rule rule)
+template <typename Condition, typename... R, typename Rule>
+LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, Rule)
 {
-    return _br<Condition, decltype(Then{} + rule)>{};
+    return _br<Condition, R..., Rule>{};
 }
 // Disambiguation.
-template <typename Condition, typename Then, typename... R>
-LEXY_CONSTEVAL auto operator+(_br<Condition, Then>, _seq<R...>)
+template <typename Condition, typename... R, typename... S>
+LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, _seq<S...>)
 {
-    return _br<Condition, decltype(Then{} + _seq<R...>{})>{};
+    if constexpr (sizeof...(S) == 0)
+        return _br<Condition, R...>{};
+    else
+        return _br<Condition, R..., S...>{};
 }
 
-// If we add two branches, we extend the then of the first one.
-template <typename C1, typename T1, typename C2, typename T2>
-LEXY_CONSTEVAL auto operator+(_br<C1, T1>, _br<C2, T2>)
+// If we add two branches, we use the condition of the first one and treat the second as sequence.
+template <typename C1, typename... R, typename C2, typename... S>
+LEXY_CONSTEVAL auto operator+(_br<C1, R...>, _br<C2, S...>)
 {
-    return _br<C1, decltype(T1{} + C2{} + T2{})>{};
+    return _br<C1, R..., C2, S...>{};
 }
 } // namespace lexyd
 
 namespace lexyd
 {
-struct _else
+struct _else : branch_base
 {
-    template <typename Then>
-    friend LEXY_CONSTEVAL auto operator>>(_else, Then then)
+    template <typename Reader>
+    struct branch_matcher
     {
-        return success >> then;
-    }
-    template <typename Condition, typename Then>
-    friend LEXY_CONSTEVAL auto operator>>(_else, _br<Condition, Then>)
-    {
-        return success >> Condition{} + Then{};
-    }
+        static constexpr auto is_unconditional = true;
+
+        constexpr bool match(Reader&)
+        {
+            return true;
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
 };
 
 /// Takes the branch unconditionally.
 inline constexpr auto else_ = _else{};
 } // namespace lexyd
-
-namespace lexy
-{
-template <typename Rule>
-using _detect_branch = decltype(branch(Rule{}));
-
-/// Whether or not the type is a branch rule.
-template <typename T>
-constexpr auto is_branch_rule = is_rule<T>&& _detail::is_detected<_detect_branch, T>;
-} // namespace lexy
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
 

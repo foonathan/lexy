@@ -34,7 +34,7 @@ TEST_CASE("dsl::whitespaced()")
     {
         constexpr auto rule = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -68,7 +68,7 @@ TEST_CASE("dsl::whitespaced()")
     {
         constexpr auto rule_ = whitespaced(LEXY_LIT("abc") >> lexy::dsl::id<0>, LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule_)>);
-        CHECK(lexy::is_branch_rule<decltype(rule_)>);
+        CHECK(lexy::is_branch<decltype(rule_)>);
 
         constexpr auto rule = if_(rule_);
 
