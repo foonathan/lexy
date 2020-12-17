@@ -145,6 +145,10 @@ struct token_base : _token_base
             }
         }
     };
+
+    //=== dsl ===//
+    template <typename Tag>
+    LEXY_CONSTEVAL auto error() const;
 };
 } // namespace lexyd
 

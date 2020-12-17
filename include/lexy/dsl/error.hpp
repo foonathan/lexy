@@ -12,6 +12,31 @@
 
 namespace lexyd
 {
+template <typename Tag, typename Token>
+struct _toke : token_base<_toke<Tag, Token>>
+{
+    using token_engine = typename Token::token_engine;
+
+    template <typename Handler, typename Reader>
+    static constexpr auto token_error(Handler& handler, const Reader& reader,
+                                      typename token_engine::error_code,
+                                      typename Reader::iterator pos)
+    {
+        auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
+        return LEXY_MOV(handler).error(err);
+    }
+};
+
+template <typename Derived>
+template <typename Tag>
+LEXY_CONSTEVAL auto token_base<Derived>::error() const
+{
+    return _toke<Tag, Derived>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
 template <typename Tag, typename Pattern>
 struct _err : rule_base
 {
@@ -79,42 +104,6 @@ LEXY_CONSTEVAL auto prevent(Pattern pattern)
 {
     // Same as above, but we don't want to match the pattern.
     return if_(peek(pattern) >> error<Tag>);
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Tag, typename Pattern>
-struct _try_ : rule_base
-{
-    static constexpr auto has_matcher = true;
-
-    using matcher = typename Pattern::matcher;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            if (auto pos = reader.cur(); Pattern::matcher::match(reader))
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            else
-            {
-                auto e = lexy::make_error<Reader, Tag>(pos, reader.cur());
-                return LEXY_MOV(handler).error(e);
-            }
-        }
-    };
-};
-
-/// Tries to match the pattern, report a tagged failure if it doesn't match.
-template <typename Tag, typename Pattern>
-LEXY_CONSTEVAL auto try_(Pattern)
-{
-    static_assert(lexy::is_pattern<Pattern>);
-    return _try_<Tag, Pattern>{};
 }
 } // namespace lexyd
 

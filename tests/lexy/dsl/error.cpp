@@ -6,6 +6,52 @@
 
 #include "verify.hpp"
 
+TEST_CASE(".error()")
+{
+    struct error;
+
+    SUBCASE("pattern")
+    {
+        constexpr auto pattern = LEXY_LIT("abc").error<error>();
+        CHECK(lexy::is_pattern<decltype(pattern)>);
+
+        constexpr auto empty = pattern_matches(pattern, "");
+        CHECK(!empty);
+
+        constexpr auto abc = pattern_matches(pattern, "abc");
+        CHECK(abc);
+        CHECK(abc.match() == "abc");
+    }
+    SUBCASE("rule")
+    {
+        constexpr auto rule = LEXY_LIT("abc").error<error>();
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                CONSTEXPR_CHECK(cur - str == 3);
+                return 0;
+            }
+
+            constexpr int error(test_error<error> e)
+            {
+                CONSTEXPR_CHECK(e.position() == str);
+                return -1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == -1);
+
+        constexpr auto abc = rule_matches<callback>(rule, "abc");
+        CHECK(abc == 0);
+    }
+}
+
 TEST_CASE("dsl::error")
 {
     struct tag;
@@ -159,52 +205,6 @@ TEST_CASE("dsl::prevent")
 
         constexpr auto abc = rule_matches<callback>(rule, "abc");
         CHECK(abc == -1);
-    }
-}
-
-TEST_CASE("dsl::try_")
-{
-    struct error;
-
-    SUBCASE("pattern")
-    {
-        constexpr auto pattern = lexy::dsl::try_<error>(LEXY_LIT("abc"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-    }
-    SUBCASE("rule")
-    {
-        constexpr auto rule = lexy::dsl::try_<error>(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur - str == 3);
-                return 0;
-            }
-
-            constexpr int error(test_error<error> e)
-            {
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
     }
 }
 

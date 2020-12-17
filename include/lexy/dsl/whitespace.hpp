@@ -23,6 +23,13 @@ struct _ws : decltype(while_(Whitespace{}) + Rule{})
         // We just add another condition to the left of the branch rule.
         return while_(Whitespace{}) >> branch(Rule{});
     }
+
+    template <typename Tag>
+    LEXY_CONSTEVAL auto error() const
+    {
+        static_assert(lexy::is_token<Rule>);
+        return Rule{}.template error<Tag>();
+    }
 };
 
 /// Matches whitespace before parsing rule.

@@ -143,8 +143,9 @@ struct comment
 struct text
 {
     static constexpr auto rule = [] {
-        auto char_ = dsl::code_point - dsl::lit_c<'<'> - dsl::lit_c<'&'>;
-        return dsl::capture(dsl::while_one(dsl::try_<invalid_character>(char_)));
+        auto char_
+            = (dsl::code_point - dsl::lit_c<'<'> - dsl::lit_c<'&'>).error<invalid_character>();
+        return dsl::capture(dsl::while_one(char_));
     }();
     static constexpr auto value
         = lexy::as_string<std::string> | lexy::new_<ast::xml_text, ast::xml_node_ptr>;
@@ -198,7 +199,7 @@ struct name
         auto head_char = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
         auto tail_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
 
-        return dsl::capture(dsl::try_<invalid_character>(head_char) + while_(tail_char));
+        return dsl::capture(head_char.error<invalid_character>() + while_(tail_char));
     }();
 
     static constexpr auto value = lexy::as_string<std::string>;

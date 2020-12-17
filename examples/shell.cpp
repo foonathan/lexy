@@ -210,7 +210,7 @@ struct command
         auto commands = dsl::p<cmd_exit> | dsl::p<cmd_echo> //
                         | dsl::p<cmd_set> | dsl::else_ >> unknown;
 
-        return commands + dsl::try_<trailing_args>(dsl::eol[arg_sep]);
+        return commands + dsl::eol[arg_sep].error<trailing_args>();
     }();
     static constexpr auto value = lexy::forward<shell::command>;
 };
