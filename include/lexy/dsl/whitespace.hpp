@@ -7,12 +7,13 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/while.hpp>
 
 namespace lexyd
 {
 template <typename Rule, typename Whitespace>
-struct _ws : decltype(while_(Whitespace{}) + Rule{})
+struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
 {
     /// Make it a branch rule, if the rule is a branch rule.
     /// If the rule isn't a branch rule, we could make the whitespace the condition, but this is
@@ -21,7 +22,7 @@ struct _ws : decltype(while_(Whitespace{}) + Rule{})
     friend LEXY_CONSTEVAL auto branch(_ws)
     {
         // We just add another condition to the left of the branch rule.
-        return while_(Whitespace{}) >> branch(Rule{});
+        return token(while_(Whitespace{})) >> branch(Rule{});
     }
 
     template <typename Tag>

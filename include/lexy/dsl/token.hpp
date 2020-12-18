@@ -6,7 +6,6 @@
 #define LEXY_DSL_TOKEN_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/whitespace.hpp>
 #include <lexy/match.hpp>
 
 namespace lexy
