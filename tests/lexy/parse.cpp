@@ -9,6 +9,7 @@
 #include <lexy/dsl/brackets.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/list.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/punctuator.hpp>
 #include <lexy/dsl/sequence.hpp>

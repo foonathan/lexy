@@ -53,6 +53,7 @@ set(tests
         dsl/sequence.cpp
         dsl/sign.cpp
         dsl/switch.cpp
+        dsl/terminator.cpp
         dsl/times.cpp
         dsl/until.cpp
         dsl/value.cpp

@@ -7,6 +7,8 @@
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/list.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/match.hpp>
 
 TEST_CASE("dsl::delimited()")
@@ -90,8 +92,13 @@ TEST_CASE("dsl::delimited()")
     }
     SUBCASE("branch")
     {
-        constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_c<0>,
-                                        LEXY_LIT(")") >> lexy::dsl::value_c<1>)(cp);
+        struct open
+        {};
+        struct close
+        {};
+
+        constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
+                                        LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(!lexy::is_pattern<decltype(rule)>);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
@@ -120,11 +127,9 @@ TEST_CASE("dsl::delimited()")
                 };
                 return b{};
             }
-            constexpr int success(const char* cur, int open, int count, int close)
+            constexpr int success(const char* cur, open, int count, close)
             {
                 CONSTEXPR_CHECK(cur - str == count + 2);
-                CONSTEXPR_CHECK(open == 0);
-                CONSTEXPR_CHECK(close == 1);
                 return count;
             }
 

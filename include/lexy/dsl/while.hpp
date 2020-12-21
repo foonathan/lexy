@@ -36,27 +36,29 @@ struct _whl : rule_base
         }
     };
 
-    struct _rule : rule_base
+    template <typename NextParser>
+    struct parser
     {
-        static constexpr auto has_matcher = false;
-
-        template <typename NextParser>
-        struct parser
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
         {
-            template <typename Handler, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader& reader,
-                                     Args&&... args) -> typename _loop_handler<Handler>::result_type
+            _loop_handler<Handler> loop_handler{handler, false};
+            while (true)
             {
                 if (!Condition::matcher::match(reader))
-                    return LEXY_MOV(handler).break_();
+                    break;
 
-                return Then::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+                using continuation = _loop_iter_parser<Args...>;
+                auto result = Then::template parser<continuation>::parse(loop_handler, reader,
+                                                                         LEXY_FWD(args)...);
+                if (!result)
+                    return LEXY_MOV(result).error();
             }
-        };
-    };
 
-    template <typename NextParser>
-    using parser = typename _loop<_rule>::template parser<NextParser>;
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
 };
 
 template <typename Pattern>
@@ -66,8 +68,7 @@ struct _whl<Pattern, void> : atom_base<_whl<Pattern, void>>
     LEXY_DSL_FUNC bool match(Reader& reader)
     {
         while (Pattern::matcher::match(reader))
-        {
-        }
+        {}
         return true;
     }
 
@@ -176,6 +177,41 @@ LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
     else
         return then + while_(condition >> then);
 }
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Terminator, typename Rule>
+struct _whlt : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            using branch = decltype(branch(Terminator()));
+            _loop_handler<Handler> loop_handler{handler, false};
+            while (true)
+            {
+                if (branch::condition_matcher::match(reader))
+                    break;
+
+                using continuation = _loop_iter_parser<Args...>;
+                auto result = Rule::template parser<continuation>::parse(loop_handler, reader,
+                                                                         LEXY_FWD(args)...);
+                if (!result)
+                    return LEXY_MOV(result).error();
+            }
+
+            return branch::template then_parser<NextParser>::parse(handler, reader,
+                                                                   LEXY_FWD(args)...);
+        }
+    };
+};
 } // namespace lexyd
 
 #endif // LEXY_DSL_WHILE_HPP_INCLUDED

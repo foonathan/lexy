@@ -1106,43 +1106,6 @@ dsl::times<4>(dsl::integer<std::uint8_t>(dsl::digits<>), dsl::sep(dsl::period))
 ----
 
 [discrete]
-==== `lexy::dsl::build_list` and `lexy::dsl::item`
-
-.`lexy/dsl/list.hpp`
-----
-build_list(rule) : Rule
-
-item(rule)   : Rule
-item(branch) : Branch
-----
-
-Using the `build_list` and `item` rule allows using a sink callback instead of a regular callback.
-The `build_list` rule starts a sinks, parses the given rule and then finishes the sink.
-If the given rule contains an `item` rule, all values produced by the rule of the `item` are passed to the sink.
-
-[horizontal]
-Requires::
-  The `item` rule must be used inside of `build_list()`.
-  A production whose rule contains `build_list()` must provide a sink.
-Matches::
-  For the purposes of matching and consumption, `build_list(rule)` and `item(rule)` are equivalent to `rule`.
-Values::
-  `item(rule)` produces all values of `rule`, but as sink arguments, not as callback arguments.
-  `build_list(rule)` produces all values of `rule`, followed by the finalized sink.
-Errors::
-  Any errors raised by the respective rules.
-
-[godbolt,cpp,id=bdE3Wa]
-----
-// We build a list that contains two items, `lexy::id<1>` and `lexy::id<2>`.
-// Only `abc` is matched.
-dsl::build_list(dsl::item(dsl::id<1>) + LEXY_LIT("abc") + dsl::item(dsl::id<2>))
-----
-
-NOTE: The `build_list` and `item` rules are mainly used to implement the `list` rule.
-It is unlikely that you are going to need it yourself.
-
-[discrete]
 ==== `lexy::dsl::list`
 
 .`lexy/dsl/list.hpp`
@@ -1332,7 +1295,56 @@ dsl::parenthesized(dsl::lit_c<'a'> | dsl::lit_c<'b'> >> dsl::return_)
 
 CAUTION: When using `return_` together with the context sensitive parsing facilities, remember to pop all context objects before the return.
 
-=== Brackets and parentheses
+=== Brackets and terminator
+
+[discrete]
+==== Terminator
+
+.`lexy/dsl/terminator.hpp`
+----
+terminator(branch)
+terminator(branch).terminator() : Branch = branch
+----
+
+A terminator can be specified using `terminator()`.
+The result is not a rule, but a DSL for specifying that a rule is followed by the terminator.
+The terminator is defined using a branch; it is returned by calling `.terminator()`.
+
+.`lexy/dsl/terminator.hpp`
+----
+t[rule]
+----
+
+Whitespace can be added by writing `t[rule]`, where `t` is the result of a `terminator()` call.
+It will skip whitespace before matching the terminator.
+If whitespace is added, this is also reflected by `.terminator()`.
+
+.`lexy/dsl/terminator.hpp`
+----
+t(rule) : Rule = rule + t.terminator()
+----
+
+Calling `t(rule)`, where `t` is the result of a `terminator()` call, results in a rule that parses the given `rule` followed by the terminator.
+
+.`lexy/dsl/terminator.hpp`
+----
+t.while_(rule) : Rule
+t.while_one(rule) : Rule
+
+t.opt(rule) : Rule
+
+t.list(rule) : Rule
+t.list(rule, sep) : Rule
+
+t.opt_list(rule) : Rule
+t.opt_list(rule, sep) : Rule
+----
+
+Using `t.while_()`, `t.while_one()` `t.opt()`, `t.list()`, or `t.opt_list()`, where `t` is the result of a `terminator()` call, results in a rule that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt(list(rule))`, respectively, but followed by the terminator.
+The `rule` does not need to be a terminator is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
+
+[discrete]
+==== Brackets
 
 .`lexy/dsl/brackets.hpp`
 ----
@@ -1364,6 +1376,9 @@ The rule is a branch that uses the opening bracket as a branch condition.
 
 .`lexy/dsl/brackets.hpp`
 ----
+b.while_(rule) : Branch
+b.while_one(rule) : Branch
+
 b.opt(rule) : Branch
 
 b.list(rule) : Branch
@@ -1373,8 +1388,8 @@ b.opt_list(rule) : Branch
 b.opt_list(rule, sep) : Branch
 ----
 
-Using `b.opt()`, `b.list()`, or `b.opt_list()`, where `b` is the result of a `brackets()` call, results in a branch that parses `opt(rule)`, `list(rule)` and `opt(list(rule))`, respectively, but surrounded as brackets.
-The `rule` does not need to be a branch as the closing brackets is used as the branch condition for the `opt()` and `list()` rule.
+Using `b.while_()`, `b.while_one()` `b.opt()`, `b.list()`, or `b.opt_list()`, where `b` is the result of a `brackets()` call, results in a branch that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt(list(rule))`, respectively, but surrounded as brackets.
+The `rule` does not need to be a branch as the closing brackets is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
 
 .`lexy/dsl/brackets.hpp`
 ----

@@ -6,15 +6,8 @@
 #define LEXY_DSL_BRACKETS_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/not.hpp>
-#include <lexy/dsl/option.hpp>
-#include <lexy/dsl/peek.hpp>
-#include <lexy/dsl/sequence.hpp>
-#include <lexy/dsl/whitespace.hpp>
+#include <lexy/dsl/terminator.hpp>
 
 namespace lexyd
 {
@@ -32,9 +25,20 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto operator()(R r) const
     {
-        auto o = open();
-        auto c = close();
-        return o >> r + c;
+        return open() >> terminator(close())(r);
+    }
+
+    /// Matches rule as often as possible, surrounded by brackets.
+    template <typename R>
+    LEXY_CONSTEVAL auto while_(R r) const
+    {
+        return open() >> terminator(close()).while_(r);
+    }
+    /// Matches rule as often as possible but at least once, surrounded by brackets.
+    template <typename R>
+    LEXY_CONSTEVAL auto while_one(R r) const
+    {
+        return open() >> r + terminator(close()).while_(r);
     }
 
     /// Matches `opt(r)` surrounded by brackets.
@@ -42,13 +46,7 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt(R r) const
     {
-        auto o = open();
-        auto c = close();
-
-        if constexpr (lexy::is_pattern<decltype(c)>)
-            return o >> lexyd::opt(!c >> r + c);
-        else
-            return o >> (!c.condition() >> r + c | else_ >> nullopt + c.then());
+        return open() >> terminator(close()).opt(r);
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -56,22 +54,12 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto list(R r) const
     {
-        auto o = open();
-        auto c = branch(close());
-
-        // !c.condition() matches until we've consumed the branch condition.
-        // Then the list exits and we still need c.then().
-        return o >> lexyd::list(!c.condition() >> r) + c.then();
+        return open() >> terminator(close()).list(r);
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto list(R r, S sep) const
     {
-        auto o = open();
-        auto c = branch(close());
-
-        // We can't use ! alone, as we might decide the list ends based on separator alone.
-        // As such we reset after the ! anyway and parse the entire condition again.
-        return o >> lexyd::list(peek(!c.condition()) >> r, sep) + c;
+        return open() >> terminator(close()).list(r, sep);
     }
 
     /// Matches `opt(list(r, sep))` surrounded by brackets.
@@ -79,21 +67,12 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
     {
-        auto o = open();
-        auto c = branch(close());
-
-        // Same as above, we're just allowing the list to exit before doing one item.
-        // As !c.condition() is also the condition for taking the optional, we still need c.then().
-        return o >> lexyd::opt(lexyd::list(!c.condition() >> r)) + c.then();
+        return open() >> terminator(close()).opt_list(r);
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
     {
-        auto o = open();
-        auto c = branch(close());
-
-        // As above, we can't use !c and reuse it as the condition for opt().
-        return o >> lexyd::opt(lexyd::list(peek(!c.condition()) >> r, sep)) + c;
+        return open() >> terminator(close()).opt_list(r, sep);
     }
 
     /// Matches the open bracket.

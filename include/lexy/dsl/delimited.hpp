@@ -9,11 +9,9 @@
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/error.hpp>
-#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/not.hpp>
-#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/peek.hpp>
+#include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
@@ -119,12 +117,10 @@ struct _delim_dsl
     template <typename Content>
     LEXY_CONSTEVAL auto _get(Content) const
     {
-        auto c = branch(close());
-
         // We put the content in a list until the closing condition of the list matches.
-        auto l = list(!c.condition() >> _delc<Content>{});
+        auto content = terminator(close()).opt_list(_delc<Content>{});
         // We surround the list with the logic that handles the positional stuff.
-        return open() >> _delb{} + opt(l) + _dele{} + c.then();
+        return open() >> _delb{} + content + _dele{};
     }
 
     /// Sets the content.

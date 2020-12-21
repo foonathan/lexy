@@ -75,4 +75,32 @@ LEXY_CONSTEVAL auto opt(Rule rule)
 }
 } // namespace lexyd
 
+namespace lexyd
+{
+template <typename Terminator, typename R>
+struct _optt : rule_base
+{
+    static constexpr auto has_matcher = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Handler, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
+            typename Handler::result_type
+        {
+            using branch = decltype(branch(Terminator()));
+            if (auto result = branch::condition_matcher::match(reader))
+                return branch::template then_parser<NextParser>::parse(handler, reader,
+                                                                       LEXY_FWD(args)...,
+                                                                       lexy::nullopt{});
+            else
+                // Note: we don't add the terminator.
+                // This has to be done by the parent rule, if necessary.
+                return R::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+        }
+    };
+};
+} // namespace lexyd
+
 #endif // LEXY_DSL_OPTION_HPP_INCLUDED
