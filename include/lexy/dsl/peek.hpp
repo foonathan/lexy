@@ -11,22 +11,8 @@
 namespace lexyd
 {
 template <typename Pattern>
-struct _peek : rule_base
+struct _peek : branch_base
 {
-    static constexpr auto has_matcher = true;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            auto copy = reader;
-            return Pattern::matcher::match(copy);
-        }
-    };
-
-    static constexpr auto is_branch = true;
-
     template <typename Reader>
     struct branch_matcher
     {
@@ -42,31 +28,6 @@ struct _peek : rule_base
         constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
         {
             return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename NextParser>
-    struct parser
-    {
-        struct _continuation
-        {
-            template <typename Handler, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Reader save, Args&&... args)
-                -> typename Handler::result_type
-            {
-                // We continue with the reader as it was before we parsed the pattern.
-                reader = LEXY_MOV(save);
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            }
-        };
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            // We parse the Pattern but remember the previous reader to reset it.
-            return Pattern::template parser<_continuation>::parse(handler, reader, Reader(reader),
-                                                                  LEXY_FWD(args)...);
         }
     };
 
@@ -87,36 +48,11 @@ LEXY_CONSTEVAL auto peek(Pattern)
 }
 } // namespace lexyd
 
-namespace lexy
-{
-struct unexpected
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "unexpected";
-    }
-};
-} // namespace lexy
-
 namespace lexyd
 {
 template <typename Pattern>
-struct _peekn : rule_base
+struct _peekn : branch_base
 {
-    static constexpr auto has_matcher = true;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            auto copy = reader;
-            return !Pattern::matcher::match(copy);
-        }
-    };
-
-    static constexpr auto is_branch = true;
-
     template <typename Reader>
     struct branch_matcher
     {
@@ -125,30 +61,12 @@ struct _peekn : rule_base
         constexpr bool match(Reader& reader) const
         {
             auto copy = reader;
-            return Pattern::matcher::match(copy);
+            return !Pattern::matcher::match(copy);
         }
 
         template <typename NextParser, typename Handler, typename... Args>
         constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            auto copy = reader;
-            if (auto pos = copy.cur(); Pattern::matcher::match(copy))
-            {
-                auto e = lexy::make_error<Reader, lexy::unexpected>(pos, copy.cur());
-                return LEXY_MOV(handler).error(e);
-            }
-
             return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };

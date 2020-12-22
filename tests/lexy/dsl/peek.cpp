@@ -5,138 +5,65 @@
 #include <lexy/dsl/peek.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/if.hpp>
 
 TEST_CASE("dsl::peek()")
 {
-    constexpr auto rule = lexy::dsl::peek(LEXY_LIT("abc"));
+    constexpr auto rule = if_(peek(LEXY_LIT("abc")) >> LEXY_LIT("a"));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(!empty);
-        CHECK(empty.match().empty());
+        const char* str;
 
-        constexpr auto abc = pattern_matches(rule, "abc");
-        CHECK(abc);
-        CHECK(abc.match().empty());
-    }
-    SUBCASE("rule")
-    {
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            return int(cur - str);
+        }
 
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur == str);
-                return 0;
-            }
-
-            constexpr int error(test_error<lexy::expected_literal> e)
-            {
-                CONSTEXPR_CHECK(e.string() == "abc");
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
-    }
-
-    constexpr auto ws_rule = lexy::dsl::peek(LEXY_LIT("abc"))[LEXY_LIT(" ")];
-    CHECK(lexy::is_rule<decltype(ws_rule)>);
-    CHECK(lexy::is_pattern<decltype(ws_rule)>);
-
-    SUBCASE("whitespace pattern")
-    {
-        constexpr auto empty = pattern_matches(ws_rule, "");
-        CHECK(!empty);
-        CHECK(empty.match().empty());
-
-        constexpr auto abc = pattern_matches(ws_rule, "abc");
-        CHECK(abc);
-        CHECK(abc.match().empty());
-
-        constexpr auto space = pattern_matches(ws_rule, "  abc");
-        CHECK(space);
-        CHECK(space.match() == "  ");
-    }
-    SUBCASE("whitespace rule")
-    {
-        struct callback
+        constexpr int error(test_error<lexy::expected_literal>)
         {
-            const char* str;
+            return -1;
+        }
+    };
 
-            constexpr int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == 0);
 
-            constexpr int error(test_error<lexy::expected_literal> e)
-            {
-                CONSTEXPR_CHECK(e.string() == "abc");
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(ws_rule, "");
-        CHECK(empty == -1);
-
-        constexpr auto abc = rule_matches<callback>(ws_rule, "abc");
-        CHECK(abc == 0);
-
-        constexpr auto space = rule_matches<callback>(ws_rule, "  abc");
-        CHECK(space == 2);
-    }
+    constexpr auto a = rule_matches<callback>(rule, "a");
+    CHECK(a == 0);
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 1);
 }
 
 TEST_CASE("dsl::peek_not()")
 {
-    constexpr auto rule = lexy::dsl::peek_not(LEXY_LIT("abc"));
+    constexpr auto rule = if_(peek_not(LEXY_LIT("abc")) >> LEXY_LIT("a"));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(empty);
-        CHECK(empty.match().empty());
+        const char* str;
 
-        constexpr auto abc = pattern_matches(rule, "abc");
-        CHECK(!abc);
-        CHECK(abc.match().empty());
-    }
-    SUBCASE("rule")
-    {
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            return int(cur - str);
+        }
 
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur == str);
-                return 0;
-            }
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            CONSTEXPR_CHECK(e.string() == "a");
+            CONSTEXPR_CHECK(e.position() == str);
+            return -1;
+        }
+    };
 
-            constexpr int error(test_error<lexy::unexpected> e)
-            {
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == -1);
-    }
+    constexpr auto a = rule_matches<callback>(rule, "a");
+    CHECK(a == 1);
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 0);
 }
 
