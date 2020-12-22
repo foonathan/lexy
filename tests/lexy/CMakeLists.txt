@@ -41,7 +41,6 @@ set(tests
         dsl/member.cpp
         dsl/minus.cpp
         dsl/newline.cpp
-        dsl/not.cpp
         dsl/option.cpp
         dsl/parse_state.cpp
         dsl/peek.cpp

@@ -8,7 +8,6 @@
 #include <lexy/_detail/type_name.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/not.hpp>
 #include <lexy/dsl/peek.hpp>
 
 namespace lexyd
@@ -71,7 +70,7 @@ LEXY_CONSTEVAL auto require(Pattern pattern)
 {
     // If we don't get the pattern, we create a failure.
     // Otherwise, we match the empty string.
-    return if_(peek(!pattern) >> error<Tag>);
+    return if_(peek_not(pattern) >> error<Tag>);
 }
 
 /// Requires that lookahead does not match a pattern at a location.

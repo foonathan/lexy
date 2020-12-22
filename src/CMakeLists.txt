@@ -43,7 +43,6 @@ set(header_files
         ${include_dir}/dsl/member.hpp
         ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
-        ${include_dir}/dsl/not.hpp
         ${include_dir}/dsl/option.hpp
         ${include_dir}/dsl/peek.hpp
         ${include_dir}/dsl/position.hpp

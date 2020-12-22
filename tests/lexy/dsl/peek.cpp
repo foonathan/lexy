@@ -5,7 +5,6 @@
 #include <lexy/dsl/peek.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/not.hpp>
 
 TEST_CASE("dsl::peek()")
 {
@@ -98,9 +97,9 @@ TEST_CASE("dsl::peek()")
     }
 }
 
-TEST_CASE("dsl::peek(!)")
+TEST_CASE("dsl::peek_not()")
 {
-    constexpr auto rule = lexy::dsl::peek(!LEXY_LIT("abc"));
+    constexpr auto rule = lexy::dsl::peek_not(LEXY_LIT("abc"));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_pattern<decltype(rule)>);
 

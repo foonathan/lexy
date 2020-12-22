@@ -32,7 +32,6 @@
 #include <lexy/dsl/member.hpp>
 #include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
-#include <lexy/dsl/not.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>

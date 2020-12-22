@@ -10,7 +10,7 @@ temporarily advancing the reader further if necessary.
 If the matching was successful, a subset of matched characters are consumed by advancing the reader permanently.
 The rule can then produce zero or more values, which are eventually forwarded to the value callback of its production.
 If the matching was not successful, an error is produced instead.
-With the exception of the `!`-rule, a failed rule does not consume any characters.
+A failed rule does not consume any characters.
 
 A `Pattern` is a special `Rule` that does not produce any value and can efficiently determine whether or not it will match at the current reader position without producing an error or consuming characters.
 As such, they can be used as branch conditions.
@@ -614,6 +614,26 @@ Errors::
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
 [discrete]
+==== `lexy::dsl::peek_not`
+
+.`lexy/dsl/peek.hpp`
+----
+peek_not(pattern) : Pattern
+----
+
+The `peek_not` pattern matches a pattern without consuming anything but flips its success and failure; only succeeding if the pattern did not match.
+This can be used for simple lookahead in a branch condition.
+It is whitespace aware; leading whitespace will be consumed.
+
+[horizontal]
+Matches::
+  Matches the pattern.
+  If it succeeds, consumes nothing and fails.
+  If it fails, consumes nothing and succeeds.
+Error::
+  A generic error with tag `lexy::unexpected` if the pattern succeeds.
+
+[discrete]
 ==== `lexy::dsl::lookahead`
 
 .`lexy/dsl/lookahead.hpp`
@@ -638,31 +658,6 @@ Error::
   A generic error with the tag `lexy::lookahead_failure` if it didn't find the `needle`.
 
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
-
-[discrete]
-==== `lexy::dsl::operator!`
-
-.`lexy/dsl/not.hpp`
-----
-!pattern : Pattern
-----
-
-The not pattern matches a pattern but flips its success and failure; only succeeding if the pattern did not match.
-
-[horizontal]
-Matches::
-  Matches the pattern.
-  If it succeeds, consumes it and fails.
-  If it fails, consumes nothing and succeeds.
-Error::
-  A generic error with tag `lexy::unexpected` if the pattern succeeds.
-
-[godbolt,cpp,id=dcr33a]
-----
-// Matches alpha characters followed by a semicolon.
-// The EOF rule at the end shows that the semicolon was consumed when the while exits.
-dsl::while_(!dsl::semicolon >> dsl::ascii::alpha) + dsl::eof
-----
 
 [discrete]
 ==== `lexy::dsl::match`
