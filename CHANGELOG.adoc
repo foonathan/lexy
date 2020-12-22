@@ -1,0 +1,15 @@
+= Changelog
+
+NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
+Until the first release is done, breaking changes -- but not new features -- are tracked here.
+
+== 2020-12
+
+* Remove `dsl::build_list()` and `dsl::item()`.
+  They were mainly used to implement `dsl::list()`, and became unnecessary after an internal restructuring.
+* Remove support for choices in lists, i.e. `dsl::list(a | b | c)`.
+  This can be added back if needed.
+* Remove `dsl::operator!` due to implementation problems.
+  Existing uses of `dsl::peek(!rule)` can be replaced by `dsl::peek_not(rule)`;
+  existing uses of `!rule >> do_sth` can be replaced using `dsl::terminator()`.
+

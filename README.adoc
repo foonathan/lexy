@@ -101,6 +101,9 @@ Keyword parsing::
 Error recovery::
   Log an error, recover, and continue parsing!
 
+NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
+All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
+
 == FAQ
 
 Why should I use `lexy` over XYZ?::
