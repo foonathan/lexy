@@ -7,71 +7,28 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/whitespace.hpp>
-
-namespace lexy
-{
-struct lookahead_failure
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "lookahead failure";
-    }
-};
-} // namespace lexy
+#include <lexy/engine/lookahead.hpp>
 
 namespace lexyd
 {
 template <typename Needle, typename End>
-struct _look : rule_base
+struct _look : branch_base
 {
-    static constexpr auto has_matcher = true;
-
-    struct matcher
+    template <typename Reader>
+    struct branch_matcher
     {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool _match(Reader& reader)
-        {
-            while (true)
-            {
-                if (Needle::matcher::match(reader))
-                    // We found the lookahead condition.
-                    break;
-                else if (End::matcher::match(reader))
-                    // We haven't found the lookahead condition and need to cancel.
-                    return false;
-                else if (reader.eof())
-                    // Dito.
-                    return false;
-                else
-                    reader.bump();
-            }
+        static constexpr auto is_unconditional = false;
 
-            return true;
-        }
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
+        constexpr bool match(Reader& reader)
         {
-            // We're matching on a copy of the reader so we don't change the input.
-            auto copy = reader;
-            return _match(copy);
+            using engine = lexy::engine_lookahead<Needle, End>;
+            return engine::match(reader) == typename engine::error_code();
         }
-    };
 
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
         {
-            if (auto copy = reader; matcher::_match(copy))
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-            else
-            {
-                auto e
-                    = lexy::make_error<Reader, lexy::lookahead_failure>(reader.cur(), copy.cur());
-                return LEXY_MOV(handler).error(e);
-            }
+            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -87,8 +44,8 @@ struct _look : rule_base
 template <typename Needle, typename End>
 LEXY_CONSTEVAL auto lookahead(Needle, End)
 {
-    static_assert(lexy::is_pattern<Needle> && lexy::is_pattern<End>);
-    return _look<Needle, End>{};
+    static_assert(lexy::is_token<Needle> && lexy::is_token<End>);
+    return _look<typename Needle::token_engine, typename End::token_engine>{};
 }
 } // namespace lexyd
 
