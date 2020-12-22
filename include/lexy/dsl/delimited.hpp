@@ -14,6 +14,7 @@
 #include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -196,54 +197,57 @@ struct invalid_escape_sequence
 
 namespace lexyd
 {
-template <typename Pattern, typename... Branches>
+template <typename Escape, typename... Branches>
 LEXY_CONSTEVAL auto _escape_rule(Branches... branches)
 {
     if constexpr (sizeof...(Branches) == 0)
-        return Pattern{};
+        return Escape{};
     else
-        return Pattern{} >> (branches | ... | error<lexy::invalid_escape_sequence>);
+        return Escape{} >> (branches | ... | error<lexy::invalid_escape_sequence>);
 }
 
-template <typename Pattern>
-struct _escape_cap
+template <typename Engine>
+struct _escape_cap : branch_base
 {
-    static constexpr auto has_matcher = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Reader>
+    struct branch_matcher
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        typename Reader::iterator _begin{};
+
+        static constexpr auto is_unconditional = false;
+
+        constexpr bool match(Reader& reader)
         {
-            // We can be sure that the pattern matches here.
-            auto begin  = reader.cur();
-            auto result = Pattern::matcher::match(reader);
-            LEXY_PRECONDITION(result);
+            _begin = reader.cur();
+            return lexy::engine_try_match<Engine>(reader);
+        }
+
+        template <typename NextParser, typename Handler, typename... Args>
+        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        {
             return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                     lexy::lexeme(reader, begin));
+                                     lexy::lexeme(reader, _begin));
         }
     };
 };
 
-template <typename EscapePattern, typename... Branches>
-struct _escape : decltype(_escape_rule<EscapePattern>(Branches{}...))
+template <typename Escape, typename... Branches>
+struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 {
     /// Adds a generic escape rule.
     template <typename Branch>
     LEXY_CONSTEVAL auto rule(Branch) const
     {
         static_assert(lexy::is_branch<Branch>);
-        return _escape<EscapePattern, Branches..., Branch>{};
+        return _escape<Escape, Branches..., Branch>{};
     }
 
-    /// Adds an escape rule that captures the pattern.
-    template <typename Pattern>
-    LEXY_CONSTEVAL auto capture(Pattern pattern) const
+    /// Adds an escape rule that captures the token.
+    template <typename Token>
+    LEXY_CONSTEVAL auto capture(Token) const
     {
-        static_assert(lexy::is_pattern<Pattern>);
-        return rule(peek(pattern) >> _escape_cap<Pattern>{});
+        static_assert(lexy::is_token<Token>);
+        return rule(_escape_cap<typename Token::token_engine>{});
     }
 
 #if LEXY_HAS_NTTP
@@ -278,11 +282,11 @@ struct _escape : decltype(_escape_rule<EscapePattern>(Branches{}...))
 /// Creates an escape rule.
 /// The pattern is the initial pattern to begin,
 /// and then you can add rules that match after it.
-template <typename EscapePattern>
-LEXY_CONSTEVAL auto escape(EscapePattern)
+template <typename EscapeToken>
+LEXY_CONSTEVAL auto escape(EscapeToken)
 {
-    static_assert(lexy::is_pattern<EscapePattern>);
-    return _escape<EscapePattern>{};
+    static_assert(lexy::is_token<EscapeToken>);
+    return _escape<EscapeToken>{};
 }
 
 constexpr auto backslash_escape = escape(lit_c<'\\'>);
