@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/callback.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
@@ -125,6 +126,35 @@ TEST_CASE("dsl::capture()")
 
         constexpr auto success = rule_matches<callback>(rule, "(abc)");
         CHECK(success == 0);
+    }
+    SUBCASE("branch")
+    {
+        constexpr auto rule = if_(capture(LEXY_LIT("abc")));
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_pattern<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            constexpr int success(const char* cur)
+            {
+                CONSTEXPR_CHECK(cur == str);
+                return 0;
+            }
+            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            {
+                CONSTEXPR_CHECK(lex.begin() == str);
+                CONSTEXPR_CHECK(lex.end() == cur);
+                return 1;
+            }
+        };
+
+        constexpr auto empty = rule_matches<callback>(rule, "");
+        CHECK(empty == 0);
+
+        constexpr auto success = rule_matches<callback>(rule, "abc");
+        CHECK(success == 1);
     }
     SUBCASE("whitespace")
     {
