@@ -509,7 +509,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_branches">Branches</a></li>
 <li><a href="#_loops">Loops</a></li>
 <li><a href="#_productions">Productions</a></li>
-<li><a href="#_brackets_and_parentheses">Brackets and parentheses</a></li>
+<li><a href="#_brackets_and_terminator">Brackets and terminator</a></li>
 <li><a href="#_numbers">Numbers</a></li>
 <li><a href="#_delimited_and_quoted">Delimited and quoted</a></li>
 <li><a href="#_aggregates">Aggregates</a></li>
@@ -2662,7 +2662,7 @@ temporarily advancing the reader further if necessary.
 If the matching was successful, a subset of matched characters are consumed by advancing the reader permanently.
 The rule can then produce zero or more values, which are eventually forwarded to the value callback of its production.
 If the matching was not successful, an error is produced instead.
-With the exception of the <code>!</code>-rule, a failed rule does not consume any characters.</p>
+A failed rule does not consume any characters.</p>
 </div>
 <div class="paragraph">
 <p>A <code>Pattern</code> is a special <code>Rule</code> that does not produce any value and can efficiently determine whether or not it will match at the current reader position without producing an error or consuming characters.
@@ -3881,6 +3881,40 @@ Long lookahead can slow down parsing speed due to backtracking.
 </tr>
 </table>
 </div>
+<h4 id="_lexydslpeek_not" class="discrete"><code>lexy::dsl::peek_not</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/peek.hpp</code></div>
+<div class="content">
+<pre>peek_not(pattern) : Pattern</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>peek_not</code> pattern matches a pattern without consuming anything but flips its success and failure; only succeeding if the pattern did not match.
+This can be used for simple lookahead in a branch condition.
+It is whitespace aware; leading whitespace will be consumed.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Matches the pattern.
+If it succeeds, consumes nothing and fails.
+If it fails, consumes nothing and succeeds.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Error
+</td>
+<td class="hdlist2">
+<p>A generic error with tag <code>lexy::unexpected</code> if the pattern succeeds.</p>
+</td>
+</tr>
+</table>
+</div>
 <h4 id="_lexydsllookahead" class="discrete"><code>lexy::dsl::lookahead</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/lookahead.hpp</code></div>
@@ -3937,51 +3971,6 @@ Long lookahead can slow down parsing speed due to backtracking.
 </tr>
 </table>
 </div>
-<h4 id="_lexydsloperator_2" class="discrete"><code>lexy::dsl::operator!</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/not.hpp</code></div>
-<div class="content">
-<pre>!pattern : Pattern</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The not pattern matches a pattern but flips its success and failure; only succeeding if the pattern did not match.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Matches the pattern.
-If it succeeds, consumes it and fails.
-If it fails, consumes nothing and succeeds.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>A generic error with tag <code>lexy::unexpected</code> if the pattern succeeds.</p>
-</td>
-</tr>
-</table>
-</div>
-<details id="dcr33a">
-<summary class="title">Example</summary>
-<div class="content">
-<a href="https://godbolt.org/z/dcr33a" target="_blank" rel="noopener">Try on Compiler Explorer</a>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Matches alpha characters followed by a semicolon.
-// The EOF rule at the end shows that the semicolon was consumed when the while exits.
-dsl::while_(!dsl::semicolon &gt;&gt; dsl::ascii::alpha) + dsl::eof</code></pre>
-</div>
-</div>
-</div>
-</details>
 <h4 id="_lexydslmatch" class="discrete"><code>lexy::dsl::match</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/match.hpp</code></div>
@@ -4040,7 +4029,7 @@ When used in combination with <code>peek()</code>, long lookahead can slow down 
 </div>
 <div class="sect2">
 <h3 id="_branches">Branches</h3>
-<h4 id="_lexydsloperator_3" class="discrete"><code>lexy::dsl::operator+</code></h4>
+<h4 id="_lexydsloperator_2" class="discrete"><code>lexy::dsl::operator+</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/sequence.hpp</code></div>
 <div class="content">
@@ -4081,7 +4070,7 @@ Errors
 </tr>
 </table>
 </div>
-<h4 id="_lexydsloperator_4" class="discrete"><code>lexy::dsl::operator&gt;&gt;</code></h4>
+<h4 id="_lexydsloperator_3" class="discrete"><code>lexy::dsl::operator&gt;&gt;</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/branch.hpp</code></div>
 <div class="content">
@@ -4212,7 +4201,7 @@ dsl::opt(dsl::list(dsl::ascii::alpha &gt;&gt; dsl::id&lt;0&gt;))</code></pre>
 </div>
 </div>
 </details>
-<h4 id="_lexydsloperator_5" class="discrete"><code>lexy::dsl::operator|</code></h4>
+<h4 id="_lexydsloperator_4" class="discrete"><code>lexy::dsl::operator|</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/choice.hpp</code></div>
 <div class="content">
@@ -4296,7 +4285,7 @@ Use <code>… | error&lt;Tag&gt;</code> to raise a custom error instead of <code
 </tr>
 </table>
 </div>
-<h4 id="_lexydsloperator_6" class="discrete"><code>lexy::dsl::operator/</code></h4>
+<h4 id="_lexydsloperator_5" class="discrete"><code>lexy::dsl::operator/</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/alternative.hpp</code></div>
 <div class="content">
@@ -4828,85 +4817,6 @@ dsl::times&lt;4&gt;(dsl::integer&lt;std::uint8_t&gt;(dsl::digits&lt;&gt;), dsl::
 </div>
 </div>
 </details>
-<h4 id="_lexydslbuild_list_and_lexydslitem" class="discrete"><code>lexy::dsl::build_list</code> and <code>lexy::dsl::item</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/list.hpp</code></div>
-<div class="content">
-<pre>build_list(rule) : Rule
-
-item(rule)   : Rule
-item(branch) : Branch</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Using the <code>build_list</code> and <code>item</code> rule allows using a sink callback instead of a regular callback.
-The <code>build_list</code> rule starts a sinks, parses the given rule and then finishes the sink.
-If the given rule contains an <code>item</code> rule, all values produced by the rule of the <code>item</code> are passed to the sink.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Requires
-</td>
-<td class="hdlist2">
-<p>The <code>item</code> rule must be used inside of <code>build_list()</code>.
-A production whose rule contains <code>build_list()</code> must provide a sink.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>For the purposes of matching and consumption, <code>build_list(rule)</code> and <code>item(rule)</code> are equivalent to <code>rule</code>.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Values
-</td>
-<td class="hdlist2">
-<p><code>item(rule)</code> produces all values of <code>rule</code>, but as sink arguments, not as callback arguments.
-<code>build_list(rule)</code> produces all values of <code>rule</code>, followed by the finalized sink.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Errors
-</td>
-<td class="hdlist2">
-<p>Any errors raised by the respective rules.</p>
-</td>
-</tr>
-</table>
-</div>
-<details id="bdE3Wa">
-<summary class="title">Example</summary>
-<div class="content">
-<a href="https://godbolt.org/z/bdE3Wa" target="_blank" rel="noopener">Try on Compiler Explorer</a>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// We build a list that contains two items, `lexy::id&lt;1&gt;` and `lexy::id&lt;2&gt;`.
-// Only `abc` is matched.
-dsl::build_list(dsl::item(dsl::id&lt;1&gt;) + LEXY_LIT("abc") + dsl::item(dsl::id&lt;2&gt;))</code></pre>
-</div>
-</div>
-</div>
-</details>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The <code>build_list</code> and <code>item</code> rules are mainly used to implement the <code>list</code> rule.
-It is unlikely that you are going to need it yourself.
-</td>
-</tr>
-</table>
-</div>
 <h4 id="_lexydsllist" class="discrete"><code>lexy::dsl::list</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/list.hpp</code></div>
@@ -5321,7 +5231,60 @@ When using <code>return_</code> together with the context sensitive parsing faci
 </div>
 </div>
 <div class="sect2">
-<h3 id="_brackets_and_parentheses">Brackets and parentheses</h3>
+<h3 id="_brackets_and_terminator">Brackets and terminator</h3>
+<h4 id="_terminator" class="discrete">Terminator</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/terminator.hpp</code></div>
+<div class="content">
+<pre>terminator(branch)
+terminator(branch).terminator() : Branch = branch</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A terminator can be specified using <code>terminator()</code>.
+The result is not a rule, but a DSL for specifying that a rule is followed by the terminator.
+The terminator is defined using a branch; it is returned by calling <code>.terminator()</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/terminator.hpp</code></div>
+<div class="content">
+<pre>t[rule]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Whitespace can be added by writing <code>t[rule]</code>, where <code>t</code> is the result of a <code>terminator()</code> call.
+It will skip whitespace before matching the terminator.
+If whitespace is added, this is also reflected by <code>.terminator()</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/terminator.hpp</code></div>
+<div class="content">
+<pre>t(rule) : Rule = rule + t.terminator()</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Calling <code>t(rule)</code>, where <code>t</code> is the result of a <code>terminator()</code> call, results in a rule that parses the given <code>rule</code> followed by the terminator.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/terminator.hpp</code></div>
+<div class="content">
+<pre>t.while_(rule) : Rule
+t.while_one(rule) : Rule
+
+t.opt(rule) : Rule
+
+t.list(rule) : Rule
+t.list(rule, sep) : Rule
+
+t.opt_list(rule) : Rule
+t.opt_list(rule, sep) : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Using <code>t.while_()</code>, <code>t.while_one()</code> <code>t.opt()</code>, <code>t.list()</code>, or <code>t.opt_list()</code>, where <code>t</code> is the result of a <code>terminator()</code> call, results in a rule that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt(list(rule))</code>, respectively, but followed by the terminator.
+The <code>rule</code> does not need to be a terminator is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
+</div>
+<h4 id="_brackets" class="discrete">Brackets</h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/brackets.hpp</code></div>
 <div class="content">
@@ -5359,7 +5322,10 @@ The rule is a branch that uses the opening bracket as a branch condition.</p>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/brackets.hpp</code></div>
 <div class="content">
-<pre>b.opt(rule) : Branch
+<pre>b.while_(rule) : Branch
+b.while_one(rule) : Branch
+
+b.opt(rule) : Branch
 
 b.list(rule) : Branch
 b.list(rule, sep) : Branch
@@ -5369,8 +5335,8 @@ b.opt_list(rule, sep) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Using <code>b.opt()</code>, <code>b.list()</code>, or <code>b.opt_list()</code>, where <code>b</code> is the result of a <code>brackets()</code> call, results in a branch that parses <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt(list(rule))</code>, respectively, but surrounded as brackets.
-The <code>rule</code> does not need to be a branch as the closing brackets is used as the branch condition for the <code>opt()</code> and <code>list()</code> rule.</p>
+<p>Using <code>b.while_()</code>, <code>b.while_one()</code> <code>b.opt()</code>, <code>b.list()</code>, or <code>b.opt_list()</code>, where <code>b</code> is the result of a <code>brackets()</code> call, results in a branch that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt(list(rule))</code>, respectively, but surrounded as brackets.
+The <code>rule</code> does not need to be a branch as the closing brackets is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/brackets.hpp</code></div>
@@ -6632,7 +6598,7 @@ Refer to the existing rules if you want to add your own.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-13 10:14:45 UTC
+Last updated 2020-12-22 14:05:55 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
