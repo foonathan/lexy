@@ -62,7 +62,10 @@ struct _token : token_base<_token<Rule>>
 template <typename Rule>
 LEXY_CONSTEVAL auto token(Rule)
 {
-    return _token<Rule>{};
+    if constexpr (lexy::is_token<Rule>)
+        return Rule{};
+    else
+        return _token<Rule>{};
 }
 } // namespace lexyd
 

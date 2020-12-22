@@ -6,11 +6,12 @@
 #define LEXY_DSL_PEEK_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
-template <typename Pattern>
+template <typename Engine, bool Expected>
 struct _peek : branch_base
 {
     template <typename Reader>
@@ -20,8 +21,7 @@ struct _peek : branch_base
 
         constexpr bool match(Reader& reader)
         {
-            auto copy = reader;
-            return Pattern::matcher::match(copy);
+            return lexy::engine_peek<Engine>(reader) == Expected;
         }
 
         template <typename NextParser, typename Handler, typename... Args>
@@ -38,53 +38,22 @@ struct _peek : branch_base
     }
 };
 
-/// Check if at this reader position, Pattern would match, but don't actually consume any characters
-/// if it does.
-template <typename Pattern>
-LEXY_CONSTEVAL auto peek(Pattern)
-{
-    static_assert(lexy::is_pattern<Pattern>);
-    return _peek<Pattern>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Pattern>
-struct _peekn : branch_base
-{
-    template <typename Reader>
-    struct branch_matcher
-    {
-        static constexpr auto is_unconditional = false;
-
-        constexpr bool match(Reader& reader) const
-        {
-            auto copy = reader;
-            return !Pattern::matcher::match(copy);
-        }
-
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
-};
-
-/// Check if at this reader position, Pattern would not match, but don't actually consume any
+/// Check if at this reader position, the rule would match, but don't actually consume any
 /// characters if it does.
-template <typename Pattern>
-LEXY_CONSTEVAL auto peek_not(Pattern)
+template <typename Rule>
+LEXY_CONSTEVAL auto peek(Rule rule)
 {
-    static_assert(lexy::is_pattern<Pattern>);
-    return _peekn<Pattern>{};
+    using token = decltype(token(rule));
+    return _peek<typename token::token_engine, true>{};
+}
+
+/// Check if at this reader position, the rule would not match, but don't actually consume any
+/// characters if it does.
+template <typename Rule>
+LEXY_CONSTEVAL auto peek_not(Rule rule)
+{
+    using token = decltype(token(rule));
+    return _peek<typename token::token_engine, false>{};
 }
 } // namespace lexyd
 
