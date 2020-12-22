@@ -84,7 +84,7 @@ struct dot_atom
 {
     // A list of atom separated by periods which are part of the content and thus captured (unlike
     // the whitespace).
-    static constexpr auto rule = dsl::list(atom, dsl::sep(dsl::period).capture());
+    static constexpr auto rule = dsl::list(atom, dsl::sep(dsl::capture(dsl::period)));
     static constexpr auto list = lexy::as_string<std::string>;
 };
 

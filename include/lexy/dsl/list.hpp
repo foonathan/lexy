@@ -105,8 +105,8 @@ struct _lstl<Item, void> : rule_base
         }
     };
 };
-template <typename Item, typename Sep, bool Capture>
-struct _lstl<Item, _sep<Sep, Capture>> : rule_base
+template <typename Item, typename Sep>
+struct _lstl<Item, _sep<Sep>> : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -119,20 +119,20 @@ struct _lstl<Item, _sep<Sep, Capture>> : rule_base
         {
             while (true)
             {
-                auto begin = reader.cur();
-                if (!Sep::matcher::match(reader))
-                    // No separator, done with the list.
+                // Check whether we have a separator.
+                lexy::branch_matcher<Sep, Reader> sep{};
+                if (!sep.match(reader))
                     break;
 
-                // Capture separator if necessary.
-                if constexpr (Capture)
-                    list_handler._sink(lexy::lexeme(reader, begin));
-                else
-                    (void)begin;
+                // Parse the separator.
+                auto result = sep.template parse<lexy::final_parser>(list_handler, reader,
+                                                                     LEXY_FWD(args)...);
+                if (!result)
+                    return LEXY_MOV(result).error();
 
                 // Parse item.
-                auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                               LEXY_FWD(args)...);
+                result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
+                                                                          LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -142,8 +142,8 @@ struct _lstl<Item, _sep<Sep, Capture>> : rule_base
         }
     };
 };
-template <typename Item, typename Sep, bool Capture>
-struct _lstl<Item, _tsep<Sep, Capture>> : rule_base
+template <typename Item, typename Sep>
+struct _lstl<Item, _tsep<Sep>> : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -156,24 +156,24 @@ struct _lstl<Item, _tsep<Sep, Capture>> : rule_base
         {
             while (true)
             {
-                auto begin = reader.cur();
-                if (!Sep::matcher::match(reader))
-                    // No separator, done with the list.
+                // Check whether we have a separator.
+                lexy::branch_matcher<Sep, Reader> sep{};
+                if (!sep.match(reader))
                     break;
 
-                // Capture separator if necessary.
-                if constexpr (Capture)
-                    list_handler._sink(lexy::lexeme(reader, begin));
-                else
-                    (void)begin;
+                // Parse the separator.
+                auto result = sep.template parse<lexy::final_parser>(list_handler, reader,
+                                                                     LEXY_FWD(args)...);
+                if (!result)
+                    return LEXY_MOV(result).error();
 
                 lexy::branch_matcher<Item, Reader> branch{};
                 if (!branch.match(reader))
                     // No longer match additional items, done with list.
                     break;
 
-                auto result = branch.template parse<lexy::final_parser>(list_handler, reader,
-                                                                        LEXY_FWD(args)...);
+                result = branch.template parse<lexy::final_parser>(list_handler, reader,
+                                                                   LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -259,19 +259,19 @@ LEXY_CONSTEVAL auto list(Item)
 }
 
 /// Creates a list of items with the specified separator.
-template <typename Item, typename Pattern, bool Capture>
-LEXY_CONSTEVAL auto list(Item, _sep<Pattern, Capture>)
+template <typename Item, typename Sep>
+LEXY_CONSTEVAL auto list(Item, _sep<Sep>)
 {
-    return _lst<Item, _sep<Pattern, Capture>>{};
+    return _lst<Item, _sep<Sep>>{};
 }
 
 /// Creates a list of items with the specified separator that can be trailing.
-template <typename Item, typename Pattern, bool Capture>
-LEXY_CONSTEVAL auto list(Item, _tsep<Pattern, Capture>)
+template <typename Item, typename Sep>
+LEXY_CONSTEVAL auto list(Item, _tsep<Sep>)
 {
     static_assert(lexy::is_branch<Item>,
                   "list() without a trailing separator requires a branch condition");
-    return _lst<Item, _tsep<Pattern, Capture>>{};
+    return _lst<Item, _tsep<Sep>>{};
 }
 } // namespace lexyd
 
@@ -324,8 +324,8 @@ struct _lstt<Terminator, Item, void> : rule_base
         }
     };
 };
-template <typename Terminator, typename Item, typename Sep, bool Capture>
-struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
+template <typename Terminator, typename Item, typename Sep>
+struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -350,17 +350,10 @@ struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                auto begin = reader.cur();
-                result     = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
+                result = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
                                                                          LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
-
-                // Capture separator if necessary.
-                if constexpr (Capture)
-                    sink(lexy::lexeme(reader, begin));
-                else
-                    (void)begin;
 
                 // Parse item.
                 result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
@@ -383,8 +376,8 @@ struct _lstt<Terminator, Item, _sep<Sep, Capture>> : rule_base
         }
     };
 };
-template <typename Terminator, typename Item, typename Sep, bool Capture>
-struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
+template <typename Terminator, typename Item, typename Sep>
+struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
 {
     static constexpr auto has_matcher = false;
 
@@ -409,18 +402,12 @@ struct _lstt<Terminator, Item, _tsep<Sep, Capture>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                auto begin = reader.cur();
-                result     = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
+                result = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
                                                                          LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
 
-                // Capture separator if necessary.
-                if constexpr (Capture)
-                    sink(lexy::lexeme(reader, begin));
-                else
-                    (void)begin;
-
+                // Check for trailing separator.
                 if (term.match(reader))
                     break;
 

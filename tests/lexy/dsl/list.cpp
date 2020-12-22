@@ -5,6 +5,7 @@
 #include <lexy/dsl/list.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
@@ -130,7 +131,7 @@ TEST_CASE("dsl::list() sep")
 
 TEST_CASE("dsl::list() sep capture")
 {
-    constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")).capture());
+    constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 
@@ -264,7 +265,7 @@ TEST_CASE("dsl::list() trailing_sep")
 TEST_CASE("dsl::list() trailing_sep capture")
 {
     constexpr auto rule
-        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")).capture());
+        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(!lexy::is_pattern<decltype(rule)>);
 

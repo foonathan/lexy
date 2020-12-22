@@ -9,38 +9,28 @@
 
 namespace lexyd
 {
-template <typename Pattern, bool Capture>
+template <typename Branch>
 struct _sep
-{
-    LEXY_CONSTEVAL auto capture() const
-    {
-        return _sep<Pattern, true>{};
-    }
-};
+{};
 
-/// Defines a separator pattern for a list.
-template <typename Pattern>
-LEXY_CONSTEVAL auto sep(Pattern)
+/// Defines a separator for a list.
+template <typename Branch>
+LEXY_CONSTEVAL auto sep(Branch)
 {
-    static_assert(lexy::is_pattern<Pattern>);
-    return _sep<Pattern, false>{};
+    static_assert(lexy::is_branch<Branch>);
+    return _sep<Branch>{};
 }
 
-template <typename Pattern, bool Capture>
+template <typename Branch>
 struct _tsep
-{
-    LEXY_CONSTEVAL auto capture() const
-    {
-        return _tsep<Pattern, true>{};
-    }
-};
+{};
 
-/// Defines a separator pattern for a list that can be trailing.
-template <typename Pattern>
-LEXY_CONSTEVAL auto trailing_sep(Pattern)
+/// Defines a separator for a list that can be trailing.
+template <typename Branch>
+LEXY_CONSTEVAL auto trailing_sep(Branch)
 {
-    static_assert(lexy::is_pattern<Pattern>);
-    return _tsep<Pattern, false>{};
+    static_assert(lexy::is_branch<Branch>);
+    return _tsep<Branch>{};
 }
 } // namespace lexyd
 

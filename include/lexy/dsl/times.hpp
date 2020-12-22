@@ -30,8 +30,8 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule)
         return rule + _gen_times<N - 1>(rule);
 }
 
-template <std::size_t N, typename Rule, typename Pattern>
-LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern, false> sep)
+template <std::size_t N, typename Rule, typename Sep>
+LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Sep> sep)
 {
     if constexpr (N == 1)
     {
@@ -40,21 +40,21 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule, _sep<Pattern, false> sep)
     }
     else
     {
-        return rule + Pattern{} + _gen_times<N - 1>(rule, sep);
+        return rule + Sep{} + _gen_times<N - 1>(rule, sep);
     }
 }
 
-template <std::size_t N, typename Rule, typename Pattern>
-LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Pattern, false> sep)
+template <std::size_t N, typename Rule, typename Sep>
+LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Sep> sep)
 {
     if constexpr (N == 1)
     {
         (void)sep;
-        return rule + if_(Pattern{});
+        return rule + if_(Sep{});
     }
     else
     {
-        return rule + Pattern{} + _gen_times<N - 1>(rule, sep);
+        return rule + Sep{} + _gen_times<N - 1>(rule, sep);
     }
 }
 
