@@ -49,24 +49,5 @@ TEST_CASE("rule: atom")
         constexpr auto abc = rule_matches<callback>(rule, "abc");
         CHECK(abc == 0);
     }
-    SUBCASE("success")
-    {
-        constexpr auto rule = lexy::dsl::success;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur == str);
-                return 0;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-    }
 }
 

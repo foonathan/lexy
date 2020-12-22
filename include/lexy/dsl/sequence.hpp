@@ -6,7 +6,6 @@
 #define LEXY_DSL_SEQUENCE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/engine/success.hpp>
 
 namespace lexyd
 {
@@ -66,14 +65,6 @@ struct _seq : rule_base
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
 };
-template <>
-struct _seq<> : token_base<_seq<>>
-{
-    using token_engine = lexy::engine_success;
-};
-
-/// Matches the empty string, always succeeds.
-constexpr auto success = _seq<>{};
 
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator+(R, S)
@@ -83,28 +74,17 @@ LEXY_CONSTEVAL auto operator+(R, S)
 template <typename... R, typename S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
 {
-    if constexpr (sizeof...(R) == 0)
-        return S{};
-    else
-        return _seq<R..., S>{};
+    return _seq<R..., S>{};
 }
 template <typename R, typename... S>
 LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
 {
-    if constexpr (sizeof...(S) == 0)
-        return R{};
-    else
-        return _seq<R, S...>{};
+    return _seq<R, S...>{};
 }
 template <typename... R, typename... S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
 {
-    if constexpr (sizeof...(R) == 0)
-        return _seq<S...>{};
-    else if constexpr (sizeof...(S) == 0)
-        return _seq<R...>{};
-    else
-        return _seq<R..., S...>{};
+    return _seq<R..., S...>{};
 }
 } // namespace lexyd
 

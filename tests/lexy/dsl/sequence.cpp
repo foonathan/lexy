@@ -8,20 +8,6 @@
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/label.hpp>
 
-TEST_CASE("dsl::success")
-{
-    constexpr auto atom = lexy::dsl::success;
-    CHECK(lexy::is_pattern<decltype(atom)>);
-
-    constexpr auto empty = atom_matches(atom, "");
-    CHECK(empty);
-    CHECK(empty.count == 0);
-
-    constexpr auto non_empty = atom_matches(atom, "abc");
-    CHECK(non_empty);
-    CHECK(non_empty.count == 0);
-}
-
 TEST_CASE("dsl::operator+")
 {
     SUBCASE("pattern")

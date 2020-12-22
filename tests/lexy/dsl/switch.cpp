@@ -47,49 +47,6 @@ TEST_CASE("dsl::switch_()")
         constexpr auto aaa = rule_matches<callback>(rule, "aaa");
         CHECK(aaa == -1);
     }
-    SUBCASE("success")
-    {
-        constexpr auto rule = switch_(while_(LEXY_LIT("a")))
-                                  .case_(lexy::dsl::success)
-                                  .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur == str);
-                return 0;
-            }
-            constexpr int success(const char* cur, int i)
-            {
-                CONSTEXPR_CHECK(i > 0);
-                CONSTEXPR_CHECK(str + i == cur);
-                return i;
-            }
-
-            constexpr int error(test_error<lexy::exhausted_switch> e)
-            {
-                CONSTEXPR_CHECK(e.begin() == str);
-                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                return -1;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-
-        constexpr auto a = rule_matches<callback>(rule, "a");
-        CHECK(a == 1);
-        constexpr auto aa = rule_matches<callback>(rule, "aa");
-        CHECK(aa == 2);
-
-        constexpr auto aaa = rule_matches<callback>(rule, "aaa");
-        CHECK(aaa == -1);
-    }
     SUBCASE("ordered")
     {
         constexpr auto rule = switch_(while_(LEXY_LIT("a")))

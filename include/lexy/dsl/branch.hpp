@@ -55,10 +55,7 @@ template <typename Condition, typename... R>
 LEXY_CONSTEVAL auto operator>>(Condition, _seq<R...>)
 {
     static_assert(lexy::is_branch<Condition>, "condition must be a branch");
-    if constexpr (sizeof...(R) == 0)
-        return Condition{};
-    else
-        return _br<Condition, R...>{};
+    return _br<Condition, R...>{};
 }
 template <typename Condition, typename C, typename... R>
 LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
@@ -76,10 +73,7 @@ LEXY_CONSTEVAL auto operator>>(_br<C, R...>, Then)
 template <typename C, typename... R, typename... S>
 LEXY_CONSTEVAL auto operator>>(_br<C, R...>, _seq<S...>)
 {
-    if constexpr (sizeof...(S) == 0)
-        return _br<C, R...>{};
-    else
-        return C{} >> _seq<R..., S...>{};
+    return C{} >> _seq<R..., S...>{};
 }
 
 // Disambiguation.
@@ -100,10 +94,7 @@ LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, R...>)
 template <typename... R, typename Condition, typename... S>
 LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, S...>)
 {
-    if constexpr (sizeof...(R) == 0)
-        return _seq<Condition, S...>{};
-    else
-        return _seq<R...>{} + _seq<Condition, S...>{};
+    return _seq<R...>{} + _seq<Condition, S...>{};
 }
 
 // If we add something on the right to a branch, we extend the then.
@@ -116,10 +107,7 @@ LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, Rule)
 template <typename Condition, typename... R, typename... S>
 LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, _seq<S...>)
 {
-    if constexpr (sizeof...(S) == 0)
-        return _br<Condition, R...>{};
-    else
-        return _br<Condition, R..., S...>{};
+    return _br<Condition, R..., S...>{};
 }
 
 // If we add two branches, we use the condition of the first one and treat the second as sequence.

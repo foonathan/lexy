@@ -67,7 +67,6 @@ set(tests
         engine/failure.cpp
         engine/literal.cpp
         engine/minus.cpp
-        engine/success.cpp
         engine/trie.cpp
         engine/until.cpp
 
