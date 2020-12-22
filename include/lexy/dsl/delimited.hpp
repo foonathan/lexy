@@ -128,7 +128,7 @@ struct _delim_dsl
     template <typename Content>
     LEXY_CONSTEVAL auto operator()(Content content) const
     {
-        if constexpr (lexy::is_pattern<Content>)
+        if constexpr (lexy::is_token<Content>)
             return _get(capture(content));
         else
             return _get(content);
@@ -136,7 +136,7 @@ struct _delim_dsl
     template <typename Content, typename Escape>
     LEXY_CONSTEVAL auto operator()(Content content, Escape escape) const
     {
-        if constexpr (lexy::is_pattern<Content>)
+        if constexpr (lexy::is_token<Content>)
             return _get(escape | else_ >> capture(content));
         else
             return _get(escape | else_ >> content);
