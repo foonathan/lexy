@@ -43,7 +43,7 @@ struct _seq : rule_base
         }
     };
 
-    static constexpr bool is_branch = has_matcher;
+    static constexpr bool is_branch = (lexy::is_token<R> && ...);
 
     template <typename Reader>
     struct branch_matcher
@@ -52,7 +52,12 @@ struct _seq : rule_base
 
         constexpr bool match(Reader& reader)
         {
-            return matcher::match(reader);
+            auto save = reader;
+            if (((R::token_engine::match(reader) == typename R::token_engine::error_code()) && ...))
+                return true;
+
+            reader = LEXY_MOV(save);
+            return false;
         }
 
         template <typename NextParser, typename Handler, typename... Args>
