@@ -8,7 +8,9 @@
 #include <doctest/doctest.h>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/lexeme.hpp>
+#include <lexy/match.hpp>
 #include <lexy/result.hpp>
 
 #include "../test_encoding.hpp"
@@ -70,13 +72,14 @@ struct pattern_match_result
 };
 
 template <typename Pattern>
-constexpr auto pattern_matches(Pattern, const char* str)
+constexpr auto pattern_matches(Pattern pattern, const char* str)
 {
+    using token = decltype(lexy::dsl::token(pattern));
     auto input  = lexy::zstring_input<test_encoding>(str);
     auto reader = input.reader();
 
     auto begin  = reader.cur();
-    auto result = Pattern::matcher::match(reader);
+    auto result = lexy::engine_try_match<typename token::token_engine>(reader);
     auto match  = lexy::lexeme(reader, begin);
     return pattern_match_result{result, {match.data(), match.size()}};
 }

@@ -11,8 +11,6 @@ namespace lexyd
 {
 struct _ret : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     // We unconditionally jump to the final parser.
     template <typename NextParser>
     using parser = lexy::final_parser;

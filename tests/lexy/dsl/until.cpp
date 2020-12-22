@@ -11,66 +11,41 @@ TEST_CASE("dsl::until()")
 {
     constexpr auto rule = until(LEXY_LIT("!"));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(!empty);
-        CHECK(empty.match().empty());
+        const char* str;
 
-        constexpr auto zero = pattern_matches(rule, "!");
-        CHECK(zero);
-        CHECK(zero.match() == "!");
-        constexpr auto one = pattern_matches(rule, "a!");
-        CHECK(one);
-        CHECK(one.match() == "a!");
-        constexpr auto two = pattern_matches(rule, "xy!");
-        CHECK(two);
-        CHECK(two.match() == "xy!");
-
-        constexpr auto unterminated = pattern_matches(rule, "abc");
-        CHECK(!unterminated);
-        CHECK(unterminated.match().empty());
-    }
-    SUBCASE("rule")
-    {
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            return int(cur - str);
+        }
 
-            constexpr int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+        constexpr int error(test_error<lexy::expected_literal> e)
+        {
+            CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
+            CONSTEXPR_CHECK(e.string() == "!");
+            return -1;
+        }
+    };
 
-            constexpr int error(test_error<lexy::expected_literal> e)
-            {
-                CONSTEXPR_CHECK(e.position() == lexy::_detail::string_view(str).end());
-                CONSTEXPR_CHECK(e.string() == "!");
-                return -1;
-            }
-        };
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
+    constexpr auto zero = rule_matches<callback>(rule, "!");
+    CHECK(zero == 1);
+    constexpr auto one = rule_matches<callback>(rule, "a!");
+    CHECK(one == 2);
+    constexpr auto two = rule_matches<callback>(rule, "ab!");
+    CHECK(two == 3);
 
-        constexpr auto zero = rule_matches<callback>(rule, "!");
-        CHECK(zero == 1);
-        constexpr auto one = rule_matches<callback>(rule, "a!");
-        CHECK(one == 2);
-        constexpr auto two = rule_matches<callback>(rule, "ab!");
-        CHECK(two == 3);
-
-        constexpr auto unterminated = rule_matches<callback>(rule, "abc");
-        CHECK(unterminated == -1);
-    }
+    constexpr auto unterminated = rule_matches<callback>(rule, "abc");
+    CHECK(unterminated == -1);
 }
 
 TEST_CASE("dsl::until().or_eof()")
 {
     constexpr auto atom = until(LEXY_LIT("!")).or_eof();
-    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = pattern_matches(atom, "");
     CHECK(empty);

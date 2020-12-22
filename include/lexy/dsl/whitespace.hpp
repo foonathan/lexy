@@ -27,7 +27,7 @@ struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
         constexpr bool match(Reader& reader)
         {
             using ws = decltype(token(while_(Whitespace{})));
-            ws::matcher::match(reader);
+            lexy::engine_try_match<typename ws::token_engine>(reader);
             return _impl.match(reader);
         }
 

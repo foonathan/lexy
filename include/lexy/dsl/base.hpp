@@ -37,18 +37,6 @@ struct Handler
 
 struct Rule : rule_base
 {
-    // Whether or not the rule has a matcher.
-    // A rule with matcher is a pattern.
-    static constexpr bool has_matcher;
-
-    struct matcher
-    {
-        // If matches, consumes characters from reader and return true.
-        // If it doesn't match, leave reader as-is and return false.
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader);
-    };
-
     template <typename NextParser>
     struct parser
     {
@@ -76,8 +64,6 @@ struct branch_base : rule_base
 {
     static constexpr auto is_branch = true;
 
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     using parser = NextParser;
 };
@@ -104,14 +90,6 @@ constexpr bool is_branch = [] {
         return false;
 }();
 
-template <typename T>
-constexpr bool is_pattern = [] {
-    if constexpr (is_rule<T>)
-        return T::has_matcher;
-    else
-        return false;
-}();
-
 template <typename Branch, typename Reader>
 using branch_matcher = typename Branch::template branch_matcher<Reader>;
 
@@ -133,17 +111,6 @@ namespace lexyd
 template <typename Derived>
 struct token_base : _token_base
 {
-    static constexpr auto has_matcher = true;
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            return lexy::engine_try_match<typename Derived::token_engine>(reader);
-        }
-    };
-
     static constexpr auto is_branch = true;
 
     template <typename Reader>

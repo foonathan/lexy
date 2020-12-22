@@ -27,8 +27,6 @@ constexpr auto _cp_name()
 
 struct _cp_cap : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

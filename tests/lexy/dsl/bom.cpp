@@ -12,7 +12,6 @@ TEST_CASE("dsl::bom")
     {
         constexpr auto atom
             = lexy::dsl::bom<lexy::default_encoding, lexy::encoding_endianness::little>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(empty);
@@ -22,7 +21,6 @@ TEST_CASE("dsl::bom")
     {
         constexpr auto atom
             = lexy::dsl::bom<lexy::utf8_encoding, lexy::encoding_endianness::little>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
@@ -38,7 +36,6 @@ TEST_CASE("dsl::bom")
     {
         constexpr auto atom
             = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::little>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
@@ -53,7 +50,6 @@ TEST_CASE("dsl::bom")
     SUBCASE("UTF-16 big")
     {
         constexpr auto atom = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::big>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
@@ -69,7 +65,6 @@ TEST_CASE("dsl::bom")
     {
         constexpr auto atom
             = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::little>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);
@@ -84,7 +79,6 @@ TEST_CASE("dsl::bom")
     SUBCASE("UTF-32 big")
     {
         constexpr auto atom = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::big>;
-        CHECK(lexy::is_pattern<decltype(atom)>);
 
         constexpr auto empty = atom_matches(atom, "");
         CHECK(!empty);

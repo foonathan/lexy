@@ -32,68 +32,35 @@ TEST_CASE("dsl::nullopt")
 
 TEST_CASE("dsl::opt()")
 {
-    SUBCASE("pattern")
+    constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::value_c<1>);
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
     {
-        constexpr auto rule = opt(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        const char* str;
 
-        struct callback
+        constexpr int success(const char* cur, int i)
         {
-            const char* str;
+            CONSTEXPR_CHECK(cur - str == 3 || cur == str);
+            return i;
+        }
 
-            constexpr int success(const char* cur, lexy::nullopt)
-            {
-                CONSTEXPR_CHECK(cur == str);
-                return 0;
-            }
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur == str + 3);
-                return 1;
-            }
-        };
-
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-
-        constexpr auto success = rule_matches<callback>(rule, "abc");
-        CHECK(success == 1);
-
-        constexpr auto partial = rule_matches<callback>(rule, "ab");
-        CHECK(partial == 0);
-    }
-    SUBCASE("branch")
-    {
-        constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::value_c<1>);
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        constexpr int error(test_error<lexy::expected_literal> e)
         {
-            const char* str;
+            CONSTEXPR_CHECK(e.string() == "bc");
+            return -1;
+        }
+    };
 
-            constexpr int success(const char* cur, int i)
-            {
-                CONSTEXPR_CHECK(cur - str == 3 || cur == str);
-                return i;
-            }
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == 0);
 
-            constexpr int error(test_error<lexy::expected_literal> e)
-            {
-                CONSTEXPR_CHECK(e.string() == "bc");
-                return -1;
-            }
-        };
+    constexpr auto success = rule_matches<callback>(rule, "abc");
+    CHECK(success == 1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == 0);
-
-        constexpr auto success = rule_matches<callback>(rule, "abc");
-        CHECK(success == 1);
-
-        constexpr auto condition = rule_matches<callback>(rule, "a");
-        CHECK(condition == -1);
-        constexpr auto partial = rule_matches<callback>(rule, "ab");
-        CHECK(partial == -1);
-    }
+    constexpr auto condition = rule_matches<callback>(rule, "a");
+    CHECK(condition == -1);
+    constexpr auto partial = rule_matches<callback>(rule, "ab");
+    CHECK(partial == -1);
 }
 

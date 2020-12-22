@@ -10,7 +10,6 @@ TEST_CASE("dsl::value_c")
 {
     constexpr auto rule = lexy::dsl::value_c<42>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -42,7 +41,6 @@ TEST_CASE("dsl::value_f")
 {
     constexpr auto rule = lexy::dsl::value_f<f>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -66,7 +64,6 @@ TEST_CASE("dsl::value_t")
 {
     constexpr auto rule = lexy::dsl::value_t<int>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -90,7 +87,6 @@ TEST_CASE("dsl::value_str")
 {
     constexpr auto rule = LEXY_VALUE_STR("abc");
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
     CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::value_str<"abc">)>);

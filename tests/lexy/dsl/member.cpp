@@ -43,7 +43,6 @@ TEST_CASE("dsl::member")
     {
         constexpr auto rule = lexy::dsl::member<& test_type::member> = LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         using callback = member_macro_callback;
 
@@ -57,7 +56,6 @@ TEST_CASE("dsl::member")
     {
         constexpr auto rule = LEXY_MEM(member) = LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         using callback = member_macro_callback;
 

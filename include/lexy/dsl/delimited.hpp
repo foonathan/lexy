@@ -32,8 +32,6 @@ namespace lexyd
 {
 struct _delb : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -50,8 +48,6 @@ struct _delb : rule_base
 template <typename Content>
 struct _delc : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -90,8 +86,6 @@ struct _delc : rule_base
 
 struct _dele : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -280,7 +274,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 };
 
 /// Creates an escape rule.
-/// The pattern is the initial pattern to begin,
+/// The token is the initial rule to begin,
 /// and then you can add rules that match after it.
 template <typename EscapeToken>
 LEXY_CONSTEVAL auto escape(EscapeToken)

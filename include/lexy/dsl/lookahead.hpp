@@ -39,7 +39,7 @@ struct _look : branch_base
     }
 };
 
-/// Looks for the Needle pattern before End pattern.
+/// Looks for the Needle before End.
 /// Used as condition to implement arbitrary lookahead.
 template <typename Needle, typename End>
 LEXY_CONSTEVAL auto lookahead(Needle, End)

@@ -13,7 +13,6 @@ TEST_CASE("dsl::operator+")
     SUBCASE("pattern")
     {
         constexpr auto pattern = LEXY_LIT("abc") + LEXY_LIT("d") + LEXY_LIT("ef");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -34,7 +33,6 @@ TEST_CASE("dsl::operator+")
         constexpr auto rule
             = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

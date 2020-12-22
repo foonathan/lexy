@@ -70,7 +70,6 @@ struct _times : rule_base
     }
 
     // We only use this template if our rule does not have a matcher.
-    static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser

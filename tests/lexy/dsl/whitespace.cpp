@@ -10,27 +10,7 @@
 
 TEST_CASE("dsl::whitespaced()")
 {
-    SUBCASE("pattern")
-    {
-        constexpr auto pattern = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto space_abc = pattern_matches(pattern, " abc");
-        CHECK(space_abc);
-        CHECK(space_abc.match() == " abc");
-
-        constexpr auto space_space_abc = pattern_matches(pattern, "  abc");
-        CHECK(space_space_abc);
-        CHECK(space_space_abc.match() == "  abc");
-    }
-    SUBCASE("rule")
+    SUBCASE("simple")
     {
         constexpr auto rule = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -63,7 +43,6 @@ TEST_CASE("dsl::whitespaced()")
         constexpr auto space_space_abc = rule_matches<callback>(rule, "  abc");
         CHECK(space_space_abc == 2);
     }
-
     SUBCASE("branch")
     {
         constexpr auto rule_ = whitespaced(LEXY_LIT("abc") >> lexy::dsl::id<0>, LEXY_LIT(" "));

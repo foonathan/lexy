@@ -34,8 +34,6 @@ namespace lexyd
 template <typename Fn, typename Rule>
 struct _mem : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     static constexpr auto is_branch = lexy::is_branch<Rule>;
 
     template <typename Reader>

@@ -42,8 +42,6 @@ struct _cap_parser
 template <typename Rule>
 struct _cap : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     static constexpr auto is_branch = lexy::is_branch<Rule>;
 
     template <typename Reader>

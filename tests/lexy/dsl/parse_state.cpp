@@ -32,7 +32,6 @@ TEST_CASE("rule: parse_state")
     {
         constexpr auto rule = lexy::dsl::parse_state;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -97,7 +96,6 @@ TEST_CASE("rule: parse_state_member")
     {
         constexpr auto rule = lexy::dsl::parse_state_member<&state::i>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

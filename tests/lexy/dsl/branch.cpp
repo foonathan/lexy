@@ -11,7 +11,6 @@ TEST_CASE("dsl::operator>>")
 {
     constexpr auto rule = LEXY_LIT("a") >> lexy::dsl::label<struct lab>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {

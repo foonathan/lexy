@@ -16,7 +16,6 @@ TEST_CASE("dsl::capture()")
     {
         constexpr auto rule = capture(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -46,7 +45,6 @@ TEST_CASE("dsl::capture()")
     {
         constexpr auto rule = capture(lexy::dsl::label<struct lab>);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -71,7 +69,6 @@ TEST_CASE("dsl::capture()")
     {
         constexpr auto rule = capture(capture(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -131,7 +128,6 @@ TEST_CASE("dsl::capture()")
     {
         constexpr auto rule = if_(capture(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -160,7 +156,6 @@ TEST_CASE("dsl::capture()")
     {
         constexpr auto rule = capture(LEXY_LIT("abc"))[LEXY_LIT(" ")];
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

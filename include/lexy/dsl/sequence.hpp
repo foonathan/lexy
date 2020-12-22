@@ -27,21 +27,6 @@ template <typename... R>
 struct _seq : rule_base
 {
     static_assert(sizeof...(R) > 1);
-    static constexpr auto has_matcher = (R::has_matcher && ...);
-
-    struct matcher
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC bool match(Reader& reader)
-        {
-            auto reset = reader;
-            if ((R::matcher::match(reader) && ...))
-                return true;
-
-            reader = LEXY_MOV(reset);
-            return false;
-        }
-    };
 
     static constexpr bool is_branch = (lexy::is_token<R> && ...);
 

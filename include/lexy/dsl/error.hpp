@@ -38,8 +38,6 @@ namespace lexyd
 template <typename Tag, typename Token>
 struct _err : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     static constexpr auto is_branch = true;
 
     template <typename Reader>
@@ -99,8 +97,6 @@ namespace lexyd
 template <bool Expected, typename Token, typename Tag>
 struct _require : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

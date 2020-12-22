@@ -10,18 +10,14 @@
 
 TEST_CASE("dsl::any")
 {
-    SUBCASE("basic")
-    {
-        constexpr auto atom = lexy::dsl::any;
-        CHECK(lexy::is_pattern<decltype(atom)>);
+    constexpr auto atom = lexy::dsl::any;
 
-        constexpr auto empty = atom_matches(atom, "");
-        CHECK(empty);
-        CHECK(empty.count == 0);
+    constexpr auto empty = atom_matches(atom, "");
+    CHECK(empty);
+    CHECK(empty.count == 0);
 
-        constexpr auto non_empty = atom_matches(atom, "abc");
-        CHECK(non_empty);
-        CHECK(non_empty.count == 3);
-    }
+    constexpr auto non_empty = atom_matches(atom, "abc");
+    CHECK(non_empty);
+    CHECK(non_empty.count == 3);
 }
 

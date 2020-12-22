@@ -11,8 +11,6 @@ namespace lexyd
 {
 struct _pos : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

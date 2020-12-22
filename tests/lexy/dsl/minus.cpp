@@ -10,27 +10,6 @@
 
 TEST_CASE("dsl::operator-")
 {
-    SUBCASE("pattern")
-    {
-        constexpr auto pattern = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
-
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-        constexpr auto zero = pattern_matches(pattern, "!");
-        CHECK(zero);
-        CHECK(zero.match() == "!");
-
-        constexpr auto a = pattern_matches(pattern, "a!");
-        CHECK(a);
-        CHECK(a.match() == "a!");
-        constexpr auto aaa = pattern_matches(pattern, "aaa!");
-        CHECK(aaa);
-        CHECK(aaa.match() == "aaa!");
-
-        constexpr auto aa = pattern_matches(pattern, "aa!");
-        CHECK(!aa);
-    }
     SUBCASE("rule")
     {
         constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
@@ -75,7 +54,6 @@ TEST_CASE("dsl::operator-")
     SUBCASE("sequence")
     {
         constexpr auto pattern = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -97,7 +75,6 @@ TEST_CASE("dsl::operator-")
     SUBCASE("any")
     {
         constexpr auto pattern = until(LEXY_LIT("!")) - lexy::dsl::any;
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);

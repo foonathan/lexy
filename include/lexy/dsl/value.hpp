@@ -18,8 +18,6 @@ namespace lexyd
 template <auto Value>
 struct _valc : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -45,8 +43,6 @@ namespace lexyd
 template <auto F>
 struct _valf : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -72,8 +68,6 @@ namespace lexyd
 template <typename T>
 struct _valt : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -99,8 +93,6 @@ namespace lexyd
 template <typename String>
 struct _vals : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

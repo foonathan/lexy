@@ -15,8 +15,6 @@ namespace lexyd
 template <typename Branch>
 struct _whl : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -46,15 +44,14 @@ struct _whl : rule_base
 template <typename... R>
 struct _whlc : rule_base
 {
-    static constexpr auto has_matcher = false;
-    using _choice                     = _chc<R...>;
+    using _choice = _chc<R...>;
 
     template <typename NextParser>
     using parser =
         typename decltype(loop(_choice{} | else_ >> break_))::template parser<NextParser>;
 };
 
-/// Matches the pattern branch rule as often as possible.
+/// Matches the branch rule as often as possible.
 template <typename Rule>
 LEXY_CONSTEVAL auto while_(Rule)
 {
@@ -99,8 +96,6 @@ namespace lexyd
 template <typename Terminator, typename Rule>
 struct _whlt : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

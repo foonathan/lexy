@@ -10,7 +10,6 @@ TEST_CASE("dsl::position")
 {
     constexpr auto rule = lexy::dsl::position;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {

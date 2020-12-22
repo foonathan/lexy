@@ -24,8 +24,6 @@ namespace lexyd
 {
 struct _nullopt : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -46,8 +44,6 @@ namespace lexyd
 template <typename Branch>
 struct _opt : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -79,8 +75,6 @@ namespace lexyd
 template <typename Terminator, typename R>
 struct _optt : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

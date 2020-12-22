@@ -13,7 +13,6 @@ TEST_CASE("dsl::while_()")
     SUBCASE("simple pattern")
     {
         constexpr auto pattern = while_(LEXY_LIT("ab"));
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(empty);

@@ -9,47 +9,31 @@
 TEST_CASE(".error()")
 {
     struct error;
+    constexpr auto rule = LEXY_LIT("abc").error<error>();
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto pattern = LEXY_LIT("abc").error<error>();
-        CHECK(lexy::is_pattern<decltype(pattern)>);
+        const char* str;
 
-        constexpr auto empty = pattern_matches(pattern, "");
-        CHECK(!empty);
-
-        constexpr auto abc = pattern_matches(pattern, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-    }
-    SUBCASE("rule")
-    {
-        constexpr auto rule = LEXY_LIT("abc").error<error>();
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            CONSTEXPR_CHECK(cur - str == 3);
+            return 0;
+        }
 
-            constexpr int success(const char* cur)
-            {
-                CONSTEXPR_CHECK(cur - str == 3);
-                return 0;
-            }
+        constexpr int error(test_error<error> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            return -1;
+        }
+    };
 
-            constexpr int error(test_error<error> e)
-            {
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
-
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
-    }
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 0);
 }
 
 TEST_CASE("dsl::error")

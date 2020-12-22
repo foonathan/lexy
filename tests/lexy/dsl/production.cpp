@@ -56,7 +56,6 @@ TEST_CASE("dsl::p")
         using namespace p_basic;
         constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -91,7 +90,6 @@ TEST_CASE("dsl::p")
         using namespace p_pattern;
         constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -126,7 +124,6 @@ TEST_CASE("dsl::p")
         using namespace p_branch;
         constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {
@@ -169,7 +166,6 @@ TEST_CASE("dsl::p")
         using namespace p_branch_branch;
         constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
 
         struct callback
         {

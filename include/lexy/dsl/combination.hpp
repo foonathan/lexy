@@ -43,8 +43,6 @@ struct _comb_state
 template <typename E, std::size_t Idx, typename... PrevArgs>
 struct _comb_it : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -79,8 +77,6 @@ struct _comb_it : rule_base
 template <bool Partial, typename E, typename... R>
 struct _comb : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

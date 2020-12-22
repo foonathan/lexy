@@ -12,69 +12,44 @@ TEST_CASE("dsl::_trie")
     constexpr auto rule = lexy::dsl::_trie<LEXY_NTTP_STRING("abc"), LEXY_NTTP_STRING("a"),
                                            LEXY_NTTP_STRING("def")>{};
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(!empty);
+        const char* str;
 
-        constexpr auto abc = pattern_matches(rule, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto a = pattern_matches(rule, "a");
-        CHECK(a);
-        CHECK(a.match() == "a");
-
-        constexpr auto ab = pattern_matches(rule, "ab");
-        CHECK(ab);
-        CHECK(ab.match() == "a");
-
-        constexpr auto def = pattern_matches(rule, "def");
-        CHECK(def);
-        CHECK(def.match() == "def");
-    }
-    SUBCASE("rule")
-    {
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            auto match = lexy::_detail::string_view(str, cur);
+            if (match == "abc")
+                return 0;
+            else if (match == "a")
+                return 1;
+            else if (match == "def")
+                return 2;
+            else
+                CONSTEXPR_CHECK(false);
+        }
 
-            constexpr int success(const char* cur)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                if (match == "abc")
-                    return 0;
-                else if (match == "a")
-                    return 1;
-                else if (match == "def")
-                    return 2;
-                else
-                    CONSTEXPR_CHECK(false);
-            }
+        constexpr int error(test_error<lexy::exhausted_alternatives> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            return -1;
+        }
+    };
 
-            constexpr int error(test_error<lexy::exhausted_alternatives> e)
-            {
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 0);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
+    constexpr auto a = rule_matches<callback>(rule, "a");
+    CHECK(a == 1);
+    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    CHECK(ab == 1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
-        CHECK(a == 1);
-        constexpr auto ab = rule_matches<callback>(rule, "ab");
-        CHECK(ab == 1);
-
-        constexpr auto def = rule_matches<callback>(rule, "def");
-        CHECK(def == 2);
-    }
+    constexpr auto def = rule_matches<callback>(rule, "def");
+    CHECK(def == 2);
 }
 
 TEST_CASE("dsl::_alt")
@@ -82,69 +57,44 @@ TEST_CASE("dsl::_alt")
     constexpr auto rule = lexy::dsl::_alt<decltype(LEXY_LIT("abc")), decltype(LEXY_LIT("a")),
                                           decltype(LEXY_LIT("ab")), decltype(LEXY_LIT("def"))>{};
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_pattern<decltype(rule)>);
 
-    SUBCASE("pattern")
+    struct callback
     {
-        constexpr auto empty = pattern_matches(rule, "");
-        CHECK(!empty);
+        const char* str;
 
-        constexpr auto abc = pattern_matches(rule, "abc");
-        CHECK(abc);
-        CHECK(abc.match() == "abc");
-
-        constexpr auto a = pattern_matches(rule, "a");
-        CHECK(a);
-        CHECK(a.match() == "a");
-
-        constexpr auto ab = pattern_matches(rule, "ab");
-        CHECK(ab);
-        CHECK(ab.match() == "a");
-
-        constexpr auto def = pattern_matches(rule, "def");
-        CHECK(def);
-        CHECK(def.match() == "def");
-    }
-    SUBCASE("rule")
-    {
-        struct callback
+        constexpr int success(const char* cur)
         {
-            const char* str;
+            auto match = lexy::_detail::string_view(str, cur);
+            if (match == "abc")
+                return 0;
+            else if (match == "a")
+                return 1;
+            else if (match == "def")
+                return 2;
+            else
+                CONSTEXPR_CHECK(false);
+        }
 
-            constexpr int success(const char* cur)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                if (match == "abc")
-                    return 0;
-                else if (match == "a")
-                    return 1;
-                else if (match == "def")
-                    return 2;
-                else
-                    CONSTEXPR_CHECK(false);
-            }
+        constexpr int error(test_error<lexy::exhausted_alternatives> e)
+        {
+            CONSTEXPR_CHECK(e.position() == str);
+            return -1;
+        }
+    };
 
-            constexpr int error(test_error<lexy::exhausted_alternatives> e)
-            {
-                CONSTEXPR_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+    constexpr auto empty = rule_matches<callback>(rule, "");
+    CHECK(empty == -1);
 
-        constexpr auto empty = rule_matches<callback>(rule, "");
-        CHECK(empty == -1);
+    constexpr auto abc = rule_matches<callback>(rule, "abc");
+    CHECK(abc == 0);
 
-        constexpr auto abc = rule_matches<callback>(rule, "abc");
-        CHECK(abc == 0);
+    constexpr auto a = rule_matches<callback>(rule, "a");
+    CHECK(a == 1);
+    constexpr auto ab = rule_matches<callback>(rule, "ab");
+    CHECK(ab == 1);
 
-        constexpr auto a = rule_matches<callback>(rule, "a");
-        CHECK(a == 1);
-        constexpr auto ab = rule_matches<callback>(rule, "ab");
-        CHECK(ab == 1);
-
-        constexpr auto def = rule_matches<callback>(rule, "def");
-        CHECK(def == 2);
-    }
+    constexpr auto def = rule_matches<callback>(rule, "def");
+    CHECK(def == 2);
 }
 
 TEST_CASE("dsl::operator/")

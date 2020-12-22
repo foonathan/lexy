@@ -11,9 +11,6 @@
 
 TEST_CASE("dsl::code_point")
 {
-    static constexpr auto atom = lexy::dsl::code_point;
-    CHECK(lexy::is_pattern<decltype(atom)>);
-
     // TODO: do some basic tests that the correct engine is used
 }
 

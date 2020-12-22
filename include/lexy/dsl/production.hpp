@@ -81,8 +81,6 @@ struct _prd : rule_base
         }
     };
 
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     using parser = _prd_parser<Production, _rule, NextParser>;
 
@@ -100,8 +98,6 @@ constexpr auto p = _prd<Production>{};
 template <typename Production>
 struct _rec : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser : _prd_parser<Production, _production_rule<Production>, NextParser>
     {};

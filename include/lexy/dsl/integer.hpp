@@ -268,15 +268,13 @@ struct _bounded_integer_parser
     }
 };
 
-// Continuation of integer that assumes the pattern is already dealt with.
+// Continuation of integer that assumes the rule is already dealt with.
 template <typename T, typename Base, bool AssumeOnlyDigits>
 struct _int_p : rule_base
 {
     using integer_parser
         = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
                              _unbounded_integer_parser<T, Base>>;
-
-    static constexpr auto has_matcher = false;
 
     template <typename NextParser>
     struct parser
@@ -297,13 +295,11 @@ struct _int_p : rule_base
     };
 };
 
-// Captures the pattern which is then parsed.
+// Captures the rule which is then parsed.
 // Must be followed by _int_p.
-template <typename Pattern>
+template <typename Rule>
 struct _int_c : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -311,17 +307,17 @@ struct _int_c : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return Pattern::template parser<NextParser>::parse(handler, reader, reader.cur(),
-                                                               LEXY_FWD(args)...);
+            return Rule::template parser<NextParser>::parse(handler, reader, reader.cur(),
+                                                            LEXY_FWD(args)...);
         }
     };
 };
 
-/// Parses the digits matched by the pattern into an integer type.
-template <typename T, typename Base, typename Pattern>
-LEXY_CONSTEVAL auto integer(Pattern)
+/// Parses the digits matched by the rule into an integer type.
+template <typename T, typename Base, typename Rule>
+LEXY_CONSTEVAL auto integer(Rule)
 {
-    return _int_c<Pattern>{} + _int_p<T, Base, false>{};
+    return _int_c<Rule>{} + _int_p<T, Base, false>{};
 }
 
 template <typename T, typename Base>

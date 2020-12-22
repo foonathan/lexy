@@ -6,19 +6,6 @@
 
 #include "verify.hpp"
 
-TEST_CASE("pattern: atom")
-{
-    constexpr auto pattern = LEXY_LIT("abc");
-    CHECK(lexy::is_pattern<decltype(pattern)>);
-
-    constexpr auto empty = pattern_matches(pattern, "");
-    CHECK(!empty);
-
-    constexpr auto abc = pattern_matches(pattern, "abc");
-    CHECK(abc);
-    CHECK(abc.match() == "abc");
-}
-
 TEST_CASE("rule: atom")
 {
     SUBCASE("lit")

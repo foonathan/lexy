@@ -19,7 +19,6 @@ TEST_CASE("dsl::delimited()")
     {
         constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -100,7 +99,6 @@ TEST_CASE("dsl::delimited()")
         constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
                                         LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_pattern<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -197,7 +195,6 @@ TEST_CASE("dsl::delimited with escape")
         = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp, lexy::dsl::escape(LEXY_LIT("$"))
                                                           .capture(lexy::dsl::ascii::character));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
     CHECK(lexy::is_branch<decltype(rule)>);
 
     struct callback

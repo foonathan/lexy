@@ -13,8 +13,6 @@ namespace lexyd
 template <typename Branch>
 struct _if : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

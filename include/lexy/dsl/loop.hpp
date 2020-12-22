@@ -55,8 +55,6 @@ namespace lexyd
 {
 struct _break : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -90,8 +88,6 @@ struct _loop_iter_parser
 template <typename Rule>
 struct _loop : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

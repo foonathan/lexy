@@ -84,8 +84,6 @@ struct _switch_select<NextParser, H, T...>
 template <typename Rule, typename... Cases>
 struct _switch : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

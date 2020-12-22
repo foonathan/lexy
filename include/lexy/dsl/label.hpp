@@ -35,8 +35,6 @@ struct _labr;
 template <typename Label>
 struct _lab : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -58,8 +56,6 @@ struct _lab : rule_base
 template <typename Label, typename Rule>
 struct _labr : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     static constexpr auto is_branch = lexy::is_branch<Rule>;
 
     template <typename Reader>

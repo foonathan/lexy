@@ -158,8 +158,6 @@ struct _encoded_reader<Reader, lexy::utf32_encoding, Endianness>
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _encode_begin : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -180,8 +178,6 @@ struct _encode_begin : rule_base
 
 struct _encode_end : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

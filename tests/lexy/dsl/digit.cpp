@@ -120,7 +120,6 @@ TEST_CASE("dsl::hex")
 TEST_CASE("dsl::zero")
 {
     constexpr auto atom = lexy::dsl::zero;
-    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
@@ -146,7 +145,6 @@ TEST_CASE("dsl::zero")
 TEST_CASE("dsl::digit")
 {
     constexpr auto atom = lexy::dsl::digit<lexy::dsl::octal>;
-    CHECK(lexy::is_pattern<decltype(atom)>);
 
     constexpr auto empty = atom_matches(atom, "");
     CHECK(!empty);
@@ -178,7 +176,6 @@ TEST_CASE("dsl::digits")
     SUBCASE("basic")
     {
         constexpr auto pattern = lexy::dsl::digits<>;
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -202,7 +199,6 @@ TEST_CASE("dsl::digits")
     SUBCASE("no leading zero")
     {
         constexpr auto pattern = lexy::dsl::digits<>.no_leading_zero();
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -225,7 +221,6 @@ TEST_CASE("dsl::digits")
     SUBCASE("sep")
     {
         constexpr auto pattern = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -255,7 +250,6 @@ TEST_CASE("dsl::digits")
     {
         constexpr auto pattern
             = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -290,7 +284,6 @@ TEST_CASE("dsl::n_digits")
     SUBCASE("basic")
     {
         constexpr auto pattern = lexy::dsl::n_digits<3>;
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);
@@ -312,7 +305,6 @@ TEST_CASE("dsl::n_digits")
     SUBCASE("sep")
     {
         constexpr auto pattern = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
-        CHECK(lexy::is_pattern<decltype(pattern)>);
 
         constexpr auto empty = pattern_matches(pattern, "");
         CHECK(!empty);

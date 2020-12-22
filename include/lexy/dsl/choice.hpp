@@ -61,8 +61,6 @@ struct _chc_parser<NextParser, H, T...>
 template <typename... R>
 struct _chc : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     using parser = _chc_parser<NextParser, R...>;
 };

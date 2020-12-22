@@ -37,8 +37,6 @@ struct _br : rule_base
         }
     };
 
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, Condition, R...>::type;
 };

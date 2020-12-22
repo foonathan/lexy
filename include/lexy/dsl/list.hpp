@@ -78,8 +78,6 @@ struct _lstl;
 template <typename Item>
 struct _lstl<Item, void> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -108,8 +106,6 @@ struct _lstl<Item, void> : rule_base
 template <typename Item, typename Sep>
 struct _lstl<Item, _sep<Sep>> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -145,8 +141,6 @@ struct _lstl<Item, _sep<Sep>> : rule_base
 template <typename Item, typename Sep>
 struct _lstl<Item, _tsep<Sep>> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -188,8 +182,6 @@ struct _lstl<Item, _tsep<Sep>> : rule_base
 template <typename Item, typename Sep>
 struct _lst : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     static constexpr auto is_branch = lexy::is_branch<Item>;
 
     template <typename Reader>
@@ -282,8 +274,6 @@ struct _lstt;
 template <typename Terminator, typename Item>
 struct _lstt<Terminator, Item, void> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -327,8 +317,6 @@ struct _lstt<Terminator, Item, void> : rule_base
 template <typename Terminator, typename Item, typename Sep>
 struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -379,8 +367,6 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
 template <typename Terminator, typename Item, typename Sep>
 struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

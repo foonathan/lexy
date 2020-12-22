@@ -45,8 +45,6 @@ namespace lexyd
 template <typename Rule>
 struct _ctx_push : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     using parser = _cap_parser<_context, Rule, NextParser>;
 };
@@ -63,8 +61,6 @@ namespace lexyd
 {
 struct _ctx_drop : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
@@ -161,8 +157,6 @@ struct context_eq_length
 template <typename Rule, typename Eq, typename Error>
 struct _ctx_top
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {

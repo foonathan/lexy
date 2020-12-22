@@ -14,7 +14,6 @@ TEST_CASE("dsl::list()")
 {
     constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -72,7 +71,6 @@ TEST_CASE("dsl::list() sep")
 {
     constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -133,7 +131,6 @@ TEST_CASE("dsl::list() sep capture")
 {
     constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -199,7 +196,6 @@ TEST_CASE("dsl::list() trailing_sep")
 {
     constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -267,7 +263,6 @@ TEST_CASE("dsl::list() trailing_sep capture")
     constexpr auto rule
         = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -336,7 +331,6 @@ TEST_CASE("dsl::opt(list())")
 {
     constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -399,7 +393,6 @@ TEST_CASE("dsl::opt(list()) sep")
 {
     constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
@@ -464,7 +457,6 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
     constexpr auto rule
         = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(!lexy::is_pattern<decltype(rule)>);
 
     struct callback
     {
