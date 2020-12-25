@@ -290,7 +290,7 @@ struct _list
         }
 
         template <typename... Args>
-        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
+        void operator()(Args&&... args)
         {
             _result.emplace_back(LEXY_FWD(args)...);
         }
@@ -338,7 +338,7 @@ struct _collection
         }
 
         template <typename... Args>
-        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
+        void operator()(Args&&... args)
         {
             _result.emplace(LEXY_FWD(args)...);
         }
