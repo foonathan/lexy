@@ -283,14 +283,12 @@ struct _list
 
         using return_type = T;
 
-        void operator()(const typename T::value_type& obj)
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
         {
-            _result.push_back(obj);
+            _result.push_back(LEXY_FWD(obj));
         }
-        void operator()(typename T::value_type&& obj)
-        {
-            _result.push_back(LEXY_MOV(obj));
-        }
+
         template <typename... Args>
         auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
         {
@@ -302,6 +300,7 @@ struct _list
             return LEXY_MOV(_result);
         }
     };
+
     constexpr auto sink() const
     {
         return _sink{};
@@ -332,14 +331,12 @@ struct _collection
 
         using return_type = T;
 
-        void operator()(const typename T::value_type& obj)
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
         {
-            _result.insert(obj);
+            return _result.insert(LEXY_FWD(obj));
         }
-        void operator()(typename T::value_type&& obj)
-        {
-            _result.insert(LEXY_MOV(obj));
-        }
+
         template <typename... Args>
         auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
         {
@@ -351,6 +348,7 @@ struct _collection
             return LEXY_MOV(_result);
         }
     };
+
     constexpr auto sink() const
     {
         return _sink{};
