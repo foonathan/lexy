@@ -279,20 +279,18 @@ struct _list
 
     struct _sink
     {
-        T _result;
+        T _result{};
 
         using return_type = T;
 
-        void operator()(const typename T::value_type& obj)
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
         {
-            _result.push_back(obj);
+            return _result.push_back(LEXY_FWD(obj));
         }
-        void operator()(typename T::value_type&& obj)
-        {
-            _result.push_back(LEXY_MOV(obj));
-        }
+
         template <typename... Args>
-        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
+        void operator()(Args&&... args)
         {
             _result.emplace_back(LEXY_FWD(args)...);
         }
@@ -302,6 +300,7 @@ struct _list
             return LEXY_MOV(_result);
         }
     };
+
     constexpr auto sink() const
     {
         return _sink{};
@@ -328,20 +327,18 @@ struct _collection
 
     struct _sink
     {
-        T _result;
+        T _result{};
 
         using return_type = T;
 
-        void operator()(const typename T::value_type& obj)
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
         {
-            _result.insert(obj);
+            return _result.insert(LEXY_FWD(obj));
         }
-        void operator()(typename T::value_type&& obj)
-        {
-            _result.insert(LEXY_MOV(obj));
-        }
+
         template <typename... Args>
-        auto operator()(Args&&... args) -> std::enable_if_t<(sizeof...(Args) > 1)>
+        void operator()(Args&&... args)
         {
             _result.emplace(LEXY_FWD(args)...);
         }
@@ -351,6 +348,7 @@ struct _collection
             return LEXY_MOV(_result);
         }
     };
+
     constexpr auto sink() const
     {
         return _sink{};
@@ -498,7 +496,7 @@ struct _as_string
 
     struct _sink
     {
-        String _result;
+        String _result{};
 
         using return_type = String;
 
