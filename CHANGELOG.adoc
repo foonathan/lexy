@@ -3,13 +3,88 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2020-12
+== 2020-12-26
 
-* Remove `dsl::build_list()` and `dsl::item()`.
+* Replaced `Pattern` concept with a new `Token` and `Branch` concept (See #10).
+A `Branch` is a rule that can make branching decision (it is required by choices and can be used as branch condition).
+A `Token` is an atomic parse unit; it is also a `Branch`.
++
+Most patterns (e.g. `LEXY_LIT`) are now tokens, which doesn't break anything.
+Some patterns are now branches (e.g. `dsl::peek()`), which breaks in rules that now require tokens (e.g. `dsl::until()`).
+The remaining patterns are now plain rules (e.g. `dsl::while_(condition >> then)`), which makes them unusable as branch conditions.
++
+The patterns that are now branches:
++
+--
+** `dsl::error`
+** `dsl::peek()` and `dsl::peek_not()`
+** `condition >> then` was a pattern if `then` is a pattern, now it is always a branch
+--
++
+The patterns that are now plain rules:
++
+--
+** a sequence using `operator+` (it is still a token if all arguments are tokens, so it can be used as condition)
+** a choice using `operator|`, even if all arguments are tokens (use `operator/` instead which is a token)
+** `dsl::while_[one]()`, even if the argument is a token
+** `dsl::times()`
+** `dsl::if_()`
+--
++
+The following rules previously required only patterns but now require tokens:
++
+--
+** a minus using `operator-` (both arguments)
+** `dsl::until()`
+** `dsl::lookahead()`
+** `dsl::escape()` (the escape character itself) and its `.capture()`
+** digit separators
+** automatic capturing of `dsl::delimited()`
+** `lexy::make_error_location()`
+--
++
+If you have a breaking change because you now use a non-token rule where a token was expected, use `dsl::token()`,
+which turns an arbitrary rule into a token (just like `dsl::match()` turned a rule into a pattern).
+
+* Removed `dsl::match()`; use `dsl::token()` instead.
+  If you previously had `dsl::peek(dsl::match(rule)) >> then` you can now even use `dsl::peek(rule) >> then`,
+  as `dsl::peek[_not]()` have learned to support arbitrary rules.
+
+* Removed `dsl::try_<Tag>(pattern)`.
+  If `pattern` is now a token, you can use `rule.error<Tag>()` instead.
+  Otherwise, use `dsl::token(pattern).error<Tag>()`.
+
+* Removed `.capture()` on `dsl::sep(pattern)` and `dsl::trailing_sep(pattern)`.
+  You can now use `dsl::sep(dsl::capture(pattern))`,
+  as `dsl::capture()` is now a branch and the separators have learned to support branches.
+
+* Removed `.zero()` and `.non_zero()` from `dsl::digit<Base>`.
+  Use `dsl::zero` instead of `dsl::digit<Base>.zero()`.
+  Use `dsl::digit<Base> - dsl::zero` (potentially with a nice error specified using `.error()`) instead of `dsl::digit<Base>.non_zero()`.
+
+* Removed `dsl::success`, as it is now longer needed internally.
+  It can be added back if needed.
+
+* *Behavior change*: As part of the branch changes, `dsl::peek()`, `dsl::peek_not()` and `dsl::lookahead()` are now no-ops if not used as branch condition.
+  For example, `prefix + dsl::peek(rule) + suffix` is equivalent to `prefix + suffix`.
+  In most cases, this is only a change in the error message as they don't consume characters.
+  Use `dsl::require()` and `dsl::prevent()` if the lookahead was intended.
+
+* *Behavior change*: Errors in whitespace are currently not reported.
+For example, if you have `/* unterminated C comment int i;` and support space and C comments as whitespace,
+this would previously raise an error about the unterminated C comment.
+Right now, it will try to skip the C comment, fail, and then just be done with whitespace skipping.
+The error for the unterminated C comment then manifests as `expected 'int', got '/*'`.
++
+This behavior is only temporary until a better solution for whitespace is implemented (see #10).
+
+== 2020-12-22
+
+* Removed `dsl::build_list()` and `dsl::item()`.
   They were mainly used to implement `dsl::list()`, and became unnecessary after an internal restructuring.
-* Remove support for choices in lists, i.e. `dsl::list(a | b | c)`.
+* Removed support for choices in lists, i.e. `dsl::list(a | b | c)`.
   This can be added back if needed.
-* Remove `dsl::operator!` due to implementation problems.
+* Removed `dsl::operator!` due to implementation problems.
   Existing uses of `dsl::peek(!rule)` can be replaced by `dsl::peek_not(rule)`;
   existing uses of `!rule >> do_sth` can be replaced using `dsl::terminator()`.
 

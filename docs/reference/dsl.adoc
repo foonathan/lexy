@@ -12,13 +12,14 @@ The rule can then produce zero or more values, which are eventually forwarded to
 If the matching was not successful, an error is produced instead.
 A failed rule does not consume any characters.
 
-A `Pattern` is a special `Rule` that does not produce any value and can efficiently determine whether or not it will match at the current reader position without producing an error or consuming characters.
-As such, they can be used as branch conditions.
+A `Branch` is a rule that has an associated condition.
+The parsing algorithm can efficiently check whether the condition would match at the current reader position.
+As such, they are used whenever the algorithm needs to decide between multiple alternatives.
+Once the branch condition matches, the branch is taken without any additional backtracking.
 
-A `Branch` is a special `Rule` that consists of a condition, which is a pattern, and a then, which is a rule.
-If the branch condition would match on the current input, it is assumed that the then has to match as well.
-They are required when the parsing algorithm has to decide between multiple rules.
-Every `Pattern` is a `Branch` with an empty then.
+A `Token` is a special `Rule` that is an atomic element of the input.
+As a rule, it does not produce any value.
+Every `Token` is also a `Branch` that uses itself as the condition.
 
 === Whitespace
 
@@ -27,9 +28,7 @@ Every `Pattern` is a `Branch` with an empty then.
 
 .`lexy/whitespace.hpp`
 ----
-whitespaced(rule, whitespace)    : Rule
-whitespaced(pattern, whitespace) : Pattern
-whitespaced(branch, whitespace)  : Branch
+whitespaced(rule, whitespace) : Rule
 ----
 
 By default, no whitespace skipping is done.
@@ -39,7 +38,7 @@ Use `whitespaced()` to skip arbitrary long whitespace before parsing a rule.
 Requires::
   `whitespace` is a branch that does not produce any values
 Equivalent to::
-  `while_(whitespace) + rule`
+  `token(while_(whitespace)) + rule`
 
 [godbolt,cpp,id=r5b8Gb]
 ----
@@ -54,7 +53,7 @@ TIP: "whitespace" can mean literal space characters but also things like comment
 
 ----
 rule[whitespace]    : Rule
-pattern[whitespace] : Pattern
+token[whitespace]   : Token
 branch[whitespace]  : Branch
 ----
 
@@ -73,33 +72,17 @@ Equivalent to::
 LEXY_LIT("abc")[dsl::ascii::space]
 ----
 
-=== Primitives
-
-[discrete]
-==== `lexy::dsl::success`
-
-.`lexy/dsl/sequence.hpp`
-----
-success : Pattern
-----
-
-The `success` pattern matches the empty string.
-
-[horizontal]
-Matches::
-  Any input, but does not consume anything.
-Error::
-  n/a (it never fails)
+=== Primitive Tokens
 
 [discrete]
 ==== `lexy::dsl::any`
 
 .`lexy/dsl/any.hpp`
 ----
-any : Pattern
+any : Token
 ----
 
-The `any` pattern matches anything, i.e. all the remaining input.
+The `any` token matches anything, i.e. all the remaining input.
 
 [horizontal]
 Matches::
@@ -114,13 +97,13 @@ NOTE: `any` is useful in combination with partial inputs such as the minus rule 
 
 .`lexy/dsl/literal.hpp`
 ----
-lit_c<C> : Pattern
-lit<Str> : Pattern
+lit_c<C> : Token
+lit<Str> : Token
 
-LEXY_LIT(Str) : Pattern
+LEXY_LIT(Str) : Token
 ----
 
-The literal pattern match the specified sequence of characters.
+The literal tokens match the specified sequence of characters.
 They are whitespace aware.
 
 [horizontal]
@@ -140,19 +123,19 @@ Use the `LEXY_LIT(Str)` macro if your compiler does not support them.
 
 .`lexy/dsl/punctuator.hpp`
 ----
-period    : Pattern = lit<".">
-comma     : Pattern = lit<",">
-colon     : Pattern = lit<":">
-semicolon : Pattern = lit<";">
+period    : Token = lit<".">
+comma     : Token = lit<",">
+colon     : Token = lit<":">
+semicolon : Token = lit<";">
 
-hyphen     : Pattern = lit<"-">
-slash      : Pattern = lit<"/">
-backslash  : Pattern = lit<"\\">
-apostrophe : Pattern = lit<"'">
+hyphen     : Token = lit<"-">
+slash      : Token = lit<"/">
+backslash  : Token = lit<"\\">
+apostrophe : Token = lit<"'">
 
-hash_sign   : Pattern = lit<"#">
-dollar_sign : Pattern = lit<"$">
-at_sign     : Pattern = lit<"@">
+hash_sign   : Token = lit<"#">
+dollar_sign : Token = lit<"$">
+at_sign     : Token = lit<"@">
 ----
 
 The header `lexy/dsl/punctuator.hpp` defines common punctuator literals.
@@ -166,10 +149,10 @@ They are whitespace aware.
 
 .`lexy/dsl/eof.hpp`
 ----
-eof : Pattern
+eof : Token
 ----
 
-The `eof` pattern matches EOF.
+The `eof` token matches EOF.
 It is whitespace aware.
 
 [horizontal]
@@ -183,10 +166,10 @@ Error::
 
 .`lexy/dsl/newline.hpp`
 ----
-newline : Pattern
+newline : Token
 ----
 
-The `newline` pattern matches a newline.
+The `newline` token matches a newline.
 It is whitespace aware.
 
 [horizontal]
@@ -200,10 +183,10 @@ Error::
 
 .`lexy/dsl/newline.hpp`
 ----
-eol : Pattern
+eol : Token
 ----
 
-The `eol` pattern matches an end-of-line (EOL).
+The `eol` token matches an end-of-line (EOL).
 It is whitespace aware.
 
 [horizontal]
@@ -220,36 +203,36 @@ Error::
 ----
 namespace ascii
 {
-    control : Pattern // 0x00-0x1F, 0x7F
+    control : Token // 0x00-0x1F, 0x7F
 
-    blank       : Pattern // ' ' (space character) or '\t'
-    newline     : Pattern // '\n' or '\r'
-    other_space : Pattern // '\f' or '\v'
-    space       : Pattern // `blank` or `newline` or `other_space`
+    blank       : Token // ' ' (space character) or '\t'
+    newline     : Token // '\n' or '\r'
+    other_space : Token // '\f' or '\v'
+    space       : Token // `blank` or `newline` or `other_space`
 
-    lower : Pattern // a-z
-    upper : Pattern // A-Z
-    alpha : Pattern // `lower` or `upper`
+    lower : Token // a-z
+    upper : Token // A-Z
+    alpha : Token // `lower` or `upper`
 
-    digit : Pattern // 0-9
-    alnum : Pattern // `digit` or `alpha`
+    digit : Token // 0-9
+    alnum : Token // `digit` or `alpha`
 
-    punct : Pattern // One of: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    punct : Token // One of: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
 
-    graph : Pattern // `alnum` or `punct`
-    print : Pattern // `graph` or ' ' (space characters)
+    graph : Token // `alnum` or `punct`
+    print : Token // `graph` or ' ' (space characters)
 
-    character : Pattern // 0x00-0x7F
+    character : Token // 0x00-0x7F
 }
 ----
 
-All patterns defined in `lexy::dsl::ascii` match one of the categories of ASCII characters.
+All tokens defined in `lexy::dsl::ascii` match one of the categories of ASCII characters.
 
 [horizontal]
 Matches::
   Matches and consumes one of the set of ASCII characters indicated in the comments.
 Errors::
-  A `lexy::expected_char_class` error with name `ASCII.<pattern>`, where `<pattern>` is the name of the pattern.
+  A `lexy::expected_char_class` error with name `ASCII.<token>`, where `<token>` is the name of the token.
 
 NOTE: Every ASCII character except for the space character is in exactly one of `control`, `lower`, `upper`, `digit` or `punct`.
 
@@ -258,12 +241,12 @@ NOTE: Every ASCII character except for the space character is in exactly one of 
 
 .`lexy/dsl/code_point.hpp`
 ----
-code_point : Pattern
+code_point : Token
 
 code_point.capture() : Rule
 ----
 
-The `code_point` pattern will match and consume a well-formed Unicode code point according to the encoding of the input.
+The `code_point` token will match and consume a well-formed Unicode code point according to the encoding of the input.
 If `code_point.capture()` is used, the consumed code point will be produced as value.
 
 [horizontal]
@@ -293,23 +276,20 @@ This rule is useful for matching things like string literals that can contain ar
 
 .`lexy/dsl/minus.hpp`
 ----
-rule - except    : Rule
-pattern - except : Pattern
+token - except : Token
 ----
 
-The minus rule matches the given rule or pattern, but only if `except` does not match on the input the rule has consumed.
+The minus rule matches the given token, but only if `except` does not match on the input the rule has consumed.
 
 [horizontal]
 Requires::
-  `except` is a pattern.
+  `except` is a token.
 Matches::
-  Matches and consumes whatever `rule` or `pattern` match and consume.
+  Matches and consumes whatever `token` match and consume.
   Then matches `except` on the same input.
-  Matching fails, if `except` matches the entire input consumed by the rule.
-Values::
-  Whatever values are produced by `rule`.
+  Matching fails if `except` matches the entire input consumed by the token.
 Errors::
-  Whatever errors are raised if `rule` or `pattern` are not matched.
+  Whatever errors are raised if `token` is not matched.
   A generic error with tag `lexy::minus_failure` if `except` has matched.
 
 TIP: Use a minus rule to exclude characters from a character class; e.g. `lexy::dsl::code_point - lexy::dsl::ascii::control` matches all code points except control characters.
@@ -317,7 +297,27 @@ TIP: Use a minus rule to exclude characters from a character class; e.g. `lexy::
 NOTE: Minus rules can be chained. This is equivalent to specifying an alternative for `except`.
 
 WARNING: `except` has to match _everything_ the rule has consumed before; partial matches don't count.
-Use `except + lexy::dsl::any` if you want to allow a partial match.
+Use `token - (except + lexy::dsl::any)` if you want to allow a partial match.
+
+[discrete]
+==== `lexy::dsl::token`
+
+.`lexy/dsl/token.hpp`
+----
+token(rule) : Token
+----
+
+The `token` rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.
+It is whitespace aware.
+
+[horizontal]
+Matches::
+  Whatever `rule` matches, which will be consumed.
+Error::
+  A generic error with tag `lexy::missing_token` if the `rule` did not match.
+
+NOTE: While `token()` is optimized to prevent any overhead created by constructing values that are later discarded,
+it still should only be used when required.
 
 === Values
 
@@ -459,13 +459,17 @@ They produce the label/id and then parse the rule.
 
 .`lexy/dsl/capture.hpp`
 ----
-capture(rule) : Rule
+capture(rule)   : Rule
+capture(branch) : Branch
 ----
 
 The `capture()` rule takes an arbitrary rule and parses it, capturing everything it has consumed into a `lexy::lexeme`.
+It is a branch if given a branch.
 It is whitespace aware; preceding whitespace is not captured.
 
 [horizontal]
+Branch Condition::
+  The branch condition is whatever `branch` uses as a branch condition.
 Matches::
   Matches and consumes whatever `rule` matches.
 Values::
@@ -511,23 +515,42 @@ TIP: Use `position` when creating an AST whose nodes are annotated with their or
 The following rules are used to customize/improve error messages.
 
 [discrete]
+==== `.error<Tag>()`
+
+----
+token.error<Tag>() : Token
+----
+
+The `error()` function on tokens changes the error that is raised when a token failed.
+
+[horizontal]
+Matches::
+  Matches and consumes what `token` matches.
+Error::
+  A generic error with the specified `Tag`.
+
+TIP: It is useful for tokens such as `dsl::token()` and `operator-`, where the result is a generic tag such as `lexy::missing_token` or `lexy::minus_failure`.
+
+[discrete]
 ==== `lexy::dsl::error`
 
 .`lexy/dsl/error.hpp`
 ----
-error<Tag>          : Pattern
-error<Tag>(pattern) : Pattern
+error<Tag>       : Branch
+error<Tag>(rule) : Branch
 ----
 
-The `error` pattern always fails and produces an error with the given tag.
-For the second version, the pattern is matched first to determine the error range.
+The `error` rule always fails and produces an error with the given tag.
+For the second version, the rule is matched first to determine the error range.
 
 [horizontal]
+Branch Condition::
+  Branch is always taken.
 Matches::
   Nothing and always fails.
 Error::
   An error object of the specified `Tag`.
-  If the optional `pattern` is given, it will be matched.
+  If the optional `rule` is given, it will be matched (without producing values or errors).
   If it matched successfully, the previous and new reader position will be used to determine the error range.
   Otherwise, the error has no range.
 
@@ -538,78 +561,55 @@ TIP: Use it as the final branch of a choice rule to customize the `lexy::exhaust
 
 .`lexy/dsl/error.hpp`
 ----
-require<Tag>(pattern) : Pattern = if_(peek(!pattern) >> error<Tag>)
-prevent<Tag>(pattern) : Pattern = if_(peek( pattern) >> error<Tag>)
+require<Tag>(rule) : Rule
+prevent<Tag>(rule) : Rule
 ----
 
-The `require` and `prevent` pattern can be used to lookahead and fail if the input matches or does not match the pattern.
+The `require` and `prevent` rules can be used to lookahead and fail if the input matches or does not match the token.
 
 [horizontal]
 Matches::
-  Both match the `pattern` without consuming input.
-  `require` fails if the `pattern` did not match; `prevent` fails if it did.
+  Both match the `rule` without consuming input (or producing values or errors).
+  `require` fails if the `rule` did not match; `rule` fails if it did.
 Error::
   An error object of the specified `Tag`.
 
-[godbolt,cpp,id=W8E3c6]
+[godbolt,cpp,id=n7zM4d]
 ----
 // Parses a sequence of digits but raises an error with tag `forbidden_leading_zero` if a zero is followed by more digits.
 // Note: this is already available as `dsl::digits<>.no_leading_zero()`.
-dsl::lit_c<'0'> >> dsl::prevent<forbidden_leading_zero>(dsl::digits<>)
+dsl::zero >> dsl::prevent<forbidden_leading_zero>(dsl::digits<>)
     | dsl::digits<>
 ----
 
 TIP: Use `prevent` together with `times` to prevent the rule from matching more than the specified number of times.
 
-[discrete]
-==== `lexy::dsl::try`
-
-.`lexy/dsl/error.hpp`
-----
-try<Tag>(pattern) : Pattern = if_(!pattern >> error<Tag>)
-----
-
-The `try` pattern tries to match the given pattern.
-If that fails, it raises the specified error instead.
-
-[horizontal]
-Matches::
-  The pattern and consumes it.
-Error::
-  An error object of the specified `Tag`.
-
 === Branch conditions
 
-The following rules are designed to be used as branch condition.
+The following rules are designed to be used as the condition of an `operator>>`.
+They have no effect if not used in a context that requires a branch.
 
 [discrete]
 ==== `lexy::dsl::else_`
 
 .`lexy/dsl/branch.hpp`
 ----
-else_ >> rule : Branch = success >> rule
+else_ : Branch
 ----
 
-`else_` can only be used as a branch condition.
-It adds a branch that will be taken if all previous branches did not match.
+If `else_` is used as a condition, that branch will be taken unconditionally.
+It must be used as a last alternative in a choice.
 
 [discrete]
 ==== `lexy::dsl::peek`
 
 .`lexy/dsl/peek.hpp`
 ----
-peek(pattern) : Pattern
+peek(rule) : Branch
 ----
 
-The `peek` pattern matches a pattern without consuming anything.
-This can be used for simple lookahead in a branch condition.
+The `peek` branch is taken if `rule` matches, but does not consume it.
 It is whitespace aware; leading whitespace will be consumed.
-
-[horizontal]
-Matches::
-  Whatever the pattern matches, but does not consume it.
-Errors::
-  All errors raised by `pattern` if it did not match.
 
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
@@ -618,67 +618,27 @@ CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
 .`lexy/dsl/peek.hpp`
 ----
-peek_not(pattern) : Pattern
+peek_not(rule) : Branch
 ----
 
-The `peek_not` pattern matches a pattern without consuming anything but flips its success and failure; only succeeding if the pattern did not match.
-This can be used for simple lookahead in a branch condition.
+The `peek_not()` branch is taken if `rule` does not match, but does not consume it.
 It is whitespace aware; leading whitespace will be consumed.
 
-[horizontal]
-Matches::
-  Matches the pattern.
-  If it succeeds, consumes nothing and fails.
-  If it fails, consumes nothing and succeeds.
-Error::
-  A generic error with tag `lexy::unexpected` if the pattern succeeds.
+CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
 [discrete]
 ==== `lexy::dsl::lookahead`
 
 .`lexy/dsl/lookahead.hpp`
 ----
-lookahead(needle, end) : Pattern
+lookahead(needle, end) : Branch
 ----
 
-The `lookahead` pattern performs arbitrary lookahead for a `needle` before `end` without consuming anything.
-This can be used for complex lookahead in a branch condition.
+The `lookahead` branch is taken if lookahead finds `needle` before `end` is found, which must both be tokens.
+No characters are consumed.
 It is whitespace aware; leading whitespace will be consumed.
 
-[horizontal]
-Requires::
-  Both `needle` and `end` must be patterns.
-Matches::
-  Repeatedly tries to match `needle` until it matches.
-  If it doesn't match, advances the reader by one code unit and tries again.
-  This process stops if `end` is matched or EOF is reached.
-  Does not consume any of the characters it has skipped over.
-  Only succeeds, if it has matched the `needle`.
-Error::
-  A generic error with the tag `lexy::lookahead_failure` if it didn't find the `needle`.
-
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
-
-[discrete]
-==== `lexy::dsl::match`
-
-.`lexy/dsl/match.hpp`
-----
-match(rule) : Pattern
-----
-
-The `match` pattern turns an arbitrary rule into a pattern by parsing it and discarding all values it has produced.
-It is whitespace aware.
-
-[horizontal]
-Matches::
-  Whatever `rule` matches, which will be consumed.
-Error::
-  A generic error with tag `lexy::no_match` if the `rule` did not match.
-
-NOTE: While `match()` is optimized to prevent any overhead created by constructing values that are later discarded, it still should only be used as a last resort for complex branch conditions.
-
-CAUTION: When used in combination with `peek()`, long lookahead can slow down parsing speed due to backtracking.
 
 === Branches
 
@@ -687,14 +647,15 @@ CAUTION: When used in combination with `peek()`, long lookahead can slow down pa
 
 .`lexy/dsl/sequence.hpp`
 ----
-rule + rule       : Rule
-pattern + pattern : Pattern
-branch + rule     : Branch
+rule + rule   : Rule
+token + token : Branch
 ----
 
 A sequence rule matches multiple rules one after the other.
 
 [horizontal]
+Branch Condition::
+  The branch is only taken if all the tokens match in sequence.
 Matches::
   Matches and consume the first rule, then matches and consumes the second rule, and so on.
   Only succeeds if all of them succeed.
@@ -708,27 +669,30 @@ Errors::
 
 .`lexy/dsl/branch.hpp`
 ----
-pattern >> rule : Branch
-branch >> rule  : Branch = branch.condition() >> branch.then() + rule
-
-branch.condition() : Pattern
-branch.then()      : Rule
+branch >> rule : Branch
 ----
 
-The `operator>>` is used to turn a rule into a branch by giving it a branch condition.
-The first overload uses the pattern as the branch condition,
-the second overload uses the condition of the branch itself.
+The `operator>>` is used to turn a rule into a branch by giving it a branch condition, which must be a branch itself.
+If the branch is used as a normal rule, it first matches the condition followed by the rule.
+If it is used in a context that requires a branch, the branch is checked to determine whether it should be taken.
 
-If the branch is used as a normal rule or pattern, it first matches the condition followed by the then.
-If it is used in a context that requires a branch, the condition is checked to determine whether the branch should be taken.
+[horizontal]
+Branch Condition::
+  Whatever `branch` uses as branch condition.
+Matches::
+  Matches and consume the branch, then matches and consumes the `rule`.
+  Only succeeds if all of them succeed.
+Values::
+  All the values produced by the branch and rule in the same order as they were matched.
+Errors::
+  Whatever errors are raised by the individual branch and rule.
 
 [discrete]
 ==== `lexy::dsl::if_`
 
 .`lexy/dsl/if.hpp`
 ----
-if_(branch)  : Rule    = branch | success
-if_(pattern) : Pattern = pattern | success
+if_(branch) : Rule
 ----
 
 The `if_` rule matches a branch only if its condition matches.
@@ -739,9 +703,9 @@ Matches::
   If that succeeds, consumes it and matches and consumes the rest of the branch.
   Otherwise, consumes nothing and succeeds anyway.
 Values::
-  Any values produced by the then of the branch.
+  Any values produced by the branch.
 Errors::
-  Any errors produced by the then of the branch.
+  Any errors produced by the branch.
   It will only fail after the condition has been matched.
 
 [godbolt,cpp,id=GaxjbP]
@@ -770,7 +734,7 @@ Values::
   If the branch condition matches, any values produced by the rule.
   Otherwise, a single object of type `lexy::nullopt`.
 Errors::
-  Any errors produced by the then of the branch.
+  Any errors produced by the branch.
   It will only fail after the condition has been matched.
 
 [godbolt,cpp,id=nq33hY]
@@ -787,7 +751,6 @@ dsl::opt(dsl::list(dsl::ascii::alpha >> dsl::id<0>))
 .`lexy/dsl/choice.hpp`
 ----
 branch  | branch  : Rule
-pattern | pattern : Pattern
 ----
 
 A choice rule matches the first branch in order whose condition was matched.
@@ -824,21 +787,22 @@ TIP: Use `… | error<Tag>` to raise a custom error instead of `lexy::exhausted_
 
 .`lexy/dsl/alternative.hpp`
 ----
-pattern / pattern : Pattern
+token / token : Token
 ----
 
-An alternative rule tries to match each pattern in order, backtracking if necessary.
+An alternative rule tries to match each token in order, backtracking if necessary.
 
 [horizontal]
 Matches::
-  Tries to match each pattern in the order they were specified.
-  As soon as one pattern matches, consumes it and succeeds.
-  If no pattern matched, fails without consuming anything.
+  Tries to match each token in the order they were specified.
+  As soon as one token matches, consumes it and succeeds.
+  If no token matched, fails without consuming anything.
 Errors::
-  A generic error with tag `lexy::exhausted_alternatives` if no pattern matched.
+  A generic error with tag `lexy::exhausted_alternatives` if no token matched.
 
-CAUTION: Even if the pattern of an alternative is actually a branch, it will not be treated as a branch but it tries the entire pattern, backtracking if necessary.
-Use a choice rule with a suitable condition to avoid long backtracking instead.
+NOTE: If an alternative consists of only literals, a trie is used to efficiently match them without backtracking.
+
+CAUTION: Use a choice rule with a suitable condition to avoid potentially long backtracking.
 
 [discrete]
 ==== `lexy::dsl::switch_`
@@ -895,20 +859,20 @@ As soon as the then has matched everything parsing continues from the reader pos
 
 .`lexy/dsl/until.hpp`
 ----
-until(pattern)          : Pattern
-until(pattern).or_eof() : Pattern = until(pattern / eof)
+until(token)          : Token
+until(token).or_eof() : Token = until(token / eof)
 ----
 
-The `until` pattern consumes all input until the specified `pattern` matches, then consumes that.
+The `until` token consumes all input until the specified `token` matches, then consumes that.
 
 [horizontal]
 Matches::
-  If the closing `pattern` matches, consumes it and succeeds.
+  If the closing `token` matches, consumes it and succeeds.
   Otherwise, consumes one code unit and tries again.
   If EOF is reached, fails, unless `.or_eof()` was called, in which case it also succeeds having consumed everything until the end of the input.
 Errors::
   It can only fail if the reader has reached the end of the input without matching the condition.
-  Then it raises the same error as raised if one tries to match the pattern at EOF.
+  Then it raises the same error as raised if the condition would be matched at EOF.
 
 [godbolt,cpp,id=Yn4WTj]
 ----
@@ -917,8 +881,7 @@ Errors::
 LEXY_LIT("/*") >> dsl::until(LEXY_LIT("*/"))
 ----
 
-NOTE: `until` includes the `pattern`, use `until(peek(pattern))` if it should not consume the pattern.
-This was done because it is more efficient than the other way round.
+NOTE: `until` includes the `token`.
 
 [discrete]
 ==== `lexy::dsl::loop`
@@ -955,8 +918,7 @@ WARNING: If `rule` contains a branch that will not consume any characters but do
 
 .`lexy/dsl/while.hpp`
 ----
-while_(branch)  : Rule
-while_(pattern) : Pattern
+while_(branch) : Rule
 ----
 
 The `while` rule matches a branch as long as it condition has matched.
@@ -980,7 +942,6 @@ WARNING: If the branch does not consume any characters, `while_` will loop forev
 .`lexy/dsl/while.hpp`
 ----
 while_(choice)         : Rule = loop(choice | else_ >> break_)
-while_(choice_pattern) : Pattern
 ----
 
 This version of the `while_` rule repeatedly matches a choice as long as one branch matches.
@@ -1004,26 +965,24 @@ WARNING: If the choice has an else branch already, it will loop until an error i
 
 .`lexy/dsl/while.hpp`
 ----
-while_one(branch) : Branch
-    = branch.condition() >> branch.then() + while_(branch)
-
-while_one(pattern) : Pattern = pattern + while_(pattern)
+while_one(rule)    : Rule    = rule + while_(rule)
+while_one(branch)  : Branch  = branch >> while_(branch)
+while_one(token)   : Token
 ----
 
 The `while_one` rule matches a rule one or more times.
+It is a token if it is given a token.
 
 [discrete]
 ==== `lexy::dsl::do_while()`
 
 .`lexy/dsl/while.hpp`
 ----
-do_while(rule, pattern) : Rule = rule + while_(pattern >> rule)
-
-do_while(branch, pattern) : Branch
-    = branch.condition() >> branch.then() + while_(pattern >> branch)
+do_while(rule, condition_branch)   : Rule   = rule + while_(condition_branch >> rule)
+do_while(branch, condition_branch) : Branch = branch >> while_(condition_branch >> rule)
 ----
 
-The `do_while` rule matches a rule first unconditionally, and then again repeatedly while the pattern matches.
+The `do_while` rule matches a rule first unconditionally, and then again repeatedly while the rule matches.
 
 [godbolt,cpp,id=4dzEK7]
 ----
@@ -1036,22 +995,17 @@ dsl::do_while(dsl::ascii::alpha, dsl::comma)
 
 .`lexy/dsl/separator.hpp`
 ----
-sep(pattern)
-trailing_sep(pattern)
-
-sep(pattern).capture()
-trailing_sep(pattern).capture()
+sep(branch)
+trailing_sep(branch)
 ----
 
 `sep` and `trailing_sep` are used to specify a separator between repeated items; they are not rules that can be parsed directly.
 
-Use `sep(pattern)` to indicate that `pattern` has to be consumed between two items.
+Use `sep(branch)` to indicate that `branch` has to be consumed between two items.
 If it would match after the last item, it is not consumed by the rule.
 
-Use `trailing_sep(pattern)` to indicate that `pattern` has to be consumed between two items and can occur after the final item.
+Use `trailing_sep(branch)` to indicate that `branch` has to be consumed between two items and can occur after the final item.
 If it matches after the last item, it is consumed as well.
-
-By calling `.capture()`, the matched separator will be captured as a `lexy::lexeme`.
 
 [discrete]
 ==== `lexy::dsl::times`
@@ -1083,7 +1037,8 @@ The `twice` rule is a convenience alias for `N = 2`.
 
 [horizontal]
 Requires::
-  The separator must not be captured and all values produced by the parsing the rule must have a common type.
+  The separator must not produce any values.
+  All values produced by the parsing the rule must have a common type.
   In particular, the rule must only produce one value.
 Matches::
   If no separator is specified, matches and consumes `rule` `N` times.
@@ -1116,8 +1071,10 @@ The `list` rule matches a rule one or more times, optionally separated by a sepa
 Values produced by the list items are forwarded to a sink callback.
 
 [horizontal]
+Branch Condition::
+  Whatever `branch` uses as branch condition.
 Requires::
-  The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator pattern can be used as condition).
+  The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator can be used as condition).
   A production whose rule contains `list()` must provide a sink.
 Matches::
   Matches and consumes the item rule one or more times.
@@ -1141,7 +1098,7 @@ dsl::list(dsl::peek(dsl::digit<>) >> dsl::integer<int>(dsl::digits<>),
           dsl::trailing_sep(dsl::comma))
 ----
 
-TIP: Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given patterns anyway.
+TIP: Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given tokens anyway.
 
 [discrete]
 ==== `lexy::dsl::combination`
@@ -1240,6 +1197,8 @@ Both are whitespace aware.
 Requires::
   For `p`, the `Production` is a complete type at the point of the rule definition.
   The `recurse` rule has no such limitations.
+Branch Condition::
+  Whatever the production's rule uses as a branch condition.
 Matches::
   Matches and consumes `Production::rule`.
 Values::
@@ -1410,8 +1369,8 @@ dsl::parenthesized.list(dsl::integer<int>(dsl::digits<>),
 
 === Numbers
 
-The facilities for parsing integers are split into the digits pattern,
-which do not produce any values, and the `integer` rule, which matches a digit pattern and converts it into an integer.
+The facilities for parsing integers are split into the digit token, which do not produce any values,
+and the `integer` rule, which matches a digit token and converts it into an integer.
 The integer conversion has to be done during and parsing and not as a callback, as overflow creates a parse error.
 
 [discrete]
@@ -1506,49 +1465,50 @@ but disables all bounds checking.
 You can specialize `lexy::integer_traits` for your own integer types.
 
 [discrete]
+==== `lexy::dsl::zero`
+
+.`lexy/dsl/digit.hpp`
+----
+zero : Token
+----
+
+The `zero` token matches the zero digit.
+
+[horizontal]
+Matches::
+    Matches and consumes the zero digit `0`.
+Errors::
+    Raises a `lexy::expected_char_class` error with the name `digit.zero`.
+
+[discrete]
 ==== `lexy::dsl::digit`
 
 .`lexy/dsl/digit.hpp`
 ----
-digit<Base> : Pattern
-
-digit<Base>.zero()     : Pattern
-digit<Base>.non_zero() : Pattern
+digit<Base> : Token
 ----
 
-The `digit` pattern matches a digit of the specified base or `decimal` if no base was specified.
-The `zero()` and `non_zero()` patterns match zero or a non-zero digit respectively.
+The `digit` token matches a digit of the specified base or `decimal` if no base was specified.
 
 [horizontal]
 Matches::
-  `digit`:::
     Matches and consumes any of the valid digits of the base.
-  `digit.zero()`:::
-    Matches and consumes the zero digit of the base (it is the same for all of them).
-  `digit.non_zero()`:::
-    Matches and consumes any of the valid digits of the base except zero.
 Errors::
-  `digit`:::
     Raises a `lexy::expected_char_class` error with the name `digit.<base>`, where `<base>` is `binary`, `hex-lower`, etc.
-  `digit.zero()`:::
-    Raises a `lexy::expected_char_class` error with the name `digit.zero`.
-  `digit.non_zero()`:::
-    If it didn't match any valid digit, raises the same error as `digit`.
-    Otherwise, raises a `lexy::expected_char_class` error with the name `digit.non-zero`.
 
 [discrete]
 ==== `lexy::dsl::digits`
 
 .`lexy/dsl/digit.hpp`
 ----
-digits<Base> : Pattern
+digits<Base> : Token
 
-digits<Base>.sep(pattern)      : Pattern
-digits<Base>.no_leading_zero() : Pattern
+digits<Base>.sep(token)        : Token
+digits<Base>.no_leading_zero() : Token
 ----
 
-The `digits` pattern matches a non-empty sequence of digits in the specified base or `decimal` if no base was specified.
-Calling `.sep()` allows adding a digit separator pattern that can be present at any point between two digits, but is not required.
+The `digits` token matches a non-empty sequence of digits in the specified base or `decimal` if no base was specified.
+Calling `.sep()` allows adding a digit separator token that can be present at any point between two digits, but is not required.
 Calling `.no_leading_zero()` raises an error if one or more leading zeros are encountered.
 The calls to `.sep()` and `.no_leading_zero()` can be chained.
 
@@ -1577,25 +1537,25 @@ There is no validation of rules to ensure it is a thousand separator or similar 
 
 .`lexy/dsl/digit.hpp`
 ----
-digit_sep_underscore : Pattern = lit<"_">
-digit_sep_tick       : Pattern = lit<"'">
+digit_sep_underscore : Token = lit<"_">
+digit_sep_tick       : Token = lit<"'">
 ----
 
 For convenience, two common digit separators `_` and `'` are predefined as `digit_sep_underscore` and `digit_sep_tick` respectively.
-However, the digit separator can be an arbitrarily complex pattern.
+However, the digit separator can be an arbitrarily complex token.
 
 [discrete]
 ==== `lexy::dsl::n_digits`
 
 .`lexy/dsl/digit.hpp`
 ----
-n_digits<N, Base> : Pattern
+n_digits<N, Base> : Token
 
-n_digits<N, Base>.sep(pattern)      : Pattern
+n_digits<N, Base>.sep(token) : Token
 ----
 
-The `n_digits` pattern matches exactly `N` digits in the specified base or `decimal` if no base was specified.
-Calling `.sep()` allows adding a digit separator pattern that can be present at any point between two digits, but is not required.
+The `n_digits` token matches exactly `N` digits in the specified base or `decimal` if no base was specified.
+Calling `.sep()` allows adding a digit separator token that can be present at any point between two digits, but is not required.
 
 [horizontal]
 Matches::
@@ -1619,28 +1579,28 @@ dsl::n_digits<4, dsl::hex_upper>.sep(dsl::digit_sep_tick)
 
 .`lexy/dsl/integer.hpp`
 ----
-integer<T, Base>(pattern) : Rule
+integer<T, Base>(token) : Rule
 ----
 
-The `integer` rule converts the lexeme matched by the `pattern` into an integer of type `T` using the given base.
-The `Base` can be omitted if the pattern is `digits` or `n_digits`.
-It will then be deduced from the pattern.
+The `integer` rule converts the lexeme matched by the `token` into an integer of type `T` using the given base.
+The `Base` can be omitted if the token is `digits` or `n_digits`.
+It will then be deduced from the token.
 
 [horizontal]
 Matches::
-  Matches and consumes what `pattern` matches.
+  Matches and consumes what `token` matches.
 Values::
-  An integer of type `T` that is created by the characters the pattern has consumed.
-  If the pattern matches characters that are not valid digits of the base (e.g. a digit separator), those characters are skipped.
+  An integer of type `T` that is created by the characters the token has consumed.
+  If the token matches characters that are not valid digits of the base (e.g. a digit separator), those characters are skipped.
   Otherwise, the character is converted to a digit and added to the resulting integer using the `lexy::integer_traits`.
 Errors::
-  Any errors raised by matching the pattern.
+  Any errors raised by matching the token.
   If the integer type `T` is bounded and the integer value would overflow, a generic error with tag `lexy::integer_overflow` is raised.
 
 [godbolt,cpp,id=6ThWPn]
 ----
 // Matches upper-case hexadecimal digits seperated by ' without leading zeroes.
-// Converts them into an integer, the base is deduced from the pattern.
+// Converts them into an integer, the base is deduced from the token.
 dsl::integer<int>(dsl::digits<dsl::hex_upper>
                         .sep(dsl::digit_sep_tick).no_leading_zero())
 ----
@@ -1726,7 +1686,7 @@ There is a convenience overload if the same rule is used for the open and closin
 d[rule]
 ----
 
-Whitespace can be added by writing `d[pattern]`, where `d` is the result of a `delimiter()` call.
+Whitespace can be added by writing `d[rule]`, where `d` is the result of a `delimiter()` call.
 It will skip whitespace before the opening delimiter only.
 If whitespace is added, this is also reflected by `.open()`.
 
@@ -1751,19 +1711,21 @@ NOTE: The naming of `quoted`, `triple_quoted` and `single_quoted` is not very lo
 
 .`lexy/dsl/delimited.hpp`
 ----
-d(rule)    : Rule
-d(pattern) : Rule = d(capture(pattern))
+d(rule)  : Branch
+d(token) : Branch = d(capture(token))
 ----
 
 Calling `d(rule)`, where `d` is the result of a `delimiter()` call, results in a rule that matches `rule` as often as possible surrounded by the delimiters.
 Values produced by the `rule` are forwarded to a sink callback.
 
-For convenience, if passing a pattern, the pattern is captured.
+For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.
 
 [horizontal]
 Requires::
   A production whose rule contains a delimited rule must provide a sink.
+Branch Condition::
+  Whatever the opening delimiter uses as branch condition.
 Matching::
   Matches and consumes the opening delimiter, followed by zero or more occurrences of `rule`, followed by the closing delimiter.
   It determines whether or not to parse another instance of `rule` using the condition of the closing delimiter.
@@ -1785,15 +1747,15 @@ dsl::quoted(dsl::code_point - dsl::ascii::control)
 
 .`lexy/dsl/delimited.hpp`
 ----
-d(rule, escape_branch)    : Rule
+d(rule, escape_branch)  : Branch
   = d(escape_branch | else_ >> rule)
-d(pattern, escape_branch) : Rule
-  = d(escape_branch | else_ >> capture(rule))
+d(token, escape_branch) : Branch
+  = d(escape_branch | else_ >> capture(token))
 
-d(rule, escape_choice)    : Rule
+d(rule, escape_choice)  : Branch
   = d(escape_choice | else_ >> rule)
-d(pattern, escape_choice) : Rule
-  = d(escape_choice | else_ >> capture(rule))
+d(token, escape_choice) : Branch
+  = d(escape_choice | else_ >> capture(token))
 ----
 
 There is a convenience overload to specify escape sequences in the delimited.
@@ -1802,7 +1764,7 @@ The `choice` matches all appropriate escape sequences and produces their values.
 Calling `d(rule, escape)`, where `d` is the result of a `delimiter()` call, is equivalent to `d(escape | else_ >> rule)`, so it results in a rule that matches `escape | else_ >> rule` as often as possible surrounded by the delimiters.
 Values produced by the `rule` or `escape` are forwarded to a sink callback.
 
-For convenience, if passing a pattern, the pattern is captured.
+For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.
 
 [godbolt,cpp,id=7ed5Wc]
@@ -1821,20 +1783,20 @@ If the escape sequence starts with a closing delimiter, it will not be matched.
 
 .`lexy/dsl/delimited.hpp`
 ----
-escape(pattern) : Rule
+escape(token) : Rule
 ----
 
-For convenience, the `escape` rule can be used to specify the escape pattern.
+For convenience, the `escape` rule can be used to specify the escape token.
 
-An escape rule consists of a leading pattern that matches the escape character (e.g. `\`), and zero or more alternatives for characters that can be escaped.
-It then is equivalent to `pattern >> (alt0 | alt1 | alt2 | else_ >> error<lexy::invalid_escape_sequence>)`.
-It will only be considered after the leading pattern has been matched and then tries to match one of the alternatives.
+An escape rule consists of a leading token that matches the escape character (e.g. `\`), and zero or more alternatives for characters that can be escaped.
+It then is equivalent to `token >> (alt0 | alt1 | alt2 | error<lexy::invalid_escape_sequence>)`.
+It will only be considered after the leading token has been matched and then tries to match one of the alternatives.
 If no alternative matches, it raises a generic error with tag `lexy::invalid_escape_sequence`.
 
 .`lexy/dsl/delimited.hpp`
 ----
 e.rule(branch) : Rule
-  = escape_pattern >> ( ... | branch
+  = escape_token >> ( ... | branch
                       | else_ >> error<lexy::invalid_escape_sequence>)
 ----
 
@@ -1842,23 +1804,23 @@ Calling `e.rule(branch)`, where `e` is an escape rule, adds `branch` to the end 
 
 .`lexy/dsl/delimited.hpp`
 ----
-e.capture(pattern) : Rule
-  = escape_pattern >> (... | peek(pattern) >> capture(pattern)
+e.capture(token) : Rule
+  = escape_token >> (... | capture(token)
                       | else_ >> error<lexy::invalid_escape_sequence>)
 ----
 
-Calling `e.capture(pattern)`, where `e` is an escape rule, adds an escape sequence that matches and captures pattern to the end of the choice.
+Calling `e.capture(token)`, where `e` is an escape rule, adds an escape sequence that matches and captures token to the end of the choice.
 
 .`lexy/dsl/delimited.hpp`
 ----
 e.lit<Str>(rule) : Rule
-  = escape_pattern >> (... | lit<Str> >> rule
+  = escape_token >> (... | lit<Str> >> rule
                       | else_ >> error<lexy::invalid_escape_sequence>)
 e.lit<Str>() : Rule
   = e.lit<Str>(value_str<Str>)
 
 e.lit_c<C>(rule) : Rule
-  = escape_pattern >> (... | lit_c<C> >> rule
+  = escape_token >> (... | lit_c<C> >> rule
                       | else_ >> error<lexy::invalid_escape_sequence>)
 e.lit_c<C>() : Rule
   = e.lit_c<C>(value_c<C>)
@@ -2038,10 +2000,10 @@ The following facilities are meant for parsing input that uses the `lexy::raw_en
 
 .`lexy/dsl/bom.hpp`
 ----
-bom<Encoding, Endianness> : Pattern
+bom<Encoding, Endianness> : Token
 ----
 
-The `bom` pattern matches the byte-order mark (BOM) for the given encoding and `lexy::encoding_endianness`.
+The `bom` token matches the byte-order mark (BOM) for the given encoding and `lexy::encoding_endianness`.
 
 [horizontal]
 Requires::
@@ -2097,6 +2059,6 @@ dsl::encode<lexy::utf8_encoding>(dsl::code_point)
 
 === Custom rules
 
-The exact interface for the `Rule`, `Pattern` and `Branch` concepts is currently still experimental.
+The exact interface for the `Rule`, `Token` and `Branch` concepts is currently still experimental.
 Refer to the existing rules if you want to add your own.
 
