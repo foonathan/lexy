@@ -279,7 +279,7 @@ struct _list
 
     struct _sink
     {
-        T _result;
+        T _result{};
 
         using return_type = T;
 
@@ -328,7 +328,7 @@ struct _collection
 
     struct _sink
     {
-        T _result;
+        T _result{};
 
         using return_type = T;
 
@@ -498,7 +498,7 @@ struct _as_string
 
     struct _sink
     {
-        String _result;
+        String _result{};
 
         using return_type = String;
 
