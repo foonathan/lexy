@@ -286,7 +286,7 @@ struct _list
         template <typename U>
         auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
         {
-            _result.push_back(LEXY_FWD(obj));
+            return _result.push_back(LEXY_FWD(obj));
         }
 
         template <typename... Args>
