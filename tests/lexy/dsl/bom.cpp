@@ -23,7 +23,7 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
@@ -43,15 +43,15 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "BOM.UTF-8");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "BOM.UTF-8");
                 return -1;
             }
         };
@@ -74,15 +74,15 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "BOM.UTF-16-LE");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "BOM.UTF-16-LE");
                 return -1;
             }
         };
@@ -105,15 +105,15 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "BOM.UTF-16-BE");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "BOM.UTF-16-BE");
                 return -1;
             }
         };
@@ -136,15 +136,15 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "BOM.UTF-32-LE");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "BOM.UTF-32-LE");
                 return -1;
             }
         };
@@ -167,15 +167,15 @@ TEST_CASE("dsl::bom")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "BOM.UTF-32-BE");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "BOM.UTF-32-BE");
                 return -1;
             }
         };

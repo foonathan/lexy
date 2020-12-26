@@ -12,14 +12,14 @@
 
 TEST_CASE("dsl::list()")
 {
-    static constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
+    static LEXY_VERIFY_FN auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -27,12 +27,12 @@ TEST_CASE("dsl::list()")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -40,16 +40,16 @@ TEST_CASE("dsl::list()")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == 3 * count);
+            LEXY_VERIFY_CHECK(cur - str == 3 * count);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -69,14 +69,14 @@ TEST_CASE("dsl::list()")
 
 TEST_CASE("dsl::list() sep")
 {
-    static constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
+    static LEXY_VERIFY_FN auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -84,12 +84,12 @@ TEST_CASE("dsl::list() sep")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -97,16 +97,16 @@ TEST_CASE("dsl::list() sep")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == 4 * count - 1);
+            LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -137,7 +137,7 @@ TEST_CASE("dsl::list() sep capture")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -145,17 +145,17 @@ TEST_CASE("dsl::list() sep capture")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     count += 3;
                 }
-                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
                 {
-                    CONSTEXPR_CHECK(lex.size() == 1);
+                    LEXY_VERIFY_CHECK(lex.size() == 1);
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -163,16 +163,16 @@ TEST_CASE("dsl::list() sep capture")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == count);
+            LEXY_VERIFY_CHECK(cur - str == count);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -203,7 +203,7 @@ TEST_CASE("dsl::list() trailing_sep")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -211,12 +211,12 @@ TEST_CASE("dsl::list() trailing_sep")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -224,19 +224,19 @@ TEST_CASE("dsl::list() trailing_sep")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
             if (cur[-1] == ',')
-                CONSTEXPR_CHECK(cur - str == 4 * count);
+                LEXY_VERIFY_CHECK(cur - str == 4 * count);
             else
-                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
+                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -270,7 +270,7 @@ TEST_CASE("dsl::list() trailing_sep capture")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -278,17 +278,17 @@ TEST_CASE("dsl::list() trailing_sep capture")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     count += 3;
                 }
-                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
                 {
-                    CONSTEXPR_CHECK(lex.size() == 1);
+                    LEXY_VERIFY_CHECK(lex.size() == 1);
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -296,16 +296,16 @@ TEST_CASE("dsl::list() trailing_sep capture")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == count);
+            LEXY_VERIFY_CHECK(cur - str == count);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -338,7 +338,7 @@ TEST_CASE("dsl::opt(list())")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -346,12 +346,12 @@ TEST_CASE("dsl::opt(list())")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -359,21 +359,21 @@ TEST_CASE("dsl::opt(list())")
             return b{};
         }
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str);
+            LEXY_VERIFY_CHECK(cur == str);
             return 0;
         }
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == 3 * count);
+            LEXY_VERIFY_CHECK(cur - str == 3 * count);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -400,7 +400,7 @@ TEST_CASE("dsl::opt(list()) sep")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -408,12 +408,12 @@ TEST_CASE("dsl::opt(list()) sep")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -421,19 +421,19 @@ TEST_CASE("dsl::opt(list()) sep")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
             if (count == 0)
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
             else
-                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
+                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };
@@ -464,7 +464,7 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -472,12 +472,12 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -485,21 +485,21 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
             if (count == 0)
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
             else if (cur[-1] == ',')
-                CONSTEXPR_CHECK(cur - str == 4 * count);
+                LEXY_VERIFY_CHECK(cur - str == 4 * count);
             else
-                CONSTEXPR_CHECK(cur - str == 4 * count - 1);
+                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
     };

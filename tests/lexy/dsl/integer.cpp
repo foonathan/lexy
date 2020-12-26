@@ -85,19 +85,19 @@ TEST_CASE("dsl::integer")
         {
             const char* str;
 
-            constexpr int success(const char*, int value)
+            LEXY_VERIFY_FN int success(const char*, int value)
             {
                 return value;
             }
 
-            constexpr int error(test_error<lexy::integer_overflow> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
             {
-                CONSTEXPR_CHECK(e.message() == "integer overflow");
-                CONSTEXPR_CHECK(e.begin() == str);
-                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                LEXY_VERIFY_CHECK(e.message() == "integer overflow");
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_char_class>)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
             {
                 return -2;
             }
@@ -244,20 +244,20 @@ TEST_CASE("dsl::code_point_id")
     {
         const char* str;
 
-        constexpr int success(const char* cur, lexy::code_point cp)
+        LEXY_VERIFY_FN int success(const char* cur, lexy::code_point cp)
         {
-            CONSTEXPR_CHECK(cur == str + 6);
+            LEXY_VERIFY_CHECK(cur == str + 6);
             return int(cp.value());
         }
 
-        constexpr int error(test_error<lexy::integer_overflow> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
         {
-            CONSTEXPR_CHECK(e.message() == "integer overflow");
-            CONSTEXPR_CHECK(e.begin() == str);
-            CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
+            LEXY_VERIFY_CHECK(e.message() == "integer overflow");
+            LEXY_VERIFY_CHECK(e.begin() == str);
+            LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
             return -1;
         }
-        constexpr int error(test_error<lexy::expected_char_class>)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
         {
             return -2;
         }

@@ -17,13 +17,13 @@ TEST_CASE("dsl::if_()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 if (cur == str)
                     return 0;
                 else
                 {
-                    CONSTEXPR_CHECK(cur - str == 3);
+                    LEXY_VERIFY_CHECK(cur - str == 3);
                     return 1;
                 }
             }
@@ -47,20 +47,20 @@ TEST_CASE("dsl::if_()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 if (cur == str)
                     return 0;
                 else
                 {
-                    CONSTEXPR_CHECK(cur - str == 3);
+                    LEXY_VERIFY_CHECK(cur - str == 3);
                     return 1;
                 }
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "bc");
+                LEXY_VERIFY_CHECK(e.string() == "bc");
                 return -1;
             }
         };

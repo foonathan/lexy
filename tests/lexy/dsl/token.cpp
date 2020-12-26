@@ -18,14 +18,14 @@ TEST_CASE("dsl::token")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }
 
-        constexpr int error(test_error<lexy::missing_token> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::missing_token> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
     };

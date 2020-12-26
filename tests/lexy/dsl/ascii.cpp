@@ -19,16 +19,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.control");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.control");
                 return -1;
             }
         };
@@ -53,16 +53,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.blank");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.blank");
                 return -1;
             }
         };
@@ -87,16 +87,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.newline");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.newline");
                 return -1;
             }
         };
@@ -121,16 +121,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.other-space");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.other-space");
                 return -1;
             }
         };
@@ -155,16 +155,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.space");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.space");
                 return -1;
             }
         };
@@ -189,16 +189,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.lower");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.lower");
                 return -1;
             }
         };
@@ -223,16 +223,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.upper");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.upper");
                 return -1;
             }
         };
@@ -257,16 +257,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.alpha");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.alpha");
                 return -1;
             }
         };
@@ -291,16 +291,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.digit");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.digit");
                 return -1;
             }
         };
@@ -325,16 +325,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.alnum");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.alnum");
                 return -1;
             }
         };
@@ -359,16 +359,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.punct");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.punct");
                 return -1;
             }
         };
@@ -393,16 +393,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.graph");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.graph");
                 return -1;
             }
         };
@@ -427,16 +427,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.print");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.print");
                 return -1;
             }
         };
@@ -461,16 +461,16 @@ TEST_CASE("dsl::ascii::*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII");
                 return -1;
             }
         };

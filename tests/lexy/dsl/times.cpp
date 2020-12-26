@@ -18,17 +18,17 @@ TEST_CASE("times")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
             {
-                CONSTEXPR_CHECK(cur - str == 6);
-                CONSTEXPR_CHECK(value[0] == 1);
-                CONSTEXPR_CHECK(value[1] == 1);
+                LEXY_VERIFY_CHECK(cur - str == 6);
+                LEXY_VERIFY_CHECK(value[0] == 1);
+                LEXY_VERIFY_CHECK(value[1] == 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -51,22 +51,23 @@ TEST_CASE("times")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
             {
-                CONSTEXPR_CHECK(cur - str == 7);
-                CONSTEXPR_CHECK(value[0] == 1);
-                CONSTEXPR_CHECK(value[1] == 1);
+                LEXY_VERIFY_CHECK(cur - str == 7);
+                LEXY_VERIFY_CHECK(value[0] == 1);
+                LEXY_VERIFY_CHECK(value[1] == 1);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 if (e.string() == "abc")
                     return -1;
                 else if (e.string() == ",")
                     return -2;
                 else
-                    CONSTEXPR_CHECK(false);
+                    LEXY_VERIFY_CHECK(false);
+                return -1;
             }
         };
 
@@ -94,27 +95,29 @@ TEST_CASE("times")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
             {
-                CONSTEXPR_CHECK(value[0] == 1);
-                CONSTEXPR_CHECK(value[1] == 1);
+                LEXY_VERIFY_CHECK(value[0] == 1);
+                LEXY_VERIFY_CHECK(value[1] == 1);
 
                 if (cur - str == 7)
                     return 0;
                 else if (cur - str == 8)
                     return 1; // trailing sep
                 else
-                    CONSTEXPR_CHECK(false);
+                    LEXY_VERIFY_CHECK(false);
+                return -1;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 if (e.string() == "abc")
                     return -1;
                 else if (e.string() == ",")
                     return -2;
                 else
-                    CONSTEXPR_CHECK(false);
+                    LEXY_VERIFY_CHECK(false);
+                return -1;
             }
         };
 

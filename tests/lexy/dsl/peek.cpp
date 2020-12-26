@@ -16,12 +16,12 @@ TEST_CASE("dsl::peek()")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }
 
-        constexpr int error(test_error<lexy::expected_literal>)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
         {
             return -1;
         }
@@ -45,15 +45,15 @@ TEST_CASE("dsl::peek_not()")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.string() == "a");
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "a");
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
     };

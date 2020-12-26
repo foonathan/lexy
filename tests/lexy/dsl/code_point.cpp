@@ -21,17 +21,17 @@ TEST_CASE("dsl::code_point")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str + 1);
+                LEXY_VERIFY_CHECK(cur == str + 1);
                 return 0;
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.code_point");
                 return -1;
             }
         };
@@ -48,16 +48,16 @@ TEST_CASE("dsl::code_point")
         {
             const LEXY_CHAR8_T* str;
 
-            constexpr int success(const LEXY_CHAR8_T* cur)
+            LEXY_VERIFY_FN int success(const LEXY_CHAR8_T* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-8.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-8.code_point");
                 return -1;
             }
         };
@@ -74,16 +74,16 @@ TEST_CASE("dsl::code_point")
         {
             const char16_t* str;
 
-            constexpr int success(const char16_t* cur)
+            LEXY_VERIFY_FN int success(const char16_t* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-16.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-16.code_point");
                 return -1;
             }
         };
@@ -100,16 +100,16 @@ TEST_CASE("dsl::code_point")
         {
             const char32_t* str;
 
-            constexpr int success(const char32_t* cur)
+            LEXY_VERIFY_FN int success(const char32_t* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-32.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-32.code_point");
                 return -1;
             }
         };
@@ -135,16 +135,16 @@ TEST_CASE("dsl::code_point.capture()")
         {
             const char* str;
 
-            constexpr int success(const char*, lexy::code_point cp)
+            LEXY_VERIFY_FN int success(const char*, lexy::code_point cp)
             {
                 return int(cp.value());
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "ASCII.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.code_point");
                 return -1;
             }
         };
@@ -161,16 +161,16 @@ TEST_CASE("dsl::code_point.capture()")
         {
             const LEXY_CHAR8_T* str;
 
-            constexpr int success(const LEXY_CHAR8_T*, lexy::code_point cp)
+            LEXY_VERIFY_FN int success(const LEXY_CHAR8_T*, lexy::code_point cp)
             {
                 return int(cp.value());
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-8.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-8.code_point");
                 return -1;
             }
         };
@@ -187,16 +187,16 @@ TEST_CASE("dsl::code_point.capture()")
         {
             const char16_t* str;
 
-            constexpr int success(const char16_t*, lexy::code_point cp)
+            LEXY_VERIFY_FN int success(const char16_t*, lexy::code_point cp)
             {
                 return int(cp.value());
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-16.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-16.code_point");
                 return -1;
             }
         };
@@ -213,16 +213,16 @@ TEST_CASE("dsl::code_point.capture()")
         {
             const char32_t* str;
 
-            constexpr int success(const char32_t*, lexy::code_point cp)
+            LEXY_VERIFY_FN int success(const char32_t*, lexy::code_point cp)
             {
                 return int(cp.value());
             }
 
-            constexpr int error(
+            LEXY_VERIFY_FN int error(
                 lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "UTF-32.code_point");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "UTF-32.code_point");
                 return -1;
             }
         };

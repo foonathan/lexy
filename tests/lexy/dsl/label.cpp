@@ -18,9 +18,9 @@ TEST_CASE("dsl::label")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::label<lab>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::label<lab>)
             {
-                CONSTEXPR_CHECK(str == cur);
+                LEXY_VERIFY_CHECK(str == cur);
                 return 0;
             }
         };
@@ -40,15 +40,15 @@ TEST_CASE("dsl::label")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::label<lab>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::label<lab>)
             {
-                CONSTEXPR_CHECK(cur == str + 3);
+                LEXY_VERIFY_CHECK(cur == str + 3);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -68,14 +68,14 @@ TEST_CASE("dsl::label")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
                 return 0;
             }
-            constexpr int success(const char* cur, lexy::label<lab>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::label<lab>)
             {
-                CONSTEXPR_CHECK(cur == str + 3);
+                LEXY_VERIFY_CHECK(cur == str + 3);
                 return 1;
             }
         };
@@ -97,10 +97,10 @@ TEST_CASE("dsl::id")
     {
         const char* str;
 
-        constexpr int success(const char* cur, lexy::id<0>)
+        LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
         {
             static_assert(lexy::id<0>{} == 0);
-            CONSTEXPR_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(str == cur);
             return 0;
         }
     };

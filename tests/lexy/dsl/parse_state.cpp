@@ -37,9 +37,9 @@ TEST_CASE("rule: parse_state")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(str == cur);
+                LEXY_VERIFY_CHECK(str == cur);
                 return 0;
             }
         };
@@ -101,9 +101,9 @@ TEST_CASE("rule: parse_state_member")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(str == cur);
+                LEXY_VERIFY_CHECK(str == cur);
                 return 0;
             }
         };

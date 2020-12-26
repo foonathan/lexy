@@ -59,20 +59,20 @@ TEST_CASE("dsl::p")
         {
             const char* str;
 
-            constexpr int success(prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(prod, lexy::id<0>)
             {
                 return 0;
             }
-            constexpr int success(const char* cur, int result)
+            LEXY_VERIFY_FN int success(const char* cur, int result)
             {
-                CONSTEXPR_CHECK(cur - str == 3);
-                CONSTEXPR_CHECK(result == 0);
+                LEXY_VERIFY_CHECK(cur - str == 3);
+                LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
 
-            constexpr int error(prod, test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(prod, test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -93,20 +93,20 @@ TEST_CASE("dsl::p")
         {
             const char* str;
 
-            constexpr int success(prod)
+            LEXY_VERIFY_FN int success(prod)
             {
                 return 0;
             }
-            constexpr int success(const char* cur, int result)
+            LEXY_VERIFY_FN int success(const char* cur, int result)
             {
-                CONSTEXPR_CHECK(cur - str == 3);
-                CONSTEXPR_CHECK(result == 0);
+                LEXY_VERIFY_CHECK(cur - str == 3);
+                LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
 
-            constexpr int error(prod, test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(prod, test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -127,26 +127,26 @@ TEST_CASE("dsl::p")
         {
             const char* str;
 
-            constexpr int success(prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(prod, lexy::id<0>)
             {
                 return 0;
             }
 
-            constexpr int success(const char* cur, int result)
+            LEXY_VERIFY_FN int success(const char* cur, int result)
             {
-                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "abc");
-                CONSTEXPR_CHECK(result == 0);
+                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "abc");
+                LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
-            constexpr int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
             {
-                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "def");
+                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
             }
 
-            constexpr int error(test_error<lexy::exhausted_choice> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -169,30 +169,30 @@ TEST_CASE("dsl::p")
         {
             const char* str;
 
-            constexpr int success(p_branch::prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(p_branch::prod, lexy::id<0>)
             {
                 return 0;
             }
-            constexpr int success(prod, int i)
+            LEXY_VERIFY_FN int success(prod, int i)
             {
                 return i;
             }
 
-            constexpr int success(const char* cur, int result)
+            LEXY_VERIFY_FN int success(const char* cur, int result)
             {
-                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "abc");
-                CONSTEXPR_CHECK(result == 0);
+                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "abc");
+                LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
-            constexpr int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
             {
-                CONSTEXPR_CHECK(lexy::_detail::string_view(str, cur) == "def");
+                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
             }
 
-            constexpr int error(test_error<lexy::exhausted_choice> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -240,31 +240,31 @@ TEST_CASE("dsl::recurse")
         {
             const char* str;
 
-            constexpr int success(inner, int outer_result)
+            LEXY_VERIFY_FN int success(inner, int outer_result)
             {
                 return outer_result + 1;
             }
-            constexpr int success(outer)
+            LEXY_VERIFY_FN int success(outer)
             {
                 return 0;
             }
-            constexpr int success(outer, int inner_result)
+            LEXY_VERIFY_FN int success(outer, int inner_result)
             {
                 return inner_result;
             }
-            constexpr int success(const char*, int result)
+            LEXY_VERIFY_FN int success(const char*, int result)
             {
                 return result;
             }
 
             int error(inner, int)
             {
-                CONSTEXPR_CHECK(false);
+                LEXY_VERIFY_CHECK(false);
                 return -1;
             }
             int error(outer, int)
             {
-                CONSTEXPR_CHECK(false);
+                LEXY_VERIFY_CHECK(false);
                 return -1;
             }
         };
@@ -288,27 +288,27 @@ TEST_CASE("dsl::recurse")
         {
             const char* str;
 
-            constexpr int success(prod)
+            LEXY_VERIFY_FN int success(prod)
             {
                 return 0;
             }
-            constexpr int success(prod, int result)
+            LEXY_VERIFY_FN int success(prod, int result)
             {
                 return result + 1;
             }
-            constexpr int success(const char*, int result)
+            LEXY_VERIFY_FN int success(const char*, int result)
             {
                 return result;
             }
 
             int error(prod, int)
             {
-                CONSTEXPR_CHECK(false);
+                LEXY_VERIFY_CHECK(false);
                 return -1;
             }
             int error(int)
             {
-                CONSTEXPR_CHECK(false);
+                LEXY_VERIFY_CHECK(false);
                 return -1;
             }
         };

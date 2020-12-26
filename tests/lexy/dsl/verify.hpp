@@ -15,12 +15,32 @@
 
 #include "../test_encoding.hpp"
 
+#ifdef LEXY_DISABLE_CONSTEXPR_TESTS
+#    define LEXY_VERIFY_CALL(...) __VA_ARGS__
+#    define LEXY_VERIFY_FN
+#    define LEXY_VERIFY_CHECK(...) CHECK(__VA_ARGS__)
+#else
+
+#    define LEXY_VERIFY_CALL(...)                                                                  \
+        [] {                                                                                       \
+            constexpr auto result = __VA_ARGS__;                                                   \
+            return result;                                                                         \
+        }()
+
+#    define LEXY_VERIFY_FN constexpr
+
 [[noreturn]] inline bool constexpr_check_failure()
 {
     throw 0;
 }
 
-#define CONSTEXPR_CHECK(x) ((x) ? true : constexpr_check_failure())
+#    define LEXY_VERIFY_CHECK(...) ((__VA_ARGS__) ? true : constexpr_check_failure())
+
+#endif
+
+#define LEXY_VERIFY(...) LEXY_VERIFY_CALL(verify<callback>(rule, __VA_ARGS__))
+#define LEXY_VERIFY_ENCODING(Encoding, ...)                                                        \
+    LEXY_VERIFY_CALL(verify<callback, Encoding>(rule, __VA_ARGS__))
 
 template <typename Tag>
 using test_error = lexy::error_for<test_input, Tag>;
@@ -33,18 +53,18 @@ struct test_handler
     using result_type = lexy::result<int, int>;
 
     template <typename SubProduction>
-    constexpr auto sub_handler(const lexy::input_reader<test_input>&)
+    LEXY_VERIFY_FN auto sub_handler(const lexy::input_reader<test_input>&)
     {
         return test_handler<Callback, CharT, SubProduction>{str};
     }
 
-    constexpr auto list_sink()
+    LEXY_VERIFY_FN auto list_sink()
     {
         return Callback{str}.list();
     }
 
     template <typename Error>
-    constexpr auto error(Error&& error) &&
+    LEXY_VERIFY_FN auto error(Error&& error) &&
     {
         if constexpr (std::is_same_v<Production, void>)
         {
@@ -59,7 +79,7 @@ struct test_handler
     }
 
     template <typename... Args>
-    constexpr auto value(Args&&... args) &&
+    LEXY_VERIFY_FN auto value(Args&&... args) &&
     {
         if constexpr (std::is_same_v<Production, void>)
         {
@@ -86,7 +106,7 @@ struct test_final_parser
 };
 
 template <typename Callback, typename Encoding, typename CharT, typename Rule>
-constexpr int verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
+LEXY_VERIFY_FN int verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
 {
     auto input  = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
                                           : lexy::string_input<Encoding>(str, size);
@@ -101,24 +121,10 @@ constexpr int verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
 }
 
 template <typename Callback, typename Rule>
-constexpr int verify(Rule rule, const char* str, std::size_t size = std::size_t(-1))
+LEXY_VERIFY_FN int verify(Rule rule, const char* str, std::size_t size = std::size_t(-1))
 {
     return verify<Callback, test_encoding>(rule, str, size);
 }
-
-#ifdef LEXY_DISABLE_CONSTEXPR_TESTS
-#    define LEXY_TEST_CALL_CONSTEVAL(...) __VA_ARGS__
-#else
-#    define LEXY_TEST_CALL_CONSTEVAL(...)                                                          \
-        [] {                                                                                       \
-            constexpr auto result = __VA_ARGS__;                                                   \
-            return result;                                                                         \
-        }()
-#endif
-
-#define LEXY_VERIFY(...) LEXY_TEST_CALL_CONSTEVAL(verify<callback>(rule, __VA_ARGS__))
-#define LEXY_VERIFY_ENCODING(Encoding, ...)                                                        \
-    LEXY_TEST_CALL_CONSTEVAL(verify<callback, Encoding>(rule, __VA_ARGS__))
 
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED
 

@@ -16,15 +16,15 @@ TEST_CASE("dsl::operator>>")
     {
         const char* str;
 
-        constexpr int success(const char* cur, lexy::label<lab>)
+        LEXY_VERIFY_FN int success(const char* cur, lexy::label<lab>)
         {
-            CONSTEXPR_CHECK(str + 1 == cur);
+            LEXY_VERIFY_CHECK(str + 1 == cur);
             return 0;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.string() == "a");
+            LEXY_VERIFY_CHECK(e.string() == "a");
             return -1;
         }
     };

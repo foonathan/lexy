@@ -15,9 +15,9 @@ TEST_CASE("dsl::value_c")
     {
         const char* str;
 
-        constexpr int success(const char* cur, int i)
+        LEXY_VERIFY_FN int success(const char* cur, int i)
         {
-            CONSTEXPR_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(str == cur);
             return i;
         }
     };
@@ -46,9 +46,9 @@ TEST_CASE("dsl::value_f")
     {
         const char* str;
 
-        constexpr int success(const char* cur, int i)
+        LEXY_VERIFY_FN int success(const char* cur, int i)
         {
-            CONSTEXPR_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(str == cur);
             return i;
         }
     };
@@ -69,9 +69,9 @@ TEST_CASE("dsl::value_t")
     {
         const char* str;
 
-        constexpr int success(const char* cur, int i)
+        LEXY_VERIFY_FN int success(const char* cur, int i)
         {
-            CONSTEXPR_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(str == cur);
             return i;
         }
     };
@@ -96,10 +96,10 @@ TEST_CASE("dsl::value_str")
     {
         const char* str;
 
-        constexpr int success(const char* cur, const char* value, std::size_t length)
+        LEXY_VERIFY_FN int success(const char* cur, const char* value, std::size_t length)
         {
-            CONSTEXPR_CHECK(str == cur);
-            CONSTEXPR_CHECK(lexy::_detail::string_view(value, length) == "abc");
+            LEXY_VERIFY_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(lexy::_detail::string_view(value, length) == "abc");
             return 0;
         }
     };

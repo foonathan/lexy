@@ -25,7 +25,7 @@ TEST_CASE("dsl::delimited()")
         {
             const char* str;
 
-            constexpr auto list()
+            LEXY_VERIFY_FN auto list()
             {
                 struct b
                 {
@@ -33,40 +33,40 @@ TEST_CASE("dsl::delimited()")
 
                     using return_type = int;
 
-                    constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
                     {
                         count += int(lex.size());
                     }
 
-                    constexpr int finish() &&
+                    LEXY_VERIFY_FN int finish() &&
                     {
                         return count;
                     }
                 };
                 return b{};
             }
-            constexpr int success(const char* cur, int count)
+            LEXY_VERIFY_FN int success(const char* cur, int count)
             {
-                CONSTEXPR_CHECK(cur - str == count + 2);
+                LEXY_VERIFY_CHECK(cur - str == count + 2);
                 return count;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "(");
-                CONSTEXPR_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "(");
+                LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
-            constexpr int error(test_error<lexy::missing_delimiter> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter> e)
             {
-                CONSTEXPR_CHECK(e.begin() == str + 1);
-                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                CONSTEXPR_CHECK(e.message() == "missing delimiter");
+                LEXY_VERIFY_CHECK(e.begin() == str + 1);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
                 return -2;
             }
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
                 return -3;
             }
         };
@@ -105,7 +105,7 @@ TEST_CASE("dsl::delimited()")
         {
             const char* str;
 
-            constexpr auto list()
+            LEXY_VERIFY_FN auto list()
             {
                 struct b
                 {
@@ -113,40 +113,40 @@ TEST_CASE("dsl::delimited()")
 
                     using return_type = int;
 
-                    constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
                     {
                         count += int(lex.size());
                     }
 
-                    constexpr int finish() &&
+                    LEXY_VERIFY_FN int finish() &&
                     {
                         return count;
                     }
                 };
                 return b{};
             }
-            constexpr int success(const char* cur, open, int count, close)
+            LEXY_VERIFY_FN int success(const char* cur, open, int count, close)
             {
-                CONSTEXPR_CHECK(cur - str == count + 2);
+                LEXY_VERIFY_CHECK(cur - str == count + 2);
                 return count;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "(");
-                CONSTEXPR_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "(");
+                LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
-            constexpr int error(test_error<lexy::missing_delimiter> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter> e)
             {
-                CONSTEXPR_CHECK(e.begin() == str + 1);
-                CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                CONSTEXPR_CHECK(e.message() == "missing delimiter");
+                LEXY_VERIFY_CHECK(e.begin() == str + 1);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
                 return -2;
             }
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
                 return -3;
             }
         };
@@ -201,7 +201,7 @@ TEST_CASE("dsl::delimited with escape")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -209,45 +209,45 @@ TEST_CASE("dsl::delimited with escape")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::lexeme_for<test_input> lex)
+                LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
                 {
                     count += int(lex.size());
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
             };
             return b{};
         }
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur[-1] == ')');
+            LEXY_VERIFY_CHECK(cur[-1] == ')');
             return count;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.string() == "(");
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.string() == "(");
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
-        constexpr int error(test_error<lexy::missing_delimiter> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter> e)
         {
-            CONSTEXPR_CHECK(e.begin() == str + 1);
-            CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
-            CONSTEXPR_CHECK(e.message() == "missing delimiter");
+            LEXY_VERIFY_CHECK(e.begin() == str + 1);
+            LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+            LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
             return -2;
         }
-        constexpr int error(test_error<lexy::expected_char_class> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            CONSTEXPR_CHECK(e.character_class() == "ASCII");
+            LEXY_VERIFY_CHECK(e.character_class() == "ASCII");
             return -3;
         }
-        constexpr int error(test_error<lexy::invalid_escape_sequence> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
         {
-            CONSTEXPR_CHECK(e.message() == "invalid escape sequence");
+            LEXY_VERIFY_CHECK(e.message() == "invalid escape sequence");
             return -4;
         }
     };
@@ -286,21 +286,21 @@ TEST_CASE("dsl::escape")
         {
             const char* str;
 
-            constexpr int success(const char* cur, int i)
+            LEXY_VERIFY_FN int success(const char* cur, int i)
             {
-                CONSTEXPR_CHECK(cur == str + 4);
+                LEXY_VERIFY_CHECK(cur == str + 4);
                 return i;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "$");
                 return -1;
             }
-            constexpr int error(test_error<lexy::invalid_escape_sequence> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
             {
-                CONSTEXPR_CHECK(e.position() == str + 1);
+                LEXY_VERIFY_CHECK(e.position() == str + 1);
                 return -2;
             }
         };
@@ -325,15 +325,15 @@ TEST_CASE("dsl::escape")
         {
             const char* str;
 
-            constexpr int success(const char*, int i)
+            LEXY_VERIFY_FN int success(const char*, int i)
             {
                 return i;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "$");
                 return -1;
             }
         };
@@ -358,21 +358,21 @@ TEST_CASE("dsl::escape")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
-                CONSTEXPR_CHECK(cur == str + 2);
+                LEXY_VERIFY_CHECK(cur == str + 2);
                 return *lex.begin();
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "$");
                 return -1;
             }
-            constexpr int error(test_error<lexy::invalid_escape_sequence> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
             {
-                CONSTEXPR_CHECK(e.position() == str + 1);
+                LEXY_VERIFY_CHECK(e.position() == str + 1);
                 return -2;
             }
         };
@@ -398,21 +398,21 @@ TEST_CASE("dsl::escape")
         {
             const char* str;
 
-            constexpr int success(const char* cur, char c)
+            LEXY_VERIFY_FN int success(const char* cur, char c)
             {
-                CONSTEXPR_CHECK(cur == str + 2);
+                LEXY_VERIFY_CHECK(cur == str + 2);
                 return c;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "$");
                 return -1;
             }
-            constexpr int error(test_error<lexy::invalid_escape_sequence> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
             {
-                CONSTEXPR_CHECK(e.position() == str + 1);
+                LEXY_VERIFY_CHECK(e.position() == str + 1);
                 return -2;
             }
         };
@@ -436,21 +436,21 @@ TEST_CASE("dsl::escape")
         {
             const char* str;
 
-            constexpr int success(const char* cur, char c)
+            LEXY_VERIFY_FN int success(const char* cur, char c)
             {
-                CONSTEXPR_CHECK(cur == str + 2);
+                LEXY_VERIFY_CHECK(cur == str + 2);
                 return c;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "$");
                 return -1;
             }
-            constexpr int error(test_error<lexy::invalid_escape_sequence> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
             {
-                CONSTEXPR_CHECK(e.position() == str + 1);
+                LEXY_VERIFY_CHECK(e.position() == str + 1);
                 return -2;
             }
         };

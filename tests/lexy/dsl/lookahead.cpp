@@ -20,15 +20,15 @@ TEST_CASE("dsl::lookahead()")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str);
+            LEXY_VERIFY_CHECK(cur == str);
             return -1;
         }
 
-        constexpr int error(test_error<error> e)
+        LEXY_VERIFY_FN int error(test_error<error> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.position() == str);
             return 0;
         }
     };

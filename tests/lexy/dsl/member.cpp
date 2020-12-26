@@ -18,20 +18,20 @@ struct member_macro_callback
     const char* str;
 
     template <typename Fn>
-    constexpr int success(const char* cur, lexy::member<Fn>)
+    LEXY_VERIFY_FN int success(const char* cur, lexy::member<Fn>)
     {
-        CONSTEXPR_CHECK(cur == str + 3);
+        LEXY_VERIFY_CHECK(cur == str + 3);
 
         test_type tt{};
         Fn()(tt, 42);
-        CONSTEXPR_CHECK(tt.member == 42);
+        LEXY_VERIFY_CHECK(tt.member == 42);
 
         return 0;
     }
 
-    constexpr int error(test_error<lexy::expected_literal> e)
+    LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
     {
-        CONSTEXPR_CHECK(e.string() == "abc");
+        LEXY_VERIFY_CHECK(e.string() == "abc");
         return -1;
     }
 };

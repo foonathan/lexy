@@ -15,7 +15,7 @@ TEST_CASE("dsl::return")
     {
         const char* str;
 
-        constexpr int success() // No argument, as we're changing the final parser.
+        LEXY_VERIFY_FN int success() // No argument, as we're changing the final parser.
         {
             return 0;
         }

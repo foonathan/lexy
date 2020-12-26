@@ -16,9 +16,9 @@ TEST_CASE("dsl::nullopt")
     {
         const char* str;
 
-        constexpr int success(const char* cur, lexy::nullopt)
+        LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
         {
-            CONSTEXPR_CHECK(cur == str);
+            LEXY_VERIFY_CHECK(cur == str);
             return 0;
         }
     };
@@ -39,15 +39,15 @@ TEST_CASE("dsl::opt()")
     {
         const char* str;
 
-        constexpr int success(const char* cur, int i)
+        LEXY_VERIFY_FN int success(const char* cur, int i)
         {
-            CONSTEXPR_CHECK(cur - str == 3 || cur == str);
+            LEXY_VERIFY_CHECK((cur - str == 3 || cur == str));
             return i;
         }
 
-        constexpr int error(test_error<lexy::expected_literal> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            CONSTEXPR_CHECK(e.string() == "bc");
+            LEXY_VERIFY_CHECK(e.string() == "bc");
             return -1;
         }
     };

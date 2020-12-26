@@ -15,10 +15,10 @@ TEST_CASE("dsl::position")
     {
         const char* str;
 
-        constexpr int success(const char* cur, const char* pos)
+        LEXY_VERIFY_FN int success(const char* cur, const char* pos)
         {
-            CONSTEXPR_CHECK(str == cur);
-            CONSTEXPR_CHECK(cur == pos);
+            LEXY_VERIFY_CHECK(str == cur);
+            LEXY_VERIFY_CHECK(cur == pos);
             return 0;
         }
     };

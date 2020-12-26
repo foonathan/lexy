@@ -18,9 +18,9 @@ TEST_CASE("dsl::while_()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK((cur - str) % 3 == 0);
+                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
         };
@@ -48,15 +48,15 @@ TEST_CASE("dsl::while_()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK((cur - str) % 3 == 0);
+                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "bc");
+                LEXY_VERIFY_CHECK(e.string() == "bc");
                 return -1;
             }
         };
@@ -84,15 +84,15 @@ TEST_CASE("dsl::while_()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK((cur - str) % 3 == 0);
+                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "bc");
+                LEXY_VERIFY_CHECK(e.string() == "bc");
                 return -1;
             }
         };
@@ -123,16 +123,16 @@ TEST_CASE("dsl::while_one()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK((cur - str) % 3 == 0);
+                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
                 return int(cur - str) / 3;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };

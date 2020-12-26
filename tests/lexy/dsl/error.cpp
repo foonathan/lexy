@@ -17,15 +17,15 @@ TEST_CASE(".error()")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur - str == 3);
+            LEXY_VERIFY_CHECK(cur - str == 3);
             return 0;
         }
 
-        constexpr int error(test_error<error> e)
+        LEXY_VERIFY_FN int error(test_error<error> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
     };
@@ -50,9 +50,9 @@ TEST_CASE("dsl::error")
         {
             const char* str;
 
-            constexpr int error(test_error<tag> e)
+            LEXY_VERIFY_FN int error(test_error<tag> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
         };
@@ -72,17 +72,17 @@ TEST_CASE("dsl::error")
         {
             const char* str;
 
-            constexpr int error(test_error<tag> e)
+            LEXY_VERIFY_FN int error(test_error<tag> e)
             {
                 if (e.begin() != e.end())
                 {
-                    CONSTEXPR_CHECK(e.begin() == str);
-                    CONSTEXPR_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                    LEXY_VERIFY_CHECK(e.begin() == str);
+                    LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
                     return -1;
                 }
                 else
                 {
-                    CONSTEXPR_CHECK(e.position() == str);
+                    LEXY_VERIFY_CHECK(e.position() == str);
                     return -2;
                 }
             }
@@ -106,15 +106,15 @@ TEST_CASE("dsl::require")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str);
+            LEXY_VERIFY_CHECK(cur == str);
             return 0;
         }
 
-        constexpr int error(test_error<tag> e)
+        LEXY_VERIFY_FN int error(test_error<tag> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
     };
@@ -136,15 +136,15 @@ TEST_CASE("dsl::prevent")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str);
+            LEXY_VERIFY_CHECK(cur == str);
             return 0;
         }
 
-        constexpr int error(test_error<tag> e)
+        LEXY_VERIFY_FN int error(test_error<tag> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
     };

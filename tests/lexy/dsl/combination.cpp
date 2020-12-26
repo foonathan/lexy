@@ -18,7 +18,7 @@ TEST_CASE("dsl::combination()")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -26,16 +26,16 @@ TEST_CASE("dsl::combination()")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
-                constexpr void operator()(lexy::id<1>)
+                LEXY_VERIFY_FN void operator()(lexy::id<1>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -43,19 +43,19 @@ TEST_CASE("dsl::combination()")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(count == 2);
-            CONSTEXPR_CHECK(cur - str == 3);
+            LEXY_VERIFY_CHECK(count == 2);
+            LEXY_VERIFY_CHECK(cur - str == 3);
             return *str;
         }
 
-        constexpr int error(test_error<lexy::combination_duplicate> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::combination_duplicate> e)
         {
-            CONSTEXPR_CHECK(e.end() - e.begin() == 1);
+            LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
             return -1;
         }
-        constexpr int error(test_error<lexy::exhausted_choice>)
+        LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice>)
         {
             return -2;
         }
@@ -100,7 +100,7 @@ TEST_CASE("dsl::partial_combination()")
     {
         const char* str;
 
-        constexpr auto list()
+        LEXY_VERIFY_FN auto list()
         {
             struct b
             {
@@ -108,20 +108,20 @@ TEST_CASE("dsl::partial_combination()")
 
                 using return_type = int;
 
-                constexpr void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
                     ++count;
                 }
-                constexpr void operator()(lexy::id<1>)
+                LEXY_VERIFY_FN void operator()(lexy::id<1>)
                 {
                     ++count;
                 }
-                constexpr void operator()(lexy::id<2>)
+                LEXY_VERIFY_FN void operator()(lexy::id<2>)
                 {
                     ++count;
                 }
 
-                constexpr int finish() &&
+                LEXY_VERIFY_FN int finish() &&
                 {
                     return count;
                 }
@@ -129,15 +129,15 @@ TEST_CASE("dsl::partial_combination()")
             return b{};
         }
 
-        constexpr int success(const char* cur, int count)
+        LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            CONSTEXPR_CHECK(cur - str == count);
+            LEXY_VERIFY_CHECK(cur - str == count);
             return count;
         }
 
-        constexpr int error(test_error<lexy::combination_duplicate> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::combination_duplicate> e)
         {
-            CONSTEXPR_CHECK(e.end() - e.begin() == 1);
+            LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
             return -1;
         }
     };

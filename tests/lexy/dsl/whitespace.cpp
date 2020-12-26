@@ -20,14 +20,14 @@ TEST_CASE("dsl::whitespaced()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) - 3;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -56,12 +56,12 @@ TEST_CASE("dsl::whitespaced()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
                 return 0;
             }
-            constexpr int success(const char* cur, lexy::id<0>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
             {
                 return int(cur - str);
             }

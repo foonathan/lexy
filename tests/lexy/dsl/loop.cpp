@@ -16,12 +16,12 @@ TEST_CASE("dsl::loop()")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str) - 1;
         }
 
-        constexpr int error(test_error<lexy::exhausted_choice>)
+        LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice>)
         {
             return -1;
         }

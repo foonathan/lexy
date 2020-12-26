@@ -127,16 +127,16 @@ TEST_CASE("dsl::zero")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str + 1);
+            LEXY_VERIFY_CHECK(cur == str + 1);
             return 0;
         }
 
-        constexpr int error(test_error<lexy::expected_char_class> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.character_class() == "digit.zero");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.character_class() == "digit.zero");
             return -1;
         }
     };
@@ -163,16 +163,16 @@ TEST_CASE("dsl::digit")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
-            CONSTEXPR_CHECK(cur == str + 1);
+            LEXY_VERIFY_CHECK(cur == str + 1);
             return *str - '0';
         }
 
-        constexpr int error(test_error<lexy::expected_char_class> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.character_class() == "digit.octal");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.character_class() == "digit.octal");
             return -1;
         }
     };
@@ -205,15 +205,15 @@ TEST_CASE("dsl::digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
         };
@@ -243,21 +243,21 @@ TEST_CASE("dsl::digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
-            constexpr int error(test_error<lexy::forbidden_leading_zero> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
             {
-                CONSTEXPR_CHECK(e.begin() == str);
-                CONSTEXPR_CHECK(e.end() == str + 1);
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == str + 1);
                 return -2;
             }
         };
@@ -287,15 +287,15 @@ TEST_CASE("dsl::digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
         };
@@ -335,21 +335,21 @@ TEST_CASE("dsl::digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
-            constexpr int error(test_error<lexy::forbidden_leading_zero> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
             {
-                CONSTEXPR_CHECK(e.begin() == str);
-                CONSTEXPR_CHECK(e.end() == str + 1);
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == str + 1);
                 return -2;
             }
         };
@@ -391,15 +391,15 @@ TEST_CASE("dsl::n_digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
         };
@@ -428,15 +428,15 @@ TEST_CASE("dsl::n_digits")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
                 return -1;
             }
         };

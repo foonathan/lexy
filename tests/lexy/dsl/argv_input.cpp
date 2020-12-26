@@ -18,16 +18,16 @@ TEST_CASE("atom: argv_separator")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_char_class> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                CONSTEXPR_CHECK(e.position() == str);
-                CONSTEXPR_CHECK(e.character_class() == "argv-separator");
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == "argv-separator");
                 return -1;
             }
         };

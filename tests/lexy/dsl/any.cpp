@@ -16,7 +16,7 @@ TEST_CASE("dsl::any")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }

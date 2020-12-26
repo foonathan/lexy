@@ -12,8 +12,6 @@
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/input/string_input.hpp>
 
-#include "dsl/verify.hpp"
-
 namespace
 {
 struct prod_a
@@ -82,7 +80,8 @@ TEST_CASE("validate")
     {
         constexpr auto prod_a_error = [](lexy::string_error_context<prod_a>,
                                          lexy::string_error<lexy::expected_literal> error) {
-            CONSTEXPR_CHECK(error.string() == "abc");
+            if (error.string() != "abc")
+                throw 0;
             return -1;
         };
         constexpr auto prod_b_error = [](lexy::string_error_context<prod_b>,

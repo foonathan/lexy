@@ -21,16 +21,16 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
-                CONSTEXPR_CHECK(lex.begin() == str);
-                CONSTEXPR_CHECK(lex.end() == cur);
+                LEXY_VERIFY_CHECK(lex.begin() == str);
+                LEXY_VERIFY_CHECK(lex.end() == cur);
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -50,11 +50,11 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex,
-                                  lexy::label<lab>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex,
+                                       lexy::label<lab>)
             {
-                CONSTEXPR_CHECK(str == cur);
-                CONSTEXPR_CHECK(lex.empty());
+                LEXY_VERIFY_CHECK(str == cur);
+                LEXY_VERIFY_CHECK(lex.empty());
                 return 0;
             }
         };
@@ -74,17 +74,17 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
-                                  lexy::lexeme_for<test_input> inner)
+            LEXY_VERIFY_FN int success(const char*, lexy::lexeme_for<test_input> outer,
+                                       lexy::lexeme_for<test_input> inner)
             {
-                CONSTEXPR_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "abc");
-                CONSTEXPR_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
+                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "abc");
+                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };
@@ -105,15 +105,15 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char*, lexy::lexeme_for<test_input> outer,
-                                  lexy::lexeme_for<test_input> inner)
+            LEXY_VERIFY_FN int success(const char*, lexy::lexeme_for<test_input> outer,
+                                       lexy::lexeme_for<test_input> inner)
             {
-                CONSTEXPR_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "(abc)");
-                CONSTEXPR_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
+                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "(abc)");
+                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal>)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
             {
                 return -1;
             }
@@ -134,15 +134,15 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
-                CONSTEXPR_CHECK(cur == str);
+                LEXY_VERIFY_CHECK(cur == str);
                 return 0;
             }
-            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
-                CONSTEXPR_CHECK(lex.begin() == str);
-                CONSTEXPR_CHECK(lex.end() == cur);
+                LEXY_VERIFY_CHECK(lex.begin() == str);
+                LEXY_VERIFY_CHECK(lex.end() == cur);
                 return 1;
             }
         };
@@ -162,16 +162,16 @@ TEST_CASE("dsl::capture()")
         {
             const char* str;
 
-            constexpr int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
             {
-                CONSTEXPR_CHECK(lex.end() == cur);
-                CONSTEXPR_CHECK(lexy::_detail::string_view(lex.data(), lex.size()) == "abc");
+                LEXY_VERIFY_CHECK(lex.end() == cur);
+                LEXY_VERIFY_CHECK(lexy::_detail::string_view(lex.data(), lex.size()) == "abc");
                 return 0;
             }
 
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == "abc");
                 return -1;
             }
         };

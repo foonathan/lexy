@@ -16,15 +16,15 @@ TEST_CASE("dsl::newline")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }
 
-        constexpr int error(test_error<lexy::expected_char_class> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.character_class() == "newline");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.character_class() == "newline");
             return -1;
         }
     };
@@ -56,15 +56,15 @@ TEST_CASE("dsl::eol")
     {
         const char* str;
 
-        constexpr int success(const char* cur)
+        LEXY_VERIFY_FN int success(const char* cur)
         {
             return int(cur - str);
         }
 
-        constexpr int error(test_error<lexy::expected_char_class> e)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            CONSTEXPR_CHECK(e.position() == str);
-            CONSTEXPR_CHECK(e.character_class() == "EOL");
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.character_class() == "EOL");
             return -1;
         }
     };

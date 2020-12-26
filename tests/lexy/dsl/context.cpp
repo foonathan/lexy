@@ -23,18 +23,18 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) / 2;
             }
 
-            constexpr int error(test_error<lexy::context_mismatch>)
+            LEXY_VERIFY_FN int error(test_error<lexy::context_mismatch>)
             {
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "-");
+                LEXY_VERIFY_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -66,18 +66,18 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) / 2;
             }
 
-            constexpr int error(test_error<lexy::context_mismatch>)
+            LEXY_VERIFY_FN int error(test_error<lexy::context_mismatch>)
             {
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "-");
+                LEXY_VERIFY_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -108,18 +108,18 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) / 3;
             }
 
-            constexpr int error(test_error<lexy::context_mismatch>)
+            LEXY_VERIFY_FN int error(test_error<lexy::context_mismatch>)
             {
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "-");
+                LEXY_VERIFY_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -148,7 +148,7 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str);
             }
@@ -174,18 +174,18 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) - 3;
             }
 
-            constexpr int error(test_error<lexy::context_mismatch>)
+            LEXY_VERIFY_FN int error(test_error<lexy::context_mismatch>)
             {
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "-");
+                LEXY_VERIFY_CHECK(e.string() == "-");
                 return -2;
             }
         };
@@ -218,18 +218,18 @@ TEST_CASE("dsl::context_*")
         {
             const char* str;
 
-            constexpr int success(const char* cur)
+            LEXY_VERIFY_FN int success(const char* cur)
             {
                 return int(cur - str) / 2;
             }
 
-            constexpr int error(test_error<lexy::context_mismatch>)
+            LEXY_VERIFY_FN int error(test_error<lexy::context_mismatch>)
             {
                 return -1;
             }
-            constexpr int error(test_error<lexy::expected_literal> e)
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                CONSTEXPR_CHECK(e.string() == "-");
+                LEXY_VERIFY_CHECK(e.string() == "-");
                 return -2;
             }
         };
