@@ -108,7 +108,7 @@ TEST_CASE("dsl::integer")
 
     SUBCASE("base 10, uint8_t")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::integer<std::uint8_t>(lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
 
         for (auto i = 0; i < 256; ++i)
@@ -125,7 +125,7 @@ TEST_CASE("dsl::integer")
     }
     SUBCASE("base 10, int8_t")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::integer<std::int8_t>(lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
 
         for (auto i = 0; i < 128; ++i)
@@ -142,7 +142,7 @@ TEST_CASE("dsl::integer")
     }
     SUBCASE("base 10, uint16_t")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::integer<std::uint16_t>(lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
 
         for (auto i = 0; i < 256; ++i)
@@ -167,7 +167,7 @@ TEST_CASE("dsl::integer")
     }
     SUBCASE("base 10, unbounded")
     {
-        constexpr auto rule = lexy::dsl::integer<lexy::unbounded<std::uint8_t>>(
+        static constexpr auto rule = lexy::dsl::integer<lexy::unbounded<std::uint8_t>>(
             lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
 
         for (auto i = 0; i < 256; ++i)
@@ -185,7 +185,7 @@ TEST_CASE("dsl::integer")
 
     SUBCASE("base 16, uint8_t")
     {
-        constexpr auto rule = lexy::dsl::integer<std::uint8_t>(
+        static constexpr auto rule = lexy::dsl::integer<std::uint8_t>(
             lexy::dsl::digits<lexy::dsl::hex>.sep(lexy::dsl::digit_sep_tick));
 
         char buffer[3];
@@ -220,7 +220,7 @@ TEST_CASE("dsl::integer")
 
     SUBCASE("generic rule")
     {
-        constexpr auto rule = lexy::dsl::integer<std::uint8_t, lexy::dsl::decimal>(
+        static constexpr auto rule = lexy::dsl::integer<std::uint8_t, lexy::dsl::decimal>(
             lexy::dsl::digit<> + lexy::dsl::digit<>);
 
         for (auto i = 10; i < 100; ++i)
@@ -228,7 +228,7 @@ TEST_CASE("dsl::integer")
     }
     SUBCASE("n_digits")
     {
-        constexpr auto rule = lexy::dsl::integer<std::uint8_t>(lexy::dsl::n_digits<2>);
+        static constexpr auto rule = lexy::dsl::integer<std::uint8_t>(lexy::dsl::n_digits<2>);
 
         for (auto i = 10; i < 100; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
@@ -237,7 +237,7 @@ TEST_CASE("dsl::integer")
 
 TEST_CASE("dsl::code_point_id")
 {
-    constexpr auto rule = lexy::dsl::code_point_id<6>;
+    static constexpr auto rule = lexy::dsl::code_point_id<6>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -263,19 +263,19 @@ TEST_CASE("dsl::code_point_id")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -2);
 
-    constexpr auto latin_small_letter_e_with_acute = verify<callback>(rule, "0000E9");
+    auto latin_small_letter_e_with_acute = LEXY_VERIFY("0000E9");
     CHECK(latin_small_letter_e_with_acute == 0x0000E9);
-    constexpr auto euro_sign = verify<callback>(rule, "0020AC");
+    auto euro_sign = LEXY_VERIFY("0020AC");
     CHECK(euro_sign == 0x20AC);
-    constexpr auto slightly_smiling_face = verify<callback>(rule, "01F92D");
+    auto slightly_smiling_face = LEXY_VERIFY("01F92D");
     CHECK(slightly_smiling_face == 0x1F92D);
 
-    constexpr auto extra_digits = verify<callback>(rule, "0000001");
+    auto extra_digits = LEXY_VERIFY("0000001");
     CHECK(extra_digits == 0);
-    constexpr auto overflow = verify<callback>(rule, "ABCDEF");
+    auto overflow = LEXY_VERIFY("ABCDEF");
     CHECK(overflow == -1);
 }
 

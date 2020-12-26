@@ -12,7 +12,7 @@ TEST_CASE("dsl::operator|")
 {
     SUBCASE("branch")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = LEXY_LIT("abc") >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -40,17 +40,17 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
-        constexpr auto def = verify<callback>(rule, "def");
+        auto def = LEXY_VERIFY("def");
         CHECK(def == 1);
     }
     SUBCASE("ordered")
     {
-        constexpr auto rule = LEXY_LIT("a") | LEXY_LIT("abc");
+        static constexpr auto rule = LEXY_LIT("a") | LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -71,17 +71,17 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 0);
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
     }
     SUBCASE("else")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = LEXY_LIT("abc") >> lexy::dsl::id<0> | lexy::dsl::else_ >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -102,16 +102,16 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
     }
     SUBCASE("error")
     {
         struct tag;
-        constexpr auto rule
+        static constexpr auto rule
             = LEXY_LIT("abc")
                   >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1> | lexy::dsl::error<tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -140,12 +140,12 @@ TEST_CASE("dsl::operator|")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
-        constexpr auto def = verify<callback>(rule, "def");
+        auto def = LEXY_VERIFY("def");
         CHECK(def == 1);
     }
 }

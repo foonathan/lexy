@@ -12,7 +12,8 @@ TEST_CASE("dsl::lookahead()")
 {
     struct error
     {};
-    constexpr auto rule = if_(lookahead(LEXY_LIT("!"), LEXY_LIT("\n")) >> lexy::dsl::error<error>);
+    static constexpr auto rule
+        = if_(lookahead(LEXY_LIT("!"), LEXY_LIT("\n")) >> lexy::dsl::error<error>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -32,19 +33,19 @@ TEST_CASE("dsl::lookahead()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto nothing = verify<callback>(rule, "abc");
+    auto nothing = LEXY_VERIFY("abc");
     CHECK(nothing == -1);
 
-    constexpr auto nothing_newline = verify<callback>(rule, "abc\n");
+    auto nothing_newline = LEXY_VERIFY("abc\n");
     CHECK(nothing_newline == -1);
 
-    constexpr auto something = verify<callback>(rule, "abc!def\n");
+    auto something = LEXY_VERIFY("abc!def\n");
     CHECK(something == 0);
 
-    constexpr auto something_after = verify<callback>(rule, "abc\n!def\n");
+    auto something_after = LEXY_VERIFY("abc\n!def\n");
     CHECK(something_after == -1);
 }
 

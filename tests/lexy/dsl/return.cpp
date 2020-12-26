@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::return")
 {
-    constexpr auto rule = lexy::dsl::return_ + LEXY_LIT("abc");
+    static constexpr auto rule = lexy::dsl::return_ + LEXY_LIT("abc");
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -21,10 +21,10 @@ TEST_CASE("dsl::return")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 }
 

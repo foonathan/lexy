@@ -13,9 +13,9 @@ TEST_CASE("dsl::switch_()")
 {
     SUBCASE("basic")
     {
-        constexpr auto rule = switch_(while_(LEXY_LIT("a")))
-                                  .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
+        static constexpr auto rule = switch_(while_(LEXY_LIT("a")))
+                                         .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
+                                         .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -36,22 +36,23 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        constexpr auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == -1);
     }
     SUBCASE("ordered")
     {
-        constexpr auto rule = switch_(while_(LEXY_LIT("a")))
-                                  .case_(LEXY_LIT("a") + lexy::dsl::any >> lexy::dsl::value_c<1>)
-                                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
+        static constexpr auto rule
+            = switch_(while_(LEXY_LIT("a")))
+                  .case_(LEXY_LIT("a") + lexy::dsl::any >> lexy::dsl::value_c<1>)
+                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -73,22 +74,22 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        constexpr auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 1);
-        constexpr auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == 1);
     }
     SUBCASE("default")
     {
-        constexpr auto rule = switch_(while_(LEXY_LIT("a")))
-                                  .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>)
-                                  .default_(lexy::dsl::id<0>);
+        static constexpr auto rule = switch_(while_(LEXY_LIT("a")))
+                                         .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
+                                         .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>)
+                                         .default_(lexy::dsl::id<0>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -108,23 +109,23 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        constexpr auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == 0);
     }
     SUBCASE("error")
     {
-        constexpr auto rule = switch_(while_(LEXY_LIT("a")))
-                                  .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                  .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>)
-                                  .error<struct tag>();
+        static constexpr auto rule = switch_(while_(LEXY_LIT("a")))
+                                         .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
+                                         .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>)
+                                         .error<struct tag>();
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -145,15 +146,15 @@ TEST_CASE("dsl::switch_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        constexpr auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 2);
 
-        constexpr auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == -1);
     }
 }

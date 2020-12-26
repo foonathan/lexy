@@ -12,7 +12,7 @@ TEST_CASE("dsl::whitespaced()")
 {
     SUBCASE("simple")
     {
-        constexpr auto rule = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
+        static constexpr auto rule = whitespaced(LEXY_LIT("abc"), LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
@@ -32,24 +32,25 @@ TEST_CASE("dsl::whitespaced()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
 
-        constexpr auto space_abc = verify<callback>(rule, " abc");
+        auto space_abc = LEXY_VERIFY(" abc");
         CHECK(space_abc == 1);
-        constexpr auto space_space_abc = verify<callback>(rule, "  abc");
+        auto space_space_abc = LEXY_VERIFY("  abc");
         CHECK(space_space_abc == 2);
     }
     SUBCASE("branch")
     {
-        constexpr auto rule_ = whitespaced(LEXY_LIT("abc") >> lexy::dsl::id<0>, LEXY_LIT(" "));
+        static constexpr auto rule_
+            = whitespaced(LEXY_LIT("abc") >> lexy::dsl::id<0>, LEXY_LIT(" "));
         CHECK(lexy::is_rule<decltype(rule_)>);
         CHECK(lexy::is_branch<decltype(rule_)>);
 
-        constexpr auto rule = if_(rule_);
+        static constexpr auto rule = if_(rule_);
 
         struct callback
         {
@@ -66,15 +67,15 @@ TEST_CASE("dsl::whitespaced()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 3);
 
-        constexpr auto space_abc = verify<callback>(rule, " abc");
+        auto space_abc = LEXY_VERIFY(" abc");
         CHECK(space_abc == 4);
-        constexpr auto space_space_abc = verify<callback>(rule, "  abc");
+        auto space_space_abc = LEXY_VERIFY("  abc");
         CHECK(space_space_abc == 5);
     }
 }

@@ -119,7 +119,7 @@ TEST_CASE("dsl::hex")
 
 TEST_CASE("dsl::zero")
 {
-    constexpr auto rule = lexy::dsl::zero;
+    static constexpr auto rule = lexy::dsl::zero;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -141,21 +141,21 @@ TEST_CASE("dsl::zero")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto zero = verify<callback>(rule, "0");
+    auto zero = LEXY_VERIFY("0");
     CHECK(zero == 0);
-    constexpr auto zero_zero = verify<callback>(rule, "00");
+    auto zero_zero = LEXY_VERIFY("00");
     CHECK(zero_zero == 0);
 
-    constexpr auto nine = verify<callback>(rule, "9");
+    auto nine = LEXY_VERIFY("9");
     CHECK(nine == -1);
 }
 
 TEST_CASE("dsl::digit")
 {
-    constexpr auto rule = lexy::dsl::digit<lexy::dsl::octal>;
+    static constexpr auto rule = lexy::dsl::digit<lexy::dsl::octal>;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -177,19 +177,19 @@ TEST_CASE("dsl::digit")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto zero = verify<callback>(rule, "0");
+    auto zero = LEXY_VERIFY("0");
     CHECK(zero == 0);
 
-    constexpr auto six = verify<callback>(rule, "6");
+    auto six = LEXY_VERIFY("6");
     CHECK(six == 6);
 
-    constexpr auto three_seven = verify<callback>(rule, "37");
+    auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven == 3);
 
-    constexpr auto nine = verify<callback>(rule, "9");
+    auto nine = LEXY_VERIFY("9");
     CHECK(nine == -1);
 }
 
@@ -197,7 +197,7 @@ TEST_CASE("dsl::digits")
 {
     SUBCASE("basic")
     {
-        constexpr auto rule = lexy::dsl::digits<>;
+        static constexpr auto rule = lexy::dsl::digits<>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -218,24 +218,24 @@ TEST_CASE("dsl::digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == 1);
 
-        constexpr auto one = verify<callback>(rule, "1");
+        auto one = LEXY_VERIFY("1");
         CHECK(one == 1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        auto one_zero_one = LEXY_VERIFY("101");
         CHECK(one_zero_one == 3);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        auto zero_zero_seven = LEXY_VERIFY("007");
         CHECK(zero_zero_seven == 3);
     }
     SUBCASE("no leading zero")
     {
-        constexpr auto rule = lexy::dsl::digits<>.no_leading_zero();
+        static constexpr auto rule = lexy::dsl::digits<>.no_leading_zero();
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -262,24 +262,24 @@ TEST_CASE("dsl::digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == 1);
 
-        constexpr auto one = verify<callback>(rule, "1");
+        auto one = LEXY_VERIFY("1");
         CHECK(one == 1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        auto one_zero_one = LEXY_VERIFY("101");
         CHECK(one_zero_one == 3);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        auto zero_zero_seven = LEXY_VERIFY("007");
         CHECK(zero_zero_seven == -2);
     }
     SUBCASE("sep")
     {
-        constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
+        static constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -300,29 +300,30 @@ TEST_CASE("dsl::digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == 1);
 
-        constexpr auto one = verify<callback>(rule, "1");
+        auto one = LEXY_VERIFY("1");
         CHECK(one == 1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        auto one_zero_one = LEXY_VERIFY("1'01");
         CHECK(one_zero_one == 4);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        auto zero_zero_seven = LEXY_VERIFY("00'7");
         CHECK(zero_zero_seven == 4);
 
-        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        auto leading_tick = LEXY_VERIFY("'0");
         CHECK(leading_tick == -1);
-        constexpr auto trailing_tick = verify<callback>(rule, "0'");
+        auto trailing_tick = LEXY_VERIFY("0'");
         CHECK(trailing_tick == -1);
     }
     SUBCASE("sep + no leading zero")
     {
-        constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
+        static constexpr auto rule
+            = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -353,27 +354,27 @@ TEST_CASE("dsl::digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == 1);
 
-        constexpr auto one = verify<callback>(rule, "1");
+        auto one = LEXY_VERIFY("1");
         CHECK(one == 1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        auto one_zero_one = LEXY_VERIFY("1'01");
         CHECK(one_zero_one == 4);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        auto zero_zero_seven = LEXY_VERIFY("00'7");
         CHECK(zero_zero_seven == -2);
 
-        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        auto leading_tick = LEXY_VERIFY("'0");
         CHECK(leading_tick == -1);
-        constexpr auto trailing_tick = verify<callback>(rule, "0'");
+        auto trailing_tick = LEXY_VERIFY("0'");
         CHECK(trailing_tick == -2);
 
-        constexpr auto zero_tick_one = verify<callback>(rule, "0'1");
+        auto zero_tick_one = LEXY_VERIFY("0'1");
         CHECK(zero_tick_one == -2);
     }
 }
@@ -382,7 +383,7 @@ TEST_CASE("dsl::n_digits")
 {
     SUBCASE("basic")
     {
-        constexpr auto rule = lexy::dsl::n_digits<3>;
+        static constexpr auto rule = lexy::dsl::n_digits<3>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -403,23 +404,23 @@ TEST_CASE("dsl::n_digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == -1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "101");
+        auto one_zero_one = LEXY_VERIFY("101");
         CHECK(one_zero_one == 3);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "007");
+        auto zero_zero_seven = LEXY_VERIFY("007");
         CHECK(zero_zero_seven == 3);
 
-        constexpr auto four_digits = verify<callback>(rule, "1234");
+        auto four_digits = LEXY_VERIFY("1234");
         CHECK(four_digits == 3);
     }
     SUBCASE("sep")
     {
-        constexpr auto rule = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
+        static constexpr auto rule = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -440,23 +441,23 @@ TEST_CASE("dsl::n_digits")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
-        constexpr auto zero = verify<callback>(rule, "0");
+        auto zero = LEXY_VERIFY("0");
         CHECK(zero == -1);
 
-        constexpr auto one_zero_one = verify<callback>(rule, "1'01");
+        auto one_zero_one = LEXY_VERIFY("1'01");
         CHECK(one_zero_one == 4);
 
-        constexpr auto zero_zero_seven = verify<callback>(rule, "00'7");
+        auto zero_zero_seven = LEXY_VERIFY("00'7");
         CHECK(zero_zero_seven == 4);
 
-        constexpr auto leading_tick = verify<callback>(rule, "'0");
+        auto leading_tick = LEXY_VERIFY("'0");
         CHECK(leading_tick == -1);
-        constexpr auto trailing_tick = verify<callback>(rule, "123'");
+        auto trailing_tick = LEXY_VERIFY("123'");
         CHECK(trailing_tick == 3);
 
-        constexpr auto four_digits = verify<callback>(rule, "1'2'3'4");
+        auto four_digits = LEXY_VERIFY("1'2'3'4");
         CHECK(four_digits == 5);
     }
 }

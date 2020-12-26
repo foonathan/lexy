@@ -14,7 +14,7 @@ TEST_CASE("dsl::capture()")
 {
     SUBCASE("basic")
     {
-        constexpr auto rule = capture(LEXY_LIT("abc"));
+        static constexpr auto rule = capture(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -35,15 +35,15 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 0);
     }
     SUBCASE("capture label")
     {
-        constexpr auto rule = capture(lexy::dsl::label<struct lab>);
+        static constexpr auto rule = capture(lexy::dsl::label<struct lab>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -59,15 +59,15 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("directly nested")
     {
-        constexpr auto rule = capture(capture(LEXY_LIT("abc")));
+        static constexpr auto rule = capture(capture(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -89,15 +89,16 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 0);
     }
     SUBCASE("indirectly nested")
     {
-        constexpr auto rule = capture(LEXY_LIT("(") + capture(LEXY_LIT("abc")) + LEXY_LIT(")"));
+        static constexpr auto rule
+            = capture(LEXY_LIT("(") + capture(LEXY_LIT("abc")) + LEXY_LIT(")"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -118,15 +119,15 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto success = verify<callback>(rule, "(abc)");
+        auto success = LEXY_VERIFY("(abc)");
         CHECK(success == 0);
     }
     SUBCASE("branch")
     {
-        constexpr auto rule = if_(capture(LEXY_LIT("abc")));
+        static constexpr auto rule = if_(capture(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -146,15 +147,15 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 1);
     }
     SUBCASE("whitespace")
     {
-        constexpr auto rule = capture(LEXY_LIT("abc"))[LEXY_LIT(" ")];
+        static constexpr auto rule = capture(LEXY_LIT("abc"))[LEXY_LIT(" ")];
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -175,13 +176,13 @@ TEST_CASE("dsl::capture()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 0);
 
-        constexpr auto with_space = verify<callback>(rule, "  abc");
+        auto with_space = LEXY_VERIFY("  abc");
         CHECK(with_space == 0);
     }
 }

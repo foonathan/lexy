@@ -4,13 +4,17 @@
 
 #include <lexy/dsl/bom.hpp>
 
+#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
+#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
+#endif
+
 #include "verify.hpp"
 
 TEST_CASE("dsl::bom")
 {
     SUBCASE("no bom")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::bom<lexy::default_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
@@ -25,12 +29,12 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
     }
     SUBCASE("UTF-8")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::bom<lexy::utf8_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
@@ -52,16 +56,16 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         static constexpr char str[] = {char(0xEF), char(0xBB), char(0xBF)};
-        constexpr auto        bom   = verify<callback>(rule, str, 3);
+        auto                  bom   = LEXY_VERIFY(str, 3);
         CHECK(bom == 3);
     }
     SUBCASE("UTF-16 little")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
@@ -83,16 +87,17 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         static constexpr char str[] = {char(0xFF), char(0xFE)};
-        constexpr auto        bom   = verify<callback>(rule, str, 2);
+        auto                  bom   = LEXY_VERIFY(str, 2);
         CHECK(bom == 2);
     }
     SUBCASE("UTF-16 big")
     {
-        constexpr auto rule = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::big>;
+        static constexpr auto rule
+            = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::big>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -113,16 +118,16 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         static constexpr char str[] = {char(0xFE), char(0xFF)};
-        constexpr auto        bom   = verify<callback>(rule, str, 2);
+        auto                  bom   = LEXY_VERIFY(str, 2);
         CHECK(bom == 2);
     }
     SUBCASE("UTF-32 little")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
@@ -144,16 +149,17 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         static constexpr char str[] = {char(0xFF), char(0xFE), 0, 0};
-        constexpr auto        bom   = verify<callback>(rule, str, 4);
+        auto                  bom   = LEXY_VERIFY(str, 4);
         CHECK(bom == 4);
     }
     SUBCASE("UTF-32 big")
     {
-        constexpr auto rule = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::big>;
+        static constexpr auto rule
+            = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::big>;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -174,11 +180,11 @@ TEST_CASE("dsl::bom")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         static constexpr char str[] = {0, 0, char(0xFE), char(0xFF)};
-        constexpr auto        bom   = verify<callback>(rule, str, 4);
+        auto                  bom   = LEXY_VERIFY(str, 4);
         CHECK(bom == 4);
     }
 }

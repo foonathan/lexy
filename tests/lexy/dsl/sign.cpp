@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::plus_sign")
 {
-    constexpr auto rule = lexy::dsl::plus_sign + lexy::dsl::eof;
+    static constexpr auto rule = lexy::dsl::plus_sign + lexy::dsl::eof;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -28,17 +28,17 @@ TEST_CASE("dsl::plus_sign")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == +1);
-    constexpr auto plus = verify<callback>(rule, "+");
+    auto plus = LEXY_VERIFY("+");
     CHECK(plus == +1);
-    constexpr auto minus = verify<callback>(rule, "-");
+    auto minus = LEXY_VERIFY("-");
     CHECK(minus == 0);
 }
 
 TEST_CASE("dsl::minus_sign")
 {
-    constexpr auto rule = lexy::dsl::minus_sign + lexy::dsl::eof;
+    static constexpr auto rule = lexy::dsl::minus_sign + lexy::dsl::eof;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -57,17 +57,17 @@ TEST_CASE("dsl::minus_sign")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == +1);
-    constexpr auto plus = verify<callback>(rule, "+");
+    auto plus = LEXY_VERIFY("+");
     CHECK(plus == 0);
-    constexpr auto minus = verify<callback>(rule, "-");
+    auto minus = LEXY_VERIFY("-");
     CHECK(minus == -1);
 }
 
 TEST_CASE("dsl::sign")
 {
-    constexpr auto rule = lexy::dsl::sign + lexy::dsl::eof;
+    static constexpr auto rule = lexy::dsl::sign + lexy::dsl::eof;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -87,11 +87,11 @@ TEST_CASE("dsl::sign")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == +1);
-    constexpr auto plus = verify<callback>(rule, "+");
+    auto plus = LEXY_VERIFY("+");
     CHECK(plus == +1);
-    constexpr auto minus = verify<callback>(rule, "-");
+    auto minus = LEXY_VERIFY("-");
     CHECK(minus == -1);
 }
 

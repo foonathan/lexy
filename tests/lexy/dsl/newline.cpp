@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::newline")
 {
-    constexpr auto rule = lexy::dsl::newline;
+    static constexpr auto rule = lexy::dsl::newline;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -29,26 +29,26 @@ TEST_CASE("dsl::newline")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto nl = verify<callback>(rule, "\n");
+    auto nl = LEXY_VERIFY("\n");
     CHECK(nl == 1);
 
-    constexpr auto cr = verify<callback>(rule, "\r");
+    auto cr = LEXY_VERIFY("\r");
     CHECK(cr == -1);
-    constexpr auto cr_nl = verify<callback>(rule, "\r\n");
+    auto cr_nl = LEXY_VERIFY("\r\n");
     CHECK(cr_nl == 2);
 
-    constexpr auto extra_cr_nl = verify<callback>(rule, "\n\r\n");
+    auto extra_cr_nl = LEXY_VERIFY("\n\r\n");
     CHECK(extra_cr_nl == 1);
-    constexpr auto extra_nl = verify<callback>(rule, "\r\n\n");
+    auto extra_nl = LEXY_VERIFY("\r\n\n");
     CHECK(extra_nl == 2);
 }
 
 TEST_CASE("dsl::eol")
 {
-    constexpr auto rule = lexy::dsl::eol;
+    static constexpr auto rule = lexy::dsl::eol;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -69,20 +69,20 @@ TEST_CASE("dsl::eol")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto nl = verify<callback>(rule, "\n");
+    auto nl = LEXY_VERIFY("\n");
     CHECK(nl == 1);
 
-    constexpr auto cr = verify<callback>(rule, "\r");
+    auto cr = LEXY_VERIFY("\r");
     CHECK(cr == -1);
-    constexpr auto cr_nl = verify<callback>(rule, "\r\n");
+    auto cr_nl = LEXY_VERIFY("\r\n");
     CHECK(cr_nl == 2);
 
-    constexpr auto extra_cr_nl = verify<callback>(rule, "\n\r\n");
+    auto extra_cr_nl = LEXY_VERIFY("\n\r\n");
     CHECK(extra_cr_nl == 1);
-    constexpr auto extra_nl = verify<callback>(rule, "\r\n\n");
+    auto extra_nl = LEXY_VERIFY("\r\n\n");
     CHECK(extra_nl == 2);
 }
 

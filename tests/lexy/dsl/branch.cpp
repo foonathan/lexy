@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::operator>>")
 {
-    constexpr auto rule = LEXY_LIT("a") >> lexy::dsl::label<struct lab>;
+    static constexpr auto rule = LEXY_LIT("a") >> lexy::dsl::label<struct lab>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -29,10 +29,10 @@ TEST_CASE("dsl::operator>>")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto success = verify<callback>(rule, "a");
+    auto success = LEXY_VERIFY("a");
     CHECK(success == 0);
 }
 

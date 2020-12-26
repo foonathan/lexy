@@ -11,7 +11,7 @@ TEST_CASE("dsl::ascii::*")
 {
     SUBCASE("control")
     {
-        constexpr auto rule = lexy::dsl::ascii::control;
+        static constexpr auto rule = lexy::dsl::ascii::control;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -33,7 +33,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -45,7 +45,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("blank")
     {
-        constexpr auto rule = lexy::dsl::ascii::blank;
+        static constexpr auto rule = lexy::dsl::ascii::blank;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -67,7 +67,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -79,7 +79,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("newline")
     {
-        constexpr auto rule = lexy::dsl::ascii::newline;
+        static constexpr auto rule = lexy::dsl::ascii::newline;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -101,7 +101,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -113,7 +113,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("other_space")
     {
-        constexpr auto rule = lexy::dsl::ascii::other_space;
+        static constexpr auto rule = lexy::dsl::ascii::other_space;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -135,7 +135,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -147,7 +147,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("space")
     {
-        constexpr auto rule = lexy::dsl::ascii::space;
+        static constexpr auto rule = lexy::dsl::ascii::space;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -169,7 +169,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -181,7 +181,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("lower")
     {
-        constexpr auto rule = lexy::dsl::ascii::lower;
+        static constexpr auto rule = lexy::dsl::ascii::lower;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -203,7 +203,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -215,7 +215,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("upper")
     {
-        constexpr auto rule = lexy::dsl::ascii::upper;
+        static constexpr auto rule = lexy::dsl::ascii::upper;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -237,7 +237,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -249,7 +249,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("alpha")
     {
-        constexpr auto rule = lexy::dsl::ascii::alpha;
+        static constexpr auto rule = lexy::dsl::ascii::alpha;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -271,7 +271,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -283,7 +283,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("digit")
     {
-        constexpr auto rule = lexy::dsl::ascii::digit;
+        static constexpr auto rule = lexy::dsl::ascii::digit;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -305,7 +305,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -317,7 +317,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("alnum")
     {
-        constexpr auto rule = lexy::dsl::ascii::alnum;
+        static constexpr auto rule = lexy::dsl::ascii::alnum;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -339,7 +339,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -351,7 +351,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("punct")
     {
-        constexpr auto rule = lexy::dsl::ascii::punct;
+        static constexpr auto rule = lexy::dsl::ascii::punct;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -373,7 +373,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -385,7 +385,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("graph")
     {
-        constexpr auto rule = lexy::dsl::ascii::graph;
+        static constexpr auto rule = lexy::dsl::ascii::graph;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -407,7 +407,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -419,7 +419,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("print")
     {
-        constexpr auto rule = lexy::dsl::ascii::print;
+        static constexpr auto rule = lexy::dsl::ascii::print;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -441,7 +441,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)
@@ -453,7 +453,7 @@ TEST_CASE("dsl::ascii::*")
     }
     SUBCASE("character")
     {
-        constexpr auto rule = lexy::dsl::ascii::character;
+        static constexpr auto rule = lexy::dsl::ascii::character;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -475,7 +475,7 @@ TEST_CASE("dsl::ascii::*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         for (auto c = 0; c <= 127; ++c)

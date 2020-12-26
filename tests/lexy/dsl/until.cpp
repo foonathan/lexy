@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::until()")
 {
-    constexpr auto rule = until(LEXY_LIT("!"));
+    static constexpr auto rule = until(LEXY_LIT("!"));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -30,23 +30,23 @@ TEST_CASE("dsl::until()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto zero = verify<callback>(rule, "!");
+    auto zero = LEXY_VERIFY("!");
     CHECK(zero == 1);
-    constexpr auto one = verify<callback>(rule, "a!");
+    auto one = LEXY_VERIFY("a!");
     CHECK(one == 2);
-    constexpr auto two = verify<callback>(rule, "ab!");
+    auto two = LEXY_VERIFY("ab!");
     CHECK(two == 3);
 
-    constexpr auto unterminated = verify<callback>(rule, "abc");
+    auto unterminated = LEXY_VERIFY("abc");
     CHECK(unterminated == -1);
 }
 
 TEST_CASE("dsl::until().or_eof()")
 {
-    constexpr auto rule = until(LEXY_LIT("!")).or_eof();
+    static constexpr auto rule = until(LEXY_LIT("!")).or_eof();
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -60,17 +60,17 @@ TEST_CASE("dsl::until().or_eof()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto zero = verify<callback>(rule, "!");
+    auto zero = LEXY_VERIFY("!");
     CHECK(zero == 1);
-    constexpr auto one = verify<callback>(rule, "a!");
+    auto one = LEXY_VERIFY("a!");
     CHECK(one == 2);
-    constexpr auto two = verify<callback>(rule, "xy!");
+    auto two = LEXY_VERIFY("xy!");
     CHECK(two == 3);
 
-    constexpr auto unterminated = verify<callback>(rule, "abc");
+    auto unterminated = LEXY_VERIFY("abc");
     CHECK(unterminated == 3);
 }
 

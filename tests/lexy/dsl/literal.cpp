@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::lit")
 {
-    constexpr auto rule = LEXY_LIT("abc");
+    static constexpr auto rule = LEXY_LIT("abc");
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -35,17 +35,17 @@ TEST_CASE("dsl::lit")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == -2);
-    constexpr auto ab = verify<callback>(rule, "ab");
+    auto ab = LEXY_VERIFY("ab");
     CHECK(ab == -3);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
-    constexpr auto abcd = verify<callback>(rule, "abcd");
+    auto abcd = LEXY_VERIFY("abcd");
     CHECK(abcd == 0);
 }
 

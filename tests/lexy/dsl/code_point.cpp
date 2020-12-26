@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::code_point")
 {
-    constexpr auto rule = lexy::dsl::code_point;
+    static constexpr auto rule = lexy::dsl::code_point;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -36,10 +36,10 @@ TEST_CASE("dsl::code_point")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::ascii_encoding>(rule, "");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::ascii_encoding>(rule, "a");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "a");
         CHECK(cp == 0);
     }
     SUBCASE("UTF-8")
@@ -62,10 +62,10 @@ TEST_CASE("dsl::code_point")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR(""));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR(""));
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR("ä"));
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR("ä"));
         CHECK(cp == 2);
     }
     SUBCASE("UTF-16")
@@ -88,10 +88,10 @@ TEST_CASE("dsl::code_point")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf16_encoding>(rule, u"");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf16_encoding>(rule, u"ä");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
         CHECK(cp == 1);
     }
     SUBCASE("UTF-32")
@@ -114,17 +114,17 @@ TEST_CASE("dsl::code_point")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf32_encoding>(rule, U"");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf32_encoding>(rule, U"ä");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"ä");
         CHECK(cp == 1);
     }
 }
 
 TEST_CASE("dsl::code_point.capture()")
 {
-    constexpr auto rule = lexy::dsl::code_point.capture();
+    static constexpr auto rule = lexy::dsl::code_point.capture();
     CHECK(lexy::is_rule<decltype(rule)>);
 
     // Only basic sanity checks needed, the actual engine is tested extensively.
@@ -149,10 +149,10 @@ TEST_CASE("dsl::code_point.capture()")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::ascii_encoding>(rule, "");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::ascii_encoding>(rule, "a");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "a");
         CHECK(cp == 0x61);
     }
     SUBCASE("UTF-8")
@@ -175,10 +175,10 @@ TEST_CASE("dsl::code_point.capture()")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR(""));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR(""));
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR("ä"));
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR("ä"));
         CHECK(cp == 0xE4);
     }
     SUBCASE("UTF-16")
@@ -201,10 +201,10 @@ TEST_CASE("dsl::code_point.capture()")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf16_encoding>(rule, u"");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf16_encoding>(rule, u"ä");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
         CHECK(cp == 0xE4);
     }
     SUBCASE("UTF-32")
@@ -227,10 +227,10 @@ TEST_CASE("dsl::code_point.capture()")
             }
         };
 
-        constexpr auto empty = verify<callback, lexy::utf32_encoding>(rule, U"");
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"");
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf32_encoding>(rule, U"ä");
+        auto cp = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"ä");
         CHECK(cp == 0xE4);
     }
 }

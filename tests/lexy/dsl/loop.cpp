@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::loop()")
 {
-    constexpr auto rule = loop(LEXY_LIT("a") | LEXY_LIT("!") >> lexy::dsl::break_);
+    static constexpr auto rule = loop(LEXY_LIT("a") | LEXY_LIT("!") >> lexy::dsl::break_);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -27,17 +27,17 @@ TEST_CASE("dsl::loop()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto one = verify<callback>(rule, "a!");
+    auto one = LEXY_VERIFY("a!");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "aa!");
+    auto two = LEXY_VERIFY("aa!");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "aaa!");
+    auto three = LEXY_VERIFY("aaa!");
     CHECK(three == 3);
 
-    constexpr auto unterminated = verify<callback>(rule, "aaa");
+    auto unterminated = LEXY_VERIFY("aaa");
     CHECK(unterminated == -1);
 }
 

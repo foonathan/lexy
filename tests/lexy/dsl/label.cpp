@@ -11,7 +11,7 @@ TEST_CASE("dsl::label")
 {
     SUBCASE("simple")
     {
-        constexpr auto rule = lexy::dsl::label<struct lab>;
+        static constexpr auto rule = lexy::dsl::label<struct lab>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -25,15 +25,15 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("operator()")
     {
-        constexpr auto rule = lexy::dsl::label<struct lab>(LEXY_LIT("abc"));
+        static constexpr auto rule = lexy::dsl::label<struct lab>(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -53,15 +53,15 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("branch")
     {
-        constexpr auto rule = if_(lexy::dsl::label<struct lab>(LEXY_LIT("abc")));
+        static constexpr auto rule = if_(lexy::dsl::label<struct lab>(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -80,17 +80,17 @@ TEST_CASE("dsl::label")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 1);
     }
 }
 
 TEST_CASE("dsl::id")
 {
-    constexpr auto rule = lexy::dsl::id<0>;
+    static constexpr auto rule = lexy::dsl::id<0>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -105,10 +105,10 @@ TEST_CASE("dsl::id")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 0);
 }
 

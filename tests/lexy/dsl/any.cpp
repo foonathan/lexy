@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::any")
 {
-    constexpr auto rule = lexy::dsl::any;
+    static constexpr auto rule = lexy::dsl::any;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -22,10 +22,10 @@ TEST_CASE("dsl::any")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto non_empty = verify<callback>(rule, "abc");
+    auto non_empty = LEXY_VERIFY("abc");
     CHECK(non_empty == 3);
 }
 

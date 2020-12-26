@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::peek()")
 {
-    constexpr auto rule = if_(peek(LEXY_LIT("abc")) >> LEXY_LIT("a"));
+    static constexpr auto rule = if_(peek(LEXY_LIT("abc")) >> LEXY_LIT("a"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -27,18 +27,18 @@ TEST_CASE("dsl::peek()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == 0);
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 1);
 }
 
 TEST_CASE("dsl::peek_not()")
 {
-    constexpr auto rule = if_(peek_not(LEXY_LIT("abc")) >> LEXY_LIT("a"));
+    static constexpr auto rule = if_(peek_not(LEXY_LIT("abc")) >> LEXY_LIT("a"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -58,12 +58,12 @@ TEST_CASE("dsl::peek_not()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == 1);
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 }
 

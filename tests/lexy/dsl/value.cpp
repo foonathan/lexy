@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::value_c")
 {
-    constexpr auto rule = lexy::dsl::value_c<42>;
+    static constexpr auto rule = lexy::dsl::value_c<42>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -22,10 +22,10 @@ TEST_CASE("dsl::value_c")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 42);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 42);
 }
 
@@ -39,7 +39,7 @@ constexpr int f()
 
 TEST_CASE("dsl::value_f")
 {
-    constexpr auto rule = lexy::dsl::value_f<f>;
+    static constexpr auto rule = lexy::dsl::value_f<f>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -53,16 +53,16 @@ TEST_CASE("dsl::value_f")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 42);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 42);
 }
 
 TEST_CASE("dsl::value_t")
 {
-    constexpr auto rule = lexy::dsl::value_t<int>;
+    static constexpr auto rule = lexy::dsl::value_t<int>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -76,16 +76,16 @@ TEST_CASE("dsl::value_t")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 0);
 }
 
 TEST_CASE("dsl::value_str")
 {
-    constexpr auto rule = LEXY_VALUE_STR("abc");
+    static constexpr auto rule = LEXY_VALUE_STR("abc");
     CHECK(lexy::is_rule<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
@@ -104,10 +104,10 @@ TEST_CASE("dsl::value_str")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 0);
 }
 

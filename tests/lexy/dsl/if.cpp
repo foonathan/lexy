@@ -10,7 +10,7 @@ TEST_CASE("dsl::if_()")
 {
     SUBCASE("rule")
     {
-        constexpr auto rule = if_(LEXY_LIT("abc"));
+        static constexpr auto rule = if_(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -29,18 +29,18 @@ TEST_CASE("dsl::if_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 1);
 
-        constexpr auto partial = verify<callback>(rule, "ab");
+        auto partial = LEXY_VERIFY("ab");
         CHECK(partial == 0);
     }
     SUBCASE("branch")
     {
-        constexpr auto rule = if_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        static constexpr auto rule = if_(LEXY_LIT("a") >> LEXY_LIT("bc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -65,15 +65,15 @@ TEST_CASE("dsl::if_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto success = verify<callback>(rule, "abc");
+        auto success = LEXY_VERIFY("abc");
         CHECK(success == 1);
 
-        constexpr auto condition = verify<callback>(rule, "a");
+        auto condition = LEXY_VERIFY("a");
         CHECK(condition == -1);
-        constexpr auto partial = verify<callback>(rule, "ab");
+        auto partial = LEXY_VERIFY("ab");
         CHECK(partial == -1);
     }
 }

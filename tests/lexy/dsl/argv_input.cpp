@@ -10,7 +10,7 @@ TEST_CASE("atom: argv_separator")
 {
     SUBCASE("non-argv_input")
     {
-        constexpr auto rule = lexy::dsl::argv_separator;
+        static constexpr auto rule = lexy::dsl::argv_separator;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -32,10 +32,10 @@ TEST_CASE("atom: argv_separator")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto non_empty = verify<callback>(rule, "abc");
+        auto non_empty = LEXY_VERIFY("abc");
         CHECK(non_empty == -1);
     }
     SUBCASE("argv_input")

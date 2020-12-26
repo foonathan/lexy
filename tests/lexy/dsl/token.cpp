@@ -10,7 +10,7 @@
 
 TEST_CASE("dsl::token")
 {
-    constexpr auto rule = token(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
+    static constexpr auto rule = token(list(LEXY_LIT("abc") >> lexy::dsl::value_c<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -30,14 +30,14 @@ TEST_CASE("dsl::token")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 3);
-    constexpr auto two = verify<callback>(rule, "abcabc");
+    auto two = LEXY_VERIFY("abcabc");
     CHECK(two == 6);
-    constexpr auto three = verify<callback>(rule, "abcabcabc");
+    auto three = LEXY_VERIFY("abcabcabc");
     CHECK(three == 9);
 }
 

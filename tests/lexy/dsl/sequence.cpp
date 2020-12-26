@@ -10,7 +10,7 @@
 
 TEST_CASE("dsl::operator+")
 {
-    constexpr auto rule
+    static constexpr auto rule
         = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -38,14 +38,14 @@ TEST_CASE("dsl::operator+")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == -2);
-    constexpr auto ab = verify<callback>(rule, "ab");
+    auto ab = LEXY_VERIFY("ab");
     CHECK(ab == -3);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 }
 

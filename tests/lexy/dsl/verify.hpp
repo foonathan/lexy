@@ -106,5 +106,19 @@ constexpr int verify(Rule rule, const char* str, std::size_t size = std::size_t(
     return verify<Callback, test_encoding>(rule, str, size);
 }
 
+#ifdef LEXY_DISABLE_CONSTEXPR_TESTS
+#    define LEXY_TEST_CALL_CONSTEVAL(...) __VA_ARGS__
+#else
+#    define LEXY_TEST_CALL_CONSTEVAL(...)                                                          \
+        [] {                                                                                       \
+            constexpr auto result = __VA_ARGS__;                                                   \
+            return result;                                                                         \
+        }()
+#endif
+
+#define LEXY_VERIFY(...) LEXY_TEST_CALL_CONSTEVAL(verify<callback>(rule, __VA_ARGS__))
+#define LEXY_VERIFY_ENCODING(Encoding, ...)                                                        \
+    LEXY_TEST_CALL_CONSTEVAL(verify<callback, Encoding>(rule, __VA_ARGS__))
+
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED
 

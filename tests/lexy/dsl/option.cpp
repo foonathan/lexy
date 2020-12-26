@@ -9,7 +9,7 @@
 
 TEST_CASE("dsl::nullopt")
 {
-    constexpr auto rule = lexy::dsl::nullopt;
+    static constexpr auto rule = lexy::dsl::nullopt;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -23,16 +23,16 @@ TEST_CASE("dsl::nullopt")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto string = verify<callback>(rule, "abc");
+    auto string = LEXY_VERIFY("abc");
     CHECK(string == 0);
 }
 
 TEST_CASE("dsl::opt()")
 {
-    constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::value_c<1>);
+    static constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::value_c<1>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -52,15 +52,15 @@ TEST_CASE("dsl::opt()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto success = verify<callback>(rule, "abc");
+    auto success = LEXY_VERIFY("abc");
     CHECK(success == 1);
 
-    constexpr auto condition = verify<callback>(rule, "a");
+    auto condition = LEXY_VERIFY("a");
     CHECK(condition == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 }
 

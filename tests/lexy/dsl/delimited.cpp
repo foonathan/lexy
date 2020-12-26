@@ -17,7 +17,7 @@ TEST_CASE("dsl::delimited()")
 
     SUBCASE("pattern")
     {
-        constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
+        static constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
@@ -71,22 +71,22 @@ TEST_CASE("dsl::delimited()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "()");
+        auto zero = LEXY_VERIFY("()");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "(a)");
+        auto one = LEXY_VERIFY("(a)");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "(ab)");
+        auto two = LEXY_VERIFY("(ab)");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "(abc)");
+        auto three = LEXY_VERIFY("(abc)");
         CHECK(three == 3);
 
-        constexpr auto unterminated = verify<callback>(rule, "(abc");
+        auto unterminated = LEXY_VERIFY("(abc");
         CHECK(unterminated == -2);
 
-        constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
+        auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
         CHECK(invalid_ascii == -3);
     }
     SUBCASE("branch")
@@ -96,8 +96,8 @@ TEST_CASE("dsl::delimited()")
         struct close
         {};
 
-        constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
-                                        LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
+        static constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
+                                               LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
@@ -151,22 +151,22 @@ TEST_CASE("dsl::delimited()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto zero = verify<callback>(rule, "()");
+        auto zero = LEXY_VERIFY("()");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "(a)");
+        auto one = LEXY_VERIFY("(a)");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "(ab)");
+        auto two = LEXY_VERIFY("(ab)");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "(abc)");
+        auto three = LEXY_VERIFY("(abc)");
         CHECK(three == 3);
 
-        constexpr auto unterminated = verify<callback>(rule, "(abc");
+        auto unterminated = LEXY_VERIFY("(abc");
         CHECK(unterminated == -2);
 
-        constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
+        auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
         CHECK(invalid_ascii == -3);
     }
 }
@@ -190,8 +190,8 @@ TEST_CASE("predefined dsl::delimited")
 
 TEST_CASE("dsl::delimited with escape")
 {
-    constexpr auto cp = lexy::dsl::ascii::character;
-    constexpr auto rule
+    constexpr auto        cp = lexy::dsl::ascii::character;
+    static constexpr auto rule
         = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp, lexy::dsl::escape(LEXY_LIT("$"))
                                                           .capture(lexy::dsl::ascii::character));
     CHECK(lexy::is_rule<decltype(rule)>);
@@ -252,25 +252,25 @@ TEST_CASE("dsl::delimited with escape")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto zero = verify<callback>(rule, "()");
+    auto zero = LEXY_VERIFY("()");
     CHECK(zero == 0);
-    constexpr auto one = verify<callback>(rule, "(a)");
+    auto one = LEXY_VERIFY("(a)");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "(ab)");
+    auto two = LEXY_VERIFY("(ab)");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "(abc)");
+    auto three = LEXY_VERIFY("(abc)");
     CHECK(three == 3);
 
-    constexpr auto unterminated = verify<callback>(rule, "(abc");
+    auto unterminated = LEXY_VERIFY("(abc");
     CHECK(unterminated == -2);
 
-    constexpr auto invalid_ascii = verify<callback>(rule, "(ab\xFF");
+    auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
     CHECK(invalid_ascii == -3);
 
-    constexpr auto escape = verify<callback>(rule, "(a$bc$))");
+    auto escape = LEXY_VERIFY("(a$bc$))");
     CHECK(escape == 4);
 }
 
@@ -279,7 +279,7 @@ TEST_CASE("dsl::escape")
     constexpr auto escape = lexy::dsl::escape(LEXY_LIT("$"));
     SUBCASE(".rule()")
     {
-        constexpr auto rule = escape.rule(LEXY_LIT("abc") >> lexy::dsl::value_c<0>);
+        static constexpr auto rule = escape.rule(LEXY_LIT("abc") >> lexy::dsl::value_c<0>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -305,20 +305,20 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "$abc");
+        auto abc = LEXY_VERIFY("$abc");
         CHECK(abc == 0);
 
-        constexpr auto invalid = verify<callback>(rule, "$ab");
+        auto invalid = LEXY_VERIFY("$ab");
         CHECK(invalid == -2);
     }
     SUBCASE("multiple rules")
     {
-        constexpr auto rule = escape.rule(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                  .rule(LEXY_LIT("b") >> lexy::dsl::value_c<2>)
-                                  .rule(lexy::dsl::else_ >> lexy::dsl::value_c<0>);
+        static constexpr auto rule = escape.rule(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
+                                         .rule(LEXY_LIT("b") >> lexy::dsl::value_c<2>)
+                                         .rule(lexy::dsl::else_ >> lexy::dsl::value_c<0>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -338,20 +338,20 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "$a");
+        auto a = LEXY_VERIFY("$a");
         CHECK(a == 1);
-        constexpr auto b = verify<callback>(rule, "$b");
+        auto b = LEXY_VERIFY("$b");
         CHECK(b == 2);
 
-        constexpr auto invalid = verify<callback>(rule, "$c");
+        auto invalid = LEXY_VERIFY("$c");
         CHECK(invalid == 0);
     }
     SUBCASE(".capture()")
     {
-        constexpr auto rule = escape.capture(lexy::dsl::ascii::character);
+        static constexpr auto rule = escape.capture(lexy::dsl::ascii::character);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -377,21 +377,21 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "$a");
+        auto a = LEXY_VERIFY("$a");
         CHECK(a == 'a');
-        constexpr auto b = verify<callback>(rule, "$b");
+        auto b = LEXY_VERIFY("$b");
         CHECK(b == 'b');
 
-        constexpr auto invalid = verify<callback>(rule, "$\xFF");
+        auto invalid = LEXY_VERIFY("$\xFF");
         CHECK(invalid == -2);
     }
 #if LEXY_HAS_NTTP
     SUBCASE(".lit_c()")
     {
-        constexpr auto rule = escape.lit<"a">();
+        static constexpr auto rule = escape.lit<"a">();
         CHECK(lexy::is_branch_rule<decltype(rule)>);
 
         struct callback
@@ -417,19 +417,19 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "$a");
+        auto a = LEXY_VERIFY("$a");
         CHECK(a == 'a');
 
-        constexpr auto invalid = verify<callback>(rule, "$b");
+        auto invalid = LEXY_VERIFY("$b");
         CHECK(invalid == -2);
     }
 #endif
     SUBCASE(".lit_c()")
     {
-        constexpr auto rule = escape.lit_c<'a'>();
+        static constexpr auto rule = escape.lit_c<'a'>();
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -455,13 +455,13 @@ TEST_CASE("dsl::escape")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto a = verify<callback>(rule, "$a");
+        auto a = LEXY_VERIFY("$a");
         CHECK(a == 'a');
 
-        constexpr auto invalid = verify<callback>(rule, "$b");
+        auto invalid = LEXY_VERIFY("$b");
         CHECK(invalid == -2);
     }
 }

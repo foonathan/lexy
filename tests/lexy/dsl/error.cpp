@@ -9,7 +9,7 @@
 TEST_CASE(".error()")
 {
     struct error;
-    constexpr auto rule = LEXY_LIT("abc").error<error>();
+    static constexpr auto rule = LEXY_LIT("abc").error<error>();
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -30,10 +30,10 @@ TEST_CASE(".error()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 }
 
@@ -43,7 +43,7 @@ TEST_CASE("dsl::error")
 
     SUBCASE("no range")
     {
-        constexpr auto rule = lexy::dsl::error<tag>;
+        static constexpr auto rule = lexy::dsl::error<tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -57,15 +57,15 @@ TEST_CASE("dsl::error")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == -1);
     }
     SUBCASE("range")
     {
-        constexpr auto rule = lexy::dsl::error<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
+        static constexpr auto rule = lexy::dsl::error<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -88,10 +88,10 @@ TEST_CASE("dsl::error")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == -1);
     }
 }
@@ -99,7 +99,7 @@ TEST_CASE("dsl::error")
 TEST_CASE("dsl::require")
 {
     struct tag;
-    constexpr auto rule = lexy::dsl::require<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
+    static constexpr auto rule = lexy::dsl::require<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -119,17 +119,17 @@ TEST_CASE("dsl::require")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 }
 
 TEST_CASE("dsl::prevent")
 {
     struct tag;
-    constexpr auto rule = lexy::dsl::prevent<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
+    static constexpr auto rule = lexy::dsl::prevent<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -149,10 +149,10 @@ TEST_CASE("dsl::prevent")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == -1);
 }
 

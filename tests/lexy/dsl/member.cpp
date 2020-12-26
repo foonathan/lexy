@@ -41,29 +41,29 @@ TEST_CASE("dsl::member")
 {
     SUBCASE("non-macro")
     {
-        constexpr auto rule = lexy::dsl::member<& test_type::member> = LEXY_LIT("abc");
+        static constexpr auto rule = lexy::dsl::member<& test_type::member> = LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
 
         using callback = member_macro_callback;
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("macro")
     {
-        constexpr auto rule = LEXY_MEM(member) = LEXY_LIT("abc");
+        static constexpr auto rule = LEXY_MEM(member) = LEXY_LIT("abc");
         CHECK(lexy::is_rule<decltype(rule)>);
 
         using callback = member_macro_callback;
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
         // Not constexpr in C++17 due to the use of reinterpret_cast in stateless lambda.
-        /* constexpr */ auto string = verify<callback>(rule, "abc");
+        auto string = verify<callback>(rule, "abc");
         CHECK(string == 0);
     }
 }

@@ -12,7 +12,7 @@
 
 TEST_CASE("dsl::list()")
 {
-    constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
+    static constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -54,22 +54,22 @@ TEST_CASE("dsl::list()")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abcabc");
+    auto two = LEXY_VERIFY("abcabc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abcabcabc");
+    auto three = LEXY_VERIFY("abcabcabc");
     CHECK(three == 3);
 }
 
 TEST_CASE("dsl::list() sep")
 {
-    constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
+    static constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -111,25 +111,26 @@ TEST_CASE("dsl::list() sep")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
 }
 
 TEST_CASE("dsl::list() sep capture")
 {
-    constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(capture(LEXY_LIT(","))));
+    static constexpr auto rule
+        = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -176,25 +177,26 @@ TEST_CASE("dsl::list() sep capture")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 3);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 7);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 11);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 3);
 }
 
 TEST_CASE("dsl::list() trailing_sep")
 {
-    constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
+    static constexpr auto rule
+        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -239,28 +241,28 @@ TEST_CASE("dsl::list() trailing_sep")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
 
-    constexpr auto trailing = verify<callback>(rule, "abc,");
+    auto trailing = LEXY_VERIFY("abc,");
     CHECK(trailing == 1);
 }
 
 TEST_CASE("dsl::list() trailing_sep capture")
 {
-    constexpr auto rule
+    static constexpr auto rule
         = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(capture(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -308,28 +310,28 @@ TEST_CASE("dsl::list() trailing_sep capture")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == -1);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 3);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 7);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 11);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 3);
 
-    constexpr auto trailing = verify<callback>(rule, "abc,");
+    auto trailing = LEXY_VERIFY("abc,");
     CHECK(trailing == 4);
 }
 
 TEST_CASE("dsl::opt(list())")
 {
-    constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
+    static constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -376,22 +378,22 @@ TEST_CASE("dsl::opt(list())")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == 0);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abcabc");
+    auto two = LEXY_VERIFY("abcabc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abcabcabc");
+    auto three = LEXY_VERIFY("abcabcabc");
     CHECK(three == 3);
 }
 
 TEST_CASE("dsl::opt(list()) sep")
 {
-    constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(","))));
+    static constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -436,25 +438,25 @@ TEST_CASE("dsl::opt(list()) sep")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == 0);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
 }
 
 TEST_CASE("dsl::opt(list()) trailing_sep")
 {
-    constexpr auto rule
+    static constexpr auto rule
         = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(","))));
     CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -502,22 +504,22 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
-    constexpr auto partial = verify<callback>(rule, "ab");
+    auto partial = LEXY_VERIFY("ab");
     CHECK(partial == 0);
 
-    constexpr auto one = verify<callback>(rule, "abc");
+    auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
-    constexpr auto two = verify<callback>(rule, "abc,abc");
+    auto two = LEXY_VERIFY("abc,abc");
     CHECK(two == 2);
-    constexpr auto three = verify<callback>(rule, "abc,abc,abc");
+    auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 3);
 
-    constexpr auto no_sep = verify<callback>(rule, "abcabc");
+    auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
 
-    constexpr auto trailing = verify<callback>(rule, "abc,");
+    auto trailing = LEXY_VERIFY("abc,");
     CHECK(trailing == 1);
 }
 

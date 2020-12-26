@@ -4,6 +4,11 @@
 
 #include <lexy/dsl/production.hpp>
 
+// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
+#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
+#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
+#endif
+
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/if.hpp>
@@ -42,19 +47,12 @@ struct prod
 };
 } // namespace p_branch_branch
 
-// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
-#if !defined(__clang__) && defined(_MSC_VER)
-#    define TEST_CONSTEXPR
-#else
-#    define TEST_CONSTEXPR constexpr
-#endif
-
 TEST_CASE("dsl::p")
 {
     SUBCASE("basic")
     {
         using namespace p_basic;
-        constexpr auto rule = lexy::dsl::p<prod>;
+        static constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -79,16 +77,16 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
     }
     SUBCASE("pattern")
     {
         using namespace p_pattern;
-        constexpr auto rule = lexy::dsl::p<prod>;
+        static constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -113,16 +111,16 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
     }
     SUBCASE("branch")
     {
         using namespace p_branch;
-        constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -153,18 +151,18 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
-        constexpr auto def = verify<callback>(rule, "def");
+        auto def = LEXY_VERIFY("def");
         CHECK(def == 1);
     }
     SUBCASE("branch in branch")
     {
         using namespace p_branch_branch;
-        constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -199,12 +197,12 @@ TEST_CASE("dsl::p")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto abc = verify<callback>(rule, "abc");
+        auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
-        constexpr auto def = verify<callback>(rule, "def");
+        auto def = LEXY_VERIFY("def");
         CHECK(def == 1);
     }
 }
@@ -236,7 +234,7 @@ TEST_CASE("dsl::recurse")
     SUBCASE("indirect recursion")
     {
         using namespace recurse_indirect;
-        constexpr auto rule = lexy::dsl::p<outer>;
+        static constexpr auto rule = lexy::dsl::p<outer>;
 
         struct callback
         {
@@ -271,20 +269,20 @@ TEST_CASE("dsl::recurse")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        constexpr auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 2);
-        constexpr auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == 3);
     }
     SUBCASE("right recursion")
     {
         using namespace recurse_right;
-        constexpr auto rule = lexy::dsl::p<prod>;
+        static constexpr auto rule = lexy::dsl::p<prod>;
 
         struct callback
         {
@@ -315,14 +313,14 @@ TEST_CASE("dsl::recurse")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto a = verify<callback>(rule, "a");
+        auto a = LEXY_VERIFY("a");
         CHECK(a == 1);
-        TEST_CONSTEXPR auto aa = verify<callback>(rule, "aa");
+        auto aa = LEXY_VERIFY("aa");
         CHECK(aa == 2);
-        TEST_CONSTEXPR auto aaa = verify<callback>(rule, "aaa");
+        auto aaa = LEXY_VERIFY("aaa");
         CHECK(aaa == 3);
     }
 }

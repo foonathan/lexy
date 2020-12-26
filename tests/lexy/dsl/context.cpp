@@ -15,8 +15,8 @@ TEST_CASE("dsl::context_*")
 
     SUBCASE("push + pop")
     {
-        constexpr auto rule = lexy::dsl::context_push(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
+        static constexpr auto rule = lexy::dsl::context_push(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -39,24 +39,24 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto zero = verify<callback>(rule, "-");
+        auto zero = LEXY_VERIFY("-");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "*-*");
+        auto one = LEXY_VERIFY("*-*");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "*+-*+");
+        auto two = LEXY_VERIFY("*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
+        auto length_mismatch = LEXY_VERIFY("**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
+        auto char_mismatch = LEXY_VERIFY("**-*+");
         CHECK(char_mismatch == -1);
     }
     SUBCASE("push + pop - length_eq")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::context_push(pattern)
               + lexy::dsl::lit_c<
                   '-'> + lexy::dsl::context_pop<lexy::dsl::context_eq_length>(pattern);
@@ -82,26 +82,26 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto zero = verify<callback>(rule, "-");
+        auto zero = LEXY_VERIFY("-");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "*-*");
+        auto one = LEXY_VERIFY("*-*");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "*+-*+");
+        auto two = LEXY_VERIFY("*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
+        auto length_mismatch = LEXY_VERIFY("**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
+        auto char_mismatch = LEXY_VERIFY("**-*+");
         CHECK(char_mismatch == 2);
     }
     SUBCASE("push + top + pop")
     {
-        constexpr auto rule = lexy::dsl::context_push(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_top(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
+        static constexpr auto rule = lexy::dsl::context_push(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_top(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -124,24 +124,24 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto zero = verify<callback>(rule, "--");
+        auto zero = LEXY_VERIFY("--");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "*-*-*");
+        auto one = LEXY_VERIFY("*-*-*");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "*+-*+-*+");
+        auto two = LEXY_VERIFY("*+-*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = verify<callback>(rule, "**-*-**");
+        auto length_mismatch = LEXY_VERIFY("**-*-**");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = verify<callback>(rule, "**-**-*+");
+        auto char_mismatch = LEXY_VERIFY("**-**-*+");
         CHECK(char_mismatch == -1);
     }
     SUBCASE("push + drop")
     {
-        constexpr auto rule = lexy::dsl::context_push(pattern) + lexy::dsl::context_drop;
+        static constexpr auto rule = lexy::dsl::context_push(pattern) + lexy::dsl::context_drop;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -154,20 +154,20 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
-        constexpr auto one = verify<callback>(rule, "*");
+        auto one = LEXY_VERIFY("*");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "*+");
+        auto two = LEXY_VERIFY("*+");
         CHECK(two == 2);
     }
 
     SUBCASE("nested")
     {
-        constexpr auto rule = lexy::dsl::context_push(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_push(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern)
-                              + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
+        static constexpr auto rule = lexy::dsl::context_push(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_push(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern)
+                                     + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -190,26 +190,26 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto zero_zero = verify<callback>(rule, "---");
+        auto zero_zero = LEXY_VERIFY("---");
         CHECK(zero_zero == 0);
-        constexpr auto zero_one = verify<callback>(rule, "-+-+-");
+        auto zero_one = LEXY_VERIFY("-+-+-");
         CHECK(zero_one == 2);
-        constexpr auto one_one = verify<callback>(rule, "*-*-*-*");
+        auto one_one = LEXY_VERIFY("*-*-*-*");
         CHECK(one_one == 4);
-        constexpr auto two_one = verify<callback>(rule, "**-*-*-**");
+        auto two_one = LEXY_VERIFY("**-*-*-**");
         CHECK(two_one == 6);
 
-        constexpr auto mismatch_outer = verify<callback>(rule, "**-+-+-*");
+        auto mismatch_outer = LEXY_VERIFY("**-+-+-*");
         CHECK(mismatch_outer == -1);
-        constexpr auto mismatch_inner = verify<callback>(rule, "**-+-++-**");
+        auto mismatch_inner = LEXY_VERIFY("**-+-++-**");
         CHECK(mismatch_inner == -1);
     }
     SUBCASE("pop discards values")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = lexy::dsl::context_push(pattern)
               + lexy::dsl::lit_c<'-'> + lexy::dsl::context_pop(pattern + lexy::dsl::value_c<0>);
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -234,19 +234,19 @@ TEST_CASE("dsl::context_*")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        constexpr auto zero = verify<callback>(rule, "-");
+        auto zero = LEXY_VERIFY("-");
         CHECK(zero == 0);
-        constexpr auto one = verify<callback>(rule, "*-*");
+        auto one = LEXY_VERIFY("*-*");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "*+-*+");
+        auto two = LEXY_VERIFY("*+-*+");
         CHECK(two == 2);
 
-        constexpr auto length_mismatch = verify<callback>(rule, "**-*");
+        auto length_mismatch = LEXY_VERIFY("**-*");
         CHECK(length_mismatch == -1);
-        constexpr auto char_mismatch = verify<callback>(rule, "**-*+");
+        auto char_mismatch = LEXY_VERIFY("**-*+");
         CHECK(char_mismatch == -1);
     }
 }

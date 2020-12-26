@@ -9,8 +9,8 @@
 
 TEST_CASE("dsl::_trie")
 {
-    constexpr auto rule = lexy::dsl::_trie<LEXY_NTTP_STRING("abc"), LEXY_NTTP_STRING("a"),
-                                           LEXY_NTTP_STRING("def")>{};
+    static constexpr auto rule = lexy::dsl::_trie<LEXY_NTTP_STRING("abc"), LEXY_NTTP_STRING("a"),
+                                                  LEXY_NTTP_STRING("def")>{};
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -38,25 +38,26 @@ TEST_CASE("dsl::_trie")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == 1);
-    constexpr auto ab = verify<callback>(rule, "ab");
+    auto ab = LEXY_VERIFY("ab");
     CHECK(ab == 1);
 
-    constexpr auto def = verify<callback>(rule, "def");
+    auto def = LEXY_VERIFY("def");
     CHECK(def == 2);
 }
 
 TEST_CASE("dsl::_alt")
 {
-    constexpr auto rule = lexy::dsl::_alt<decltype(LEXY_LIT("abc")), decltype(LEXY_LIT("a")),
-                                          decltype(LEXY_LIT("ab")), decltype(LEXY_LIT("def"))>{};
+    static constexpr auto rule
+        = lexy::dsl::_alt<decltype(LEXY_LIT("abc")), decltype(LEXY_LIT("a")),
+                          decltype(LEXY_LIT("ab")), decltype(LEXY_LIT("def"))>{};
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -84,18 +85,18 @@ TEST_CASE("dsl::_alt")
         }
     };
 
-    constexpr auto empty = verify<callback>(rule, "");
+    auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
 
-    constexpr auto abc = verify<callback>(rule, "abc");
+    auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
 
-    constexpr auto a = verify<callback>(rule, "a");
+    auto a = LEXY_VERIFY("a");
     CHECK(a == 1);
-    constexpr auto ab = verify<callback>(rule, "ab");
+    auto ab = LEXY_VERIFY("ab");
     CHECK(ab == 1);
 
-    constexpr auto def = verify<callback>(rule, "def");
+    auto def = LEXY_VERIFY("def");
     CHECK(def == 2);
 }
 

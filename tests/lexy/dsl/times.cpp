@@ -11,7 +11,7 @@ TEST_CASE("times")
 {
     SUBCASE("no sep")
     {
-        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>);
+        static constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -33,17 +33,18 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = verify<callback>(rule, "");
+        auto zero = LEXY_VERIFY("");
         CHECK(zero == -1);
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == -1);
 
-        constexpr auto two = verify<callback>(rule, "abcabc");
+        auto two = LEXY_VERIFY("abcabc");
         CHECK(two == 0);
     }
     SUBCASE("sep")
     {
-        constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, sep(LEXY_LIT(",")));
+        static constexpr auto rule
+            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -69,23 +70,23 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = verify<callback>(rule, "");
+        auto zero = LEXY_VERIFY("");
         CHECK(zero == -1);
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == -2);
 
-        constexpr auto two = verify<callback>(rule, "abc,abc");
+        auto two = LEXY_VERIFY("abc,abc");
         CHECK(two == 0);
 
-        constexpr auto no_sep = verify<callback>(rule, "abcabc");
+        auto no_sep = LEXY_VERIFY("abcabc");
         CHECK(no_sep == -2);
 
-        constexpr auto trailing_sep = verify<callback>(rule, "abc,abc,");
+        auto trailing_sep = LEXY_VERIFY("abc,abc,");
         CHECK(trailing_sep == 0);
     }
     SUBCASE("trailing_sep")
     {
-        constexpr auto rule
+        static constexpr auto rule
             = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, trailing_sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -117,18 +118,18 @@ TEST_CASE("times")
             }
         };
 
-        constexpr auto zero = verify<callback>(rule, "");
+        auto zero = LEXY_VERIFY("");
         CHECK(zero == -1);
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == -2);
 
-        constexpr auto two = verify<callback>(rule, "abc,abc");
+        auto two = LEXY_VERIFY("abc,abc");
         CHECK(two == 0);
 
-        constexpr auto no_sep = verify<callback>(rule, "abcabc");
+        auto no_sep = LEXY_VERIFY("abcabc");
         CHECK(no_sep == -2);
 
-        constexpr auto trailing_sep = verify<callback>(rule, "abc,abc,");
+        auto trailing_sep = LEXY_VERIFY("abc,abc,");
         CHECK(trailing_sep == 1);
     }
 }

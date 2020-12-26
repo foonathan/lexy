@@ -12,7 +12,7 @@ TEST_CASE("dsl::operator-")
 {
     SUBCASE("basic")
     {
-        constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
+        static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -39,22 +39,22 @@ TEST_CASE("dsl::operator-")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
-        constexpr auto zero = verify<callback>(rule, "!");
+        auto zero = LEXY_VERIFY("!");
         CHECK(zero == 1);
 
-        constexpr auto a = verify<callback>(rule, "a!");
+        auto a = LEXY_VERIFY("a!");
         CHECK(a == 2);
-        constexpr auto aaa = verify<callback>(rule, "aaa!");
+        auto aaa = LEXY_VERIFY("aaa!");
         CHECK(aaa == 4);
 
-        constexpr auto aa = verify<callback>(rule, "aa!");
+        auto aa = LEXY_VERIFY("aa!");
         CHECK(aa == -2);
     }
     SUBCASE("sequence")
     {
-        constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
+        static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -81,22 +81,22 @@ TEST_CASE("dsl::operator-")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
-        constexpr auto zero = verify<callback>(rule, "!");
+        auto zero = LEXY_VERIFY("!");
         CHECK(zero == 1);
 
-        constexpr auto a = verify<callback>(rule, "a!");
+        auto a = LEXY_VERIFY("a!");
         CHECK(a == -2);
-        constexpr auto aa = verify<callback>(rule, "aa!");
+        auto aa = LEXY_VERIFY("aa!");
         CHECK(aa == -2);
 
-        constexpr auto aaa = verify<callback>(rule, "aaa!");
+        auto aaa = LEXY_VERIFY("aaa!");
         CHECK(aaa == 4);
     }
     SUBCASE("any")
     {
-        constexpr auto rule = until(LEXY_LIT("!")) - lexy::dsl::any;
+        static constexpr auto rule = until(LEXY_LIT("!")) - lexy::dsl::any;
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -123,16 +123,16 @@ TEST_CASE("dsl::operator-")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
-        constexpr auto zero = verify<callback>(rule, "!");
+        auto zero = LEXY_VERIFY("!");
         CHECK(zero == -2);
 
-        constexpr auto a = verify<callback>(rule, "a!");
+        auto a = LEXY_VERIFY("a!");
         CHECK(a == -2);
-        constexpr auto aa = verify<callback>(rule, "aa!");
+        auto aa = LEXY_VERIFY("aa!");
         CHECK(aa == -2);
-        constexpr auto aaa = verify<callback>(rule, "aaa!");
+        auto aaa = LEXY_VERIFY("aaa!");
         CHECK(aaa == -2);
     }
 }

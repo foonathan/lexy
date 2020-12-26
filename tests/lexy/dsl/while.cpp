@@ -11,7 +11,7 @@ TEST_CASE("dsl::while_()")
 {
     SUBCASE("token")
     {
-        constexpr auto rule = while_(LEXY_LIT("abc"));
+        static constexpr auto rule = while_(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -25,23 +25,23 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "abcabc");
+        auto two = LEXY_VERIFY("abcabc");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "abcabcabc");
+        auto three = LEXY_VERIFY("abcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = verify<callback>(rule, "abcab");
+        auto partial = LEXY_VERIFY("abcab");
         CHECK(partial == 1);
     }
 
     SUBCASE("branch")
     {
-        constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        static constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -61,23 +61,23 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "abcabc");
+        auto two = LEXY_VERIFY("abcabc");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "abcabcabc");
+        auto three = LEXY_VERIFY("abcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = verify<callback>(rule, "abcab");
+        auto partial = LEXY_VERIFY("abcab");
         CHECK(partial == -1);
     }
 
     SUBCASE("choice")
     {
-        constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc") | LEXY_LIT("bbc"));
+        static constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc") | LEXY_LIT("bbc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -97,17 +97,17 @@ TEST_CASE("dsl::while_()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "abcbbc");
+        auto two = LEXY_VERIFY("abcbbc");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "bbcabcabc");
+        auto three = LEXY_VERIFY("bbcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = verify<callback>(rule, "abcab");
+        auto partial = LEXY_VERIFY("abcab");
         CHECK(partial == -1);
     }
 }
@@ -116,7 +116,7 @@ TEST_CASE("dsl::while_one()")
 {
     SUBCASE("token")
     {
-        constexpr auto rule = while_one(LEXY_LIT("abc"));
+        static constexpr auto rule = while_one(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -137,17 +137,17 @@ TEST_CASE("dsl::while_one()")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == -1);
 
-        constexpr auto one = verify<callback>(rule, "abc");
+        auto one = LEXY_VERIFY("abc");
         CHECK(one == 1);
-        constexpr auto two = verify<callback>(rule, "abcabc");
+        auto two = LEXY_VERIFY("abcabc");
         CHECK(two == 2);
-        constexpr auto three = verify<callback>(rule, "abcabcabc");
+        auto three = LEXY_VERIFY("abcabcabc");
         CHECK(three == 3);
 
-        constexpr auto partial = verify<callback>(rule, "abcab");
+        auto partial = LEXY_VERIFY("abcab");
         CHECK(partial == 1);
     }
     SUBCASE("branch")

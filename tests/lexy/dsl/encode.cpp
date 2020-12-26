@@ -14,16 +14,16 @@ TEST_CASE("dsl::encoded")
 {
     SUBCASE("ASCII")
     {
-        constexpr auto encode = lexy::dsl::encode<lexy::ascii_encoding>;
-        constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
+        constexpr auto        encode = lexy::dsl::encode<lexy::ascii_encoding>;
+        static constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         CHECK(lexy::match(lexy::zstring_input<lexy::raw_encoding>("abc"), rule));
     }
     SUBCASE("UTF-8, bom")
     {
-        constexpr auto encode = lexy::dsl::encode<lexy::utf8_encoding>;
-        constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
+        constexpr auto        encode = lexy::dsl::encode<lexy::utf8_encoding>;
+        static constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char input[] = {0xEF, 0xBB, 0xBF, 'a', 'b', 'c'};
@@ -34,7 +34,7 @@ TEST_CASE("dsl::encoded")
     {
         constexpr auto encode
             = lexy::dsl::encode<lexy::utf16_encoding, lexy::encoding_endianness::little>;
-        constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char input[] = {0xBB, 0xAA};
@@ -44,7 +44,7 @@ TEST_CASE("dsl::encoded")
     {
         constexpr auto encode
             = lexy::dsl::encode<lexy::utf16_encoding, lexy::encoding_endianness::big>;
-        constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char input[] = {0xAA, 0xBB};
@@ -52,8 +52,8 @@ TEST_CASE("dsl::encoded")
     }
     SUBCASE("utf16, bom")
     {
-        constexpr auto encode = lexy::dsl::encode<lexy::utf16_encoding>;
-        constexpr auto rule   = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        constexpr auto        encode = lexy::dsl::encode<lexy::utf16_encoding>;
+        static constexpr auto rule   = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char no_bom[] = {0xAA, 0xBB};
@@ -67,7 +67,7 @@ TEST_CASE("dsl::encoded")
     {
         constexpr auto encode
             = lexy::dsl::encode<lexy::utf32_encoding, lexy::encoding_endianness::little>;
-        constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char input[] = {0xBB, 0xAA, 0x00, 0x00};
@@ -77,7 +77,7 @@ TEST_CASE("dsl::encoded")
     {
         constexpr auto encode
             = lexy::dsl::encode<lexy::utf32_encoding, lexy::encoding_endianness::big>;
-        constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char input[] = {0x00, 0x00, 0xAA, 0xBB};
@@ -85,8 +85,8 @@ TEST_CASE("dsl::encoded")
     }
     SUBCASE("utf32, bom")
     {
-        constexpr auto encode = lexy::dsl::encode<lexy::utf32_encoding>;
-        constexpr auto rule   = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        constexpr auto        encode = lexy::dsl::encode<lexy::utf32_encoding>;
+        static constexpr auto rule   = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         unsigned char no_bom[] = {0x00, 0x00, 0xAA, 0xBB};

@@ -30,7 +30,7 @@ TEST_CASE("rule: parse_state")
 
     SUBCASE("different handler")
     {
-        constexpr auto rule = lexy::dsl::parse_state;
+        static constexpr auto rule = lexy::dsl::parse_state;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -44,10 +44,10 @@ TEST_CASE("rule: parse_state")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("parse rvalue")
@@ -94,7 +94,7 @@ TEST_CASE("rule: parse_state_member")
 
     SUBCASE("different handler")
     {
-        constexpr auto rule = lexy::dsl::parse_state_member<&state::i>;
+        static constexpr auto rule = lexy::dsl::parse_state_member<&state::i>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -108,10 +108,10 @@ TEST_CASE("rule: parse_state_member")
             }
         };
 
-        constexpr auto empty = verify<callback>(rule, "");
+        auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
 
-        constexpr auto string = verify<callback>(rule, "abc");
+        auto string = LEXY_VERIFY("abc");
         CHECK(string == 0);
     }
     SUBCASE("parse rvalue")
