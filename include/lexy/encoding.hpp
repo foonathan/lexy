@@ -139,35 +139,6 @@ struct ascii_encoding
         *buffer = char_type(cp.value());
         return 1;
     }
-
-    class code_point_decoder
-    {
-    public:
-        int init(int_type c)
-        {
-            if (c == eof())
-                return -1;
-
-            _result = char32_t(c);
-            return 0;
-        }
-
-        bool next(int_type)
-        {
-            return false;
-        }
-
-        auto finish() &&
-        {
-            auto cp = code_point(_result);
-            if (!cp.is_ascii())
-                return code_point();
-            return cp;
-        }
-
-    private:
-        char32_t _result = {};
-    };
 };
 
 /// An encoding where the input is assumed to be valid UTF-8.
@@ -243,88 +214,6 @@ struct utf8_encoding
             return 4;
         }
     }
-
-    class code_point_decoder
-    {
-        static constexpr auto payload_lead1 = 0b0111'1111;
-        static constexpr auto payload_lead2 = 0b0001'1111;
-        static constexpr auto payload_lead3 = 0b0000'1111;
-        static constexpr auto payload_lead4 = 0b0000'0111;
-        static constexpr auto payload_cont  = 0b0011'1111;
-
-        static constexpr auto pattern_lead1 = 0b0 << 7;
-        static constexpr auto pattern_lead2 = 0b110 << 5;
-        static constexpr auto pattern_lead3 = 0b1110 << 4;
-        static constexpr auto pattern_lead4 = 0b11110 << 3;
-        static constexpr auto pattern_cont  = 0b10 << 6;
-
-    public:
-        int init(int_type c)
-        {
-            if ((c & ~payload_lead1) == pattern_lead1)
-            {
-                _result = char32_t(c & payload_lead1);
-                return 0;
-            }
-            else if (c == 0xC0 || c == 0xC1)
-            {
-                // These leading characters can only used for overlong ASCII.
-                return -1;
-            }
-            else if ((c & ~payload_lead2) == pattern_lead2)
-            {
-                _result = char32_t(c & payload_lead2);
-                return 1;
-            }
-            else if ((c & ~payload_lead3) == pattern_lead3)
-            {
-                _result = char32_t(c & payload_lead3);
-                if (c == 0xE0)
-                    _min_cont_value = 0xA0;
-                return 2;
-            }
-            else if ((c & ~payload_lead4) == pattern_lead4)
-            {
-                _result = char32_t(c & payload_lead4);
-                if (c == 0xF0)
-                    _min_cont_value = 0x90;
-                return 3;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-
-        bool next(int_type c)
-        {
-            if ((c & ~payload_cont) != pattern_cont)
-                return false; // Not a continuation byte.
-            else if (c < _min_cont_value)
-                return false; // Overlong sequence.
-
-            _result <<= 6;
-            _result |= char32_t(c & payload_cont);
-
-            // We're only having overlong sequences in the second byte, so overwrite.
-            _min_cont_value = 0x80;
-            return true;
-        }
-
-        auto finish() &&
-        {
-            auto cp = code_point(_result);
-            if (cp.is_surrogate())
-                // Surrogates are not allowed.
-                return code_point();
-            return cp;
-        }
-
-    private:
-        char32_t _result = {};
-        // The minimal continuation value to prevent overlong sequences.
-        int_type _min_cont_value = 0x80;
-    };
 };
 template <>
 constexpr bool utf8_encoding::is_secondary_char_type<char> = true;
@@ -376,64 +265,6 @@ struct utf16_encoding
             return 2;
         }
     }
-
-    class code_point_decoder
-    {
-        static constexpr auto payload_lead1 = 0b0000'0011'1111'1111;
-        static constexpr auto payload_lead2 = payload_lead1;
-
-        static constexpr auto pattern_lead1 = 0b110110 << 10;
-        static constexpr auto pattern_lead2 = 0b110111 << 10;
-
-    public:
-        int init(int_type c)
-        {
-            // We need to handle EOF separately and then convert it to a uint16_t.
-            if (c == eof())
-                return -1;
-            auto value = char_type(c);
-
-            if ((value & ~payload_lead1) == pattern_lead1)
-            {
-                _result = char32_t(value & payload_lead1);
-                return 1;
-            }
-            else if ((value & ~payload_lead2) == pattern_lead2)
-            {
-                return -1;
-            }
-            else
-            {
-                _result = char32_t(value);
-                return 0;
-            }
-        }
-
-        bool next(int_type c)
-        {
-            if (c == eof())
-                return false;
-            auto value = char_type(c);
-
-            if ((value & ~payload_lead2) != pattern_lead2)
-                return false;
-
-            _result <<= 10;
-            _result |= char32_t(value & payload_lead2);
-            _result |= 0x10000;
-            return true;
-        }
-
-        auto finish() &&
-        {
-            auto cp = code_point(_result);
-            LEXY_PRECONDITION(!cp.is_surrogate());
-            return cp;
-        }
-
-    private:
-        char32_t _result = {};
-    };
 };
 template <>
 constexpr bool utf16_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
@@ -468,34 +299,6 @@ struct utf32_encoding
         *buffer = char_type(cp.value());
         return 1;
     }
-
-    class code_point_decoder
-    {
-    public:
-        int init(int_type c)
-        {
-            // No need to handle EOF, the code point validation will take care of that one.
-            _result = c;
-            return 0;
-        }
-
-        bool next(int_type)
-        {
-            return false;
-        }
-
-        auto finish() &&
-        {
-            auto cp = code_point(_result);
-            if (cp.is_surrogate())
-                // Surrogates are not allowed.
-                return code_point();
-            return cp;
-        }
-
-    private:
-        char32_t _result = {};
-    };
 };
 template <>
 constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
@@ -523,8 +326,6 @@ struct raw_encoding
     static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
                                                    std::size_t size)
         = delete;
-
-    class code_point_decoder;
 };
 template <>
 constexpr bool raw_encoding::is_secondary_char_type<char> = true;
