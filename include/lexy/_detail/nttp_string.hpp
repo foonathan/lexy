@@ -179,17 +179,11 @@ struct check_size
             ::lexy::_detail::cat<LEXY_NTTP_STRING8(Str, I), LEXY_NTTP_STRING8(Str, I + 8)>
 #        define LEXY_NTTP_STRING32(Str, I)                                                         \
             ::lexy::_detail::cat<LEXY_NTTP_STRING16(Str, I), LEXY_NTTP_STRING16(Str, I + 16)>
-#        define LEXY_NTTP_STRING64(Str, I)                                                         \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING32(Str, I), LEXY_NTTP_STRING32(Str, I + 32)>
-#        define LEXY_NTTP_STRING128(Str, I)                                                        \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING64(Str, I), LEXY_NTTP_STRING64(Str, I + 64)>
-#        define LEXY_NTTP_STRING256(Str, I)                                                        \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING128(Str, I), LEXY_NTTP_STRING128(Str, I + 128)>
 
 // instantiate with overflow check
 #        define LEXY_NTTP_STRING(Str)                                                              \
-            ::lexy::_detail::check_size<LEXY_NTTP_STRING256(Str, 0), LEXY_NTTP_STRING_LENGTH(Str), \
-                                        256>::type
+            ::lexy::_detail::check_size<LEXY_NTTP_STRING32(Str, 0), LEXY_NTTP_STRING_LENGTH(Str),  \
+                                        32>::type
 
 #    endif
 
