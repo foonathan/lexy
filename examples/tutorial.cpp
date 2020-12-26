@@ -62,13 +62,17 @@ struct version
         static constexpr auto name = "build string not supported";
     };
 
-    // Match three integers separated by dots.
+    // Match three integers separated by dots, or the special tag "unreleased".
     static constexpr auto rule = [] {
-        auto number = dsl::integer<int>(dsl::digits<>);
-        auto dot    = dsl::period;
+        auto number      = dsl::integer<int>(dsl::digits<>);
+        auto dot         = dsl::period;
+        auto dot_version = number + dot + number + dot + number
+                           + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>);
 
-        return number + dot + number + dot + number
-               + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>);
+        auto unreleased
+            = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>;
+
+        return unreleased | dsl::else_ >> dot_version;
     }();
 
     // Construct a PackageVersion as the result of the production.

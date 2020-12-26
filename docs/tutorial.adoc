@@ -40,7 +40,7 @@ struct PackageConfig
 };
 ----
 
-The final source code can be found at `examples/tutorial.cpp`.
+The final source code can be found at https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp[`examples/tutorial.cpp`].
 
 ****
 If anything in the tutorial could be improved (and there is probably a lot),
@@ -139,6 +139,8 @@ int main()
 The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
 Refer to the documentation for further details on the surrounding infrastructure.
 
+Again, the full final source code can be found at https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp[`examples/tutorial.cpp`].
+
 == Parsing the package name
 
 We will create a separate production for each of the fields (name, version, authors).
@@ -187,7 +189,10 @@ Likewise, `dsl::ascii::alnum` matches one of `a-zA-Z0-9`.
 To match a single underscore, we can use `dsl::lit_c<'_'>`.
 The latter rule matches and consumes the specified character.
 
-Of course, we don't want a single alpha(numeric) character or underscore,
+All of the three rules are so called _tokens_: they are the fundamental, atomic parse unit of the input.
+Tokens play an essential role in parsing as we'll see, because the library can easily check whether a token matches at a given position.
+
+Of course, here we don't want a single alpha(numeric) character or underscore,
 we want one alpha character followed by zero or more alphanumeric characters or underscores.
 For that, we need to combine rules.
 
@@ -214,24 +219,52 @@ The while rule takes a rule and matches it as often as possible.
 dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum)
 ----
 
-****
-How does the while rule know how many times it should match the alphanumeric rule?
-We will get to that later, but the spoiler is: it just tries it over and over.
-For rules that only look at the next character of the input, such as `dsl::ascii::alnum`,
-this is not a problem, but for more complex rules it can involve expensive backtracking.
+The while rule is different from all other rules we've seen:
+it needs to decide whether it should match again or be done with it.
+If the argument is a token, that can be done very easily --
+just try to match the token (remember: that can be done very efficiently)
+If it matched, it works.
+Otherwise, it backtracks to the previous position and is done.
 
-But don't worry, backtracking happens in a very controlled way and can be prevented.
+Let's consider a more complex token to see how it works: `LEXY_LIT("ab")`.
+This one is equivalent to `dsl::lit_c<'a'> + dsl::lit_c<'b'>` (match `a` then `b`), but it is a single token, not a sequence of tokens.
+If you have a C++20 compiler, you can write it as `dsl::lit<"ab">` without using a macro.
+
+.Parsing `dsl::while_(LEXY_LIT("ab"))`
+----
+ababa
+^ start, try to match ab
+
+ababa
+--^ that worked, try to match it again
+
+ababa
+----^ that worked, try to match it again
+
+ababa
+-----^ that did not work, we're missing a `b`, backtrack!
+
+ababa
+----^ done, next character on input is `a`
+----
+
+****
+Don't worry about backtracking.
+The library will only do it when you've explicitly requested it, or when it is efficient like here.
 ****
 
-Now we're almost there!
+Back to our problem at hand: we're almost there now!
 All we need is to allow the underscore as well as an alphanumeric character in the while loop.
 
-For that, we can use the alternative rule.
-The alternative rule tries to match the first rule.
+For that, we can use the alternative rule, which matches one of the given token.
+It does that by trying to match each token in order.
 If that works, great.
 Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
-It is implemented using `operator/` (read "or").
+Remember, for tokens this is efficient.
+As the alternative rule matches only exactly one token, it is also considered to be a token itself
+(although it's strictly speaking another combination of tokens).
 
+In the DSL, the alternative rule is implemented using `operator/` (read "or").
 With all that, we can finally write our first production:
 
 .The `name` production (https://godbolt.org/z/bdn39v[godbolt])
@@ -245,6 +278,12 @@ struct name
 };
 ----
 
+****
+If we have an alternative rule of literals, as in `LEXY_LIT("abc") / LEXY_LIT("ab") / LEXY_LIT("b")`,
+it can be parsed without any backtracking.
+This is done by constructing a https://en.wikipedia.org/wiki/Trie[trie] at compile-time and looking for the input in there.
+****
+
 The production is now almost done.
 We can use `lexy::validate()` to give it some input and raise an error if it does not match the rule,
 or we can use `lexy::match()` to just give us a `true`/`false` result.
@@ -254,9 +293,9 @@ To implement that, we need to do two things.
 First, we need to remember everything we've just matched by the rule, so we can convert that into the `std::string` later on.
 This is done using `dsl::capture()`.
 This rule takes another rule as input and parses it.
-However, it is also the first rule that produces a value.
+However, it is also the first rule that produces a value:
 When parsing a `dsl::capture()` rule, we get a `lexy::lexeme` (basically a `std::string_view`) that views all the input the rule has matched.
-This is exactly what we want to turn into our `std::string`.
+This is exactly what we then want to turn into our `std::string`.
 
 Second, we need to specify what value our production should return when it's parsed.
 When we `lexy::parse()` a production, we parse the rule of the production.
@@ -312,6 +351,7 @@ struct name
 ----
 
 If now parse the `name` production, we will get a `std::string`.
+First field done, let's move on to the next one.
 
 == Parsing the package version
 
@@ -325,7 +365,7 @@ version = 0.0.0
 Again, we're only concerned with the value after the equal sign for now.
 It consists of three numbers separated by dots, where a number is a non-empty sequence of digits.
 
-The rule `dsl::ascii::digit` matches one digit 0-9.
+The token `dsl::ascii::digit` matches one digit 0-9.
 To match an arbitrary amount of digits, we can again use the while rule.
 However, this would also allow zero digits, which we don't want.
 So instead we use `dsl::while_one(dsl::ascii::digit)`, which is equivalent to `dsl::ascii::digit + dsl::while_(dsl::ascii::digit)`:
@@ -338,13 +378,13 @@ it needs at least one digit, and then zero or more.
 dsl::while_one(dsl::ascii::digit)
 ----
 
-Matching one or more digits is common, so there is a predefined rule for that: `dsl::digits`.
+Matching one or more digits is common, so there is a predefined rule (token actually): `dsl::digits`.
 It takes an optional template parameter to specify the base,
 for example `dsl::digits<dsl::octal>` would only match `0-7`,
 whereas `dsl::digits<dsl::hex_upper>` would match `0-9A-F`.
 If we don't specify a base, it defaults to `dsl::decimal`.
 
-.The digits rule (https://godbolt.org/z/6TnKeY[godbolt])
+.The digits token (https://godbolt.org/z/6TnKeY[godbolt])
 [source,cpp]
 ----
 // Match one or more decimal digits.
@@ -440,6 +480,265 @@ struct version
 
 We can now use this production to parse `PackageVersion`.
 
+== Extending the version field
+
+Let's stick with the `version` production a bit and extend it.
+We also want to allow the special version number `unreleased` as an alternate spelling for `0.0.0`.
+
+Parsing `unreleased` is easy: just use the `LEXY_LIT("unreleased")` token:
+
+.Adding `unreleased` support
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::period;
+        auto dot_version = number + dot + number + dot + number; // <1>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return ???; // <2>
+    }();
+};
+----
+<1> For convenience, we put the previous rule in a variable `dot_version`.
+<2> What do we put here?
+
+But how do we can we parse either `unreleased` or `dot_version`?
+
+We've already seen the alternative rule `/`, which allowed us to parse one of the specified tokens.
+However, `number + dot + number + dot + number` is not a token, so we can't use `/`.
+And this is a good thing!
+
+If we were able to write `dot_version / unreleased`, this might lead to arbitrary backtracking.
+In particular, rules can have arbitrary side-effects that then might happen unnecessarily.
+So `lexy` strictly limits backtracking.
+
+What we need here is a special _branch_ rule.
+This is a rule that has an associated condition.
+If the condition matches, the branch can be taken and will be parsed without further backtracking.
+If the condition didn't match, the parsing algorithm needs to look for another alternative to go.
+Matching the condition uses a special efficient implementation, so backtracking it is acceptable.
+
+Every token is also a branch, and many simple rules such as a sequence of tokens are also branches.
+The same is true for `dsl::capture()` if it captures a token or branch.
+Then the argument is the branch condition, which is only really captured once the branch has been taken.
+
+And even if you have a rule that isn't a branch, don't worry, there is a way to turn an arbitrary rule into a branch.
+We just need to give it a condition, which is another branch rule (usually a token).
+This can be done using `operator>>`: `condition >> rule`.
+This will check whether `condition` matches, and take the branch parsing `rule` if it does.
+Once the algorithm starts parsing `rule` it has already committed and will never backtrack.
+
+The alternative rule `/` requires only tokens, but it has a big sister: the choice rule `|`.
+This requires branches as arguments and parses the first branch whose condition matches.
+
+.The choice rule
+----
+// In C++, this has the operator precedence we want, which worked out nicely.
+condition1 >> rule1 | condition2 >> rule2 | ...
+----
+
+Such a choice corresponds to the following pseudo-code.
+
+.Manual implementation of choice
+[source,cpp]
+----
+if (match(input, condition1)) // <1>
+  parse(input, rule1); // <2>
+else if (match(input, condition2))
+  parse(input, rule2);
+…
+----
+<1> If we match a condition, we take the branch.
+    Of course, this requires backtracking if the condition did not match.
+<2> When the condition did match, the input is not rewound and we can continue with the rule.
+    If any errors occur now, it's too late -- we've committed to this branch and issue an error.
+
+Note that we will not backtrack after a branch condition has been matched, no matter what!
+This is illustrated in the following example, where we use `dsl::while_()` with a branch.
+
+.Parsing `dsl::while_(dsl::lit_c<'a'> >> dsl::lit_c<'b'> + dsl::lit_c<'c'>)`
+----
+abcabcabd
+^ start, try to match the condition
+
+abcabcabd
+-^ condition matched, we take the branch
+
+abcabcabd
+---^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+----^ condition matched, we take the branch
+
+abcabcabd
+------^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+-------^ condition matched, we take the branch
+
+abcabcabd
+--------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken
+----
+
+With the choice rule, we can now parse `unreleased` or `dot_version`.
+As `unreleased` is a token, it is already a branch.
+But `dot_version` isn't, so we need to give it a condition.
+Something like this does not work:
+
+.`unreleased` or `dot_version`, first attempt
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::period;
+
+        auto dot_version = number + dot + number + dot + number;
+        auto dot_version_condition = dsl::digit<>; // <1>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dot_version_condition >> dot_version; // <2>
+    }();
+};
+----
+<1> We only want to parse `dot_version` if we have a decimal digit, which is checked by `dsl::digit<>`.
+<2> A choice of the two branches.
+
+If we haven an input like `1.2.3`, we first try to match `unreleased`.
+This fails, so we try to match the condition of the second branch.
+`dsl::digit<>` matches, so we take the branch.
+However, `dsl::digit<>` consumes the digit!
+What is left once we try to parse `dot_version` is only `.2.3`, which is wrong.
+
+We need to check for a digit without consuming it.
+This can be done with `dsl::peek()`.
+
+.`unreleased` or `dot_version`, second attempt
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::period;
+
+        auto dot_version = number + dot + number + dot + number;
+        auto dot_version_condition = dsl::peek(dsl::digit<>); // <1>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dot_version_condition >> dot_version; // <2>
+    }();
+};
+----
+<1> We only want to parse `dot_version` if we have a decimal digit, which is checked by `dsl::digit<>`.
+    `dsl::peek()` is a branch that matches the rule without consuming it.
+<2> A choice of the two branches.
+
+This works, but we can do better.
+Remember that the choice tries each branch strictly in order.
+So once it's clear that it isn't `unreleased`, it has to be `dot_version` (or is an error).
+This means that as condition of `dot_version`, we can just use a branch that is always taken.
+This branch is called `dsl::else_`.
+
+.`unreleased` or `dot_version`, third attempt
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::period;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dsl::else_ >> dot_version;
+    }();
+};
+----
+
+Now we're successfully matching the input, we just need to produce a correct `PackageVersion`.
+Let's consider the values produced by the choice rule.
+If our input is a version number like `1.2.3`, we're producing three ints, just as before.
+But if our input is `unreleased` we're not producing any values.
+
+There are three things we can do.
+
+The first solution is two simply add a default constructor to `PackageVersion`.
+If we parse `unreleased`, the `lexy::construct<PackageVersion>` callback will be invoked with zero arguments which will itself invoke the default constructor of `PackageVersion`.
+
+The second solution is to write a callback that has two overloads.
+The first one takes three ints and forwards them to the `PackageVersion`.
+The second one takes no arguments and creates a `0.0.0` `PackageVersion` manually.
+
+.Overloaded callback for the `version` production (https://godbolt.org/z/TzxT7d[godbolt])
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::lit_c<'.'>;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dsl::else_ >> dot_version;
+    }();
+
+    // An overloaded callback.
+    static constexpr auto value
+      = lexy::callback<PackageVersion>(
+            [](int a, int b, int c) { // <1>
+                // a is the result of the first number rule, b of the second, c of the third.
+                return PackageVersion{a, b, c};
+            },
+            [] { // <2>
+                return PackageVersion{0, 0, 0};
+            }
+        );
+};
+----
+<1> This callback will be invoked when we parse `dot_version`.
+<2> This callback will be invoked when we parse `unreleased`.
+
+The third solution is two produce three ints even if we take the `unreleased` branch.
+This can be done with the `dsl::value_c<Constant>` production.
+It will accept any input without consuming anything, but it will always produce a value -- the specified `Constant`.
+So we extend the `unreleased` branch to produce three zeroes once we take the branch:
+
+.Using `dsl::value_c` for the version production (https://godbolt.org/z/1nWvEn[godbolt])
+[source,cpp]
+----
+struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer<int>(dsl::digits<>);
+        auto dot    = dsl::lit_c<'.'>;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased
+          = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>; // <1>
+
+        return unreleased | dsl::else_ >> dot_version;
+    }();
+
+    static constexpr auto value = lexy::construct<PackageVersion>; // <2>
+};
+----
+<1> Produce the three zeroes.
+<2> This callback will always be invoked with three integers.
+
+To illustrate the most rules, I've decided to just stick with this solution.
+Your preference may vary, of course.
+
 == Parsing one package author
 
 Before we go and parse the list of authors, we need to parse an individual one.
@@ -473,324 +772,8 @@ First of all, we don't want _arbitrary_ code points in our string.
 It shouldn't contain characters like line breaks.
 More importantly, the rule can never succeed.
 
-To understand why, we need to talk about _branches_.
-
-== Branches: Making parse decisions
-
-Parsing is really easy when you know exactly what character is going to come next.
-All the complexity comes from making decisions about _what_ to parse.
-
-Let's say we want to write a rule that matches either a decimal integer literal (e.g. `123`) or a hexadecimal integer literal (e.g `1A`).
-If we have a literal that can be both decimal and hexadecimal, we'll just assume it's decimal.
-The example is a bit contrived, but let's just bear with me.
-
-We can easily write a rule that matches a decimal integer, and another one that matches a hexadecimal integer.
-
-.Decimal or hexadecimal
-[source,cpp]
-----
-struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer<int>(dsl::digits<>);
-        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
-
-        return ???;
-    }();
-};
-----
-
-We want some rule that expresses "decimal or hex".
-We've already seen the alternative rule `/`.
-However, that one doesn't actually work with `dsl::integer`, for reasons I'll explain shortly.
-
-Let's suppose it _would_ work and we write `dec / hex`.
-This would first try to match `dec`.
-If that fails at some point, it rewinds the input -- it _backtracks_ -- to the original position.
-It then discards the partially constructed integer that was going to be produced by `dec`,
-and matches `hex` instead.
-
-Let's consider an input like `123456789A`.
-The `dec` rule is perfectly happy with it until it reaches the `A`.
-`A` is no longer a decimal digit, so it stops and returns `123456789` as the result, which is wrong.
-When parsing then continues after our `dec_or_hex` production, it will certainly fail due to the unexpected `A` still remaining on the input.
-
-.Parsing `123456789A`
-----
-123456789A
----------^ no longer a digit, exit
-----
-
-So let's say we fix our `dec` rule that it will fail instead of succeeding to early when it sees the `A` (or any other non-decimal hex digit).
-Then the alternative rule will go and backtrack to match the `hex` rule.
-However, for that we're doing the same work twice!
-The first thing the `hex` rule does is match `123456789` _again_.
-
-.Parsing `123456789A` with the revised `dec` rule
-----
-123456789A
----------^ hex digit, backtrack
-
-123456789A
-^ start here again
-
-123456789A
-----------^ ok, we're done
-----
-
-
-Furthermore, let's say our `dec` rule would introduce side effects like printing the integer as it parses it,
-or is expensive such as performing heap allocation to store a big integer type.
-Backtracking means that side effects would happen even though the rule was never parsed, and expensive work is done unnecessarily.
-
-As such, `lexy` made the design decision to only backtrack simple rules and only when you've explicitly opt-in to that.
-
-A "simple rule" is called a _pattern_.
-Such a rule cannot produce a value -- as this can be expensive and/or produce side-effects -- and provides a special interface to efficiently determine "would this rule match at this input?".
-The alternative rule then only takes pattern, as backtracking a pattern is not a problem.
-
-Most rules we've seen so fare are actually patterns: `dsl::ascii::*`, `dsl::lit_c`, and `dsl::digits<>`.
-Combinator rules such as sequence `+` and `dsl::while_()` are patterns when all arguments are patterns.
-The only non-pattern rules we've seen are `dsl::capture()` and `dsl::integer<T>()`, as both produce values.
-
-Every time `lexy` needs to make a decision between one or more rules, it requires a pattern.
-This is the case for the alternative rule `/`, but also `dsl::while_()`.
-The latter needs to decide: do I match the repeated rule again, or am I done?
-So it requires a pattern.
-If the pattern matches again, the rule is repeated, otherwise, it backtracks the failed match and is done.
-
-.Parsing `dsl::while_(dsl::lit_c<'a'> + dsl::lit_c<'b'>)`
-----
-ababa
-^ start, try to match ab
-
-ababa
---^ that worked, try to match it again
-
-ababa
-----^ that worked, try to match it again
-
-ababa
------^ that did not work, we're missing a `b`, backtrack!
-
-ababa
-----^ done, next character on input is `a`
-----
-
-
-So how can we implement `dec` or `hex`?
-As both are non-pattern rules, we can't use the alternative rule `/`.
-
-For that, we need to specify a so-called _branch_.
-A branch is a rule associated with a pattern, the branch condition.
-The parsing algorithm will take a branch when its condition matches -- this can be done efficiently.
-Once a branch is taken, it never backtracks again.
-
-Every pattern is a branch where the pattern is the condition and there is no associated rule.
-Rules such as `dsl::while_()` that need to make a decision thus work with patterns or branches.
-We can construct a branch using an `operator>>` overload: `condition >> rule`.
-Then we can use it, to for example specify when exactly we want another repetition of a while loop.
-
-.Parsing `dsl::while_(dsl::lit_c<'a'> >> dsl::lit_c<'b'> + dsl::lit_c<'c'>)`
-----
-abcabcabd
-^ start, try to match the condition
-
-abcabcabd
--^ condition matched, we take the branch
-
-abcabcabd
----^ branch matched, try to match condition of the next iteration
-
-abcabcabd
-----^ condition matched, we take the branch
-
-abcabcabd
-------^ branch matched, try to match condition of the next iteration
-
-abcabcabd
--------^ condition matched, we take the branch
-
-abcabcabd
---------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken
-----
-
-The simple alternative rule `/` on the other hand, does not support branches.
-Instead we have to use a choice rule implemented using `operator|`.
-This also tries to match one of multiple rules in the order they were specified,
-but it uses the branch condition to determine which one should be taken.
-
-.The choice rule
-----
-// In C++, this has the operator precedence we want, which worked out nicely.
-condition1 >> rule1 | condition2 >> rule2 | ...
-----
-
-Such a choice corresponds to the following pseudo-code.
-
-.Manual implementation of choice
-[source,cpp]
-----
-if (match(input, condition1)) // <1>
-  parse(input, rule1); // <2>
-else if (match(input, condition2))
-  parse(input, rule2);
-…
-----
-<1> If we match a condition, we take the branch.
-    Of course, this requires backtracking if the condition did not match.
-<2> When the condition did match, the input is not rewound and we can continue with the rule.
-    If any errors occur now, it's too late -- we've committed to this branch and issue an error.
-
-For our `dec_or_hex` production, we only want to parse `dec` if we don't have a hexadecimal integer.
-To do that, we first need to match all decimal digits and then need to prevent that it is followed by a hexadecimal digit (as in `123456789A12`, which is `1-9` followed by a hexadecimal digit `A`):
-
-.Decimal or hexadecimal
-[source,cpp]
-----
-struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer<int>(dsl::digits<>);
-        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
-
-        auto dec_condition = dsl::digits<> + !dsl::digit<dsl::hex>; // <1>
-
-        return dec_condition >> dec | dsl::else_ >> hex;            // <2>
-    }();
-};
-----
-<1> We use `dsl::digits<>` to match all decimal digit first.
-    Then we fail if we encounter a hexadecimal digit.
-    `dsl::digit<dsl::hex>` (no trailing 's') matches a single hex digit,
-    but its parse success is negated using the `!` rule.
-<2> Once we have a condition, we can use the choice rule.
-    The special branch condition `dsl::else_` is always taken, so should be the last branch.
-    This is required to turn a rule into a branch without adding a condition, as we don't need one -- if it wasn't decimal, it needs to be hex.
-
-However, this doesn't work:
-the input is only rewound if the `dec_condition` does not match.
-If it did match, we continue with the `dec` rule but we've just consumed all the decimal digits!
-
-So we use `dsl::peek()`, which matches a pattern without consuming any input.
-
-.Decimal or hexadecimal (https://godbolt.org/z/KK4TYe[godbolt])
-[source,cpp]
-----
-struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer<int>(dsl::digits<>);
-        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
-
-        auto dec_condition
-          = dsl::peek(dsl::digits<> + !dsl::digit<dsl::hex>);
-
-        return dec_condition >> dec | dsl::else_ >> hex;
-    }();
-};
-----
-
-.Parsing `123456789A`
-----
-123456789A
-^ start with the `dec_condition`
-
-123456789A
----------^ at this point, it sees the A and fails
-
-123456789A
-^ backtrack back to beginning
-
-123456789A
-----------^ successfully parsed the `hex` rule (if we ignore the integer overflow)
-----
-
-.Parsing `123456789`
-----
-123456789
-^ start with the `dec_condition`
-
-123456789
----------^ no more digits, but also not a hex digit: condition succeeded
-
-123456789
-^ the peek rule rewinds the input
-
-123456789A
-----------^ successfully parsed the `dec` rule
-----
-
-This works.
-Note that we couldn't avoid backtracking.
-However, the backtracking was done explicitly by giving a branch condition.
-We thus have full control over how much backtracking is used and when.
-
-Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional requirements on the input.
-For example, hexadecimal numbers are usually prefixed with something like `0x`.
-This also allows writing a hexadecimal number using only decimal digits, which makes the example less contrived.
-
-If we have `0x` as a prefix, we can use that as the condition for the `hex` branch.
-It isn't even necessary for the actual value of the number, so no need to use `dsl::peek()` to rewind after the condition has matched.
-
-.Decimal or hexadecimal with prefix (https://godbolt.org/z/anj7dc[godbolt])
-[source,cpp]
-----
-struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer<int>(dsl::digits<>);
-        auto hex = dsl::integer<int>(dsl::digits<dsl::hex>);
-
-        auto hex_condition = LEXY_LIT("0x"); // <1>
-
-        return hex_condition >> hex | dsl::else_ >> dec;
-    }();
-};
-----
-<1> `LEXY_LIT("0x")` is equivalent to `dsl::lit_c<'0'> + dsl::lit_c<'x'>`.
-    If we have C++20, we can even write `dsl::lit<"0x">` without needing a macro.
-
-Now we can match a decimal or hexadecimal number.
-
-.Parsing `0x42`
-----
-0x42
-^ try to match `hex_condition` first
-
-0x42
---^ it succeeded, take the branch
-
-0x42
-----^ successfully parsed hexadecimal number
-----
-
-.Parsing `007`
-----
-007
-^ try to match `hex_condition` first
-
-007
--^ error, this should be x
-
-007
-^ backtrack after failed condition
-
-007
----^ successfully parsed decimal number
-----
-
-== Parsing one package author - Continued
-
-Now we know how the algorithm makes decisions, we can understand why our previous attempt does not work:
-
-[source,cpp]
-----
-dsl::lit_c<'"'> + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c<'"'>
-----
-
 The while rule uses the branch condition to determine whether or not it should try another iteration.
-Here, our branch is the pattern `dsl::code_point`, so the entire pattern is used as condition.
+Here, our branch is the token `dsl::code_point`, so the entire rule is used as condition.
 We repeat as long as we match code points, this includes the closing `"` character.
 
 ****
@@ -803,12 +786,9 @@ It does exactly what you say it should do.
 
 To fix this, we need a branch condition.
 We only want to match code points while we don't have the closing `"`.
-This can be implemented using the `!`-rule as condition, which matches a pattern but flips the result:
-it succeeds if the pattern didn't match, but fails if it did match.
-Note that on failure, the pattern has been consumed.
-This means that we don't need to parse the `"` after the loop has ended, as it's done by our condition.
+For that, we can use `dsl::peek_not()`, which checks whether a rule would not match at the input without consuming anything.
 
-.String parsing, second attempt (https://godbolt.org/z/Y4qMz6[godbolt])
+.String parsing, second attempt (https://godbolt.org/z/eca4E9[godbolt])
 [source,cpp]
 ----
 struct author
@@ -816,19 +796,25 @@ struct author
     // Match zero or more code points ("characters") surrounded by quotation marks.
     // We capture the content without the quotes.
     static constexpr auto rule
-      = dsl::lit_c<'"'> + dsl::capture(dsl::while_(!dsl::lit_c<'"'> >> dsl::code_point));
+      = dsl::lit_c<'"'>
+        + dsl::capture(dsl::while_(dsl::peek_not(dsl::lit_c<'"'>) >> dsl::code_point))
+        + dsl::lit_c<'"'>;
 
     // Convert the captured lexeme into a std::string.
     static constexpr auto value = lexy::as_string<std::string>;
 };
 ----
 
-Unfortunately, the branch condition is still captured, so we get a trailing `"` in our string.
-We need to wrap the condition in `dsl::peek()` so we don't consume the closing `"` and match it at the end...
+While this works, it is not as efficient as it could be:
+To determine whether we should parse another character, we need to peek for it in the input.
+If it would match, we're done -- but don't match it yet.
+Immediately afterwards, we do match it again.
+
+It's also not quite as compact as I would like.
 
 Luckily, parsing a quoted string is a common problem, so there is a predefined function in the library.
 We can use `dsl::quoted(dsl::code_point)` to match zero or more code points surrounded by quotes.
-The closing `"` is used as the condition to detect the end of the string, just like we've just implemented.
+The closing `"` is used as the condition to detect the end of the string, like we've just implemented, only more efficiently.
 
 `dsl::quoted()` works differently than the other rules we've seen so far.
 Every rule that produced a value like `dsl::capture()` or `dsl::integer` produces only a single value.
@@ -884,7 +870,7 @@ We also haven't forbidden input such as `"First line\nSecond line"`, where `\n` 
 To do that, we need to prevent certain code points from occurring in our string.
 We can do that using the minus rule implemented as `operator-`.
 `a - b` matches `a` but only succeeds if `b` did not match the input `a` just matched.
-With that, we can "subtract" certain character classes from our pattern.
+With that, we can "subtract" certain character classes from our token.
 
 .String parsing, fourth attempt (https://godbolt.org/z/KMEfaq[godbolt])
 [source,cpp]
@@ -1030,6 +1016,27 @@ struct author_list
 };
 ----
 
+****
+To recap all the implicit branch condition:
+
+* Using `dsl::sep()` as list separator does not require a branch to parse a list.
+  The separator itself is used to determine whether or not we need another list item.
+  If we wanted to use `dsl::trailing_sep()` or no list separator, we would need a branch.
+* The `dsl::p` rule is branch if the production rule is a branch.
+* `dsl::quoted()` is a branch that uses the initial quotation mark as condition.
+  The same is true for every `dsl::delimited()`.
+* `dsl::square_bracketed()` is a branch that uses the initial opening square bracket as condition.
+  The same is true for every `dsl::bracketed()`.
+* Using `dsl::square_bracketed.list(...)` does never require a branch condition in the list item.
+  The list is considered done if we have the closing square bracket, similar to the way `dsl::quoted()` worked.
+  The same is true for every `dsl::bracketed()`.
+
+So while `lexy` requires branches every time it needs to make a decision,
+in many situations, the branches can be hidden away.
+This is thanks to the utility rules such as `dsl::delimited()` and `dsl::bracketed()`.
+There is also `dsl::terminated()`, which works just like `dsl::bracketed()` but it has only a closing "bracket" not an opening one.
+****
+
 == Parsing the package config
 
 We can now put everything together and parse our config:
@@ -1056,7 +1063,7 @@ struct config
 };
 ----
 <1> We define a little helper function that builds a rule that parses a field given its name and value.
-<2> Each field consists of the name, an equal sign, the value rule, and a newline matched by the `dsl::newline` pattern.
+<2> Each field consists of the name, an equal sign, the value rule, and a newline matched by the `dsl::newline` token.
 <3> Define each field using the productions we've built above.
 <4> Match them all in order.
 <5> Construct the package config from the resulting `std::string`, `PackageVersion` and `std::vector<std::string>`.
@@ -1076,11 +1083,11 @@ We don't support whitespace between the elements.
 `lexy` does not skip whitespace until you tell it to (and more importantly, what the whitespace is).
 
 For that, we can use `dsl::whitespaced()`.
-It takes a rule and the whitespace pattern.
+It takes a rule and the whitespace rule.
 It then matches the rule after it skipped any leading whitespace.
 For convenience, many rules provide an `operator[]` that does the same thing.
 
-So we first define our whitespace pattern as a global constant in our grammar:
+So we first define our whitespace rule as a global constant in our grammar:
 
 [source,cpp]
 ----
@@ -1172,7 +1179,7 @@ asdfjlagnlwefhjlaghlhl
 
 The reason for that is simple: when we parse a production, we only consume as much input as necessary for it and don't look at anything else.
 To prevent that, we need to use `dsl::eof`.
-This pattern only matches when we're at the end of the input.
+This token only matches when we're at the end of the input.
 
 .Preventing trailing input
 [source,cpp]
@@ -1244,8 +1251,8 @@ error: while parsing author_list
 
 However, some generic errors are a bit confusing if you haven't written the grammar.
 For example, if you write a string literal that contains a control character, you get the generic `minus failure` error message.
-This can be improved using `dsl::try_`.
-This rule matches a pattern and reports an error with the specified tag if the pattern didn't match.
+Luckily, the minus rule is actually a token and every token has a `.error()` member function.
+This allows specifying the error that will be reported if the token didn't match.
 
 .`author` production with `dsl::try_`
 [source,cpp]
@@ -1258,7 +1265,7 @@ struct author
     };
 
     static constexpr auto rule = [] {
-        auto cp = dsl::try_<invalid_character>(dsl::code_point - dsl::ascii::control); // <3>
+        auto cp = (dsl::code_point - dsl::ascii::control).error<invalid_character>(); // <3>
 
         …
     }();
@@ -1268,7 +1275,7 @@ struct author
 ----
 <1> The tag that will be associated with the error.
 <2> We override the default message (which would be `author::invalid_character`) to the more friendly `invalid string character`.
-<3> We apply `dsl::try_` to the content of the string.
+<3> We specify that on token failure, we want a generic error with the given tag.
 
 Likewise, if we specify the same field twice we get the generic `combination duplicate` error message.
 This can be improved by specifying a custom tag in our `dsl::combination()` call.
