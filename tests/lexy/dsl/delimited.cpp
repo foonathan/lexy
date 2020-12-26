@@ -267,11 +267,13 @@ TEST_CASE("dsl::delimited with escape")
     auto unterminated = LEXY_VERIFY("(abc");
     CHECK(unterminated == -2);
 
-    auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
+    auto invalid_ascii = LEXY_VERIFY("(ab\xF0)");
     CHECK(invalid_ascii == -3);
 
     auto escape = LEXY_VERIFY("(a$bc$))");
     CHECK(escape == 4);
+    auto invalid_escape = LEXY_VERIFY("(a$\xF0)");
+    CHECK(invalid_escape == -4);
 }
 
 TEST_CASE("dsl::escape")

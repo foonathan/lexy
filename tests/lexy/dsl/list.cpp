@@ -12,7 +12,8 @@
 
 TEST_CASE("dsl::list()")
 {
-    static LEXY_VERIFY_FN auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
+    static LEXY_VERIFY_FN auto rule
+        = list(LEXY_LIT("ab") >> lexy::dsl::lit_c<'c'> + lexy::dsl::id<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -48,16 +49,21 @@ TEST_CASE("dsl::list()")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
-            return -1;
+            if (e.position() == str)
+            {
+                LEXY_VERIFY_CHECK(e.string() == "ab");
+                return -1;
+            }
+            else
+            {
+                LEXY_VERIFY_CHECK(e.string() == "c");
+                return -2;
+            }
         }
     };
 
     auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
 
     auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
@@ -65,6 +71,16 @@ TEST_CASE("dsl::list()")
     CHECK(two == 2);
     auto three = LEXY_VERIFY("abcabcabc");
     CHECK(three == 3);
+
+    auto condition_partial = LEXY_VERIFY("a");
+    CHECK(condition_partial == -1);
+    auto one_condition_partial = LEXY_VERIFY("abca");
+    CHECK(one_condition_partial == 1);
+
+    auto partial = LEXY_VERIFY("ab");
+    CHECK(partial == -2);
+    auto one_partial = LEXY_VERIFY("abcab");
+    CHECK(one_partial == -2);
 }
 
 TEST_CASE("dsl::list() sep")
@@ -105,7 +121,6 @@ TEST_CASE("dsl::list() sep")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.position() == str);
             LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
@@ -113,8 +128,6 @@ TEST_CASE("dsl::list() sep")
 
     auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
 
     auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
@@ -122,6 +135,11 @@ TEST_CASE("dsl::list() sep")
     CHECK(two == 2);
     auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 3);
+
+    auto partial = LEXY_VERIFY("ab");
+    CHECK(partial == -1);
+    auto one_partial = LEXY_VERIFY("abc,ab");
+    CHECK(one_partial == -1);
 
     auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
@@ -171,7 +189,6 @@ TEST_CASE("dsl::list() sep capture")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.position() == str);
             LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
@@ -179,8 +196,6 @@ TEST_CASE("dsl::list() sep capture")
 
     auto empty = LEXY_VERIFY("");
     CHECK(empty == -1);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
 
     auto one = LEXY_VERIFY("abc");
     CHECK(one == 3);
@@ -188,6 +203,11 @@ TEST_CASE("dsl::list() sep capture")
     CHECK(two == 7);
     auto three = LEXY_VERIFY("abc,abc,abc");
     CHECK(three == 11);
+
+    auto partial = LEXY_VERIFY("ab");
+    CHECK(partial == -1);
+    auto one_partial = LEXY_VERIFY("abc,ab");
+    CHECK(one_partial == -1);
 
     auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 3);

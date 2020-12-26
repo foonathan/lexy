@@ -165,6 +165,31 @@ TEST_CASE("dsl::integer")
         CHECK(parse(rule, "1'2'3'4'5") == 12345);
         CHECK(parse(rule, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
     }
+    SUBCASE("base 10, int")
+    {
+        static constexpr auto rule
+            = lexy::dsl::integer<int>(lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
+
+        for (auto i = 0; i < 256; ++i)
+            CHECK(parse(rule, std::to_string(i).c_str()) == i);
+        for (auto i = 0; i < 256; ++i)
+        {
+            auto value = i * i;
+            CHECK(parse(rule, std::to_string(value).c_str()) == value);
+        }
+        for (auto i = 0; i < 256; ++i)
+        {
+            auto value = INT_MAX - i;
+            CHECK(parse(rule, std::to_string(value).c_str()) == value);
+        }
+
+        CHECK(parse(rule, "000000000000") == 0);
+        CHECK(parse(rule, ("000000000000" + std::to_string(INT_MAX)).c_str()) == INT_MAX);
+        CHECK(parse(rule, ("000000000000" + std::to_string(INT_MAX + 1ll)).c_str()) == -1);
+
+        CHECK(parse(rule, "1'2'3'4'5") == 12345);
+        CHECK(parse(rule, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
+    }
     SUBCASE("base 10, unbounded")
     {
         static constexpr auto rule = lexy::dsl::integer<lexy::unbounded<std::uint8_t>>(

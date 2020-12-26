@@ -355,6 +355,11 @@ TEST_CASE("make_buffer")
         CHECK(big.data()[2] == 0x4455);
         CHECK(big.data()[3] == 0x6677);
 
+        auto empty_bom
+            = lexy::make_buffer<lexy::utf16_encoding, lexy::encoding_endianness::bom>(no_bom_str,
+                                                                                      0);
+        CHECK(empty_bom.size() == 0);
+
         auto no_bom
             = lexy::make_buffer<lexy::utf16_encoding,
                                 lexy::encoding_endianness::bom>(no_bom_str, sizeof(no_bom_str));
@@ -395,6 +400,11 @@ TEST_CASE("make_buffer")
         CHECK(big.size() == 2);
         CHECK(big.data()[0] == 0x00112233);
         CHECK(big.data()[1] == 0x44556677);
+
+        auto empty_bom
+            = lexy::make_buffer<lexy::utf32_encoding, lexy::encoding_endianness::bom>(no_bom_str,
+                                                                                      0);
+        CHECK(empty_bom.size() == 0);
 
         auto no_bom
             = lexy::make_buffer<lexy::utf32_encoding,
