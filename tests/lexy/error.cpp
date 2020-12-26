@@ -12,8 +12,8 @@ TEST_CASE("error_context")
     struct production
     {};
 
-    static constexpr auto input   = lexy::zstring_input("abc");
-    constexpr auto        context = lexy::error_context(production{}, input, input.begin());
+    auto input   = lexy::zstring_input("abc");
+    auto context = lexy::error_context(production{}, input, input.begin());
     CHECK(&context.input() == &input);
     CHECK(context.production() == "production");
     CHECK(context.position() == input.begin());
