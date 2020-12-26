@@ -20,35 +20,35 @@ TEST_CASE("engine_lookahead")
         = lexy::engine_lookahead<lexy::engine_literal<needle_trie>, lexy::engine_literal<end_trie>>;
     CHECK(lexy::engine_is_matcher<engine>);
 
-    constexpr auto empty = engine_matches<engine>("");
+    auto empty = engine_matches<engine>("");
     CHECK(!empty);
     CHECK(empty.count == 0);
     CHECK(empty.ec == engine::error_code::not_found_eof);
 
-    constexpr auto abc = engine_matches<engine>("abc");
+    auto abc = engine_matches<engine>("abc");
     CHECK(!abc);
     CHECK(abc.count == 0);
     CHECK(abc.ec == engine::error_code::not_found_eof);
-    constexpr auto abc_end = engine_matches<engine>("abc\n");
+    auto abc_end = engine_matches<engine>("abc\n");
     CHECK(!abc_end);
     CHECK(abc_end.count == 0);
     CHECK(abc_end.ec == engine::error_code::not_found_end);
 
-    constexpr auto needle = engine_matches<engine>("<!>");
+    auto needle = engine_matches<engine>("<!>");
     CHECK(needle);
     CHECK(needle.count == 0);
-    constexpr auto needle_end = engine_matches<engine>("<!>\n");
+    auto needle_end = engine_matches<engine>("<!>\n");
     CHECK(needle_end);
     CHECK(needle_end.count == 0);
 
-    constexpr auto abc_needle_abc = engine_matches<engine>("abc<!>abc");
+    auto abc_needle_abc = engine_matches<engine>("abc<!>abc");
     CHECK(abc_needle_abc);
     CHECK(abc_needle_abc.count == 0);
-    constexpr auto abc_needle_abc_end = engine_matches<engine>("abc<!>abc\n");
+    auto abc_needle_abc_end = engine_matches<engine>("abc<!>abc\n");
     CHECK(abc_needle_abc_end);
     CHECK(abc_needle_abc_end.count == 0);
 
-    constexpr auto abc_end_needle = engine_matches<engine>("abc\n<!>");
+    auto abc_end_needle = engine_matches<engine>("abc\n<!>");
     CHECK(!abc_end_needle);
     CHECK(abc_end_needle.count == 0);
     CHECK(abc_end_needle.ec == engine::error_code::not_found_end);

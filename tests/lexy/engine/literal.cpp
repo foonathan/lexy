@@ -23,18 +23,18 @@ TEST_CASE("engine_literal")
         using engine = lexy::engine_literal<trie_empty>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(a);
         CHECK(a.count == 0);
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 0);
 
-        constexpr auto b = engine_matches<engine>("b");
+        auto b = engine_matches<engine>("b");
         CHECK(b);
         CHECK(b.count == 0);
     }
@@ -43,19 +43,19 @@ TEST_CASE("engine_literal")
         using engine = lexy::engine_literal<trie_a>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::index_to_error(0));
 
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(a);
         CHECK(a.count == 1);
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 1);
 
-        constexpr auto b = engine_matches<engine>("b");
+        auto b = engine_matches<engine>("b");
         CHECK(!b);
         CHECK(b.count == 0);
         CHECK(b.ec == engine::index_to_error(0));
@@ -65,24 +65,24 @@ TEST_CASE("engine_literal")
         using engine = lexy::engine_literal<trie_ab>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::index_to_error(0));
 
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(!a);
         CHECK(a.count == 1);
         CHECK(a.ec == engine::index_to_error(1));
 
-        constexpr auto ab = engine_matches<engine>("ab");
+        auto ab = engine_matches<engine>("ab");
         CHECK(ab);
         CHECK(ab.count == 2);
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 2);
 
-        constexpr auto b = engine_matches<engine>("b");
+        auto b = engine_matches<engine>("b");
         CHECK(!b);
         CHECK(b.count == 0);
         CHECK(b.ec == engine::index_to_error(0));
@@ -92,28 +92,28 @@ TEST_CASE("engine_literal")
         using engine = lexy::engine_literal<trie_abc>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::index_to_error(0));
 
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(!a);
         CHECK(a.count == 1);
         CHECK(a.ec == engine::index_to_error(1));
-        constexpr auto ab = engine_matches<engine>("ab");
+        auto ab = engine_matches<engine>("ab");
         CHECK(!ab);
         CHECK(ab.count == 2);
         CHECK(ab.ec == engine::index_to_error(2));
 
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 3);
-        constexpr auto abcd = engine_matches<engine>("abcd");
+        auto abcd = engine_matches<engine>("abcd");
         CHECK(abcd);
         CHECK(abcd.count == 3);
 
-        constexpr auto b = engine_matches<engine>("b");
+        auto b = engine_matches<engine>("b");
         CHECK(!b);
         CHECK(b.count == 0);
     }
@@ -122,25 +122,25 @@ TEST_CASE("engine_literal")
         using engine = lexy::engine_literal<trie_abc_u>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>(u"");
+        auto empty = engine_matches<engine>(u"");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>(u"a");
+        auto a = engine_matches<engine>(u"a");
         CHECK(!a);
         CHECK(a.count == 1);
-        constexpr auto ab = engine_matches<engine>(u"ab");
+        auto ab = engine_matches<engine>(u"ab");
         CHECK(!ab);
         CHECK(ab.count == 2);
 
-        constexpr auto abc = engine_matches<engine>(u"abc");
+        auto abc = engine_matches<engine>(u"abc");
         CHECK(abc);
         CHECK(abc.count == 3);
-        constexpr auto abcd = engine_matches<engine>(u"abcd");
+        auto abcd = engine_matches<engine>(u"abcd");
         CHECK(abcd);
         CHECK(abcd.count == 3);
 
-        constexpr auto b = engine_matches<engine>(u"b");
+        auto b = engine_matches<engine>(u"b");
         CHECK(!b);
         CHECK(b.count == 0);
         CHECK(b.ec == engine::index_to_error(0));

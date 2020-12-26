@@ -26,11 +26,11 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_empty>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(!abc);
         CHECK(abc.count == 0);
     }
@@ -39,11 +39,11 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_empty_string>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(empty);
         CHECK(empty.count == 0);
 
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 0);
     }
@@ -52,37 +52,37 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_basic>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(!a);
         CHECK(a.count == 1);
-        constexpr auto ab = engine_matches<engine>("ab");
+        auto ab = engine_matches<engine>("ab");
         CHECK(ab);
         CHECK(ab.count == 2);
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 3);
-        constexpr auto ac = engine_matches<engine>("ac");
+        auto ac = engine_matches<engine>("ac");
         CHECK(ac);
         CHECK(ac.count == 2);
 
-        constexpr auto b = engine_matches<engine>("b");
+        auto b = engine_matches<engine>("b");
         CHECK(!b);
         CHECK(b.count == 1);
-        constexpr auto bc = engine_matches<engine>("bc");
+        auto bc = engine_matches<engine>("bc");
         CHECK(!bc);
         CHECK(bc.count == 2);
         auto bcd = engine_matches<engine>("bcd");
         CHECK(bcd);
         CHECK(bcd.count == 3);
 
-        constexpr auto abd = engine_matches<engine>("abd");
+        auto abd = engine_matches<engine>("abd");
         CHECK(abd);
         CHECK(abd.count == 2);
-        constexpr auto abcd = engine_matches<engine>("abcd");
+        auto abcd = engine_matches<engine>("abcd");
         CHECK(abcd);
         CHECK(abcd.count == 3);
     }
@@ -91,24 +91,24 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_linear>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(empty);
         CHECK(empty.count == 0);
-        constexpr auto a = engine_matches<engine>("a");
+        auto a = engine_matches<engine>("a");
         CHECK(a);
         CHECK(a.count == 1);
-        constexpr auto ab = engine_matches<engine>("ab");
+        auto ab = engine_matches<engine>("ab");
         CHECK(ab);
         CHECK(ab.count == 2);
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 3);
 
-        constexpr auto abcd = engine_matches<engine>("abcd");
+        auto abcd = engine_matches<engine>("abcd");
         CHECK(abcd);
         CHECK(abcd.count == 3);
 
-        constexpr auto bcd = engine_matches<engine>("bcd");
+        auto bcd = engine_matches<engine>("bcd");
         CHECK(bcd);
         CHECK(bcd.count == 0);
     }
@@ -117,17 +117,17 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_disjoint>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto abc = engine_matches<engine>("abc");
+        auto abc = engine_matches<engine>("abc");
         CHECK(abc);
         CHECK(abc.count == 3);
-        constexpr auto bcd = engine_matches<engine>("bcd");
+        auto bcd = engine_matches<engine>("bcd");
         CHECK(bcd);
         CHECK(bcd.count == 3);
-        constexpr auto cde = engine_matches<engine>("cde");
+        auto cde = engine_matches<engine>("cde");
         CHECK(cde);
         CHECK(cde.count == 3);
     }

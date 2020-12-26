@@ -19,34 +19,34 @@ TEST_CASE("engine_until")
     using engine    = lexy::engine_until<condition>;
     CHECK(lexy::engine_is_matcher<engine>);
 
-    constexpr auto empty = engine_matches<engine>("");
+    auto empty = engine_matches<engine>("");
     CHECK(!empty);
     CHECK(empty.count == 0);
     CHECK(empty.ec == condition::index_to_error(0));
 
-    constexpr auto zero = engine_matches<engine>("ab");
+    auto zero = engine_matches<engine>("ab");
     CHECK(zero);
     CHECK(zero.count == 2);
-    constexpr auto one = engine_matches<engine>("-ab");
+    auto one = engine_matches<engine>("-ab");
     CHECK(one);
     CHECK(one.count == 3);
-    constexpr auto two = engine_matches<engine>("-+ab");
+    auto two = engine_matches<engine>("-+ab");
     CHECK(two);
     CHECK(two.count == 4);
-    constexpr auto three = engine_matches<engine>("+-+ab");
+    auto three = engine_matches<engine>("+-+ab");
     CHECK(three);
     CHECK(three.count == 5);
 
-    constexpr auto partial = engine_matches<engine>("+a+ab");
+    auto partial = engine_matches<engine>("+a+ab");
     CHECK(partial);
     CHECK(partial.count == 5);
 
-    constexpr auto partial_end = engine_matches<engine>("+a+a");
+    auto partial_end = engine_matches<engine>("+a+a");
     CHECK(!partial_end);
     CHECK(partial_end.count == 4);
     CHECK(partial_end.ec == condition::index_to_error(0));
 
-    constexpr auto unterminated = engine_matches<engine>("++");
+    auto unterminated = engine_matches<engine>("++");
     CHECK(!unterminated);
     CHECK(unterminated.count == 2);
     CHECK(unterminated.ec == condition::index_to_error(0));
@@ -58,28 +58,28 @@ TEST_CASE("engine_until_eof")
     using engine    = lexy::engine_until_eof<condition>;
     CHECK(lexy::engine_is_matcher<engine>);
 
-    constexpr auto empty = engine_matches<engine>("");
+    auto empty = engine_matches<engine>("");
     CHECK(empty);
     CHECK(empty.count == 0);
 
-    constexpr auto zero = engine_matches<engine>("ab");
+    auto zero = engine_matches<engine>("ab");
     CHECK(zero);
     CHECK(zero.count == 2);
-    constexpr auto one = engine_matches<engine>("-ab");
+    auto one = engine_matches<engine>("-ab");
     CHECK(one);
     CHECK(one.count == 3);
-    constexpr auto two = engine_matches<engine>("-+ab");
+    auto two = engine_matches<engine>("-+ab");
     CHECK(two);
     CHECK(two.count == 4);
-    constexpr auto three = engine_matches<engine>("+-+ab");
+    auto three = engine_matches<engine>("+-+ab");
     CHECK(three);
     CHECK(three.count == 5);
 
-    constexpr auto partial = engine_matches<engine>("+a+ab");
+    auto partial = engine_matches<engine>("+a+ab");
     CHECK(partial);
     CHECK(partial.count == 5);
 
-    constexpr auto partial_end = engine_matches<engine>("+a+a");
+    auto partial_end = engine_matches<engine>("+a+a");
     CHECK(partial_end);
     CHECK(partial_end.count == 4);
 }

@@ -11,11 +11,11 @@ TEST_CASE("engine_failure")
     using engine = lexy::engine_failure;
     CHECK(lexy::engine_is_matcher<engine>);
 
-    constexpr auto empty = engine_matches<engine>("");
+    auto empty = engine_matches<engine>("");
     CHECK(!empty);
     CHECK(empty.count == 0);
 
-    constexpr auto abc = engine_matches<engine>("abc");
+    auto abc = engine_matches<engine>("abc");
     CHECK(!abc);
     CHECK(abc.count == 0);
 }

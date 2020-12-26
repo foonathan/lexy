@@ -12,7 +12,7 @@ TEST_CASE("engine_char_range")
     using engine = lexy::engine_char_range<'0', '9'>;
     CHECK(lexy::engine_is_matcher<engine>);
 
-    constexpr auto empty = engine_matches<engine>("");
+    auto empty = engine_matches<engine>("");
     CHECK(!empty);
     CHECK(empty.count == 0);
 
@@ -51,23 +51,23 @@ TEST_CASE("engine_char_set")
         using engine = lexy::engine_char_set<trie_a>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>("aaa");
+        auto a = engine_matches<engine>("aaa");
         CHECK(a);
         CHECK(a.count == 1);
 
-        constexpr auto b = engine_matches<engine>("bbb");
+        auto b = engine_matches<engine>("bbb");
         CHECK(!b);
         CHECK(b.count == 0);
 
-        constexpr auto c = engine_matches<engine>("ccc");
+        auto c = engine_matches<engine>("ccc");
         CHECK(!c);
         CHECK(c.count == 0);
 
-        constexpr auto d = engine_matches<engine>("ddd");
+        auto d = engine_matches<engine>("ddd");
         CHECK(!d);
         CHECK(d.count == 0);
     }
@@ -76,23 +76,23 @@ TEST_CASE("engine_char_set")
         using engine = lexy::engine_char_set<trie_abc>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>("aaa");
+        auto a = engine_matches<engine>("aaa");
         CHECK(a);
         CHECK(a.count == 1);
 
-        constexpr auto b = engine_matches<engine>("bbb");
+        auto b = engine_matches<engine>("bbb");
         CHECK(b);
         CHECK(b.count == 1);
 
-        constexpr auto c = engine_matches<engine>("ccc");
+        auto c = engine_matches<engine>("ccc");
         CHECK(c);
         CHECK(c.count == 1);
 
-        constexpr auto d = engine_matches<engine>("ddd");
+        auto d = engine_matches<engine>("ddd");
         CHECK(!d);
         CHECK(d.count == 0);
     }
@@ -102,23 +102,23 @@ TEST_CASE("engine_char_set")
         using engine = lexy::engine_char_set<trie_abc_u>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>(u"");
+        auto empty = engine_matches<engine>(u"");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
-        constexpr auto a = engine_matches<engine>(u"aaa");
+        auto a = engine_matches<engine>(u"aaa");
         CHECK(a);
         CHECK(a.count == 1);
 
-        constexpr auto b = engine_matches<engine>(u"bbb");
+        auto b = engine_matches<engine>(u"bbb");
         CHECK(b);
         CHECK(b.count == 1);
 
-        constexpr auto c = engine_matches<engine>(u"ccc");
+        auto c = engine_matches<engine>(u"ccc");
         CHECK(c);
         CHECK(c.count == 1);
 
-        constexpr auto d = engine_matches<engine>(u"ddd");
+        auto d = engine_matches<engine>(u"ddd");
         CHECK(!d);
         CHECK(d.count == 0);
     }
@@ -182,7 +182,7 @@ TEST_CASE("engine_ascii_table")
         using engine = lexy::engine_ascii_table<table, 1>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
@@ -218,7 +218,7 @@ TEST_CASE("engine_ascii_table")
         using engine = lexy::engine_ascii_table<table, 1, 2>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>("");
+        auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
 
@@ -255,7 +255,7 @@ TEST_CASE("engine_ascii_table")
         using engine = lexy::engine_ascii_table<table, 1>;
         CHECK(lexy::engine_is_matcher<engine>);
 
-        constexpr auto empty = engine_matches<engine>(u"");
+        auto empty = engine_matches<engine>(u"");
         CHECK(!empty);
         CHECK(empty.count == 0);
 

@@ -9,13 +9,6 @@
 #include <lexy/engine/base.hpp>
 #include <lexy/input/string_input.hpp>
 
-[[noreturn]] inline bool constexpr_check_failure()
-{
-    throw 0;
-}
-
-#define CONSTEXPR_CHECK(x) ((x) ? true : constexpr_check_failure())
-
 //=== engine_matches ===//
 template <typename Matcher>
 struct engine_match_result
@@ -30,7 +23,7 @@ struct engine_match_result
 };
 
 template <typename Matcher, typename Encoding, typename CharT>
-constexpr auto engine_matches(const CharT* str)
+auto engine_matches(const CharT* str)
 {
     auto input  = lexy::zstring_input<Encoding>(str);
     auto reader = input.reader();
@@ -42,7 +35,7 @@ constexpr auto engine_matches(const CharT* str)
     return engine_match_result<Matcher>{result, std::size_t(end - begin)};
 }
 template <typename Matcher, typename CharT>
-constexpr auto engine_matches(const CharT* str)
+auto engine_matches(const CharT* str)
 {
     return engine_matches<Matcher, lexy::deduce_encoding<CharT>>(str);
 }
@@ -62,7 +55,7 @@ struct engine_parse_result
 };
 
 template <typename Parser, typename Encoding, typename CharT>
-constexpr auto engine_parses(const CharT* str)
+auto engine_parses(const CharT* str)
 {
     auto input  = lexy::zstring_input<Encoding>(str);
     auto reader = input.reader();
@@ -75,7 +68,7 @@ constexpr auto engine_parses(const CharT* str)
     return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin)};
 }
 template <typename Parser, typename CharT>
-constexpr auto engine_parses(const CharT* str)
+auto engine_parses(const CharT* str)
 {
     return engine_parses<Parser, lexy::deduce_encoding<CharT>>(str);
 }
