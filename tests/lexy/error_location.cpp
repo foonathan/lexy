@@ -8,7 +8,6 @@
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/literal.hpp>
 #include <lexy/input/string_input.hpp>
 
 namespace
@@ -35,7 +34,7 @@ struct str_context
 TEST_CASE("make_error_location")
 {
     constexpr auto character = lexy::dsl::ascii::character;
-    constexpr auto newline   = lexy::dsl::lit_c<'\n'>;
+    constexpr auto newline   = lexy::dsl::ascii::newline;
 
     SUBCASE("basic")
     {
