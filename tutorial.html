@@ -449,9 +449,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_overview">Overview</a></li>
 <li><a href="#_parsing_the_package_name">Parsing the package name</a></li>
 <li><a href="#_parsing_the_package_version">Parsing the package version</a></li>
+<li><a href="#_extending_the_version_field">Extending the version field</a></li>
 <li><a href="#_parsing_one_package_author">Parsing one package author</a></li>
-<li><a href="#_branches_making_parse_decisions">Branches: Making parse decisions</a></li>
-<li><a href="#_parsing_one_package_author_continued">Parsing one package author - Continued</a></li>
 <li><a href="#_parsing_the_package_authors">Parsing the package authors</a></li>
 <li><a href="#_parsing_the_package_config">Parsing the package config</a></li>
 <li><a href="#_error_handling">Error handling</a></li>
@@ -498,7 +497,7 @@ struct PackageConfig
 </div>
 </div>
 <div class="paragraph">
-<p>The final source code can be found at <code>examples/tutorial.cpp</code>.</p>
+<p>The final source code can be found at <a href="https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp"><code>examples/tutorial.cpp</code></a>.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
@@ -637,6 +636,9 @@ Parsing can fail, so we need to handle that (not shown here).</td>
 <p>The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
 Refer to the documentation for further details on the surrounding infrastructure.</p>
 </div>
+<div class="paragraph">
+<p>Again, the full final source code can be found at <a href="https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp"><code>examples/tutorial.cpp</code></a>.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -713,7 +715,11 @@ To match a single underscore, we can use <code>dsl::lit_c&lt;'_'&gt;</code>.
 The latter rule matches and consumes the specified character.</p>
 </div>
 <div class="paragraph">
-<p>Of course, we don&#8217;t want a single alpha(numeric) character or underscore,
+<p>All of the three rules are so called <em>tokens</em>: they are the fundamental, atomic parse unit of the input.
+Tokens play an essential role in parsing as we&#8217;ll see, because the library can easily check whether a token matches at a given position.</p>
+</div>
+<div class="paragraph">
+<p>Of course, here we don&#8217;t want a single alpha(numeric) character or underscore,
 we want one alpha character followed by zero or more alphanumeric characters or underscores.
 For that, we need to combine rules.</p>
 </div>
@@ -742,32 +748,61 @@ The while rule takes a rule and matches it as often as possible.</p>
 dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum)</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>The while rule is different from all other rules we&#8217;ve seen:
+it needs to decide whether it should match again or be done with it.
+If the argument is a token, that can be done very easily&#8201;&#8212;&#8201;just try to match the token (remember: that can be done very efficiently)
+If it matched, it works.
+Otherwise, it backtracks to the previous position and is done.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s consider a more complex token to see how it works: <code>LEXY_LIT("ab")</code>.
+This one is equivalent to <code>dsl::lit_c&lt;'a'&gt; + dsl::lit_c&lt;'b'&gt;</code> (match <code>a</code> then <code>b</code>), but it is a single token, not a sequence of tokens.
+If you have a C++20 compiler, you can write it as <code>dsl::lit&lt;"ab"&gt;</code> without using a macro.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>dsl::while_(LEXY_LIT("ab"))</code></div>
+<div class="content">
+<pre>ababa
+^ start, try to match ab
+
+ababa
+--^ that worked, try to match it again
+
+ababa
+----^ that worked, try to match it again
+
+ababa
+-----^ that did not work, we're missing a `b`, backtrack!
+
+ababa
+----^ done, next character on input is `a`</pre>
+</div>
+</div>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p>How does the while rule know how many times it should match the alphanumeric rule?
-We will get to that later, but the spoiler is: it just tries it over and over.
-For rules that only look at the next character of the input, such as <code>dsl::ascii::alnum</code>,
-this is not a problem, but for more complex rules it can involve expensive backtracking.</p>
-</div>
-<div class="paragraph">
-<p>But don&#8217;t worry, backtracking happens in a very controlled way and can be prevented.</p>
+<p>Don&#8217;t worry about backtracking.
+The library will only do it when you&#8217;ve explicitly requested it, or when it is efficient like here.</p>
 </div>
 </div>
 </div>
 <div class="paragraph">
-<p>Now we&#8217;re almost there!
+<p>Back to our problem at hand: we&#8217;re almost there now!
 All we need is to allow the underscore as well as an alphanumeric character in the while loop.</p>
 </div>
 <div class="paragraph">
-<p>For that, we can use the alternative rule.
-The alternative rule tries to match the first rule.
+<p>For that, we can use the alternative rule, which matches one of the given token.
+It does that by trying to match each token in order.
 If that works, great.
 Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
-It is implemented using <code>operator/</code> (read "or").</p>
+Remember, for tokens this is efficient.
+As the alternative rule matches only exactly one token, it is also considered to be a token itself
+(although it&#8217;s strictly speaking another combination of tokens).</p>
 </div>
 <div class="paragraph">
-<p>With all that, we can finally write our first production:</p>
+<p>In the DSL, the alternative rule is implemented using <code>operator/</code> (read "or").
+With all that, we can finally write our first production:</p>
 </div>
 <div class="listingblock">
 <div class="title">The <code>name</code> production (<a href="https://godbolt.org/z/bdn39v">godbolt</a>)</div>
@@ -778,6 +813,15 @@ It is implemented using <code>operator/</code> (read "or").</p>
     static constexpr auto rule
         = dsl::ascii::alpha + dsl::while_(dsl::ascii::alnum / dsl::lit_c&lt;'_'&gt;);
 };</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>If we have an alternative rule of literals, as in <code>LEXY_LIT("abc") / LEXY_LIT("ab") / LEXY_LIT("b")</code>,
+it can be parsed without any backtracking.
+This is done by constructing a <a href="https://en.wikipedia.org/wiki/Trie">trie</a> at compile-time and looking for the input in there.</p>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -791,9 +835,9 @@ To implement that, we need to do two things.</p>
 <p>First, we need to remember everything we&#8217;ve just matched by the rule, so we can convert that into the <code>std::string</code> later on.
 This is done using <code>dsl::capture()</code>.
 This rule takes another rule as input and parses it.
-However, it is also the first rule that produces a value.
+However, it is also the first rule that produces a value:
 When parsing a <code>dsl::capture()</code> rule, we get a <code>lexy::lexeme</code> (basically a <code>std::string_view</code>) that views all the input the rule has matched.
-This is exactly what we want to turn into our <code>std::string</code>.</p>
+This is exactly what we then want to turn into our <code>std::string</code>.</p>
 </div>
 <div class="paragraph">
 <p>Second, we need to specify what value our production should return when it&#8217;s parsed.
@@ -853,7 +897,8 @@ We can use an immediately invoked lambda to improve that.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>If now parse the <code>name</code> production, we will get a <code>std::string</code>.</p>
+<p>If now parse the <code>name</code> production, we will get a <code>std::string</code>.
+First field done, let&#8217;s move on to the next one.</p>
 </div>
 </div>
 </div>
@@ -874,7 +919,7 @@ We can use an immediately invoked lambda to improve that.</p>
 It consists of three numbers separated by dots, where a number is a non-empty sequence of digits.</p>
 </div>
 <div class="paragraph">
-<p>The rule <code>dsl::ascii::digit</code> matches one digit 0-9.
+<p>The token <code>dsl::ascii::digit</code> matches one digit 0-9.
 To match an arbitrary amount of digits, we can again use the while rule.
 However, this would also allow zero digits, which we don&#8217;t want.
 So instead we use <code>dsl::while_one(dsl::ascii::digit)</code>, which is equivalent to <code>dsl::ascii::digit + dsl::while_(dsl::ascii::digit)</code>:
@@ -888,14 +933,14 @@ dsl::while_one(dsl::ascii::digit)</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Matching one or more digits is common, so there is a predefined rule for that: <code>dsl::digits</code>.
+<p>Matching one or more digits is common, so there is a predefined rule (token actually): <code>dsl::digits</code>.
 It takes an optional template parameter to specify the base,
 for example <code>dsl::digits&lt;dsl::octal&gt;</code> would only match <code>0-7</code>,
 whereas <code>dsl::digits&lt;dsl::hex_upper&gt;</code> would match <code>0-9A-F</code>.
 If we don&#8217;t specify a base, it defaults to <code>dsl::decimal</code>.</p>
 </div>
 <div class="listingblock">
-<div class="title">The digits rule (<a href="https://godbolt.org/z/6TnKeY">godbolt</a>)</div>
+<div class="title">The digits token (<a href="https://godbolt.org/z/6TnKeY">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match one or more decimal digits.
 dsl::digits&lt;&gt;</code></pre>
@@ -1003,6 +1048,351 @@ Constructing a type from arguments is also a common callback, so it is provided 
 </div>
 </div>
 <div class="sect1">
+<h2 id="_extending_the_version_field">Extending the version field</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s stick with the <code>version</code> production a bit and extend it.
+We also want to allow the special version number <code>unreleased</code> as an alternate spelling for <code>0.0.0</code>.</p>
+</div>
+<div class="paragraph">
+<p>Parsing <code>unreleased</code> is easy: just use the <code>LEXY_LIT("unreleased")</code> token:</p>
+</div>
+<div class="listingblock">
+<div class="title">Adding <code>unreleased</code> support</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::period;
+        auto dot_version = number + dot + number + dot + number; <i class="conum" data-value="1"></i><b>(1)</b>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return ???; <i class="conum" data-value="2"></i><b>(2)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>For convenience, we put the previous rule in a variable <code>dot_version</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>What do we put here?</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>But how do we can we parse either <code>unreleased</code> or <code>dot_version</code>?</p>
+</div>
+<div class="paragraph">
+<p>We&#8217;ve already seen the alternative rule <code>/</code>, which allowed us to parse one of the specified tokens.
+However, <code>number + dot + number + dot + number</code> is not a token, so we can&#8217;t use <code>/</code>.
+And this is a good thing!</p>
+</div>
+<div class="paragraph">
+<p>If we were able to write <code>dot_version / unreleased</code>, this might lead to arbitrary backtracking.
+In particular, rules can have arbitrary side-effects that then might happen unnecessarily.
+So <code>lexy</code> strictly limits backtracking.</p>
+</div>
+<div class="paragraph">
+<p>What we need here is a special <em>branch</em> rule.
+This is a rule that has an associated condition.
+If the condition matches, the branch can be taken and will be parsed without further backtracking.
+If the condition didn&#8217;t match, the parsing algorithm needs to look for another alternative to go.
+Matching the condition uses a special efficient implementation, so backtracking it is acceptable.</p>
+</div>
+<div class="paragraph">
+<p>Every token is also a branch, and many simple rules such as a sequence of tokens are also branches.
+The same is true for <code>dsl::capture()</code> if it captures a token or branch.
+Then the argument is the branch condition, which is only really captured once the branch has been taken.</p>
+</div>
+<div class="paragraph">
+<p>And even if you have a rule that isn&#8217;t a branch, don&#8217;t worry, there is a way to turn an arbitrary rule into a branch.
+We just need to give it a condition, which is another branch rule (usually a token).
+This can be done using <code>operator&gt;&gt;</code>: <code>condition &gt;&gt; rule</code>.
+This will check whether <code>condition</code> matches, and take the branch parsing <code>rule</code> if it does.
+Once the algorithm starts parsing <code>rule</code> it has already committed and will never backtrack.</p>
+</div>
+<div class="paragraph">
+<p>The alternative rule <code>/</code> requires only tokens, but it has a big sister: the choice rule <code>|</code>.
+This requires branches as arguments and parses the first branch whose condition matches.</p>
+</div>
+<div class="listingblock">
+<div class="title">The choice rule</div>
+<div class="content">
+<pre>// In C++, this has the operator precedence we want, which worked out nicely.
+condition1 &gt;&gt; rule1 | condition2 &gt;&gt; rule2 | ...</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Such a choice corresponds to the following pseudo-code.</p>
+</div>
+<div class="listingblock">
+<div class="title">Manual implementation of choice</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">if (match(input, condition1)) <i class="conum" data-value="1"></i><b>(1)</b>
+  parse(input, rule1); <i class="conum" data-value="2"></i><b>(2)</b>
+else if (match(input, condition2))
+  parse(input, rule2);
+…</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>If we match a condition, we take the branch.
+Of course, this requires backtracking if the condition did not match.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>When the condition did match, the input is not rewound and we can continue with the rule.
+If any errors occur now, it&#8217;s too late&#8201;&#8212;&#8201;we&#8217;ve committed to this branch and issue an error.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that we will not backtrack after a branch condition has been matched, no matter what!
+This is illustrated in the following example, where we use <code>dsl::while_()</code> with a branch.</p>
+</div>
+<div class="listingblock">
+<div class="title">Parsing <code>dsl::while_(dsl::lit_c&lt;'a'&gt; &gt;&gt; dsl::lit_c&lt;'b'&gt; + dsl::lit_c&lt;'c'&gt;)</code></div>
+<div class="content">
+<pre>abcabcabd
+^ start, try to match the condition
+
+abcabcabd
+-^ condition matched, we take the branch
+
+abcabcabd
+---^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+----^ condition matched, we take the branch
+
+abcabcabd
+------^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+-------^ condition matched, we take the branch
+
+abcabcabd
+--------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With the choice rule, we can now parse <code>unreleased</code> or <code>dot_version</code>.
+As <code>unreleased</code> is a token, it is already a branch.
+But <code>dot_version</code> isn&#8217;t, so we need to give it a condition.
+Something like this does not work:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>unreleased</code> or <code>dot_version</code>, first attempt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::period;
+
+        auto dot_version = number + dot + number + dot + number;
+        auto dot_version_condition = dsl::digit&lt;&gt;; <i class="conum" data-value="1"></i><b>(1)</b>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dot_version_condition &gt;&gt; dot_version; <i class="conum" data-value="2"></i><b>(2)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We only want to parse <code>dot_version</code> if we have a decimal digit, which is checked by <code>dsl::digit&lt;&gt;</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A choice of the two branches.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If we haven an input like <code>1.2.3</code>, we first try to match <code>unreleased</code>.
+This fails, so we try to match the condition of the second branch.
+<code>dsl::digit&lt;&gt;</code> matches, so we take the branch.
+However, <code>dsl::digit&lt;&gt;</code> consumes the digit!
+What is left once we try to parse <code>dot_version</code> is only <code>.2.3</code>, which is wrong.</p>
+</div>
+<div class="paragraph">
+<p>We need to check for a digit without consuming it.
+This can be done with <code>dsl::peek()</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>unreleased</code> or <code>dot_version</code>, second attempt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::period;
+
+        auto dot_version = number + dot + number + dot + number;
+        auto dot_version_condition = dsl::peek(dsl::digit&lt;&gt;); <i class="conum" data-value="1"></i><b>(1)</b>
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dot_version_condition &gt;&gt; dot_version; <i class="conum" data-value="2"></i><b>(2)</b>
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We only want to parse <code>dot_version</code> if we have a decimal digit, which is checked by <code>dsl::digit&lt;&gt;</code>.
+<code>dsl::peek()</code> is a branch that matches the rule without consuming it.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A choice of the two branches.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This works, but we can do better.
+Remember that the choice tries each branch strictly in order.
+So once it&#8217;s clear that it isn&#8217;t <code>unreleased</code>, it has to be <code>dot_version</code> (or is an error).
+This means that as condition of <code>dot_version</code>, we can just use a branch that is always taken.
+This branch is called <code>dsl::else_</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>unreleased</code> or <code>dot_version</code>, third attempt</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::period;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dsl::else_ &gt;&gt; dot_version;
+    }();
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re successfully matching the input, we just need to produce a correct <code>PackageVersion</code>.
+Let&#8217;s consider the values produced by the choice rule.
+If our input is a version number like <code>1.2.3</code>, we&#8217;re producing three ints, just as before.
+But if our input is <code>unreleased</code> we&#8217;re not producing any values.</p>
+</div>
+<div class="paragraph">
+<p>There are three things we can do.</p>
+</div>
+<div class="paragraph">
+<p>The first solution is two simply add a default constructor to <code>PackageVersion</code>.
+If we parse <code>unreleased</code>, the <code>lexy::construct&lt;PackageVersion&gt;</code> callback will be invoked with zero arguments which will itself invoke the default constructor of <code>PackageVersion</code>.</p>
+</div>
+<div class="paragraph">
+<p>The second solution is to write a callback that has two overloads.
+The first one takes three ints and forwards them to the <code>PackageVersion</code>.
+The second one takes no arguments and creates a <code>0.0.0</code> <code>PackageVersion</code> manually.</p>
+</div>
+<div class="listingblock">
+<div class="title">Overloaded callback for the <code>version</code> production (<a href="https://godbolt.org/z/TzxT7d">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::lit_c&lt;'.'&gt;;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased = LEXY_LIT("unreleased");
+
+        return unreleased | dsl::else_ &gt;&gt; dot_version;
+    }();
+
+    // An overloaded callback.
+    static constexpr auto value
+      = lexy::callback&lt;PackageVersion&gt;(
+            [](int a, int b, int c) { <i class="conum" data-value="1"></i><b>(1)</b>
+                // a is the result of the first number rule, b of the second, c of the third.
+                return PackageVersion{a, b, c};
+            },
+            [] { <i class="conum" data-value="2"></i><b>(2)</b>
+                return PackageVersion{0, 0, 0};
+            }
+        );
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This callback will be invoked when we parse <code>dot_version</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This callback will be invoked when we parse <code>unreleased</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The third solution is two produce three ints even if we take the <code>unreleased</code> branch.
+This can be done with the <code>dsl::value_c&lt;Constant&gt;</code> production.
+It will accept any input without consuming anything, but it will always produce a value&#8201;&#8212;&#8201;the specified <code>Constant</code>.
+So we extend the <code>unreleased</code> branch to produce three zeroes once we take the branch:</p>
+</div>
+<div class="listingblock">
+<div class="title">Using <code>dsl::value_c</code> for the version production (<a href="https://godbolt.org/z/1nWvEn">godbolt</a>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct version
+{
+    static constexpr auto rule = []{
+        auto number = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
+        auto dot    = dsl::lit_c&lt;'.'&gt;;
+        auto dot_version = number + dot + number + dot + number;
+
+        auto unreleased
+          = LEXY_LIT("unreleased") &gt;&gt; dsl::value_c&lt;0&gt; + dsl::value_c&lt;0&gt; + dsl::value_c&lt;0&gt;; <i class="conum" data-value="1"></i><b>(1)</b>
+
+        return unreleased | dsl::else_ &gt;&gt; dot_version;
+    }();
+
+    static constexpr auto value = lexy::construct&lt;PackageVersion&gt;; <i class="conum" data-value="2"></i><b>(2)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Produce the three zeroes.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This callback will always be invoked with three integers.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To illustrate the most rules, I&#8217;ve decided to just stick with this solution.
+Your preference may vary, of course.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_parsing_one_package_author">Parsing one package author</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -1042,390 +1432,8 @@ It shouldn&#8217;t contain characters like line breaks.
 More importantly, the rule can never succeed.</p>
 </div>
 <div class="paragraph">
-<p>To understand why, we need to talk about <em>branches</em>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_branches_making_parse_decisions">Branches: Making parse decisions</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Parsing is really easy when you know exactly what character is going to come next.
-All the complexity comes from making decisions about <em>what</em> to parse.</p>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s say we want to write a rule that matches either a decimal integer literal (e.g. <code>123</code>) or a hexadecimal integer literal (e.g <code>1A</code>).
-If we have a literal that can be both decimal and hexadecimal, we&#8217;ll just assume it&#8217;s decimal.
-The example is a bit contrived, but let&#8217;s just bear with me.</p>
-</div>
-<div class="paragraph">
-<p>We can easily write a rule that matches a decimal integer, and another one that matches a hexadecimal integer.</p>
-</div>
-<div class="listingblock">
-<div class="title">Decimal or hexadecimal</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
-        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
-
-        return ???;
-    }();
-};</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We want some rule that expresses "decimal or hex".
-We&#8217;ve already seen the alternative rule <code>/</code>.
-However, that one doesn&#8217;t actually work with <code>dsl::integer</code>, for reasons I&#8217;ll explain shortly.</p>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s suppose it <em>would</em> work and we write <code>dec / hex</code>.
-This would first try to match <code>dec</code>.
-If that fails at some point, it rewinds the input&#8201;&#8212;&#8201;it <em>backtracks</em>&#8201;&#8212;&#8201;to the original position.
-It then discards the partially constructed integer that was going to be produced by <code>dec</code>,
-and matches <code>hex</code> instead.</p>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s consider an input like <code>123456789A</code>.
-The <code>dec</code> rule is perfectly happy with it until it reaches the <code>A</code>.
-<code>A</code> is no longer a decimal digit, so it stops and returns <code>123456789</code> as the result, which is wrong.
-When parsing then continues after our <code>dec_or_hex</code> production, it will certainly fail due to the unexpected <code>A</code> still remaining on the input.</p>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>123456789A</code></div>
-<div class="content">
-<pre>123456789A
----------^ no longer a digit, exit</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>So let&#8217;s say we fix our <code>dec</code> rule that it will fail instead of succeeding to early when it sees the <code>A</code> (or any other non-decimal hex digit).
-Then the alternative rule will go and backtrack to match the <code>hex</code> rule.
-However, for that we&#8217;re doing the same work twice!
-The first thing the <code>hex</code> rule does is match <code>123456789</code> <em>again</em>.</p>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>123456789A</code> with the revised <code>dec</code> rule</div>
-<div class="content">
-<pre>123456789A
----------^ hex digit, backtrack
-
-123456789A
-^ start here again
-
-123456789A
-----------^ ok, we're done</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Furthermore, let&#8217;s say our <code>dec</code> rule would introduce side effects like printing the integer as it parses it,
-or is expensive such as performing heap allocation to store a big integer type.
-Backtracking means that side effects would happen even though the rule was never parsed, and expensive work is done unnecessarily.</p>
-</div>
-<div class="paragraph">
-<p>As such, <code>lexy</code> made the design decision to only backtrack simple rules and only when you&#8217;ve explicitly opt-in to that.</p>
-</div>
-<div class="paragraph">
-<p>A "simple rule" is called a <em>pattern</em>.
-Such a rule cannot produce a value&#8201;&#8212;&#8201;as this can be expensive and/or produce side-effects&#8201;&#8212;&#8201;and provides a special interface to efficiently determine "would this rule match at this input?".
-The alternative rule then only takes pattern, as backtracking a pattern is not a problem.</p>
-</div>
-<div class="paragraph">
-<p>Most rules we&#8217;ve seen so fare are actually patterns: <code>dsl::ascii::*</code>, <code>dsl::lit_c</code>, and <code>dsl::digits&lt;&gt;</code>.
-Combinator rules such as sequence <code>+</code> and <code>dsl::while_()</code> are patterns when all arguments are patterns.
-The only non-pattern rules we&#8217;ve seen are <code>dsl::capture()</code> and <code>dsl::integer&lt;T&gt;()</code>, as both produce values.</p>
-</div>
-<div class="paragraph">
-<p>Every time <code>lexy</code> needs to make a decision between one or more rules, it requires a pattern.
-This is the case for the alternative rule <code>/</code>, but also <code>dsl::while_()</code>.
-The latter needs to decide: do I match the repeated rule again, or am I done?
-So it requires a pattern.
-If the pattern matches again, the rule is repeated, otherwise, it backtracks the failed match and is done.</p>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>dsl::while_(dsl::lit_c&lt;'a'&gt; + dsl::lit_c&lt;'b'&gt;)</code></div>
-<div class="content">
-<pre>ababa
-^ start, try to match ab
-
-ababa
---^ that worked, try to match it again
-
-ababa
-----^ that worked, try to match it again
-
-ababa
------^ that did not work, we're missing a `b`, backtrack!
-
-ababa
-----^ done, next character on input is `a`</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>So how can we implement <code>dec</code> or <code>hex</code>?
-As both are non-pattern rules, we can&#8217;t use the alternative rule <code>/</code>.</p>
-</div>
-<div class="paragraph">
-<p>For that, we need to specify a so-called <em>branch</em>.
-A branch is a rule associated with a pattern, the branch condition.
-The parsing algorithm will take a branch when its condition matches&#8201;&#8212;&#8201;this can be done efficiently.
-Once a branch is taken, it never backtracks again.</p>
-</div>
-<div class="paragraph">
-<p>Every pattern is a branch where the pattern is the condition and there is no associated rule.
-Rules such as <code>dsl::while_()</code> that need to make a decision thus work with patterns or branches.
-We can construct a branch using an <code>operator&gt;&gt;</code> overload: <code>condition &gt;&gt; rule</code>.
-Then we can use it, to for example specify when exactly we want another repetition of a while loop.</p>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>dsl::while_(dsl::lit_c&lt;'a'&gt; &gt;&gt; dsl::lit_c&lt;'b'&gt; + dsl::lit_c&lt;'c'&gt;)</code></div>
-<div class="content">
-<pre>abcabcabd
-^ start, try to match the condition
-
-abcabcabd
--^ condition matched, we take the branch
-
-abcabcabd
----^ branch matched, try to match condition of the next iteration
-
-abcabcabd
-----^ condition matched, we take the branch
-
-abcabcabd
-------^ branch matched, try to match condition of the next iteration
-
-abcabcabd
--------^ condition matched, we take the branch
-
-abcabcabd
---------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The simple alternative rule <code>/</code> on the other hand, does not support branches.
-Instead we have to use a choice rule implemented using <code>operator|</code>.
-This also tries to match one of multiple rules in the order they were specified,
-but it uses the branch condition to determine which one should be taken.</p>
-</div>
-<div class="listingblock">
-<div class="title">The choice rule</div>
-<div class="content">
-<pre>// In C++, this has the operator precedence we want, which worked out nicely.
-condition1 &gt;&gt; rule1 | condition2 &gt;&gt; rule2 | ...</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Such a choice corresponds to the following pseudo-code.</p>
-</div>
-<div class="listingblock">
-<div class="title">Manual implementation of choice</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">if (match(input, condition1)) <i class="conum" data-value="1"></i><b>(1)</b>
-  parse(input, rule1); <i class="conum" data-value="2"></i><b>(2)</b>
-else if (match(input, condition2))
-  parse(input, rule2);
-…</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>If we match a condition, we take the branch.
-Of course, this requires backtracking if the condition did not match.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>When the condition did match, the input is not rewound and we can continue with the rule.
-If any errors occur now, it&#8217;s too late&#8201;&#8212;&#8201;we&#8217;ve committed to this branch and issue an error.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>For our <code>dec_or_hex</code> production, we only want to parse <code>dec</code> if we don&#8217;t have a hexadecimal integer.
-To do that, we first need to match all decimal digits and then need to prevent that it is followed by a hexadecimal digit (as in <code>123456789A12</code>, which is <code>1-9</code> followed by a hexadecimal digit <code>A</code>):</p>
-</div>
-<div class="listingblock">
-<div class="title">Decimal or hexadecimal</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
-        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
-
-        auto dec_condition = dsl::digits&lt;&gt; + !dsl::digit&lt;dsl::hex&gt;; <i class="conum" data-value="1"></i><b>(1)</b>
-
-        return dec_condition &gt;&gt; dec | dsl::else_ &gt;&gt; hex;            <i class="conum" data-value="2"></i><b>(2)</b>
-    }();
-};</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>We use <code>dsl::digits&lt;&gt;</code> to match all decimal digit first.
-Then we fail if we encounter a hexadecimal digit.
-<code>dsl::digit&lt;dsl::hex&gt;</code> (no trailing 's') matches a single hex digit,
-but its parse success is negated using the <code>!</code> rule.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>Once we have a condition, we can use the choice rule.
-The special branch condition <code>dsl::else_</code> is always taken, so should be the last branch.
-This is required to turn a rule into a branch without adding a condition, as we don&#8217;t need one&#8201;&#8212;&#8201;if it wasn&#8217;t decimal, it needs to be hex.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>However, this doesn&#8217;t work:
-the input is only rewound if the <code>dec_condition</code> does not match.
-If it did match, we continue with the <code>dec</code> rule but we&#8217;ve just consumed all the decimal digits!</p>
-</div>
-<div class="paragraph">
-<p>So we use <code>dsl::peek()</code>, which matches a pattern without consuming any input.</p>
-</div>
-<div class="listingblock">
-<div class="title">Decimal or hexadecimal (<a href="https://godbolt.org/z/KK4TYe">godbolt</a>)</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
-        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
-
-        auto dec_condition
-          = dsl::peek(dsl::digits&lt;&gt; + !dsl::digit&lt;dsl::hex&gt;);
-
-        return dec_condition &gt;&gt; dec | dsl::else_ &gt;&gt; hex;
-    }();
-};</code></pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>123456789A</code></div>
-<div class="content">
-<pre>123456789A
-^ start with the `dec_condition`
-
-123456789A
----------^ at this point, it sees the A and fails
-
-123456789A
-^ backtrack back to beginning
-
-123456789A
-----------^ successfully parsed the `hex` rule (if we ignore the integer overflow)</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>123456789</code></div>
-<div class="content">
-<pre>123456789
-^ start with the `dec_condition`
-
-123456789
----------^ no more digits, but also not a hex digit: condition succeeded
-
-123456789
-^ the peek rule rewinds the input
-
-123456789A
-----------^ successfully parsed the `dec` rule</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This works.
-Note that we couldn&#8217;t avoid backtracking.
-However, the backtracking was done explicitly by giving a branch condition.
-We thus have full control over how much backtracking is used and when.</p>
-</div>
-<div class="paragraph">
-<p>Furthermore, in most grammars designed to be parsed by computers, we can avoid backtracking by introducing additional requirements on the input.
-For example, hexadecimal numbers are usually prefixed with something like <code>0x</code>.
-This also allows writing a hexadecimal number using only decimal digits, which makes the example less contrived.</p>
-</div>
-<div class="paragraph">
-<p>If we have <code>0x</code> as a prefix, we can use that as the condition for the <code>hex</code> branch.
-It isn&#8217;t even necessary for the actual value of the number, so no need to use <code>dsl::peek()</code> to rewind after the condition has matched.</p>
-</div>
-<div class="listingblock">
-<div class="title">Decimal or hexadecimal with prefix (<a href="https://godbolt.org/z/anj7dc">godbolt</a>)</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct dec_or_hex
-{
-    static constexpr auto rule = []{
-        auto dec = dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;);
-        auto hex = dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex&gt;);
-
-        auto hex_condition = LEXY_LIT("0x"); <i class="conum" data-value="1"></i><b>(1)</b>
-
-        return hex_condition &gt;&gt; hex | dsl::else_ &gt;&gt; dec;
-    }();
-};</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td><code>LEXY_LIT("0x")</code> is equivalent to <code>dsl::lit_c&lt;'0'&gt; + dsl::lit_c&lt;'x'&gt;</code>.
-If we have C++20, we can even write <code>dsl::lit&lt;"0x"&gt;</code> without needing a macro.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Now we can match a decimal or hexadecimal number.</p>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>0x42</code></div>
-<div class="content">
-<pre>0x42
-^ try to match `hex_condition` first
-
-0x42
---^ it succeeded, take the branch
-
-0x42
-----^ successfully parsed hexadecimal number</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">Parsing <code>007</code></div>
-<div class="content">
-<pre>007
-^ try to match `hex_condition` first
-
-007
--^ error, this should be x
-
-007
-^ backtrack after failed condition
-
-007
----^ successfully parsed decimal number</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_parsing_one_package_author_continued">Parsing one package author - Continued</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Now we know how the algorithm makes decisions, we can understand why our previous attempt does not work:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">dsl::lit_c&lt;'"'&gt; + dsl::capture(dsl::while_(dsl::code_point)) + dsl::lit_c&lt;'"'&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
 <p>The while rule uses the branch condition to determine whether or not it should try another iteration.
-Here, our branch is the pattern <code>dsl::code_point</code>, so the entire pattern is used as condition.
+Here, our branch is the token <code>dsl::code_point</code>, so the entire rule is used as condition.
 We repeat as long as we match code points, this includes the closing <code>"</code> character.</p>
 </div>
 <div class="sidebarblock">
@@ -1443,20 +1451,19 @@ It does exactly what you say it should do.</p>
 <div class="paragraph">
 <p>To fix this, we need a branch condition.
 We only want to match code points while we don&#8217;t have the closing <code>"</code>.
-This can be implemented using the <code>!</code>-rule as condition, which matches a pattern but flips the result:
-it succeeds if the pattern didn&#8217;t match, but fails if it did match.
-Note that on failure, the pattern has been consumed.
-This means that we don&#8217;t need to parse the <code>"</code> after the loop has ended, as it&#8217;s done by our condition.</p>
+For that, we can use <code>dsl::peek_not()</code>, which checks whether a rule would not match at the input without consuming anything.</p>
 </div>
 <div class="listingblock">
-<div class="title">String parsing, second attempt (<a href="https://godbolt.org/z/Y4qMz6">godbolt</a>)</div>
+<div class="title">String parsing, second attempt (<a href="https://godbolt.org/z/eca4E9">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
 {
     // Match zero or more code points ("characters") surrounded by quotation marks.
     // We capture the content without the quotes.
     static constexpr auto rule
-      = dsl::lit_c&lt;'"'&gt; + dsl::capture(dsl::while_(!dsl::lit_c&lt;'"'&gt; &gt;&gt; dsl::code_point));
+      = dsl::lit_c&lt;'"'&gt;
+        + dsl::capture(dsl::while_(dsl::peek_not(dsl::lit_c&lt;'"'&gt;) &gt;&gt; dsl::code_point))
+        + dsl::lit_c&lt;'"'&gt;;
 
     // Convert the captured lexeme into a std::string.
     static constexpr auto value = lexy::as_string&lt;std::string&gt;;
@@ -1464,13 +1471,18 @@ This means that we don&#8217;t need to parse the <code>"</code> after the loop h
 </div>
 </div>
 <div class="paragraph">
-<p>Unfortunately, the branch condition is still captured, so we get a trailing <code>"</code> in our string.
-We need to wrap the condition in <code>dsl::peek()</code> so we don&#8217;t consume the closing <code>"</code> and match it at the end&#8230;&#8203;</p>
+<p>While this works, it is not as efficient as it could be:
+To determine whether we should parse another character, we need to peek for it in the input.
+If it would match, we&#8217;re done&#8201;&#8212;&#8201;but don&#8217;t match it yet.
+Immediately afterwards, we do match it again.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s also not quite as compact as I would like.</p>
 </div>
 <div class="paragraph">
 <p>Luckily, parsing a quoted string is a common problem, so there is a predefined function in the library.
 We can use <code>dsl::quoted(dsl::code_point)</code> to match zero or more code points surrounded by quotes.
-The closing <code>"</code> is used as the condition to detect the end of the string, just like we&#8217;ve just implemented.</p>
+The closing <code>"</code> is used as the condition to detect the end of the string, like we&#8217;ve just implemented, only more efficiently.</p>
 </div>
 <div class="paragraph">
 <p><code>dsl::quoted()</code> works differently than the other rules we&#8217;ve seen so far.
@@ -1547,7 +1559,7 @@ but also a sink that will repeatedly append the arguments to the string.</p>
 To do that, we need to prevent certain code points from occurring in our string.
 We can do that using the minus rule implemented as <code>operator-</code>.
 <code>a - b</code> matches <code>a</code> but only succeeds if <code>b</code> did not match the input <code>a</code> just matched.
-With that, we can "subtract" certain character classes from our pattern.</p>
+With that, we can "subtract" certain character classes from our token.</p>
 </div>
 <div class="listingblock">
 <div class="title">String parsing, fourth attempt (<a href="https://godbolt.org/z/KMEfaq">godbolt</a>)</div>
@@ -1736,6 +1748,44 @@ This has the additional advantage that the closing bracket will be used as branc
 };</code></pre>
 </div>
 </div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p>To recap all the implicit branch condition:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Using <code>dsl::sep()</code> as list separator does not require a branch to parse a list.
+The separator itself is used to determine whether or not we need another list item.
+If we wanted to use <code>dsl::trailing_sep()</code> or no list separator, we would need a branch.</p>
+</li>
+<li>
+<p>The <code>dsl::p</code> rule is branch if the production rule is a branch.</p>
+</li>
+<li>
+<p><code>dsl::quoted()</code> is a branch that uses the initial quotation mark as condition.
+The same is true for every <code>dsl::delimited()</code>.</p>
+</li>
+<li>
+<p><code>dsl::square_bracketed()</code> is a branch that uses the initial opening square bracket as condition.
+The same is true for every <code>dsl::bracketed()</code>.</p>
+</li>
+<li>
+<p>Using <code>dsl::square_bracketed.list(&#8230;&#8203;)</code> does never require a branch condition in the list item.
+The list is considered done if we have the closing square bracket, similar to the way <code>dsl::quoted()</code> worked.
+The same is true for every <code>dsl::bracketed()</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>So while <code>lexy</code> requires branches every time it needs to make a decision,
+in many situations, the branches can be hidden away.
+This is thanks to the utility rules such as <code>dsl::delimited()</code> and <code>dsl::bracketed()</code>.
+There is also <code>dsl::terminated()</code>, which works just like <code>dsl::bracketed()</code> but it has only a closing "bracket" not an opening one.</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1774,7 +1824,7 @@ This has the additional advantage that the closing bracket will be used as branc
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>Each field consists of the name, an equal sign, the value rule, and a newline matched by the <code>dsl::newline</code> pattern.</td>
+<td>Each field consists of the name, an equal sign, the value rule, and a newline matched by the <code>dsl::newline</code> token.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
@@ -1810,12 +1860,12 @@ authors=["Jonathan Müller"]</pre>
 </div>
 <div class="paragraph">
 <p>For that, we can use <code>dsl::whitespaced()</code>.
-It takes a rule and the whitespace pattern.
+It takes a rule and the whitespace rule.
 It then matches the rule after it skipped any leading whitespace.
 For convenience, many rules provide an <code>operator[]</code> that does the same thing.</p>
 </div>
 <div class="paragraph">
-<p>So we first define our whitespace pattern as a global constant in our grammar:</p>
+<p>So we first define our whitespace rule as a global constant in our grammar:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1936,7 +1986,7 @@ asdfjlagnlwefhjlaghlhl</pre>
 <div class="paragraph">
 <p>The reason for that is simple: when we parse a production, we only consume as much input as necessary for it and don&#8217;t look at anything else.
 To prevent that, we need to use <code>dsl::eof</code>.
-This pattern only matches when we&#8217;re at the end of the input.</p>
+This token only matches when we&#8217;re at the end of the input.</p>
 </div>
 <div class="listingblock">
 <div class="title">Preventing trailing input</div>
@@ -2025,8 +2075,8 @@ Some error messages are given.</p>
 <div class="paragraph">
 <p>However, some generic errors are a bit confusing if you haven&#8217;t written the grammar.
 For example, if you write a string literal that contains a control character, you get the generic <code>minus failure</code> error message.
-This can be improved using <code>dsl::try_</code>.
-This rule matches a pattern and reports an error with the specified tag if the pattern didn&#8217;t match.</p>
+Luckily, the minus rule is actually a token and every token has a <code>.error()</code> member function.
+This allows specifying the error that will be reported if the token didn&#8217;t match.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>author</code> production with <code>dsl::try_</code></div>
@@ -2039,7 +2089,7 @@ This rule matches a pattern and reports an error with the specified tag if the p
     };
 
     static constexpr auto rule = [] {
-        auto cp = dsl::try_&lt;invalid_character&gt;(dsl::code_point - dsl::ascii::control); <i class="conum" data-value="3"></i><b>(3)</b>
+        auto cp = (dsl::code_point - dsl::ascii::control).error&lt;invalid_character&gt;(); <i class="conum" data-value="3"></i><b>(3)</b>
 
         …
     }();
@@ -2060,7 +2110,7 @@ This rule matches a pattern and reports an error with the specified tag if the p
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>We apply <code>dsl::try_</code> to the content of the string.</td>
+<td>We specify that on token failure, we want a generic error with the given tag.</td>
 </tr>
 </table>
 </div>
@@ -2248,7 +2298,7 @@ Check out the reference documentation for specific rules.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-25 09:47:23 UTC
+Last updated 2020-12-26 17:22:34 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

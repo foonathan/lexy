@@ -501,7 +501,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_the_rule_dsl">The rule DSL</a>
 <ul class="sectlevel2">
 <li><a href="#_whitespace">Whitespace</a></li>
-<li><a href="#_primitives">Primitives</a></li>
+<li><a href="#_primitive_tokens">Primitive Tokens</a></li>
 <li><a href="#_character_classes">Character classes</a></li>
 <li><a href="#_values">Values</a></li>
 <li><a href="#_errors">Errors</a></li>
@@ -2618,11 +2618,11 @@ The result is an unspecified type similar to <code>std::string_view</code>.</p>
     template &lt;typename Input&gt;
     using error_location_for = error_location&lt;input_reader&lt;Input&gt;&gt;;
 
-    template &lt;typename Input, typename PatternCP, typename PatternNL&gt;
+    template &lt;typename Input, typename TokenCP, typename TokenNL&gt;
     constexpr auto make_error_location(const Input&amp; input,
                                        typename input_reader&lt;Input&gt;::iterator pos,
-                                       PatternCP code_point_pattern,
-                                       PatternNL newline_pattern)
+                                       TokenCP code_point_token,
+                                       TokenNL newline_token)
         -&gt; error_location_for&lt;Input&gt;;
 }</code></pre>
 </div>
@@ -2632,16 +2632,16 @@ The result is an unspecified type similar to <code>std::string_view</code>.</p>
 which is always given via an iterator, into the traditional line/column format.</p>
 </div>
 <div class="paragraph">
-<p>The function takes the position into the input, as well as two patterns.
-It then determines the line and column by repeatedly parsing the two patterns until the error position is reached.
-Every time the <code>code_point_pattern</code> matches, the column is increased by one.
-Every time the <code>newline_pattern</code> matches, the column is reset to one and the line increased by one.
-If neither pattern matches, column is increased by one and the next code unit skipped.
+<p>The function takes the position into the input, as well as two tokens.
+It then determines the line and column by repeatedly parsing the two tokens until the error position is reached.
+Every time the <code>code_point_token</code> matches, the column is increased by one.
+Every time the <code>newline_token</code> matches, the column is reset to one and the line increased by one.
+If neither token matches, column is increased by one and the next code unit skipped.
 The final line and column number are returned, together with the <code>context</code> which is a lexeme containing the entire line where the error occurred.</p>
 </div>
 <div class="paragraph">
-<p>For ASCII encoded texts, the <code>code_point_pattern</code> is <code>lexy::dsl::ascii::character</code> and the <code>newline_pattern</code> is <code>lexy::dsl::newline</code>.
-For Unicode encoded texts, the <code>code_point_pattern</code> is <code>lexy::dsl::code_point</code> and the <code>newline_pattern</code> is <code>lexy::dsl::newline</code>.</p>
+<p>For ASCII encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::ascii::character</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.
+For Unicode encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::code_point</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.</p>
 </div>
 </div>
 </div>
@@ -2665,14 +2665,15 @@ If the matching was not successful, an error is produced instead.
 A failed rule does not consume any characters.</p>
 </div>
 <div class="paragraph">
-<p>A <code>Pattern</code> is a special <code>Rule</code> that does not produce any value and can efficiently determine whether or not it will match at the current reader position without producing an error or consuming characters.
-As such, they can be used as branch conditions.</p>
+<p>A <code>Branch</code> is a rule that has an associated condition.
+The parsing algorithm can efficiently check whether the condition would match at the current reader position.
+As such, they are used whenever the algorithm needs to decide between multiple alternatives.
+Once the branch condition matches, the branch is taken without any additional backtracking.</p>
 </div>
 <div class="paragraph">
-<p>A <code>Branch</code> is a special <code>Rule</code> that consists of a condition, which is a pattern, and a then, which is a rule.
-If the branch condition would match on the current input, it is assumed that the then has to match as well.
-They are required when the parsing algorithm has to decide between multiple rules.
-Every <code>Pattern</code> is a <code>Branch</code> with an empty then.</p>
+<p>A <code>Token</code> is a special <code>Rule</code> that is an atomic element of the input.
+As a rule, it does not produce any value.
+Every <code>Token</code> is also a <code>Branch</code> that uses itself as the condition.</p>
 </div>
 <div class="sect2">
 <h3 id="_whitespace">Whitespace</h3>
@@ -2680,9 +2681,7 @@ Every <code>Pattern</code> is a <code>Branch</code> with an empty then.</p>
 <div class="listingblock">
 <div class="title"><code>lexy/whitespace.hpp</code></div>
 <div class="content">
-<pre>whitespaced(rule, whitespace)    : Rule
-whitespaced(pattern, whitespace) : Pattern
-whitespaced(branch, whitespace)  : Branch</pre>
+<pre>whitespaced(rule, whitespace) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2704,7 +2703,7 @@ Requires
 Equivalent to
 </td>
 <td class="hdlist2">
-<p><code>while_(whitespace) + rule</code></p>
+<p><code>token(while_(whitespace)) + rule</code></p>
 </td>
 </tr>
 </table>
@@ -2737,7 +2736,7 @@ dsl::whitespaced(LEXY_LIT("abc"), dsl::ascii::space)</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre>rule[whitespace]    : Rule
-pattern[whitespace] : Pattern
+token[whitespace]   : Token
 branch[whitespace]  : Branch</pre>
 </div>
 </div>
@@ -2779,46 +2778,16 @@ LEXY_LIT("abc")[dsl::ascii::space]</code></pre>
 </details>
 </div>
 <div class="sect2">
-<h3 id="_primitives">Primitives</h3>
-<h4 id="_lexydslsuccess" class="discrete"><code>lexy::dsl::success</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/sequence.hpp</code></div>
-<div class="content">
-<pre>success : Pattern</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>success</code> pattern matches the empty string.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Any input, but does not consume anything.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>n/a (it never fails)</p>
-</td>
-</tr>
-</table>
-</div>
+<h3 id="_primitive_tokens">Primitive Tokens</h3>
 <h4 id="_lexydslany" class="discrete"><code>lexy::dsl::any</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/any.hpp</code></div>
 <div class="content">
-<pre>any : Pattern</pre>
+<pre>any : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>any</code> pattern matches anything, i.e. all the remaining input.</p>
+<p>The <code>any</code> token matches anything, i.e. all the remaining input.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -2856,14 +2825,14 @@ Error
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/literal.hpp</code></div>
 <div class="content">
-<pre>lit_c&lt;C&gt; : Pattern
-lit&lt;Str&gt; : Pattern
+<pre>lit_c&lt;C&gt; : Token
+lit&lt;Str&gt; : Token
 
-LEXY_LIT(Str) : Pattern</pre>
+LEXY_LIT(Str) : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The literal pattern match the specified sequence of characters.
+<p>The literal tokens match the specified sequence of characters.
 They are whitespace aware.</p>
 </div>
 <div class="hdlist">
@@ -2922,19 +2891,19 @@ Use the <code>LEXY_LIT(Str)</code> macro if your compiler does not support them.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/punctuator.hpp</code></div>
 <div class="content">
-<pre>period    : Pattern = lit&lt;"."&gt;
-comma     : Pattern = lit&lt;","&gt;
-colon     : Pattern = lit&lt;":"&gt;
-semicolon : Pattern = lit&lt;";"&gt;
+<pre>period    : Token = lit&lt;"."&gt;
+comma     : Token = lit&lt;","&gt;
+colon     : Token = lit&lt;":"&gt;
+semicolon : Token = lit&lt;";"&gt;
 
-hyphen     : Pattern = lit&lt;"-"&gt;
-slash      : Pattern = lit&lt;"/"&gt;
-backslash  : Pattern = lit&lt;"\\"&gt;
-apostrophe : Pattern = lit&lt;"'"&gt;
+hyphen     : Token = lit&lt;"-"&gt;
+slash      : Token = lit&lt;"/"&gt;
+backslash  : Token = lit&lt;"\\"&gt;
+apostrophe : Token = lit&lt;"'"&gt;
 
-hash_sign   : Pattern = lit&lt;"#"&gt;
-dollar_sign : Pattern = lit&lt;"$"&gt;
-at_sign     : Pattern = lit&lt;"@"&gt;</pre>
+hash_sign   : Token = lit&lt;"#"&gt;
+dollar_sign : Token = lit&lt;"$"&gt;
+at_sign     : Token = lit&lt;"@"&gt;</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2949,11 +2918,11 @@ They are whitespace aware.</p>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/eof.hpp</code></div>
 <div class="content">
-<pre>eof : Pattern</pre>
+<pre>eof : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>eof</code> pattern matches EOF.
+<p>The <code>eof</code> token matches EOF.
 It is whitespace aware.</p>
 </div>
 <div class="hdlist">
@@ -2980,11 +2949,11 @@ Error
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/newline.hpp</code></div>
 <div class="content">
-<pre>newline : Pattern</pre>
+<pre>newline : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>newline</code> pattern matches a newline.
+<p>The <code>newline</code> token matches a newline.
 It is whitespace aware.</p>
 </div>
 <div class="hdlist">
@@ -3011,11 +2980,11 @@ Error
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/newline.hpp</code></div>
 <div class="content">
-<pre>eol : Pattern</pre>
+<pre>eol : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>eol</code> pattern matches an end-of-line (EOL).
+<p>The <code>eol</code> token matches an end-of-line (EOL).
 It is whitespace aware.</p>
 </div>
 <div class="hdlist">
@@ -3045,31 +3014,31 @@ Error
 <div class="content">
 <pre>namespace ascii
 {
-    control : Pattern // 0x00-0x1F, 0x7F
+    control : Token // 0x00-0x1F, 0x7F
 
-    blank       : Pattern // ' ' (space character) or '\t'
-    newline     : Pattern // '\n' or '\r'
-    other_space : Pattern // '\f' or '\v'
-    space       : Pattern // `blank` or `newline` or `other_space`
+    blank       : Token // ' ' (space character) or '\t'
+    newline     : Token // '\n' or '\r'
+    other_space : Token // '\f' or '\v'
+    space       : Token // `blank` or `newline` or `other_space`
 
-    lower : Pattern // a-z
-    upper : Pattern // A-Z
-    alpha : Pattern // `lower` or `upper`
+    lower : Token // a-z
+    upper : Token // A-Z
+    alpha : Token // `lower` or `upper`
 
-    digit : Pattern // 0-9
-    alnum : Pattern // `digit` or `alpha`
+    digit : Token // 0-9
+    alnum : Token // `digit` or `alpha`
 
-    punct : Pattern // One of: !"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~
+    punct : Token // One of: !"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~
 
-    graph : Pattern // `alnum` or `punct`
-    print : Pattern // `graph` or ' ' (space characters)
+    graph : Token // `alnum` or `punct`
+    print : Token // `graph` or ' ' (space characters)
 
-    character : Pattern // 0x00-0x7F
+    character : Token // 0x00-0x7F
 }</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>All patterns defined in <code>lexy::dsl::ascii</code> match one of the categories of ASCII characters.</p>
+<p>All tokens defined in <code>lexy::dsl::ascii</code> match one of the categories of ASCII characters.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3086,7 +3055,7 @@ Matches
 Errors
 </td>
 <td class="hdlist2">
-<p>A <code>lexy::expected_char_class</code> error with name <code>ASCII.&lt;pattern&gt;</code>, where <code>&lt;pattern&gt;</code> is the name of the pattern.</p>
+<p>A <code>lexy::expected_char_class</code> error with name <code>ASCII.&lt;token&gt;</code>, where <code>&lt;token&gt;</code> is the name of the token.</p>
 </td>
 </tr>
 </table>
@@ -3107,13 +3076,13 @@ Every ASCII character except for the space character is in exactly one of <code>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/code_point.hpp</code></div>
 <div class="content">
-<pre>code_point : Pattern
+<pre>code_point : Token
 
 code_point.capture() : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>code_point</code> pattern will match and consume a well-formed Unicode code point according to the encoding of the input.
+<p>The <code>code_point</code> token will match and consume a well-formed Unicode code point according to the encoding of the input.
 If <code>code_point.capture()</code> is used, the consumed code point will be produced as value.</p>
 </div>
 <div class="hdlist">
@@ -3184,12 +3153,11 @@ This rule is useful for matching things like string literals that can contain ar
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/minus.hpp</code></div>
 <div class="content">
-<pre>rule - except    : Rule
-pattern - except : Pattern</pre>
+<pre>token - except : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The minus rule matches the given rule or pattern, but only if <code>except</code> does not match on the input the rule has consumed.</p>
+<p>The minus rule matches the given token, but only if <code>except</code> does not match on the input the rule has consumed.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3198,7 +3166,7 @@ pattern - except : Pattern</pre>
 Requires
 </td>
 <td class="hdlist2">
-<p><code>except</code> is a pattern.</p>
+<p><code>except</code> is a token.</p>
 </td>
 </tr>
 <tr>
@@ -3206,17 +3174,9 @@ Requires
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and consumes whatever <code>rule</code> or <code>pattern</code> match and consume.
+<p>Matches and consumes whatever <code>token</code> match and consume.
 Then matches <code>except</code> on the same input.
-Matching fails, if <code>except</code> matches the entire input consumed by the rule.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Values
-</td>
-<td class="hdlist2">
-<p>Whatever values are produced by <code>rule</code>.</p>
+Matching fails if <code>except</code> matches the entire input consumed by the token.</p>
 </td>
 </tr>
 <tr>
@@ -3224,7 +3184,7 @@ Values
 Errors
 </td>
 <td class="hdlist2">
-<p>Whatever errors are raised if <code>rule</code> or <code>pattern</code> are not matched.
+<p>Whatever errors are raised if <code>token</code> is not matched.
 A generic error with tag <code>lexy::minus_failure</code> if <code>except</code> has matched.</p>
 </td>
 </tr>
@@ -3262,7 +3222,51 @@ Minus rules can be chained. This is equivalent to specifying an alternative for 
 </td>
 <td class="content">
 <code>except</code> has to match <em>everything</em> the rule has consumed before; partial matches don&#8217;t count.
-Use <code>except + lexy::dsl::any</code> if you want to allow a partial match.
+Use <code>token - (except + lexy::dsl::any)</code> if you want to allow a partial match.
+</td>
+</tr>
+</table>
+</div>
+<h4 id="_lexydsltoken" class="discrete"><code>lexy::dsl::token</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/token.hpp</code></div>
+<div class="content">
+<pre>token(rule) : Token</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>token</code> rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.
+It is whitespace aware.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Whatever <code>rule</code> matches, which will be consumed.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Error
+</td>
+<td class="hdlist2">
+<p>A generic error with tag <code>lexy::missing_token</code> if the <code>rule</code> did not match.</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+While <code>token()</code> is optimized to prevent any overhead created by constructing values that are later discarded,
+it still should only be used when required.
 </td>
 </tr>
 </table>
@@ -3568,15 +3572,25 @@ They produce the label/id and then parse the rule.</p>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/capture.hpp</code></div>
 <div class="content">
-<pre>capture(rule) : Rule</pre>
+<pre>capture(rule)   : Rule
+capture(branch) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>The <code>capture()</code> rule takes an arbitrary rule and parses it, capturing everything it has consumed into a <code>lexy::lexeme</code>.
+It is a branch if given a branch.
 It is whitespace aware; preceding whitespace is not captured.</p>
 </div>
 <div class="hdlist">
 <table>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>The branch condition is whatever <code>branch</code> uses as a branch condition.</p>
+</td>
+</tr>
 <tr>
 <td class="hdlist1">
 Matches
@@ -3684,20 +3698,69 @@ Use <code>position</code> when creating an AST whose nodes are annotated with th
 <div class="paragraph">
 <p>The following rules are used to customize/improve error messages.</p>
 </div>
+<h4 id="_errortag" class="discrete"><code>.error&lt;Tag&gt;()</code></h4>
+<div class="listingblock">
+<div class="content">
+<pre>token.error&lt;Tag&gt;() : Token</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>error()</code> function on tokens changes the error that is raised when a token failed.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Matches and consumes what <code>token</code> matches.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Error
+</td>
+<td class="hdlist2">
+<p>A generic error with the specified <code>Tag</code>.</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+It is useful for tokens such as <code>dsl::token()</code> and <code>operator-</code>, where the result is a generic tag such as <code>lexy::missing_token</code> or <code>lexy::minus_failure</code>.
+</td>
+</tr>
+</table>
+</div>
 <h4 id="_lexydslerror" class="discrete"><code>lexy::dsl::error</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/error.hpp</code></div>
 <div class="content">
-<pre>error&lt;Tag&gt;          : Pattern
-error&lt;Tag&gt;(pattern) : Pattern</pre>
+<pre>error&lt;Tag&gt;       : Branch
+error&lt;Tag&gt;(rule) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>error</code> pattern always fails and produces an error with the given tag.
-For the second version, the pattern is matched first to determine the error range.</p>
+<p>The <code>error</code> rule always fails and produces an error with the given tag.
+For the second version, the rule is matched first to determine the error range.</p>
 </div>
 <div class="hdlist">
 <table>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Branch is always taken.</p>
+</td>
+</tr>
 <tr>
 <td class="hdlist1">
 Matches
@@ -3712,7 +3775,7 @@ Error
 </td>
 <td class="hdlist2">
 <p>An error object of the specified <code>Tag</code>.
-If the optional <code>pattern</code> is given, it will be matched.
+If the optional <code>rule</code> is given, it will be matched (without producing values or errors).
 If it matched successfully, the previous and new reader position will be used to determine the error range.
 Otherwise, the error has no range.</p>
 </td>
@@ -3735,12 +3798,12 @@ Use it as the final branch of a choice rule to customize the <code>lexy::exhaust
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/error.hpp</code></div>
 <div class="content">
-<pre>require&lt;Tag&gt;(pattern) : Pattern = if_(peek(!pattern) &gt;&gt; error&lt;Tag&gt;)
-prevent&lt;Tag&gt;(pattern) : Pattern = if_(peek( pattern) &gt;&gt; error&lt;Tag&gt;)</pre>
+<pre>require&lt;Tag&gt;(rule) : Rule
+prevent&lt;Tag&gt;(rule) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>require</code> and <code>prevent</code> pattern can be used to lookahead and fail if the input matches or does not match the pattern.</p>
+<p>The <code>require</code> and <code>prevent</code> rules can be used to lookahead and fail if the input matches or does not match the token.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3749,8 +3812,8 @@ prevent&lt;Tag&gt;(pattern) : Pattern = if_(peek( pattern) &gt;&gt; error&lt;Tag
 Matches
 </td>
 <td class="hdlist2">
-<p>Both match the <code>pattern</code> without consuming input.
-<code>require</code> fails if the <code>pattern</code> did not match; <code>prevent</code> fails if it did.</p>
+<p>Both match the <code>rule</code> without consuming input (or producing values or errors).
+<code>require</code> fails if the <code>rule</code> did not match; <code>rule</code> fails if it did.</p>
 </td>
 </tr>
 <tr>
@@ -3763,15 +3826,15 @@ Error
 </tr>
 </table>
 </div>
-<details id="W8E3c6">
+<details id="n7zM4d">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/W8E3c6" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/n7zM4d" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Parses a sequence of digits but raises an error with tag `forbidden_leading_zero` if a zero is followed by more digits.
 // Note: this is already available as `dsl::digits&lt;&gt;.no_leading_zero()`.
-dsl::lit_c&lt;'0'&gt; &gt;&gt; dsl::prevent&lt;forbidden_leading_zero&gt;(dsl::digits&lt;&gt;)
+dsl::zero &gt;&gt; dsl::prevent&lt;forbidden_leading_zero&gt;(dsl::digits&lt;&gt;)
     | dsl::digits&lt;&gt;</code></pre>
 </div>
 </div>
@@ -3789,85 +3852,34 @@ Use <code>prevent</code> together with <code>times</code> to prevent the rule fr
 </tr>
 </table>
 </div>
-<h4 id="_lexydsltry" class="discrete"><code>lexy::dsl::try</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/error.hpp</code></div>
-<div class="content">
-<pre>try&lt;Tag&gt;(pattern) : Pattern = if_(!pattern &gt;&gt; error&lt;Tag&gt;)</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>try</code> pattern tries to match the given pattern.
-If that fails, it raises the specified error instead.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>The pattern and consumes it.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>An error object of the specified <code>Tag</code>.</p>
-</td>
-</tr>
-</table>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_branch_conditions">Branch conditions</h3>
 <div class="paragraph">
-<p>The following rules are designed to be used as branch condition.</p>
+<p>The following rules are designed to be used as the condition of an <code>operator&gt;&gt;</code>.
+They have no effect if not used in a context that requires a branch.</p>
 </div>
 <h4 id="_lexydslelse" class="discrete"><code>lexy::dsl::else_</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/branch.hpp</code></div>
 <div class="content">
-<pre>else_ &gt;&gt; rule : Branch = success &gt;&gt; rule</pre>
+<pre>else_ : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>else_</code> can only be used as a branch condition.
-It adds a branch that will be taken if all previous branches did not match.</p>
+<p>If <code>else_</code> is used as a condition, that branch will be taken unconditionally.
+It must be used as a last alternative in a choice.</p>
 </div>
 <h4 id="_lexydslpeek" class="discrete"><code>lexy::dsl::peek</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/peek.hpp</code></div>
 <div class="content">
-<pre>peek(pattern) : Pattern</pre>
+<pre>peek(rule) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>peek</code> pattern matches a pattern without consuming anything.
-This can be used for simple lookahead in a branch condition.
+<p>The <code>peek</code> branch is taken if <code>rule</code> matches, but does not consume it.
 It is whitespace aware; leading whitespace will be consumed.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Whatever the pattern matches, but does not consume it.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Errors
-</td>
-<td class="hdlist2">
-<p>All errors raised by <code>pattern</code> if it did not match.</p>
-</td>
-</tr>
-</table>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -3885,79 +3897,12 @@ Long lookahead can slow down parsing speed due to backtracking.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/peek.hpp</code></div>
 <div class="content">
-<pre>peek_not(pattern) : Pattern</pre>
+<pre>peek_not(rule) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>peek_not</code> pattern matches a pattern without consuming anything but flips its success and failure; only succeeding if the pattern did not match.
-This can be used for simple lookahead in a branch condition.
+<p>The <code>peek_not()</code> branch is taken if <code>rule</code> does not match, but does not consume it.
 It is whitespace aware; leading whitespace will be consumed.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Matches the pattern.
-If it succeeds, consumes nothing and fails.
-If it fails, consumes nothing and succeeds.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>A generic error with tag <code>lexy::unexpected</code> if the pattern succeeds.</p>
-</td>
-</tr>
-</table>
-</div>
-<h4 id="_lexydsllookahead" class="discrete"><code>lexy::dsl::lookahead</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/lookahead.hpp</code></div>
-<div class="content">
-<pre>lookahead(needle, end) : Pattern</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>lookahead</code> pattern performs arbitrary lookahead for a <code>needle</code> before <code>end</code> without consuming anything.
-This can be used for complex lookahead in a branch condition.
-It is whitespace aware; leading whitespace will be consumed.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Requires
-</td>
-<td class="hdlist2">
-<p>Both <code>needle</code> and <code>end</code> must be patterns.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Repeatedly tries to match <code>needle</code> until it matches.
-If it doesn&#8217;t match, advances the reader by one code unit and tries again.
-This process stops if <code>end</code> is matched or EOF is reached.
-Does not consume any of the characters it has skipped over.
-Only succeeds, if it has matched the <code>needle</code>.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>A generic error with the tag <code>lexy::lookahead_failure</code> if it didn&#8217;t find the <code>needle</code>.</p>
-</td>
-</tr>
-</table>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -3971,48 +3916,17 @@ Long lookahead can slow down parsing speed due to backtracking.
 </tr>
 </table>
 </div>
-<h4 id="_lexydslmatch" class="discrete"><code>lexy::dsl::match</code></h4>
+<h4 id="_lexydsllookahead" class="discrete"><code>lexy::dsl::lookahead</code></h4>
 <div class="listingblock">
-<div class="title"><code>lexy/dsl/match.hpp</code></div>
+<div class="title"><code>lexy/dsl/lookahead.hpp</code></div>
 <div class="content">
-<pre>match(rule) : Pattern</pre>
+<pre>lookahead(needle, end) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>match</code> pattern turns an arbitrary rule into a pattern by parsing it and discarding all values it has produced.
-It is whitespace aware.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>Whatever <code>rule</code> matches, which will be consumed.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Error
-</td>
-<td class="hdlist2">
-<p>A generic error with tag <code>lexy::no_match</code> if the <code>rule</code> did not match.</p>
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-While <code>match()</code> is optimized to prevent any overhead created by constructing values that are later discarded, it still should only be used as a last resort for complex branch conditions.
-</td>
-</tr>
-</table>
+<p>The <code>lookahead</code> branch is taken if lookahead finds <code>needle</code> before <code>end</code> is found, which must both be tokens.
+No characters are consumed.
+It is whitespace aware; leading whitespace will be consumed.</p>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -4021,7 +3935,7 @@ While <code>match()</code> is optimized to prevent any overhead created by const
 <i class="fa icon-caution" title="Caution"></i>
 </td>
 <td class="content">
-When used in combination with <code>peek()</code>, long lookahead can slow down parsing speed due to backtracking.
+Long lookahead can slow down parsing speed due to backtracking.
 </td>
 </tr>
 </table>
@@ -4033,9 +3947,8 @@ When used in combination with <code>peek()</code>, long lookahead can slow down 
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/sequence.hpp</code></div>
 <div class="content">
-<pre>rule + rule       : Rule
-pattern + pattern : Pattern
-branch + rule     : Branch</pre>
+<pre>rule + rule   : Rule
+token + token : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4043,6 +3956,14 @@ branch + rule     : Branch</pre>
 </div>
 <div class="hdlist">
 <table>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>The branch is only taken if all the tokens match in sequence.</p>
+</td>
+</tr>
 <tr>
 <td class="hdlist1">
 Matches
@@ -4074,28 +3995,56 @@ Errors
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/branch.hpp</code></div>
 <div class="content">
-<pre>pattern &gt;&gt; rule : Branch
-branch &gt;&gt; rule  : Branch = branch.condition() &gt;&gt; branch.then() + rule
-
-branch.condition() : Pattern
-branch.then()      : Rule</pre>
+<pre>branch &gt;&gt; rule : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>operator&gt;&gt;</code> is used to turn a rule into a branch by giving it a branch condition.
-The first overload uses the pattern as the branch condition,
-the second overload uses the condition of the branch itself.</p>
+<p>The <code>operator&gt;&gt;</code> is used to turn a rule into a branch by giving it a branch condition, which must be a branch itself.
+If the branch is used as a normal rule, it first matches the condition followed by the rule.
+If it is used in a context that requires a branch, the branch is checked to determine whether it should be taken.</p>
 </div>
-<div class="paragraph">
-<p>If the branch is used as a normal rule or pattern, it first matches the condition followed by the then.
-If it is used in a context that requires a branch, the condition is checked to determine whether the branch should be taken.</p>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Whatever <code>branch</code> uses as branch condition.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Matches and consume the branch, then matches and consumes the <code>rule</code>.
+Only succeeds if all of them succeed.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>All the values produced by the branch and rule in the same order as they were matched.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>Whatever errors are raised by the individual branch and rule.</p>
+</td>
+</tr>
+</table>
 </div>
 <h4 id="_lexydslif" class="discrete"><code>lexy::dsl::if_</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/if.hpp</code></div>
 <div class="content">
-<pre>if_(branch)  : Rule    = branch | success
-if_(pattern) : Pattern = pattern | success</pre>
+<pre>if_(branch) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4118,7 +4067,7 @@ Otherwise, consumes nothing and succeeds anyway.</p>
 Values
 </td>
 <td class="hdlist2">
-<p>Any values produced by the then of the branch.</p>
+<p>Any values produced by the branch.</p>
 </td>
 </tr>
 <tr>
@@ -4126,7 +4075,7 @@ Values
 Errors
 </td>
 <td class="hdlist2">
-<p>Any errors produced by the then of the branch.
+<p>Any errors produced by the branch.
 It will only fail after the condition has been matched.</p>
 </td>
 </tr>
@@ -4181,7 +4130,7 @@ Otherwise, a single object of type <code>lexy::nullopt</code>.</p>
 Errors
 </td>
 <td class="hdlist2">
-<p>Any errors produced by the then of the branch.
+<p>Any errors produced by the branch.
 It will only fail after the condition has been matched.</p>
 </td>
 </tr>
@@ -4205,8 +4154,7 @@ dsl::opt(dsl::list(dsl::ascii::alpha &gt;&gt; dsl::id&lt;0&gt;))</code></pre>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/choice.hpp</code></div>
 <div class="content">
-<pre>branch  | branch  : Rule
-pattern | pattern : Pattern</pre>
+<pre>branch  | branch  : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4289,11 +4237,11 @@ Use <code>… | error&lt;Tag&gt;</code> to raise a custom error instead of <code
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/alternative.hpp</code></div>
 <div class="content">
-<pre>pattern / pattern : Pattern</pre>
+<pre>token / token : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>An alternative rule tries to match each pattern in order, backtracking if necessary.</p>
+<p>An alternative rule tries to match each token in order, backtracking if necessary.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -4302,9 +4250,9 @@ Use <code>… | error&lt;Tag&gt;</code> to raise a custom error instead of <code
 Matches
 </td>
 <td class="hdlist2">
-<p>Tries to match each pattern in the order they were specified.
-As soon as one pattern matches, consumes it and succeeds.
-If no pattern matched, fails without consuming anything.</p>
+<p>Tries to match each token in the order they were specified.
+As soon as one token matches, consumes it and succeeds.
+If no token matched, fails without consuming anything.</p>
 </td>
 </tr>
 <tr>
@@ -4312,7 +4260,19 @@ If no pattern matched, fails without consuming anything.</p>
 Errors
 </td>
 <td class="hdlist2">
-<p>A generic error with tag <code>lexy::exhausted_alternatives</code> if no pattern matched.</p>
+<p>A generic error with tag <code>lexy::exhausted_alternatives</code> if no token matched.</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If an alternative consists of only literals, a trie is used to efficiently match them without backtracking.
 </td>
 </tr>
 </table>
@@ -4324,8 +4284,7 @@ Errors
 <i class="fa icon-caution" title="Caution"></i>
 </td>
 <td class="content">
-Even if the pattern of an alternative is actually a branch, it will not be treated as a branch but it tries the entire pattern, backtracking if necessary.
-Use a choice rule with a suitable condition to avoid long backtracking instead.
+Use a choice rule with a suitable condition to avoid potentially long backtracking.
 </td>
 </tr>
 </table>
@@ -4421,12 +4380,12 @@ As soon as the then has matched everything parsing continues from the reader pos
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/until.hpp</code></div>
 <div class="content">
-<pre>until(pattern)          : Pattern
-until(pattern).or_eof() : Pattern = until(pattern / eof)</pre>
+<pre>until(token)          : Token
+until(token).or_eof() : Token = until(token / eof)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>until</code> pattern consumes all input until the specified <code>pattern</code> matches, then consumes that.</p>
+<p>The <code>until</code> token consumes all input until the specified <code>token</code> matches, then consumes that.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -4435,7 +4394,7 @@ until(pattern).or_eof() : Pattern = until(pattern / eof)</pre>
 Matches
 </td>
 <td class="hdlist2">
-<p>If the closing <code>pattern</code> matches, consumes it and succeeds.
+<p>If the closing <code>token</code> matches, consumes it and succeeds.
 Otherwise, consumes one code unit and tries again.
 If EOF is reached, fails, unless <code>.or_eof()</code> was called, in which case it also succeeds having consumed everything until the end of the input.</p>
 </td>
@@ -4446,7 +4405,7 @@ Errors
 </td>
 <td class="hdlist2">
 <p>It can only fail if the reader has reached the end of the input without matching the condition.
-Then it raises the same error as raised if one tries to match the pattern at EOF.</p>
+Then it raises the same error as raised if the condition would be matched at EOF.</p>
 </td>
 </tr>
 </table>
@@ -4471,8 +4430,7 @@ LEXY_LIT("/*") &gt;&gt; dsl::until(LEXY_LIT("*/"))</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<code>until</code> includes the <code>pattern</code>, use <code>until(peek(pattern))</code> if it should not consume the pattern.
-This was done because it is more efficient than the other way round.
+<code>until</code> includes the <code>token</code>.
 </td>
 </tr>
 </table>
@@ -4557,8 +4515,7 @@ If <code>rule</code> contains a branch that will not consume any characters but 
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/while.hpp</code></div>
 <div class="content">
-<pre>while_(branch)  : Rule
-while_(pattern) : Pattern</pre>
+<pre>while_(branch) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4618,8 +4575,7 @@ If the branch does not consume any characters, <code>while_</code> will loop for
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/while.hpp</code></div>
 <div class="content">
-<pre>while_(choice)         : Rule = loop(choice | else_ &gt;&gt; break_)
-while_(choice_pattern) : Pattern</pre>
+<pre>while_(choice)         : Rule = loop(choice | else_ &gt;&gt; break_)</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4679,27 +4635,25 @@ If the choice has an else branch already, it will loop until an error is raised.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/while.hpp</code></div>
 <div class="content">
-<pre>while_one(branch) : Branch
-    = branch.condition() &gt;&gt; branch.then() + while_(branch)
-
-while_one(pattern) : Pattern = pattern + while_(pattern)</pre>
+<pre>while_one(rule)    : Rule    = rule + while_(rule)
+while_one(branch)  : Branch  = branch &gt;&gt; while_(branch)
+while_one(token)   : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>while_one</code> rule matches a rule one or more times.</p>
+<p>The <code>while_one</code> rule matches a rule one or more times.
+It is a token if it is given a token.</p>
 </div>
 <h4 id="_lexydsldo_while" class="discrete"><code>lexy::dsl::do_while()</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/while.hpp</code></div>
 <div class="content">
-<pre>do_while(rule, pattern) : Rule = rule + while_(pattern &gt;&gt; rule)
-
-do_while(branch, pattern) : Branch
-    = branch.condition() &gt;&gt; branch.then() + while_(pattern &gt;&gt; branch)</pre>
+<pre>do_while(rule, condition_branch)   : Rule   = rule + while_(condition_branch &gt;&gt; rule)
+do_while(branch, condition_branch) : Branch = branch &gt;&gt; while_(condition_branch &gt;&gt; rule)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>do_while</code> rule matches a rule first unconditionally, and then again repeatedly while the pattern matches.</p>
+<p>The <code>do_while</code> rule matches a rule first unconditionally, and then again repeatedly while the rule matches.</p>
 </div>
 <details id="4dzEK7">
 <summary class="title">Example</summary>
@@ -4717,26 +4671,20 @@ dsl::do_while(dsl::ascii::alpha, dsl::comma)</code></pre>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/separator.hpp</code></div>
 <div class="content">
-<pre>sep(pattern)
-trailing_sep(pattern)
-
-sep(pattern).capture()
-trailing_sep(pattern).capture()</pre>
+<pre>sep(branch)
+trailing_sep(branch)</pre>
 </div>
 </div>
 <div class="paragraph">
 <p><code>sep</code> and <code>trailing_sep</code> are used to specify a separator between repeated items; they are not rules that can be parsed directly.</p>
 </div>
 <div class="paragraph">
-<p>Use <code>sep(pattern)</code> to indicate that <code>pattern</code> has to be consumed between two items.
+<p>Use <code>sep(branch)</code> to indicate that <code>branch</code> has to be consumed between two items.
 If it would match after the last item, it is not consumed by the rule.</p>
 </div>
 <div class="paragraph">
-<p>Use <code>trailing_sep(pattern)</code> to indicate that <code>pattern</code> has to be consumed between two items and can occur after the final item.
+<p>Use <code>trailing_sep(branch)</code> to indicate that <code>branch</code> has to be consumed between two items and can occur after the final item.
 If it matches after the last item, it is consumed as well.</p>
-</div>
-<div class="paragraph">
-<p>By calling <code>.capture()</code>, the matched separator will be captured as a <code>lexy::lexeme</code>.</p>
 </div>
 <h4 id="_lexydsltimes" class="discrete"><code>lexy::dsl::times</code></h4>
 <div class="listingblock">
@@ -4773,7 +4721,8 @@ The <code>twice</code> rule is a convenience alias for <code>N = 2</code>.</p>
 Requires
 </td>
 <td class="hdlist2">
-<p>The separator must not be captured and all values produced by the parsing the rule must have a common type.
+<p>The separator must not produce any values.
+All values produced by the parsing the rule must have a common type.
 In particular, the rule must only produce one value.</p>
 </td>
 </tr>
@@ -4836,10 +4785,18 @@ Values produced by the list items are forwarded to a sink callback.</p>
 <table>
 <tr>
 <td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Whatever <code>branch</code> uses as branch condition.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
 Requires
 </td>
 <td class="hdlist2">
-<p>The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator pattern can be used as condition).
+<p>The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator can be used as condition).
 A production whose rule contains <code>list()</code> must provide a sink.</p>
 </td>
 </tr>
@@ -4897,7 +4854,7 @@ dsl::list(dsl::peek(dsl::digit&lt;&gt;) &gt;&gt; dsl::integer&lt;int&gt;(dsl::di
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given patterns anyway.
+Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given tokens anyway.
 </td>
 </tr>
 </table>
@@ -5090,6 +5047,14 @@ Requires
 <td class="hdlist2">
 <p>For <code>p</code>, the <code>Production</code> is a complete type at the point of the rule definition.
 The <code>recurse</code> rule has no such limitations.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Whatever the production&#8217;s rule uses as a branch condition.</p>
 </td>
 </tr>
 <tr>
@@ -5372,8 +5337,8 @@ dsl::parenthesized.list(dsl::integer&lt;int&gt;(dsl::digits&lt;&gt;),
 <div class="sect2">
 <h3 id="_numbers">Numbers</h3>
 <div class="paragraph">
-<p>The facilities for parsing integers are split into the digits pattern,
-which do not produce any values, and the <code>integer</code> rule, which matches a digit pattern and converts it into an integer.
+<p>The facilities for parsing integers are split into the digit token, which do not produce any values,
+and the <code>integer</code> rule, which matches a digit token and converts it into an integer.
 The integer conversion has to be done during and parsing and not as a callback, as overflow creates a parse error.</p>
 </div>
 <h4 id="_base" class="discrete">Base</h4>
@@ -5483,19 +5448,15 @@ It specialization of <code>lexy::integer_traits</code> is built on top of the sp
 but disables all bounds checking.
 You can specialize <code>lexy::integer_traits</code> for your own integer types.</p>
 </div>
-<h4 id="_lexydsldigit" class="discrete"><code>lexy::dsl::digit</code></h4>
+<h4 id="_lexydslzero" class="discrete"><code>lexy::dsl::zero</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/digit.hpp</code></div>
 <div class="content">
-<pre>digit&lt;Base&gt; : Pattern
-
-digit&lt;Base&gt;.zero()     : Pattern
-digit&lt;Base&gt;.non_zero() : Pattern</pre>
+<pre>zero : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>digit</code> pattern matches a digit of the specified base or <code>decimal</code> if no base was specified.
-The <code>zero()</code> and <code>non_zero()</code> patterns match zero or a non-zero digit respectively.</p>
+<p>The <code>zero</code> token matches the zero digit.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -5504,22 +5465,7 @@ The <code>zero()</code> and <code>non_zero()</code> patterns match zero or a non
 Matches
 </td>
 <td class="hdlist2">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><code>digit</code></dt>
-<dd>
-<p>Matches and consumes any of the valid digits of the base.</p>
-</dd>
-<dt class="hdlist1"><code>digit.zero()</code></dt>
-<dd>
-<p>Matches and consumes the zero digit of the base (it is the same for all of them).</p>
-</dd>
-<dt class="hdlist1"><code>digit.non_zero()</code></dt>
-<dd>
-<p>Matches and consumes any of the valid digits of the base except zero.</p>
-</dd>
-</dl>
-</div>
+<p>Matches and consumes the zero digit <code>0</code>.</p>
 </td>
 </tr>
 <tr>
@@ -5527,23 +5473,37 @@ Matches
 Errors
 </td>
 <td class="hdlist2">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><code>digit</code></dt>
-<dd>
-<p>Raises a <code>lexy::expected_char_class</code> error with the name <code>digit.&lt;base&gt;</code>, where <code>&lt;base&gt;</code> is <code>binary</code>, <code>hex-lower</code>, etc.</p>
-</dd>
-<dt class="hdlist1"><code>digit.zero()</code></dt>
-<dd>
 <p>Raises a <code>lexy::expected_char_class</code> error with the name <code>digit.zero</code>.</p>
-</dd>
-<dt class="hdlist1"><code>digit.non_zero()</code></dt>
-<dd>
-<p>If it didn&#8217;t match any valid digit, raises the same error as <code>digit</code>.
-Otherwise, raises a <code>lexy::expected_char_class</code> error with the name <code>digit.non-zero</code>.</p>
-</dd>
-</dl>
+</td>
+</tr>
+</table>
 </div>
+<h4 id="_lexydsldigit" class="discrete"><code>lexy::dsl::digit</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/digit.hpp</code></div>
+<div class="content">
+<pre>digit&lt;Base&gt; : Token</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>digit</code> token matches a digit of the specified base or <code>decimal</code> if no base was specified.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Matches and consumes any of the valid digits of the base.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>Raises a <code>lexy::expected_char_class</code> error with the name <code>digit.&lt;base&gt;</code>, where <code>&lt;base&gt;</code> is <code>binary</code>, <code>hex-lower</code>, etc.</p>
 </td>
 </tr>
 </table>
@@ -5552,15 +5512,15 @@ Otherwise, raises a <code>lexy::expected_char_class</code> error with the name <
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/digit.hpp</code></div>
 <div class="content">
-<pre>digits&lt;Base&gt; : Pattern
+<pre>digits&lt;Base&gt; : Token
 
-digits&lt;Base&gt;.sep(pattern)      : Pattern
-digits&lt;Base&gt;.no_leading_zero() : Pattern</pre>
+digits&lt;Base&gt;.sep(token)        : Token
+digits&lt;Base&gt;.no_leading_zero() : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>digits</code> pattern matches a non-empty sequence of digits in the specified base or <code>decimal</code> if no base was specified.
-Calling <code>.sep()</code> allows adding a digit separator pattern that can be present at any point between two digits, but is not required.
+<p>The <code>digits</code> token matches a non-empty sequence of digits in the specified base or <code>decimal</code> if no base was specified.
+Calling <code>.sep()</code> allows adding a digit separator token that can be present at any point between two digits, but is not required.
 Calling <code>.no_leading_zero()</code> raises an error if one or more leading zeros are encountered.
 The calls to <code>.sep()</code> and <code>.no_leading_zero()</code> can be chained.</p>
 </div>
@@ -5619,26 +5579,26 @@ There is no validation of rules to ensure it is a thousand separator or similar 
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/digit.hpp</code></div>
 <div class="content">
-<pre>digit_sep_underscore : Pattern = lit&lt;"_"&gt;
-digit_sep_tick       : Pattern = lit&lt;"'"&gt;</pre>
+<pre>digit_sep_underscore : Token = lit&lt;"_"&gt;
+digit_sep_tick       : Token = lit&lt;"'"&gt;</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>For convenience, two common digit separators <code>_</code> and <code>'</code> are predefined as <code>digit_sep_underscore</code> and <code>digit_sep_tick</code> respectively.
-However, the digit separator can be an arbitrarily complex pattern.</p>
+However, the digit separator can be an arbitrarily complex token.</p>
 </div>
 <h4 id="_lexydsln_digits" class="discrete"><code>lexy::dsl::n_digits</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/digit.hpp</code></div>
 <div class="content">
-<pre>n_digits&lt;N, Base&gt; : Pattern
+<pre>n_digits&lt;N, Base&gt; : Token
 
-n_digits&lt;N, Base&gt;.sep(pattern)      : Pattern</pre>
+n_digits&lt;N, Base&gt;.sep(token) : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>n_digits</code> pattern matches exactly <code>N</code> digits in the specified base or <code>decimal</code> if no base was specified.
-Calling <code>.sep()</code> allows adding a digit separator pattern that can be present at any point between two digits, but is not required.</p>
+<p>The <code>n_digits</code> token matches exactly <code>N</code> digits in the specified base or <code>decimal</code> if no base was specified.
+Calling <code>.sep()</code> allows adding a digit separator token that can be present at any point between two digits, but is not required.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -5681,13 +5641,13 @@ dsl::n_digits&lt;4, dsl::hex_upper&gt;.sep(dsl::digit_sep_tick)</code></pre>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/integer.hpp</code></div>
 <div class="content">
-<pre>integer&lt;T, Base&gt;(pattern) : Rule</pre>
+<pre>integer&lt;T, Base&gt;(token) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>integer</code> rule converts the lexeme matched by the <code>pattern</code> into an integer of type <code>T</code> using the given base.
-The <code>Base</code> can be omitted if the pattern is <code>digits</code> or <code>n_digits</code>.
-It will then be deduced from the pattern.</p>
+<p>The <code>integer</code> rule converts the lexeme matched by the <code>token</code> into an integer of type <code>T</code> using the given base.
+The <code>Base</code> can be omitted if the token is <code>digits</code> or <code>n_digits</code>.
+It will then be deduced from the token.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -5696,7 +5656,7 @@ It will then be deduced from the pattern.</p>
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and consumes what <code>pattern</code> matches.</p>
+<p>Matches and consumes what <code>token</code> matches.</p>
 </td>
 </tr>
 <tr>
@@ -5704,8 +5664,8 @@ Matches
 Values
 </td>
 <td class="hdlist2">
-<p>An integer of type <code>T</code> that is created by the characters the pattern has consumed.
-If the pattern matches characters that are not valid digits of the base (e.g. a digit separator), those characters are skipped.
+<p>An integer of type <code>T</code> that is created by the characters the token has consumed.
+If the token matches characters that are not valid digits of the base (e.g. a digit separator), those characters are skipped.
 Otherwise, the character is converted to a digit and added to the resulting integer using the <code>lexy::integer_traits</code>.</p>
 </td>
 </tr>
@@ -5714,7 +5674,7 @@ Otherwise, the character is converted to a digit and added to the resulting inte
 Errors
 </td>
 <td class="hdlist2">
-<p>Any errors raised by matching the pattern.
+<p>Any errors raised by matching the token.
 If the integer type <code>T</code> is bounded and the integer value would overflow, a generic error with tag <code>lexy::integer_overflow</code> is raised.</p>
 </td>
 </tr>
@@ -5727,7 +5687,7 @@ If the integer type <code>T</code> is bounded and the integer value would overfl
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Matches upper-case hexadecimal digits seperated by ' without leading zeroes.
-// Converts them into an integer, the base is deduced from the pattern.
+// Converts them into an integer, the base is deduced from the token.
 dsl::integer&lt;int&gt;(dsl::digits&lt;dsl::hex_upper&gt;
                         .sep(dsl::digit_sep_tick).no_leading_zero())</code></pre>
 </div>
@@ -5884,7 +5844,7 @@ The open and close delimiters are defined using branches; they are returned by c
 </div>
 </div>
 <div class="paragraph">
-<p>Whitespace can be added by writing <code>d[pattern]</code>, where <code>d</code> is the result of a <code>delimiter()</code> call.
+<p>Whitespace can be added by writing <code>d[rule]</code>, where <code>d</code> is the result of a <code>delimiter()</code> call.
 It will skip whitespace before the opening delimiter only.
 If whitespace is added, this is also reflected by <code>.open()</code>.</p>
 </div>
@@ -5920,8 +5880,8 @@ The naming of <code>quoted</code>, <code>triple_quoted</code> and <code>single_q
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
-<pre>d(rule)    : Rule
-d(pattern) : Rule = d(capture(pattern))</pre>
+<pre>d(rule)  : Branch
+d(token) : Branch = d(capture(token))</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5929,7 +5889,7 @@ d(pattern) : Rule = d(capture(pattern))</pre>
 Values produced by the <code>rule</code> are forwarded to a sink callback.</p>
 </div>
 <div class="paragraph">
-<p>For convenience, if passing a pattern, the pattern is captured.
+<p>For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.</p>
 </div>
 <div class="hdlist">
@@ -5940,6 +5900,14 @@ Requires
 </td>
 <td class="hdlist2">
 <p>A production whose rule contains a delimited rule must provide a sink.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Whatever the opening delimiter uses as branch condition.</p>
 </td>
 </tr>
 <tr>
@@ -5987,15 +5955,15 @@ dsl::quoted(dsl::code_point - dsl::ascii::control)</code></pre>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
-<pre>d(rule, escape_branch)    : Rule
+<pre>d(rule, escape_branch)  : Branch
   = d(escape_branch | else_ &gt;&gt; rule)
-d(pattern, escape_branch) : Rule
-  = d(escape_branch | else_ &gt;&gt; capture(rule))
+d(token, escape_branch) : Branch
+  = d(escape_branch | else_ &gt;&gt; capture(token))
 
-d(rule, escape_choice)    : Rule
+d(rule, escape_choice)  : Branch
   = d(escape_choice | else_ &gt;&gt; rule)
-d(pattern, escape_choice) : Rule
-  = d(escape_choice | else_ &gt;&gt; capture(rule))</pre>
+d(token, escape_choice) : Branch
+  = d(escape_choice | else_ &gt;&gt; capture(token))</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6007,7 +5975,7 @@ The <code>choice</code> matches all appropriate escape sequences and produces th
 Values produced by the <code>rule</code> or <code>escape</code> are forwarded to a sink callback.</p>
 </div>
 <div class="paragraph">
-<p>For convenience, if passing a pattern, the pattern is captured.
+<p>For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.</p>
 </div>
 <details id="7ed5Wc">
@@ -6041,23 +6009,23 @@ If the escape sequence starts with a closing delimiter, it will not be matched.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
-<pre>escape(pattern) : Rule</pre>
+<pre>escape(token) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>For convenience, the <code>escape</code> rule can be used to specify the escape pattern.</p>
+<p>For convenience, the <code>escape</code> rule can be used to specify the escape token.</p>
 </div>
 <div class="paragraph">
-<p>An escape rule consists of a leading pattern that matches the escape character (e.g. <code>\</code>), and zero or more alternatives for characters that can be escaped.
-It then is equivalent to <code>pattern &gt;&gt; (alt0 | alt1 | alt2 | else_ &gt;&gt; error&lt;lexy::invalid_escape_sequence&gt;)</code>.
-It will only be considered after the leading pattern has been matched and then tries to match one of the alternatives.
+<p>An escape rule consists of a leading token that matches the escape character (e.g. <code>\</code>), and zero or more alternatives for characters that can be escaped.
+It then is equivalent to <code>token &gt;&gt; (alt0 | alt1 | alt2 | error&lt;lexy::invalid_escape_sequence&gt;)</code>.
+It will only be considered after the leading token has been matched and then tries to match one of the alternatives.
 If no alternative matches, it raises a generic error with tag <code>lexy::invalid_escape_sequence</code>.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
 <pre>e.rule(branch) : Rule
-  = escape_pattern &gt;&gt; ( ... | branch
+  = escape_token &gt;&gt; ( ... | branch
                       | else_ &gt;&gt; error&lt;lexy::invalid_escape_sequence&gt;)</pre>
 </div>
 </div>
@@ -6067,25 +6035,25 @@ If no alternative matches, it raises a generic error with tag <code>lexy::invali
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
-<pre>e.capture(pattern) : Rule
-  = escape_pattern &gt;&gt; (... | peek(pattern) &gt;&gt; capture(pattern)
+<pre>e.capture(token) : Rule
+  = escape_token &gt;&gt; (... | capture(token)
                       | else_ &gt;&gt; error&lt;lexy::invalid_escape_sequence&gt;)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Calling <code>e.capture(pattern)</code>, where <code>e</code> is an escape rule, adds an escape sequence that matches and captures pattern to the end of the choice.</p>
+<p>Calling <code>e.capture(token)</code>, where <code>e</code> is an escape rule, adds an escape sequence that matches and captures token to the end of the choice.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
 <pre>e.lit&lt;Str&gt;(rule) : Rule
-  = escape_pattern &gt;&gt; (... | lit&lt;Str&gt; &gt;&gt; rule
+  = escape_token &gt;&gt; (... | lit&lt;Str&gt; &gt;&gt; rule
                       | else_ &gt;&gt; error&lt;lexy::invalid_escape_sequence&gt;)
 e.lit&lt;Str&gt;() : Rule
   = e.lit&lt;Str&gt;(value_str&lt;Str&gt;)
 
 e.lit_c&lt;C&gt;(rule) : Rule
-  = escape_pattern &gt;&gt; (... | lit_c&lt;C&gt; &gt;&gt; rule
+  = escape_token &gt;&gt; (... | lit_c&lt;C&gt; &gt;&gt; rule
                       | else_ &gt;&gt; error&lt;lexy::invalid_escape_sequence&gt;)
 e.lit_c&lt;C&gt;() : Rule
   = e.lit_c&lt;C&gt;(value_c&lt;C&gt;)</pre>
@@ -6401,11 +6369,11 @@ It checks the top of the context stack and then removes it.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/bom.hpp</code></div>
 <div class="content">
-<pre>bom&lt;Encoding, Endianness&gt; : Pattern</pre>
+<pre>bom&lt;Encoding, Endianness&gt; : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>bom</code> pattern matches the byte-order mark (BOM) for the given encoding and <code>lexy::encoding_endianness</code>.</p>
+<p>The <code>bom</code> token matches the byte-order mark (BOM) for the given encoding and <code>lexy::encoding_endianness</code>.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -6540,7 +6508,7 @@ dsl::encode&lt;lexy::utf8_encoding&gt;(dsl::code_point)
 <div class="sect2">
 <h3 id="_custom_rules">Custom rules</h3>
 <div class="paragraph">
-<p>The exact interface for the <code>Rule</code>, <code>Pattern</code> and <code>Branch</code> concepts is currently still experimental.
+<p>The exact interface for the <code>Rule</code>, <code>Token</code> and <code>Branch</code> concepts is currently still experimental.
 Refer to the existing rules if you want to add your own.</p>
 </div>
 </div>
@@ -6553,7 +6521,8 @@ Refer to the existing rules if you want to add your own.</p>
 <dl>
 <dt>Branch</dt>
 <dd>
-<p>A rule with a pattern condition and rule then used when making choices between multiple options in the parsing algorithm.</p>
+<p>A rule that has an associated condition and will only be taken if the condition matches.
+It is used to make decisions in the parsing algorithm.</p>
 </dd>
 <dt>Callback</dt>
 <dd>
@@ -6575,10 +6544,6 @@ Refer to the existing rules if you want to add your own.</p>
 <dd>
 <p>Defines the input that will be parsed.</p>
 </dd>
-<dt>Pattern</dt>
-<dd>
-<p>A special rule that can efficiently determine whether it would match on the current input.</p>
-</dd>
 <dt>Production</dt>
 <dd>
 <p>Building-block of a grammar consisting of a rule and an optional callback that produces the parsed value.</p>
@@ -6591,6 +6556,10 @@ Refer to the existing rules if you want to add your own.</p>
 <dd>
 <p>A type with a <code>sink()</code> method that then returns a function object that can be called multiple times.</p>
 </dd>
+<dt>Token</dt>
+<dd>
+<p>A rule that is an atomic building block of the input.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -6598,7 +6567,7 @@ Refer to the existing rules if you want to add your own.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-25 09:47:23 UTC
+Last updated 2020-12-26 17:22:34 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
