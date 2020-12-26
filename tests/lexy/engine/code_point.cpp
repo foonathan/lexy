@@ -5,12 +5,7 @@
 #include <lexy/engine/code_point.hpp>
 
 #include "verify.hpp"
-
-#if LEXY_HAS_CHAR8_T
-#    define LEXY_CONSTEXPR constexpr
-#else
-#    define LEXY_CONSTEXPR const
-#endif
+#include <lexy/_detail/nttp_string.hpp>
 
 TEST_CASE("engine_cp_ascii")
 {
@@ -101,24 +96,24 @@ TEST_CASE("engine_cp_utf8")
 
     SUBCASE("constexpr")
     {
-        LEXY_CONSTEXPR auto empty = parse(u8"");
+        constexpr auto empty = parse(LEXY_CHAR8_STR(""));
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::error_code::eof);
 
-        LEXY_CONSTEXPR auto a = parse(u8"a");
+        constexpr auto a = parse(LEXY_CHAR8_STR("a"));
         CHECK(a);
         CHECK(a.count == 1);
         CHECK(a.value.value() == 'a');
-        LEXY_CONSTEXPR auto umlaut = parse(u8"ä");
+        constexpr auto umlaut = parse(LEXY_CHAR8_STR("ä"));
         CHECK(umlaut);
         CHECK(umlaut.count == 2);
         CHECK(umlaut.value.value() == 0xE4);
-        LEXY_CONSTEXPR auto euro = parse(u8"€");
+        constexpr auto euro = parse(LEXY_CHAR8_STR("€"));
         CHECK(euro);
         CHECK(euro.count == 3);
         CHECK(euro.value.value() == 0x20AC);
-        LEXY_CONSTEXPR auto emojii = parse(u8"🙂");
+        constexpr auto emojii = parse(LEXY_CHAR8_STR("🙂"));
         CHECK(emojii);
         CHECK(emojii.count == 4);
         CHECK(emojii.value.value() == 0x1F642);
@@ -419,7 +414,7 @@ TEST_CASE("engine_cp_auto")
         CHECK(ascii);
         CHECK(ascii.value.value() == 'a');
 
-        LEXY_CONSTEXPR auto utf8 = engine_parses<engine, lexy::utf8_encoding>(u8"ä");
+        constexpr auto utf8 = engine_parses<engine, lexy::utf8_encoding>(LEXY_CHAR8_STR("ä"));
         CHECK(utf8);
         CHECK(utf8.value.value() == 0xE4);
 
@@ -436,7 +431,7 @@ TEST_CASE("engine_cp_auto")
         constexpr auto ascii = engine_matches<engine, lexy::ascii_encoding>("a");
         CHECK(ascii);
 
-        LEXY_CONSTEXPR auto utf8 = engine_matches<engine, lexy::utf8_encoding>(u8"ä");
+        constexpr auto utf8 = engine_matches<engine, lexy::utf8_encoding>(LEXY_CHAR8_STR("ä"));
         CHECK(utf8);
 
         constexpr auto utf16 = engine_matches<engine, lexy::utf16_encoding>(u"ä");

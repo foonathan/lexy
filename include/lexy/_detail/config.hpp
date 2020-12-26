@@ -84,15 +84,35 @@ constexpr void swap(T& lhs, T& rhs)
 #if LEXY_HAS_CHAR8_T
 
 #    define LEXY_CHAR8_T char8_t
+#    define LEXY_CHAR8_STR(Str) u8##Str
 
 #else
 
 namespace lexy
 {
 using _char8_t = unsigned char;
+
+template <typename String>
+struct _char8_str
+{
+    struct str
+    {
+        _char8_t data[String::get().size() + 1];
+
+        constexpr str() : data{}
+        {
+            auto i = 0;
+            for (auto c : String::get())
+                data[i++] = _char8_t(c);
+        }
+    };
+
+    static constexpr auto get = str{};
+};
 } // namespace lexy
 
 #    define LEXY_CHAR8_T ::lexy::_char8_t
+#    define LEXY_CHAR8_STR(Str) (::lexy::_char8_str<LEXY_NTTP_STRING(u8##Str)>::get.data)
 
 #endif
 

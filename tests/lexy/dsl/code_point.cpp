@@ -62,21 +62,11 @@ TEST_CASE("dsl::code_point")
             }
         };
 
-#if LEXY_HAS_CHAR8_T
-        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, u8"");
+        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR(""));
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, u8"ä");
+        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR("ä"));
         CHECK(cp == 2);
-#else
-        auto empty_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"");
-        auto empty     = verify<callback, lexy::utf8_encoding>(rule, empty_str);
-        CHECK(empty == -1);
-
-        auto cp_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"ä");
-        auto cp     = verify<callback, lexy::utf8_encoding>(rule, cp_str);
-        CHECK(cp == 2);
-#endif
     }
     SUBCASE("UTF-16")
     {
@@ -185,21 +175,11 @@ TEST_CASE("dsl::code_point.capture()")
             }
         };
 
-#if LEXY_HAS_CHAR8_T
-        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, u8"");
+        constexpr auto empty = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR(""));
         CHECK(empty == -1);
 
-        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, u8"ä");
+        constexpr auto cp = verify<callback, lexy::utf8_encoding>(rule, LEXY_CHAR8_STR("ä"));
         CHECK(cp == 0xE4);
-#else
-        auto empty_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"");
-        auto empty     = verify<callback, lexy::utf8_encoding>(rule, empty_str);
-        CHECK(empty == -1);
-
-        auto cp_str = reinterpret_cast<const LEXY_CHAR8_T*>(u8"ä");
-        auto cp     = verify<callback, lexy::utf8_encoding>(rule, cp_str);
-        CHECK(cp == 0xE4);
-#endif
     }
     SUBCASE("UTF-16")
     {
