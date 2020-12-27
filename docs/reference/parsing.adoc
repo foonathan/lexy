@@ -278,13 +278,13 @@ They can either be written manually implementing to the above concepts or compos
 namespace lexy
 {
     template <typename ReturnType = void, typename... Fns>
-    consteval Callback callback(Fns&&... fns);
+    constexpr Callback callback(Fns&&... fns);
 }
 ----
 
 Creates a callback with the given `ReturnType` from multiple functions.
 When calling the resulting callback, it will use overload resolution to determine the correct function to call.
-Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.
+It supports function pointers, lambdas, and member function or data pointers.
 
 .`lexy/callback.hpp`
 [source,cpp]
@@ -292,13 +292,13 @@ Every function must either be an empty class (i.e. a stateless lambda), or a poi
 namespace lexy
 {
     template <typename T, typename... Fns>
-    consteval Sink sink(Fns&&... fns);
+    constexpr Sink sink(Fns&&... fns);
 }
 ----
 
 Creates a sink constructing the given `T` using the given functions.
 The sink will value-construct the `T` and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
-Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.
+It supports function pointers, lambdas, and member function or data pointers.
 
 .Example
 [%collapsible]
@@ -328,7 +328,7 @@ assert(result == 1 + 2 + 3);
 namespace lexy
 {
     template <typename First, typename Second>
-    consteval auto operator|(First first, Second second);
+    constexpr auto operator|(First first, Second second);
 }
 ----
 

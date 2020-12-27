@@ -58,6 +58,12 @@ TEST_CASE("callback")
         CHECK(callback(foo(), 4) == 4);
         CHECK(callback(&obj) == 42);
     }
+    SUBCASE("with state")
+    {
+        constexpr auto callback = lexy::callback<int>([i = 42](int arg) { return arg + i; });
+        CHECK(callback(0) == 42);
+        CHECK(callback(11) == 53);
+    }
 }
 
 TEST_CASE("sink")

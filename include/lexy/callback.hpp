@@ -46,12 +46,8 @@ struct _callback : _fn_as_base<Fns>...
 
 /// Creates a callback.
 template <typename ReturnType = void, typename... Fns>
-LEXY_CONSTEVAL auto callback(Fns&&... fns)
+constexpr auto callback(Fns&&... fns)
 {
-    static_assert(((std::is_pointer_v<std::decay_t<Fns>>           //
-                    || std::is_member_pointer_v<std::decay_t<Fns>> //
-                    || std::is_empty_v<std::decay_t<Fns>>)&&...),
-                  "only capture-less lambdas are allowed in a callback");
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
 
@@ -118,11 +114,8 @@ private:
 
 /// Creates a sink callback.
 template <typename T, typename... Fns>
-LEXY_CONSTEVAL auto sink(Fns&&... fns)
+constexpr auto sink(Fns&&... fns)
 {
-    static_assert(((std::is_pointer_v<
-                        std::decay_t<Fns>> || std::is_empty_v<std::decay_t<Fns>>)&&...),
-                  "only capture-less lambdas are allowed in a callback");
     return _sink_callback<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
 } // namespace lexy
@@ -148,7 +141,7 @@ struct _compose
 /// Composes two callbacks.
 template <typename First, typename Second, typename = typename First::return_type,
           typename = typename Second::return_type>
-LEXY_CONSTEVAL auto operator|(First first, Second second)
+constexpr auto operator|(First first, Second second)
 {
     return _compose<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
 }
