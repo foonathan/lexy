@@ -6,8 +6,8 @@
 #define LEXY_ERROR_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
-#include <lexy/_detail/type_name.hpp>
 #include <lexy/input/base.hpp>
+#include <lexy/production.hpp>
 
 namespace lexy
 {
@@ -150,9 +150,9 @@ public:
     }
 
     // The name of the production where the error occurred.
-    static LEXY_CONSTEVAL _detail::string_view production()
+    static LEXY_CONSTEVAL auto production()
     {
-        return _detail::type_name<Production>();
+        return production_traits<Production>::name();
     }
 
     // The starting position of the production.
@@ -168,3 +168,4 @@ private:
 } // namespace lexy
 
 #endif // LEXY_ERROR_HPP_INCLUDED
+

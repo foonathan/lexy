@@ -6,6 +6,7 @@
 #define LEXY_MATCH_HPP_INCLUDED
 
 #include <lexy/callback.hpp>
+#include <lexy/production.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy
@@ -50,7 +51,7 @@ LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule)
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    return match(input, Production::rule);
+    return match(input, production_traits<Production>::rule::get);
 }
 } // namespace lexy
 

@@ -12,9 +12,6 @@
 
 namespace lexyd
 {
-template <typename Production>
-using _production_rule = std::remove_const_t<decltype(Production::rule)>;
-
 // Not inline: one function per production.
 template <typename Rule, typename Handler, typename Reader>
 constexpr auto _parse(Handler& handler, Reader& reader) -> typename Handler::result_type
@@ -44,10 +41,10 @@ struct _prd_parser
     }
 };
 
-template <typename Production, typename Rule = void>
+template <typename Production>
 struct _prd : rule_base
 {
-    using _rule = std::conditional_t<std::is_void_v<Rule>, _production_rule<Production>, Rule>;
+    using _rule = typename lexy::production_traits<Production>::rule::type;
 
     static constexpr bool is_branch = lexy::is_branch<_rule>;
 
@@ -99,7 +96,8 @@ template <typename Production>
 struct _rec : rule_base
 {
     template <typename NextParser>
-    struct parser : _prd_parser<Production, _production_rule<Production>, NextParser>
+    struct parser
+    : _prd_parser<Production, typename lexy::production_traits<Production>::rule::type, NextParser>
     {};
 
     template <typename Whitespace>
@@ -117,3 +115,4 @@ constexpr auto recurse = _rec<Production>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED
+

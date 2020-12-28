@@ -91,3 +91,4 @@ LEXY_CONSTEVAL string_view type_name(int namespace_count = 1)
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
+

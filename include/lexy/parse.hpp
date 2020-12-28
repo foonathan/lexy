@@ -8,6 +8,7 @@
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/production.hpp>
 #include <lexy/result.hpp>
 
 namespace lexyd
@@ -30,6 +31,7 @@ template <typename Production, typename State, typename Input, typename Callback
 class _parse_handler
 {
     static_assert(std::is_lvalue_reference_v<State>);
+    using _traits = lexy::production_traits<Production>;
 
 public:
     constexpr explicit _parse_handler(State state, const Input& input,
@@ -42,13 +44,10 @@ public:
 
     static auto _value_cb()
     {
-        constexpr auto callback = Production::value;
-        using callback_t        = decltype(callback);
-
-        if constexpr (lexy::is_callback<callback_t>)
-            return Production::value;
+        if constexpr (lexy::is_callback<typename _traits::value::type>)
+            return _traits::value::get;
         else
-            return LEXY_DECLVAL(lexy::sink_callback<callback_t>);
+            return LEXY_DECLVAL(lexy::sink_callback<typename _traits::value::type>);
     }
     using result_type
         = result<typename decltype(_value_cb())::return_type, typename Callback::return_type>;
@@ -62,7 +61,7 @@ public:
 
     constexpr auto list_sink()
     {
-        return Production::value.sink();
+        return _traits::value::get.sink();
     }
 
     template <typename Error>
@@ -75,16 +74,13 @@ public:
     template <typename... Args>
     constexpr auto value(Args&&... args) &&
     {
-        constexpr auto callback = Production::value;
-        using callback_t        = decltype(callback);
-
-        if constexpr (lexy::is_callback_for<callback_t, Args&&...>)
+        if constexpr (lexy::is_callback_for<typename _traits::value::type, Args&&...>)
         {
             // We have a callback for those arguments; invoke it.
-            return lexy::invoke_as_result<result_type>(lexy::result_value, Production::value,
+            return lexy::invoke_as_result<result_type>(lexy::result_value, _traits::value::get,
                                                        LEXY_FWD(args)...);
         }
-        else if constexpr (lexy::is_sink<callback_t> //
+        else if constexpr (lexy::is_sink<typename _traits::value::type> //
                            && _is_convertible<typename result_type::value_type, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has the
@@ -118,14 +114,14 @@ private:
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    using rule = std::remove_const_t<decltype(Production::rule)>;
-    // We make state an lvalue reference.
-    using handler_t = _parse_handler<Production, State&, Input, Callback>;
-
     auto reader = input.reader();
 
+    // We make state an lvalue reference.
+    using handler_t = _parse_handler<Production, State&, Input, Callback>;
     handler_t handler(state, input, reader, callback);
-    return rule::template parser<final_parser>::parse(handler, reader);
+
+    using traits = production_traits<Production>;
+    return traits::rule::type::template parser<final_parser>::parse(handler, reader);
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -180,3 +176,4 @@ constexpr auto parse_state_member = _state<Fn>{};
 } // namespace lexyd
 
 #endif // LEXY_PARSE_HPP_INCLUDED
+

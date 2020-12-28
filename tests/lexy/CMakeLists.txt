@@ -86,6 +86,7 @@ set(tests
         lexeme.cpp
         match.cpp
         parse.cpp
+        production.cpp
         result.cpp
         validate.cpp
     )

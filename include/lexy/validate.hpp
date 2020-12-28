@@ -7,6 +7,7 @@
 
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/production.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy
@@ -55,13 +56,13 @@ private:
 template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
 {
-    using rule      = std::remove_const_t<decltype(Production::rule)>;
-    using handler_t = _validate_handler<Production, Input, Callback>;
-
     auto reader = input.reader();
 
+    using handler_t = _validate_handler<Production, Input, Callback>;
     handler_t handler(input, reader, callback);
-    return rule::template parser<final_parser>::parse(handler, reader);
+
+    using traits = production_traits<Production>;
+    return traits::rule::type::template parser<final_parser>::parse(handler, reader);
 }
 } // namespace lexy
 
