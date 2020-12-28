@@ -187,8 +187,10 @@ struct cdata
         auto delim = dsl::delimited(LEXY_LIT("<![CDATA["), LEXY_LIT("]]>"));
         return delim(dsl::code_point);
     }();
-    static constexpr auto list  = lexy::as_string<std::string>;
-    static constexpr auto value = lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
+
+    // We build a string; then we construct a node from it.
+    static constexpr auto value
+        = lexy::as_string<std::string> >> lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
 };
 
 // The name of a tag.
@@ -240,10 +242,10 @@ struct element
         return dsl::brackets(open_tag, close_tag).opt_list(content);
     }();
 
-    // We collect the children as vector.
-    static constexpr auto list = lexy::as_list<std::vector<ast::xml_node_ptr>>;
-    // Then we construct the node.
-    static constexpr auto value = lexy::new_<ast::xml_element, ast::xml_node_ptr>;
+    // We collect the children as vector; then we construct a node from it.
+    static constexpr auto value
+        = lexy::as_list<std::vector<ast::xml_node_ptr>> >> lexy::new_<ast::xml_element,
+                                                                      ast::xml_node_ptr>;
 };
 
 // An XML document.

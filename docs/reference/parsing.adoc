@@ -8,7 +8,6 @@ struct Production
     static constexpr auto rule = …;
 
     static constexpr auto value = …; // optional
-    static constexpr auto list  = …; // optional
 };
 ----
 
@@ -82,21 +81,23 @@ namespace lexy
 The function `lexy::parse()` parses the `Production` on the given `input`.
 The return value is a `lexy::result<T, E>`, where `T` is the return type of the `Production::value` or `Production::list` callback,
 and `E` is the return type of the `callback`.
-If the production accepts the input, invokes `Production::value` or `Production::list` (see below) with the produced values and returns their result.
+If the production accepts the input, invokes `Production::value` (see below) with the produced values and returns their result.
 Otherwise, invokes `callback` with the error information (see <<Error handling>>) and returns its result.
 
-The return value on success is determined using `Production::value` or `Production::list` depending on three cases:
+The return value on success is determined using `Production::value` depending on three cases:
 
-* `Production::rule` does not contain a list. Then all arguments will be forwarded to the `Production::value` callback whose result is returned.
+* `Production::rule` does not contain a list. Then all arguments will be forwarded to `Production::value` as a callback whose result is returned.
   The `Production::value` callback must be present.
-* `Production::rule` contains a list and no other rule produces a value. Then the `Production::list` callback will be used as sink for the list values.
-  If an additional `Production::value` callback is present, the result of the `Production::list` callback will be passed to the `Production::value` callback whose result is returned.
-  Otherwise, the result of the `Production::list` callback is the final result.
-  The `Production::list` callback must be present.
+* `Production::rule` contains a list and no other rule produces a value. Then `Production::value` will be used as sink for the list values.
+  If `Production::value` is also a callback that accepts the result of the sink as argument,
+  it will be invoked with the sink result and the processed result returned.
+  Otherwise, the result of the sink is the final result.
 * `Production::rule` contains a list and other rules produce values as well.
-  Then the `Production::list` callback will be used as sink for the list values.
-  The resulting value will be added to the list of other rule values in order, and all values forwarded to the `Production::value` callback whose result is returned.
-  Both `Production::value` and `Production::list` must be present.
+  Then `Production::value` will be used as sink for the list values.
+  The sink result will be added to the other values in order and everything forwarded to `Production::value` as a callback.
+  The callback result is then returned.
+
+NOTE: The callback `operator>>` is useful for case 3 to create a combined callback and sink with the desired behavior.
 
 The second overload of `lexy::parse()` allows passing an arbitrary state argument.
 This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::parse_state_member` rules which can forward it to the `Production::value` callback.
@@ -328,13 +329,18 @@ assert(result == 1 + 2 + 3);
 namespace lexy
 {
     template <typename First, typename Second>
-    constexpr auto operator|(First first, Second second);
+    constexpr auto operator|(First first, Second second); // <1>
+
+    template <typename Sink, typename Callback>
+    constexpr auto operator>>(Sink sink, Callback callback); // <2>
+
 }
 ----
-
-The result of `g | h`, where `g` and `h` are both callbacks, is another callback that first invokes `g` and then passes the result to `h`.
-
-NOTE: It does not compose sinks.
+<1> The result of `first | second`, where `first` and `second` are both callbacks, is another callback that first invokes `first` and then passes the result to `second`.
+    The result cannot be used as sink.
+<2> The  result of `sink | callback`, is a sink and a callback.
+    As a sink, it behaves just like `sink`.
+    As a callback, it takes the result of the `sink` as well as any other arguments and forwards them to `callback`.
 
 .Example
 [%collapsible]
@@ -353,6 +359,9 @@ assert(inefficient_strlen("1234") == 4); // <2>
 <1> Compose the two callbacks.
 <2> Use it.
 ====
+
+NOTE: The callback `operator>>` is used for productions whose rule contain both a list and produce other values.
+The list will be constructed using the `sink` and then everything will be passed to `callback`.
 
 ==== The no-op callback
 

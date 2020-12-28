@@ -99,7 +99,7 @@ struct author
     }();
 
     // Construct a UTF-8 string from the quoted content.
-    static constexpr auto list = lexy::as_string<std::string, lexy::utf8_encoding>;
+    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>;
 };
 
 struct author_list
@@ -109,7 +109,7 @@ struct author_list
         = dsl::square_bracketed[ws].list(dsl::p<author>[ws], dsl::sep(dsl::comma[ws]));
 
     // Collect all authors into a std::vector.
-    static constexpr auto list = lexy::as_list<std::vector<std::string>>;
+    static constexpr auto value = lexy::as_list<std::vector<std::string>>;
 };
 
 struct config
@@ -133,7 +133,7 @@ struct config
                + dsl::eof[dsl::ascii::space];
     }();
 
-    static constexpr auto list = lexy::as_aggregate<PackageConfig>;
+    static constexpr auto value = lexy::as_aggregate<PackageConfig>;
 };
 } // namespace grammar
 

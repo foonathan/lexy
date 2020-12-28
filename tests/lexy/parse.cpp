@@ -47,7 +47,7 @@ struct string_pair_p
 using prod = string_pair_p;
 } // namespace parse_value
 
-namespace parse_list
+namespace parse_sink
 {
 namespace dsl = lexy::dsl;
 
@@ -57,13 +57,13 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list = lexy::as_list<std::vector<lexy::_detail::string_view>>;
+    static constexpr auto value = lexy::as_list<std::vector<lexy::_detail::string_view>>;
 };
 
 using prod = string_list_p;
-} // namespace parse_list
+} // namespace parse_sink
 
-namespace parse_list_value
+namespace parse_sink_cb
 {
 namespace dsl = lexy::dsl;
 
@@ -73,13 +73,17 @@ struct string_list_p
 {
     static constexpr auto rule = dsl::parenthesized.opt_list(dsl::p<string_p>, sep(dsl::comma));
 
-    static constexpr auto list  = lexy::as_list<std::vector<lexy::_detail::string_view>>;
-    static constexpr auto value = lexy::callback<std::size_t>(
-        [](const std::vector<lexy::_detail::string_view>& vec) { return vec.size(); });
+    static constexpr auto value = [] {
+        auto sink = lexy::as_list<std::vector<lexy::_detail::string_view>>;
+        auto cb   = lexy::callback<std::size_t>(
+            [](const std::vector<lexy::_detail::string_view>& vec) { return vec.size(); });
+
+        return sink >> cb;
+    }();
 };
 
 using prod = string_list_p;
-} // namespace parse_list_value
+} // namespace parse_sink_cb
 
 TEST_CASE("parse")
 {
@@ -100,15 +104,16 @@ TEST_CASE("parse")
         CHECK(abc_123.value().a == "abc");
         CHECK(abc_123.value().b == "123");
     }
-    SUBCASE("list")
+    SUBCASE("sink")
     {
-        using namespace parse_list;
+        using namespace parse_sink;
 
         auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
 
         auto parens = lexy::parse<prod>(lexy::zstring_input("()"), lexy::noop);
         CHECK(parens);
+        INFO(parens.value().at(0).size());
         CHECK(parens.value().empty());
 
         auto abc = lexy::parse<prod>(lexy::zstring_input("(abc)"), lexy::noop);
@@ -135,9 +140,9 @@ TEST_CASE("parse")
         CHECK(abc_abc_123.value().at(1) == "abc");
         CHECK(abc_abc_123.value().at(2) == "123");
     }
-    SUBCASE("list_value")
+    SUBCASE("sink_cb")
     {
-        using namespace parse_list_value;
+        using namespace parse_sink_cb;
 
         auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
         CHECK(!empty);
@@ -163,3 +168,4 @@ TEST_CASE("parse")
         CHECK(abc_abc_123.value() == 3);
     }
 }
+

@@ -5,7 +5,6 @@
 #ifndef LEXY_PARSE_HPP_INCLUDED
 #define LEXY_PARSE_HPP_INCLUDED
 
-#include <lexy/_detail/detect.hpp>
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
@@ -19,11 +18,13 @@ struct _state;
 
 namespace lexy
 {
-template <typename Production>
-using _production_value = decltype(Production::value);
-
 struct _no_parse_state
 {};
+
+template <typename To, typename... Args>
+constexpr bool _is_convertible = false;
+template <typename To, typename Arg>
+constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
 template <typename Production, typename State, typename Input, typename Callback>
 class _parse_handler
@@ -39,17 +40,18 @@ public:
     _parse_handler(const _parse_handler&) = delete;
     _parse_handler& operator=(const _parse_handler&) = delete;
 
-    static auto _result_value_cb()
+    static auto _value_cb()
     {
-        if constexpr (_detail::is_detected<_production_value, Production>)
+        constexpr auto callback = Production::value;
+        using callback_t        = decltype(callback);
+
+        if constexpr (lexy::is_callback<callback_t>)
             return Production::value;
         else
-            // If we don't have a Production::value callback, we must have only the list.
-            // Then the list return type determines value.
-            return Production::list.sink();
+            return LEXY_DECLVAL(lexy::sink_callback<callback_t>);
     }
-    using result_type = result<typename decltype(_result_value_cb())::return_type,
-                               typename Callback::return_type>;
+    using result_type
+        = result<typename decltype(_value_cb())::return_type, typename Callback::return_type>;
 
     template <typename SubProduction>
     constexpr auto sub_handler(const input_reader<Input>& reader)
@@ -60,7 +62,7 @@ public:
 
     constexpr auto list_sink()
     {
-        return Production::list.sink();
+        return Production::value.sink();
     }
 
     template <typename Error>
@@ -73,25 +75,30 @@ public:
     template <typename... Args>
     constexpr auto value(Args&&... args) &&
     {
-        if constexpr (!_detail::is_detected<_production_value, Production>)
-        {
-            // We don't have a value callback, which means we must have a list callback.
-            // Use it to handle the arguments.
+        constexpr auto callback = Production::value;
+        using callback_t        = decltype(callback);
 
-            if constexpr (sizeof...(Args) == 0)
-                // No arguments, build an empty list.
-                return result_type(lexy::result_value, Production::list.sink().finish());
-            else if constexpr (sizeof...(Args) == 1)
-                // Single argument, return that one.
-                return result_type(lexy::result_value, LEXY_FWD(args)...);
-            else
-                static_assert(_detail::error<Production, Args...>,
-                              "missing value callback for Production");
-        }
-        else
-            // Pass the arguments to the value callback.
+        if constexpr (lexy::is_callback_for<callback_t, Args&&...>)
+        {
+            // We have a callback for those arguments; invoke it.
             return lexy::invoke_as_result<result_type>(lexy::result_value, Production::value,
                                                        LEXY_FWD(args)...);
+        }
+        else if constexpr (lexy::is_sink<callback_t> //
+                           && _is_convertible<typename result_type::value_type, Args&&...>)
+        {
+            // We don't have a matching callback, but it is a single argument that has the
+            // correct type already. Assume it came from the list sink and
+            // construct the result without invoking a callback.
+            return result_type(lexy::result_value, LEXY_FWD(args)...);
+        }
+        else
+        {
+            // We're missing a callback overload.
+            static_assert(_detail::error<Production, Args...>,
+                          "missing callback overload for production");
+            return result_type();
+        }
     }
 
 private:

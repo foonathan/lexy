@@ -252,6 +252,25 @@ public:
         return LEXY_MOV(this->_error);
     }
 };
+
+/// Invokes a callback into a result.
+template <typename Result, typename ErrorOrValue, typename Callback, typename... Args>
+constexpr Result invoke_as_result(ErrorOrValue tag, Callback&& callback, Args&&... args)
+{
+    using callback_t  = std::decay_t<Callback>;
+    using return_type = typename callback_t::return_type;
+
+    if constexpr (std::is_same_v<return_type, void>)
+    {
+        LEXY_FWD(callback)(LEXY_FWD(args)...);
+        return Result(tag);
+    }
+    else
+    {
+        return Result(tag, LEXY_FWD(callback)(LEXY_FWD(args)...));
+    }
+}
 } // namespace lexy
 
 #endif // LEXY_RESULT_HPP_INCLUDED
+

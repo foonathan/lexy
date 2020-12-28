@@ -826,7 +826,7 @@ Every time it is invoked, all arguments are somehow added to an internal value, 
 This allows building a container or `std::string`.
 If we write `dsl::quoted(dsl::code_point)`, the sink will be invoked with the captured code point in each iteration.
 
-.String parsing, third attempt (https://godbolt.org/z/jYKbbq[godbolt])
+.String parsing, third attempt (https://godbolt.org/z/4eczx4[godbolt])
 [source,cpp]
 ----
 struct author
@@ -835,7 +835,7 @@ struct author
     static constexpr auto rule = dsl::quoted(dsl::code_point);       // <1>
 
     // Add each captured code point to a std::string.
-    static constexpr auto list                                       // <2>
+    static constexpr auto value                                       // <2>
       = lexy::sink<std::string>([](std::string& result, auto lexeme) // <3>
                                 {
                                     result.append(lexeme.begin(), lexeme.end());
@@ -844,7 +844,7 @@ struct author
 ----
 <1> We want code points surrounded by quotes.
     `dsl::code_point` is a pattern, so it will be automatically `dsl::capture()`d for us in each iteration.
-<2> To provide a sink instead of a callback, we use `::list` instead of `::value`.
+<2> To provide a sink we use `::value` just as before.
 <3> `lexy::sink` creates a sink for us.
     It constructs an empty `std::string` and then invokes the lambda with each captured lexeme.
     We then append that to the string.
@@ -872,7 +872,7 @@ We can do that using the minus rule implemented as `operator-`.
 `a - b` matches `a` but only succeeds if `b` did not match the input `a` just matched.
 With that, we can "subtract" certain character classes from our token.
 
-.String parsing, fourth attempt (https://godbolt.org/z/KMEfaq[godbolt])
+.String parsing, fourth attempt (https://godbolt.org/z/crvhsM[godbolt])
 [source,cpp]
 ----
 struct author
@@ -881,7 +881,7 @@ struct author
     static constexpr auto rule = dsl::quoted(dsl::code_point - dsl::ascii::control);
 
     // Construct a string from the quoted content.
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 ----
 
@@ -894,7 +894,7 @@ Or more importantly, how do we get a `"` in our string?
 For that, we need escape sequences.
 They can be very conveniently defined using another rule and added to the string as the second argument.
 
-.String parsing, final attempt (https://godbolt.org/z/7onPn8[godbolt])
+.String parsing, final attempt (https://godbolt.org/z/hMs4xn[godbolt])
 [source,cpp]
 ----
 struct author
@@ -912,7 +912,7 @@ struct author
     }();
 
     // Construct a UTF-8 string from the quoted content.
-    static constexpr auto list = lexy::as_string<std::string, lexy::utf8_encoding>; // <4>
+    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>; // <4>
 };
 ----
 <1> We use `\` as the escape character using `dsl::backslash_escape`.
@@ -941,7 +941,7 @@ The reason for that is that `dsl::while_()` does not work with rules that produc
 Instead we need to use `dsl::list(rule, sep)`.
 This matches a (non-empty) list of `rule` separated by `sep`.
 
-.The list rule (https://godbolt.org/z/sGGWo3[godbolt])
+.The list rule (https://godbolt.org/z/GK7McT[godbolt])
 [source,cpp]
 ----
 struct integer_list
@@ -951,7 +951,7 @@ struct integer_list
                                            dsl::sep(dsl::comma)); // <1>
 
     // Add them all to a std::vector<int>.
-    static constexpr auto list = lexy::as_list<std::vector<int>>; // <2>
+    static constexpr auto value = lexy::as_list<std::vector<int>>; // <2>
 };
 ----
 <1> `dsl::comma` is just `dsl::lit_c<','>`.
@@ -982,7 +982,7 @@ struct author_list
       = dsl::lit_c<'['> + dsl::list(dsl::p<author>, dsl::sep(dsl::comma)) + dsl::lit_c<']'>;
 
     // Collect all authors into a std::vector.
-    static constexpr auto list = lexy::as_list<std::vector<std::string>>;
+    static constexpr auto value = lexy::as_list<std::vector<std::string>>;
 };
 ----
 
@@ -1002,7 +1002,7 @@ Writing `dsl::square_bracketed(rule)` will match the `rule` surrounded by square
 For the specific case of `dsl::list()`, we can also use `dsl::square_bracketed.list(item, sep)` instead.
 This has the additional advantage that the closing bracket will be used as branch condition for the list item.
 
-.The final `author_list` production (https://godbolt.org/z/s86j1c[godbolt])
+.The final `author_list` production (https://godbolt.org/z/bPM1P9[godbolt])
 [source,cpp]
 ----
 struct author_list
@@ -1012,7 +1012,7 @@ struct author_list
         = dsl::square_bracketed.list(dsl::p<author>, dsl::sep(dsl::comma));
 
     // Collect all authors into a std::vector.
-    static constexpr auto list = lexy::as_list<std::vector<std::string>>;
+    static constexpr auto value = lexy::as_list<std::vector<std::string>>;
 };
 ----
 
@@ -1151,7 +1151,7 @@ struct config
         return dsl::combination(name_field, version_field, authors_field); // <3>
     }();
 
-    static constexpr auto list = lexy::as_aggregate<PackageConfig>; // <4>
+    static constexpr auto value = lexy::as_aggregate<PackageConfig>; // <4>
 };
 ----
 <1> `dsl::combination()` requires a branch condition to know which rule to parse.

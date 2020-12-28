@@ -737,7 +737,7 @@ Errors::
   Any errors produced by the branch.
   It will only fail after the condition has been matched.
 
-[godbolt,cpp,id=nq33hY]
+[godbolt,cpp,id=1vK39o]
 ----
 // Matches an optional list of alpha characters.
 // (The id<0> is just there, so the sink will be invoked on each character).
@@ -1088,7 +1088,7 @@ Values::
 Errors::
   All errors raised when parsing the item rule or separator.
 
-[godbolt,cpp,id=fod3vY]
+[godbolt,cpp,id=sE873v]
 ----
 // Parses a list of integers seperated by (a potentially trailing) comma.
 // As the separator is trailing, it cannot be used to determine the end of the list.
@@ -1357,7 +1357,7 @@ parenthesized = round_bracketed
 
 Common sets of open and close brackets are pre-defined.
 
-[godbolt,cpp,id=dzMTnx]
+[godbolt,cpp,id=G9MPKh]
 ----
 // Parses a list of integers seperated by (a potentially trailing) comma surrounded by parentheses.
 // The same example without the parentheses was also used for list,
@@ -1736,7 +1736,7 @@ Errors::
   All errors raised when matching the opening delimiter and the rule.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
 
-[godbolt,cpp,id=WPzos5]
+[godbolt,cpp,id=nnoMYv]
 ----
 // Match a string consisting of code points that aren't control characters.
 dsl::quoted(dsl::code_point - dsl::ascii::control)
@@ -1767,7 +1767,7 @@ Values produced by the `rule` or `escape` are forwarded to a sink callback.
 For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.
 
-[godbolt,cpp,id=7ed5Wc]
+[godbolt,cpp,id=vqsfM4]
 ----
 // Match a string consisting of code points that aren't control characters.
 // `\"` can be used to add a `"` to the string.
@@ -1837,7 +1837,7 @@ dollar_escape    = escape(lit_c<'$'>)
 
 Common escape characters are predefined.
 
-[godbolt,cpp,id=aajf7c]
+[godbolt,cpp,id=71EEWY]
 ----
 // Match a string consisting of code points that aren't control characters.
 // `\"` can be used to add a `"` to the string.

@@ -116,8 +116,8 @@ struct arg_bare
 // A string without escape characters.
 struct arg_string
 {
-    static constexpr auto rule = dsl::single_quoted(str_char);
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto rule  = dsl::single_quoted(str_char);
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 // A string with escape characters.
@@ -144,7 +144,7 @@ struct arg_quoted
 
         return dsl::quoted(str_char, escape);
     }();
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 // An argument that expands to the value of a variable.

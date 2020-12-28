@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/detect.hpp>
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/dsl/member.hpp>
 #include <lexy/encoding.hpp>
@@ -51,34 +52,27 @@ constexpr auto callback(Fns&&... fns)
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
 
-/// Invokes a callback into a result.
-template <typename Result, typename ErrorOrValue, typename Callback, typename... Args>
-constexpr Result invoke_as_result(ErrorOrValue tag, Callback&& callback, Args&&... args)
-{
-    using callback_t  = std::decay_t<Callback>;
-    using return_type = typename callback_t::return_type;
+template <typename T>
+using _detect_callback = typename T::return_type;
+template <typename T>
+constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
 
-    if constexpr (std::is_same_v<return_type, void>)
-    {
-        LEXY_FWD(callback)(LEXY_FWD(args)...);
-        return Result(tag);
-    }
-    else
-    {
-        return Result(tag, LEXY_FWD(callback)(LEXY_FWD(args)...));
-    }
-}
+template <typename T, typename... Args>
+using _detect_callback_for = decltype(LEXY_DECLVAL(T)(LEXY_DECLVAL(Args)...));
+template <typename T, typename... Args>
+constexpr bool is_callback_for
+    = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 } // namespace lexy
 
 namespace lexy
 {
 template <typename T, typename Callback>
-class _sink
+class _sink_cb
 {
 public:
     using return_type = T;
 
-    constexpr explicit _sink(Callback cb) : _value(), _cb(cb) {}
+    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
 
     template <typename... Args>
     constexpr void operator()(Args&&... args)
@@ -98,14 +92,14 @@ private:
 };
 
 template <typename T, typename... Fns>
-class _sink_callback
+class _sink
 {
 public:
-    LEXY_CONSTEVAL explicit _sink_callback(Fns... fns) : _cb(fns...) {}
+    LEXY_CONSTEVAL explicit _sink(Fns... fns) : _cb(fns...) {}
 
     constexpr auto sink() const
     {
-        return _sink<T, _callback<void, Fns...>>(_cb);
+        return _sink_cb<T, _callback<void, Fns...>>(_cb);
     }
 
 private:
@@ -116,25 +110,55 @@ private:
 template <typename T, typename... Fns>
 constexpr auto sink(Fns&&... fns)
 {
-    return _sink_callback<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
+
+/// Returns the type of the `.sink()` function.
+template <typename Sink>
+using sink_callback = decltype(LEXY_DECLVAL(Sink).sink());
+
+template <typename T>
+using _detect_sink = decltype(LEXY_DECLVAL(typename sink_callback<T>::return_type&)
+                              = LEXY_DECLVAL(T).sink().finish());
+template <typename T>
+constexpr bool is_sink = _detail::is_detected<_detect_sink, T>;
 } // namespace lexy
 
 namespace lexy
 {
 template <typename First, typename Second>
-struct _compose
+struct _compose_cb
 {
-    LEXY_EMPTY_MEMBER First  first;
-    LEXY_EMPTY_MEMBER Second second;
+    LEXY_EMPTY_MEMBER First  _first;
+    LEXY_EMPTY_MEMBER Second _second;
 
     using return_type = typename Second::return_type;
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype(first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
+        -> std::decay_t<decltype(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
     {
-        return second(first(LEXY_FWD(args)...));
+        return _second(_first(LEXY_FWD(args)...));
+    }
+};
+
+template <typename Sink, typename Callback>
+struct _compose_s
+{
+    LEXY_EMPTY_MEMBER Sink     _sink;
+    LEXY_EMPTY_MEMBER Callback _callback;
+
+    using return_type = typename Callback::return_type;
+
+    constexpr auto sink() const
+    {
+        return _sink.sink();
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const -> decltype(_callback(LEXY_FWD(args)...))
+    {
+        return _callback(LEXY_FWD(args)...);
     }
 };
 
@@ -143,7 +167,21 @@ template <typename First, typename Second, typename = typename First::return_typ
           typename = typename Second::return_type>
 constexpr auto operator|(First first, Second second)
 {
-    return _compose<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
+    return _compose_cb<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
+}
+template <typename S, typename Cb, typename Second>
+constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
+{
+    auto cb = LEXY_MOV(composed._callback) | LEXY_MOV(second);
+    return _compose_s<S, decltype(cb)>{LEXY_MOV(composed._sink), LEXY_MOV(cb)};
+}
+
+/// Composes a sink with a callback.
+template <typename Sink, typename Callback, typename = decltype(LEXY_DECLVAL(Sink).sink()),
+          typename = typename Callback::return_type>
+constexpr auto operator>>(Sink sink, Callback cb)
+{
+    return _compose_s<Sink, Callback>{LEXY_MOV(sink), LEXY_MOV(cb)};
 }
 } // namespace lexy
 
@@ -261,15 +299,6 @@ namespace lexy
 template <typename T>
 struct _list
 {
-    using return_type = T;
-
-    template <typename... Args>
-    constexpr T operator()(Args&&... args) const
-    {
-        // Use the initializer_list constructor.
-        return T{LEXY_FWD(args)...};
-    }
-
     struct _sink
     {
         T _result{};
@@ -309,15 +338,6 @@ constexpr auto as_list = _list<T>{};
 template <typename T>
 struct _collection
 {
-    using return_type = T;
-
-    template <typename... Args>
-    constexpr T operator()(Args&&... args) const
-    {
-        // Use the initializer_list constructor.
-        return T{LEXY_FWD(args)...};
-    }
-
     struct _sink
     {
         T _result{};
@@ -396,6 +416,7 @@ struct _as_aggregate
     }
     template <typename... Args>
     constexpr auto operator()(return_type&& result, Args&&... args) const
+        -> std::enable_if_t<(sizeof...(Args) > 0), return_type>
     {
         static_assert(sizeof...(Args) % 2 == 0, "missing dsl::member rules");
 
@@ -582,3 +603,4 @@ constexpr auto as_integer = _int<T>{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_HPP_INCLUDED
+

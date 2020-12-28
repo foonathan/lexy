@@ -27,10 +27,16 @@ TEST_CASE("callback")
             = lexy::callback<int>([](int i) { return 2 * i; }, [](const char* ptr) { return *ptr; },
                                   &test_fn);
 
+        CHECK(lexy::is_callback<decltype(callback)>);
         CHECK(std::is_same_v<typename decltype(callback)::return_type, int>);
 
+        CHECK(lexy::is_callback_for<decltype(callback), int>);
         CHECK(callback(11) == 22);
+
+        CHECK(lexy::is_callback_for<decltype(callback), const char*>);
         CHECK(callback("abc") == 'a');
+
+        CHECK(lexy::is_callback_for<decltype(callback), std::nullptr_t>);
         CHECK(callback(nullptr) == 0);
     }
     SUBCASE("match all case")
@@ -70,7 +76,9 @@ TEST_CASE("sink")
 {
     constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; },
                                           [](int& result, const char* ptr) { result += *ptr; });
-    auto           cb   = sink.sink();
+    CHECK(lexy::is_sink<decltype(sink)>);
+
+    auto cb = sink.sink();
     cb(4);
     cb("abc");
 
@@ -80,15 +88,46 @@ TEST_CASE("sink")
 
 TEST_CASE("callback compose")
 {
-    constexpr auto a = lexy::callback<int>([](int i) { return 2 * i; });
-    constexpr auto b
-        = lexy::callback<std::string>([](int i) { return std::string(std::size_t(i), 'a'); });
-    constexpr auto c
-        = lexy::callback<std::size_t>([](const std::string& str) { return str.size(); });
+    SUBCASE("callbacks")
+    {
+        constexpr auto a = lexy::callback<int>([](int i) { return 2 * i; });
+        constexpr auto b
+            = lexy::callback<std::string>([](int i) { return std::string(std::size_t(i), 'a'); });
+        constexpr auto c = lexy::callback<std::size_t>(&std::string::length);
 
-    constexpr auto composed = a | b | c;
-    CHECK(composed(0) == 0);
-    CHECK(composed(8) == 16);
+        constexpr auto composed = a | b | c;
+        CHECK(composed(0) == 0);
+        CHECK(composed(8) == 16);
+    }
+    SUBCASE("sink and callback")
+    {
+        constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; });
+        constexpr auto cb   = lexy::callback<std::string>([](int i) { return std::to_string(i); });
+
+        constexpr auto composed = sink >> cb;
+
+        auto s = sink.sink();
+        s(1);
+        s(2);
+        s(3);
+        auto result = composed(LEXY_MOV(s).finish());
+        CHECK(result == "6");
+    }
+    SUBCASE("sink and two callback")
+    {
+        constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; });
+        constexpr auto cb_a = lexy::callback<std::string>([](int i) { return std::to_string(i); });
+        constexpr auto cb_b = lexy::callback<std::size_t>(&std::string::length);
+
+        constexpr auto composed = sink >> cb_a | cb_b;
+
+        auto s = sink.sink();
+        s(1);
+        s(2);
+        s(3);
+        auto result = composed(LEXY_MOV(s).finish());
+        CHECK(result == 1);
+    }
 }
 
 TEST_CASE("noop")
@@ -189,38 +228,22 @@ TEST_CASE("new_")
 
 TEST_CASE("as_list")
 {
-    SUBCASE("callback")
-    {
-        std::vector<int> vec = lexy::as_list<std::vector<int>>(1, 2, 3);
-        CHECK(vec == std::vector{1, 2, 3});
-    }
-    SUBCASE("sink")
-    {
-        auto sink = lexy::as_list<std::vector<std::string>>.sink();
-        sink("a");
-        sink(std::string("b"));
-        sink(1, 'c');
-        std::vector<std::string> result = LEXY_MOV(sink).finish();
-        CHECK(result == std::vector<std::string>{"a", "b", "c"});
-    }
+    auto sink = lexy::as_list<std::vector<std::string>>.sink();
+    sink("a");
+    sink(std::string("b"));
+    sink(1, 'c');
+    std::vector<std::string> result = LEXY_MOV(sink).finish();
+    CHECK(result == std::vector<std::string>{"a", "b", "c"});
 }
 
 TEST_CASE("as_collection")
 {
-    SUBCASE("callback")
-    {
-        std::set<int> s = lexy::as_collection<std::set<int>>(1, 2, 3);
-        CHECK(s == std::set{1, 2, 3});
-    }
-    SUBCASE("sink")
-    {
-        auto sink = lexy::as_collection<std::set<std::string>>.sink();
-        sink("a");
-        sink(std::string("b"));
-        sink(1, 'c');
-        std::set<std::string> result = LEXY_MOV(sink).finish();
-        CHECK(result == std::set<std::string>{"a", "b", "c"});
-    }
+    auto sink = lexy::as_collection<std::set<std::string>>.sink();
+    sink("a");
+    sink(std::string("b"));
+    sink(1, 'c');
+    std::set<std::string> result = LEXY_MOV(sink).finish();
+    CHECK(result == std::set<std::string>{"a", "b", "c"});
 }
 
 TEST_CASE("as_aggregate")

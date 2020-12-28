@@ -211,7 +211,7 @@ struct string
         return dsl::quoted[ws](code_point, escape);
     }();
 
-    static constexpr auto list = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
+    static constexpr auto value = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
 };
 
 // A json value that is an array.
@@ -222,7 +222,7 @@ struct array
     static constexpr auto rule
         = dsl::square_bracketed[ws].opt_list(dsl::recurse<json_value>, sep(dsl::comma[ws]));
 
-    static constexpr auto list = lexy::as_list<ast::json_array>;
+    static constexpr auto value = lexy::as_list<ast::json_array>;
 };
 
 // A json value that is an object.
@@ -235,7 +235,7 @@ struct object
         return dsl::curly_bracketed[ws].opt_list(item, dsl::sep(dsl::comma[ws]));
     }();
 
-    static constexpr auto list = lexy::as_collection<ast::json_object>;
+    static constexpr auto value = lexy::as_collection<ast::json_object>;
 };
 
 // A json value.

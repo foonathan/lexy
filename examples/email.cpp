@@ -84,8 +84,8 @@ struct dot_atom
 {
     // A list of atom separated by periods which are part of the content and thus captured (unlike
     // the whitespace).
-    static constexpr auto rule = dsl::list(atom, dsl::sep(dsl::capture(dsl::period)));
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto rule  = dsl::list(atom, dsl::sep(dsl::capture(dsl::period)));
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.2.4 ===//
@@ -96,7 +96,7 @@ struct quoted_string
         auto escape = dsl::backslash_escape.capture(dsl::ascii::print);
         return dsl::quoted[ws](dsl::ascii::print, escape);
     }();
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.2.5 ===//
@@ -105,8 +105,8 @@ constexpr auto word = dsl::p<quoted_string> | dsl::else_ >> atom;
 struct phrase
 {
     // A phrase is a list of words which starts with another text character or quote.
-    static constexpr auto rule = dsl::list(dsl::peek(atext / LEXY_LIT("\""))[ws] >> word);
-    static constexpr auto list = lexy::as_string<std::string>;
+    static constexpr auto rule  = dsl::list(dsl::peek(atext / LEXY_LIT("\""))[ws] >> word);
+    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.4 ===//
@@ -138,8 +138,8 @@ struct address
 
 struct address_list
 {
-    static constexpr auto rule = dsl::list(dsl::p<address>, dsl::sep(dsl::comma));
-    static constexpr auto list = lexy::as_list<std::vector<ast::address>>;
+    static constexpr auto rule  = dsl::list(dsl::p<address>, dsl::sep(dsl::comma));
+    static constexpr auto value = lexy::as_list<std::vector<ast::address>>;
 };
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.5/6 ===//
@@ -173,7 +173,7 @@ struct fields
         return dsl::partial_combination(LEXY_MEM(from) = from, LEXY_MEM(to) = to, LEXY_MEM(cc) = cc,
                                         LEXY_MEM(subject) = subject);
     }();
-    static constexpr auto list = lexy::as_aggregate<ast::message>;
+    static constexpr auto value = lexy::as_aggregate<ast::message>;
 };
 
 struct message
