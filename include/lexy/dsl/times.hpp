@@ -97,7 +97,7 @@ struct _times : rule_base
             // afterwards.
             using rule         = decltype(_repeated_rule());
             using continuation = _continuation<Args...>;
-            return rule::template parser<continuation>::parse(handler, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<rule, continuation>::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 };

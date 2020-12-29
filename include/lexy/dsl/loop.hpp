@@ -99,8 +99,8 @@ struct _loop : rule_base
             while (!loop_handler._break)
             {
                 using continuation = _loop_iter_parser<Args...>;
-                auto result = Rule::template parser<continuation>::parse(loop_handler, reader,
-                                                                         LEXY_FWD(args)...);
+                auto result = lexy::rule_parser<Rule, continuation>::parse(loop_handler, reader,
+                                                                           LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }

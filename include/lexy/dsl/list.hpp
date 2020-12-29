@@ -127,8 +127,8 @@ struct _lstl<Item, _sep<Sep>> : rule_base
                     return LEXY_MOV(result).error();
 
                 // Parse item.
-                result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                          LEXY_FWD(args)...);
+                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                            LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -210,7 +210,7 @@ struct _lst : rule_base
                 return LEXY_MOV(result).error();
 
             // Continue with the rest of the items.
-            using continuation = typename _lstl<Item, Sep>::template parser<NextParser>;
+            using continuation = lexy::rule_parser<_lstl<Item, Sep>, NextParser>;
             return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
         }
     };
@@ -227,13 +227,13 @@ struct _lst : rule_base
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
             // Parse the initial item.
-            auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
+            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                             LEXY_FWD(args)...);
             if (!result)
                 return LEXY_MOV(result).error();
 
             // Continue with the rest of the items.
-            using continuation = typename _lstl<Item, Sep>::template parser<NextParser>;
+            using continuation = lexy::rule_parser<_lstl<Item, Sep>, NextParser>;
             return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
         }
     };
@@ -285,8 +285,8 @@ struct _lstt<Terminator, Item, void> : rule_base
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
             // Parse initial item.
-            auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
+            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                             LEXY_FWD(args)...);
             if (!result)
                 return LEXY_MOV(result).error();
 
@@ -294,8 +294,9 @@ struct _lstt<Terminator, Item, void> : rule_base
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
-                auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                               LEXY_FWD(args)...);
+                auto result
+                    = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                         LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -328,8 +329,8 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
             // Parse initial item.
-            auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
+            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                             LEXY_FWD(args)...);
             if (!result)
                 return LEXY_MOV(result).error();
 
@@ -338,14 +339,14 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                         LEXY_FWD(args)...);
+                result = lexy::rule_parser<Sep, lexy::final_parser>::parse(list_handler, reader,
+                                                                           LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
 
                 // Parse item.
-                result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                          LEXY_FWD(args)...);
+                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                            LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }
@@ -378,8 +379,8 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
             _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
 
             // Parse initial item.
-            auto result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
+            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                             LEXY_FWD(args)...);
             if (!result)
                 return LEXY_MOV(result).error();
 
@@ -388,8 +389,8 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = Sep::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                         LEXY_FWD(args)...);
+                result = lexy::rule_parser<Sep, lexy::final_parser>::parse(list_handler, reader,
+                                                                           LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
 
@@ -398,8 +399,8 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
                     break;
 
                 // Parse item.
-                result = Item::template parser<lexy::final_parser>::parse(list_handler, reader,
-                                                                          LEXY_FWD(args)...);
+                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
+                                                                            LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }

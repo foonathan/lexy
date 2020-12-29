@@ -45,7 +45,7 @@ struct _chc_parser<NextParser, H, T...>
 
         if constexpr (branch_matcher::is_unconditional)
         {
-            return H::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<H, NextParser>::parse(handler, reader, LEXY_FWD(args)...);
         }
         else
         {

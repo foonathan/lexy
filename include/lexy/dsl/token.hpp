@@ -35,7 +35,7 @@ struct _token : token_base<_token<Rule>>
         static constexpr error_code match(Reader& reader)
         {
             lexy::_match_handler handler{};
-            if (Rule::template parser<lexy::final_parser>::parse(handler, reader).has_value())
+            if (lexy::rule_parser<Rule, lexy::final_parser>::parse(handler, reader).has_value())
                 return error_code();
             else
                 return error_code::error;

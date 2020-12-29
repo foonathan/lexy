@@ -89,7 +89,12 @@ constexpr bool is_branch = [] {
     else
         return false;
 }();
+} // namespace lexy
 
+namespace lexy
+{
+template <typename Rule, typename NextParser>
+using rule_parser = typename Rule::template parser<NextParser>;
 template <typename Branch, typename Reader>
 using branch_matcher = typename Branch::template branch_matcher<Reader>;
 

@@ -307,8 +307,8 @@ struct _int_c : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return Rule::template parser<NextParser>::parse(handler, reader, reader.cur(),
-                                                            LEXY_FWD(args)...);
+            return lexy::rule_parser<Rule, NextParser>::parse(handler, reader, reader.cur(),
+                                                              LEXY_FWD(args)...);
         }
     };
 };

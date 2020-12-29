@@ -47,8 +47,7 @@ struct _whlc : rule_base
     using _choice = _chc<R...>;
 
     template <typename NextParser>
-    using parser =
-        typename decltype(loop(_choice{} | else_ >> break_))::template parser<NextParser>;
+    using parser = lexy::rule_parser<decltype(loop(_choice{} | else_ >> break_)), NextParser>;
 };
 
 /// Matches the branch rule as often as possible.
@@ -112,8 +111,8 @@ struct _whlt : rule_base
                     break;
 
                 using continuation = _loop_iter_parser<Args...>;
-                auto result = Rule::template parser<continuation>::parse(loop_handler, reader,
-                                                                         LEXY_FWD(args)...);
+                auto result = lexy::rule_parser<Rule, continuation>::parse(loop_handler, reader,
+                                                                           LEXY_FWD(args)...);
                 if (!result)
                     return LEXY_MOV(result).error();
             }

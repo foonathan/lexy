@@ -77,8 +77,8 @@ struct _delc : rule_base
             }
             else
             {
-                return Content::template parser<NextParser>::parse(handler, reader,
-                                                                   LEXY_FWD(args)...);
+                return lexy::rule_parser<Content, NextParser>::parse(handler, reader,
+                                                                     LEXY_FWD(args)...);
             }
         }
     };

@@ -34,8 +34,8 @@ struct _cap_parser
         typename Handler::result_type
     {
         using continuation = _cap_cont<Lexeme, NextParser, Args...>;
-        return Rule::template parser<continuation>::parse(handler, reader, LEXY_FWD(args)...,
-                                                          reader.cur());
+        return lexy::rule_parser<Rule, continuation>::parse(handler, reader, LEXY_FWD(args)...,
+                                                            reader.cur());
     }
 };
 

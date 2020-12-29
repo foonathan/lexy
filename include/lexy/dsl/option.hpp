@@ -89,7 +89,7 @@ struct _optt : rule_base
             else
                 // Note: we don't add the terminator.
                 // This has to be done by the parent rule, if necessary.
-                return R::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+                return lexy::rule_parser<R, NextParser>::parse(handler, reader, LEXY_FWD(args)...);
         }
     };
 };

@@ -20,7 +20,7 @@ template <typename NextParser, typename H, typename... T>
 struct _seq_parser<NextParser, H, T...>
 {
     using tail = typename _seq_parser<NextParser, T...>::type;
-    using type = typename H::template parser<tail>;
+    using type = lexy::rule_parser<H, tail>;
 };
 
 template <typename... R>

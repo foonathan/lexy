@@ -121,8 +121,8 @@ struct _comb : rule_base
             constexpr auto comb_choice
                 = _comb_choice<Args...>(lexy::_detail::make_index_sequence<N>{});
             constexpr auto l = loop(comb_choice);
-            return decltype(l)::template parser<_continuation>::parse(handler, reader, state,
-                                                                      LEXY_FWD(args)...);
+            return lexy::rule_parser<decltype(l), _continuation>::parse(handler, reader, state,
+                                                                        LEXY_FWD(args)...);
         }
     };
 };

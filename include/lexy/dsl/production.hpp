@@ -16,7 +16,7 @@ namespace lexyd
 template <typename Rule, typename Handler, typename Reader>
 constexpr auto _parse(Handler& handler, Reader& reader) -> typename Handler::result_type
 {
-    return Rule::template parser<lexy::final_parser>::parse(handler, reader);
+    return lexy::rule_parser<Rule, lexy::final_parser>::parse(handler, reader);
 }
 
 template <typename Production, typename Rule, typename NextParser>

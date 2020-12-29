@@ -67,7 +67,7 @@ struct _switch_select<NextParser, H, T...>
 
         if constexpr (branch_matcher::is_unconditional)
         {
-            return H::template parser<cont>::parse(handler, partial, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<H, cont>::parse(handler, partial, reader, LEXY_FWD(args)...);
         }
         else
         {
@@ -94,8 +94,8 @@ struct _switch : rule_base
             // We parse the rule using our special continuation.
             // To recover the old reader position, we create a copy.
             using cont = _switch_select<NextParser, Cases...>;
-            return Rule::template parser<cont>::parse(handler, reader, Reader(reader),
-                                                      LEXY_FWD(args)...);
+            return lexy::rule_parser<Rule, cont>::parse(handler, reader, Reader(reader),
+                                                        LEXY_FWD(args)...);
         }
     };
 

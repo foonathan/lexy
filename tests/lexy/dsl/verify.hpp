@@ -113,7 +113,7 @@ LEXY_VERIFY_FN int verify(Rule, const CharT* str, std::size_t size = std::size_t
     auto reader = input.reader();
 
     test_handler<Callback, CharT> handler{str};
-    auto result = Rule::template parser<test_final_parser>::parse(handler, reader);
+    auto result = lexy::rule_parser<Rule, test_final_parser>::parse(handler, reader);
     if (result)
         return result.value();
     else

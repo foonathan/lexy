@@ -85,8 +85,8 @@ struct _labr : rule_base
         LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
             typename Handler::result_type
         {
-            return Rule::template parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...,
-                                                            lexy::label<Label>{});
+            return lexy::rule_parser<Rule, NextParser>::parse(handler, reader, LEXY_FWD(args)...,
+                                                              lexy::label<Label>{});
         }
     };
 };
