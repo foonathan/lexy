@@ -8,36 +8,34 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/whitespace.hpp>
-#include <lexy/result.hpp>
 
 namespace lexyd
 {
 // Not inline: one function per production.
-template <typename Rule, typename Handler, typename Reader>
-constexpr auto _parse(Handler& handler, Reader& reader) -> typename Handler::result_type
+template <typename Rule, typename Context, typename Reader>
+constexpr auto _parse(Context& context, Reader& reader) -> typename Context::result_type
 {
-    return lexy::rule_parser<Rule, lexy::final_parser>::parse(handler, reader);
+    return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader);
 }
 
 template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-        typename Handler::result_type
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+        typename Context::result_type
     {
-        auto sub_handler = handler.template sub_handler<Production>(reader);
-
-        if (auto result = _parse<Rule>(sub_handler, reader))
+        if (lexy::production_context prod_ctx(context, Production{}, reader.cur());
+            auto                     result = _parse<Rule>(prod_ctx, reader))
         {
             if constexpr (result.has_void_value())
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                return NextParser::parse(context, reader, LEXY_FWD(args)...,
                                          LEXY_MOV(result).value());
         }
         else
-            return typename Handler::result_type(LEXY_MOV(result));
+            return typename Context::result_type(LEXY_MOV(result));
     }
 };
 
@@ -60,21 +58,20 @@ struct _prd : rule_base
             return _impl.match(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sub_handler = handler.template sub_handler<Production>(reader);
-
-            if (auto result = _impl.template parse<lexy::final_parser>(sub_handler, reader))
+            if (lexy::production_context prod_ctx(context, Production{}, reader.cur());
+                auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
             {
                 if constexpr (result.has_void_value())
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
                                              LEXY_MOV(result).value());
             }
             else
-                return typename Handler::result_type(LEXY_MOV(result));
+                return typename Context::result_type(LEXY_MOV(result));
         }
     };
 

@@ -30,9 +30,9 @@ struct _cp_cap : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             auto save = reader;
 
@@ -41,7 +41,7 @@ struct _cp_cap : rule_base
             if (ec == lexy::engine_cp_auto::error_code())
             {
                 LEXY_PRECONDITION(result.is_scalar());
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             }
             else
             {
@@ -49,7 +49,7 @@ struct _cp_cap : rule_base
 
                 auto name = _cp_name<typename Reader::encoding>();
                 auto e    = lexy::make_error<Reader, lexy::expected_char_class>(reader.cur(), name);
-                return LEXY_MOV(handler).error(e);
+                return LEXY_MOV(context).error(e);
             }
         }
     };
@@ -59,13 +59,13 @@ struct _cp : token_base<_cp>
 {
     using token_engine = lexy::engine_cp_auto;
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto name = _cp_name<typename Reader::encoding>();
         auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 
     LEXY_CONSTEVAL auto capture() const

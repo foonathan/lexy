@@ -77,27 +77,27 @@ struct _times : rule_base
         template <typename... Args>
         struct _continuation
         {
-            template <typename Handler, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args,
-                                     RuleArgs&&... rule_args) -> typename Handler::result_type
+            template <typename Context, typename Reader, typename... RuleArgs>
+            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args,
+                                     RuleArgs&&... rule_args) -> typename Context::result_type
             {
                 // Create an array containing the rule arguments.
                 static_assert(N == sizeof...(RuleArgs), "rule must create exactly one value");
                 using array_type    = std::common_type_t<std::decay_t<RuleArgs>...>;
                 array_type array[N] = {LEXY_FWD(rule_args)...};
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., array);
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., array);
             }
         };
 
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             // Parse the rule with the special continuation that converts the value into an array
             // afterwards.
             using rule         = decltype(_repeated_rule());
             using continuation = _continuation<Args...>;
-            return lexy::rule_parser<rule, continuation>::parse(handler, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<rule, continuation>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };

@@ -10,7 +10,7 @@
 
 namespace lexy
 {
-struct _match_handler;
+struct _match_context;
 } // namespace lexy
 
 namespace lexyd
@@ -21,14 +21,14 @@ struct _valc : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            if constexpr (std::is_same_v<Context, lexy::_match_context>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., Value);
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., Value);
         }
     };
 };
@@ -46,14 +46,14 @@ struct _valf : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            if constexpr (std::is_same_v<Context, lexy::_match_context>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., F());
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., F());
         }
     };
 };
@@ -71,14 +71,14 @@ struct _valt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            if constexpr (std::is_same_v<Context, lexy::_match_context>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., T());
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., T());
         }
     };
 };
@@ -96,16 +96,16 @@ struct _vals : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            if constexpr (std::is_same_v<Handler, lexy::_match_handler>)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            if constexpr (std::is_same_v<Context, lexy::_match_context>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
             {
                 constexpr auto str = String::get();
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., str.data(),
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., str.data(),
                                          str.size());
             }
         }

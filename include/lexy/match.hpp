@@ -13,45 +13,64 @@ namespace lexy
 {
 struct _match_handler
 {
-    using result_type = lexy::result<void, void>;
+    template <typename Production>
+    using result_type_for = lexy::result<void, void>;
 
-    template <typename SubProduction, typename Reader>
-    constexpr auto sub_handler(const Reader&)
-    {
-        return _match_handler();
-    }
-
-    constexpr auto list_sink()
+    template <typename Production>
+    constexpr auto sink(Production)
     {
         return noop.sink();
     }
 
-    template <typename Error>
-    constexpr auto error(Error&&) &&
+    template <typename Production, typename Iterator>
+    constexpr void start_production(Production, Iterator)
+    {}
+
+    template <typename Production, typename... Args>
+    constexpr auto finish_production(Production, Args&&...)
     {
-        return result_type();
+        return result_type_for<Production>(lexy::result_value);
     }
 
-    template <typename... Args>
-    constexpr auto value(Args&&...) &&
+    template <typename Production, typename Input, typename Error>
+    constexpr auto error(lexy::error_context<Production, Input>&&, Error&&)
     {
-        return result_type(result_value);
+        return result_type_for<Production>(lexy::result_error);
     }
 };
 
+template <typename Reader, typename Rule>
+LEXY_FORCE_INLINE constexpr bool _match_impl(Reader& reader, Rule)
+{
+    struct input_t
+    {
+        Reader _reader;
+
+        Reader reader() const
+        {
+            return _reader;
+        }
+    } input{reader};
+
+    using context_t = lexy::parse_context<input_t, lexy::_match_handler>;
+    context_t context(input);
+
+    lexy::production_context prod_ctx(context, Rule{}, reader.cur());
+    return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(prod_ctx, reader).has_value();
+}
+
 template <typename Input, typename Rule, typename = std::enable_if_t<is_rule<Rule>>>
-LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule)
+LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule rule)
 {
     auto reader = input.reader();
-
-    _match_handler handler;
-    return !!Rule::template parser<final_parser>::parse(handler, reader);
+    return _match_impl(reader, rule);
 }
 
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    return match(input, production_traits<Production>::rule::get);
+    auto reader = input.reader();
+    return _match_impl(reader, lexy::production_traits<Production>::rule::get);
 }
 } // namespace lexy
 

@@ -27,12 +27,12 @@ namespace lexyd
 template <typename NextParser>
 struct _switch_continue
 {
-    template <typename Handler, typename PartialReader, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, PartialReader&, Reader& reader, Args&&... args) ->
-        typename Handler::result_type
+    template <typename Context, typename PartialReader, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, PartialReader&, Reader& reader, Args&&... args) ->
+        typename Context::result_type
     {
         // We now continue with the regular reader again.
-        return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
     }
 };
 
@@ -42,22 +42,22 @@ struct _switch_select;
 template <typename NextParser>
 struct _switch_select<NextParser>
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Reader save, Args&&...) ->
-        typename Handler::result_type
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Reader save, Args&&...) ->
+        typename Context::result_type
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
         auto err = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _switch_select<NextParser, H, T...>
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Reader save, Args&&... args) ->
-        typename Handler::result_type
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Reader save, Args&&... args) ->
+        typename Context::result_type
     {
         using cont = _switch_continue<NextParser>;
 
@@ -67,15 +67,15 @@ struct _switch_select<NextParser, H, T...>
 
         if constexpr (branch_matcher::is_unconditional)
         {
-            return lexy::rule_parser<H, cont>::parse(handler, partial, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<H, cont>::parse(context, partial, reader, LEXY_FWD(args)...);
         }
         else
         {
             branch_matcher branch{};
             if (branch.match(partial) && partial.eof())
-                return branch.template parse<cont>(handler, partial, reader, LEXY_FWD(args)...);
+                return branch.template parse<cont>(context, partial, reader, LEXY_FWD(args)...);
             else
-                return _switch_select<NextParser, T...>::parse(handler, reader, save,
+                return _switch_select<NextParser, T...>::parse(context, reader, save,
                                                                LEXY_FWD(args)...);
         }
     }
@@ -87,14 +87,14 @@ struct _switch : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             // We parse the rule using our special continuation.
             // To recover the old reader position, we create a copy.
             using cont = _switch_select<NextParser, Cases...>;
-            return lexy::rule_parser<Rule, cont>::parse(handler, reader, Reader(reader),
+            return lexy::rule_parser<Rule, cont>::parse(context, reader, Reader(reader),
                                                         LEXY_FWD(args)...);
         }
     };
@@ -133,3 +133,4 @@ LEXY_CONSTEVAL auto switch_(Rule)
 } // namespace lexyd
 
 #endif // LEXY_DSL_SWITCH_HPP_INCLUDED
+

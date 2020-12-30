@@ -31,10 +31,10 @@ struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
             return _impl.match(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return _impl.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+            return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };
 

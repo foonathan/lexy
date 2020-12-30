@@ -233,12 +233,12 @@ struct _argvsep : token_base<_argvsep>
         }
     };
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader&, token_engine::error_code,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 
     template <typename Whitespace>

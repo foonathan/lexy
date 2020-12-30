@@ -26,34 +26,34 @@ struct _chc_parser;
 template <typename NextParser>
 struct _chc_parser<NextParser>
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
-        typename Handler::result_type
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
+        typename Context::result_type
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_choice>(reader.cur());
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _chc_parser<NextParser, H, T...>
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-        typename Handler::result_type
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+        typename Context::result_type
     {
         using branch_matcher = lexy::branch_matcher<H, Reader>;
 
         if constexpr (branch_matcher::is_unconditional)
         {
-            return lexy::rule_parser<H, NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+            return lexy::rule_parser<H, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
         else
         {
             branch_matcher branch{};
             if (branch.match(reader))
-                return branch.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             else
-                return _chc_parser<NextParser, T...>::parse(handler, reader, LEXY_FWD(args)...);
+                return _chc_parser<NextParser, T...>::parse(context, reader, LEXY_FWD(args)...);
         }
     }
 };

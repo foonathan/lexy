@@ -27,11 +27,11 @@ struct _nullopt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::nullopt{});
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
     };
 };
@@ -47,15 +47,15 @@ struct _opt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             lexy::branch_matcher<Branch, Reader> branch{};
             if (branch.match(reader))
-                return branch.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::nullopt{});
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
     };
 };
@@ -78,18 +78,18 @@ struct _optt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             lexy::branch_matcher<Terminator, Reader> term{};
             if (term.match(reader))
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+                return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
                                                        lexy::nullopt{});
             else
                 // Note: we don't add the terminator.
                 // This has to be done by the parent rule, if necessary.
-                return lexy::rule_parser<R, NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };

@@ -18,25 +18,24 @@ struct _whl : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            _loop_handler<Handler> loop_handler{handler, false};
             while (true)
             {
                 lexy::branch_matcher<Branch, Reader> branch{};
                 if (!branch.match(reader))
                     break;
 
-                using continuation = _loop_iter_parser<Args...>;
                 auto result
-                    = branch.template parse<continuation>(loop_handler, reader, LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                    = branch.template parse<lexy::context_discard_parser>(context, reader,
+                                                                          LEXY_FWD(args)...);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -98,26 +97,20 @@ struct _whlt : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            _loop_handler<Handler> loop_handler{handler, false};
-
             lexy::branch_matcher<Terminator, Reader> term;
-            while (true)
+            while (!term.match(reader))
             {
-                if (term.match(reader))
-                    break;
-
-                using continuation = _loop_iter_parser<Args...>;
-                auto result = lexy::rule_parser<Rule, continuation>::parse(loop_handler, reader,
-                                                                           LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                using parser = lexy::rule_parser<Rule, lexy::context_discard_parser>;
+                auto result  = parser::parse(context, reader, LEXY_FWD(args)...);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
+            return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };
 };

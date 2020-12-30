@@ -161,9 +161,9 @@ struct _encode_begin : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             using old_encoding = typename Reader::encoding;
             static_assert((std::is_same_v<old_encoding, lexy::default_encoding>)
@@ -171,7 +171,7 @@ struct _encode_begin : rule_base
                           "cannot re-encode input");
 
             auto encoded_reader = _encoded_reader<Reader, Encoding, Endianness>{reader};
-            return NextParser::parse(handler, encoded_reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, encoded_reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -181,13 +181,13 @@ struct _encode_end : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename Encoding,
+        template <typename Context, typename Reader, typename Encoding,
                   lexy::encoding_endianness Endianness, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler&                                       handler,
+        LEXY_DSL_FUNC auto parse(Context&                                       context,
                                  _encoded_reader<Reader, Encoding, Endianness>& reader,
-                                 Args&&... args) -> typename Handler::result_type
+                                 Args&&... args) -> typename Context::result_type
         {
-            return NextParser::parse(handler, reader._reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader._reader, LEXY_FWD(args)...);
         }
     };
 };

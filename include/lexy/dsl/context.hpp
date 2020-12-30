@@ -67,9 +67,9 @@ struct _ctx_drop : rule_base
         template <typename... Args>
         struct _continuation
         {
-            template <typename Handler, typename Reader, typename Head, typename... Tail>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args, Head&& head,
-                                     Tail&&... tail) -> typename Handler::result_type
+            template <typename Context, typename Reader, typename Head, typename... Tail>
+            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args, Head&& head,
+                                     Tail&&... tail) -> typename Context::result_type
             {
                 using context_t                = _context<typename Reader::canonical_reader>;
                 constexpr auto head_is_context = context_t::template is<Head>;
@@ -78,25 +78,25 @@ struct _ctx_drop : rule_base
                 if constexpr (head_is_context && !tail_is_context)
                 {
                     // Head is a context argument and it is the last one; remove it and we're done.
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)..., LEXY_FWD(tail)...);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_FWD(tail)...);
                 }
                 else
                 {
                     // Either Head is a context, but there is a later one, or Head isn't a context.
                     // In either case, we're keeping Head.
                     static_assert(sizeof...(Tail) > 0, "missing previous context_push()");
-                    return _continuation<Args..., Head>::parse(handler, reader, LEXY_FWD(args)...,
+                    return _continuation<Args..., Head>::parse(context, reader, LEXY_FWD(args)...,
                                                                LEXY_FWD(head), LEXY_FWD(tail)...);
                 }
             }
         };
 
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             // Initially no argument is kept.
-            return _continuation<>::parse(handler, reader, LEXY_FWD(args)...);
+            return _continuation<>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -165,30 +165,30 @@ struct _ctx_top
         {
             // We're ignoring any values created by the rule.
             //
-            template <typename Handler, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args,
+            template <typename Context, typename Reader, typename... RuleArgs>
+            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args,
                                      const _context<typename Reader::canonical_reader>& popped,
-                                     RuleArgs&&...) -> typename Handler::result_type
+                                     RuleArgs&&...) -> typename Context::result_type
             {
                 auto pushed = _context<typename Reader::canonical_reader>::get(LEXY_FWD(args)...);
                 if (Eq{}(pushed.lexeme, popped.lexeme))
                     // We've parsed the same argument that we've pushed, continue.
-                    return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
                 {
                     auto e = lexy::make_error<Reader, Error>(popped.lexeme.begin(),
                                                              popped.lexeme.end());
-                    return LEXY_MOV(handler).error(e);
+                    return LEXY_MOV(context).error(e);
                 }
             }
         };
 
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             // We capture the rule and pass it to the continuation to process.
-            return _cap_parser<_context, Rule, _continuation<Args...>>::parse(handler, reader,
+            return _cap_parser<_context, Rule, _continuation<Args...>>::parse(context, reader,
                                                                               LEXY_FWD(args)...);
         }
     };

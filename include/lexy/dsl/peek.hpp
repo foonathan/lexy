@@ -24,10 +24,10 @@ struct _peek : branch_base
             return lexy::engine_peek<Engine>(reader) == Expected;
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 

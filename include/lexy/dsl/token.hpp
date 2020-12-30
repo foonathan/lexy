@@ -34,21 +34,17 @@ struct _token : token_base<_token<Rule>>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            lexy::_match_handler handler{};
-            if (lexy::rule_parser<Rule, lexy::final_parser>::parse(handler, reader).has_value())
-                return error_code();
-            else
-                return error_code::error;
+            return lexy::_match_impl(reader, Rule{}) ? error_code() : error_code::error;
         }
     };
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader&,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 
     template <typename Whitespace>

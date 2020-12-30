@@ -11,12 +11,6 @@
 #include <lexy/production.hpp>
 #include <lexy/result.hpp>
 
-namespace lexyd
-{
-template <auto Fn>
-struct _state;
-} // namespace lexyd
-
 namespace lexy
 {
 struct _no_parse_state
@@ -27,60 +21,53 @@ constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
 constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
-template <typename Production, typename State, typename Input, typename Callback>
-class _parse_handler
+template <typename State, typename Callback>
+struct _parse_handler
 {
-    static_assert(std::is_lvalue_reference_v<State>);
-    using _traits = lexy::production_traits<Production>;
+    State&                     _state;
+    LEXY_EMPTY_MEMBER Callback _callback;
 
-public:
-    constexpr explicit _parse_handler(State state, const Input& input,
-                                      const input_reader<Input>& reader, Callback callback) noexcept
-    : _err_ctx(input, reader.cur()), _state(state), _callback(callback)
+    explicit constexpr _parse_handler(State& state, Callback callback)
+    : _state(state), _callback(LEXY_MOV(callback))
     {}
 
-    _parse_handler(const _parse_handler&) = delete;
-    _parse_handler& operator=(const _parse_handler&) = delete;
-
+    template <typename Production>
     static auto _value_cb()
     {
-        if constexpr (lexy::is_callback<typename _traits::value::type>)
-            return _traits::value::get;
+        using value = typename lexy::production_traits<Production>::value;
+        if constexpr (lexy::is_callback<typename value::type>)
+            return value::get;
         else
-            return LEXY_DECLVAL(lexy::sink_callback<typename _traits::value::type>);
-    }
-    using result_type
-        = result<typename decltype(_value_cb())::return_type, typename Callback::return_type>;
-
-    template <typename SubProduction>
-    constexpr auto sub_handler(const input_reader<Input>& reader)
-    {
-        return _parse_handler<SubProduction, State, Input, Callback>(_state, _err_ctx.input(),
-                                                                     reader, _callback);
+            return LEXY_DECLVAL(lexy::sink_callback<typename value::type>);
     }
 
-    constexpr auto list_sink()
+    template <typename Production>
+    using result_type_for = lexy::result<typename decltype(_value_cb<Production>())::return_type,
+                                         typename Callback::return_type>;
+
+    template <typename Production>
+    constexpr auto sink(Production)
     {
-        return _traits::value::get.sink();
+        return lexy::production_traits<Production>::value::get.sink();
     }
 
-    template <typename Error>
-    constexpr auto error(Error&& error) &&
-    {
-        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, _err_ctx,
-                                                   LEXY_FWD(error));
-    }
+    template <typename Production, typename Iterator>
+    constexpr void start_production(Production, Iterator)
+    {}
 
-    template <typename... Args>
-    constexpr auto value(Args&&... args) &&
+    template <typename Production, typename... Args>
+    constexpr result_type_for<Production> finish_production(Production, Args&&... args)
     {
-        if constexpr (lexy::is_callback_for<typename _traits::value::type, Args&&...>)
+        using result_type = result_type_for<Production>;
+        using value       = typename lexy::production_traits<Production>::value;
+
+        if constexpr (lexy::is_callback_for<typename value::type, Args&&...>)
         {
             // We have a callback for those arguments; invoke it.
-            return lexy::invoke_as_result<result_type>(lexy::result_value, _traits::value::get,
+            return lexy::invoke_as_result<result_type>(lexy::result_value, value::get,
                                                        LEXY_FWD(args)...);
         }
-        else if constexpr (lexy::is_sink<typename _traits::value::type> //
+        else if constexpr (lexy::is_sink<typename value::type> //
                            && _is_convertible<typename result_type::value_type, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has the
@@ -97,31 +84,33 @@ public:
         }
     }
 
-private:
-    // If we don't have a state, don't store a reference.
-    using _state_storage_type
-        = std::conditional_t<std::is_same_v<State, _no_parse_state&>, _no_parse_state, State>;
-
-    error_context<Production, Input>      _err_ctx;
-    LEXY_EMPTY_MEMBER _state_storage_type _state;
-    LEXY_EMPTY_MEMBER Callback            _callback;
-
-    template <auto Fn>
-    friend struct lexyd::_state;
+    template <typename Production, typename Input, typename Error>
+    constexpr auto error(lexy::error_context<Production, Input>&& err_ctx, Error&& error)
+    {
+        return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
+                                                                   LEXY_FWD(err_ctx),
+                                                                   LEXY_FWD(error));
+    }
 };
+
+template <typename T>
+constexpr bool _is_parse_handler = false;
+template <typename State, typename Callback>
+constexpr bool _is_parse_handler<_parse_handler<State, Callback>> = true;
 
 /// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    auto reader = input.reader();
+    using context_t
+        = lexy::parse_context<Input, lexy::_parse_handler<std::decay_t<State>, Callback>>;
+    context_t context(input, state, LEXY_MOV(callback));
 
-    // We make state an lvalue reference.
-    using handler_t = _parse_handler<Production, State&, Input, Callback>;
-    handler_t handler(state, input, reader, callback);
+    auto                     reader = input.reader();
+    lexy::production_context prod_ctx(context, Production{}, reader.cur());
 
-    using traits = production_traits<Production>;
-    return traits::rule::type::template parser<final_parser>::parse(handler, reader);
+    using rule = typename lexy::production_traits<Production>::rule::type;
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(prod_ctx, reader);
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -136,33 +125,33 @@ namespace lexyd
 template <auto Fn>
 struct _state : rule_base
 {
-    static constexpr auto has_matcher = false;
-
     template <typename NextParser>
     struct parser
     {
-        template <typename Production, typename State, typename Input, typename Callback,
-                  typename... Args>
-        LEXY_DSL_FUNC auto parse(lexy::_parse_handler<Production, State, Input, Callback>& handler,
-                                 lexy::input_reader<Input>& reader, Args&&... args) ->
-            typename lexy::_parse_handler<Production, State, Input, Callback>::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            static_assert(!std::is_same_v<State, lexy::_no_parse_state&>,
-                          "lexy::dsl::state requires passing a state to lexy::parse()");
+            auto& handler   = context.root().handler();
+            using handler_t = std::remove_reference_t<decltype(handler)>;
 
-            if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., handler._state);
+            if constexpr (lexy::_is_parse_handler<handler_t>)
+            {
+                using state_type = decltype(handler._state);
+                static_assert(!std::is_same_v<state_type, lexy::_no_parse_state>,
+                              "lexy::dsl::state requires passing a state to lexy::parse()");
+
+                if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
+                    return NextParser::parse(context, reader, LEXY_FWD(args)..., handler._state);
+                else
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                             lexy::_detail::invoke(Fn, handler._state));
+            }
             else
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...,
-                                         lexy::_detail::invoke(Fn, handler._state));
-        }
-
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
-        {
-            // Not used with parse, ignore.
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            {
+                // Not used with parse, ignore.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
         }
     };
 };

@@ -6,84 +6,71 @@
 #define LEXY_DSL_LIST_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/separator.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexyd
 {
-template <typename Handler, typename Sink, typename... PrevArgs>
-struct _list_handler
+template <typename NextParser, typename... PrevArgs>
+struct _list_impl
 {
-    Handler& _handler;
-    Sink&    _sink;
-
-    using parent_result_type = typename Handler::result_type;
-    using result_type        = lexy::result<void, parent_result_type>;
-
-    template <typename SubProduction, typename Reader>
-    constexpr auto sub_handler(const Reader& reader)
+    // Final parser for the list.
+    // It will create the final value.
+    struct sink_finish_parser
     {
-        return _handler.template sub_handler<SubProduction>(reader);
-    }
-
-    constexpr auto list_sink()
-    {
-        return _handler.sink();
-    }
-
-    template <typename Error>
-    constexpr auto error(Error&& error) &&
-    {
-        // We report errors to the normal handler.
-        return result_type(lexy::result_error, LEXY_MOV(_handler).error(LEXY_FWD(error)));
-    }
-
-    template <typename... Args>
-    constexpr auto value(PrevArgs&&..., Args&&... args) &&
-    {
-        if constexpr (sizeof...(Args) > 0)
-            _sink(LEXY_FWD(args)...); // Forward item args to the sink.
-        return result_type(lexy::result_value);
-    }
-
-    // This is the final parser of a list that produces the value and reverts back to the original
-    // handler.
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Reader>
-        LEXY_DSL_FUNC auto parse(_list_handler& self, Reader& reader, PrevArgs&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename Sink>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink)
         {
             if constexpr (std::is_same_v<typename Sink::return_type, void>)
             {
-                LEXY_MOV(self._sink).finish();
-                return NextParser::parse(self._handler, reader, LEXY_FWD(args)...);
+                LEXY_MOV(sink).finish();
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
-                return NextParser::parse(self._handler, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(self._sink).finish());
+                return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                         LEXY_MOV(sink).finish());
+            }
+        }
+
+        template <typename Branch, typename Context, typename Reader, typename Sink>
+        LEXY_DSL_FUNC auto parse_branch(Branch& branch, Context& context, Reader& reader,
+                                        PrevArgs&&... args, Sink& sink)
+        {
+            if constexpr (std::is_same_v<typename Sink::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
+                                                         LEXY_MOV(sink).finish());
             }
         }
     };
-};
 
-// Parse items of the list after the initial item and setup.
-template <typename Item, typename Sep>
-struct _lstl;
-template <typename Item>
-struct _lstl<Item, void> : rule_base
-{
-    template <typename NextParser>
-    struct parser
+    struct sink_parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& list_handler, Reader& reader, Args&&... args) ->
-            typename Handler::parent_result_type
+        template <typename Context, typename Reader, typename Sink, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context&, Reader&, PrevArgs&&..., Sink& sink, Args&&... args)
+        {
+            if constexpr (sizeof...(Args) > 0)
+                sink(LEXY_FWD(args)...);
+            return typename Context::result_type(lexy::result_empty);
+        }
+    };
+
+    // Loop to parse all items.
+    template <typename Item, typename Sep>
+    struct loop_parser;
+    template <typename Item>
+    struct loop_parser<Item, void>
+    {
+        template <typename Context, typename Reader, typename Sink>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink)
+            -> typename Context::result_type
         {
             while (true)
             {
@@ -92,26 +79,21 @@ struct _lstl<Item, void> : rule_base
                     // No longer match additional items, done with list.
                     break;
 
-                auto result = branch.template parse<lexy::final_parser>(list_handler, reader,
-                                                                        LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                auto result
+                    = branch.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return Handler::template parser<NextParser>::parse(list_handler, reader,
-                                                               LEXY_FWD(args)...);
+            return sink_finish_parser::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
-};
-template <typename Item, typename Sep>
-struct _lstl<Item, _sep<Sep>> : rule_base
-{
-    template <typename NextParser>
-    struct parser
+    template <typename Item, typename Sep>
+    struct loop_parser<Item, _sep<Sep>>
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& list_handler, Reader& reader, Args&&... args) ->
-            typename Handler::parent_result_type
+        template <typename Context, typename Reader, typename... Args, typename Sink>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args, Sink& sink) ->
+            typename Context::result_type
         {
             while (true)
             {
@@ -121,32 +103,27 @@ struct _lstl<Item, _sep<Sep>> : rule_base
                     break;
 
                 // Parse the separator.
-                auto result = sep.template parse<lexy::final_parser>(list_handler, reader,
-                                                                     LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                auto result
+                    = sep.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
 
                 // Parse item.
-                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                            LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                using item_parser = typename lexy::rule_parser<Item, sink_parser>;
+                result            = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return Handler::template parser<NextParser>::parse(list_handler, reader,
-                                                               LEXY_FWD(args)...);
+            return sink_finish_parser::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
-};
-template <typename Item, typename Sep>
-struct _lstl<Item, _tsep<Sep>> : rule_base
-{
-    template <typename NextParser>
-    struct parser
+    template <typename Item, typename Sep>
+    struct loop_parser<Item, _tsep<Sep>>
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& list_handler, Reader& reader, Args&&... args) ->
-            typename Handler::parent_result_type
+        template <typename Context, typename Reader, typename... Args, typename Sink>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args, Sink& sink) ->
+            typename Context::result_type
         {
             while (true)
             {
@@ -156,24 +133,24 @@ struct _lstl<Item, _tsep<Sep>> : rule_base
                     break;
 
                 // Parse the separator.
-                auto result = sep.template parse<lexy::final_parser>(list_handler, reader,
-                                                                     LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                auto result
+                    = sep.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
 
+                // Parse item.
                 lexy::branch_matcher<Item, Reader> branch{};
                 if (!branch.match(reader))
                     // No longer match additional items, done with list.
                     break;
 
-                result = branch.template parse<lexy::final_parser>(list_handler, reader,
-                                                                   LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result
+                    = branch.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return Handler::template parser<NextParser>::parse(list_handler, reader,
-                                                               LEXY_FWD(args)...);
+            return sink_finish_parser::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
 };
@@ -196,45 +173,43 @@ struct _lst : rule_base
             return _impl.match(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Obtain sink and create list handler.
-            auto                                            sink = handler.list_sink();
-            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+            using impl = _list_impl<NextParser, Args...>;
+            auto sink  = context.sink();
 
             // Parse the initial item.
-            auto result
-                = _impl.template parse<lexy::final_parser>(list_handler, reader, LEXY_FWD(args)...);
-            if (!result)
-                return LEXY_MOV(result).error();
+            auto result = _impl.template parse<typename impl::sink_parser>(context, reader,
+                                                                           LEXY_FWD(args)..., sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
 
             // Continue with the rest of the items.
-            using continuation = lexy::rule_parser<_lstl<Item, Sep>, NextParser>;
-            return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
+            using continuation = typename impl::template loop_parser<Item, Sep>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            // Obtain sink and create list handler.
-            auto                                            sink = handler.list_sink();
-            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+            using impl = _list_impl<NextParser, Args...>;
+            auto sink  = context.sink();
 
             // Parse the initial item.
-            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                             LEXY_FWD(args)...);
-            if (!result)
-                return LEXY_MOV(result).error();
+            using item_parser = typename lexy::rule_parser<Item, typename impl::sink_parser>;
+            auto result       = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
 
             // Continue with the rest of the items.
-            using continuation = lexy::rule_parser<_lstl<Item, Sep>, NextParser>;
-            return continuation::parse(list_handler, reader, LEXY_FWD(args)...);
+            using continuation = typename impl::template loop_parser<Item, Sep>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
 };
@@ -277,41 +252,30 @@ struct _lstt<Terminator, Item, void> : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            auto                                            sink = handler.list_sink();
-            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+            using impl        = _list_impl<NextParser, Args...>;
+            using item_parser = typename lexy::rule_parser<Item, typename impl::sink_parser>;
+            auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                             LEXY_FWD(args)...);
-            if (!result)
-                return LEXY_MOV(result).error();
+            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
-                auto result
-                    = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                         LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            // Get value.
-            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
-            {
-                LEXY_MOV(sink).finish();
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
-                                                       LEXY_MOV(sink).finish());
-            }
+            return impl::sink_finish_parser::parse_branch(term, context, reader, LEXY_FWD(args)...,
+                                                          sink);
         }
     };
 };
@@ -321,47 +285,37 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            auto                                            sink = handler.list_sink();
-            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+            using impl        = _list_impl<NextParser, Args...>;
+            using item_parser = typename lexy::rule_parser<Item, typename impl::sink_parser>;
+            using sep_parser  = typename lexy::rule_parser<Sep, typename impl::sink_parser>;
+            auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                             LEXY_FWD(args)...);
-            if (!result)
-                return LEXY_MOV(result).error();
+            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = lexy::rule_parser<Sep, lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result = sep_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
 
                 // Parse item.
-                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                            LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            // Get value.
-            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
-            {
-                LEXY_MOV(sink).finish();
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
-                                                       LEXY_MOV(sink).finish());
-            }
+            return impl::sink_finish_parser::parse_branch(term, context, reader, LEXY_FWD(args)...,
+                                                          sink);
         }
     };
 };
@@ -371,51 +325,41 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            auto                                            sink = handler.list_sink();
-            _list_handler<Handler, decltype(sink), Args...> list_handler{handler, sink};
+            using impl        = _list_impl<NextParser, Args...>;
+            using item_parser = typename lexy::rule_parser<Item, typename impl::sink_parser>;
+            using sep_parser  = typename lexy::rule_parser<Sep, typename impl::sink_parser>;
+            auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                             LEXY_FWD(args)...);
-            if (!result)
-                return LEXY_MOV(result).error();
+            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = lexy::rule_parser<Sep, lexy::final_parser>::parse(list_handler, reader,
-                                                                           LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result = sep_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
 
                 // Check for trailing separator.
                 if (term.match(reader))
                     break;
 
                 // Parse item.
-                result = lexy::rule_parser<Item, lexy::final_parser>::parse(list_handler, reader,
-                                                                            LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            // Get value.
-            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
-            {
-                LEXY_MOV(sink).finish();
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return term.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
-                                                       LEXY_MOV(sink).finish());
-            }
+            return impl::sink_finish_parser::parse_branch(term, context, reader, LEXY_FWD(args)...,
+                                                          sink);
         }
     };
 };

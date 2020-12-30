@@ -35,12 +35,12 @@ struct _delb : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             // Remember the beginning of the delimited for the error message.
-            return NextParser::parse(handler, reader, reader.cur(), LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, reader.cur(), LEXY_FWD(args)...);
         }
     };
 };
@@ -51,9 +51,9 @@ struct _delc : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             if (reader.eof())
             {
@@ -73,11 +73,11 @@ struct _delc : rule_base
 
                 // If we've reached EOF, it means we're missing the closing delimiter.
                 auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
-                return LEXY_MOV(handler).error(e);
+                return LEXY_MOV(context).error(e);
             }
             else
             {
-                return lexy::rule_parser<Content, NextParser>::parse(handler, reader,
+                return lexy::rule_parser<Content, NextParser>::parse(context, reader,
                                                                      LEXY_FWD(args)...);
             }
         }
@@ -89,12 +89,12 @@ struct _dele : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, typename Reader::iterator,
-                                 Args&&... args) -> typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, typename Reader::iterator,
+                                 Args&&... args) -> typename Context::result_type
         {
             // Remove the saved beginning again.
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -216,10 +216,10 @@ struct _escape_cap : branch_base
             return lexy::engine_try_match<Engine>(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...,
+            return NextParser::parse(context, reader, LEXY_FWD(args)...,
                                      lexy::lexeme(reader, _begin));
         }
     };

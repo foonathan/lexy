@@ -6,50 +6,6 @@
 #define LEXY_DSL_LOOP_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/result.hpp>
-
-namespace lexyd
-{
-// The handler used for parsing the rules inside a loop.
-// It will package any error nicely and return it to us.
-template <typename Handler>
-struct _loop_handler
-{
-    Handler& _handler;
-    bool     _break;
-
-    using result_type = lexy::result<void, typename Handler::result_type>;
-
-    template <typename SubProduction, typename Reader>
-    constexpr auto sub_handler(const Reader& reader)
-    {
-        return _handler.template sub_handler<SubProduction>(reader);
-    }
-
-    constexpr auto list_sink()
-    {
-        return _handler.sink();
-    }
-
-    template <typename Error>
-    constexpr auto error(Error&& error) &&
-    {
-        // We report errors to the normal handler.
-        return result_type(lexy::result_error, LEXY_MOV(_handler).error(LEXY_FWD(error)));
-    }
-
-    constexpr auto value() &&
-    {
-        return result_type(lexy::result_value);
-    }
-
-    constexpr auto break_() &&
-    {
-        _break = true;
-        return result_type(lexy::result_value);
-    }
-};
-} // namespace lexyd
 
 namespace lexyd
 {
@@ -58,11 +14,23 @@ struct _break : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader&, Args&&...) ->
-            typename _loop_handler<Handler>::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context&, Reader&, Args&&... args)
         {
-            return LEXY_MOV(handler).break_();
+// GCC doesn't like how we use the comma operator.
+#if defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-value"
+#endif
+
+            // The last argument must be the state as looped rules must not push values.
+            auto& state      = (LEXY_FWD(args), ...);
+            state.loop_break = true;
+            return typename Context::result_type(lexy::result_empty);
+
+#if defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#endif
         }
     };
 };
@@ -73,39 +41,25 @@ constexpr auto break_ = _break{};
 
 namespace lexyd
 {
-template <typename... PrevArgs>
-struct _loop_iter_parser
-{
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(_loop_handler<Handler>& handler, Reader&, PrevArgs&&..., Args&&...) ->
-        typename _loop_handler<Handler>::result_type
-    {
-        static_assert(sizeof...(Args) == 0, "looped rule must not add any values");
-        return LEXY_MOV(handler).value();
-    }
-};
-
 template <typename Rule>
 struct _loop : rule_base
 {
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            _loop_handler<Handler> loop_handler{handler, false};
-            while (!loop_handler._break)
+            for (struct { bool loop_break = false; } state; !state.loop_break;)
             {
-                using continuation = _loop_iter_parser<Args...>;
-                auto result = lexy::rule_parser<Rule, continuation>::parse(loop_handler, reader,
-                                                                           LEXY_FWD(args)...);
-                if (!result)
-                    return LEXY_MOV(result).error();
+                using parser = lexy::rule_parser<Rule, lexy::context_discard_parser>;
+                auto result  = parser::parse(context, reader, LEXY_FWD(args)..., state);
+                if (result.has_error())
+                    return LEXY_MOV(result);
             }
 
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };

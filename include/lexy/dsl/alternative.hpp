@@ -32,13 +32,13 @@ struct _trie : token_base<_trie<Strings...>>
     static constexpr auto _impl = lexy::trie<_char_type, Strings...>;
     using token_engine          = lexy::engine_trie<_impl>;
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader&,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 
@@ -62,13 +62,13 @@ struct _alt : token_base<_alt<Tokens...>>
         }
     };
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader&,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 

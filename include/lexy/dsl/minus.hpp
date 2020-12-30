@@ -28,19 +28,19 @@ struct _minus : token_base<_minus<Token, Excepts...>>
     using token_engine
         = lexy::engine_minus<typename Token::token_engine, typename Excepts::token_engine...>;
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader& reader,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
         if (ec == token_engine::error_code::minus_failure)
         {
             auto err = lexy::make_error<Reader, lexy::minus_failure>(pos, reader.cur());
-            return LEXY_MOV(handler).error(err);
+            return LEXY_MOV(context).error(err);
         }
         else
         {
-            return Token::token_error(handler, reader, token_engine::error_to_matcher(ec), pos);
+            return Token::token_error(context, reader, token_engine::error_to_matcher(ec), pos);
         }
     }
 };

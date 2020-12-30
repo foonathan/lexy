@@ -279,18 +279,18 @@ struct _int_p : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename Iterator, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Iterator begin, Args&&... args)
-            -> typename Handler::result_type
+        template <typename Context, typename Reader, typename Iterator, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Iterator begin, Args&&... args)
+            -> typename Context::result_type
         {
             using error_type
                 = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
 
             auto result = typename integer_parser::result_type(0);
             if (integer_parser::parse(result, begin, reader.cur()))
-                return NextParser::parse(handler, reader, LEXY_FWD(args)..., result);
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             else
-                return LEXY_MOV(handler).error(error_type(begin, reader.cur()));
+                return LEXY_MOV(context).error(error_type(begin, reader.cur()));
         }
     };
 };
@@ -303,11 +303,11 @@ struct _int_c : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            return lexy::rule_parser<Rule, NextParser>::parse(handler, reader, reader.cur(),
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, reader.cur(),
                                                               LEXY_FWD(args)...);
         }
     };

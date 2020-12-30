@@ -21,8 +21,8 @@ struct _lit : token_base<_lit<String>>
     static constexpr auto _trie = lexy::linear_trie<String>;
     using token_engine          = lexy::engine_literal<_trie>;
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler&                          handler, const Reader&,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context&                          context, const Reader&,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
@@ -32,7 +32,7 @@ struct _lit : token_base<_lit<String>>
         auto err
             = lexy::make_error<Reader, lexy::expected_literal>(pos, string,
                                                                token_engine::index_from_error(ec));
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 
     //=== dsl ===//

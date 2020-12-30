@@ -38,11 +38,11 @@ struct _lab : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)..., lexy::label<Label>{});
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::label<Label>{});
         }
     };
 
@@ -70,10 +70,10 @@ struct _labr : rule_base
             return _impl.match(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return _impl.template parse<NextParser>(handler, reader, LEXY_FWD(args)...,
+            return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
                                                     lexy::label<Label>{});
         }
     };
@@ -81,11 +81,11 @@ struct _labr : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            return lexy::rule_parser<Rule, NextParser>::parse(handler, reader, LEXY_FWD(args)...,
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
                                                               lexy::label<Label>{});
         }
     };

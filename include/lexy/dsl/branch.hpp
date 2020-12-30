@@ -29,11 +29,11 @@ struct _br : rule_base
             return _condition.match(reader);
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
             using continuation = typename _seq_parser<NextParser, R...>::type;
-            return _condition.template parse<continuation>(handler, reader, LEXY_FWD(args)...);
+            return _condition.template parse<continuation>(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -130,10 +130,10 @@ struct _else : branch_base
             return true;
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };

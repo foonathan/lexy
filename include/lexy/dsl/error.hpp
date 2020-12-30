@@ -15,13 +15,13 @@ struct _toke : token_base<_toke<Tag, Token>>
 {
     using token_engine = typename Token::token_engine;
 
-    template <typename Handler, typename Reader>
-    static constexpr auto token_error(Handler& handler, const Reader& reader,
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 
@@ -50,19 +50,19 @@ struct _err : rule_base
             return true;
         }
 
-        template <typename NextParser, typename Handler, typename... Args>
-        constexpr auto parse(Handler& handler, Reader& reader, Args&&... args)
+        template <typename NextParser, typename Context, typename... Args>
+        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return parser<NextParser>::parse(handler, reader, LEXY_FWD(args)...);
+            return parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&...) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
+            typename Context::result_type
         {
             auto begin = reader.cur();
             auto end   = reader.cur();
@@ -74,7 +74,7 @@ struct _err : rule_base
             }
 
             auto err = lexy::make_error<Reader, Tag>(begin, end);
-            return LEXY_MOV(handler).error(err);
+            return LEXY_MOV(context).error(err);
         }
     };
 
@@ -100,16 +100,16 @@ struct _require : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename Handler, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-            typename Handler::result_type
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
             if (lexy::engine_peek<typename Token::token_engine>(reader) == Expected)
-                return NextParser::parse(handler, reader, LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
             {
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                return LEXY_MOV(handler).error(err);
+                return LEXY_MOV(context).error(err);
             }
         }
     };

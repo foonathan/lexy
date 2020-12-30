@@ -12,57 +12,52 @@
 
 namespace lexy
 {
-template <typename Production, typename Input, typename Callback>
-class _validate_handler
+template <typename Callback>
+struct _validate_handler
 {
-public:
-    constexpr explicit _validate_handler(const Input& input, const input_reader<Input>& reader,
-                                         Callback cb)
-    : _err_ctx(input, reader.cur()), _callback(cb)
-    {}
+    LEXY_EMPTY_MEMBER Callback _callback;
 
-    using result_type = result<void, typename Callback::return_type>;
+    explicit constexpr _validate_handler(Callback callback) : _callback(LEXY_MOV(callback)) {}
 
-    template <typename SubProduction>
-    constexpr auto sub_handler(const input_reader<Input>& reader)
-    {
-        return _validate_handler<SubProduction, Input, Callback>(_err_ctx.input(), reader,
-                                                                 _callback);
-    }
+    template <typename Production>
+    using result_type_for = lexy::result<void, typename Callback::return_type>;
 
-    constexpr auto list_sink()
+    template <typename Production>
+    constexpr auto sink(Production)
     {
         return noop.sink();
     }
 
-    template <typename Error>
-    constexpr auto error(Error&& error) &&
+    template <typename Production, typename Iterator>
+    constexpr void start_production(Production, Iterator)
+    {}
+
+    template <typename Production, typename... Args>
+    constexpr auto finish_production(Production, Args&&...)
     {
-        return lexy::invoke_as_result<result_type>(lexy::result_error, _callback, _err_ctx,
-                                                   LEXY_FWD(error));
+        return result_type_for<Production>(lexy::result_value);
     }
 
-    template <typename... Args>
-    constexpr auto value(Args&&...) &&
+    template <typename Production, typename Input, typename Error>
+    constexpr auto error(lexy::error_context<Production, Input>&& err_ctx, Error&& error)
     {
-        return result_type(lexy::result_value);
+        return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
+                                                                   LEXY_FWD(err_ctx),
+                                                                   LEXY_FWD(error));
     }
-
-private:
-    error_context<Production, Input> _err_ctx;
-    LEXY_EMPTY_MEMBER Callback       _callback;
 };
 
 template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
 {
-    auto reader = input.reader();
+    using context_t = lexy::parse_context<Input, lexy::_validate_handler<Callback>>;
+    context_t context(input, LEXY_MOV(callback));
 
-    using handler_t = _validate_handler<Production, Input, Callback>;
-    handler_t handler(input, reader, callback);
+    auto                     reader = input.reader();
+    lexy::production_context prod_ctx(context, Production{}, reader.cur());
 
-    using traits = production_traits<Production>;
-    return traits::rule::type::template parser<final_parser>::parse(handler, reader);
+    using rule = typename lexy::production_traits<Production>::rule::type;
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(prod_ctx, reader);
 }
 } // namespace lexy
 

@@ -13,7 +13,7 @@ struct _ret : rule_base
 {
     // We unconditionally jump to the final parser.
     template <typename NextParser>
-    using parser = lexy::final_parser;
+    using parser = lexy::context_value_parser;
 };
 
 /// Finishes parsing a production without considering subsequent rules.

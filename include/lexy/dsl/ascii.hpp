@@ -15,12 +15,12 @@ namespace lexyd::ascii
 template <typename Derived>
 struct _ascii : token_base<Derived>
 {
-    template <typename Handler, typename Reader, typename ErrorCode>
-    static constexpr auto token_error(Handler&                  handler, const Reader&, ErrorCode,
+    template <typename Context, typename Reader, typename ErrorCode>
+    static constexpr auto token_error(Context&                  context, const Reader&, ErrorCode,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Derived::name());
-        return LEXY_MOV(handler).error(err);
+        return LEXY_MOV(context).error(err);
     }
 };
 
