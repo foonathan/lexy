@@ -11,14 +11,42 @@
 
 namespace lexy
 {
+enum class _result_state : unsigned char
+{
+    empty,
+    value,
+    error,
+};
+
+struct result_empty_t
+{
+    LEXY_CONSTEVAL operator _result_state() const
+    {
+        return _result_state::empty;
+    }
+};
+
+/// Tag value to indicate an empty result.
+constexpr auto result_empty = result_empty_t{};
+
 struct result_value_t
-{};
+{
+    LEXY_CONSTEVAL operator _result_state() const
+    {
+        return _result_state::value;
+    }
+};
 
 /// Tag value to indicate result success.
 constexpr auto result_value = result_value_t{};
 
 struct result_error_t
-{};
+{
+    LEXY_CONSTEVAL operator _result_state() const
+    {
+        return _result_state::error;
+    }
+};
 
 /// Tag value to indiciate result error.
 constexpr auto result_error = result_error_t{};
@@ -34,21 +62,24 @@ struct _result_storage_trivial
     using value_type = T;
     using error_type = E;
 
-    bool _has_value;
+    _result_state _state;
     union
     {
-        T _value;
-        E _error;
+        char _empty;
+        T    _value;
+        E    _error;
     };
 
+    constexpr _result_storage_trivial(result_empty_t tag) : _state(tag), _empty() {}
+
     template <typename... Args>
-    constexpr _result_storage_trivial(result_value_t, Args&&... args)
-    : _has_value(true), _value(LEXY_FWD(args)...)
+    constexpr _result_storage_trivial(result_value_t tag, Args&&... args)
+    : _state(tag), _value(LEXY_FWD(args)...)
     {}
 
     template <typename... Args>
-    constexpr _result_storage_trivial(result_error_t, Args&&... args)
-    : _has_value(false), _error(LEXY_FWD(args)...)
+    constexpr _result_storage_trivial(result_error_t tag, Args&&... args)
+    : _state(tag), _error(LEXY_FWD(args)...)
     {}
 };
 
@@ -58,20 +89,23 @@ struct _result_storage_non_trivial
     using value_type = T;
     using error_type = E;
 
-    bool _has_value;
+    _result_state _state;
     union
     {
-        T _value;
-        E _error;
+        char _empty;
+        T    _value;
+        E    _error;
     };
 
+    constexpr _result_storage_non_trivial(result_empty_t tag) : _state(tag), _empty() {}
+
     template <typename... Args>
-    _result_storage_non_trivial(result_value_t, Args&&... args)
-    : _has_value(true), _value(LEXY_FWD(args)...)
+    _result_storage_non_trivial(result_value_t tag, Args&&... args)
+    : _state(tag), _value(LEXY_FWD(args)...)
     {}
     template <typename... Args>
-    _result_storage_non_trivial(result_error_t, Args&&... args)
-    : _has_value(false), _error(LEXY_FWD(args)...)
+    _result_storage_non_trivial(result_error_t tag, Args&&... args)
+    : _state(tag), _error(LEXY_FWD(args)...)
     {}
 
 #if !defined(__clang__) && ((defined(__GNUC__) && __GNUC__ == 9) || defined(_MSC_VER))
@@ -80,53 +114,51 @@ struct _result_storage_non_trivial
 
     template <typename Nullopt,
               typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_value_t, Nullopt&&) : _has_value(true), _value()
+    _result_storage_non_trivial(result_value_t tag, Nullopt&&) : _state(tag), _value()
     {}
     template <typename Nullopt,
               typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_error_t, Nullopt&&) : _has_value(false), _error()
+    _result_storage_non_trivial(result_error_t tag, Nullopt&&) : _state(tag), _error()
     {}
 #endif
 
     _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
-    : _has_value(other._has_value)
+    : _state(other._state), _empty()
     {
-        if (_has_value)
+        if (_state == _result_state::value)
             ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
-        else
+        else if (_state == _result_state::error)
             ::new (static_cast<void*>(&_error)) E(LEXY_MOV(other._error));
     }
 
     ~_result_storage_non_trivial() noexcept
     {
-        if (_has_value)
+        if (_state == _result_state::value)
             _value.~T();
-        else
+        else if (_state == _result_state::error)
             _error.~E();
     }
 
     _result_storage_non_trivial& operator=(_result_storage_non_trivial&& other) noexcept
     {
-        if (_has_value && other._has_value)
-        {
-            _value = LEXY_MOV(other._value);
-        }
-        else if (_has_value && !other._has_value)
-        {
+        // This can be made more efficient by leveraging assignment and what-not.
+        // However, the vast majority of users should just get a result and unpack it immediately.
+        // So let's keep this one simple and do a destroy + create.
+        // (If you're reading this, feel free to add a PR).
+
+        // Destroy.
+        if (_state == _result_state::value)
             _value.~T();
-            ::new (static_cast<void*>(&_error)) E(LEXY_MOV(other._error));
-            _has_value = false;
-        }
-        else if (!_has_value && other._has_value)
-        {
+        else if (_state == _result_state::error)
             _error.~E();
+
+        _state = other._state;
+
+        // Create.
+        if (_state == _result_state::value)
             ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
-            _has_value = true;
-        }
-        else // !_has_value && !other._has_value
-        {
-            _error = LEXY_MOV(other._error);
-        }
+        else if (_state == _result_state::error)
+            ::new (static_cast<void*>(&_error)) E(LEXY_MOV(other._error));
 
         return *this;
     }
@@ -144,7 +176,7 @@ using _result_storage
 
 namespace lexy
 {
-/// Stores a T or an E.
+/// Stores a T or an E (or nothing).
 /// Supports `void` for either one of them meaning "none".
 template <typename T, typename E>
 class result : _result_storage<T, E>
@@ -161,7 +193,7 @@ public:
     using error_type = typename _result_storage<T, E>::error_type;
 
     //=== constructor ===//
-    constexpr result() : _result_storage<T, E>(result_error) {}
+    constexpr result(result_empty_t) : _result_storage<T, E>(result_empty) {}
 
     template <typename... Args>
     constexpr result(result_value_t, Args&&... args)
@@ -190,15 +222,19 @@ public:
     //=== access ===//
     constexpr explicit operator bool() const noexcept
     {
-        return this->_has_value;
+        return this->_state == _result_state::value;
+    }
+    constexpr bool is_empty() const noexcept
+    {
+        return this->_state == _result_state::empty;
     }
     constexpr bool has_value() const noexcept
     {
-        return this->_has_value;
+        return this->_state == _result_state::value;
     }
     constexpr bool has_error() const noexcept
     {
-        return !this->_has_value;
+        return this->_state == _result_state::error;
     }
 
     static constexpr bool has_void_value() noexcept

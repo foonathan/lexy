@@ -9,49 +9,49 @@
 
 TEST_CASE("result")
 {
+    auto check_empty = [](const auto& res) {
+        CHECK(!res);
+        CHECK(res.is_empty());
+        CHECK(!res.has_value());
+        CHECK(!res.has_error());
+    };
+    auto check_value = [](const auto& res, auto value) {
+        CHECK(res);
+        CHECK(res.has_value());
+        CHECK(!res.has_error());
+        CHECK(res.value() == value);
+    };
+    auto check_error = [](const auto& res, auto error) {
+        CHECK(!res);
+        CHECK(!res.has_value());
+        CHECK(res.has_error());
+        CHECK(res.error() == error);
+    };
+
     SUBCASE("trivial")
     {
-        constexpr lexy::result<int, int> def;
-        CHECK(!def);
-        CHECK(!def.has_value());
-        CHECK(def.has_error());
-        CHECK(def.error() == 0);
+        constexpr lexy::result<int, int> empty(lexy::result_empty);
+        check_empty(empty);
 
         constexpr lexy::result<int, int> val(lexy::result_value, 42);
-        CHECK(val);
-        CHECK(val.has_value());
-        CHECK(!val.has_error());
-        CHECK(val.value() == 42);
+        check_value(val, 42);
 
         constexpr lexy::result<int, int> err(lexy::result_error, 42);
-        CHECK(!err);
-        CHECK(!err.has_value());
-        CHECK(err.has_error());
-        CHECK(err.error() == 42);
+        check_error(err, 42);
 
         constexpr lexy::result<short, int> conv_err(err);
-        CHECK(!conv_err);
-        CHECK(!conv_err.has_value());
-        CHECK(conv_err.has_error());
-        CHECK(conv_err.error() == 42);
+        check_error(conv_err, 42);
+
+        constexpr auto conv_err_move = [&] {
+            auto tmp = err;
+            return lexy::result<short, int>(LEXY_MOV(tmp));
+        }();
+        check_error(conv_err_move, 42);
     }
     SUBCASE("non-trivial")
     {
-        auto check_value = [](const auto& res, const char* value) {
-            CHECK(res);
-            CHECK(res.has_value());
-            CHECK(!res.has_error());
-            CHECK(res.value() == value);
-        };
-        auto check_error = [](const auto& res, const char* error) {
-            CHECK(!res);
-            CHECK(!res.has_value());
-            CHECK(res.has_error());
-            CHECK(res.error() == error);
-        };
-
-        lexy::result<std::string, std::string> def;
-        check_error(def, "");
+        lexy::result<std::string, std::string> empty(lexy::result_empty);
+        check_empty(empty);
 
         lexy::result<std::string, std::string> val(lexy::result_value,
                                                    "a somewhat long string against SSO");
@@ -64,6 +64,19 @@ TEST_CASE("result")
         lexy::result<int, std::string> conv_err(err);
         check_error(conv_err, "a somewhat long string against SSO");
 
+        auto conv_err_move = [&] {
+            lexy::result<std::string, std::string> tmp(lexy::result_error,
+                                                       "a somewhat long string against SSO");
+            return lexy::result<int, std::string>(LEXY_MOV(tmp));
+        }();
+        check_error(conv_err_move, "a somewhat long string against SSO");
+
+        SUBCASE("move ctor - empty")
+        {
+            const auto moved = LEXY_MOV(empty);
+            check_empty(moved);
+            check_empty(empty);
+        }
         SUBCASE("move ctor - value")
         {
             const auto moved = LEXY_MOV(val);
@@ -75,6 +88,43 @@ TEST_CASE("result")
             const auto moved = LEXY_MOV(err);
             check_error(moved, "a somewhat long string against SSO");
             check_error(err, "");
+        }
+        SUBCASE("move assign - empty = empty")
+        {
+            lexy::result<std::string, std::string> empty2(lexy::result_empty);
+            check_empty(empty2);
+
+            empty2 = LEXY_MOV(empty);
+            check_empty(empty2);
+            check_empty(empty);
+        }
+        SUBCASE("move assign - empty = value")
+        {
+            lexy::result<std::string, std::string> empty2(lexy::result_empty);
+            check_empty(empty2);
+
+            empty2 = LEXY_MOV(val);
+            check_value(empty2, "a somewhat long string against SSO");
+            check_value(val, "");
+        }
+        SUBCASE("move assign - empty = error")
+        {
+            lexy::result<std::string, std::string> empty2(lexy::result_empty);
+            check_empty(empty2);
+
+            empty2 = LEXY_MOV(err);
+            check_error(empty2, "a somewhat long string against SSO");
+            check_error(err, "");
+        }
+        SUBCASE("move assign - value = empty")
+        {
+            lexy::result<std::string, std::string> val2(lexy::result_value,
+                                                        "another somewhat long string, again SSO");
+            check_value(val2, "another somewhat long string, again SSO");
+
+            val2 = LEXY_MOV(empty);
+            check_empty(val2);
+            check_empty(empty);
         }
         SUBCASE("move assign - value = value")
         {
@@ -95,6 +145,16 @@ TEST_CASE("result")
             val2 = LEXY_MOV(err);
             check_error(val2, "a somewhat long string against SSO");
             check_error(err, "");
+        }
+        SUBCASE("move assign - error = empty")
+        {
+            lexy::result<std::string, std::string> err2(lexy::result_error,
+                                                        "another somewhat long string, again SSO");
+            check_error(err2, "another somewhat long string, again SSO");
+
+            err2 = LEXY_MOV(empty);
+            check_empty(err2);
+            check_empty(empty);
         }
         SUBCASE("move assign - error = value")
         {
@@ -123,19 +183,22 @@ TEST_CASE("result<int, void>")
 {
     CHECK(lexy::result<int, void>::has_void_error());
 
-    constexpr lexy::result<int, void> def;
-    CHECK(!def);
-    CHECK(!def.has_value());
-    CHECK(def.has_error());
+    constexpr lexy::result<int, void> empty(lexy::result_empty);
+    CHECK(!empty);
+    CHECK(empty.is_empty());
+    CHECK(!empty.has_value());
+    CHECK(!empty.has_error());
 
     constexpr lexy::result<int, void> val(lexy::result_value, 42);
     CHECK(val);
+    CHECK(!val.is_empty());
     CHECK(val.has_value());
     CHECK(!val.has_error());
     CHECK(val.value() == 42);
 
     constexpr lexy::result<int, void> err(lexy::result_error);
     CHECK(!err);
+    CHECK(!err.is_empty());
     CHECK(!err.has_value());
     CHECK(err.has_error());
 }
@@ -144,19 +207,21 @@ TEST_CASE("result<void, int>")
 {
     CHECK(lexy::result<void, int>::has_void_value());
 
-    constexpr lexy::result<void, int> def;
-    CHECK(!def);
-    CHECK(!def.has_value());
-    CHECK(def.has_error());
-    CHECK(def.error() == 0);
+    constexpr lexy::result<void, int> empty(lexy::result_empty);
+    CHECK(!empty);
+    CHECK(empty.is_empty());
+    CHECK(!empty.has_value());
+    CHECK(!empty.has_error());
 
     constexpr lexy::result<void, int> val(lexy::result_value);
     CHECK(val);
+    CHECK(!val.is_empty());
     CHECK(val.has_value());
     CHECK(!val.has_error());
 
     constexpr lexy::result<void, int> err(lexy::result_error, 42);
     CHECK(!err);
+    CHECK(!err.is_empty());
     CHECK(!err.has_value());
     CHECK(err.has_error());
     CHECK(err.error() == 42);

@@ -109,6 +109,9 @@ This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::pars
 ----
 namespace lexy
 {
+    struct result_empty_t {};
+    constexpr auto result_empty = result_empty_t{};
+
     struct result_value_t {};
     constexpr auto result_value = result_value_t{};
 
@@ -122,7 +125,7 @@ namespace lexy
         using value_type = /* see below */;
         using error_type = /* see below */;
 
-        constexpr result();
+        constexpr result(result_empty_t);
 
         template <typename... Args>
         constexpr result(result_value_t, Args&&... args);
@@ -157,7 +160,7 @@ namespace lexy
 }
 ----
 
-The class `lexy::result<T, E>` stores either a value `T` or an error `E` and is used to return the result of parsing.
+The class `lexy::result<T, E>` stores either a value `T` or an error `E` (or nothing) and is used to return the result of parsing.
 `T` and `E` can be `void`; in that case it is internally translated to the tag types `result_value_t` or `result_error_t`, respectively, which is reflected in the `value_type` and `error_type` typedefs as well.
 
 TIP: `lexy::result<T, void>` is like `std::optional<T>` and `lexy::result<void, void>` is like `bool`.
@@ -167,19 +170,22 @@ Once a result is created containing a value or error, it can never change that s
 NOTE: `lexy::result` was created for use by the library only.
 While it can be used as a general purpose result monad (which we leverage for `lexy::read_file()`), it is better to us a designated library for it.
 
+NOTE: Every `lexy::result` object returned by the library is never empty.
+The empty state is just used internally and not exposed to the user (unless of course, the user explicitly creates an empty result).
+
 [discrete]
 ===== Creation
 
 [source,cpp]
 ----
-constexpr result(); // <1>
+constexpr result(result_empty_t); // <1>
 
 template <typename... Args>
 constexpr result(result_value_t, Args&&... args); // <2>
 template <typename... Args>
 constexpr result(result_error_t, Args&&... args); // <3>
 ----
-<1> Creates a result containing a default constructed error.
+<1> Creates a result that is empty.
 <2> Creates a result containing the value constructed by forwarding the arguments.
 <3> Creates a result containing the error constructed by forwarding the arguments.
 
@@ -206,17 +212,19 @@ constexpr explicit result(Arg&& arg); // <3>
 [source,cpp]
 ----
 constexpr explicit operator bool() const noexcept; // <1>
-constexpr bool has_value() const noexcept; // <2>
-constexpr bool has_error() const noexcept; // <3>
+constexpr bool is_empty() const noexcept;  // <2>
+constexpr bool has_value() const noexcept; // <3>
+constexpr bool has_error() const noexcept; // <4>
 
-static constexpr bool has_void_value() noexcept; // <4>
-static constexpr bool has_void_error() noexcept; // <5>
+static constexpr bool has_void_value() noexcept; // <5>
+static constexpr bool has_void_error() noexcept; // <6>
 ----
 <1> Returns `true` if it contains a value, `false` otherwise.
-<2> Returns `true` if it contains a value, `false` otherwise.
-<3> Returns `true` if it contains an error, `false` otherwise.
-<4> Returns `true` if `T == void`, `false` otherwise.
-<5> Returns `true` if `E == void`, `false` otherwise.
+<2> Returns `true` if it is empty (contains neither value nor error), `false` otherwise.
+<3> Returns `true` if it contains a value, `false` otherwise.
+<4> Returns `true` if it contains an error, `false` otherwise.
+<5> Returns `true` if `T == void`, `false` otherwise.
+<6> Returns `true` if `E == void`, `false` otherwise.
 
 [discrete]
 ===== Access

@@ -3,7 +3,7 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2020-12-28
+== 2021-01-03
 
 * Remove callback from `lexy::as_list` and `lexy::as_collection`; they're now only sink.
   `lexy::construct` can be used in most cases instead.
@@ -14,6 +14,9 @@ Until the first release is done, breaking changes -- but not new features -- are
   ** A production has a `list` and `value` member:
      add a `value` member that uses `sink >> callback`, where `sink` was the previous `list` value and `callback` the previous `callback`.
      This will use `sink` to construct the list then pass everything to `callback`.
+* `lexy::result` now has an empty state. It is only used internally and never exposed to the user.
+  As a related change, the default constructor has been removed due to unclear semantics.
+  Use `lexy::result(lexy::result_error)` to restore its behavior of creating a default constructed error.
 
 == 2020-12-26
 
