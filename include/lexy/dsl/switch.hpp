@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is partialject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 

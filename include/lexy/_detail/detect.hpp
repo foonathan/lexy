@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2020-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
