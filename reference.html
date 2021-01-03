@@ -1609,7 +1609,6 @@ Refer to the comments in <code>lexy/input/base.hpp</code>.
     static constexpr auto rule = …;
 
     static constexpr auto value = …; // optional
-    static constexpr auto list  = …; // optional
 };</code></pre>
 </div>
 </div>
@@ -1712,31 +1711,43 @@ Add <code>lexy::dsl::eof</code> to the end if the production should consume the 
 <p>The function <code>lexy::parse()</code> parses the <code>Production</code> on the given <code>input</code>.
 The return value is a <code>lexy::result&lt;T, E&gt;</code>, where <code>T</code> is the return type of the <code>Production::value</code> or <code>Production::list</code> callback,
 and <code>E</code> is the return type of the <code>callback</code>.
-If the production accepts the input, invokes <code>Production::value</code> or <code>Production::list</code> (see below) with the produced values and returns their result.
+If the production accepts the input, invokes <code>Production::value</code> (see below) with the produced values and returns their result.
 Otherwise, invokes <code>callback</code> with the error information (see <a href="#_error_handling">Error handling</a>) and returns its result.</p>
 </div>
 <div class="paragraph">
-<p>The return value on success is determined using <code>Production::value</code> or <code>Production::list</code> depending on three cases:</p>
+<p>The return value on success is determined using <code>Production::value</code> depending on three cases:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><code>Production::rule</code> does not contain a list. Then all arguments will be forwarded to the <code>Production::value</code> callback whose result is returned.
+<p><code>Production::rule</code> does not contain a list. Then all arguments will be forwarded to <code>Production::value</code> as a callback whose result is returned.
 The <code>Production::value</code> callback must be present.</p>
 </li>
 <li>
-<p><code>Production::rule</code> contains a list and no other rule produces a value. Then the <code>Production::list</code> callback will be used as sink for the list values.
-If an additional <code>Production::value</code> callback is present, the result of the <code>Production::list</code> callback will be passed to the <code>Production::value</code> callback whose result is returned.
-Otherwise, the result of the <code>Production::list</code> callback is the final result.
-The <code>Production::list</code> callback must be present.</p>
+<p><code>Production::rule</code> contains a list and no other rule produces a value. Then <code>Production::value</code> will be used as sink for the list values.
+If <code>Production::value</code> is also a callback that accepts the result of the sink as argument,
+it will be invoked with the sink result and the processed result returned.
+Otherwise, the result of the sink is the final result.</p>
 </li>
 <li>
 <p><code>Production::rule</code> contains a list and other rules produce values as well.
-Then the <code>Production::list</code> callback will be used as sink for the list values.
-The resulting value will be added to the list of other rule values in order, and all values forwarded to the <code>Production::value</code> callback whose result is returned.
-Both <code>Production::value</code> and <code>Production::list</code> must be present.</p>
+Then <code>Production::value</code> will be used as sink for the list values.
+The sink result will be added to the other values in order and everything forwarded to <code>Production::value</code> as a callback.
+The callback result is then returned.</p>
 </li>
 </ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The callback <code>operator&gt;&gt;</code> is useful for case 3 to create a combined callback and sink with the desired behavior.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>The second overload of <code>lexy::parse()</code> allows passing an arbitrary state argument.
@@ -1749,6 +1760,9 @@ This will be made available to the <code>lexy::dsl::parse_state</code> and <code
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
 {
+    struct result_empty_t {};
+    constexpr auto result_empty = result_empty_t{};
+
     struct result_value_t {};
     constexpr auto result_value = result_value_t{};
 
@@ -1762,7 +1776,7 @@ This will be made available to the <code>lexy::dsl::parse_state</code> and <code
         using value_type = /* see below */;
         using error_type = /* see below */;
 
-        constexpr result();
+        constexpr result(result_empty_t);
 
         template &lt;typename... Args&gt;
         constexpr result(result_value_t, Args&amp;&amp;... args);
@@ -1798,7 +1812,7 @@ This will be made available to the <code>lexy::dsl::parse_state</code> and <code
 </div>
 </div>
 <div class="paragraph">
-<p>The class <code>lexy::result&lt;T, E&gt;</code> stores either a value <code>T</code> or an error <code>E</code> and is used to return the result of parsing.
+<p>The class <code>lexy::result&lt;T, E&gt;</code> stores either a value <code>T</code> or an error <code>E</code> (or nothing) and is used to return the result of parsing.
 <code>T</code> and <code>E</code> can be <code>void</code>; in that case it is internally translated to the tag types <code>result_value_t</code> or <code>result_error_t</code>, respectively, which is reflected in the <code>value_type</code> and <code>error_type</code> typedefs as well.</p>
 </div>
 <div class="admonitionblock tip">
@@ -1829,10 +1843,23 @@ While it can be used as a general purpose result monad (which we leverage for <c
 </tr>
 </table>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Every <code>lexy::result</code> object returned by the library is never empty.
+The empty state is just used internally and not exposed to the user (unless of course, the user explicitly creates an empty result).
+</td>
+</tr>
+</table>
+</div>
 <h5 id="_creation" class="discrete">Creation</h5>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr result(); <i class="conum" data-value="1"></i><b>(1)</b>
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr result(result_empty_t); <i class="conum" data-value="1"></i><b>(1)</b>
 
 template &lt;typename... Args&gt;
 constexpr result(result_value_t, Args&amp;&amp;... args); <i class="conum" data-value="2"></i><b>(2)</b>
@@ -1844,7 +1871,7 @@ constexpr result(result_error_t, Args&amp;&amp;... args); <i class="conum" data-
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Creates a result containing a default constructed error.</td>
+<td>Creates a result that is empty.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -1888,11 +1915,12 @@ constexpr explicit result(Arg&amp;&amp; arg); <i class="conum" data-value="3"></
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr explicit operator bool() const noexcept; <i class="conum" data-value="1"></i><b>(1)</b>
-constexpr bool has_value() const noexcept; <i class="conum" data-value="2"></i><b>(2)</b>
-constexpr bool has_error() const noexcept; <i class="conum" data-value="3"></i><b>(3)</b>
+constexpr bool is_empty() const noexcept;  <i class="conum" data-value="2"></i><b>(2)</b>
+constexpr bool has_value() const noexcept; <i class="conum" data-value="3"></i><b>(3)</b>
+constexpr bool has_error() const noexcept; <i class="conum" data-value="4"></i><b>(4)</b>
 
-static constexpr bool has_void_value() noexcept; <i class="conum" data-value="4"></i><b>(4)</b>
-static constexpr bool has_void_error() noexcept; <i class="conum" data-value="5"></i><b>(5)</b></code></pre>
+static constexpr bool has_void_value() noexcept; <i class="conum" data-value="5"></i><b>(5)</b>
+static constexpr bool has_void_error() noexcept; <i class="conum" data-value="6"></i><b>(6)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -1903,18 +1931,22 @@ static constexpr bool has_void_error() noexcept; <i class="conum" data-value="5"
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>Returns <code>true</code> if it contains a value, <code>false</code> otherwise.</td>
+<td>Returns <code>true</code> if it is empty (contains neither value nor error), <code>false</code> otherwise.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>Returns <code>true</code> if it contains an error, <code>false</code> otherwise.</td>
+<td>Returns <code>true</code> if it contains a value, <code>false</code> otherwise.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>Returns <code>true</code> if <code>T == void</code>, <code>false</code> otherwise.</td>
+<td>Returns <code>true</code> if it contains an error, <code>false</code> otherwise.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Returns <code>true</code> if <code>T == void</code>, <code>false</code> otherwise.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
 <td>Returns <code>true</code> if <code>E == void</code>, <code>false</code> otherwise.</td>
 </tr>
 </table>
@@ -1982,14 +2014,14 @@ They can either be written manually implementing to the above concepts or compos
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
 {
     template &lt;typename ReturnType = void, typename... Fns&gt;
-    consteval Callback callback(Fns&amp;&amp;... fns);
+    constexpr Callback callback(Fns&amp;&amp;... fns);
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>Creates a callback with the given <code>ReturnType</code> from multiple functions.
 When calling the resulting callback, it will use overload resolution to determine the correct function to call.
-Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.</p>
+It supports function pointers, lambdas, and member function or data pointers.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/callback.hpp</code></div>
@@ -1997,14 +2029,14 @@ Every function must either be an empty class (i.e. a stateless lambda), or a poi
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
 {
     template &lt;typename T, typename... Fns&gt;
-    consteval Sink sink(Fns&amp;&amp;... fns);
+    constexpr Sink sink(Fns&amp;&amp;... fns);
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>Creates a sink constructing the given <code>T</code> using the given functions.
 The sink will value-construct the <code>T</code> and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
-Every function must either be an empty class (i.e. a stateless lambda), or a pointer to a (member) function or data member.</p>
+It supports function pointers, lambdas, and member function or data pointers.</p>
 </div>
 <details>
 <summary class="title">Example</summary>
@@ -2047,22 +2079,26 @@ assert(result == 1 + 2 + 3);</code></pre>
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
 {
     template &lt;typename First, typename Second&gt;
-    consteval auto operator|(First first, Second second);
+    constexpr auto operator|(First first, Second second); <i class="conum" data-value="1"></i><b>(1)</b>
+
+    template &lt;typename Sink, typename Callback&gt;
+    constexpr auto operator&gt;&gt;(Sink sink, Callback callback); <i class="conum" data-value="2"></i><b>(2)</b>
+
 }</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>The result of <code>g | h</code>, where <code>g</code> and <code>h</code> are both callbacks, is another callback that first invokes <code>g</code> and then passes the result to <code>h</code>.</p>
-</div>
-<div class="admonitionblock note">
+<div class="colist arabic">
 <table>
 <tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-It does not compose sinks.
-</td>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The result of <code>first | second</code>, where <code>first</code> and <code>second</code> are both callbacks, is another callback that first invokes <code>first</code> and then passes the result to <code>second</code>.
+The result cannot be used as sink.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The  result of <code>sink | callback</code>, is a sink and a callback.
+As a sink, it behaves just like <code>sink</code>.
+As a callback, it takes the result of the <code>sink</code> as well as any other arguments and forwards them to <code>callback</code>.</td>
 </tr>
 </table>
 </div>
@@ -2096,6 +2132,19 @@ assert(inefficient_strlen("1234") == 4); <i class="conum" data-value="2"></i><b>
 </div>
 </div>
 </details>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The callback <code>operator&gt;&gt;</code> is used for productions whose rule contain both a list and produce other values.
+The list will be constructed using the <code>sink</code> and then everything will be passed to <code>callback</code>.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_the_no_op_callback">The no-op callback</h4>
@@ -4136,10 +4185,10 @@ It will only fail after the condition has been matched.</p>
 </tr>
 </table>
 </div>
-<details id="nq33hY">
+<details id="1vK39o">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/nq33hY" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/1vK39o" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Matches an optional list of alpha characters.
@@ -4831,10 +4880,10 @@ Errors
 </tr>
 </table>
 </div>
-<details id="fod3vY">
+<details id="sE873v">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/fod3vY" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/sE873v" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Parses a list of integers seperated by (a potentially trailing) comma.
@@ -5317,10 +5366,10 @@ parenthesized = round_bracketed</pre>
 <div class="paragraph">
 <p>Common sets of open and close brackets are pre-defined.</p>
 </div>
-<details id="dzMTnx">
+<details id="G9MPKh">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/dzMTnx" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/G9MPKh" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Parses a list of integers seperated by (a potentially trailing) comma surrounded by parentheses.
@@ -5939,10 +5988,10 @@ If EOF is reached without a closing delimiter, a generic error with tag <code>le
 </tr>
 </table>
 </div>
-<details id="WPzos5">
+<details id="nnoMYv">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/WPzos5" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/nnoMYv" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match a string consisting of code points that aren't control characters.
@@ -5978,10 +6027,10 @@ Values produced by the <code>rule</code> or <code>escape</code> are forwarded to
 <p>For convenience, if passing a token, the token is captured.
 Otherwise, nothing would be passed to the sink.</p>
 </div>
-<details id="7ed5Wc">
+<details id="vqsfM4">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/7ed5Wc" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/vqsfM4" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match a string consisting of code points that aren't control characters.
@@ -6073,10 +6122,10 @@ dollar_escape    = escape(lit_c&lt;'$'&gt;)</pre>
 <div class="paragraph">
 <p>Common escape characters are predefined.</p>
 </div>
-<details id="aajf7c">
+<details id="71EEWY">
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/aajf7c" target="_blank" rel="noopener">Try on Compiler Explorer</a>
+<a href="https://godbolt.org/z/71EEWY" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Match a string consisting of code points that aren't control characters.
@@ -6567,7 +6616,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-26 21:58:00 UTC
+Last updated 2021-01-03 21:03:04 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

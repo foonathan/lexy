@@ -1497,7 +1497,7 @@ This allows building a container or <code>std::string</code>.
 If we write <code>dsl::quoted(dsl::code_point)</code>, the sink will be invoked with the captured code point in each iteration.</p>
 </div>
 <div class="listingblock">
-<div class="title">String parsing, third attempt (<a href="https://godbolt.org/z/jYKbbq">godbolt</a>)</div>
+<div class="title">String parsing, third attempt (<a href="https://godbolt.org/z/4eczx4">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
 {
@@ -1505,7 +1505,7 @@ If we write <code>dsl::quoted(dsl::code_point)</code>, the sink will be invoked 
     static constexpr auto rule = dsl::quoted(dsl::code_point);       <i class="conum" data-value="1"></i><b>(1)</b>
 
     // Add each captured code point to a std::string.
-    static constexpr auto list                                       <i class="conum" data-value="2"></i><b>(2)</b>
+    static constexpr auto value                                       <i class="conum" data-value="2"></i><b>(2)</b>
       = lexy::sink&lt;std::string&gt;([](std::string&amp; result, auto lexeme) <i class="conum" data-value="3"></i><b>(3)</b>
                                 {
                                     result.append(lexeme.begin(), lexeme.end());
@@ -1522,7 +1522,7 @@ If we write <code>dsl::quoted(dsl::code_point)</code>, the sink will be invoked 
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>To provide a sink instead of a callback, we use <code>::list</code> instead of <code>::value</code>.</td>
+<td>To provide a sink we use <code>::value</code> just as before.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
@@ -1562,7 +1562,7 @@ We can do that using the minus rule implemented as <code>operator-</code>.
 With that, we can "subtract" certain character classes from our token.</p>
 </div>
 <div class="listingblock">
-<div class="title">String parsing, fourth attempt (<a href="https://godbolt.org/z/KMEfaq">godbolt</a>)</div>
+<div class="title">String parsing, fourth attempt (<a href="https://godbolt.org/z/crvhsM">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
 {
@@ -1570,7 +1570,7 @@ With that, we can "subtract" certain character classes from our token.</p>
     static constexpr auto rule = dsl::quoted(dsl::code_point - dsl::ascii::control);
 
     // Construct a string from the quoted content.
-    static constexpr auto list = lexy::as_string&lt;std::string&gt;;
+    static constexpr auto value = lexy::as_string&lt;std::string&gt;;
 };</code></pre>
 </div>
 </div>
@@ -1587,7 +1587,7 @@ Or more importantly, how do we get a <code>"</code> in our string?
 They can be very conveniently defined using another rule and added to the string as the second argument.</p>
 </div>
 <div class="listingblock">
-<div class="title">String parsing, final attempt (<a href="https://godbolt.org/z/7onPn8">godbolt</a>)</div>
+<div class="title">String parsing, final attempt (<a href="https://godbolt.org/z/hMs4xn">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author
 {
@@ -1604,7 +1604,7 @@ They can be very conveniently defined using another rule and added to the string
     }();
 
     // Construct a UTF-8 string from the quoted content.
-    static constexpr auto list = lexy::as_string&lt;std::string, lexy::utf8_encoding&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
+    static constexpr auto value = lexy::as_string&lt;std::string, lexy::utf8_encoding&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
 };</code></pre>
 </div>
 </div>
@@ -1656,7 +1656,7 @@ Instead we need to use <code>dsl::list(rule, sep)</code>.
 This matches a (non-empty) list of <code>rule</code> separated by <code>sep</code>.</p>
 </div>
 <div class="listingblock">
-<div class="title">The list rule (<a href="https://godbolt.org/z/sGGWo3">godbolt</a>)</div>
+<div class="title">The list rule (<a href="https://godbolt.org/z/GK7McT">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct integer_list
 {
@@ -1665,7 +1665,7 @@ This matches a (non-empty) list of <code>rule</code> separated by <code>sep</cod
                                            dsl::sep(dsl::comma)); <i class="conum" data-value="1"></i><b>(1)</b>
 
     // Add them all to a std::vector&lt;int&gt;.
-    static constexpr auto list = lexy::as_list&lt;std::vector&lt;int&gt;&gt;; <i class="conum" data-value="2"></i><b>(2)</b>
+    static constexpr auto value = lexy::as_list&lt;std::vector&lt;int&gt;&gt;; <i class="conum" data-value="2"></i><b>(2)</b>
 };</code></pre>
 </div>
 </div>
@@ -1709,7 +1709,7 @@ Here, the value is a <code>std::string</code> and we add that to our <code>std::
       = dsl::lit_c&lt;'['&gt; + dsl::list(dsl::p&lt;author&gt;, dsl::sep(dsl::comma)) + dsl::lit_c&lt;']'&gt;;
 
     // Collect all authors into a std::vector.
-    static constexpr auto list = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
+    static constexpr auto value = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
 };</code></pre>
 </div>
 </div>
@@ -1735,7 +1735,7 @@ For the specific case of <code>dsl::list()</code>, we can also use <code>dsl::sq
 This has the additional advantage that the closing bracket will be used as branch condition for the list item.</p>
 </div>
 <div class="listingblock">
-<div class="title">The final <code>author_list</code> production (<a href="https://godbolt.org/z/s86j1c">godbolt</a>)</div>
+<div class="title">The final <code>author_list</code> production (<a href="https://godbolt.org/z/bPM1P9">godbolt</a>)</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author_list
 {
@@ -1744,7 +1744,7 @@ This has the additional advantage that the closing bracket will be used as branc
         = dsl::square_bracketed.list(dsl::p&lt;author&gt;, dsl::sep(dsl::comma));
 
     // Collect all authors into a std::vector.
-    static constexpr auto list = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
+    static constexpr auto value = lexy::as_list&lt;std::vector&lt;std::string&gt;&gt;;
 };</code></pre>
 </div>
 </div>
@@ -1934,7 +1934,7 @@ The <code>lexy::as_aggregate&lt;T&gt;</code> sink then constructs a <code>T</cod
         return dsl::combination(name_field, version_field, authors_field); <i class="conum" data-value="3"></i><b>(3)</b>
     }();
 
-    static constexpr auto list = lexy::as_aggregate&lt;PackageConfig&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
+    static constexpr auto value = lexy::as_aggregate&lt;PackageConfig&gt;; <i class="conum" data-value="4"></i><b>(4)</b>
 };</code></pre>
 </div>
 </div>
@@ -2298,7 +2298,7 @@ Check out the reference documentation for specific rules.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-12-26 21:58:00 UTC
+Last updated 2021-01-03 21:03:04 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
