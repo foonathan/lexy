@@ -27,10 +27,6 @@ struct _parse_handler
     State&                     _state;
     LEXY_EMPTY_MEMBER Callback _callback;
 
-    explicit constexpr _parse_handler(State& state, Callback callback)
-    : _state(state), _callback(LEXY_MOV(callback))
-    {}
-
     template <typename Production>
     static auto _value_cb()
     {
@@ -102,15 +98,15 @@ constexpr bool _is_parse_handler<_parse_handler<State, Callback>> = true;
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    using context_t
-        = lexy::parse_context<Input, lexy::_parse_handler<std::decay_t<State>, Callback>>;
-    context_t context(input, state, LEXY_MOV(callback));
+    using handler_t = _parse_handler<std::decay_t<State>, Callback>;
+    using context_t = lexy::parse_context<Production, Input, handler_t>;
 
-    auto                     reader = input.reader();
-    lexy::production_context prod_ctx(context, Production{}, reader.cur());
+    auto      handler = handler_t{state, LEXY_MOV(callback)};
+    auto      reader  = input.reader();
+    context_t context(handler, input, reader.cur());
 
     using rule = typename lexy::production_traits<Production>::rule::type;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(prod_ctx, reader);
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -132,7 +128,7 @@ struct _state : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            auto& handler   = context.root().handler();
+            auto& handler   = context.handler();
             using handler_t = std::remove_reference_t<decltype(handler)>;
 
             if constexpr (lexy::_is_parse_handler<handler_t>)

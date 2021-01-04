@@ -39,31 +39,17 @@ struct _match_handler
     }
 };
 
-template <typename Reader, typename Rule>
-LEXY_FORCE_INLINE constexpr bool _match_impl(Reader& reader, Rule)
-{
-    struct input_t
-    {
-        Reader _reader;
-
-        Reader reader() const
-        {
-            return _reader;
-        }
-    } input{reader};
-
-    using context_t = lexy::parse_context<input_t, lexy::_match_handler>;
-    context_t context(input);
-
-    lexy::production_context prod_ctx(context, Rule{}, reader.cur());
-    return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(prod_ctx, reader).has_value();
-}
-
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto reader = input.reader();
-    return _match_impl(reader, lexy::production_traits<Production>::rule::get);
+    using context_t = lexy::parse_context<Production, Input, _match_handler>;
+
+    auto      handler = _match_handler{};
+    auto      reader  = input.reader();
+    context_t context(handler, input, reader.cur());
+
+    using rule = typename lexy::production_traits<Production>::rule::type;
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader).has_value();
 }
 } // namespace lexy
 

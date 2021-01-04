@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/token.hpp>
+#include <lexy/dsl/sequence.hpp>
 #include <lexy/lexeme.hpp>
 #include <lexy/match.hpp>
 #include <lexy/result.hpp>
@@ -101,28 +101,36 @@ struct test_handler
     }
 };
 
-struct test_final_parser
+struct test_final_rule : lexy::dsl::rule_base
 {
-    template <typename Handler, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Handler& handler, Reader& reader, Args&&... args) ->
-        typename Handler::result_type
+    template <typename NextParser>
+    struct parser
     {
-        // We sneak in the final input position.
-        return LEXY_MOV(handler).value(reader.cur(), LEXY_FWD(args)...);
-    }
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
+        {
+            // We sneak in the final input position.
+            return NextParser::parse(context, reader, reader.cur(), LEXY_FWD(args)...);
+        }
+    };
 };
 
 template <typename Callback, typename Encoding, typename CharT, typename Rule>
-LEXY_VERIFY_FN int verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
+LEXY_VERIFY_FN int verify(Rule _rule, const CharT* str, std::size_t size = std::size_t(-1))
 {
-    auto input  = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
-                                          : lexy::string_input<Encoding>(str, size);
-    auto reader = input.reader();
+    auto input = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
+                                         : lexy::string_input<Encoding>(str, size);
 
-    lexy::parse_context<decltype(input), test_handler<Callback, CharT>> context(input, str);
-    lexy::production_context prod_ctx(context, test_production{}, reader.cur());
+    using handler_t = test_handler<Callback, CharT>;
+    using context_t = lexy::parse_context<test_production, decltype(input), handler_t>;
 
-    auto result = lexy::rule_parser<Rule, test_final_parser>::parse(prod_ctx, reader);
+    auto      handler = handler_t{str};
+    auto      reader  = input.reader();
+    context_t context(handler, input, reader.cur());
+
+    using rule  = decltype(_rule + test_final_rule{});
+    auto result = lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
     if (result)
         return result.value();
     else

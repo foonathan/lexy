@@ -50,14 +50,14 @@ struct _validate_handler
 template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
 {
-    using context_t = lexy::parse_context<Input, lexy::_validate_handler<Callback>>;
-    context_t context(input, LEXY_MOV(callback));
+    using context_t = lexy::parse_context<Production, Input, _validate_handler<Callback>>;
 
-    auto                     reader = input.reader();
-    lexy::production_context prod_ctx(context, Production{}, reader.cur());
+    auto      handler = _validate_handler<Callback>{LEXY_MOV(callback)};
+    auto      reader  = input.reader();
+    context_t context(handler, input, reader.cur());
 
     using rule = typename lexy::production_traits<Production>::rule::type;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(prod_ctx, reader);
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
 }
 } // namespace lexy
 
