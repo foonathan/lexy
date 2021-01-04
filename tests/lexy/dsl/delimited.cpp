@@ -173,19 +173,21 @@ TEST_CASE("dsl::delimited()")
 
 TEST_CASE("predefined dsl::delimited")
 {
-    constexpr auto cp = lexy::dsl::ascii::character;
+    constexpr auto quoted_equivalent = lexy::dsl::delimited(LEXY_LIT("\""));
+    CHECK(std::is_same_v<decltype(lexy::dsl::quoted), decltype(quoted_equivalent)>);
+    constexpr auto triple_quoted_equivalent = lexy::dsl::delimited(LEXY_LIT("\"\"\""));
+    CHECK(std::is_same_v<decltype(lexy::dsl::triple_quoted), decltype(triple_quoted_equivalent)>);
+    constexpr auto single_quoted_equivalent = lexy::dsl::delimited(LEXY_LIT("'"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::single_quoted), decltype(single_quoted_equivalent)>);
 
-    CHECK(lexy::match(lexy::zstring_input(R"("abc")"), lexy::dsl::quoted(cp) + lexy::dsl::eof));
-    CHECK(lexy::match(lexy::zstring_input(R"("""abc""")"),
-                      lexy::dsl::triple_quoted(cp) + lexy::dsl::eof));
-    CHECK(lexy::match(lexy::zstring_input(R"('abc')"),
-                      lexy::dsl::single_quoted(cp) + lexy::dsl::eof));
-
-    CHECK(lexy::match(lexy::zstring_input("`abc`"), lexy::dsl::backticked(cp) + lexy::dsl::eof));
-    CHECK(lexy::match(lexy::zstring_input("``abc``"),
-                      lexy::dsl::double_backticked(cp) + lexy::dsl::eof));
-    CHECK(lexy::match(lexy::zstring_input("```abc```"),
-                      lexy::dsl::triple_backticked(cp) + lexy::dsl::eof));
+    constexpr auto backticked_equivalent = lexy::dsl::delimited(LEXY_LIT("`"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::backticked), decltype(backticked_equivalent)>);
+    constexpr auto double_backticked_equivalent = lexy::dsl::delimited(LEXY_LIT("``"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::double_backticked),
+                         decltype(double_backticked_equivalent)>);
+    constexpr auto triple_backticked_equivalent = lexy::dsl::delimited(LEXY_LIT("```"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::triple_backticked),
+                         decltype(triple_backticked_equivalent)>);
 }
 
 TEST_CASE("dsl::delimited with escape")
@@ -470,7 +472,10 @@ TEST_CASE("dsl::escape")
 
 TEST_CASE("predefined escapes")
 {
-    CHECK(lexy::match(lexy::zstring_input("\\"), lexy::dsl::backslash_escape));
-    CHECK(lexy::match(lexy::zstring_input("$"), lexy::dsl::dollar_escape));
+    constexpr auto backslash_equivalent = lexy::dsl::escape(LEXY_LIT("\\"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::backslash_escape), decltype(backslash_equivalent)>);
+
+    constexpr auto dollar_equivalent = lexy::dsl::escape(LEXY_LIT("$"));
+    CHECK(std::is_same_v<decltype(lexy::dsl::dollar_escape), decltype(dollar_equivalent)>);
 }
 

@@ -59,13 +59,6 @@ LEXY_FORCE_INLINE constexpr bool _match_impl(Reader& reader, Rule)
     return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(prod_ctx, reader).has_value();
 }
 
-template <typename Input, typename Rule, typename = std::enable_if_t<is_rule<Rule>>>
-LEXY_FORCE_INLINE constexpr bool match(const Input& input, Rule rule)
-{
-    auto reader = input.reader();
-    return _match_impl(reader, rule);
-}
-
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {

@@ -9,55 +9,39 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/input/string_input.hpp>
 
+namespace
+{
+struct production
+{
+    static constexpr auto rule = list(LEXY_LIT("abc"));
+};
+} // namespace
+
 TEST_CASE("match")
 {
-    SUBCASE("pattern")
+    SUBCASE("match one")
     {
-        SUBCASE("match")
-        {
-            auto input  = lexy::zstring_input("abc");
-            auto result = lexy::match(input, LEXY_LIT("abc"));
-            CHECK(result);
-        }
-        SUBCASE("no match")
-        {
-            auto input  = lexy::zstring_input("def");
-            auto result = lexy::match(input, LEXY_LIT("abc"));
-            CHECK(!result);
-        }
-        SUBCASE("partial match")
-        {
-            auto input  = lexy::zstring_input("abc123");
-            auto result = lexy::match(input, LEXY_LIT("abc"));
-            CHECK(result);
-        }
+        auto input  = lexy::zstring_input("abc");
+        auto result = lexy::match<production>(input);
+        CHECK(result);
     }
-    SUBCASE("rule")
+    SUBCASE("match twice")
     {
-        SUBCASE("match one")
-        {
-            auto input  = lexy::zstring_input("abc");
-            auto result = lexy::match(input, list(LEXY_LIT("abc")));
-            CHECK(result);
-        }
-        SUBCASE("match twice")
-        {
-            auto input  = lexy::zstring_input("abcabc");
-            auto result = lexy::match(input, list(LEXY_LIT("abc")));
-            CHECK(result);
-        }
-        SUBCASE("no match")
-        {
-            auto input  = lexy::zstring_input("def");
-            auto result = lexy::match(input, list(LEXY_LIT("abc")));
-            CHECK(!result);
-        }
-        SUBCASE("partial match")
-        {
-            auto input  = lexy::zstring_input("abc123");
-            auto result = lexy::match(input, list(LEXY_LIT("abc")));
-            CHECK(result);
-        }
+        auto input  = lexy::zstring_input("abcabc");
+        auto result = lexy::match<production>(input);
+        CHECK(result);
+    }
+    SUBCASE("no match")
+    {
+        auto input  = lexy::zstring_input("def");
+        auto result = lexy::match<production>(input);
+        CHECK(!result);
+    }
+    SUBCASE("partial match")
+    {
+        auto input  = lexy::zstring_input("abc123");
+        auto result = lexy::match<production>(input);
+        CHECK(result);
     }
 }
 

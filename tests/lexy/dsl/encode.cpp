@@ -4,120 +4,160 @@
 
 #include <lexy/dsl/encode.hpp>
 
-#include <doctest/doctest.h>
-#include <lexy/dsl/eof.hpp>
-#include <lexy/dsl/literal.hpp>
-#include <lexy/input/string_input.hpp>
-#include <lexy/match.hpp>
+// Maybe because of this issue here?
+// I don't know, in either case - just disable it.
+// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
+#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
+#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
+#endif
+
+#include "verify.hpp"
+
+namespace
+{
+struct callback
+{
+    const unsigned char* str;
+
+    LEXY_VERIFY_FN int success(const unsigned char* cur)
+    {
+        return int(cur - str);
+    }
+
+    template <typename Reader>
+    LEXY_VERIFY_FN int error(lexy::error<Reader, lexy::expected_literal>)
+    {
+        return -1;
+    }
+};
+
+} // namespace
 
 TEST_CASE("dsl::encoded")
 {
     SUBCASE("ASCII")
     {
-        constexpr auto        encode = lexy::dsl::encode<lexy::ascii_encoding>;
-        static constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
+        static constexpr unsigned char input[] = {'a', 'b', 'c'};
+        static constexpr auto rule = lexy::dsl::encode<lexy::ascii_encoding>(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(lexy::match(lexy::zstring_input<lexy::raw_encoding>("abc"), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto abc = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 3);
+        CHECK(abc == 3);
     }
-    SUBCASE("UTF-8, bom")
+    SUBCASE("UTF-8")
     {
-        constexpr auto        encode = lexy::dsl::encode<lexy::utf8_encoding>;
-        static constexpr auto rule   = encode(LEXY_LIT("abc")) + lexy::dsl::eof;
+        static constexpr unsigned char input[] = {0xEF, 0xBB, 0xBF, 'a', 'b', 'c'};
+        static constexpr auto rule = lexy::dsl::encode<lexy::utf8_encoding>(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char input[] = {0xEF, 0xBB, 0xBF, 'a', 'b', 'c'};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input + 3, 3), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input, 6), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input + 3, 3);
+        CHECK(no_bom == 3);
+        auto bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 6);
+        CHECK(bom == 6);
     }
-    SUBCASE("utf16, little")
+    SUBCASE("UTF-16, little")
     {
-        constexpr auto encode
+        static constexpr unsigned char input[] = {0xBB, 0xAA};
+
+        static constexpr auto encode
             = lexy::dsl::encode<lexy::utf16_encoding, lexy::encoding_endianness::little>;
-        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char input[] = {0xBB, 0xAA};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 1), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input, 2), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        CHECK(no_bom == 2);
     }
-    SUBCASE("utf16, big")
+    SUBCASE("UTF-16, big")
     {
-        constexpr auto encode
+        static constexpr unsigned char input[] = {0xAA, 0xBB};
+
+        static constexpr auto encode
             = lexy::dsl::encode<lexy::utf16_encoding, lexy::encoding_endianness::big>;
-        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char input[] = {0xAA, 0xBB};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 1), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input, 2), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        CHECK(no_bom == 2);
     }
-    SUBCASE("utf16, bom")
+    SUBCASE("UTF-16, bom")
     {
-        constexpr auto        encode = lexy::dsl::encode<lexy::utf16_encoding>;
-        static constexpr auto rule   = encode(LEXY_LIT(u"\uAABB")) + lexy::dsl::eof;
+        static constexpr unsigned char input[]        = {0xAA, 0xBB};
+        static constexpr unsigned char input_little[] = {0xFF, 0xFE, 0xBB, 0xAA};
+        static constexpr unsigned char input_big[]    = {0xFE, 0xFF, 0xAA, 0xBB};
+
+        static constexpr auto encode
+            = lexy::dsl::encode<lexy::utf16_encoding, lexy::encoding_endianness::bom>;
+        static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char no_bom[] = {0xAA, 0xBB};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 1), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 2), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        CHECK(no_bom == 2);
 
-        unsigned char little_bom[] = {0xFF, 0xFE, 0xBB, 0xAA};
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(little_bom, 4), rule));
-        unsigned char big_bom[] = {0xFE, 0xFF, 0xAA, 0xBB};
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(big_bom, 4), rule));
+        auto bom_little = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_little, 4);
+        CHECK(bom_little == 4);
+        auto bom_big = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_big, 4);
+        CHECK(bom_big == 4);
     }
-    SUBCASE("utf32, little")
+    SUBCASE("UTF-32, little")
     {
-        constexpr auto encode
+        static constexpr unsigned char input[] = {0xBB, 0xAA, 0x00, 0x00};
+
+        static constexpr auto encode
             = lexy::dsl::encode<lexy::utf32_encoding, lexy::encoding_endianness::little>;
-        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char input[] = {0xBB, 0xAA, 0x00, 0x00};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 1), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 2), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 3), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input, 4), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        CHECK(no_bom == 4);
     }
-    SUBCASE("utf32, big")
+    SUBCASE("UTF-32, big")
     {
-        constexpr auto encode
+        static constexpr unsigned char input[] = {0x00, 0x00, 0xAA, 0xBB};
+
+        static constexpr auto encode
             = lexy::dsl::encode<lexy::utf32_encoding, lexy::encoding_endianness::big>;
-        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char input[] = {0x00, 0x00, 0xAA, 0xBB};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 1), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 2), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(input, 3), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(input, 4), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        CHECK(no_bom == 4);
     }
-    SUBCASE("utf32, bom")
+    SUBCASE("UTF-32, bom")
     {
-        constexpr auto        encode = lexy::dsl::encode<lexy::utf32_encoding>;
-        static constexpr auto rule   = encode(LEXY_LIT(U"\uAABB")) + lexy::dsl::eof;
+        static constexpr unsigned char input[] = {0x00, 0x00, 0xAA, 0xBB};
+        static constexpr unsigned char input_little[]
+            = {0xFF, 0xFE, 0x00, 0x00, 0xBB, 0xAA, 0x00, 0x00};
+        static constexpr unsigned char input_big[]
+            = {0x00, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0xAA, 0xBB};
+
+        static constexpr auto encode
+            = lexy::dsl::encode<lexy::utf32_encoding, lexy::encoding_endianness::bom>;
+        static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        unsigned char no_bom[] = {0x00, 0x00, 0xAA, 0xBB};
-        CHECK(!lexy::match(lexy::zstring_input<lexy::raw_encoding>(""), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 1), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 2), rule));
-        CHECK(!lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 3), rule));
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(no_bom, 4), rule));
+        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        CHECK(empty == -1);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        CHECK(no_bom == 4);
 
-        unsigned char little_bom[] = {0xFF, 0xFE, 0x00, 0x00, 0xBB, 0xAA, 0x00, 0x00};
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(little_bom, 8), rule));
-
-        unsigned char big_bom[] = {0x00, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0xAA, 0xBB};
-        CHECK(lexy::match(lexy::string_input<lexy::raw_encoding>(big_bom, 8), rule));
+        auto bom_little = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_little, 8);
+        CHECK(bom_little == 8);
+        auto bom_big = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_big, 8);
+        CHECK(bom_big == 8);
     }
 }
 

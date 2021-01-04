@@ -101,7 +101,7 @@ struct _whlt : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            lexy::branch_matcher<Terminator, Reader> term;
+            lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser>;

@@ -4,114 +4,173 @@
 
 #include <lexy/dsl/terminator.hpp>
 
-#include <doctest/doctest.h>
-#include <lexy/dsl/eof.hpp>
-#include <lexy/dsl/label.hpp>
+#include "verify.hpp"
 #include <lexy/dsl/list.hpp>
-#include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/option.hpp>
-#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/while.hpp>
-#include <lexy/input/string_input.hpp>
-#include <lexy/match.hpp>
 
 TEST_CASE("dsl::terminator")
 {
     constexpr auto terminator = lexy::dsl::terminator(LEXY_LIT(";"));
-    // We want to make sure that inner does not have a matcher.
-    constexpr auto inner = LEXY_LIT("abc") + lexy::dsl::id<0>;
+    constexpr auto inner      = LEXY_LIT("abc");
+
+    struct callback
+    {
+        const char* str;
+
+        LEXY_VERIFY_FN auto list()
+        {
+            struct b
+            {
+                using return_type = void;
+
+                LEXY_VERIFY_FN void operator()() {}
+
+                LEXY_VERIFY_FN void finish() && {}
+            };
+            return b{};
+        }
+
+        LEXY_VERIFY_FN int success(const char* cur)
+        {
+            return int(cur - str);
+        }
+        LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
+        {
+            return int(cur - str);
+        }
+
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
+        {
+            return -1;
+        }
+    };
+
+    SUBCASE("basic")
+    {
+        static constexpr auto rule       = terminator(inner);
+        constexpr auto        equivalent = inner + LEXY_LIT(";");
+        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
+
+        auto result = LEXY_VERIFY("abc;");
+        CHECK(result == 4);
+    }
 
     SUBCASE("whitespace")
     {
-        constexpr auto result     = terminator[LEXY_LIT(" ")](inner);
-        constexpr auto equivalent = inner + whitespaced(LEXY_LIT(";"), LEXY_LIT(" "));
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        static constexpr auto rule       = terminator[LEXY_LIT(" ")](inner);
+        constexpr auto        equivalent = inner + whitespaced(LEXY_LIT(";"), LEXY_LIT(" "));
+        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
 
-        CHECK(lexy::match(lexy::zstring_input("abc ;"), result + lexy::dsl::eof));
+        auto result = LEXY_VERIFY("abc ;");
+        CHECK(result == 5);
     }
 
     SUBCASE("while")
     {
-        constexpr auto result = terminator.while_(token(inner));
+        static constexpr auto rule = terminator.while_(inner);
 
-        CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abcabc;"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abcabcabc;"), result + lexy::dsl::eof));
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abcabc;");
+        CHECK(two == 7);
     }
     SUBCASE("while_one")
     {
-        constexpr auto result = terminator.while_one(token(inner));
+        static constexpr auto rule = terminator.while_one(inner);
 
-        CHECK(!lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abcabc;"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abcabcabc;"), result + lexy::dsl::eof));
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abcabc;");
+        CHECK(two == 7);
     }
     SUBCASE("opt")
     {
-        constexpr auto result = terminator.opt(inner);
+        static constexpr auto rule = terminator.opt(inner);
 
-        CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-        CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
     }
-    SUBCASE("list")
+    SUBCASE("list - no sep")
     {
-        SUBCASE("no sep")
-        {
-            constexpr auto result = terminator.list(inner);
+        static constexpr auto rule = terminator.list(inner);
 
-            CHECK(!lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abcabc;"), result + lexy::dsl::eof));
-        }
-        SUBCASE("sep")
-        {
-            constexpr auto result = terminator.list(inner, sep(LEXY_LIT(",")));
-
-            CHECK(!lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc;"), result + lexy::dsl::eof));
-            CHECK(!lexy::match(lexy::zstring_input("abc,abc,;"), result + lexy::dsl::eof));
-        }
-        SUBCASE("trailing sep")
-        {
-            constexpr auto result = terminator.list(inner, trailing_sep(LEXY_LIT(",")));
-
-            CHECK(!lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc,;"), result + lexy::dsl::eof));
-        }
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abcabc;");
+        CHECK(two == 7);
     }
-    SUBCASE("opt_list")
+    SUBCASE("list - sep")
     {
-        SUBCASE("no sep")
-        {
-            constexpr auto result = terminator.opt_list(inner);
+        static constexpr auto rule = terminator.list(inner, lexy::dsl::sep(LEXY_LIT(",")));
 
-            CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abcabc;"), result + lexy::dsl::eof));
-        }
-        SUBCASE("sep")
-        {
-            constexpr auto result = terminator.opt_list(inner, sep(LEXY_LIT(",")));
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == -1);
+    }
+    SUBCASE("list - trailing sep")
+    {
+        static constexpr auto rule = terminator.list(inner, lexy::dsl::trailing_sep(LEXY_LIT(",")));
 
-            CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc;"), result + lexy::dsl::eof));
-            CHECK(!lexy::match(lexy::zstring_input("abc,abc,;"), result + lexy::dsl::eof));
-        }
-        SUBCASE("trailing sep")
-        {
-            constexpr auto result = terminator.opt_list(inner, trailing_sep(LEXY_LIT(",")));
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == 9);
+    }
+    SUBCASE("opt_list - no sep")
+    {
+        static constexpr auto rule = terminator.opt_list(inner);
 
-            CHECK(lexy::match(lexy::zstring_input(";"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc;"), result + lexy::dsl::eof));
-            CHECK(lexy::match(lexy::zstring_input("abc,abc,;"), result + lexy::dsl::eof));
-        }
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abcabc;");
+        CHECK(two == 7);
+    }
+    SUBCASE("opt_list - sep")
+    {
+        static constexpr auto rule = terminator.opt_list(inner, lexy::dsl::sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == -1);
+    }
+    SUBCASE("opt_list - trailing sep")
+    {
+        static constexpr auto rule
+            = terminator.opt_list(inner, lexy::dsl::trailing_sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == 9);
     }
 }
 

@@ -5,7 +5,6 @@
 #include <lexy/dsl/while.hpp>
 
 #include "verify.hpp"
-#include <lexy/match.hpp>
 
 TEST_CASE("dsl::while_()")
 {
@@ -156,10 +155,6 @@ TEST_CASE("dsl::while_one()")
         constexpr auto equivalent
             = LEXY_LIT("a") >> LEXY_LIT("bc") + while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
         CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
-
-        CHECK(!lexy::match(lexy::zstring_input(""), result));
-        CHECK(lexy::match(lexy::zstring_input("abc"), result));
-        CHECK(lexy::match(lexy::zstring_input("abcabc"), result));
     }
 }
 
@@ -168,10 +163,5 @@ TEST_CASE("dsl::do_while()")
     constexpr auto result     = do_while(LEXY_LIT("a"), LEXY_LIT("b"));
     constexpr auto equivalent = LEXY_LIT("a") >> while_(LEXY_LIT("b") >> LEXY_LIT("a"));
     CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
-
-    CHECK(!lexy::match(lexy::zstring_input(""), result));
-    CHECK(lexy::match(lexy::zstring_input("a"), result));
-    CHECK(lexy::match(lexy::zstring_input("aba"), result));
-    CHECK(lexy::match(lexy::zstring_input("ababa"), result));
 }
 
