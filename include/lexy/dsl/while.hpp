@@ -7,8 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/loop.hpp>
 
 namespace lexyd
 {
@@ -39,26 +37,12 @@ struct _whl : rule_base
     };
 };
 
-template <typename... R>
-struct _whlc : rule_base
-{
-    using _choice = _chc<R...>;
-
-    template <typename NextParser>
-    using parser = lexy::rule_parser<decltype(loop(_choice{} | break_)), NextParser>;
-};
-
 /// Matches the branch rule as often as possible.
 template <typename Rule>
 LEXY_CONSTEVAL auto while_(Rule)
 {
     static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
     return _whl<Rule>{};
-}
-template <typename... R>
-LEXY_CONSTEVAL auto while_(_chc<R...>)
-{
-    return _whlc<R...>{};
 }
 } // namespace lexyd
 
@@ -68,10 +52,8 @@ namespace lexyd
 template <typename Rule>
 LEXY_CONSTEVAL auto while_one(Rule rule)
 {
-    if constexpr (lexy::is_branch<Rule>)
-        return rule >> while_(rule);
-    else
-        return rule + while_(rule);
+    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
+    return rule >> while_(rule);
 }
 } // namespace lexyd
 

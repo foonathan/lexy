@@ -37,7 +37,6 @@ TEST_CASE("dsl::while_()")
         auto partial = LEXY_VERIFY("abcab");
         CHECK(partial == 1);
     }
-
     SUBCASE("branch")
     {
         static constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
@@ -68,42 +67,6 @@ TEST_CASE("dsl::while_()")
         auto two = LEXY_VERIFY("abcabc");
         CHECK(two == 2);
         auto three = LEXY_VERIFY("abcabcabc");
-        CHECK(three == 3);
-
-        auto partial = LEXY_VERIFY("abcab");
-        CHECK(partial == -1);
-    }
-
-    SUBCASE("choice")
-    {
-        static constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc") | LEXY_LIT("bbc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
-                return int(cur - str) / 3;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == "bc");
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abcbbc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("bbcabcabc");
         CHECK(three == 3);
 
         auto partial = LEXY_VERIFY("abcab");

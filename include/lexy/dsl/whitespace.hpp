@@ -7,13 +7,14 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/dsl/while.hpp>
 
 namespace lexyd
 {
 template <typename Rule, typename Whitespace>
-struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
+struct _ws : decltype(loop(token(Whitespace{}) | break_) + Rule{})
 {
     static constexpr bool is_branch = lexy::is_branch<Rule>;
 
@@ -26,7 +27,7 @@ struct _ws : decltype(while_(token(Whitespace{})) + Rule{})
 
         constexpr bool match(Reader& reader)
         {
-            using ws = decltype(token(while_(Whitespace{})));
+            using ws = decltype(token(loop(Whitespace{} | break_)));
             lexy::engine_try_match<typename ws::token_engine>(reader);
             return _impl.match(reader);
         }

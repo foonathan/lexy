@@ -78,7 +78,8 @@ constexpr auto atext = dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / L
                        / LEXY_LIT("`") / LEXY_LIT("{") / LEXY_LIT("|") / LEXY_LIT("}");
 
 // Text of the specified characters surrounded by whitespace.
-constexpr auto atom = dsl::while_(ws) + dsl::capture(dsl::while_one(atext)) + dsl::while_(ws);
+constexpr auto atom = dsl::loop(ws | dsl::break_) + dsl::capture(dsl::while_one(atext))
+                      + dsl::loop(ws | dsl::break_);
 
 struct dot_atom
 {

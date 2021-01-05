@@ -934,41 +934,15 @@ Errors::
 
 WARNING: If the branch does not consume any characters, `while_` will loop forever.
 
-'''
-
-.`lexy/dsl/while.hpp`
-----
-while_(choice)         : Rule = loop(choice | else_ >> break_)
-----
-
-This version of the `while_` rule repeatedly matches a choice as long as one branch matches.
-
-[horizontal]
-Requires::
-  `choice` most not produce any values.
-Matches::
-  While one branch condition of the choice matches, consumes it and the rest of the branch.
-  If no branch matches anymore, succeeds without consuming additional input.
-Values::
-  No values are produced.
-Errors::
-  The rule can only fail if the then of one of the choice branches fails.
-  Then it will raise its error unchanged.
-
-WARNING: If the choice has an else branch already, it will loop until an error is raised.
-
 [discrete]
 ==== `lexy::dsl::while_one()`
 
 .`lexy/dsl/while.hpp`
 ----
-while_one(rule)    : Rule    = rule + while_(rule)
 while_one(branch)  : Branch  = branch >> while_(branch)
-while_one(token)   : Token
 ----
 
 The `while_one` rule matches a rule one or more times.
-It is a token if it is given a token.
 
 [discrete]
 ==== `lexy::dsl::do_while()`
