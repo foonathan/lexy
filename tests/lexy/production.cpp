@@ -20,13 +20,12 @@ struct prod
 };
 } // namespace
 
-TEST_CASE("production_traits")
+TEST_CASE("production traits")
 {
-    using traits = lexy::production_traits<prod>;
-    CHECK(traits::name() == "prod");
+    CHECK(lexy::production_name<prod>() == "prod");
 
-    CHECK(std::is_same_v<const traits::rule::type, decltype(lexy::dsl::any)>);
-    CHECK(std::is_same_v<const traits::value::type, decltype(lexy::noop)>);
+    CHECK(std::is_same_v<const lexy::production_rule<prod>, decltype(lexy::dsl::any)>);
+    CHECK(std::is_same_v<const lexy::production_value<prod>::type, decltype(lexy::noop)>);
 }
 
 namespace
@@ -42,17 +41,17 @@ struct prod_list_value
 };
 } // namespace
 
-TEST_CASE("production_traits deprecated")
+TEST_CASE("production traits deprecated")
 {
     SUBCASE("list")
     {
-        using traits = lexy::production_traits<prod_list>;
-        CHECK(std::is_same_v<const traits::value::type, decltype(lexy::noop)>);
+        using traits = lexy::production_value<prod_list>;
+        CHECK(std::is_same_v<const traits::type, decltype(lexy::noop)>);
     }
     SUBCASE("list + value")
     {
-        using traits = lexy::production_traits<prod_list_value>;
-        CHECK(std::is_same_v<traits::value::type, decltype(lexy::noop >> lexy::noop)>);
+        using traits = lexy::production_value<prod_list_value>;
+        CHECK(std::is_same_v<traits::type, decltype(lexy::noop >> lexy::noop)>);
     }
 }
 

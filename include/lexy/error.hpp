@@ -152,7 +152,7 @@ public:
     // The name of the production where the error occurred.
     static LEXY_CONSTEVAL auto production()
     {
-        return production_traits<Production>::name();
+        return production_name<Production>();
     }
 
     // The starting position of the production.

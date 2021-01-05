@@ -42,7 +42,7 @@ struct _prd_parser
 template <typename Production>
 struct _prd : rule_base
 {
-    using _rule = typename lexy::production_traits<Production>::rule::type;
+    using _rule = lexy::production_rule<Production>;
 
     static constexpr bool is_branch = lexy::is_branch<_rule>;
 
@@ -93,8 +93,7 @@ template <typename Production>
 struct _rec : rule_base
 {
     template <typename NextParser>
-    struct parser
-    : _prd_parser<Production, typename lexy::production_traits<Production>::rule::type, NextParser>
+    struct parser : _prd_parser<Production, lexy::production_rule<Production>, NextParser>
     {};
 
     template <typename Whitespace>

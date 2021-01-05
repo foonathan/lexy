@@ -48,7 +48,7 @@ constexpr bool match(const Input& input)
     auto      reader  = input.reader();
     context_t context(handler, input, reader.cur());
 
-    using rule = typename lexy::production_traits<Production>::rule::type;
+    using rule = lexy::production_rule<Production>;
     return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader).has_value();
 }
 } // namespace lexy

@@ -30,7 +30,7 @@ struct _parse_handler
     template <typename Production>
     static auto _value_cb()
     {
-        using value = typename lexy::production_traits<Production>::value;
+        using value = lexy::production_value<Production>;
         if constexpr (lexy::is_callback<typename value::type>)
             return value::get;
         else
@@ -44,7 +44,7 @@ struct _parse_handler
     template <typename Production>
     constexpr auto sink(Production)
     {
-        return lexy::production_traits<Production>::value::get.sink();
+        return lexy::production_value<Production>::get.sink();
     }
 
     template <typename Production, typename Iterator>
@@ -55,7 +55,7 @@ struct _parse_handler
     constexpr result_type_for<Production> finish_production(Production, Args&&... args)
     {
         using result_type = result_type_for<Production>;
-        using value       = typename lexy::production_traits<Production>::value;
+        using value       = typename lexy::production_value<Production>;
 
         if constexpr (lexy::is_callback_for<typename value::type, Args&&...>)
         {
@@ -105,7 +105,7 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
     auto      reader  = input.reader();
     context_t context(handler, input, reader.cur());
 
-    using rule = typename lexy::production_traits<Production>::rule::type;
+    using rule = lexy::production_rule<Production>;
     return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
 }
 

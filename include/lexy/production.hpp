@@ -65,24 +65,19 @@ struct _prod_value<Production, false, false>
 namespace lexy
 {
 template <typename Production>
-struct production_traits
+LEXY_CONSTEVAL auto production_name()
 {
-    static LEXY_CONSTEVAL auto name()
-    {
-        return _detail::type_name<Production>();
-    }
+    return _detail::type_name<Production>();
+}
 
-    struct rule
-    {
-        static constexpr auto get = Production::rule;
-        using type                = std::decay_t<decltype(get)>;
-    };
+template <typename Production>
+using production_rule = std::decay_t<decltype(Production::rule)>;
 
-    struct value
-    {
-        static constexpr auto get = _prod_value<Production>::get;
-        using type                = std::decay_t<decltype(get)>;
-    };
+template <typename Production>
+struct production_value
+{
+    static constexpr auto get = _prod_value<Production>::get;
+    using type                = std::decay_t<decltype(get)>;
 };
 } // namespace lexy
 
