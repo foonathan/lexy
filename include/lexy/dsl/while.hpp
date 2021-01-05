@@ -45,7 +45,7 @@ struct _whlc : rule_base
     using _choice = _chc<R...>;
 
     template <typename NextParser>
-    using parser = lexy::rule_parser<decltype(loop(_choice{} | else_ >> break_)), NextParser>;
+    using parser = lexy::rule_parser<decltype(loop(_choice{} | break_)), NextParser>;
 };
 
 /// Matches the branch rule as often as possible.

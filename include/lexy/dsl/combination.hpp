@@ -58,7 +58,7 @@ struct _comb : rule_base
     static auto _comb_choice_(lexy::_detail::index_sequence<Idx...>)
     {
         if constexpr (Partial)
-            return (id<Idx>(R{}) | ... | (else_ >> break_));
+            return (id<Idx>(R{}) | ... | break_);
         else
             return (id<Idx>(R{}) | ...);
     }
