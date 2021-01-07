@@ -17,23 +17,28 @@ struct _match_handler
     using result_type_for = lexy::result<void, void>;
 
     template <typename Production>
-    constexpr auto sink(Production)
+    constexpr auto get_sink(Production)
     {
         return noop.sink();
     }
 
+    struct state
+    {};
+
     template <typename Production, typename Iterator>
-    constexpr void start_production(Production, Iterator)
-    {}
+    constexpr state start_production(Production, Iterator)
+    {
+        return {};
+    }
 
     template <typename Production, typename... Args>
-    constexpr auto finish_production(Production, Args&&...)
+    constexpr auto finish_production(Production, state, Args&&...)
     {
         return result_type_for<Production>(lexy::result_value);
     }
 
-    template <typename Production, typename Input, typename Error>
-    constexpr auto error(lexy::error_context<Production, Input>&&, Error&&)
+    template <typename Production, typename Error>
+    constexpr auto error(Production, state, Error&&)
     {
         return result_type_for<Production>(lexy::result_error);
     }
@@ -42,11 +47,9 @@ struct _match_handler
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    using context_t = lexy::parse_context<Production, Input, _match_handler>;
-
-    auto      handler = _match_handler{};
-    auto      reader  = input.reader();
-    context_t context(handler, input, reader.cur());
+    auto                handler = _match_handler{};
+    auto                reader  = input.reader();
+    lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
     return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader).has_value();

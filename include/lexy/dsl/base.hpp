@@ -135,93 +135,57 @@ struct token_base : _token_base
 //=== parse_context ===//
 namespace lexy
 {
-struct _no_context_state
-{};
-
 /// Stores contextual information for parsing the given production.
-template <typename Production, typename Input, typename Handler>
+template <typename Production, typename Handler, typename HandlerState>
 class parse_context
 {
-    using _iterator = typename input_reader<Input>::iterator;
-
-    static constexpr auto _start_production(Handler& handler, _iterator pos)
-    {
-        if constexpr (std::is_void_v<decltype(handler.start_production(Production{}, pos))>)
-        {
-            handler.start_production(Production{}, pos);
-            return _no_context_state{};
-        }
-        else
-        {
-            return handler.start_production(Production{}, pos);
-        }
-    }
-
-    using _handler_state_t = decltype(_start_production(LEXY_DECLVAL(Handler&), _iterator()));
-
 public:
-    constexpr explicit parse_context(Handler& handler, const Input& input,
-                                     _iterator current_position)
-    : _handler(&handler), _handler_state(_start_production(*_handler, current_position)),
-      _error_context(input, current_position)
+    template <typename Iterator>
+    constexpr explicit parse_context(Production p, Handler& handler, Iterator begin)
+    : _handler(&handler), _state(_handler->start_production(p, begin))
     {}
 
-    template <typename ParentProd>
-    constexpr explicit parse_context(parse_context<ParentProd, Input, Handler>& context, Production,
-                                     _iterator                                  current_position)
-    : parse_context(context.handler(), context.input(), current_position)
-    {}
-
-    parse_context(parse_context&&) = default;
-    parse_context& operator=(parse_context&&) = default;
-
-    parse_context(const parse_context&) = delete;
-    parse_context& operator=(const parse_context&) = delete;
-
-    constexpr Handler& handler() const
+    constexpr Handler& handler() const noexcept
     {
         return *_handler;
     }
 
-    constexpr const Input& input() const
+    template <typename ChildProduction, typename Iterator>
+    constexpr auto production_context(ChildProduction p, Iterator position) const
     {
-        return _error_context.input();
+        using state_t   = decltype(_handler->start_production(p, position));
+        using context_t = parse_context<ChildProduction, Handler, state_t>;
+        return context_t(p, *_handler, position);
     }
 
-    //=== handler interface wrapper ===//
     using production  = Production;
     using result_type = typename Handler::template result_type_for<Production>;
 
     constexpr auto sink() const
     {
-        return _handler->sink(Production{});
+        return _handler->get_sink(Production{});
     }
 
     template <typename Error>
     constexpr result_type error(Error&& error) &&
     {
-        return _handler->error(LEXY_MOV(_error_context), LEXY_FWD(error));
+        return _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
     }
 
     template <typename... Args>
     constexpr result_type value(Args&&... args) &&
     {
-        if constexpr (std::is_same_v<_handler_state_t, _no_context_state>)
-            return _handler->finish_production(Production{}, LEXY_FWD(args)...);
-        else
-            return _handler->finish_production(LEXY_MOV(_handler_state), Production{},
-                                               LEXY_FWD(args)...);
+        return _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
     }
 
 private:
-    Handler*                               _handler;
-    LEXY_EMPTY_MEMBER _handler_state_t     _handler_state;
-    lexy::error_context<Production, Input> _error_context;
+    Handler*                       _handler;
+    LEXY_EMPTY_MEMBER HandlerState _state;
 };
 
-template <typename Parent, typename Input, typename Handler, typename Production, typename Iter>
-parse_context(parse_context<Parent, Input, Handler>&, Production, Iter)
-    -> parse_context<Production, Input, Handler>;
+template <typename Production, typename Handler, typename Iterator>
+parse_context(Production p, Handler& handler, Iterator position)
+    -> parse_context<Production, Handler, decltype(handler.start_production(p, position))>;
 
 /// A final parser that forwards all elements to the context.
 struct context_value_parser

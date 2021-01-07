@@ -37,23 +37,8 @@ struct _token : token_base<_token<Rule>>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            // We need something that models the input concept.
-            // It doesn't really matter as it's only used for error reporting.
-            struct input_t
-            {
-                Reader _reader;
-
-                constexpr Reader reader() const&
-                {
-                    return _reader;
-                }
-            };
-            using context_t
-                = lexy::parse_context<_token_dummy_production, input_t, lexy::_match_handler>;
-
-            auto      handler = lexy::_match_handler{};
-            auto      input   = input_t{reader};
-            context_t context(handler, input, reader.cur());
+            auto                handler = lexy::_match_handler{};
+            lexy::parse_context context(_token_dummy_production{}, handler, reader.cur());
 
             return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader)
                        ? error_code()

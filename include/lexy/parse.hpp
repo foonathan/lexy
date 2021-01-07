@@ -21,9 +21,10 @@ constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
 constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
-template <typename State, typename Callback>
+template <typename Input, typename State, typename Callback>
 struct _parse_handler
 {
+    const Input*               _input;
     State&                     _state;
     LEXY_EMPTY_MEMBER Callback _callback;
 
@@ -42,17 +43,19 @@ struct _parse_handler
                                          typename Callback::return_type>;
 
     template <typename Production>
-    constexpr auto sink(Production)
+    constexpr auto get_sink(Production)
     {
         return lexy::production_value<Production>::get.sink();
     }
 
     template <typename Production, typename Iterator>
-    constexpr void start_production(Production, Iterator)
-    {}
+    constexpr auto start_production(Production, Iterator pos)
+    {
+        return pos;
+    }
 
-    template <typename Production, typename... Args>
-    constexpr result_type_for<Production> finish_production(Production, Args&&... args)
+    template <typename Production, typename Iterator, typename... Args>
+    constexpr auto finish_production(Production, Iterator, Args&&... args)
     {
         using result_type = result_type_for<Production>;
         using value       = typename lexy::production_value<Production>;
@@ -80,30 +83,29 @@ struct _parse_handler
         }
     }
 
-    template <typename Production, typename Input, typename Error>
-    constexpr auto error(lexy::error_context<Production, Input>&& err_ctx, Error&& error)
+    template <typename Production, typename Iterator, typename Error>
+    constexpr auto error(Production p, Iterator pos, Error&& error)
     {
+        lexy::error_context err_ctx(p, *_input, pos);
         return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
-                                                                   LEXY_FWD(err_ctx),
-                                                                   LEXY_FWD(error));
+                                                                   err_ctx, LEXY_FWD(error));
     }
 };
 
 template <typename T>
 constexpr bool _is_parse_handler = false;
-template <typename State, typename Callback>
-constexpr bool _is_parse_handler<_parse_handler<State, Callback>> = true;
+template <typename Input, typename State, typename Callback>
+constexpr bool _is_parse_handler<_parse_handler<Input, State, Callback>> = true;
 
 /// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    using handler_t = _parse_handler<std::decay_t<State>, Callback>;
-    using context_t = lexy::parse_context<Production, Input, handler_t>;
+    using handler_t = _parse_handler<Input, std::decay_t<State>, Callback>;
 
-    auto      handler = handler_t{state, LEXY_MOV(callback)};
-    auto      reader  = input.reader();
-    context_t context(handler, input, reader.cur());
+    auto                handler = handler_t{&input, state, LEXY_MOV(callback)};
+    auto                reader  = input.reader();
+    lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
     return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);

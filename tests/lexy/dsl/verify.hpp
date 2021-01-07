@@ -59,7 +59,7 @@ struct test_handler
     using result_type_for = lexy::result<int, int>;
 
     template <typename Production>
-    LEXY_VERIFY_FN auto sink(Production)
+    LEXY_VERIFY_FN auto get_sink(Production)
     {
         return Callback{str}.list();
     }
@@ -71,7 +71,7 @@ struct test_handler
     }
 
     template <typename Production, typename... Args>
-    LEXY_VERIFY_FN result_type_for<Production> finish_production(int, Production, Args&&... args)
+    LEXY_VERIFY_FN result_type_for<Production> finish_production(Production, int, Args&&... args)
     {
         if constexpr (std::is_same_v<Production, test_production>)
         {
@@ -85,8 +85,8 @@ struct test_handler
         }
     }
 
-    template <typename Production, typename Input, typename Error>
-    LEXY_VERIFY_FN auto error(lexy::error_context<Production, Input>, Error&& error)
+    template <typename Production, typename Error>
+    LEXY_VERIFY_FN auto error(Production, int, Error&& error)
     {
         if constexpr (std::is_same_v<Production, test_production>)
         {
@@ -123,11 +123,10 @@ LEXY_VERIFY_FN int verify(Rule _rule, const CharT* str, std::size_t size = std::
                                          : lexy::string_input<Encoding>(str, size);
 
     using handler_t = test_handler<Callback, CharT>;
-    using context_t = lexy::parse_context<test_production, decltype(input), handler_t>;
 
-    auto      handler = handler_t{str};
-    auto      reader  = input.reader();
-    context_t context(handler, input, reader.cur());
+    auto                handler = handler_t{str};
+    auto                reader  = input.reader();
+    lexy::parse_context context(test_production{}, handler, reader.cur());
 
     using rule  = decltype(_rule + test_final_rule{});
     auto result = lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);

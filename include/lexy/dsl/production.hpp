@@ -25,8 +25,8 @@ struct _prd_parser
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
-        if (lexy::parse_context prod_ctx(context, Production{}, reader.cur());
-            auto                result = _parse<Rule>(prod_ctx, reader))
+        auto prod_ctx = context.production_context(Production{}, reader.cur());
+        if (auto result = _parse<Rule>(prod_ctx, reader))
         {
             if constexpr (result.has_void_value())
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -61,8 +61,8 @@ struct _prd : rule_base
         template <typename NextParser, typename Context, typename... Args>
         constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (lexy::parse_context prod_ctx(context, Production{}, reader.cur());
-                auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
+            auto prod_ctx = context.production_context(Production{}, reader.cur());
+            if (auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
             {
                 if constexpr (result.has_void_value())
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
