@@ -71,5 +71,29 @@ template <typename Input>
 using lexeme_for = lexeme<input_reader<Input>>;
 } // namespace lexy
 
+namespace lexy::_detail
+{
+template <typename Reader>
+constexpr bool equal_lexemes(lexeme<Reader> lhs, lexeme<Reader> rhs)
+{
+    if constexpr (std::is_pointer_v<typename Reader::iterator>)
+    {
+        if (lhs.size() != rhs.size())
+            return false;
+    }
+
+    auto lhs_cur = lhs.begin();
+    auto rhs_cur = rhs.begin();
+    while (lhs_cur != lhs.end() && rhs_cur != rhs.end())
+    {
+        if (*lhs_cur != *rhs_cur)
+            return false;
+        ++lhs_cur;
+        ++rhs_cur;
+    }
+    return lhs_cur == lhs.end() && rhs_cur == rhs.end();
+}
+} // namespace lexy::_detail
+
 #endif // LEXY_LEXEME_HPP_INCLUDED
 

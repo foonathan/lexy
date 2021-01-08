@@ -30,6 +30,9 @@ set(header_files
         ${include_dir}/dsl/code_point.hpp
         ${include_dir}/dsl/combination.hpp
         ${include_dir}/dsl/context.hpp
+        ${include_dir}/dsl/context_counter.hpp
+        ${include_dir}/dsl/context_flag.hpp
+        ${include_dir}/dsl/context_lexeme.hpp
         ${include_dir}/dsl/delimited.hpp
         ${include_dir}/dsl/digit.hpp
         ${include_dir}/dsl/eof.hpp

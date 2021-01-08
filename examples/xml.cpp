@@ -223,15 +223,20 @@ struct element
         auto open_tagged  = dsl::brackets(LEXY_LIT("<"), LEXY_LIT(">")[ws]);
         auto close_tagged = dsl::brackets(LEXY_LIT("</"), LEXY_LIT(">")[ws]);
 
-        // The actual rule for the open and closing tag.
-        // We use context_push to push a name, and then context_pop to pop it and check that it
-        // matches. That is in both case surrounded by the brackets defined above.
-        //
-        // We also allow an empty tag by checking for the closing characters, dropping the pushed
-        // name and immediately returning from parsing.
-        auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::context_drop + dsl::return_);
-        auto open_tag = open_tagged(dsl::context_push(dsl::p<name>) + empty);
-        auto close_tag = close_tagged(dsl::context_pop(dsl::p<name>).error<tag_mismatch>());
+        // To check that the name is equal for the opening and closing tag,
+        // we use a variable that has the type lexeme.
+        // Note: this only declares the variable, we still need to create it below.
+        auto name_var = dsl::context_lexeme<struct name>;
+
+        // The open tag parses a name and captures it in the variable.
+        // It also checks for an empty tag (<name/>), in which case we're done and immediately
+        // return.
+        auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::return_);
+        auto open_tag = open_tagged(name_var.capture(dsl::p<name>) + empty);
+
+        // The closing tag matches the name again and requires that it matches the one we've stored
+        // earlier.
+        auto close_tag = close_tagged(name_var.require<tag_mismatch>(dsl::p<name>));
 
         // The content of the element.
         auto content = dsl::p<comment> | dsl::p<cdata>                     //
@@ -239,7 +244,8 @@ struct element
                        | dsl::p<reference> | dsl::else_ >> dsl::p<text>;
 
         // We match a (possibly empty) list of content surrounded itself by the open and close tag.
-        return dsl::brackets(open_tag, close_tag).opt_list(content);
+        // But first we create the variable that holds the name.
+        return name_var.create() + dsl::brackets(open_tag, close_tag).opt_list(content);
     }();
 
     // We collect the children as vector; then we construct a node from it.

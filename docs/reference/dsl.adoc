@@ -1893,103 +1893,184 @@ If a member is specified more than once, the final value is stored at the end.
 
 === Context sensitive parsing
 
-All other parse rules don't remember any state and thus can only be used for context free parsing.
-The rules described in this section allow the creation of a stack of contextual information.
-This can be used to parse context sensitive grammars like XML with matching open and close tags.
+To parse context sensitive grammars, `lexy` allows the creation of _context variables_.
+They allow to save state between different rules which can be used to parse context sensitive elements such as XML with matching opening and closing tag names.
+
+A context variable has a type, which is limited to `bool`, `int` and `lexy::lexeme`, and an identifier, which is given by a type.
+Before a variable can be used it needs to be created with `.create()`.
+It is then available for all rules of the current production: child and parent production cannot access them.
+Variables are not persistent between multiple invocations of a production;
+every time a production is parsed it starts out with no variables.
 
 See `example/xml.cpp` for an example that uses the context sensitive parsing facilities.
 
-CAUTION: The context stack uses the same mechanism as the values produced by a rule.
-If the rules that push to the stack aren't matched by the rules that pop, context values will be passed to the value callback, which isn't going to work.
+[discrete]
+==== `lexy::dsl::context_flag`
+
+.`lexy/dsl/context_flag.hpp`
+----
+context_flag<Id>
+----
+
+A `lexy::dsl::context_flag` controls a boolean that can be `true` or `false`.
+Each object is uniquely identified by the type `Id`.
+It is not a rule but a DSL for specifying operations which are then rules.
+
+----
+context_flag<Id>.create() : Rule
+context_flag<Id>.create<Value>() : Rule
+----
+
+The `.create()` rule does not interact with the input at all.
+When it is parsed, it creates the flag with the given `Id` and initializes it to the `Value` (defaulting to `false`).
+
+----
+context_flag<Id>.set()   : Rule
+context_flag<Id>.reset() : Rule
+----
+
+The `.set()`/`.reset()` rules do not interact with the input at all.
+When they are parsed, they set the flag with the given `Id` to `true`/`false` respectively.
+
+----
+context_flag<Id>.toggle() : Rule
+----
+
+The `.toggle()` rule does not interact with the input at all.
+When it is parsed, it toggles the value of the flag with the given `Id`.
+
+----
+context_flag<Id>.check() : Branch
+----
+
+The `.check()` rule does not interact with the input at all.
+When it is used as a branch condition that branch is only taken if the value of the flag with the given `Id` is `true`.
+When it is parsed normally it has no effect.
+
+----
+context_flag<Id>.require<ErrorTag>()        : Rule
+context_flag<Id>.require<Value, ErrorTag>() : Rule
+----
+
+The `.require()` rule does not interact with the input at all.
+When it is parsed, it checks that the value of the flag with the given `Id` is the given `Value` (defaults to `true`).
+If that is the case, parsing continues.
+Otherwise, the rule fails, producing an error with the given `ErrorTag`.
 
 [discrete]
-==== `lexy::dsl::context_push`
+==== `lexy::dsl::context_counter`
 
-.`lexy/dsl/context.hpp`
+.`lexy/dsl/context_counter.hpp`
 ----
-context_push(rule) : Rule
+context_counter<Id>
 ----
 
-The `context_push` rule pushes a context onto the context stack.
+A `lexy::dsl::context_counter` controls a C++ `int`.
+Each object is uniquely identified by the type `Id`.
+It is not a rule but a DSL for specifying operations which are then rules.
+
+----
+context_counter<Id>.create() : Rule
+context_counter<Id>.create<Value>() : Rule
+----
+
+The `.create()` rule does not interact with the input at all.
+When it is parsed, it creates the counter with the given `Id` and initializes it to the `Value` (defaulting to `0`).
+
+----
+context_counter<Id>.inc() : Rule
+context_counter<Id>.dec() : Rule
+----
+
+The `.inc()`/`.dec()` rules do not interact with the input at all.
+When they are parsed, they increment/decrement the counter with the given `Id` respectively.
+
+----
+context_counter<Id>.push(rule) : Rule
+context_counter<Id>.pop(rule)  : Rule
+----
+
+The `.push()`/`.pop()` rules parse the given `rule`.
+The counter with the given `Id` is then incremented/decremented by the number of characters (code units) consumed by `rule`.
 
 [horizontal]
 Matches::
-  Matches and consumes `rule`.
-  A lexeme that contains everything consumed will be pushed to the context stack.
+  Matches and  consumes `rule.`
 Values::
-  All values produced by `rule`.
+  All values produced by parsing `rule`.
 Errors::
-  All errors raised by `rule`.
+  All errors raised by parsing `rule`.
+
+----
+context_counter<Id>.check_eq<Value>() : Branch
+context_counter<Id>.check_lt<Value>() : Branch
+context_counter<Id>.check_gt<Value>() : Branch
+----
+
+The `.check_*()` rules do not interact with the input at all.
+When it is used as a branch condition that branch is only taken if the value of the counter with the given `Id` is equal to/less than/greater than `Value`.
+When it is parsed normally it has no effect.
+
+----
+context_counter<Id>.require<ErrorTag>()        : Rule
+context_counter<Id>.require<Value, ErrorTag>() : Rule
+----
+
+The `.require()` rule does not interact with the input at all.
+When it is parsed, it checks that the value of the counter with the given `Id` is the given `Value` (defaults to `0`).
+If that is the case, parsing continues.
+Otherwise, the rule fails, producing an error with the given `ErrorTag`.
 
 [discrete]
-==== `lexy::dsl::context_drop`
+==== `lexy::dsl::context_lexeme`
 
-.`lexy/dsl/context.hpp`
+.`lexy/dsl/context_lexeme.hpp`
 ----
-context_drop : Rule
+context_lexeme<Id>
 ----
 
-The `context_drop` rule removes the top context from the stack.
+A `lexy::dsl::context_flag` controls a `lexy::lexeme` (i.e. a string view on part of the input).
+Each object is uniquely identified by the type `Id`.
+It is not a rule but a DSL for specifying operations which are then rules.
+
+----
+context_lexeme<Id>.create() : Rule
+----
+
+The `.create()` rule does not interact with the input at all.
+When it is parsed, it creates the lexeme with the given `Id` and initializes it to an empty view.
+
+----
+context_lexeme<Id>.capture(rule) : Rule
+----
+
+The `.capture()` rule parses the given `rule`.
+The lexeme with the given `Id` is then set to view everything the `rule` has consumed as-if `lexy::dsl::capture()` was used.
 
 [horizontal]
-Requires::
-  It must be preceded by a `context_push`.
 Matches::
-  Matches and consumes nothing, but always succeeds.
-  The context that was pushed last is removed.
+  Matches and  consumes `rule.`
 Values::
-  None.
+  All values produced by parsing `rule`.
 Errors::
-  n/a (it does not fail)
+  All errors raised by parsing `rule`.
 
-[discrete]
-==== `lexy::dsl::context_top`
-
-.`lexy/dsl/context.hpp`
 ----
-struct context_eq;
-struct context_eq_length;
-
-context_top<Eq>(rule) : Rule
-context_top<Eq>(rule).error<Tag>() : Rule
+context_lexeme<Id>.require<ErrorTag>(rule) : Rule
 ----
 
-The `context_top` rule asserts that the lexeme matched by `rule` is equal to the context on top of the stack.
-Equality is determined using the `Eq` policy, which defaults to `context_eq`.
+The `.require()` rule parses the given `rule`, capturing it in a temporary lexeme.
+The temporary lexeme is then compared with the lexeme given by the `Id`.
+If the two lexemes are equal, parsing continues.
+Otherwise, the rule fails, producing an error with the given `ErrorTag`.
 
-Requires::
-  `Eq` is either `context_eq` or `context_eq_length`.
+[horizontal]
 Matches::
-  Matches and consumes `rule`.
-  It then compares the consumed lexeme with the lexeme on top of the context stack using `Eq`.
-  If `Eq` is `context_eq`, the lexeme must contain the exact same characters.
-  If `Eq` is `context_eq_length`, the lexeme must have the same length.
+  Matches and  consumes `rule.`
 Values::
-  All values produced by `rule`.
+  Discards values produced by `rule`.
 Errors::
-  All values raised by `rule`.
-  If the lexeme did not match the lexeme on top of the context, raises a generic error.
-  The tag is either the tag specified by calling `.error()`, or `lexy::context_mismatch` otherwise.
-
-NOTE: The `rule` is usually the same as the rule passed to the matching `context_push`.
-
-NOTE: The `context_top` rule does not remove the context from the stack, use `context_pop` for that.
-
-[discrete]
-==== `lexy::dsl::context_pop`
-
-.`lexy/dsl/context.hpp`
-----
-context_pop<Eq>(rule) : Rule
-  = context_top<Eq>(rule) + context_drop
-
-context_pop<Eq>(rule).error<Tag>() : Rule
-  = context_top<Eq>(rule).error<Tag>() + context_drop
-----
-
-The `context_pop` rule is a convenience rule that is equivalent to `context_top` followed by `context_drop`.
-It checks the top of the context stack and then removes it.
-`Eq` defaults to `context_eq`.
+  All errors raised by parsing `rule`.
 
 === Raw input
 

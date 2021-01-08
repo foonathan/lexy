@@ -16,6 +16,9 @@
 #include <lexy/dsl/code_point.hpp>
 #include <lexy/dsl/combination.hpp>
 #include <lexy/dsl/context.hpp>
+#include <lexy/dsl/context_counter.hpp>
+#include <lexy/dsl/context_flag.hpp>
+#include <lexy/dsl/context_lexeme.hpp>
 #include <lexy/dsl/delimited.hpp>
 #include <lexy/dsl/digit.hpp>
 #include <lexy/dsl/encode.hpp>

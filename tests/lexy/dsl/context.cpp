@@ -2,6 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#define LEXY_IGNORE_DEPRECATED_CONTEXT
 #include <lexy/dsl/context.hpp>
 
 #include "verify.hpp"

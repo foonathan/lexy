@@ -8,6 +8,13 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_CONTEXT
+#    define LEXY_DEPRECATED_CONTEXT
+#else
+#    define LEXY_DEPRECATED_CONTEXT                                                                \
+        [[deprecated("old context_* has been replaced by `dsl::context_lexeme`")]]
+#endif
+
 namespace lexyd
 {
 template <typename Reader>
@@ -51,7 +58,7 @@ struct _ctx_push : rule_base
 
 /// Pushes whatever the rule captures onto the context stack.
 template <typename Rule>
-LEXY_CONSTEVAL auto context_push(Rule)
+LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_push(Rule)
 {
     return _ctx_push<Rule>{};
 }
@@ -125,21 +132,7 @@ struct context_eq
     template <typename Reader>
     constexpr bool operator()(lexy::lexeme<Reader> lhs, lexy::lexeme<Reader> rhs) const
     {
-        using iterator = typename Reader::iterator;
-        if constexpr (std::is_pointer_v<iterator>)
-            if (lhs.size() != rhs.size())
-                return false;
-
-        auto lhs_cur = lhs.begin();
-        auto rhs_cur = rhs.begin();
-        while (lhs_cur != lhs.end() && rhs_cur != rhs.end())
-        {
-            if (*lhs_cur != *rhs_cur)
-                return false;
-            ++lhs_cur;
-            ++rhs_cur;
-        }
-        return lhs_cur == lhs.end() && rhs_cur == rhs.end();
+        return lexy::_detail::equal_lexemes(lhs, rhs);
     }
 };
 
@@ -205,7 +198,7 @@ struct _ctx_top
 /// stack.
 /// The context is kept on the stack.
 template <typename Eq = context_eq, typename Rule>
-LEXY_CONSTEVAL auto context_top(Rule)
+LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_top(Rule)
 {
     return _ctx_top<Rule, Eq, lexy::context_mismatch>{};
 }
@@ -225,7 +218,7 @@ struct _ctx_pop : decltype(_ctx_top<Rule, Eq, Error>{} + context_drop)
 /// stack.
 /// The context is removed on the stack.
 template <typename Eq = context_eq, typename Rule>
-LEXY_CONSTEVAL auto context_pop(Rule)
+LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_pop(Rule)
 {
     return _ctx_pop<Rule, Eq, lexy::context_mismatch>{};
 }

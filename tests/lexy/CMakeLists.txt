@@ -24,6 +24,9 @@ set(tests
         dsl/code_point.cpp
         dsl/combination.cpp
         dsl/context.cpp
+        dsl/context_counter.cpp
+        dsl/context_flag.cpp
+        dsl/context_lexeme.cpp
         dsl/delimited.cpp
         dsl/digit.cpp
         dsl/encode.cpp
