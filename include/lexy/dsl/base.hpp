@@ -153,9 +153,27 @@ public:
     template <typename ChildProduction, typename Iterator>
     constexpr auto production_context(ChildProduction p, Iterator position) const
     {
-        using state_t   = decltype(_handler->start_production(p, position));
-        using context_t = parse_context<ChildProduction, Handler, state_t>;
-        return context_t(p, *_handler, position);
+        // We need to qualify the class name, otherwise we won't get CTAD but just the current type.
+        return lexy::parse_context(p, *_handler, position);
+    }
+
+    template <typename Id, typename T>
+    constexpr auto insert(Id, T&& value)
+    {
+        return _stateful_context<parse_context, Id, std::decay_t<T>>(*this, LEXY_FWD(value));
+    }
+
+    template <typename Id>
+    static LEXY_CONSTEVAL bool contains(Id)
+    {
+        return false;
+    }
+
+    template <typename Id>
+    constexpr auto get(Id)
+    {
+        static_assert(lexy::_detail::error<Id>, "context does not contain a state with that id");
+        return 0;
     }
 
     using production  = Production;
@@ -179,6 +197,77 @@ public:
     }
 
 private:
+    template <typename Parent, typename Id, typename State>
+    class _stateful_context
+    {
+    public:
+        template <typename T>
+        constexpr explicit _stateful_context(Parent& parent, T&& value)
+        : _parent(&parent), _state(LEXY_FWD(value))
+        {}
+
+        constexpr Handler& handler() const noexcept
+        {
+            return _parent->handler();
+        }
+
+        template <typename ChildProduction, typename Iterator>
+        constexpr auto production_context(ChildProduction p, Iterator position) const
+        {
+            return lexy::parse_context(p, _parent->handler(), position);
+        }
+
+        template <typename Id2, typename T>
+        constexpr auto insert(Id2, T&& value)
+        {
+            return _stateful_context<_stateful_context, Id2, std::decay_t<T>>(*this,
+                                                                              LEXY_FWD(value));
+        }
+
+        template <typename Id2>
+        static LEXY_CONSTEVAL bool contains(Id2 id)
+        {
+            if constexpr (std::is_same_v<Id, Id2>)
+                return true;
+            else
+                return Parent::contains(id);
+        }
+
+        template <typename Id2>
+        constexpr auto& get(Id2 id)
+        {
+            (void)id;
+            if constexpr (std::is_same_v<Id2, Id>)
+                return _state;
+            else
+                return _parent->get(id);
+        }
+
+        using production  = Production;
+        using result_type = typename Handler::template result_type_for<Production>;
+
+        constexpr auto sink() const
+        {
+            return _parent->sink();
+        }
+
+        template <typename Error>
+        constexpr result_type error(Error&& error) &&
+        {
+            return LEXY_MOV(*_parent).error(LEXY_FWD(error));
+        }
+
+        template <typename... Args>
+        constexpr result_type value(Args&&... args) &&
+        {
+            return LEXY_MOV(*_parent).value(LEXY_FWD(args)...);
+        }
+
+    private:
+        Parent*                 _parent;
+        LEXY_EMPTY_MEMBER State _state;
+    };
+
     Handler*                       _handler;
     LEXY_EMPTY_MEMBER HandlerState _state;
 };

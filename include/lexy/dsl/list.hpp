@@ -48,11 +48,10 @@ struct _list_finish
     }
 };
 
-template <typename... PrevArgs>
 struct _list_sink
 {
     template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context&, Reader&, PrevArgs&&..., Sink& sink, Args&&... args)
+    LEXY_DSL_FUNC auto parse(Context&, Reader&, Sink& sink, Args&&... args)
     {
         if constexpr (sizeof...(Args) > 0)
             sink(LEXY_FWD(args)...);
@@ -70,8 +69,6 @@ struct _list_loop<Item, void, NextParser, PrevArgs...>
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
         typename Context::result_type
     {
-        using sink_parser = _list_sink<PrevArgs...>;
-
         while (true)
         {
             lexy::branch_matcher<Item, Reader> branch{};
@@ -79,8 +76,7 @@ struct _list_loop<Item, void, NextParser, PrevArgs...>
                 // No longer match additional items, done with list.
                 break;
 
-            auto result
-                = branch.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+            auto result = branch.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
         }
@@ -96,8 +92,6 @@ struct _list_loop<Item, _sep<Sep>, NextParser, PrevArgs...>
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
         typename Context::result_type
     {
-        using sink_parser = _list_sink<PrevArgs...>;
-
         while (true)
         {
             // Check whether we have a separator.
@@ -106,13 +100,13 @@ struct _list_loop<Item, _sep<Sep>, NextParser, PrevArgs...>
                 break;
 
             // Parse the separator.
-            auto result = sep.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+            auto result = sep.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
             // Parse item.
-            using item_parser = typename lexy::rule_parser<Item, sink_parser>;
-            result            = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            result            = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
         }
@@ -128,8 +122,6 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
         typename Context::result_type
     {
-        using sink_parser = _list_sink<PrevArgs...>;
-
         while (true)
         {
             // Check whether we have a separator.
@@ -138,7 +130,7 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
                 break;
 
             // Parse the separator.
-            auto result = sep.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+            auto result = sep.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -148,7 +140,7 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
                 // No longer match additional items, done with list.
                 break;
 
-            result = branch.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+            result = branch.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
         }
@@ -182,9 +174,7 @@ struct _lst : rule_base
             auto sink = context.sink();
 
             // Parse the initial item.
-            using sink_parser = _list_sink<Args...>;
-            auto result
-                = _impl.template parse<sink_parser>(context, reader, LEXY_FWD(args)..., sink);
+            auto result = _impl.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -204,8 +194,8 @@ struct _lst : rule_base
             auto sink = context.sink();
 
             // Parse the initial item.
-            using item_parser = typename lexy::rule_parser<Item, _list_sink<Args...>>;
-            auto result       = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            auto result       = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -258,11 +248,11 @@ struct _lstt<Terminator, Item, void> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink<Args...>>;
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
             auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            auto result = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -270,7 +260,7 @@ struct _lstt<Terminator, Item, void> : rule_base
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
-                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                result = item_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }
@@ -290,12 +280,12 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink<Args...>>;
-            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink<Args...>>;
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
             auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            auto result = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -304,12 +294,12 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = sep_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                result = sep_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
 
                 // Parse item.
-                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                result = item_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }
@@ -329,12 +319,12 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink<Args...>>;
-            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink<Args...>>;
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
             auto sink         = context.sink();
 
             // Parse initial item.
-            auto result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+            auto result = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
@@ -343,7 +333,7 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
             while (!term.match(reader))
             {
                 // Parse separator.
-                result = sep_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                result = sep_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
 
@@ -352,7 +342,7 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
                     break;
 
                 // Parse item.
-                result = item_parser::parse(context, reader, LEXY_FWD(args)..., sink);
+                result = item_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }

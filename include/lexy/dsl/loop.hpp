@@ -15,22 +15,12 @@ struct _break : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context&, Reader&, Args&&... args)
+        LEXY_DSL_FUNC auto parse(Context& context, Reader&, Args&&...)
         {
-// GCC doesn't like how we use the comma operator.
-#if defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wunused-value"
-#endif
+            // We set loop break on the member with the specified id.
+            context.get(_break{}).loop_break = true;
 
-            // The last argument must be the state as looped rules must not push values.
-            auto& state      = (LEXY_FWD(args), ...);
-            state.loop_break = true;
             return typename Context::result_type(lexy::result_empty);
-
-#if defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#endif
         }
     };
 };
@@ -51,10 +41,16 @@ struct _loop : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            for (struct { bool loop_break = false; } state; !state.loop_break;)
+            struct flag
+            {
+                bool loop_break = false;
+            };
+
+            auto loop_context = context.insert(_break{}, flag{});
+            while (!loop_context.get(_break{}).loop_break)
             {
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser>;
-                auto result  = parser::parse(context, reader, LEXY_FWD(args)..., state);
+                auto result  = parser::parse(loop_context, reader);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }

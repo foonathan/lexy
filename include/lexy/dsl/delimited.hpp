@@ -9,12 +9,10 @@
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/error.hpp>
+#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/peek.hpp>
-#include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
-#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -30,7 +28,8 @@ struct missing_delimiter
 
 namespace lexyd
 {
-struct _delb : rule_base
+template <typename Close, typename Content>
+struct _del : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -39,62 +38,30 @@ struct _delb : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            // Remember the beginning of the delimited for the error message.
-            return NextParser::parse(context, reader, reader.cur(), LEXY_FWD(args)...);
-        }
-    };
-};
+            auto begin = reader.cur();
+            auto sink  = context.sink();
 
-template <typename Content>
-struct _delc : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
-        {
-            if (reader.eof())
+            lexy::branch_matcher<Close, Reader> close{};
+            while (!close.match(reader))
             {
-                // Find the beginning of the delimited; it was added somwhere in the arguments.
-                typename Reader::iterator begin  = {};
-                auto                      lambda = [&](const auto& arg) {
-                    using arg_type = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<arg_type, typename Reader::iterator>)
-                    {
-                        begin = arg;
-                        return true;
-                    }
-                    else
-                        return false;
-                };
-                (lambda(args) || ...);
-
                 // If we've reached EOF, it means we're missing the closing delimiter.
-                auto e = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
-                return LEXY_MOV(context).error(e);
-            }
-            else
-            {
-                return lexy::rule_parser<Content, NextParser>::parse(context, reader,
-                                                                     LEXY_FWD(args)...);
-            }
-        }
-    };
-};
+                if (reader.eof())
+                {
+                    auto err
+                        = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
+                    return LEXY_MOV(context).error(err);
+                }
 
-struct _dele : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, typename Reader::iterator,
-                                 Args&&... args) -> typename Context::result_type
-        {
-            // Remove the saved beginning again.
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                // Parse the next character.
+                using parser = lexy::rule_parser<Content, _list_sink>;
+                auto result  = parser::parse(context, reader, sink);
+                if (result.has_error())
+                    return result;
+            }
+
+            // Finish up the list.
+            return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
         }
     };
 };
@@ -112,10 +79,7 @@ struct _delim_dsl
     template <typename Content>
     LEXY_CONSTEVAL auto _get(Content) const
     {
-        // We put the content in a list until the closing condition of the list matches.
-        auto content = terminator(close()).opt_list(_delc<Content>{});
-        // We surround the list with the logic that handles the positional stuff.
-        return open() >> _delb{} + content + _dele{};
+        return open() >> _del<Close, Content>{};
     }
 
     /// Sets the content.

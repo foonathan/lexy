@@ -37,14 +37,14 @@ struct _comb_state
 };
 
 // Final parser for one item in the combination.
-template <typename... PrevArgs>
 struct _comb_it
 {
-    template <typename Context, typename Reader, typename State, int Idx, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context&, Reader&, PrevArgs&&..., State& state, lexy::id<Idx>,
-                             Args&&... args) -> typename Context::result_type
+    template <typename Context, typename Reader, int Idx, typename... Args>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader&, lexy::id<Idx>, Args&&... args) ->
+        typename Context::result_type
     {
-        state.idx = Idx;
+        auto& state = context.get(_break{});
+        state.idx   = Idx;
         if constexpr (sizeof...(Args) > 0)
             state.sink(LEXY_FWD(args)...);
         return typename Context::result_type(lexy::result_empty);
@@ -73,17 +73,18 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto sink       = context.sink();
-            bool handled[N] = {};
+            auto  sink         = context.sink();
+            bool  handled[N]   = {};
+            auto  comb_context = context.insert(_break{}, _comb_state<decltype(sink)>{sink});
+            auto& state        = comb_context.get(_break{});
 
             // Parse all iterations of the choice.
             for (std::size_t count = 0; count < N; ++count)
             {
-                using parser = lexy::rule_parser<_comb_choice, _comb_it<Args...>>;
-                _comb_state<decltype(context.sink())> state{sink};
+                auto begin = reader.cur();
 
-                auto begin  = reader.cur();
-                auto result = parser::parse(context, reader, LEXY_FWD(args)..., state);
+                using parser = lexy::rule_parser<_comb_choice, _comb_it>;
+                auto result  = parser::parse(comb_context, reader);
                 if (result.has_error())
                     return result;
                 else if (state.loop_break)
