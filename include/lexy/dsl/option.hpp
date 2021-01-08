@@ -52,7 +52,7 @@ struct _opt : rule_base
             typename Context::result_type
         {
             lexy::branch_matcher<Branch, Reader> branch{};
-            if (branch.match(reader))
+            if (branch.match(context, reader))
                 return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             else
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
@@ -83,7 +83,7 @@ struct _optt : rule_base
             typename Context::result_type
         {
             lexy::branch_matcher<Terminator, Reader> term{};
-            if (term.match(reader))
+            if (term.match(context, reader))
                 return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
                                                        lexy::nullopt{});
             else

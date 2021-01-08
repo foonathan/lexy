@@ -45,7 +45,8 @@ struct _err : rule_base
     {
         static constexpr auto is_unconditional = true;
 
-        constexpr bool match(Reader&)
+        template <typename Context>
+        constexpr bool match(Context&, Reader&)
         {
             return true;
         }

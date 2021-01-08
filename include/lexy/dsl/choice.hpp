@@ -50,7 +50,7 @@ struct _chc_parser<NextParser, H, T...>
         else
         {
             branch_matcher branch{};
-            if (branch.match(reader))
+            if (branch.match(context, reader))
                 return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             else
                 return _chc_parser<NextParser, T...>::parse(context, reader, LEXY_FWD(args)...);

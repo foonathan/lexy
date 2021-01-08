@@ -19,7 +19,8 @@ struct _look : branch_base
     {
         static constexpr auto is_unconditional = false;
 
-        constexpr bool match(Reader& reader)
+        template <typename Context>
+        constexpr bool match(Context&, Reader& reader)
         {
             using engine = lexy::engine_lookahead<Needle, End>;
             return engine::match(reader) == typename engine::error_code();

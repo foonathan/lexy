@@ -72,7 +72,7 @@ struct _list_loop<Item, void, NextParser, PrevArgs...>
         while (true)
         {
             lexy::branch_matcher<Item, Reader> branch{};
-            if (!branch.match(reader))
+            if (!branch.match(context, reader))
                 // No longer match additional items, done with list.
                 break;
 
@@ -96,7 +96,7 @@ struct _list_loop<Item, _sep<Sep>, NextParser, PrevArgs...>
         {
             // Check whether we have a separator.
             lexy::branch_matcher<Sep, Reader> sep{};
-            if (!sep.match(reader))
+            if (!sep.match(context, reader))
                 break;
 
             // Parse the separator.
@@ -126,7 +126,7 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
         {
             // Check whether we have a separator.
             lexy::branch_matcher<Sep, Reader> sep{};
-            if (!sep.match(reader))
+            if (!sep.match(context, reader))
                 break;
 
             // Parse the separator.
@@ -136,7 +136,7 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
 
             // Parse item.
             lexy::branch_matcher<Item, Reader> branch{};
-            if (!branch.match(reader))
+            if (!branch.match(context, reader))
                 // No longer match additional items, done with list.
                 break;
 
@@ -163,9 +163,10 @@ struct _lst : rule_base
 
         static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
 
-        constexpr bool match(Reader& reader)
+        template <typename Context>
+        constexpr bool match(Context& context, Reader& reader)
         {
-            return _impl.match(reader);
+            return _impl.match(context, reader);
         }
 
         template <typename NextParser, typename Context, typename... Args>
@@ -258,7 +259,7 @@ struct _lstt<Terminator, Item, void> : rule_base
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            while (!term.match(context, reader))
             {
                 result = item_parser::parse(context, reader, sink);
                 if (result.has_error())
@@ -291,7 +292,7 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            while (!term.match(context, reader))
             {
                 // Parse separator.
                 result = sep_parser::parse(context, reader, sink);
@@ -330,7 +331,7 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
 
             // Parse remaining items.
             lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            while (!term.match(context, reader))
             {
                 // Parse separator.
                 result = sep_parser::parse(context, reader, sink);
@@ -338,7 +339,7 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
                     return LEXY_MOV(result);
 
                 // Check for trailing separator.
-                if (term.match(reader))
+                if (term.match(context, reader))
                     break;
 
                 // Parse item.

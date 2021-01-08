@@ -25,7 +25,7 @@ struct _whl : rule_base
             while (true)
             {
                 lexy::branch_matcher<Branch, Reader> branch{};
-                if (!branch.match(reader))
+                if (!branch.match(context, reader))
                     break;
 
                 auto result
@@ -101,7 +101,7 @@ struct _whlt : rule_base
             typename Context::result_type
         {
             lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            while (!term.match(context, reader))
             {
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
                 auto result  = parser::parse(context, reader);

@@ -24,9 +24,10 @@ struct _br : rule_base
 
         static constexpr auto is_unconditional = decltype(_condition)::is_unconditional;
 
-        constexpr bool match(Reader& reader)
+        template <typename Context>
+        constexpr bool match(Context& context, Reader& reader)
         {
-            return _condition.match(reader);
+            return _condition.match(context, reader);
         }
 
         template <typename NextParser, typename Context, typename... Args>
@@ -125,7 +126,8 @@ struct _else : branch_base
     {
         static constexpr auto is_unconditional = true;
 
-        constexpr bool match(Reader&)
+        template <typename Context>
+        constexpr bool match(Context&, Reader&)
         {
             return true;
         }
