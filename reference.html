@@ -6222,35 +6222,123 @@ If a member is specified more than once, the final value is stored at the end.</
 <div class="sect2">
 <h3 id="_context_sensitive_parsing">Context sensitive parsing</h3>
 <div class="paragraph">
-<p>All other parse rules don&#8217;t remember any state and thus can only be used for context free parsing.
-The rules described in this section allow the creation of a stack of contextual information.
-This can be used to parse context sensitive grammars like XML with matching open and close tags.</p>
+<p>To parse context sensitive grammars, <code>lexy</code> allows the creation of <em>context variables</em>.
+They allow to save state between different rules which can be used to parse context sensitive elements such as XML with matching opening and closing tag names.</p>
+</div>
+<div class="paragraph">
+<p>A context variable has a type, which is limited to <code>bool</code>, <code>int</code> and <code>lexy::lexeme</code>, and an identifier, which is given by a type.
+Before a variable can be used it needs to be created with <code>.create()</code>.
+It is then available for all rules of the current production: child and parent production cannot access them.
+Variables are not persistent between multiple invocations of a production;
+every time a production is parsed it starts out with no variables.</p>
 </div>
 <div class="paragraph">
 <p>See <code>example/xml.cpp</code> for an example that uses the context sensitive parsing facilities.</p>
 </div>
-<div class="admonitionblock caution">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-caution" title="Caution"></i>
-</td>
-<td class="content">
-The context stack uses the same mechanism as the values produced by a rule.
-If the rules that push to the stack aren&#8217;t matched by the rules that pop, context values will be passed to the value callback, which isn&#8217;t going to work.
-</td>
-</tr>
-</table>
-</div>
-<h4 id="_lexydslcontext_push" class="discrete"><code>lexy::dsl::context_push</code></h4>
+<h4 id="_lexydslcontext_flag" class="discrete"><code>lexy::dsl::context_flag</code></h4>
 <div class="listingblock">
-<div class="title"><code>lexy/dsl/context.hpp</code></div>
+<div class="title"><code>lexy/dsl/context_flag.hpp</code></div>
 <div class="content">
-<pre>context_push(rule) : Rule</pre>
+<pre>context_flag&lt;Id&gt;</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>context_push</code> rule pushes a context onto the context stack.</p>
+<p>A <code>lexy::dsl::context_flag</code> controls a boolean that can be <code>true</code> or <code>false</code>.
+Each object is uniquely identified by the type <code>Id</code>.
+It is not a rule but a DSL for specifying operations which are then rules.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_flag&lt;Id&gt;.create() : Rule
+context_flag&lt;Id&gt;.create&lt;Value&gt;() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.create()</code> rule does not interact with the input at all.
+When it is parsed, it creates the flag with the given <code>Id</code> and initializes it to the <code>Value</code> (defaulting to <code>false</code>).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_flag&lt;Id&gt;.set()   : Rule
+context_flag&lt;Id&gt;.reset() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.set()</code>/<code>.reset()</code> rules do not interact with the input at all.
+When they are parsed, they set the flag with the given <code>Id</code> to <code>true</code>/<code>false</code> respectively.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_flag&lt;Id&gt;.toggle() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.toggle()</code> rule does not interact with the input at all.
+When it is parsed, it toggles the value of the flag with the given <code>Id</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_flag&lt;Id&gt;.check() : Branch</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.check()</code> rule does not interact with the input at all.
+When it is used as a branch condition that branch is only taken if the value of the flag with the given <code>Id</code> is <code>true</code>.
+When it is parsed normally it has no effect.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_flag&lt;Id&gt;.require&lt;ErrorTag&gt;()        : Rule
+context_flag&lt;Id&gt;.require&lt;Value, ErrorTag&gt;() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.require()</code> rule does not interact with the input at all.
+When it is parsed, it checks that the value of the flag with the given <code>Id</code> is the given <code>Value</code> (defaults to <code>true</code>).
+If that is the case, parsing continues.
+Otherwise, the rule fails, producing an error with the given <code>ErrorTag</code>.</p>
+</div>
+<h4 id="_lexydslcontext_counter" class="discrete"><code>lexy::dsl::context_counter</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/context_counter.hpp</code></div>
+<div class="content">
+<pre>context_counter&lt;Id&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A <code>lexy::dsl::context_counter</code> controls a C++ <code>int</code>.
+Each object is uniquely identified by the type <code>Id</code>.
+It is not a rule but a DSL for specifying operations which are then rules.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_counter&lt;Id&gt;.create() : Rule
+context_counter&lt;Id&gt;.create&lt;Value&gt;() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.create()</code> rule does not interact with the input at all.
+When it is parsed, it creates the counter with the given <code>Id</code> and initializes it to the <code>Value</code> (defaulting to <code>0</code>).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_counter&lt;Id&gt;.inc() : Rule
+context_counter&lt;Id&gt;.dec() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.inc()</code>/<code>.dec()</code> rules do not interact with the input at all.
+When they are parsed, they increment/decrement the counter with the given <code>Id</code> respectively.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_counter&lt;Id&gt;.push(rule) : Rule
+context_counter&lt;Id&gt;.pop(rule)  : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.push()</code>/<code>.pop()</code> rules parse the given <code>rule</code>.
+The counter with the given <code>Id</code> is then incremented/decremented by the number of characters (code units) consumed by <code>rule</code>.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -6259,8 +6347,7 @@ If the rules that push to the stack aren&#8217;t matched by the rules that pop, 
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and consumes <code>rule</code>.
-A lexeme that contains everything consumed will be pushed to the context stack.</p>
+<p>Matches and  consumes <code>rule.</code></p>
 </td>
 </tr>
 <tr>
@@ -6268,7 +6355,7 @@ A lexeme that contains everything consumed will be pushed to the context stack.<
 Values
 </td>
 <td class="hdlist2">
-<p>All values produced by <code>rule</code>.</p>
+<p>All values produced by parsing <code>rule</code>.</p>
 </td>
 </tr>
 <tr>
@@ -6276,38 +6363,73 @@ Values
 Errors
 </td>
 <td class="hdlist2">
-<p>All errors raised by <code>rule</code>.</p>
+<p>All errors raised by parsing <code>rule</code>.</p>
 </td>
 </tr>
 </table>
 </div>
-<h4 id="_lexydslcontext_drop" class="discrete"><code>lexy::dsl::context_drop</code></h4>
 <div class="listingblock">
-<div class="title"><code>lexy/dsl/context.hpp</code></div>
 <div class="content">
-<pre>context_drop : Rule</pre>
+<pre>context_counter&lt;Id&gt;.check_eq&lt;Value&gt;() : Branch
+context_counter&lt;Id&gt;.check_lt&lt;Value&gt;() : Branch
+context_counter&lt;Id&gt;.check_gt&lt;Value&gt;() : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>context_drop</code> rule removes the top context from the stack.</p>
+<p>The <code>.check_*()</code> rules do not interact with the input at all.
+When it is used as a branch condition that branch is only taken if the value of the counter with the given <code>Id</code> is equal to/less than/greater than <code>Value</code>.
+When it is parsed normally it has no effect.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_counter&lt;Id&gt;.require&lt;ErrorTag&gt;()        : Rule
+context_counter&lt;Id&gt;.require&lt;Value, ErrorTag&gt;() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.require()</code> rule does not interact with the input at all.
+When it is parsed, it checks that the value of the counter with the given <code>Id</code> is the given <code>Value</code> (defaults to <code>0</code>).
+If that is the case, parsing continues.
+Otherwise, the rule fails, producing an error with the given <code>ErrorTag</code>.</p>
+</div>
+<h4 id="_lexydslcontext_lexeme" class="discrete"><code>lexy::dsl::context_lexeme</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/context_lexeme.hpp</code></div>
+<div class="content">
+<pre>context_lexeme&lt;Id&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A <code>lexy::dsl::context_flag</code> controls a <code>lexy::lexeme</code> (i.e. a string view on part of the input).
+Each object is uniquely identified by the type <code>Id</code>.
+It is not a rule but a DSL for specifying operations which are then rules.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_lexeme&lt;Id&gt;.create() : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.create()</code> rule does not interact with the input at all.
+When it is parsed, it creates the lexeme with the given <code>Id</code> and initializes it to an empty view.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>context_lexeme&lt;Id&gt;.capture(rule) : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.capture()</code> rule parses the given <code>rule</code>.
+The lexeme with the given <code>Id</code> is then set to view everything the <code>rule</code> has consumed as-if <code>lexy::dsl::capture()</code> was used.</p>
 </div>
 <div class="hdlist">
 <table>
 <tr>
 <td class="hdlist1">
-Requires
-</td>
-<td class="hdlist2">
-<p>It must be preceded by a <code>context_push</code>.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and consumes nothing, but always succeeds.
-The context that was pushed last is removed.</p>
+<p>Matches and  consumes <code>rule.</code></p>
 </td>
 </tr>
 <tr>
@@ -6315,7 +6437,7 @@ The context that was pushed last is removed.</p>
 Values
 </td>
 <td class="hdlist2">
-<p>None.</p>
+<p>All values produced by parsing <code>rule</code>.</p>
 </td>
 </tr>
 <tr>
@@ -6323,90 +6445,49 @@ Values
 Errors
 </td>
 <td class="hdlist2">
-<p>n/a (it does not fail)</p>
+<p>All errors raised by parsing <code>rule</code>.</p>
 </td>
 </tr>
 </table>
 </div>
-<h4 id="_lexydslcontext_top" class="discrete"><code>lexy::dsl::context_top</code></h4>
 <div class="listingblock">
-<div class="title"><code>lexy/dsl/context.hpp</code></div>
 <div class="content">
-<pre>struct context_eq;
-struct context_eq_length;
-
-context_top&lt;Eq&gt;(rule) : Rule
-context_top&lt;Eq&gt;(rule).error&lt;Tag&gt;() : Rule</pre>
+<pre>context_lexeme&lt;Id&gt;.require&lt;ErrorTag&gt;(rule) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>context_top</code> rule asserts that the lexeme matched by <code>rule</code> is equal to the context on top of the stack.
-Equality is determined using the <code>Eq</code> policy, which defaults to <code>context_eq</code>.</p>
+<p>The <code>.require()</code> rule parses the given <code>rule</code>, capturing it in a temporary lexeme.
+The temporary lexeme is then compared with the lexeme given by the <code>Id</code>.
+If the two lexemes are equal, parsing continues.
+Otherwise, the rule fails, producing an error with the given <code>ErrorTag</code>.</p>
 </div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">Requires</dt>
-<dd>
-<p><code>Eq</code> is either <code>context_eq</code> or <code>context_eq_length</code>.</p>
-</dd>
-<dt class="hdlist1">Matches</dt>
-<dd>
-<p>Matches and consumes <code>rule</code>.
-It then compares the consumed lexeme with the lexeme on top of the context stack using <code>Eq</code>.
-If <code>Eq</code> is <code>context_eq</code>, the lexeme must contain the exact same characters.
-If <code>Eq</code> is <code>context_eq_length</code>, the lexeme must have the same length.</p>
-</dd>
-<dt class="hdlist1">Values</dt>
-<dd>
-<p>All values produced by <code>rule</code>.</p>
-</dd>
-<dt class="hdlist1">Errors</dt>
-<dd>
-<p>All values raised by <code>rule</code>.
-If the lexeme did not match the lexeme on top of the context, raises a generic error.
-The tag is either the tag specified by calling <code>.error()</code>, or <code>lexy::context_mismatch</code> otherwise.</p>
-</dd>
-</dl>
-</div>
-<div class="admonitionblock note">
+<div class="hdlist">
 <table>
 <tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
+<td class="hdlist1">
+Matches
 </td>
-<td class="content">
-The <code>rule</code> is usually the same as the rule passed to the matching <code>context_push</code>.
+<td class="hdlist2">
+<p>Matches and  consumes <code>rule.</code></p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>Discards values produced by <code>rule</code>.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>All errors raised by parsing <code>rule</code>.</p>
 </td>
 </tr>
 </table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The <code>context_top</code> rule does not remove the context from the stack, use <code>context_pop</code> for that.
-</td>
-</tr>
-</table>
-</div>
-<h4 id="_lexydslcontext_pop" class="discrete"><code>lexy::dsl::context_pop</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/context.hpp</code></div>
-<div class="content">
-<pre>context_pop&lt;Eq&gt;(rule) : Rule
-  = context_top&lt;Eq&gt;(rule) + context_drop
-
-context_pop&lt;Eq&gt;(rule).error&lt;Tag&gt;() : Rule
-  = context_top&lt;Eq&gt;(rule).error&lt;Tag&gt;() + context_drop</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>context_pop</code> rule is a convenience rule that is equivalent to <code>context_top</code> followed by <code>context_drop</code>.
-It checks the top of the context stack and then removes it.
-<code>Eq</code> defaults to <code>context_eq</code>.</p>
 </div>
 </div>
 <div class="sect2">
@@ -6616,7 +6697,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-01-03 21:03:04 UTC
+Last updated 2021-01-08 20:44:12 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
