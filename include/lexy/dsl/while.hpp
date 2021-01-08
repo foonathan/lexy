@@ -29,8 +29,7 @@ struct _whl : rule_base
                     break;
 
                 auto result
-                    = branch.template parse<lexy::context_discard_parser>(context, reader,
-                                                                          LEXY_FWD(args)...);
+                    = branch.template parse<lexy::context_discard_parser<Context>>(context, reader);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }
@@ -104,8 +103,8 @@ struct _whlt : rule_base
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
-                using parser = lexy::rule_parser<Rule, lexy::context_discard_parser>;
-                auto result  = parser::parse(context, reader, LEXY_FWD(args)...);
+                using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
+                auto result  = parser::parse(context, reader);
                 if (result.has_error())
                     return LEXY_MOV(result);
             }

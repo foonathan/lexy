@@ -288,11 +288,15 @@ struct context_value_parser
 };
 
 /// A final parser that drops all arguments; creating an empty result.
+template <typename Context>
 struct context_discard_parser
 {
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context&, Reader&, Args&&...)
+    template <typename NewContext, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto parse(NewContext&, Reader&, Args&&...)
     {
+        static_assert(sizeof...(Args) == 0, "looped rule must not produce any values");
+        static_assert(std::is_same_v<Context, NewContext>,
+                      "looped rule cannot add state to the context");
         return typename Context::result_type(lexy::result_empty);
     }
 };
