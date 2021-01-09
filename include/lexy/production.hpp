@@ -19,6 +19,52 @@
 namespace lexy
 {
 template <typename Production>
+LEXY_CONSTEVAL auto production_name()
+{
+    return _detail::type_name<Production>();
+}
+
+template <typename Production>
+using production_rule = std::decay_t<decltype(Production::rule)>;
+} // namespace lexy
+
+namespace lexy
+{
+/// Base class to indicate that this production is conceptually a token.
+/// This inhibits whitespace skipping inside the production.
+struct token_production
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "token";
+    }
+};
+
+template <typename Production>
+constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
+
+template <typename Production>
+using _detect_whitespace = decltype(Production::whitespace);
+
+template <typename Production, typename Root>
+auto _production_whitespace()
+{
+    if constexpr (is_token_production<Production>)
+        return; // void
+    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
+        return Production::whitespace;
+    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
+        return Root::whitespace;
+    else
+        return; // void
+}
+template <typename Production, typename Root>
+using production_whitespace = decltype(_production_whitespace<Production, Root>());
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Production>
 using _detect_value = decltype(&Production::value);
 template <typename Production>
 using _detect_list = decltype(&Production::list);
@@ -60,18 +106,6 @@ struct _prod_value<Production, false, false>
     static_assert(_detail::error<Production>, "missing Production::value member");
     static constexpr auto get = Production::value;
 };
-} // namespace lexy
-
-namespace lexy
-{
-template <typename Production>
-LEXY_CONSTEVAL auto production_name()
-{
-    return _detail::type_name<Production>();
-}
-
-template <typename Production>
-using production_rule = std::decay_t<decltype(Production::rule)>;
 
 template <typename Production>
 struct production_value

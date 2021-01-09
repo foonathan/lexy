@@ -113,7 +113,7 @@ private:
 } // namespace ast
 
 // The grammar of (a subset of) XML.
-// It does not support the XML prolog, doctype, or processing instructions.
+// It does not support attributes, the XML prolog, doctype, or processing instructions.
 // It also only supports the pre-defined entity references.
 namespace grammar
 {
@@ -129,8 +129,8 @@ struct invalid_character
     }
 };
 
-// Whitespace.
-constexpr auto ws = dsl::ascii::space / dsl::ascii::newline;
+// Whitespace that is manually inserted in a couple of places.
+constexpr auto ws = dsl::whitespace(dsl::ascii::space / dsl::ascii::newline);
 
 // Comment.
 struct comment
@@ -220,8 +220,8 @@ struct element
 
     static constexpr auto rule = [] {
         // The brackets for surrounding the opening and closing tag.
-        auto open_tagged  = dsl::brackets(LEXY_LIT("<"), LEXY_LIT(">")[ws]);
-        auto close_tagged = dsl::brackets(LEXY_LIT("</"), LEXY_LIT(">")[ws]);
+        auto open_tagged  = dsl::brackets(LEXY_LIT("<"), LEXY_LIT(">"));
+        auto close_tagged = dsl::brackets(LEXY_LIT("</"), LEXY_LIT(">"));
 
         // To check that the name is equal for the opening and closing tag,
         // we use a variable that has the type lexeme.
@@ -232,11 +232,11 @@ struct element
         // It also checks for an empty tag (<name/>), in which case we're done and immediately
         // return.
         auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::return_);
-        auto open_tag = open_tagged(name_var.capture(dsl::p<name>) + empty);
+        auto open_tag = open_tagged(name_var.capture(dsl::p<name>) + ws + empty);
 
         // The closing tag matches the name again and requires that it matches the one we've stored
         // earlier.
-        auto close_tag = close_tagged(name_var.require<tag_mismatch>(dsl::p<name>));
+        auto close_tag = close_tagged(name_var.require<tag_mismatch>(dsl::p<name>) + ws);
 
         // The content of the element.
         auto content = dsl::p<comment> | dsl::p<cdata>                     //
@@ -260,7 +260,7 @@ struct document
     static constexpr auto rule = [] {
         // We allow surrounding the document with comments and whitespace.
         auto ws_comment = ws | dsl::p<comment>;
-        return dsl::p<element>[ws_comment] + dsl::eof[ws_comment];
+        return ws_comment + dsl::p<element> + ws_comment + dsl::eof;
     }();
     static constexpr auto value = lexy::forward<ast::xml_node_ptr>;
 };

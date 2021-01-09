@@ -98,9 +98,13 @@ namespace grammar
 namespace dsl = lexy::dsl;
 struct argument;
 
-// Arguments are separated by ' ' or '\t' or by a backslash followed by newline.
-constexpr auto arg_sep_char = dsl::ascii::blank | dsl::backslash >> dsl::newline;
-constexpr auto arg_sep      = arg_sep_char + dsl::loop(arg_sep_char | dsl::break_);
+constexpr auto arg_sep = [] {
+    // Arguments are separated by ' ' or '\t' or by a backslash followed by newline.
+    auto c = dsl::ascii::blank | dsl::backslash >> dsl::newline;
+
+    auto condition = dsl::peek(dsl::ascii::blank / dsl::backslash);
+    return condition >> c + dsl::loop(c | dsl::break_);
+}();
 
 // Characters allowed in a bare argument or command name.
 constexpr auto bare_char = dsl::ascii::alnum;
@@ -211,7 +215,7 @@ struct command
         auto commands = dsl::p<cmd_exit> | dsl::p<cmd_echo> //
                         | dsl::p<cmd_set> | dsl::else_ >> unknown;
 
-        return commands + dsl::eol[arg_sep].error<trailing_args>();
+        return commands + dsl::if_(arg_sep) + dsl::eol.error<trailing_args>();
     }();
     static constexpr auto value = lexy::forward<shell::command>;
 };

@@ -8,7 +8,6 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/whitespace.hpp>
 #include <lexy/engine/literal.hpp>
 
 namespace lexyd
@@ -57,3 +56,4 @@ constexpr auto lit = _lit<lexy::_detail::type_string<Str>>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED
+

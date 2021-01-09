@@ -6,6 +6,7 @@
 struct Production
 {
     static constexpr auto rule = …;
+    static constexpr auto whitespace = …; // optional
 
     static constexpr auto value = …; // optional
 };

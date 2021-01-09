@@ -19,14 +19,15 @@ struct _whlt;
 template <typename Terminator, typename R, typename Sep>
 struct _lstt;
 
-template <typename Branch, typename Whitespace>
+template <typename Branch>
 struct _term
 {
     /// Sets the whitespace that will be skipped before the terminator.
     template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws) const
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
     {
-        return _term<Branch, Ws>{};
+        auto branch = whitespaced(Branch{}, ws);
+        return _term<decltype(branch)>{};
     }
 
     /// Matches rule followed by the terminator.
@@ -40,7 +41,7 @@ struct _term
     template <typename Rule>
     LEXY_CONSTEVAL auto while_(Rule) const
     {
-        return _whlt<decltype(terminator()), Rule>{};
+        return _whlt<Branch, Rule>{};
     }
     /// Matches rule as long as terminator isn't matched, but at least once.
     template <typename Rule>
@@ -57,7 +58,7 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto opt(R r) const
     {
-        return _optt<decltype(terminator()), decltype(r + terminator())>{};
+        return _optt<Branch, decltype(r + terminator())>{};
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -65,12 +66,12 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto list(R) const
     {
-        return _lstt<decltype(terminator()), R, void>{};
+        return _lstt<Branch, R, void>{};
     }
     template <typename R, typename Sep>
     LEXY_CONSTEVAL auto list(R, Sep) const
     {
-        return _lstt<decltype(terminator()), R, Sep>{};
+        return _lstt<Branch, R, Sep>{};
     }
 
     /// Matches `opt(list(r, sep))` surrounded by brackets.
@@ -78,21 +79,18 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
     {
-        return _optt<decltype(terminator()), decltype(list(r))>{};
+        return _optt<Branch, decltype(list(r))>{};
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
     {
-        return _optt<decltype(terminator()), decltype(list(r, sep))>{};
+        return _optt<Branch, decltype(list(r, sep))>{};
     }
 
     /// Matches the terminator alone.
     LEXY_CONSTEVAL auto terminator() const
     {
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Branch{};
-        else
-            return whitespaced(Branch{}, Whitespace{});
+        return Branch{};
     }
 };
 
@@ -101,7 +99,7 @@ template <typename Branch>
 LEXY_CONSTEVAL auto terminator(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
-    return _term<Branch, void>{};
+    return _term<Branch>{};
 }
 } // namespace lexyd
 

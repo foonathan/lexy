@@ -77,6 +77,35 @@ template <typename Branch, typename Reader>
 using branch_matcher = typename Branch::template branch_matcher<Reader>;
 } // namespace lexy
 
+//=== whitespace ===//
+namespace lexyd
+{
+template <typename Rule>
+struct _wsr;
+template <>
+struct _wsr<void> : rule_base
+{
+    template <typename NextParser>
+    using parser = NextParser;
+};
+} // namespace lexyd
+
+namespace lexy
+{
+struct _whitespace_tag
+{};
+
+template <typename Context>
+using _ws_rule = std::conditional_t<
+    // We need to disable whitespace if the context is already currently parsing whitespace.
+    Context::contains(_whitespace_tag{}), void,
+    lexy::production_whitespace<typename Context::production, typename Context::root>>;
+
+template <typename Context, typename NextParser>
+using whitespace_parser = rule_parser<lexy::dsl::_wsr<_ws_rule<Context>>, NextParser>;
+} // namespace lexy
+
+//=== token ===//
 namespace lexyd
 {
 template <typename Derived>
@@ -97,7 +126,8 @@ struct token_base : _token_base
         template <typename NextParser, typename Context, typename... Args>
         constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
         }
     };
 
@@ -109,19 +139,21 @@ struct token_base : _token_base
             typename Context::result_type
         {
             using token_engine = typename Derived::token_engine;
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+
             if constexpr (lexy::engine_can_fail<token_engine, Reader>)
             {
                 auto position = reader.cur();
                 if (auto ec = token_engine::match(reader);
                     ec == typename token_engine::error_code())
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                    return continuation::parse(context, reader, LEXY_FWD(args)...);
                 else
                     return Derived::token_error(context, reader, ec, position);
             }
             else
             {
                 token_engine::match(reader);
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
         }
     };
@@ -136,9 +168,19 @@ struct token_base : _token_base
 namespace lexy
 {
 /// Stores contextual information for parsing the given production.
-template <typename Production, typename Handler, typename HandlerState>
+template <typename Production, typename Handler, typename HandlerState, typename Root = Production>
 class parse_context
 {
+    static_assert(!lexy::is_token_production<Production> || std::is_same_v<Production, Root>,
+                  "don't specify Root argument explicitly");
+
+    template <typename ChildProduction, typename Iterator>
+    using _parse_context_for = parse_context<
+        ChildProduction, Handler,
+        decltype(LEXY_DECLVAL(Handler&).start_production(ChildProduction{}, Iterator{})),
+        // If it's a token we need to re-root it.
+        std::conditional_t<lexy::is_token_production<ChildProduction>, ChildProduction, Root>>;
+
 public:
     template <typename Iterator>
     constexpr explicit parse_context(Production p, Handler& handler, Iterator begin)
@@ -153,8 +195,7 @@ public:
     template <typename ChildProduction, typename Iterator>
     constexpr auto production_context(ChildProduction p, Iterator position) const
     {
-        // We need to qualify the class name, otherwise we won't get CTAD but just the current type.
-        return lexy::parse_context(p, *_handler, position);
+        return _parse_context_for<ChildProduction, Iterator>(p, *_handler, position);
     }
 
     template <typename Id, typename T>
@@ -177,6 +218,7 @@ public:
     }
 
     using production  = Production;
+    using root        = Root;
     using result_type = typename Handler::template result_type_for<Production>;
 
     constexpr auto sink() const
@@ -214,7 +256,7 @@ private:
         template <typename ChildProduction, typename Iterator>
         constexpr auto production_context(ChildProduction p, Iterator position) const
         {
-            return lexy::parse_context(p, _parent->handler(), position);
+            return _parse_context_for<ChildProduction, Iterator>(p, _parent->handler(), position);
         }
 
         template <typename Id2, typename T>
@@ -244,6 +286,7 @@ private:
         }
 
         using production  = Production;
+        using root        = Root;
         using result_type = typename Handler::template result_type_for<Production>;
 
         constexpr auto sink() const

@@ -9,13 +9,20 @@
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
-#include <lexy/match.hpp>
+
+namespace
+{
+struct ws_production
+{
+    static constexpr auto whitespace = LEXY_LIT(" ");
+};
+} // namespace
 
 TEST_CASE("dsl::delimited()")
 {
     constexpr auto cp = lexy::dsl::ascii::character;
 
-    SUBCASE("pattern")
+    SUBCASE("token")
     {
         static constexpr auto rule = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -88,6 +95,9 @@ TEST_CASE("dsl::delimited()")
 
         auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
         CHECK(invalid_ascii == -3);
+
+        auto inner_whitespace = LEXY_VERIFY_PRODUCTION(ws_production, "(  abc)");
+        CHECK(inner_whitespace == 5);
     }
     SUBCASE("branch")
     {

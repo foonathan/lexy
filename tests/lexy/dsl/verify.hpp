@@ -41,6 +41,8 @@
 #define LEXY_VERIFY(...) LEXY_VERIFY_CALL(verify<callback>(rule, __VA_ARGS__))
 #define LEXY_VERIFY_ENCODING(Encoding, ...)                                                        \
     LEXY_VERIFY_CALL(verify<callback, Encoding>(rule, __VA_ARGS__))
+#define LEXY_VERIFY_PRODUCTION(Production, ...)                                                    \
+    LEXY_VERIFY_CALL(verify<callback, test_encoding, Production>(rule, __VA_ARGS__))
 
 template <typename Tag>
 using test_error = lexy::error_for<test_input, Tag>;
@@ -48,7 +50,7 @@ using test_error = lexy::error_for<test_input, Tag>;
 struct test_production
 {};
 
-template <typename Callback, typename CharT>
+template <typename Callback, typename CharT, typename Root>
 struct test_handler
 {
     const CharT* str;
@@ -73,7 +75,7 @@ struct test_handler
     template <typename Production, typename... Args>
     LEXY_VERIFY_FN result_type_for<Production> finish_production(Production, int, Args&&... args)
     {
-        if constexpr (std::is_same_v<Production, test_production>)
+        if constexpr (std::is_same_v<Production, Root>)
         {
             auto code = Callback{str}.success(LEXY_FWD(args)...);
             return result_type_for<Production>(lexy::result_value, code);
@@ -88,7 +90,7 @@ struct test_handler
     template <typename Production, typename Error>
     LEXY_VERIFY_FN auto error(Production, int, Error&& error)
     {
-        if constexpr (std::is_same_v<Production, test_production>)
+        if constexpr (std::is_same_v<Production, Root>)
         {
             auto code = Callback{str}.error(LEXY_FWD(error));
             return result_type_for<Production>(lexy::result_error, code);
@@ -116,17 +118,18 @@ struct test_final_rule : lexy::dsl::rule_base
     };
 };
 
-template <typename Callback, typename Encoding, typename CharT, typename Rule>
+template <typename Callback, typename Encoding = test_encoding,
+          typename Production = test_production, typename CharT, typename Rule>
 LEXY_VERIFY_FN int verify(Rule _rule, const CharT* str, std::size_t size = std::size_t(-1))
 {
     auto input = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
                                          : lexy::string_input<Encoding>(str, size);
 
-    using handler_t = test_handler<Callback, CharT>;
+    using handler_t = test_handler<Callback, CharT, Production>;
 
     auto                handler = handler_t{str};
     auto                reader  = input.reader();
-    lexy::parse_context context(test_production{}, handler, reader.cur());
+    lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule  = decltype(_rule + test_final_rule{});
     auto result = lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
@@ -134,12 +137,6 @@ LEXY_VERIFY_FN int verify(Rule _rule, const CharT* str, std::size_t size = std::
         return result.value();
     else
         return result.error();
-}
-
-template <typename Callback, typename Rule>
-LEXY_VERIFY_FN int verify(Rule rule, const char* str, std::size_t size = std::size_t(-1))
-{
-    return verify<Callback, test_encoding>(rule, str, size);
 }
 
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED

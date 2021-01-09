@@ -7,7 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {

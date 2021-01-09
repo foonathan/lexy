@@ -31,10 +31,7 @@ namespace grammar
 {
 namespace dsl = lexy::dsl;
 
-// Whitespace is ' ' and '\t'.
-constexpr auto ws = dsl::ascii::blank;
-
-struct name
+struct name : lexy::token_production
 {
     struct invalid_character
     {
@@ -55,7 +52,7 @@ struct name
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
-struct version
+struct version : lexy::token_production
 {
     struct forbidden_build_string
     {
@@ -105,8 +102,7 @@ struct author
 struct author_list
 {
     // Match a comma separated (non-empty) list of authors surrounded by square brackets.
-    static constexpr auto rule
-        = dsl::square_bracketed[ws].list(dsl::p<author>[ws], dsl::sep(dsl::comma[ws]));
+    static constexpr auto rule = dsl::square_bracketed.list(dsl::p<author>, dsl::sep(dsl::comma));
 
     // Collect all authors into a std::vector.
     static constexpr auto value = lexy::as_list<std::vector<std::string>>;
@@ -119,10 +115,12 @@ struct config
         static constexpr auto name = "duplicate config field";
     };
 
+    // Whitespace is ' ' and '\t'.
+    static constexpr auto whitespace = dsl::ascii::blank;
+
     static constexpr auto rule = [] {
-        auto make_field = [](auto name, auto rule) {
-            return name >> dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws];
-        };
+        auto make_field
+            = [](auto name, auto rule) { return name >> dsl::lit_c<'='> + rule + dsl::newline; };
 
         auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>);
         auto version_field = make_field(LEXY_LIT("version"), LEXY_MEM(version) = dsl::p<version>);
@@ -130,7 +128,7 @@ struct config
             = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p<author_list>);
 
         return dsl::combination<duplicate_field>(name_field, version_field, authors_field)
-               + dsl::eof[dsl::ascii::space];
+               + dsl::whitespace(dsl::ascii::space) + dsl::eof;
     }();
 
     static constexpr auto value = lexy::as_aggregate<PackageConfig>;

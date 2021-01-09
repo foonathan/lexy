@@ -56,16 +56,6 @@ TEST_CASE("dsl::terminator")
         CHECK(result == 4);
     }
 
-    SUBCASE("whitespace")
-    {
-        static constexpr auto rule       = terminator[LEXY_LIT(" ")](inner);
-        constexpr auto        equivalent = inner + whitespaced(LEXY_LIT(";"), LEXY_LIT(" "));
-        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
-
-        auto result = LEXY_VERIFY("abc ;");
-        CHECK(result == 5);
-    }
-
     SUBCASE("while")
     {
         static constexpr auto rule = terminator.while_(inner);

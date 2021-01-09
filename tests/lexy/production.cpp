@@ -20,12 +20,33 @@ struct prod
 };
 } // namespace
 
-TEST_CASE("production traits")
+TEST_CASE("production traits simple")
 {
     CHECK(lexy::production_name<prod>() == "prod");
 
     CHECK(std::is_same_v<const lexy::production_rule<prod>, decltype(lexy::dsl::any)>);
     CHECK(std::is_same_v<const lexy::production_value<prod>::type, decltype(lexy::noop)>);
+}
+
+namespace
+{
+struct prod_ws
+{
+    static constexpr auto whitespace = lexy::dsl::any;
+};
+
+struct prod_token : lexy::token_production
+{};
+} // namespace
+
+TEST_CASE("production whitespace")
+{
+    CHECK(std::is_same_v<const lexy::production_whitespace<prod_token, prod_ws>, const void>);
+    CHECK(
+        std::is_same_v<const lexy::production_whitespace<prod, prod_ws>, decltype(lexy::dsl::any)>);
+    CHECK(
+        std::is_same_v<const lexy::production_whitespace<prod_ws, prod>, decltype(lexy::dsl::any)>);
+    CHECK(std::is_same_v<const lexy::production_whitespace<prod, prod>, const void>);
 }
 
 namespace

@@ -7,7 +7,6 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/whitespace.hpp>
 
 namespace lexyd
 {
@@ -25,14 +24,20 @@ struct _prd_parser
     LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
         typename Context::result_type
     {
+        // If we're about to parse a token production, we need to continue with the parent's (i.e.
+        // our current context) whitespace.
+        using continuation
+            = std::conditional_t<lexy::is_token_production<Production>,
+                                 lexy::whitespace_parser<Context, NextParser>, NextParser>;
+
         auto prod_ctx = context.production_context(Production{}, reader.cur());
         if (auto result = _parse<Rule>(prod_ctx, reader))
         {
             if constexpr (result.has_void_value())
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return continuation::parse(context, reader, LEXY_FWD(args)...);
             else
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(result).value());
+                return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                           LEXY_MOV(result).value());
         }
         else
             return typename Context::result_type(LEXY_MOV(result));
@@ -61,14 +66,20 @@ struct _prd : rule_base
         template <typename NextParser, typename Context, typename... Args>
         constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
+            // If we're about to parse a token production, we need to continue with the parent's
+            // (i.e. our current context) whitespace.
+            using continuation
+                = std::conditional_t<lexy::is_token_production<Production>,
+                                     lexy::whitespace_parser<Context, NextParser>, NextParser>;
+
             auto prod_ctx = context.production_context(Production{}, reader.cur());
             if (auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
             {
                 if constexpr (result.has_void_value())
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                    return continuation::parse(context, reader, LEXY_FWD(args)...);
                 else
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                             LEXY_MOV(result).value());
+                    return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                               LEXY_MOV(result).value());
             }
             else
                 return typename Context::result_type(LEXY_MOV(result));

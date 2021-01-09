@@ -66,9 +66,11 @@ namespace grammar
 {
 namespace dsl = lexy::dsl;
 
-// We're limiting whitespace to ASCII blank or comments.
+// We're limiting whitespace to ASCII blank.
 // We don't distinguish here between folding and non-folding whitespace for simplicity.
-constexpr auto ws = dsl::ascii::blank | dsl::parenthesized(dsl::ascii::print);
+// We also don't support comments - they're really complicated in that they support nesting and
+// quotes and so on.
+constexpr auto ws = dsl::whitespace(dsl::ascii::blank);
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.2.3 ===//
 constexpr auto atext = dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / LEXY_LIT("#")
@@ -77,15 +79,16 @@ constexpr auto atext = dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / L
                        / LEXY_LIT("=") / LEXY_LIT("?") / LEXY_LIT("^") / LEXY_LIT("_")
                        / LEXY_LIT("`") / LEXY_LIT("{") / LEXY_LIT("|") / LEXY_LIT("}");
 
-// Text of the specified characters surrounded by whitespace.
-constexpr auto atom = dsl::loop(ws | dsl::break_) + dsl::capture(dsl::while_one(atext))
-                      + dsl::loop(ws | dsl::break_);
+// Text of the specified characters.
+// In the grammar it is always surrounded by whitespace.
+// Here, we only add trailing whitespace; leading whitespace is taken care of earlier.
+constexpr auto atom = dsl::capture(dsl::while_one(atext)) + ws;
 
 struct dot_atom
 {
     // A list of atom separated by periods which are part of the content and thus captured (unlike
     // the whitespace).
-    static constexpr auto rule  = dsl::list(atom, dsl::sep(dsl::capture(dsl::period)));
+    static constexpr auto rule  = dsl::list(atom, dsl::sep(dsl::capture(dsl::period) >> ws));
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
@@ -95,18 +98,20 @@ struct quoted_string
     static constexpr auto rule = [] {
         // \c, where c is a printable ASCII character, is replaced by c itself.
         auto escape = dsl::backslash_escape.capture(dsl::ascii::print);
-        return dsl::quoted[ws](dsl::ascii::print, escape);
+        // Skip trailing whitespace.
+        return dsl::quoted(dsl::ascii::print, escape) >> ws;
     }();
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.2.5 ===//
+// Word skips trailing whitespace.
 constexpr auto word = dsl::p<quoted_string> | dsl::else_ >> atom;
 
 struct phrase
 {
     // A phrase is a list of words which starts with another text character or quote.
-    static constexpr auto rule  = dsl::list(dsl::peek(atext / LEXY_LIT("\""))[ws] >> word);
+    static constexpr auto rule  = dsl::list(dsl::peek(atext / LEXY_LIT("\"")) >> word);
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
@@ -116,23 +121,27 @@ struct address
 {
     static constexpr auto rule = [] {
         auto local_part = dsl::p<quoted_string> | dsl::else_ >> dsl::p<dot_atom>;
+        auto at         = dsl::at_sign + ws;
         auto domain     = dsl::p<dot_atom>; // No domain literal support.
 
         // Sets the local part and domain member.
-        auto addr_spec = local_part + dsl::at_sign + domain;
+        auto addr_spec = local_part + at + domain;
 
         // An address spec with an optional name.
-        auto angle_addr = dsl::angle_bracketed[ws](addr_spec);
-        auto name_addr  = dsl::opt(dsl::p<phrase>) + angle_addr;
+        // Need to skip whitespace after the <, trailing whitespace skipped by addr_spec.
+        auto angle_addr = dsl::angle_bracketed(ws + addr_spec);
+        // Whitespace between phrase and < is skipped by phrase.
+        auto name_addr = dsl::opt(dsl::p<phrase>) + angle_addr;
 
         // We're only having a named address if we can match the optional phrase followed by an
         // angle bracket.
-        auto name_addr_condition = dsl::opt(dsl::p<phrase>) + LEXY_LIT("<")[ws];
+        auto name_addr_condition = dsl::opt(dsl::p<phrase>) + LEXY_LIT("<");
 
         // An address spec without a name.
         auto unnamed_addr = dsl::nullopt + addr_spec;
 
-        return dsl::peek(name_addr_condition) >> name_addr | dsl::else_ >> unnamed_addr;
+        // Need to skip initial whitespace.
+        return ws + (dsl::peek(name_addr_condition) >> name_addr | dsl::else_ >> unnamed_addr);
     }();
     static constexpr auto value = lexy::construct<ast::address>;
 };

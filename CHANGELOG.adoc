@@ -5,8 +5,20 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-01-12
 
+* Replaced `operator[]` and `dsl::whitespaced()` by new `dsl::whitespace` rule.
+Whitespace can now be parsed manually or automatically.
++
+To parse whitespace manually, replace `rule[ws]` by `rule + dsl::whitespace(rule)`,
+or otherwise insert `dsl::whitespace(rule)` calls where appropriate.
+See `examples/email.cpp` or `examples/xml.cpp` for an example of manual whitespace skipping.
++
+To parse whitespace automatically, define a `static constexpr auto whitespace` member in the root production of the grammar.
+This rule is then skipped _after_ every token.
+To temporarily disable automatic whitespace skipping inside one production, inherit from `lexy::token_production`.
+See `examples/tutorial.cpp` or `examples/json.cpp` for an example of automatic whitespace skipping.
+
 * Removed support for choices in while, i.e. `dsl::while_(a | b | c)`.
-  This can be replaced by `dsl::loop(a | b | c | dsl::break_)`.
+This can be replaced by `dsl::loop(a | b | c | dsl::break_)`.
 
 == 2021-01-09
 

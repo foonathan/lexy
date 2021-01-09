@@ -23,56 +23,164 @@ Every `Token` is also a `Branch` that uses itself as the condition.
 
 === Whitespace
 
+By default, `lexy` does not treat whitespace in any special way.
+You need to instruct it to do so, using either manual or automatic whitespace skipping.
+
+Manual whitespace skipping is done using `lexy::dsl::whitespace(rule)`.
+It skips zero or more whitespace characters defined by `rule`.
+Insert it everywhere you want to skip over whitespace.
+See `examples/email.cpp` or `examples/xml.cpp` for an example of manual whitespace skipping.
+
+Automatic whitespace skipping is done by adding a `static constexpr auto whitespace` to the root production,
+i.e. the production passed to one of the parse functions.
+This member is initialized to a rule that defines a single whitespace character.
+`lexy` will then skip zero or more occurrences of `::whitespace` after every token of the entire grammar.
+
+To temporarily disable whitespace skipping for a production, inherit the production from `lexy::token_production`.
+Then whitespace will not be skipped for the rule of the production, and all productions reached from that rule.
+Likewise, `lexy::dsl::no_whitespace()` can be used to disable it for a single rule.
+
+See `examples/tutorial.cpp` or `examples/json.cpp` for an example of automatic whitespace skipping.
+
+NOTE: "Whitespace" can mean literal whitespace characters, but also comments (or whatever you want it to mean).
+
 [discrete]
-==== `lexy::dsl::whitespaced`
+==== `lexy::dsl::whitespace` (explicit)
 
-.`lexy/whitespace.hpp`
+.`lexy/dsl/whitespace.hpp`
 ----
-whitespaced(rule, whitespace) : Rule
+whitespace(rule) : Rule
+
+whitespace(rule_a) | rule_b = whitespace(rule_a | rule_b)
+whitespace(rule_a) / rule_b = whitespace(rule_a / rule_b)
 ----
 
-By default, no whitespace skipping is done.
-Use `whitespaced()` to skip arbitrary long whitespace before parsing a rule.
+The explicit `whitespace` rule matches `rule` zero or more times and treats the result as whitespace.
+This happens regardless of the state of automatic whitespace skipping.
+
+If the whitespace rule is used inside a choice or alternative, the entire choice/alternative is treated as whitespace instead.
 
 [horizontal]
 Requires::
-  `whitespace` is a branch that does not produce any values
-Equivalent to::
-  `token(while_(whitespace)) + rule`
-
-[godbolt,cpp,id=r5b8Gb]
-----
-// Skips whitespace and then parses `abc`.
-dsl::whitespaced(LEXY_LIT("abc"), dsl::ascii::space)
-----
-
-TIP: "whitespace" can mean literal space characters but also things like comments.
+  `rule` is a branch or a choice rule.
+  It must not produce any values.
+Matches::
+  While the branch condition of `rule` or any of the branch conditions of the choices match,
+  match and consume `rule`.
+  This will only stop once the branch conditions no longer match.
+  While matching and consuming `rule`, automatic whitespace skipping is disabled.
+Values::
+  None.
+Errors::
+  All errors raised by `rule` after the branch condition has been matched.
 
 [discrete]
-==== `Rule::operator[]`
+==== `lexy::dsl::whitespace` (implicit)
 
+.`lexy/dsl/whitespace.hpp`
 ----
-rule[whitespace]    : Rule
-token[whitespace]   : Token
-branch[whitespace]  : Branch
+whitespace : Rule = whitespace(automatic_whitespace_rule)
 ----
 
-Some rules also provide an `operator[]` that does the same as `whitespaced()`.
-They are here described as whitespace aware.
+The implicit `whitespace` rule is equivalent to the explicit `whitespace` rule with the current whitespace rule;
+i.e. it matches the current whitespace rule zero or more times.
+
+The current whitespace rule is determined as follows:
+
+* If automatic whitespace skipping is disabled, there is no current whitespace rule.
+  `lexy::dsl::whitespace` does nothing.
+* If the current production inherits from `lexy::token_production`, there is no current whitespace rule.
+  `lexy::dsl::whitespace` does nothing.
+* Otherwise, if the current production defines a `static constexpr auto whitespace` member,
+  its value is the current whitespace rule.
+* Otherwise, if the root production defines a `static constexpr auto whitespace` member,
+  its value is the current whitespace rule.
+
+Here, the root production is defined as follows:
+
+* If the current production is a token production, the root production is the current production.
+* Otherwise, if the current production is the production that was originally parsed to the top-level parse function (e.g. `lexy::parse()`),
+  the root production is the current production.
+* Otherwise, the root production is taken from the production that parsed the `lexy::dsl::p` or `lexy::dsl::recurse` rule to start parsing the current production.
+
+This rule is automatically parsed after every token, after a production that inherits from `lexy::token_production`,
+or after a `lexy::dsl::no_whitespace()` rule.
+
+.Example
+[%collapsible]
+====
+
+[source,cpp]
+----
+struct token_p : lexy::token_production
+{
+    struct child
+    {
+        static constexpr auto rule = dsl::whitespace; // <4>
+    };
+
+    static constexpr auto rule = dsl::whitespace + dsl::p<child>; // <3>
+};
+
+struct normal_prod
+{
+    static constexpr auto rule = dsl::whitespace + dsl::p<token_p>; // <2>
+};
+
+struct root_prod
+{
+    static constexpr auto whitespace = dsl::ascii::space;
+    static constexpr auto rule = dsl::whitespace + dsl::p<normal_prod>; // <1>
+};
+
+…
+
+auto result = lexy::parse<root_prod>(…);
+----
+<1> Here, the automatic whitespace rule is `dsl::ascii::space`,
+    as the current production has a `whitespace` member.
+<2> Here, the automatic whitespace rule is also `dsl::ascii::space`.
+    The current production doesn't have a `whitespace` member,
+    but its root production (`root_prod`) does.
+<3> Here, the current production is a token production, so there is no automatic whitespace.
+    The root production is reset to `token_p`.
+<4> Here, the root production is `token_p`, as that is the root of the parent.
+    As such, there is no automatic whitespace.
+====
+
+[discrete]
+==== `lexy::dsl::no_whitespace()`
+
+.`lexy/dsl/whitespace.hpp`
+----
+no_whitespace(rule)   : Rule
+no_whitespace(branch) : Branch
+----
+
+The `no_whitespace` rule parses the given `rule` but disables automatic whitespace skipping while doing so.
+It is a branch if given a branch.
 
 [horizontal]
-Requires::
-  `whitespace` is a branch that does not produce any values
-Equivalent to::
-  `whitespaced(rule, whitespace)`
+Branch Condition::
+  Whatever `branch` uses as branch condition.
+  Note that automatic whitespace skipping inside a branch condition is impossible anyway,
+  so nothing is changed there.
+Matches::
+  Matches and consumes `rule` but without performing automatic whitespace skipping after every token;
+  it disables the automatic whitespace rule during the parsing of `rule`.
+  After `rule` has been matched, skips implicit whitespace by matching and consuming `lexy::dsl::whitespace`.
+Values::
+  All values produced by `rule`.
+Errors::
+  All errors raised by `rule`.
 
-[godbolt,cpp,id=sqdze6]
-----
-// Skips whitespace and then parses `abc`.
-LEXY_LIT("abc")[dsl::ascii::space]
-----
+CAUTION: When `rule` contains a `lexy::dsl::p` or `lexy::dsl::recurse` rule, whitespace skipping is re-enabled while that production is parsed.
 
 === Primitive Tokens
+
+NOTE: All tokens, not just the tokens defined here, do implicit whitespace skipping.
+As such, a token `t` is really equivalent to `t + dsl::whitespace`.
+This has no effect, unless a whitespace rule has been specified.
 
 [discrete]
 ==== `lexy::dsl::any`
@@ -104,7 +212,6 @@ LEXY_LIT(Str) : Token
 ----
 
 The literal tokens match the specified sequence of characters.
-They are whitespace aware.
 
 [horizontal]
 Requires::
@@ -140,7 +247,6 @@ at_sign     : Token = lit<"@">
 
 The header `lexy/dsl/punctuator.hpp` defines common punctuator literals.
 They are equivalent to a literal matching the specified character.
-They are whitespace aware.
 
 === Character classes
 
@@ -153,7 +259,6 @@ eof : Token
 ----
 
 The `eof` token matches EOF.
-It is whitespace aware.
 
 [horizontal]
 Matches::
@@ -170,7 +275,6 @@ newline : Token
 ----
 
 The `newline` token matches a newline.
-It is whitespace aware.
 
 [horizontal]
 Matches::
@@ -187,7 +291,6 @@ eol : Token
 ----
 
 The `eol` token matches an end-of-line (EOL).
-It is whitespace aware.
 
 [horizontal]
 Matches::
@@ -257,7 +360,7 @@ Matches::
   For ASCII and UTF-32 this is only one, but for UTF-8 and UTF-16 it can be multiple code units.
   If the code point is too big or a UTF-16 surrogate, it fails.
   For UTF-8, it also fails for overlong sequences.
-Values::
+Value::
   If `.capture()` was called, it will produce the matched code point as a `lexy::code_point`.
 Errors::
   If it could not match a valid code point, it fails with a `lexy::expected_char_class` error with name `<encoding>.code_point`.
@@ -308,7 +411,6 @@ token(rule) : Token
 ----
 
 The `token` rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.
-It is whitespace aware.
 
 [horizontal]
 Matches::
@@ -465,7 +567,6 @@ capture(branch) : Branch
 
 The `capture()` rule takes an arbitrary rule and parses it, capturing everything it has consumed into a `lexy::lexeme`.
 It is a branch if given a branch.
-It is whitespace aware; preceding whitespace is not captured.
 
 [horizontal]
 Branch Condition::
@@ -609,7 +710,8 @@ peek(rule) : Branch
 ----
 
 The `peek` branch is taken if `rule` matches, but does not consume it.
-It is whitespace aware; leading whitespace will be consumed.
+
+CAUTION: Automatic whitespace skipping is disabled while determining whether `rule` matches.
 
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
@@ -622,7 +724,8 @@ peek_not(rule) : Branch
 ----
 
 The `peek_not()` branch is taken if `rule` does not match, but does not consume it.
-It is whitespace aware; leading whitespace will be consumed.
+
+CAUTION: Automatic whitespace skipping is disabled while determining whether `rule` matches.
 
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
@@ -636,7 +739,6 @@ lookahead(needle, end) : Branch
 
 The `lookahead` branch is taken if lookahead finds `needle` before `end` is found, which must both be tokens.
 No characters are consumed.
-It is whitespace aware; leading whitespace will be consumed.
 
 CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
@@ -1162,7 +1264,6 @@ recurse<Production> : Rule
 
 The `p` and `recurse` rules parses the rule of another production.
 The `p` rule is a branch, if the rule of the other production is a branch.
-Both are whitespace aware.
 
 [horizontal]
 Requires::
@@ -1172,6 +1273,8 @@ Branch Condition::
   Whatever the production's rule uses as a branch condition.
 Matches::
   Matches and consumes `Production::rule`.
+  If `Production` inherits from `lexy::token_production`,
+  automatic whitespace is skipped afterwards by matching and consuming the `lexy::dsl::whitespace` rule.
 Values::
   A single value, which is the result of parsing the production.
   All values produced by parsing its rule are forwarded to the productions value callback.
@@ -1188,6 +1291,11 @@ dsl::p<sub_production> + dsl::lit_c<'!'>
 TIP: While `recurse` can be used to implement direct recursion (e.g. `prefix >> dsl::p<current_production> | dsl::else_ >> end` to match zero or more `prefix` followed by `end`), it is better to use loops instead.
 
 WARNING: Left recursion will create an infinite loop.
+
+CAUTION: If a production is parsed while whitespace skipping has been disabled using `lexy::dsl::no_whitespace()`,
+it is temporarily re-enabled while `Production::rule` is parsed.
+If whitespace skipping has been disabled because the parent production inherits from `lexy::token_production`,
+whitespace skipping is still disabled while parsing `Production::rule`.
 
 [discrete]
 ==== `lexy::dsl::return_`
@@ -1237,15 +1345,6 @@ The terminator is defined using a branch; it is returned by calling `.terminator
 
 .`lexy/dsl/terminator.hpp`
 ----
-t[rule]
-----
-
-Whitespace can be added by writing `t[rule]`, where `t` is the result of a `terminator()` call.
-It will skip whitespace before matching the terminator.
-If whitespace is added, this is also reflected by `.terminator()`.
-
-.`lexy/dsl/terminator.hpp`
-----
 t(rule) : Rule = rule + t.terminator()
 ----
 
@@ -1281,15 +1380,6 @@ brackets(open_branch, close_branch).close() : Branch = close_branch
 A set of open and close brackets can be specified using `brackets()`.
 The result is not a rule, but a DSL for specifying that a rule is surrounded by brackets.
 The open and close brackets are defined using branches; they are returned by calling `.open()` and `.close()`.
-
-.`lexy/dsl/brackets.hpp`
-----
-b[rule]
-----
-
-Whitespace can be added by writing `b[rule]`, where `b` is the result of a `brackets()` call.
-It will skip whitespace before matching the open and close branch.
-If whitespace is added, this is also reflected by `.open()` and `.close()`.
 
 .`lexy/dsl/brackets.hpp`
 ----
@@ -1654,15 +1744,6 @@ There is a convenience overload if the same rule is used for the open and closin
 
 .`lexy/dsl/delimited.hpp`
 ----
-d[rule]
-----
-
-Whitespace can be added by writing `d[rule]`, where `d` is the result of a `delimiter()` call.
-It will skip whitespace before the opening delimiter only.
-If whitespace is added, this is also reflected by `.open()`.
-
-.`lexy/dsl/delimited.hpp`
-----
 quoted        = delimited(lit<"\"">)
 triple_quoted = delimited(lit<"\"\"\"">)
 
@@ -1700,6 +1781,8 @@ Branch Condition::
 Matching::
   Matches and consumes the opening delimiter, followed by zero or more occurrences of `rule`, followed by the closing delimiter.
   It determines whether or not to parse another instance of `rule` using the condition of the closing delimiter.
+  Automatic whitespace skipping is disabled while matching the opening and closing delimiter, as well as `rule` using `lexy::dsl::no_whitespace()`.
+  After the closing delimiter has been matched and consumed, whitespace is skipped by matching and consuming `lexy::dsl::whitespace`.
 Values::
   Values produced by the opening delimiter, the finished sink (which might be empty), and values produced by the closing delimiter.
   Every time the rule is parsed, all values produced by it are passed to the sink.
@@ -1712,6 +1795,8 @@ Errors::
 // Match a string consisting of code points that aren't control characters.
 dsl::quoted(dsl::code_point - dsl::ascii::control)
 ----
+
+CAUTION: When `rule` contains a `lexy::dsl::p` or `lexy::dsl::recurse` rule, whitespace skipping is re-enabled while that production is parsed.
 
 [discrete]
 ==== Delimited with escape sequences

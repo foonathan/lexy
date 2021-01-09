@@ -8,7 +8,6 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/std.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/whitespace.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 

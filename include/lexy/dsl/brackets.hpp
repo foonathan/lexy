@@ -11,14 +11,16 @@
 
 namespace lexyd
 {
-template <typename Open, typename Close, typename Whitespace>
+template <typename Open, typename Close>
 struct _brackets
 {
     /// Sets the whitespace.
     template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws) const
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
     {
-        return _brackets<Open, Close, Ws>{};
+        auto open  = whitespaced(Open{}, ws);
+        auto close = whitespaced(Close{}, ws);
+        return _brackets<decltype(open), decltype(close)>{};
     }
 
     /// Matches the rule surrounded by brackets.
@@ -78,18 +80,12 @@ struct _brackets
     /// Matches the open bracket.
     LEXY_CONSTEVAL auto open() const
     {
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Open{};
-        else
-            return whitespaced(Open{}, Whitespace{});
+        return Open{};
     }
     /// Matches the closing bracket.
     LEXY_CONSTEVAL auto close() const
     {
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Close{};
-        else
-            return whitespaced(Close{}, Whitespace{});
+        return Close{};
     }
 };
 
@@ -98,7 +94,7 @@ template <typename Open, typename Close>
 LEXY_CONSTEVAL auto brackets(Open, Close)
 {
     static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
-    return _brackets<Open, Close, void>{};
+    return _brackets<Open, Close>{};
 }
 
 constexpr auto round_bracketed  = brackets(lit_c<'('>, lit_c<')'>);

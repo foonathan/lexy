@@ -153,37 +153,5 @@ TEST_CASE("dsl::capture()")
         auto success = LEXY_VERIFY("abc");
         CHECK(success == 1);
     }
-    SUBCASE("whitespace")
-    {
-        static constexpr auto rule = capture(LEXY_LIT("abc"))[LEXY_LIT(" ")];
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
-            {
-                LEXY_VERIFY_CHECK(lex.end() == cur);
-                LEXY_VERIFY_CHECK(lexy::_detail::string_view(lex.data(), lex.size()) == "abc");
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == "abc");
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 0);
-
-        auto with_space = LEXY_VERIFY("  abc");
-        CHECK(with_space == 0);
-    }
 }
 

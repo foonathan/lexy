@@ -91,17 +91,6 @@ TEST_CASE("dsl::bracketed")
         CHECK(result == 5);
     }
 
-    SUBCASE("whitespace")
-    {
-        static constexpr auto rule       = lexy::dsl::parenthesized[LEXY_LIT(" ")](inner);
-        constexpr auto        equivalent = whitespaced(LEXY_LIT("("), LEXY_LIT(" "))
-                                    >> inner + whitespaced(LEXY_LIT(")"), LEXY_LIT(" "));
-        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
-
-        auto result = LEXY_VERIFY(" (abc )");
-        CHECK(result == 7);
-    }
-
     SUBCASE("while")
     {
         static constexpr auto rule = lexy::dsl::parenthesized.while_(inner);

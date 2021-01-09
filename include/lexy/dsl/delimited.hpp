@@ -66,20 +66,21 @@ struct _del : rule_base
     };
 };
 
-template <typename Open, typename Close, typename Whitespace>
+template <typename Open, typename Close>
 struct _delim_dsl
 {
     /// Sets the whitespace.
     template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws) const
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
     {
-        return _delim_dsl<Open, Close, Ws>{};
+        auto open = whitespaced(Open{}, ws);
+        return _delim_dsl<decltype(open), Close>{};
     }
 
     template <typename Content>
     LEXY_CONSTEVAL auto _get(Content) const
     {
-        return open() >> _del<Close, Content>{};
+        return no_whitespace(open() >> _del<Close, Content>{});
     }
 
     /// Sets the content.
@@ -103,10 +104,7 @@ struct _delim_dsl
     /// Matches the open delimiter.
     LEXY_CONSTEVAL auto open() const
     {
-        if constexpr (std::is_same_v<Whitespace, void>)
-            return Open{};
-        else
-            return whitespaced(Open{}, Whitespace{});
+        return Open{};
     }
     /// Matches the closing delimiter.
     LEXY_CONSTEVAL auto close() const
@@ -121,7 +119,7 @@ template <typename Open, typename Close>
 LEXY_CONSTEVAL auto delimited(Open, Close)
 {
     static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
-    return _delim_dsl<Open, Close, void>{};
+    return _delim_dsl<Open, Close>{};
 }
 
 /// Parses everything between a paired delimiter.
@@ -129,7 +127,7 @@ template <typename Delim>
 LEXY_CONSTEVAL auto delimited(Delim)
 {
     static_assert(lexy::is_branch<Delim>);
-    return _delim_dsl<Delim, Delim, void>{};
+    return _delim_dsl<Delim, Delim>{};
 }
 
 constexpr auto quoted        = delimited(LEXY_LIT("\""));

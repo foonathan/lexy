@@ -1080,48 +1080,109 @@ authors=["Jonathan Müller"]
 ----
 
 We don't support whitespace between the elements.
-`lexy` does not skip whitespace until you tell it to (and more importantly, what the whitespace is).
+We want to support ASCII blank characters (space and tab) surrounding the equal sign and the brackets and comma of the author list.
+This can be done either manually or automatically.
 
-For that, we can use `dsl::whitespaced()`.
-It takes a rule and the whitespace rule.
-It then matches the rule after it skipped any leading whitespace.
-For convenience, many rules provide an `operator[]` that does the same thing.
+=== Manual whitespace skipping
 
-So we first define our whitespace rule as a global constant in our grammar:
-
-[source,cpp]
-----
-// Whitespace is ' ' and '\t'.
-constexpr auto ws = dsl::ascii::blank;
-----
-
-Then we add whitespace to the author list:
+To do this manually, we can use `dsl::whitespace(dsl::ascii::blank)`.
+This rule, like `dsl::while_()`, matches zero or more occurrences of the given rule (but internally it is treated as whitespace, not actual text).
+We then insert it wherever we need to skip whitespace.
 
 [source,cpp]
 ----
-struct author_list
+// Define whitespace globally for convenience.
+constexpr auto ws = dsl::whitespace(dsl::ascii:::blank).
+
+struct config
 {
-    // We allow whitespace:
-    // - before the [ and ] brackets
-    // - before each author name
-    // - before the comma
-    static constexpr auto rule
-        = dsl::square_bracketed[ws].list(dsl::p<author>[ws], dsl::sep(dsl::comma[ws]));
+    static constexpr auto rule = []{
+        auto make_field = [](auto name, auto rule) {
+            // Skip whitespace surrounding the equal sign and before the newline.
+            return name + ws + dsl::lit_c<'='> + ws + rule + ws + dsl::newline;
+        };
+
+        …
+    }();
 };
+
+// Likewise, add it to the author_list production.
 ----
 
-And to the field:
+=== Automatic whitespace skipping
+
+Skipping whitespace manually is a good idea when whitespace is only needed in a couple of places or you're copying a grammar that already specifies whitespace.
+Here, however, it just adds extra noise to the rule.
+
+So instead we can instruct `lexy` to skip whitespace automatically for us.
+We just need to tell the library what whitespace is, and it will automatically skip one after it parses a token.
+Remember, tokens are things like `LEXY_LIT("name")` or `dsl::lit_c<'='>` -- precisely where we inserted `ws` in the example above!
 
 [source,cpp]
 ----
-auto make_field = [](auto name, auto rule) {
-    // We skip whitespace before and after the =,
-    // i.e. before the rule.
-    return name + dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline;
+struct config
+{
+    static constexpr auto whitespace = dsl::ascii::blank; // <1>
+
+    static constexpr auto rule = [] { … } (); // <2>
+    static constexpr auto value = lexy::as_aggregate<PackageConfig>;
 };
 ----
+<1> Define what whitespace is for our grammar.
+<2> Nothing needs to change in any of the rules here!
+
+We enable whitespace by adding a `whitespace` member to the root production, i.e. the production we're actually parsing.
+And that's all: now `lexy` will skip whitespace after every token of our grammar.
+
+This is a bit much, however.
+For example, the following now parses:
+
+----
+name    = le   x  y
+version = 0.  0  .0
+authors = ["Jonathan Müller"]
+----
+
+The `name` production consists of a sequence of tokens like `dsl::ascii::alpha`.
+`lexy` will skip whitespace after every one of them.
+Likewise, it will skip whitespace after the `dsl::period` and `dsl::digits` of the `version` production.
+
+So we need to disable whitespace skipping there.
+Conceptually, the `name` and `version` production should be treated just like tokens:
+we don't want whitespace inside of them, but only skip it afterwards.
+We can get that behavior by inheriting them from `lexy::token_production`:
+
+[source,cpp]
+----
+struct name : lexy::token_production
+{
+    …
+};
+
+struct version : lexy::token_production
+{
+    …
+};
+
+// Other productions unchanged.
+----
+
+Now when we parse the name and version field, `lexy` disables whitespace skipping for the tokens inside the productions,
+and will only skip spaces afterwards.
+
+Note that we don't need to do the same for the `author` production.
+While it is also a production that should be treated as a single token (a string literal),
+whitespace skipping inside of `dsl::quoted()` is disabled automatically for us.
+So `"   Jonathan Müller"` will always include the leading spaces.
+
+To recap, to enable automatic whitespace skipping, we just need to do the following:
+
+* Add a `static constexpr auto whitespace` member that defines whitespace to our root production `config`.
+* Disable whitespace skipping inside the `name` and `version` field by inheriting the productions from `lexy::token_production`.
 
 Now we can parse the package config shown in the beginning of the tutorial!
+
+=== Arbitrary ordering of fields
 
 One final feature we might want to support is parsing fields in arbitrary order.
 This can be done with the `dsl::combination()` rule, which matches the specified set of rules once, but in any order.
@@ -1166,6 +1227,8 @@ This will match each field exactly once, but in any order.
 
 Our parser now handles all well-formed input, but what about wrong input?
 
+=== Parsing the entire input
+
 The first thing you might notice is that you can freely append stuff at the end of the config file.
 
 .`package.config`
@@ -1190,13 +1253,29 @@ struct config
         …
 
         return dsl::combination(name_field, version_field, authors_field)
-                + dsl::eof[dsl::ascii::space];
+                + dsl::eof;
     }();
 };
 ----
 
-In order to allow arbitrary whitespace at the end, we use the `operator[]` to add it.
-Now input like the one given above, will raise an error.
+Note that this does not allow trailing newlines, as we've required EOF immediately after all the fields.
+To fix that, we can manually instruct `lexy` to skip any whitespace character, not just blanks.
+
+.Allowing trailing newlines
+[source,cpp]
+----
+struct config
+{
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination(name_field, version_field, authors_field)
+                + dsl::whitespace(dsl::ascii::space) + dsl::eof;
+    }();
+};
+----
+
+=== Error messages
 
 When the parsing algorithm fails to parse something, parsing stops and an error is raised.
 This error is passed to the error callback passed as second argument to `lexy::parse()` and `lexy::validate()`.

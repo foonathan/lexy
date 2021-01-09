@@ -141,14 +141,10 @@ namespace grammar
 {
 namespace dsl = lexy::dsl;
 
-// whitespace is a sequence of space, tab, carriage return, or newline.
-// Add your comment syntax here.
-constexpr auto ws = dsl::ascii::space / dsl::ascii::newline;
-
 struct json_value;
 
 // A json value that is a number.
-struct number
+struct number : lexy::token_production
 {
     // A signed integer parsed as int64_t.
     struct integer
@@ -176,10 +172,8 @@ struct number
     };
 
     static constexpr auto rule
-        = dsl::whitespaced(dsl::peek(dsl::lit_c<'-'> / dsl::digit<>)
-                               >> dsl::p<integer> + dsl::opt(dsl::p<fraction>)
-                                      + dsl::opt(dsl::p<exponent>),
-                           ws);
+        = dsl::peek(dsl::lit_c<'-'> / dsl::digit<>)
+          >> dsl::p<integer> + dsl::opt(dsl::p<fraction>) + dsl::opt(dsl::p<exponent>);
     static constexpr auto value = lexy::construct<ast::json_number>;
 };
 
@@ -208,7 +202,7 @@ struct string
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>);
 
         // String of code_point with specified escape sequences, surrounded by ".
-        return dsl::quoted[ws](code_point, escape);
+        return dsl::quoted(code_point, escape);
     }();
 
     static constexpr auto value = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
@@ -220,7 +214,7 @@ struct array
     // A (potentially empty) list of json values, seperated by comma and surrouned by square
     // brackets. Use trailing_sep() here to allow trailing commas.
     static constexpr auto rule
-        = dsl::square_bracketed[ws].opt_list(dsl::recurse<json_value>, sep(dsl::comma[ws]));
+        = dsl::square_bracketed.opt_list(dsl::recurse<json_value>, sep(dsl::comma));
 
     static constexpr auto value = lexy::as_list<ast::json_array>;
 };
@@ -229,10 +223,10 @@ struct array
 struct object
 {
     static constexpr auto rule = [] {
-        auto item = dsl::p<string> + dsl::colon[ws] + dsl::recurse<json_value>;
+        auto item = dsl::p<string> + dsl::colon + dsl::recurse<json_value>;
         // A (potentially empty) list of items, seperated by comma and surrouned by curly brackets.
         // Use trailing_sep() here to allow trailing commas.
-        return dsl::curly_bracketed[ws].opt_list(item, dsl::sep(dsl::comma[ws]));
+        return dsl::curly_bracketed.opt_list(item, dsl::sep(dsl::comma));
     }();
 
     static constexpr auto value = lexy::as_collection<ast::json_object>;
@@ -250,9 +244,9 @@ struct json_value
     };
 
     static constexpr auto rule = [] {
-        auto null   = LEXY_LIT("null")[ws] >> dsl::value_t<ast::json_null>;
-        auto true_  = LEXY_LIT("true")[ws] >> dsl::value_c<true>;
-        auto false_ = LEXY_LIT("false")[ws] >> dsl::value_c<false>;
+        auto null   = LEXY_LIT("null") >> dsl::value_t<ast::json_null>;
+        auto true_  = LEXY_LIT("true") >> dsl::value_c<true>;
+        auto false_ = LEXY_LIT("false") >> dsl::value_c<false>;
 
         auto primitive = null | true_ | false_ | dsl::p<number> | dsl::p<string>;
         auto complex   = dsl::p<object> | dsl::p<array>;
@@ -266,7 +260,11 @@ struct json_value
 // Entry point of the production.
 struct json
 {
-    static constexpr auto rule  = dsl::p<json_value> + dsl::eof[ws];
+    // Whitespace is a sequence of space, tab, carriage return, or newline.
+    // Add your comment syntax here.
+    static constexpr auto whitespace = dsl::ascii::space / dsl::ascii::newline;
+
+    static constexpr auto rule  = dsl::whitespace + dsl::p<json_value> + dsl::eof;
     static constexpr auto value = lexy::forward<ast::json_value>;
 };
 } // namespace grammar

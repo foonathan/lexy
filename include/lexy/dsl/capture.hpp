@@ -6,7 +6,6 @@
 #define LEXY_DSL_CAPTURE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexyd

@@ -34,6 +34,7 @@ TEST_CASE("command")
     pass("echo    hi");
     pass(R"(echo \
     hi)");
+    pass("echo    hi  ");
 
     fail("unknown command");
 }
