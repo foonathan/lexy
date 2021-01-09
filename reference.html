@@ -3996,8 +3996,7 @@ Long lookahead can slow down parsing speed due to backtracking.
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/sequence.hpp</code></div>
 <div class="content">
-<pre>rule + rule   : Rule
-token + token : Branch</pre>
+<pre>rule + rule : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4005,14 +4004,6 @@ token + token : Branch</pre>
 </div>
 <div class="hdlist">
 <table>
-<tr>
-<td class="hdlist1">
-Branch Condition
-</td>
-<td class="hdlist2">
-<p>The branch is only taken if all the tokens match in sequence.</p>
-</td>
-</tr>
 <tr>
 <td class="hdlist1">
 Matches
@@ -6278,13 +6269,41 @@ When it is parsed, it toggles the value of the flag with the given <code>Id</cod
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>context_flag&lt;Id&gt;.check() : Branch</pre>
+<pre>context_counter&lt;Id&gt;.select(rule_true, rule_false) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>.check()</code> rule does not interact with the input at all.
-When it is used as a branch condition that branch is only taken if the value of the flag with the given <code>Id</code> is <code>true</code>.
-When it is parsed normally it has no effect.</p>
+<p>The <code>.select()</code> rule selects on the given rules depending on the value of the flag with the given <code>Id</code>.
+It then parses the selected rule.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>If the value of the flag is <code>true</code>, matches and  consumes <code>rule_true</code>.
+Otherwise, matches and  consumes <code>rule_false</code>.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>All values produced by parsing the selected rule.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>All errors raised by parsing the selected rule.</p>
+</td>
+</tr>
+</table>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6347,7 +6366,7 @@ The counter with the given <code>Id</code> is then incremented/decremented by th
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and  consumes <code>rule.</code></p>
+<p>Matches and  consumes <code>rule</code>.</p>
 </td>
 </tr>
 <tr>
@@ -6370,15 +6389,42 @@ Errors
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>context_counter&lt;Id&gt;.check_eq&lt;Value&gt;() : Branch
-context_counter&lt;Id&gt;.check_lt&lt;Value&gt;() : Branch
-context_counter&lt;Id&gt;.check_gt&lt;Value&gt;() : Branch</pre>
+<pre>context_counter&lt;Id&gt;.compare&lt;Value&gt;(rule_less, rule_eq, rule_greater) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>.check_*()</code> rules do not interact with the input at all.
-When it is used as a branch condition that branch is only taken if the value of the counter with the given <code>Id</code> is equal to/less than/greater than <code>Value</code>.
-When it is parsed normally it has no effect.</p>
+<p>The <code>.compare()</code> rule compares the value of the counter with the given <code>Id</code> to <code>Value</code>.
+It then parses one of the three given rules, depending on the result.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>If the value of the counter is less than <code>Value</code>, matches and  consumes <code>rule_less</code>.
+If the value of the counter is equal than <code>Value</code>, matches and  consumes <code>rule_eq</code>.
+If the value of the counter is greater than <code>Value</code>, matches and  consumes <code>rule_greater</code>.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>All values produced by parsing the selected rule.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>All errors raised by parsing the selected rule.</p>
+</td>
+</tr>
+</table>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6697,7 +6743,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-01-08 20:44:12 UTC
+Last updated 2021-01-09 21:05:40 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
