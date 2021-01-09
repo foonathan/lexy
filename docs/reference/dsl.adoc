@@ -1940,12 +1940,20 @@ The `.toggle()` rule does not interact with the input at all.
 When it is parsed, it toggles the value of the flag with the given `Id`.
 
 ----
-context_flag<Id>.check() : Branch
+context_counter<Id>.select(rule_true, rule_false) : Rule
 ----
 
-The `.check()` rule does not interact with the input at all.
-When it is used as a branch condition that branch is only taken if the value of the flag with the given `Id` is `true`.
-When it is parsed normally it has no effect.
+The `.select()` rule selects on the given rules depending on the value of the flag with the given `Id`.
+It then parses the selected rule.
+
+[horizontal]
+Matches::
+  If the value of the flag is `true`, matches and  consumes `rule_true`.
+  Otherwise, matches and  consumes `rule_false`.
+Values::
+  All values produced by parsing the selected rule.
+Errors::
+  All errors raised by parsing the selected rule.
 
 ----
 context_flag<Id>.require<ErrorTag>()        : Rule
@@ -1995,21 +2003,28 @@ The counter with the given `Id` is then incremented/decremented by the number of
 
 [horizontal]
 Matches::
-  Matches and  consumes `rule.`
+  Matches and  consumes `rule`.
 Values::
   All values produced by parsing `rule`.
 Errors::
   All errors raised by parsing `rule`.
 
 ----
-context_counter<Id>.check_eq<Value>() : Branch
-context_counter<Id>.check_lt<Value>() : Branch
-context_counter<Id>.check_gt<Value>() : Branch
+context_counter<Id>.compare<Value>(rule_less, rule_eq, rule_greater) : Rule
 ----
 
-The `.check_*()` rules do not interact with the input at all.
-When it is used as a branch condition that branch is only taken if the value of the counter with the given `Id` is equal to/less than/greater than `Value`.
-When it is parsed normally it has no effect.
+The `.compare()` rule compares the value of the counter with the given `Id` to `Value`.
+It then parses one of the three given rules, depending on the result.
+
+[horizontal]
+Matches::
+  If the value of the counter is less than `Value`, matches and  consumes `rule_less`.
+  If the value of the counter is equal than `Value`, matches and  consumes `rule_eq`.
+  If the value of the counter is greater than `Value`, matches and  consumes `rule_greater`.
+Values::
+  All values produced by parsing the selected rule.
+Errors::
+  All errors raised by parsing the selected rule.
 
 ----
 context_counter<Id>.require<ErrorTag>()        : Rule

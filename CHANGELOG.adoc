@@ -3,6 +3,11 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-01-09
+
+Remove `.check()` from `dsl::context_flag` and `.check_eq/lt/gt` from `dsl::context_counter` due to implementation problems.
+Use `.select()` and `.compare()` instead.
+
 == 2021-01-08
 
 Removed context sensitive parsing mechanism from `context.hpp` (`dsl::context_push()`, `_pop()` etc.).

@@ -13,96 +13,110 @@ TEST_CASE("dsl::context_counter")
     struct error;
 
     static constexpr auto counter = lexy::dsl::context_counter<struct id>;
-    auto                  get     = [](auto check) {
-        return check >> lexy::dsl::value_c<true> | lexy::dsl::else_ >> lexy::dsl::value_c<false>;
-    };
 
     struct callback
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char*, bool value)
-        {
-            return value;
-        }
         LEXY_VERIFY_FN int success(const char*)
         {
-            return 2;
+            return 0;
+        }
+        LEXY_VERIFY_FN int success(const char*, int sign)
+        {
+            return sign;
         }
 
         LEXY_VERIFY_FN int error(test_error<error> error)
         {
             LEXY_VERIFY_CHECK(error.position() == str);
-            return -1;
+            return -2;
         }
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
         {
-            return -2;
+            return -3;
         }
     };
 
-    SUBCASE("declare - 0")
+    SUBCASE("create - 0")
     {
-        static constexpr auto rule = counter.create() + get(counter.check_eq<0>());
+        static constexpr auto rule = counter.create() + counter.require<0, error>();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        CHECK(result == 0);
     }
-    SUBCASE("declare - 42")
+    SUBCASE("create - 42")
     {
-        static constexpr auto rule = counter.create<42>() + get(counter.check_eq<42>());
+        static constexpr auto rule = counter.create<42>() + counter.require<42, error>();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        CHECK(result == 0);
     }
 
     SUBCASE("inc")
     {
         static constexpr auto rule
-            = counter.create() + counter.inc() + counter.inc() + get(counter.check_eq<2>());
+            = counter.create() + counter.inc() + counter.inc() + counter.require<2, error>();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        CHECK(result == 0);
     }
     SUBCASE("dec")
     {
         static constexpr auto rule
-            = counter.create() + counter.dec() + counter.dec() + get(counter.check_eq<-2>());
+            = counter.create() + counter.dec() + counter.dec() + counter.require<-2, error>();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        CHECK(result == 0);
     }
 
     SUBCASE("push")
     {
         static constexpr auto rule
-            = counter.create() + counter.push(LEXY_LIT("abc")) + get(counter.check_eq<3>());
+            = counter.create() + counter.push(LEXY_LIT("abc")) + counter.require<3, error>();
 
         auto result = LEXY_VERIFY("abc");
-        CHECK(result == 1);
+        CHECK(result == 0);
     }
     SUBCASE("pop")
     {
         static constexpr auto rule
-            = counter.create() + counter.pop(LEXY_LIT("abc")) + get(counter.check_eq<-3>());
+            = counter.create() + counter.pop(LEXY_LIT("abc")) + counter.require<-3, error>();
+
+        auto result = LEXY_VERIFY("abc");
+        CHECK(result == 0);
+    }
+
+    static constexpr auto compare
+        = counter.compare<0>(lexy::dsl::value_c<-1>, lexy::dsl::value_c<0>, lexy::dsl::value_c<1>);
+    SUBCASE("compare - less")
+    {
+        static constexpr auto rule = counter.create<-1>() + compare;
+
+        auto result = LEXY_VERIFY("abc");
+        CHECK(result == -1);
+    }
+    SUBCASE("compare - equal")
+    {
+        static constexpr auto rule = counter.create<0>() + compare;
+
+        auto result = LEXY_VERIFY("abc");
+        CHECK(result == 0);
+    }
+    SUBCASE("compare - greater")
+    {
+        static constexpr auto rule = counter.create<1>() + compare;
 
         auto result = LEXY_VERIFY("abc");
         CHECK(result == 1);
     }
 
-    SUBCASE("require - failed")
+    SUBCASE("require failed")
     {
-        static constexpr auto rule = counter.create<1>() + counter.require<error>();
+        static constexpr auto rule = counter.create() + counter.require<1, error>();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == -1);
-    }
-    SUBCASE("require - pass")
-    {
-        static constexpr auto rule = counter.create<1>() + counter.require<1, error>();
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 2);
+        CHECK(result == -2);
     }
 }
 

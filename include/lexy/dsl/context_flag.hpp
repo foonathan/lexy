@@ -58,24 +58,20 @@ struct _ctx_ftoggle : rule_base
     };
 };
 
-template <typename Id>
-struct _ctx_fcheck : branch_base
+template <typename Id, typename R, typename S>
+struct _ctx_fselect : rule_base
 {
-    template <typename Reader>
-    struct branch_matcher
+    template <typename NextParser>
+    struct parser
     {
-        static constexpr auto is_unconditional = false;
-
-        template <typename Context>
-        constexpr bool match(Context& context, Reader&)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            return context.get(Id{});
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            if (context.get(Id{}))
+                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            else
+                return lexy::rule_parser<S, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -130,9 +126,10 @@ struct _ctx_flag
         return _ctx_ftoggle<id>{};
     }
 
-    LEXY_CONSTEVAL auto check() const
+    template <typename R, typename S>
+    LEXY_CONSTEVAL auto select(R, S) const
     {
-        return _ctx_fcheck<id>{};
+        return _ctx_fselect<id, R, S>{};
     }
 
     template <typename ErrorTag>

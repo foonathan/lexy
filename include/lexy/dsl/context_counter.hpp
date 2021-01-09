@@ -75,29 +75,22 @@ struct _ctx_cpush : rule_base
     };
 };
 
-template <typename Id, int Value, int Sign>
-struct _ctx_ccomp : branch_base
+template <typename Id, int Value, typename R, typename S, typename T>
+struct _ctx_ccompare : rule_base
 {
-    template <typename Reader>
-    struct branch_matcher
+    template <typename NextParser>
+    struct parser
     {
-        static constexpr auto is_unconditional = false;
-
-        template <typename Context>
-        constexpr bool match(Context& context, Reader&)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
         {
-            if constexpr (Sign == 0)
-                return context.get(Id{}) == Value;
-            else if constexpr (Sign > 0)
-                return context.get(Id{}) > Value;
-            else
-                return context.get(Id{}) < Value;
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            if (context.get(Id{}) < Value)
+                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            else if (context.get(Id{}) == Value)
+                return lexy::rule_parser<S, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            else // context.get(Id{}) > Value
+                return lexy::rule_parser<T, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -158,20 +151,10 @@ struct _ctx_counter
         return _ctx_cpush<id, Rule, -1>{};
     }
 
-    template <int Value>
-    LEXY_CONSTEVAL auto check_eq() const
+    template <int Value, typename R, typename S, typename T>
+    LEXY_CONSTEVAL auto compare(R, S, T) const
     {
-        return _ctx_ccomp<id, Value, 0>{};
-    }
-    template <int Value>
-    LEXY_CONSTEVAL auto check_lt() const
-    {
-        return _ctx_ccomp<id, Value, -1>{};
-    }
-    template <int Value>
-    LEXY_CONSTEVAL auto check_gt() const
-    {
-        return _ctx_ccomp<id, Value, +1>{};
+        return _ctx_ccompare<id, Value, R, S, T>{};
     }
 
     template <typename ErrorTag>
