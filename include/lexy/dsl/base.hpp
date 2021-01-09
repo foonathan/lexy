@@ -89,8 +89,7 @@ struct token_base : _token_base
     {
         static constexpr auto is_unconditional = false;
 
-        template <typename Context>
-        constexpr bool match(Context&, Reader& reader)
+        constexpr bool match(Reader& reader)
         {
             return lexy::engine_try_match<typename Derived::token_engine>(reader);
         }

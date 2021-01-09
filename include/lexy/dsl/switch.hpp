@@ -72,7 +72,7 @@ struct _switch_select<NextParser, H, T...>
         else
         {
             branch_matcher branch{};
-            if (branch.match(context, partial) && partial.eof())
+            if (branch.match(partial) && partial.eof())
                 return branch.template parse<cont>(context, partial, reader, LEXY_FWD(args)...);
             else
                 return _switch_select<NextParser, T...>::parse(context, reader, save,

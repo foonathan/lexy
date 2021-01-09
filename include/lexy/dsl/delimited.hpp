@@ -42,7 +42,7 @@ struct _del : rule_base
             auto sink  = context.sink();
 
             lexy::branch_matcher<Close, Reader> close{};
-            while (!close.match(context, reader))
+            while (!close.match(reader))
             {
                 // If we've reached EOF, it means we're missing the closing delimiter.
                 if (reader.eof())
@@ -174,8 +174,7 @@ struct _escape_cap : branch_base
 
         static constexpr auto is_unconditional = false;
 
-        template <typename Context>
-        constexpr bool match(Context&, Reader& reader)
+        constexpr bool match(Reader& reader)
         {
             _begin = reader.cur();
             return lexy::engine_try_match<Engine>(reader);

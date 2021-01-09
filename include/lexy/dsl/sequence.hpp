@@ -35,8 +35,7 @@ struct _seq : rule_base
     {
         static constexpr auto is_unconditional = false;
 
-        template <typename Context>
-        constexpr bool match(Context&, Reader& reader)
+        constexpr bool match(Reader& reader)
         {
             auto save = reader;
             if (((R::token_engine::match(reader) == typename R::token_engine::error_code()) && ...))

@@ -21,7 +21,7 @@ struct _if : rule_base
             typename Context::result_type
         {
             lexy::branch_matcher<Branch, Reader> branch{};
-            if (branch.match(context, reader))
+            if (branch.match(reader))
                 return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             else
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);

@@ -43,10 +43,9 @@ struct _mem : rule_base
 
         static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
 
-        template <typename Context>
-        constexpr bool match(Context& context, Reader& reader)
+        constexpr bool match(Reader& reader)
         {
-            return _impl.match(context, reader);
+            return _impl.match(reader);
         }
 
         template <typename NextParser, typename Context, typename... Args>
