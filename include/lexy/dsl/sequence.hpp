@@ -28,30 +28,6 @@ struct _seq : rule_base
 {
     static_assert(sizeof...(R) > 1);
 
-    static constexpr bool is_branch = (lexy::is_token<R> && ...);
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        static constexpr auto is_unconditional = false;
-
-        constexpr bool match(Reader& reader)
-        {
-            auto save = reader;
-            if (((R::token_engine::match(reader) == typename R::token_engine::error_code()) && ...))
-                return true;
-
-            reader = LEXY_MOV(save);
-            return false;
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
     template <typename NextParser>
     using parser = typename _seq_parser<NextParser, R...>::type;
 };

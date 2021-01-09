@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/label.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/while.hpp>
 
@@ -51,7 +52,7 @@ TEST_CASE("dsl::switch_()")
     {
         static constexpr auto rule
             = switch_(while_(LEXY_LIT("a")))
-                  .case_(LEXY_LIT("a") + lexy::dsl::any >> lexy::dsl::value_c<1>)
+                  .case_(token(LEXY_LIT("a") + lexy::dsl::any) >> lexy::dsl::value_c<1>)
                   .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
