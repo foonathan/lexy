@@ -269,6 +269,7 @@ private:
         template <typename Id2>
         static LEXY_CONSTEVAL bool contains(Id2 id)
         {
+            (void)id;
             if constexpr (std::is_same_v<Id, Id2>)
                 return true;
             else
