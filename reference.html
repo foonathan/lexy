@@ -1607,6 +1607,7 @@ Refer to the comments in <code>lexy/input/base.hpp</code>.
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct Production
 {
     static constexpr auto rule = …;
+    static constexpr auto whitespace = …; // optional
 
     static constexpr auto value = …; // optional
 };</code></pre>
@@ -2726,72 +2727,58 @@ Every <code>Token</code> is also a <code>Branch</code> that uses itself as the c
 </div>
 <div class="sect2">
 <h3 id="_whitespace">Whitespace</h3>
-<h4 id="_lexydslwhitespaced" class="discrete"><code>lexy::dsl::whitespaced</code></h4>
-<div class="listingblock">
-<div class="title"><code>lexy/whitespace.hpp</code></div>
-<div class="content">
-<pre>whitespaced(rule, whitespace) : Rule</pre>
-</div>
+<div class="paragraph">
+<p>By default, <code>lexy</code> does not treat whitespace in any special way.
+You need to instruct it to do so, using either manual or automatic whitespace skipping.</p>
 </div>
 <div class="paragraph">
-<p>By default, no whitespace skipping is done.
-Use <code>whitespaced()</code> to skip arbitrary long whitespace before parsing a rule.</p>
+<p>Manual whitespace skipping is done using <code>lexy::dsl::whitespace(rule)</code>.
+It skips zero or more whitespace characters defined by <code>rule</code>.
+Insert it everywhere you want to skip over whitespace.
+See <code>examples/email.cpp</code> or <code>examples/xml.cpp</code> for an example of manual whitespace skipping.</p>
 </div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Requires
-</td>
-<td class="hdlist2">
-<p><code>whitespace</code> is a branch that does not produce any values</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Equivalent to
-</td>
-<td class="hdlist2">
-<p><code>token(while_(whitespace)) + rule</code></p>
-</td>
-</tr>
-</table>
+<div class="paragraph">
+<p>Automatic whitespace skipping is done by adding a <code>static constexpr auto whitespace</code> to the root production,
+i.e. the production passed to one of the parse functions.
+This member is initialized to a rule that defines a single whitespace character.
+<code>lexy</code> will then skip zero or more occurrences of <code>::whitespace</code> after every token of the entire grammar.</p>
 </div>
-<details id="r5b8Gb">
-<summary class="title">Example</summary>
-<div class="content">
-<a href="https://godbolt.org/z/r5b8Gb" target="_blank" rel="noopener">Try on Compiler Explorer</a>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Skips whitespace and then parses `abc`.
-dsl::whitespaced(LEXY_LIT("abc"), dsl::ascii::space)</code></pre>
+<div class="paragraph">
+<p>To temporarily disable whitespace skipping for a production, inherit the production from <code>lexy::token_production</code>.
+Then whitespace will not be skipped for the rule of the production, and all productions reached from that rule.
+Likewise, <code>lexy::dsl::no_whitespace()</code> can be used to disable it for a single rule.</p>
 </div>
+<div class="paragraph">
+<p>See <code>examples/tutorial.cpp</code> or <code>examples/json.cpp</code> for an example of automatic whitespace skipping.</p>
 </div>
-</div>
-</details>
-<div class="admonitionblock tip">
+<div class="admonitionblock note">
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-"whitespace" can mean literal space characters but also things like comments.
+"Whitespace" can mean literal whitespace characters, but also comments (or whatever you want it to mean).
 </td>
 </tr>
 </table>
 </div>
-<h4 id="_ruleoperator" class="discrete"><code>Rule::operator[]</code></h4>
+<h4 id="_lexydslwhitespace_explicit" class="discrete"><code>lexy::dsl::whitespace</code> (explicit)</h4>
 <div class="listingblock">
+<div class="title"><code>lexy/dsl/whitespace.hpp</code></div>
 <div class="content">
-<pre>rule[whitespace]    : Rule
-token[whitespace]   : Token
-branch[whitespace]  : Branch</pre>
+<pre>whitespace(rule) : Rule
+
+whitespace(rule_a) | rule_b = whitespace(rule_a | rule_b)
+whitespace(rule_a) / rule_b = whitespace(rule_a / rule_b)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Some rules also provide an <code>operator[]</code> that does the same as <code>whitespaced()</code>.
-They are here described as whitespace aware.</p>
+<p>The explicit <code>whitespace</code> rule matches <code>rule</code> zero or more times and treats the result as whitespace.
+This happens regardless of the state of automatic whitespace skipping.</p>
+</div>
+<div class="paragraph">
+<p>If the whitespace rule is used inside a choice or alternative, the entire choice/alternative is treated as whitespace instead.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -2800,34 +2787,233 @@ They are here described as whitespace aware.</p>
 Requires
 </td>
 <td class="hdlist2">
-<p><code>whitespace</code> is a branch that does not produce any values</p>
+<p><code>rule</code> is a branch or a choice rule.
+It must not produce any values.</p>
 </td>
 </tr>
 <tr>
 <td class="hdlist1">
-Equivalent to
+Matches
 </td>
 <td class="hdlist2">
-<p><code>whitespaced(rule, whitespace)</code></p>
+<p>While the branch condition of <code>rule</code> or any of the branch conditions of the choices match,
+match and consume <code>rule</code>.
+This will only stop once the branch conditions no longer match.
+While matching and consuming <code>rule</code>, automatic whitespace skipping is disabled.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>None.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>All errors raised by <code>rule</code> after the branch condition has been matched.</p>
 </td>
 </tr>
 </table>
 </div>
-<details id="sqdze6">
+<h4 id="_lexydslwhitespace_implicit" class="discrete"><code>lexy::dsl::whitespace</code> (implicit)</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/whitespace.hpp</code></div>
+<div class="content">
+<pre>whitespace : Rule = whitespace(automatic_whitespace_rule)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The implicit <code>whitespace</code> rule is equivalent to the explicit <code>whitespace</code> rule with the current whitespace rule;
+i.e. it matches the current whitespace rule zero or more times.</p>
+</div>
+<div class="paragraph">
+<p>The current whitespace rule is determined as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If automatic whitespace skipping is disabled, there is no current whitespace rule.
+<code>lexy::dsl::whitespace</code> does nothing.</p>
+</li>
+<li>
+<p>If the current production inherits from <code>lexy::token_production</code>, there is no current whitespace rule.
+<code>lexy::dsl::whitespace</code> does nothing.</p>
+</li>
+<li>
+<p>Otherwise, if the current production defines a <code>static constexpr auto whitespace</code> member,
+its value is the current whitespace rule.</p>
+</li>
+<li>
+<p>Otherwise, if the root production defines a <code>static constexpr auto whitespace</code> member,
+its value is the current whitespace rule.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Here, the root production is defined as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If the current production is a token production, the root production is the current production.</p>
+</li>
+<li>
+<p>Otherwise, if the current production is the production that was originally parsed to the top-level parse function (e.g. <code>lexy::parse()</code>),
+the root production is the current production.</p>
+</li>
+<li>
+<p>Otherwise, the root production is taken from the production that parsed the <code>lexy::dsl::p</code> or <code>lexy::dsl::recurse</code> rule to start parsing the current production.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This rule is automatically parsed after every token, after a production that inherits from <code>lexy::token_production</code>,
+or after a <code>lexy::dsl::no_whitespace()</code> rule.</p>
+</div>
+<details>
 <summary class="title">Example</summary>
 <div class="content">
-<a href="https://godbolt.org/z/sqdze6" target="_blank" rel="noopener">Try on Compiler Explorer</a>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Skips whitespace and then parses `abc`.
-LEXY_LIT("abc")[dsl::ascii::space]</code></pre>
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct token_p : lexy::token_production
+{
+    struct child
+    {
+        static constexpr auto rule = dsl::whitespace; <i class="conum" data-value="4"></i><b>(4)</b>
+    };
+
+    static constexpr auto rule = dsl::whitespace + dsl::p&lt;child&gt;; <i class="conum" data-value="3"></i><b>(3)</b>
+};
+
+struct normal_prod
+{
+    static constexpr auto rule = dsl::whitespace + dsl::p&lt;token_p&gt;; <i class="conum" data-value="2"></i><b>(2)</b>
+};
+
+struct root_prod
+{
+    static constexpr auto whitespace = dsl::ascii::space;
+    static constexpr auto rule = dsl::whitespace + dsl::p&lt;normal_prod&gt;; <i class="conum" data-value="1"></i><b>(1)</b>
+};
+
+…
+
+auto result = lexy::parse&lt;root_prod&gt;(…);</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Here, the automatic whitespace rule is <code>dsl::ascii::space</code>,
+as the current production has a <code>whitespace</code> member.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Here, the automatic whitespace rule is also <code>dsl::ascii::space</code>.
+The current production doesn&#8217;t have a <code>whitespace</code> member,
+but its root production (<code>root_prod</code>) does.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Here, the current production is a token production, so there is no automatic whitespace.
+The root production is reset to <code>token_p</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Here, the root production is <code>token_p</code>, as that is the root of the parent.
+As such, there is no automatic whitespace.</td>
+</tr>
+</table>
 </div>
 </div>
 </details>
+<h4 id="_lexydslno_whitespace" class="discrete"><code>lexy::dsl::no_whitespace()</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/whitespace.hpp</code></div>
+<div class="content">
+<pre>no_whitespace(rule)   : Rule
+no_whitespace(branch) : Branch</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>no_whitespace</code> rule parses the given <code>rule</code> but disables automatic whitespace skipping while doing so.
+It is a branch if given a branch.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Branch Condition
+</td>
+<td class="hdlist2">
+<p>Whatever <code>branch</code> uses as branch condition.
+Note that automatic whitespace skipping inside a branch condition is impossible anyway,
+so nothing is changed there.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Matches and consumes <code>rule</code> but without performing automatic whitespace skipping after every token;
+it disables the automatic whitespace rule during the parsing of <code>rule</code>.
+After <code>rule</code> has been matched, skips implicit whitespace by matching and consuming <code>lexy::dsl::whitespace</code>.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>All values produced by <code>rule</code>.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>All errors raised by <code>rule</code>.</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+When <code>rule</code> contains a <code>lexy::dsl::p</code> or <code>lexy::dsl::recurse</code> rule, whitespace skipping is re-enabled while that production is parsed.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_primitive_tokens">Primitive Tokens</h3>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+All tokens, not just the tokens defined here, do implicit whitespace skipping.
+As such, a token <code>t</code> is really equivalent to <code>t + dsl::whitespace</code>.
+This has no effect, unless a whitespace rule has been specified.
+</td>
+</tr>
+</table>
+</div>
 <h4 id="_lexydslany" class="discrete"><code>lexy::dsl::any</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/any.hpp</code></div>
@@ -2881,8 +3067,7 @@ LEXY_LIT(Str) : Token</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The literal tokens match the specified sequence of characters.
-They are whitespace aware.</p>
+<p>The literal tokens match the specified sequence of characters.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -2957,8 +3142,7 @@ at_sign     : Token = lit&lt;"@"&gt;</pre>
 </div>
 <div class="paragraph">
 <p>The header <code>lexy/dsl/punctuator.hpp</code> defines common punctuator literals.
-They are equivalent to a literal matching the specified character.
-They are whitespace aware.</p>
+They are equivalent to a literal matching the specified character.</p>
 </div>
 </div>
 <div class="sect2">
@@ -2971,8 +3155,7 @@ They are whitespace aware.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>eof</code> token matches EOF.
-It is whitespace aware.</p>
+<p>The <code>eof</code> token matches EOF.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3002,8 +3185,7 @@ Error
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>newline</code> token matches a newline.
-It is whitespace aware.</p>
+<p>The <code>newline</code> token matches a newline.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3033,8 +3215,7 @@ Error
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>eol</code> token matches an end-of-line (EOL).
-It is whitespace aware.</p>
+<p>The <code>eol</code> token matches an end-of-line (EOL).</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3157,7 +3338,7 @@ For UTF-8, it also fails for overlong sequences.</p>
 </tr>
 <tr>
 <td class="hdlist1">
-Values
+Value
 </td>
 <td class="hdlist2">
 <p>If <code>.capture()</code> was called, it will produce the matched code point as a <code>lexy::code_point</code>.</p>
@@ -3284,8 +3465,7 @@ Use <code>token - (except + lexy::dsl::any)</code> if you want to allow a partia
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>token</code> rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.
-It is whitespace aware.</p>
+<p>The <code>token</code> rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3627,8 +3807,7 @@ capture(branch) : Branch</pre>
 </div>
 <div class="paragraph">
 <p>The <code>capture()</code> rule takes an arbitrary rule and parses it, capturing everything it has consumed into a <code>lexy::lexeme</code>.
-It is a branch if given a branch.
-It is whitespace aware; preceding whitespace is not captured.</p>
+It is a branch if given a branch.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -3927,8 +4106,19 @@ It must be used as a last alternative in a choice.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>peek</code> branch is taken if <code>rule</code> matches, but does not consume it.
-It is whitespace aware; leading whitespace will be consumed.</p>
+<p>The <code>peek</code> branch is taken if <code>rule</code> matches, but does not consume it.</p>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+Automatic whitespace skipping is disabled while determining whether <code>rule</code> matches.
+</td>
+</tr>
+</table>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -3950,8 +4140,19 @@ Long lookahead can slow down parsing speed due to backtracking.
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>peek_not()</code> branch is taken if <code>rule</code> does not match, but does not consume it.
-It is whitespace aware; leading whitespace will be consumed.</p>
+<p>The <code>peek_not()</code> branch is taken if <code>rule</code> does not match, but does not consume it.</p>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+Automatic whitespace skipping is disabled while determining whether <code>rule</code> matches.
+</td>
+</tr>
+</table>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -3974,8 +4175,7 @@ Long lookahead can slow down parsing speed due to backtracking.
 </div>
 <div class="paragraph">
 <p>The <code>lookahead</code> branch is taken if lookahead finds <code>needle</code> before <code>end</code> is found, which must both be tokens.
-No characters are consumed.
-It is whitespace aware; leading whitespace will be consumed.</p>
+No characters are consumed.</p>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -4611,78 +4811,15 @@ If the branch does not consume any characters, <code>while_</code> will loop for
 </tr>
 </table>
 </div>
-<hr>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/while.hpp</code></div>
-<div class="content">
-<pre>while_(choice)         : Rule = loop(choice | else_ &gt;&gt; break_)</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This version of the <code>while_</code> rule repeatedly matches a choice as long as one branch matches.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Requires
-</td>
-<td class="hdlist2">
-<p><code>choice</code> most not produce any values.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Matches
-</td>
-<td class="hdlist2">
-<p>While one branch condition of the choice matches, consumes it and the rest of the branch.
-If no branch matches anymore, succeeds without consuming additional input.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Values
-</td>
-<td class="hdlist2">
-<p>No values are produced.</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Errors
-</td>
-<td class="hdlist2">
-<p>The rule can only fail if the then of one of the choice branches fails.
-Then it will raise its error unchanged.</p>
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-If the choice has an else branch already, it will loop until an error is raised.
-</td>
-</tr>
-</table>
-</div>
 <h4 id="_lexydslwhile_one" class="discrete"><code>lexy::dsl::while_one()</code></h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/while.hpp</code></div>
 <div class="content">
-<pre>while_one(rule)    : Rule    = rule + while_(rule)
-while_one(branch)  : Branch  = branch &gt;&gt; while_(branch)
-while_one(token)   : Token</pre>
+<pre>while_one(branch)  : Branch  = branch &gt;&gt; while_(branch)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>while_one</code> rule matches a rule one or more times.
-It is a token if it is given a token.</p>
+<p>The <code>while_one</code> rule matches a rule one or more times.</p>
 </div>
 <h4 id="_lexydsldo_while" class="discrete"><code>lexy::dsl::do_while()</code></h4>
 <div class="listingblock">
@@ -5075,8 +5212,7 @@ recurse&lt;Production&gt; : Rule</pre>
 </div>
 <div class="paragraph">
 <p>The <code>p</code> and <code>recurse</code> rules parses the rule of another production.
-The <code>p</code> rule is a branch, if the rule of the other production is a branch.
-Both are whitespace aware.</p>
+The <code>p</code> rule is a branch, if the rule of the other production is a branch.</p>
 </div>
 <div class="hdlist">
 <table>
@@ -5102,7 +5238,9 @@ Branch Condition
 Matches
 </td>
 <td class="hdlist2">
-<p>Matches and consumes <code>Production::rule</code>.</p>
+<p>Matches and consumes <code>Production::rule</code>.
+If <code>Production</code> inherits from <code>lexy::token_production</code>,
+automatic whitespace is skipped afterwards by matching and consuming the <code>lexy::dsl::whitespace</code> rule.</p>
 </td>
 </tr>
 <tr>
@@ -5157,6 +5295,21 @@ While <code>recurse</code> can be used to implement direct recursion (e.g. <code
 </td>
 <td class="content">
 Left recursion will create an infinite loop.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+If a production is parsed while whitespace skipping has been disabled using <code>lexy::dsl::no_whitespace()</code>,
+it is temporarily re-enabled while <code>Production::rule</code> is parsed.
+If whitespace skipping has been disabled because the parent production inherits from <code>lexy::token_production</code>,
+whitespace skipping is still disabled while parsing <code>Production::rule</code>.
 </td>
 </tr>
 </table>
@@ -5253,17 +5406,6 @@ The terminator is defined using a branch; it is returned by calling <code>.termi
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/terminator.hpp</code></div>
 <div class="content">
-<pre>t[rule]</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Whitespace can be added by writing <code>t[rule]</code>, where <code>t</code> is the result of a <code>terminator()</code> call.
-It will skip whitespace before matching the terminator.
-If whitespace is added, this is also reflected by <code>.terminator()</code>.</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/terminator.hpp</code></div>
-<div class="content">
 <pre>t(rule) : Rule = rule + t.terminator()</pre>
 </div>
 </div>
@@ -5302,17 +5444,6 @@ brackets(open_branch, close_branch).close() : Branch = close_branch</pre>
 <p>A set of open and close brackets can be specified using <code>brackets()</code>.
 The result is not a rule, but a DSL for specifying that a rule is surrounded by brackets.
 The open and close brackets are defined using branches; they are returned by calling <code>.open()</code> and <code>.close()</code>.</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/brackets.hpp</code></div>
-<div class="content">
-<pre>b[rule]</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Whitespace can be added by writing <code>b[rule]</code>, where <code>b</code> is the result of a <code>brackets()</code> call.
-It will skip whitespace before matching the open and close branch.
-If whitespace is added, this is also reflected by <code>.open()</code> and <code>.close()</code>.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/brackets.hpp</code></div>
@@ -5880,17 +6011,6 @@ The open and close delimiters are defined using branches; they are returned by c
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
 <div class="content">
-<pre>d[rule]</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Whitespace can be added by writing <code>d[rule]</code>, where <code>d</code> is the result of a <code>delimiter()</code> call.
-It will skip whitespace before the opening delimiter only.
-If whitespace is added, this is also reflected by <code>.open()</code>.</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>lexy/dsl/delimited.hpp</code></div>
-<div class="content">
 <pre>quoted        = delimited(lit&lt;"\""&gt;)
 triple_quoted = delimited(lit&lt;"\"\"\""&gt;)
 
@@ -5956,7 +6076,9 @@ Matching
 </td>
 <td class="hdlist2">
 <p>Matches and consumes the opening delimiter, followed by zero or more occurrences of <code>rule</code>, followed by the closing delimiter.
-It determines whether or not to parse another instance of <code>rule</code> using the condition of the closing delimiter.</p>
+It determines whether or not to parse another instance of <code>rule</code> using the condition of the closing delimiter.
+Automatic whitespace skipping is disabled while matching the opening and closing delimiter, as well as <code>rule</code> using <code>lexy::dsl::no_whitespace()</code>.
+After the closing delimiter has been matched and consumed, whitespace is skipped by matching and consuming <code>lexy::dsl::whitespace</code>.</p>
 </td>
 </tr>
 <tr>
@@ -5991,6 +6113,18 @@ dsl::quoted(dsl::code_point - dsl::ascii::control)</code></pre>
 </div>
 </div>
 </details>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+When <code>rule</code> contains a <code>lexy::dsl::p</code> or <code>lexy::dsl::recurse</code> rule, whitespace skipping is re-enabled while that production is parsed.
+</td>
+</tr>
+</table>
+</div>
 <h4 id="_delimited_with_escape_sequences" class="discrete">Delimited with escape sequences</h4>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/delimited.hpp</code></div>
@@ -6743,7 +6877,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-01-09 21:05:40 UTC
+Last updated 2021-01-10 14:36:38 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

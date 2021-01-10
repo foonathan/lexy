@@ -1856,54 +1856,141 @@ authors=["Jonathan Müller"]</pre>
 </div>
 <div class="paragraph">
 <p>We don&#8217;t support whitespace between the elements.
-<code>lexy</code> does not skip whitespace until you tell it to (and more importantly, what the whitespace is).</p>
+We want to support ASCII blank characters (space and tab) surrounding the equal sign and the brackets and comma of the author list.
+This can be done either manually or automatically.</p>
 </div>
+<div class="sect2">
+<h3 id="_manual_whitespace_skipping">Manual whitespace skipping</h3>
 <div class="paragraph">
-<p>For that, we can use <code>dsl::whitespaced()</code>.
-It takes a rule and the whitespace rule.
-It then matches the rule after it skipped any leading whitespace.
-For convenience, many rules provide an <code>operator[]</code> that does the same thing.</p>
-</div>
-<div class="paragraph">
-<p>So we first define our whitespace rule as a global constant in our grammar:</p>
+<p>To do this manually, we can use <code>dsl::whitespace(dsl::ascii::blank)</code>.
+This rule, like <code>dsl::while_()</code>, matches zero or more occurrences of the given rule (but internally it is treated as whitespace, not actual text).
+We then insert it wherever we need to skip whitespace.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Whitespace is ' ' and '\t'.
-constexpr auto ws = dsl::ascii::blank;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then we add whitespace to the author list:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct author_list
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">// Define whitespace globally for convenience.
+constexpr auto ws = dsl::whitespace(dsl::ascii:::blank).
+
+struct config
 {
-    // We allow whitespace:
-    // - before the [ and ] brackets
-    // - before each author name
-    // - before the comma
-    static constexpr auto rule
-        = dsl::square_bracketed[ws].list(dsl::p&lt;author&gt;[ws], dsl::sep(dsl::comma[ws]));
-};</code></pre>
+    static constexpr auto rule = []{
+        auto make_field = [](auto name, auto rule) {
+            // Skip whitespace surrounding the equal sign and before the newline.
+            return name + ws + dsl::lit_c&lt;'='&gt; + ws + rule + ws + dsl::newline;
+        };
+
+        …
+    }();
+};
+
+// Likewise, add it to the author_list production.</code></pre>
 </div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_automatic_whitespace_skipping">Automatic whitespace skipping</h3>
+<div class="paragraph">
+<p>Skipping whitespace manually is a good idea when whitespace is only needed in a couple of places or you&#8217;re copying a grammar that already specifies whitespace.
+Here, however, it just adds extra noise to the rule.</p>
 </div>
 <div class="paragraph">
-<p>And to the field:</p>
+<p>So instead we can instruct <code>lexy</code> to skip whitespace automatically for us.
+We just need to tell the library what whitespace is, and it will automatically skip one after it parses a token.
+Remember, tokens are things like <code>LEXY_LIT("name")</code> or <code>dsl::lit_c&lt;'='&gt;</code>&#8201;&#8212;&#8201;precisely where we inserted <code>ws</code> in the example above!</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">auto make_field = [](auto name, auto rule) {
-    // We skip whitespace before and after the =,
-    // i.e. before the rule.
-    return name + dsl::lit_c&lt;'='&gt;[ws] + dsl::whitespaced(rule, ws) + dsl::newline;
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    static constexpr auto whitespace = dsl::ascii::blank; <i class="conum" data-value="1"></i><b>(1)</b>
+
+    static constexpr auto rule = [] { … } (); <i class="conum" data-value="2"></i><b>(2)</b>
+    static constexpr auto value = lexy::as_aggregate&lt;PackageConfig&gt;;
 };</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define what whitespace is for our grammar.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Nothing needs to change in any of the rules here!</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We enable whitespace by adding a <code>whitespace</code> member to the root production, i.e. the production we&#8217;re actually parsing.
+And that&#8217;s all: now <code>lexy</code> will skip whitespace after every token of our grammar.</p>
+</div>
+<div class="paragraph">
+<p>This is a bit much, however.
+For example, the following now parses:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>name    = le   x  y
+version = 0.  0  .0
+authors = ["Jonathan Müller"]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>name</code> production consists of a sequence of tokens like <code>dsl::ascii::alpha</code>.
+<code>lexy</code> will skip whitespace after every one of them.
+Likewise, it will skip whitespace after the <code>dsl::period</code> and <code>dsl::digits</code> of the <code>version</code> production.</p>
+</div>
+<div class="paragraph">
+<p>So we need to disable whitespace skipping there.
+Conceptually, the <code>name</code> and <code>version</code> production should be treated just like tokens:
+we don&#8217;t want whitespace inside of them, but only skip it afterwards.
+We can get that behavior by inheriting them from <code>lexy::token_production</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct name : lexy::token_production
+{
+    …
+};
+
+struct version : lexy::token_production
+{
+    …
+};
+
+// Other productions unchanged.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now when we parse the name and version field, <code>lexy</code> disables whitespace skipping for the tokens inside the productions,
+and will only skip spaces afterwards.</p>
+</div>
+<div class="paragraph">
+<p>Note that we don&#8217;t need to do the same for the <code>author</code> production.
+While it is also a production that should be treated as a single token (a string literal),
+whitespace skipping inside of <code>dsl::quoted()</code> is disabled automatically for us.
+So <code>"   Jonathan Müller"</code> will always include the leading spaces.</p>
+</div>
+<div class="paragraph">
+<p>To recap, to enable automatic whitespace skipping, we just need to do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Add a <code>static constexpr auto whitespace</code> member that defines whitespace to our root production <code>config</code>.</p>
+</li>
+<li>
+<p>Disable whitespace skipping inside the <code>name</code> and <code>version</code> field by inheriting the productions from <code>lexy::token_production</code>.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>Now we can parse the package config shown in the beginning of the tutorial!</p>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_arbitrary_ordering_of_fields">Arbitrary ordering of fields</h3>
 <div class="paragraph">
 <p>One final feature we might want to support is parsing fields in arbitrary order.
 This can be done with the <code>dsl::combination()</code> rule, which matches the specified set of rules once, but in any order.
@@ -1964,12 +2051,15 @@ Luckily, we can use the name of the field for that.</td>
 </div>
 </div>
 </div>
+</div>
 <div class="sect1">
 <h2 id="_error_handling">Error handling</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Our parser now handles all well-formed input, but what about wrong input?</p>
 </div>
+<div class="sect2">
+<h3 id="_parsing_the_entire_input">Parsing the entire input</h3>
 <div class="paragraph">
 <p>The first thing you might notice is that you can freely append stuff at the end of the config file.</p>
 </div>
@@ -1997,15 +2087,32 @@ This token only matches when we&#8217;re at the end of the input.</p>
         …
 
         return dsl::combination(name_field, version_field, authors_field)
-                + dsl::eof[dsl::ascii::space];
+                + dsl::eof;
     }();
 };</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>In order to allow arbitrary whitespace at the end, we use the <code>operator[]</code> to add it.
-Now input like the one given above, will raise an error.</p>
+<p>Note that this does not allow trailing newlines, as we&#8217;ve required EOF immediately after all the fields.
+To fix that, we can manually instruct <code>lexy</code> to skip any whitespace character, not just blanks.</p>
 </div>
+<div class="listingblock">
+<div class="title">Allowing trailing newlines</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">struct config
+{
+    static constexpr auto rule = [] {
+        …
+
+        return dsl::combination(name_field, version_field, authors_field)
+                + dsl::whitespace(dsl::ascii::space) + dsl::eof;
+    }();
+};</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_error_messages">Error messages</h3>
 <div class="paragraph">
 <p>When the parsing algorithm fails to parse something, parsing stops and an error is raised.
 This error is passed to the error callback passed as second argument to <code>lexy::parse()</code> and <code>lexy::validate()</code>.
@@ -2068,6 +2175,7 @@ Some error messages are given.</p>
      |
  3:12| authors = [Jonathan Müller]
      |            ^ expected '"'</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -2298,7 +2406,7 @@ Check out the reference documentation for specific rules.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-01-09 21:05:40 UTC
+Last updated 2021-01-10 14:36:38 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
