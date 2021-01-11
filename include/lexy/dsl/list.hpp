@@ -150,6 +150,87 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
     }
 };
 
+// Loop to parse all list items when we have a terminator.
+template <typename Term, typename Item, typename Sep, typename NextParser, typename... PrevArgs>
+struct _list_loop_term;
+template <typename Term, typename Item, typename NextParser, typename... PrevArgs>
+struct _list_loop_term<Term, Item, void, NextParser, PrevArgs...>
+{
+    template <typename Context, typename Reader, typename Sink>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
+        typename Context::result_type
+    {
+        lexy::branch_matcher<Term, Reader> term{};
+        while (!term.match(reader))
+        {
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+
+            auto result = item_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+        }
+
+        return _list_finish<NextParser, PrevArgs...>::parse_branch(term, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
+    }
+};
+template <typename Term, typename Item, typename Sep, typename NextParser, typename... PrevArgs>
+struct _list_loop_term<Term, Item, _sep<Sep>, NextParser, PrevArgs...>
+{
+    template <typename Context, typename Reader, typename Sink>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
+        typename Context::result_type
+    {
+        lexy::branch_matcher<Term, Reader> term{};
+        while (!term.match(reader))
+        {
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
+
+            auto result = sep_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+
+            result = item_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+        }
+
+        return _list_finish<NextParser, PrevArgs...>::parse_branch(term, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
+    }
+};
+template <typename Term, typename Item, typename Sep, typename NextParser, typename... PrevArgs>
+struct _list_loop_term<Term, Item, _tsep<Sep>, NextParser, PrevArgs...>
+{
+    template <typename Context, typename Reader, typename Sink>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
+        typename Context::result_type
+    {
+        lexy::branch_matcher<Term, Reader> term{};
+        while (!term.match(reader))
+        {
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
+
+            auto result = sep_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+
+            // Check for trailing separator.
+            if (term.match(reader))
+                break;
+
+            result = item_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+        }
+
+        return _list_finish<NextParser, PrevArgs...>::parse_branch(term, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
+    }
+};
+
 // Parse the entire list, i.e. head followed by loop.
 template <typename Item, typename Sep>
 struct _lst : rule_base
@@ -209,7 +290,7 @@ struct _lst : rule_base
 
 namespace lexyd
 {
-/// Creates a list of items without a separator.
+/// Parses a list of items without a separator.
 template <typename Item>
 LEXY_CONSTEVAL auto list(Item)
 {
@@ -217,14 +298,14 @@ LEXY_CONSTEVAL auto list(Item)
     return _lst<Item, void>{};
 }
 
-/// Creates a list of items with the specified separator.
+/// Parses a list of items with the specified separator.
 template <typename Item, typename Sep>
 LEXY_CONSTEVAL auto list(Item, _sep<Sep>)
 {
     return _lst<Item, _sep<Sep>>{};
 }
 
-/// Creates a list of items with the specified separator that can be trailing.
+/// Parses a list of items with the specified separator that can be trailing.
 template <typename Item, typename Sep>
 LEXY_CONSTEVAL auto list(Item, _tsep<Sep>)
 {
@@ -236,10 +317,8 @@ LEXY_CONSTEVAL auto list(Item, _tsep<Sep>)
 
 namespace lexyd
 {
-template <typename Terminator, typename Item, typename Sep>
-struct _lstt;
-template <typename Terminator, typename Item>
-struct _lstt<Terminator, Item, void> : rule_base
+template <typename Item, typename Sep>
+struct _olst : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -248,30 +327,44 @@ struct _lstt<Terminator, Item, void> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
-            auto sink         = context.sink();
+            using list = _lst<Item, Sep>;
 
-            // Parse initial item.
-            auto result = item_parser::parse(context, reader, sink);
-            if (result.has_error())
-                return LEXY_MOV(result);
-
-            // Parse remaining items.
-            lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            // We ask the list whether it would match.
+            if (lexy::branch_matcher<list, Reader> branch{}; branch.match(reader))
             {
-                result = item_parser::parse(context, reader, sink);
-                if (result.has_error())
-                    return LEXY_MOV(result);
+                // It did, so parse it as normal.
+                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
             }
-
-            return _list_finish<NextParser, Args...>::parse_branch(term, context, reader,
-                                                                   LEXY_FWD(args)..., sink);
+            else
+            {
+                // Otherwise construct a sink and immediately finish it.
+                auto sink = context.sink();
+                return _list_finish<NextParser, Args...>::parse(context, reader, LEXY_FWD(args)...,
+                                                                sink);
+            }
         }
     };
 };
-template <typename Terminator, typename Item, typename Sep>
-struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
+
+/// Parses a list that might be empty.
+template <typename Item>
+LEXY_CONSTEVAL auto opt_list(Item)
+{
+    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    return _olst<Item, void>{};
+}
+template <typename Item, typename Sep>
+LEXY_CONSTEVAL auto opt_list(Item, Sep)
+{
+    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    return _olst<Item, Sep>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Term, typename Item, typename Sep>
+struct _lstt : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -280,37 +373,23 @@ struct _lstt<Terminator, Item, _sep<Sep>> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
-            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
-            auto sink         = context.sink();
+            auto sink = context.sink();
 
             // Parse initial item.
-            auto result = item_parser::parse(context, reader, sink);
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            auto result       = item_parser::parse(context, reader, sink);
             if (result.has_error())
                 return LEXY_MOV(result);
 
-            // Parse remaining items.
-            lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
-            {
-                // Parse separator.
-                result = sep_parser::parse(context, reader, sink);
-                if (result.has_error())
-                    return LEXY_MOV(result);
-
-                // Parse item.
-                result = item_parser::parse(context, reader, sink);
-                if (result.has_error())
-                    return LEXY_MOV(result);
-            }
-
-            return _list_finish<NextParser, Args...>::parse_branch(term, context, reader,
-                                                                   LEXY_FWD(args)..., sink);
+            // Parse the remaining items.
+            using continuation = _list_loop_term<Term, Item, Sep, NextParser, Args...>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
 };
-template <typename Terminator, typename Item, typename Sep>
-struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
+
+template <typename Term, typename Item, typename Sep>
+struct _olstt : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -319,36 +398,27 @@ struct _lstt<Terminator, Item, _tsep<Sep>> : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
-            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
-            auto sink         = context.sink();
+            auto sink = context.sink();
 
-            // Parse initial item.
-            auto result = item_parser::parse(context, reader, sink);
-            if (result.has_error())
-                return LEXY_MOV(result);
-
-            // Parse remaining items.
-            lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            lexy::branch_matcher<Term, Reader> term{};
+            if (!term.match(reader))
             {
-                // Parse separator.
-                result = sep_parser::parse(context, reader, sink);
+                // Parse initial item.
+                using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+                auto result       = item_parser::parse(context, reader, sink);
                 if (result.has_error())
                     return LEXY_MOV(result);
 
-                // Check for trailing separator.
-                if (term.match(reader))
-                    break;
-
-                // Parse item.
-                result = item_parser::parse(context, reader, sink);
-                if (result.has_error())
-                    return LEXY_MOV(result);
+                // Parse the remaining items.
+                using continuation = _list_loop_term<Term, Item, Sep, NextParser, Args...>;
+                return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
             }
-
-            return _list_finish<NextParser, Args...>::parse_branch(term, context, reader,
-                                                                   LEXY_FWD(args)..., sink);
+            else
+            {
+                // Construct the empty list.
+                return _list_finish<NextParser, Args...>::parse_branch(term, context, reader,
+                                                                       LEXY_FWD(args)..., sink);
+            }
         }
     };
 };

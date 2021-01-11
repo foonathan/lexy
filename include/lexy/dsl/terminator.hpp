@@ -18,6 +18,8 @@ template <typename Terminator, typename R>
 struct _whlt;
 template <typename Terminator, typename R, typename Sep>
 struct _lstt;
+template <typename Terminator, typename R, typename Sep>
+struct _olstt;
 
 template <typename Branch>
 struct _term
@@ -74,17 +76,17 @@ struct _term
         return _lstt<Branch, R, Sep>{};
     }
 
-    /// Matches `opt(list(r, sep))` surrounded by brackets.
+    /// Matches `opt_list(r, sep)` surrounded by brackets.
     /// The rule does not require a condition.
     template <typename R>
-    LEXY_CONSTEVAL auto opt_list(R r) const
+    LEXY_CONSTEVAL auto opt_list(R) const
     {
-        return _optt<Branch, decltype(list(r))>{};
+        return _olstt<Branch, R, void>{};
     }
     template <typename R, typename S>
-    LEXY_CONSTEVAL auto opt_list(R r, S sep) const
+    LEXY_CONSTEVAL auto opt_list(R, S) const
     {
-        return _optt<Branch, decltype(list(r, sep))>{};
+        return _olstt<Branch, R, S>{};
     }
 
     /// Matches the terminator alone.

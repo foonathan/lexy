@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/label.hpp>
-#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("dsl::list()")
@@ -349,9 +348,9 @@ TEST_CASE("dsl::list() trailing_sep capture")
     CHECK(trailing == 4);
 }
 
-TEST_CASE("dsl::opt(list())")
+TEST_CASE("dsl::opt_list())")
 {
-    static constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
+    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -379,22 +378,10 @@ TEST_CASE("dsl::opt(list())")
             return b{};
         }
 
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(cur == str);
-            return 0;
-        }
         LEXY_VERIFY_FN int success(const char* cur, int count)
         {
             LEXY_VERIFY_CHECK(cur - str == 3 * count);
             return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
-            return -1;
         }
     };
 
@@ -411,9 +398,9 @@ TEST_CASE("dsl::opt(list())")
     CHECK(three == 3);
 }
 
-TEST_CASE("dsl::opt(list()) sep")
+TEST_CASE("dsl::opt_list() sep")
 {
-    static constexpr auto rule = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(","))));
+    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -452,7 +439,6 @@ TEST_CASE("dsl::opt(list()) sep")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.position() == str);
             LEXY_VERIFY_CHECK(e.string() == "abc");
             return -1;
         }
@@ -460,8 +446,6 @@ TEST_CASE("dsl::opt(list()) sep")
 
     auto empty = LEXY_VERIFY("");
     CHECK(empty == 0);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == 0);
 
     auto one = LEXY_VERIFY("abc");
     CHECK(one == 1);
@@ -472,12 +456,17 @@ TEST_CASE("dsl::opt(list()) sep")
 
     auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
+
+    auto partial = LEXY_VERIFY("ab");
+    CHECK(partial == 0);
+    auto one_partial = LEXY_VERIFY("abc,ab");
+    CHECK(one_partial == -1);
 }
 
-TEST_CASE("dsl::opt(list()) trailing_sep")
+TEST_CASE("dsl::opt_list() trailing_sep")
 {
     static constexpr auto rule
-        = opt(list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(","))));
+        = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -514,13 +503,6 @@ TEST_CASE("dsl::opt(list()) trailing_sep")
             else
                 LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
-            return -1;
         }
     };
 

@@ -1147,7 +1147,7 @@ Values produced by the list items are forwarded to a sink callback.
 Branch Condition::
   Whatever `branch` uses as branch condition.
 Requires::
-  The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator can be used as condition).
+  The item rule must be a branch unless a non-trailing separator is used (in that case the separator can be used as condition).
   A production whose rule contains `list()` must provide a sink.
 Matches::
   Matches and consumes the item rule one or more times.
@@ -1172,6 +1172,32 @@ dsl::list(dsl::peek(dsl::digit<>) >> dsl::integer<int>(dsl::digits<>),
 ----
 
 TIP: Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given tokens anyway.
+
+[discrete]
+==== `lexy::dsl::opt_list`
+
+.`lexy/dsl/list.hpp`
+----
+opt_list(branch)      : Rule
+opt_list(branch, sep) : Rule
+----
+
+The `opt_list` rule matches a rule zero or more times, optionally separated by a separator.
+Values produced by the list items are forwarded to a sink callback.
+
+[horizontal]
+Requires::
+  The item rule must be a branch.
+  A production whose rule contains `opt_list()` must provide a sink.
+Matches::
+  Checks whether the item rule would match using its branch condition.
+  If it does, matches and consumes `list(branch, sep)`.
+  Otherwise, consumes nothing and succeeds.
+Values::
+  If the list is non-empty, the result of the sink produced by parsing the `list()` rule.
+  Otherwise, the result of a sink that is immediately finished without invoking it once.
+Errors::
+  If the list is non-empty, all errors raised by parsing the `list()` rule.
 
 [discrete]
 ==== `lexy::dsl::combination`
@@ -1364,8 +1390,9 @@ t.opt_list(rule) : Rule
 t.opt_list(rule, sep) : Rule
 ----
 
-Using `t.while_()`, `t.while_one()` `t.opt()`, `t.list()`, or `t.opt_list()`, where `t` is the result of a `terminator()` call, results in a rule that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt(list(rule))`, respectively, but followed by the terminator.
-The `rule` does not need to be a terminator is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
+Using `t.while_()`, `t.while_one()` `t.opt()`, `t.list()`, or `t.opt_list()`, where `t` is the result of a `terminator()` call,
+results in a rule that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt_list(rule)`, respectively, but followed by the terminator.
+The `rule` does not need to be a branch, as the terminator is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
 
 [discrete]
 ==== Brackets
@@ -1403,8 +1430,8 @@ b.opt_list(rule) : Branch
 b.opt_list(rule, sep) : Branch
 ----
 
-Using `b.while_()`, `b.while_one()` `b.opt()`, `b.list()`, or `b.opt_list()`, where `b` is the result of a `brackets()` call, results in a branch that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt(list(rule))`, respectively, but surrounded as brackets.
-The `rule` does not need to be a branch as the closing brackets is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
+Using `b.while_()`, `b.while_one()` `b.opt()`, `b.list()`, or `b.opt_list()`, where `b` is the result of a `brackets()` call, results in a branch that parses `while_(rule)`, `while_one(rule)`, `opt(rule)`, `list(rule)` and `opt_list(rule)`, respectively, but surrounded as brackets.
+The `rule` does not need to be a branch, as the closing brackets is used as the branch condition for the `while_()`, `opt()` and `list()` rule.
 
 .`lexy/dsl/brackets.hpp`
 ----

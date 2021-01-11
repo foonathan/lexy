@@ -64,7 +64,7 @@ struct _brackets
         return open() >> terminator(close()).list(r, sep);
     }
 
-    /// Matches `opt(list(r, sep))` surrounded by brackets.
+    /// Matches `opt_list(r, sep)` surrounded by brackets.
     /// The rule does not require a condition.
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
