@@ -39,9 +39,14 @@ TEST_CASE("dsl::opt()")
     {
         const char* str;
 
+        LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
+        {
+            LEXY_VERIFY_CHECK(cur == str);
+            return 0;
+        }
         LEXY_VERIFY_FN int success(const char* cur, int i)
         {
-            LEXY_VERIFY_CHECK((cur - str == 3 || cur == str));
+            LEXY_VERIFY_CHECK(cur - str == 3);
             return i;
         }
 

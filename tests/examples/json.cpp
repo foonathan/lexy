@@ -313,10 +313,10 @@ auto get_number(const ast::json_value& value)
 {
     auto number = get<ast::json_number>(value);
     auto result = std::to_string(number.integer);
-    if (!number.fraction.empty())
-        result += "." + number.fraction;
-    if (number.exponent != 0)
-        result += "e" + std::to_string(number.exponent);
+    if (number.fraction)
+        result += "." + *number.fraction;
+    if (number.exponent)
+        result += "e" + std::to_string(*number.exponent);
     return result;
 }
 

@@ -10,9 +10,21 @@
 
 namespace lexy
 {
+// An optional type is something that has the following:
+// * a default constructors: this means we can actually construct it from our `nullopt`
+// * a dereference operator: this means that it actually contains something else
+// * a contextual conversion to bool: this means that it might be "false" (i.e. empty)
+//
+// This definition should work:
+// * it excludes all default constructible types that are convertible to bool (e.g. integers...)
+// * it includes pointers, which is ok
+// * it includes `std::optional` and all non-std implementations of it
+template <typename T>
+using _detect_optional_like = decltype(T(), *LEXY_DECLVAL(T&), !LEXY_DECLVAL(const T&));
+
 struct nullopt
 {
-    template <typename T, typename = std::enable_if_t<std::is_default_constructible_v<T>>>
+    template <typename T, typename = _detect_optional_like<T>>
     constexpr operator T() const
     {
         return T();

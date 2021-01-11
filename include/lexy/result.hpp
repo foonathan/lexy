@@ -54,8 +54,6 @@ constexpr auto result_error = result_error_t{};
 
 namespace lexy
 {
-struct nullopt;
-
 template <typename T, typename E>
 struct _result_storage_trivial
 {
@@ -107,20 +105,6 @@ struct _result_storage_non_trivial
     _result_storage_non_trivial(result_error_t tag, Args&&... args)
     : _state(tag), _error(LEXY_FWD(args)...)
     {}
-
-#if !defined(__clang__) && ((defined(__GNUC__) && __GNUC__ == 9) || defined(_MSC_VER))
-    // GCC 9 crashes and MSVC fails to resolve ambiguous overloads when trying to convert nullopt to
-    // a value here.
-
-    template <typename Nullopt,
-              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_value_t tag, Nullopt&&) : _state(tag), _value()
-    {}
-    template <typename Nullopt,
-              typename = std::enable_if_t<std::is_same_v<std::decay_t<Nullopt>, nullopt>>>
-    _result_storage_non_trivial(result_error_t tag, Nullopt&&) : _state(tag), _error()
-    {}
-#endif
 
     _result_storage_non_trivial(_result_storage_non_trivial&& other) noexcept
     : _state(other._state), _empty()

@@ -37,22 +37,22 @@ auto parse_address(const char* str)
 TEST_CASE("address")
 {
     auto a = parse_address("test@example.com");
-    REQUIRE(a.display_name.empty());
+    REQUIRE(!a.display_name);
     REQUIRE(a.local_part == "test");
     REQUIRE(a.domain == "example.com");
 
     auto b = parse_address("test.foo.bar@example.com");
-    REQUIRE(b.display_name.empty());
+    REQUIRE(!b.display_name);
     REQUIRE(b.local_part == "test.foo.bar");
     REQUIRE(b.domain == "example.com");
 
     auto c = parse_address(" test . foo . bar @example.com");
-    REQUIRE(c.display_name.empty());
+    REQUIRE(!c.display_name);
     REQUIRE(c.local_part == "test.foo.bar");
     REQUIRE(c.domain == "example.com");
 
     auto d = parse_address(R"("Hello World @ foo bar"@example.com)");
-    REQUIRE(d.display_name.empty());
+    REQUIRE(!d.display_name);
     REQUIRE(d.local_part == "Hello World @ foo bar");
     REQUIRE(d.domain == "example.com");
 

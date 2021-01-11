@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <map>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -27,9 +28,9 @@ using json_bool = bool;
 
 struct json_number
 {
-    std::int64_t integer;
-    std::string  fraction;
-    std::int16_t exponent;
+    std::int64_t                integer;
+    std::optional<std::string>  fraction;
+    std::optional<std::int16_t> exponent;
 };
 
 using json_string = std::string;
@@ -65,10 +66,10 @@ struct json_value
     void _print(const json_number& i, int) const
     {
         std::fprintf(stdout, "%" PRId64, i.integer);
-        if (!i.fraction.empty())
-            std::fprintf(stdout, ".%s", i.fraction.c_str());
-        if (i.exponent != 0)
-            std::fprintf(stdout, "e%" PRId16, i.exponent);
+        if (i.fraction)
+            std::fprintf(stdout, ".%s", i.fraction->c_str());
+        if (i.exponent)
+            std::fprintf(stdout, "e%" PRId16, *i.exponent);
     }
     void _print(const json_string& str, int) const
     {

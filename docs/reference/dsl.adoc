@@ -475,13 +475,15 @@ namespace lexy
     struct nullopt
     {
         template <typename T>
-        constexpr operator T() const
-        {
-            return T();
-        }
+        constexpr operator T() const;
     };
 }
 ----
+
+The `lexy::nullopt` type represents an empty optional.
+It is implicitly convertible to any type that has a default constructor (`T()`), a dereference operator (`*t`), and a contextual conversion to `bool` (`if (t)`).
+Examples are pointers or `std::optional`.
+The conversion operator returns a default constructible object, i.e. an empty optional.
 
 .`lexy/dsl/option.hpp`
 ----
@@ -494,7 +496,7 @@ The `nullopt` rule produces a value of type `lexy::nullopt` without parsing anyt
 Matches::
   Any input, but does not consume anything.
 Value::
-  An object of type `lexy::nullopt`, which is convertible to any other type.
+  An object of type `lexy::nullopt`.
 Error::
   n/a (it does not fail)
 

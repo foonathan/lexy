@@ -3,7 +3,12 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-01-12
+== 2021-01-11
+
+Limit implicit conversion of `lexy::nullopt` to types that are like `std::optional` or pointers.
+Replace `lexy::dsl::nullopt` by `lexy::dsl::value_t<T>` and `lexy::dsl::opt(rule)` by `rule | lexy::dsl::value_t<T>` to keep the previous behavior of getting a default constructed object of type `T`.
+
+== 2021-01-10
 
 * Replaced `operator[]` and `dsl::whitespaced()` by new `dsl::whitespace` rule.
 Whitespace can now be parsed manually or automatically.

@@ -3,6 +3,7 @@
 // found in the top-level directory of this distribution.
 
 #include <cstdio>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -21,13 +22,16 @@ namespace ast
 {
 struct address
 {
-    std::string display_name;
-    std::string local_part;
-    std::string domain;
+    std::optional<std::string> display_name;
+    std::string                local_part;
+    std::string                domain;
 
     void print() const
     {
-        std::printf("%s <%s@%s> ", display_name.c_str(), local_part.c_str(), domain.c_str());
+        if (display_name)
+            std::printf("%s <%s@%s> ", display_name->c_str(), local_part.c_str(), domain.c_str());
+        else
+            std::printf("%s@%s ", local_part.c_str(), domain.c_str());
     }
 };
 
