@@ -3638,13 +3638,16 @@ Use the <code>LEXY_VALUE_STR(Str)</code> macro if your compiler does not support
     struct nullopt
     {
         template &lt;typename T&gt;
-        constexpr operator T() const
-        {
-            return T();
-        }
+        constexpr operator T() const;
     };
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>The <code>lexy::nullopt</code> type represents an empty optional.
+It is implicitly convertible to any type that has a default constructor (<code>T()</code>), a dereference operator (<code>*t</code>), and a contextual conversion to <code>bool</code> (<code>if (t)</code>).
+Examples are pointers or <code>std::optional</code>.
+The conversion operator returns a default constructible object, i.e. an empty optional.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/option.hpp</code></div>
@@ -3670,7 +3673,7 @@ Matches
 Value
 </td>
 <td class="hdlist2">
-<p>An object of type <code>lexy::nullopt</code>, which is convertible to any other type.</p>
+<p>An object of type <code>lexy::nullopt</code>.</p>
 </td>
 </tr>
 <tr>
@@ -4973,7 +4976,7 @@ Branch Condition
 Requires
 </td>
 <td class="hdlist2">
-<p>The item rule must be a branch or a choice rule unless a non-trailing separator is used (in that case the separator can be used as condition).
+<p>The item rule must be a branch unless a non-trailing separator is used (in that case the separator can be used as condition).
 A production whose rule contains <code>list()</code> must provide a sink.</p>
 </td>
 </tr>
@@ -5032,6 +5035,58 @@ dsl::list(dsl::peek(dsl::digit&lt;&gt;) &gt;&gt; dsl::integer&lt;int&gt;(dsl::di
 </td>
 <td class="content">
 Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given tokens anyway.
+</td>
+</tr>
+</table>
+</div>
+<h4 id="_lexydslopt_list" class="discrete"><code>lexy::dsl::opt_list</code></h4>
+<div class="listingblock">
+<div class="title"><code>lexy/dsl/list.hpp</code></div>
+<div class="content">
+<pre>opt_list(branch)      : Rule
+opt_list(branch, sep) : Rule</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>opt_list</code> rule matches a rule zero or more times, optionally separated by a separator.
+Values produced by the list items are forwarded to a sink callback.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Requires
+</td>
+<td class="hdlist2">
+<p>The item rule must be a branch.
+A production whose rule contains <code>opt_list()</code> must provide a sink.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Matches
+</td>
+<td class="hdlist2">
+<p>Checks whether the item rule would match using its branch condition.
+If it does, matches and consumes <code>list(branch, sep)</code>.
+Otherwise, consumes nothing and succeeds.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Values
+</td>
+<td class="hdlist2">
+<p>If the list is non-empty, the result of the sink produced by parsing the <code>list()</code> rule.
+Otherwise, the result of a sink that is immediately finished without invoking it once.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Errors
+</td>
+<td class="hdlist2">
+<p>If the list is non-empty, all errors raised by parsing the <code>list()</code> rule.</p>
 </td>
 </tr>
 </table>
@@ -5428,8 +5483,9 @@ t.opt_list(rule, sep) : Rule</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Using <code>t.while_()</code>, <code>t.while_one()</code> <code>t.opt()</code>, <code>t.list()</code>, or <code>t.opt_list()</code>, where <code>t</code> is the result of a <code>terminator()</code> call, results in a rule that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt(list(rule))</code>, respectively, but followed by the terminator.
-The <code>rule</code> does not need to be a terminator is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
+<p>Using <code>t.while_()</code>, <code>t.while_one()</code> <code>t.opt()</code>, <code>t.list()</code>, or <code>t.opt_list()</code>, where <code>t</code> is the result of a <code>terminator()</code> call,
+results in a rule that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt_list(rule)</code>, respectively, but followed by the terminator.
+The <code>rule</code> does not need to be a branch, as the terminator is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
 </div>
 <h4 id="_brackets" class="discrete">Brackets</h4>
 <div class="listingblock">
@@ -5471,8 +5527,8 @@ b.opt_list(rule, sep) : Branch</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Using <code>b.while_()</code>, <code>b.while_one()</code> <code>b.opt()</code>, <code>b.list()</code>, or <code>b.opt_list()</code>, where <code>b</code> is the result of a <code>brackets()</code> call, results in a branch that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt(list(rule))</code>, respectively, but surrounded as brackets.
-The <code>rule</code> does not need to be a branch as the closing brackets is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
+<p>Using <code>b.while_()</code>, <code>b.while_one()</code> <code>b.opt()</code>, <code>b.list()</code>, or <code>b.opt_list()</code>, where <code>b</code> is the result of a <code>brackets()</code> call, results in a branch that parses <code>while_(rule)</code>, <code>while_one(rule)</code>, <code>opt(rule)</code>, <code>list(rule)</code> and <code>opt_list(rule)</code>, respectively, but surrounded as brackets.
+The <code>rule</code> does not need to be a branch, as the closing brackets is used as the branch condition for the <code>while_()</code>, <code>opt()</code> and <code>list()</code> rule.</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>lexy/dsl/brackets.hpp</code></div>
@@ -6877,7 +6933,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-01-10 14:36:38 UTC
+Last updated 2021-01-11 19:40:59 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
