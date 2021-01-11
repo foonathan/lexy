@@ -55,11 +55,14 @@ struct _prd : rule_base
     struct branch_matcher
     {
         lexy::branch_matcher<_rule, Reader> _impl;
+        typename Reader::iterator           _begin = {};
 
         static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
 
         constexpr bool match(Reader& reader)
         {
+            // The production really begins here, not when we start parsing the branch.
+            _begin = reader.cur();
             return _impl.match(reader);
         }
 
@@ -72,7 +75,7 @@ struct _prd : rule_base
                 = std::conditional_t<lexy::is_token_production<Production>,
                                      lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
-            auto prod_ctx = context.production_context(Production{}, reader.cur());
+            auto prod_ctx = context.production_context(Production{}, _begin);
             if (auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
             {
                 if constexpr (result.has_void_value())
