@@ -111,6 +111,8 @@ namespace lexyd
 template <typename Derived>
 struct token_base : _token_base
 {
+    using token_type = Derived;
+
     static constexpr auto is_branch = true;
 
     template <typename Reader>

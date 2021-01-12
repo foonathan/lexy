@@ -92,6 +92,7 @@ set(tests
         parse.cpp
         production.cpp
         result.cpp
+        token.cpp
         validate.cpp
     )
 

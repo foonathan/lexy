@@ -98,6 +98,7 @@ set(header_files
         ${include_dir}/parse.hpp
         ${include_dir}/production.hpp
         ${include_dir}/result.hpp
+        ${include_dir}/token.hpp
         ${include_dir}/validate.hpp)
 
 # Base target for common options.

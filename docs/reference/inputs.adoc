@@ -666,54 +666,14 @@ If the program is invoked with `./a.out a 123 b`, the input will be `a\0123\0b`.
 
 ====
 
-=== Lexemes
+=== Lexemes and Tokens
 
-A *lexeme* is a the part of the input matched by a rule.
+A *lexeme* is the part of the input matched by a token rule.
+It is represented by the class `lexy::lexeme`.
+A *token* is a combination of an identifier that defines the rule it matches, as well as the matched lexeme.
 
-==== Lexeme
-
-.`lexy/lexeme.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-    template <typename Reader>
-    class lexeme
-    {
-    public:
-        using encoding  = typename Reader::encoding;
-        using char_type = typename encoding::char_type;
-        using iterator  = typename Reader::iterator;
-
-        constexpr lexeme() noexcept;
-        constexpr lexeme(iterator begin, iterator end) noexcept;
-
-        constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
-        : lexeme(begin, reader.cur())
-        {}
-
-        constexpr bool empty() const noexcept;
-
-        constexpr iterator begin() const noexcept;
-        constexpr iterator end() const noexcept;
-
-        // Only if the iterator is a pointer.
-        constexpr const char_type* data() const noexcept;
-
-        // Only if the iterator has `operator-`.
-        constexpr std::size_t size() const noexcept;
-
-        // Only if the iterator has `operator[]`.
-        constexpr char_type operator[](std::size_t idx) const noexcept;
-    };
-
-    template <typename Input>
-    using lexeme_for = lexeme<input_reader<Input>>;
-}
-----
-
-The class `lexy::lexeme` represents a sub-range of the input.
-For convenience, most inputs also provide convenience typedefs that can be used instead of `lexy::lexeme_for`.
+NOTE: When talking about tokens in the context of rules, it is usually short for token rule,
+i.e. the rule that defines what is matched, not the concrete realization.
 
 ==== Code point
 
@@ -777,6 +737,220 @@ constexpr bool is_bmp() const noexcept; // <2>
 ----
 <1> Returns `true` if the code point is ASCII (7-bit value), `false` otherwise.
 <2> Returns `true` if the code point is in the Unicode BMP (16-bit value), `false` otherwise.
+
+
+==== Lexeme
+
+.`lexy/lexeme.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Reader>
+    class lexeme
+    {
+    public:
+        using encoding  = typename Reader::encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = typename Reader::iterator;
+
+        constexpr lexeme() noexcept;
+        constexpr lexeme(iterator begin, iterator end) noexcept;
+
+        constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
+        : lexeme(begin, reader.cur())
+        {}
+
+        constexpr bool empty() const noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        // Only if the iterator is a pointer.
+        constexpr const char_type* data() const noexcept;
+
+        // Only if the iterator has `operator-`.
+        constexpr std::size_t size() const noexcept;
+
+        // Only if the iterator has `operator[]`.
+        constexpr char_type operator[](std::size_t idx) const noexcept;
+    };
+
+    template <typename Input>
+    using lexeme_for = lexeme<input_reader<Input>>;
+}
+----
+
+The class `lexy::lexeme` represents a sub-range of the input.
+For convenience, most inputs also provide convenience typedefs that can be used instead of `lexy::lexeme_for`.
+
+==== Token Kind
+
+.`lexy/token.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    struct unknown_token_kind {};
+
+    template <typename TokenKind = void>
+    class token_kind
+    {
+    public:
+        constexpr token_kind() noexcept;
+        constexpr token_kind(lexy::unknown_token_kind) noexcept;
+        constexpr token_kind(TokenKind value) noexcept;
+        template <typename TokenRule>
+        constexpr token_kind(TokenRule token_rule) noexcept;
+
+        constexpr explicit operator bool() const noexcept;
+
+        constexpr /* see below */ name() const noexcept;
+
+        constexpr TokenKind get() const noexcept;
+
+        static constexpr std::uint_least16_t to_raw(token_kind<TokenKind> kind) noexcept;
+        static constexpr token_kind<TokenKind> from_raw(std::uint_least16_t kind) noexcept;
+
+        friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept;
+        friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept;
+    };
+}
+----
+
+The class `lexy::token_kind` identifies a token rule.
+It is merely a wrapper over the specified `TokenKind`, which is an enum.
+If `TokenKind` is `void`, it is a wrapper over an `int`.
+
+===== Constructors
+
+[source,cpp]
+----
+constexpr token_kind() noexcept;                         // <1>
+constexpr token_kind(lexy::unknown_token_kind) noexcept; // <1>
+
+constexpr token_kind(TokenKind value) noexcept; // <2>
+
+template <typename TokenRule>
+constexpr token_kind(TokenRule token_rule) noexcept; // <3>
+----
+<1> Creates an unknown token kind, which has the value `TokenKind(-1)`.
+<2> Creates the specified token kind, if `TokenKind` is `void`, constructor takes an `int`.
+<3> Creates a token kind from a token rule.
+
+The token kind of a rule is computed as follows:
+
+* If the token rule was associated with a token kind by calling `.kind<value>()`, the resulting kind is the specified `value>`.
+* Otherwise, if the map found at `lexy::token_kind_map_for<TokenKind>` contains a mapping for the `TokenRule`, it uses that.
+* Otherwise, the token kind is unknown.
+
+===== Access
+
+[source,cpp]
+----
+constexpr explicit operator bool() const noexcept; // <1>
+
+constexpr /* see below */ name() const noexcept; // <2>
+
+constexpr TokenKind get() const noexcept; // <3>
+----
+<1> Returns `true` if the token kind is not unknown, `false` otherwise.
+<2> Returns the name of the token kind, the return type is some unspecified type like `std::string_view`.
+<3> Returns the underlying value of the token kind.
+
+The name of a token kind is determined as follows:
+
+* If the `TokenKind` is `void`, the name is `"token"` for all token kinds.
+* Otherwise, if the `TokenKind` is unknown, the name is `"token"`.
+* Otherwise, if ADL finds an overload `string-like token_kind_name(TokenKind kind)`,
+  where `string-like` is either `const char*` or a class with `.data()` and `.size()`,
+  returns that as the name.
+* Otherwise, the name is `"token"` for all tokens.
+
+==== Token Kind Map
+
+.`lexy/token.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    class Token-Kind-Map
+    {
+    public:
+        template <auto TokenKind, typename TokenRule>
+        consteval Token-Kind-Map map(TokenRule) const;
+    };
+
+    inline constexpr auto token_kind_map = Token-Kind-Map{};
+
+    template <typename TokenKind>
+    constexpr auto token_kind_map_for = token_kind_map;
+}
+----
+
+There are two ways to associate a token kind with a token rule.
+Either by calling `.kind()` on the token rule and giving it a value there,
+or by specializing the `lexy::token_kind_map_for` for your `TokenKind` enumeration.
+
+.Example
+[%collapsible]
+====
+[source,cpp]
+----
+enum class my_token_kind // <1>
+{
+    code_point,
+    period,
+    open_paren,
+    close_paren,
+};
+
+// <2>
+template <>
+constexpr auto lexy::token_kind_map_for<my_token_kind>
+    = lexy::token_kind_map.map<my_token_kind::code_point>(lexy::dsl::code_point)
+                          .map<my_token_kind::period>(lexy::dsl::period)
+                          .map<my_token_kind::open_paren>(lexy::dsl::parenthesized.open())
+                          .map<my_token_kind::close_paren>(lexy::dsl::parenthesized.close());
+----
+<1> Define your `TokenKind` enumeration.
+<2> Define the mapping of token rules to enumeration values.
+====
+
+NOTE: The token kind is only relevant when `lexy::parse_as_tree()` is used to parse the input.
+
+==== Token
+
+.`lexy/token.hpp`
+----
+namespace lexy
+{
+    template <typename Reader, typename TokenKind = void>
+    class token
+    {
+    public:
+        explicit constexpr token(token_kind<TokenKind> kind, lexy::lexeme<Reader> lex) noexcept;
+        explicit constexpr token(token_kind<TokenKind> kind,
+                                 typename Reader::iterator begin,
+                                 typename Reader::iterator end) noexcept;
+
+        constexpr token_kind<TokenKind> kind() const noexcept;
+        constexpr auto lexeme() const noexcept;
+
+        constexpr auto name() const noexcept { return kind().name(); }
+
+        constexpr auto position() const noexcept -> typename Reader::iterator
+        {
+            return lexeme().begin();
+        }
+    };
+
+    template <typename Input, typename TokenKind = void>
+    using token_for = token<input_reader<Input>, TokenKind>;
+}
+----
+
+The class `lexy::token` just combines a `lexy::token_kind` and a `lexy::lexeme`.
 
 === Writing custom Inputs
 
