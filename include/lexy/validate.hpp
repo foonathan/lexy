@@ -33,6 +33,10 @@ struct _validate_handler
         return pos;
     }
 
+    template <typename Kind, typename Iterator>
+    constexpr void token(Kind, Iterator, Iterator)
+    {}
+
     template <typename Production, typename Iterator, typename... Args>
     constexpr auto finish_production(Production, Iterator, Args&&...)
     {

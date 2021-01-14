@@ -23,6 +23,11 @@ struct _toke : token_base<_toke<Tag, Token>>
         auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
         return LEXY_MOV(context).error(err);
     }
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return Token::token_kind();
+    }
 };
 
 template <typename Derived>

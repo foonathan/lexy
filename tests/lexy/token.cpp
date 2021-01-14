@@ -35,9 +35,8 @@ const char* token_kind_name(token_kind k)
 } // namespace
 
 template <>
-constexpr auto lexy::token_kind_map_for<::token_kind> = lexy::token_kind_map
-                                                            .map<::token_kind::c>(LEXY_LIT("."))
-                                                            .map<::token_kind::b>(LEXY_LIT("..."));
+constexpr auto lexy::token_kind_map_for<::token_kind> = lexy::token_kind_map.map<::token_kind::c>(
+    LEXY_LIT("."));
 
 TEST_CASE("token_kind")
 {
@@ -68,12 +67,12 @@ TEST_CASE("token_kind")
         CHECK(period == lexy::unknown_token_kind());
         CHECK(period == lexy::dsl::period);
 
-        lexy::token_kind manual(lexy::dsl::period.kind<42>());
+        lexy::token_kind manual(lexy::dsl::period.kind<42>);
         CHECK(manual);
         CHECK(manual.get() == 42);
         CHECK(manual.name() == "token");
         CHECK(manual == 42);
-        CHECK(manual == lexy::dsl::period.kind<42>());
+        CHECK(manual == lexy::dsl::period.kind<42>);
     }
     SUBCASE("enum")
     {
@@ -100,12 +99,12 @@ TEST_CASE("token_kind")
         CHECK(period == token_kind::c);
         CHECK(period == lexy::dsl::period);
 
-        lexy::token_kind manual(lexy::dsl::period.kind<token_kind::b>());
+        lexy::token_kind manual(lexy::dsl::period.kind<token_kind::b>);
         CHECK(manual);
         CHECK(manual.get() == token_kind::b);
         CHECK(manual.name() == "b");
         CHECK(manual == token_kind::b);
-        CHECK(manual == lexy::dsl::period.kind<token_kind::b>());
+        CHECK(manual == lexy::dsl::period.kind<token_kind::b>);
     }
 }
 

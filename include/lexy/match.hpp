@@ -31,6 +31,10 @@ struct _match_handler
         return {};
     }
 
+    template <typename Kind, typename Iterator>
+    constexpr void token(Kind, Iterator, Iterator)
+    {}
+
     template <typename Production, typename... Args>
     constexpr auto finish_production(Production, state, Args&&...)
     {

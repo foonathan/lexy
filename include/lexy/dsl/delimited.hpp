@@ -59,6 +59,7 @@ struct _del : rule_base
                 else if (escape.match(reader))
                 {
                     // Before we add the escape character to the sink, we need to add the content.
+                    context.token(Char::token_kind(), content_begin, content_end);
                     sink(lexy::lexeme<Reader>(content_begin, content_end));
 
                     auto result = escape.template parse<_list_sink>(context, reader, sink);
@@ -85,6 +86,7 @@ struct _del : rule_base
             }
 
             // Finish up the list.
+            context.token(Char::token_kind(), content_begin, content_end);
             sink(lexy::lexeme<Reader>(content_begin, content_end));
             return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
                                                                    LEXY_FWD(args)..., sink);
@@ -133,6 +135,7 @@ struct _del<Close, Char, void>
             }
 
             // Finish up the list.
+            context.token(Char::token_kind(), content_begin, content_end);
             sink(lexy::lexeme<Reader>(content_begin, content_end));
             return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
                                                                    LEXY_FWD(args)..., sink);

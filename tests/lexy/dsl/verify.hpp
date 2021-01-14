@@ -72,6 +72,10 @@ struct test_handler
         return 0;
     }
 
+    template <typename Kind, typename Iterator>
+    LEXY_VERIFY_FN void token(Kind, Iterator, Iterator)
+    {}
+
     template <typename Production, typename... Args>
     LEXY_VERIFY_FN result_type_for<Production> finish_production(Production, int, Args&&... args)
     {

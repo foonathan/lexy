@@ -34,7 +34,12 @@ struct _wsr : rule_base
             {
                 // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
                 using engine = lexy::engine_while<typename Rule::token_engine>;
+
+                auto begin = reader.cur();
                 engine::match(reader);
+                auto end = reader.cur();
+
+                context.token(Rule::token_kind(), begin, end);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else

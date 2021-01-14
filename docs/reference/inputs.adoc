@@ -840,7 +840,7 @@ constexpr token_kind(TokenRule token_rule) noexcept; // <3>
 
 The token kind of a rule is computed as follows:
 
-* If the token rule was associated with a token kind by calling `.kind<value>()`, the resulting kind is the specified `value>`.
+* If the token rule was associated with a token kind by calling `.kind<value>`, the resulting kind is the specified `value>`.
 * Otherwise, if the map found at `lexy::token_kind_map_for<TokenKind>` contains a mapping for the `TokenRule`, it uses that.
 * Otherwise, the token kind is unknown.
 
@@ -889,7 +889,7 @@ namespace lexy
 ----
 
 There are two ways to associate a token kind with a token rule.
-Either by calling `.kind()` on the token rule and giving it a value there,
+Either by calling `.kind<Kind>` on the token rule and giving it a value there,
 or by specializing the `lexy::token_kind_map_for` for your `TokenKind` enumeration.
 
 .Example

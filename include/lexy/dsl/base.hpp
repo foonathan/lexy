@@ -34,6 +34,12 @@ struct Rule : rule_base
 };
 #endif
 
+namespace lexy
+{
+struct unknown_token_kind
+{};
+} // namespace lexy
+
 namespace lexyd
 {
 struct rule_base
@@ -108,26 +114,38 @@ using whitespace_parser = rule_parser<lexy::dsl::_wsr<_ws_rule<Context>>, NextPa
 //=== token ===//
 namespace lexyd
 {
+template <auto Kind, typename Token>
+struct _tokk;
+
 template <typename Derived>
 struct token_base : _token_base
 {
     using token_type = Derived;
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return Derived{};
+    }
 
     static constexpr auto is_branch = true;
 
     template <typename Reader>
     struct branch_matcher
     {
+        typename Reader::iterator _begin = {};
+
         static constexpr auto is_unconditional = false;
 
         constexpr bool match(Reader& reader)
         {
+            _begin = reader.cur();
             return lexy::engine_try_match<typename Derived::token_engine>(reader);
         }
 
         template <typename NextParser, typename Context, typename... Args>
         constexpr auto parse(Context& context, Reader& reader, Args&&... args)
         {
+            context.token(Derived::token_kind(), _begin, reader.cur());
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -143,18 +161,20 @@ struct token_base : _token_base
             using token_engine = typename Derived::token_engine;
             using continuation = lexy::whitespace_parser<Context, NextParser>;
 
+            auto position = reader.cur();
             if constexpr (lexy::engine_can_fail<token_engine, Reader>)
             {
-                auto position = reader.cur();
                 if (auto ec = token_engine::match(reader);
-                    ec == typename token_engine::error_code())
-                    return continuation::parse(context, reader, LEXY_FWD(args)...);
-                else
+                    ec != typename token_engine::error_code())
                     return Derived::token_error(context, reader, ec, position);
+
+                context.token(Derived::token_kind(), position, reader.cur());
+                return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
                 token_engine::match(reader);
+                context.token(Derived::token_kind(), position, reader.cur());
                 return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
         }
@@ -163,6 +183,28 @@ struct token_base : _token_base
     //=== dsl ===//
     template <typename Tag>
     LEXY_CONSTEVAL auto error() const;
+
+    template <auto Kind>
+    static constexpr _tokk<Kind, Derived> kind = _tokk<Kind, Derived>{};
+};
+
+template <auto Kind, typename Token>
+struct _tokk : token_base<_tokk<Kind, Token>>
+{
+    using token_engine = typename Token::token_engine;
+
+    template <typename Context, typename Reader>
+    static constexpr auto token_error(Context& context, const Reader& reader,
+                                      typename token_engine::error_code ec,
+                                      typename Reader::iterator         pos)
+    {
+        return Token::token_error(context, reader, ec, pos);
+    }
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return Kind;
+    }
 };
 } // namespace lexyd
 
@@ -228,16 +270,28 @@ public:
         return _handler->get_sink(Production{});
     }
 
-    template <typename Error>
-    constexpr result_type error(Error&& error) &&
+    template <typename Iterator>
+    constexpr void whitespace(Iterator begin, Iterator end)
     {
-        return _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
+        _handler->whitespace(begin, end);
+    }
+
+    template <typename TokenKind, typename Iterator>
+    constexpr void token(TokenKind kind, Iterator begin, Iterator end)
+    {
+        _handler->token(kind, begin, end);
     }
 
     template <typename... Args>
     constexpr result_type value(Args&&... args) &&
     {
         return _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
+    }
+
+    template <typename Error>
+    constexpr result_type error(Error&& error) &&
+    {
+        return _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
     }
 
 private:
@@ -297,16 +351,28 @@ private:
             return _parent->sink();
         }
 
-        template <typename Error>
-        constexpr result_type error(Error&& error) &&
+        template <typename Iterator>
+        constexpr void whitespace(Iterator begin, Iterator end)
         {
-            return LEXY_MOV(*_parent).error(LEXY_FWD(error));
+            _parent->whitespace(begin, end);
+        }
+
+        template <typename TokenKind, typename Iterator>
+        constexpr void token(TokenKind kind, Iterator begin, Iterator end)
+        {
+            _parent->token(kind, begin, end);
         }
 
         template <typename... Args>
         constexpr result_type value(Args&&... args) &&
         {
             return LEXY_MOV(*_parent).value(LEXY_FWD(args)...);
+        }
+
+        template <typename Error>
+        constexpr result_type error(Error&& error) &&
+        {
+            return LEXY_MOV(*_parent).error(LEXY_FWD(error));
         }
 
     private:
