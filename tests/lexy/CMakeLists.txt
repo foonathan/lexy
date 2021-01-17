@@ -90,6 +90,7 @@ set(tests
         lexeme.cpp
         match.cpp
         parse.cpp
+        parse_tree.cpp
         production.cpp
         result.cpp
         token.cpp

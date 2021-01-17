@@ -18,6 +18,26 @@
 
 namespace lexy
 {
+/// Base class to indicate that this production is conceptually a token.
+/// This inhibits whitespace skipping inside the production.
+struct token_production
+{};
+
+template <typename Production>
+constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
+
+/// Base class to indicate that this production is transparent for the parse tree generation.
+/// It will not create a node in the tree, all children will be added to the its parent.
+/// If parse tree generation is not used, it has no effect.
+struct transparent_production
+{};
+
+template <typename Production>
+constexpr bool is_transparent_production = std::is_base_of_v<transparent_production, Production>;
+} // namespace lexy
+
+namespace lexy
+{
 template <typename Production>
 LEXY_CONSTEVAL auto production_name()
 {
@@ -26,17 +46,6 @@ LEXY_CONSTEVAL auto production_name()
 
 template <typename Production>
 using production_rule = std::decay_t<decltype(Production::rule)>;
-} // namespace lexy
-
-namespace lexy
-{
-/// Base class to indicate that this production is conceptually a token.
-/// This inhibits whitespace skipping inside the production.
-struct token_production
-{};
-
-template <typename Production>
-constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
 
 template <typename Production>
 using _detect_whitespace = decltype(Production::whitespace);

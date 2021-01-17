@@ -96,6 +96,7 @@ set(header_files
         ${include_dir}/lexeme.hpp
         ${include_dir}/match.hpp
         ${include_dir}/parse.hpp
+        ${include_dir}/parse_tree.hpp
         ${include_dir}/production.hpp
         ${include_dir}/result.hpp
         ${include_dir}/token.hpp

@@ -22,9 +22,11 @@ endif()
 
 # Add the individual tests.
 add_subdirectory(lexy)
+add_subdirectory(lexy_ext)
 add_subdirectory(examples)
 
-add_test(NAME unit_tests COMMAND lexy_test)
+add_test(NAME lexy_test COMMAND lexy_test)
+add_test(NAME lexy_ext_test COMMAND lexy_ext_test)
 add_test(NAME email COMMAND lexy_test_email)
 add_test(NAME json COMMAND lexy_test_json)
 add_test(NAME shell COMMAND lexy_test_shell)
