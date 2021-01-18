@@ -8,7 +8,7 @@
 #include <cstring>
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
-#include <lexy/_detail/std.hpp>
+#include <lexy/_detail/iterator.hpp>
 #include <new>
 
 namespace lexy::_detail
@@ -106,15 +106,9 @@ public:
 
     //=== iterator ===//
     // Stable iterator over the memory.
-    class stable_iterator
+    class stable_iterator : public forward_iterator_base<stable_iterator, const T>
     {
     public:
-        using value_type        = T;
-        using reference         = const value_type&;
-        using pointer           = const value_type*;
-        using difference_type   = std::ptrdiff_t;
-        using iterator_category = std::forward_iterator_tag;
-
         constexpr stable_iterator() = default;
 
         explicit constexpr stable_iterator(const _detail::buffer_builder<T>& buffer,
@@ -122,43 +116,22 @@ public:
         : _buffer(&buffer), _idx(idx)
         {}
 
-        //=== dereference ===//
-        constexpr reference operator*() const noexcept
+        constexpr const T& deref() const noexcept
         {
             LEXY_PRECONDITION(_idx != _buffer->read_size());
             return _buffer->read_data()[_idx];
         }
 
-        //=== positioning ===//
-        constexpr stable_iterator& operator++() noexcept
+        constexpr void increment() noexcept
         {
             LEXY_PRECONDITION(_idx != _buffer->read_size());
             ++_idx;
-            return *this;
-        }
-        constexpr stable_iterator operator++(int) noexcept
-        {
-            stable_iterator tmp(*this);
-            ++*this;
-            return tmp;
         }
 
-        friend constexpr difference_type operator-(stable_iterator lhs,
-                                                   stable_iterator rhs) noexcept
+        constexpr bool equal(stable_iterator rhs) const noexcept
         {
-            LEXY_PRECONDITION(lhs._buffer == rhs._buffer);
-            return difference_type(lhs._idx) - difference_type(rhs._idx);
-        }
-
-        //=== comparison ===//
-        friend constexpr bool operator==(stable_iterator lhs, stable_iterator rhs) noexcept
-        {
-            LEXY_PRECONDITION(lhs._buffer == rhs._buffer);
-            return lhs._idx == rhs._idx;
-        }
-        friend constexpr bool operator!=(stable_iterator lhs, stable_iterator rhs) noexcept
-        {
-            return !(lhs == rhs);
+            LEXY_PRECONDITION(_buffer == rhs._buffer);
+            return _idx == rhs._idx;
         }
 
     private:

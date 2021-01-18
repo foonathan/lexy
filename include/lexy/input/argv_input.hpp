@@ -6,41 +6,31 @@
 #define LEXY_INPUT_ARGV_INPUT_HPP_INCLUDED
 
 #include <lexy/_detail/assert.hpp>
-#include <lexy/_detail/std.hpp>
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy
 {
+class argv_iterator;
+
 /// A sentinel for the command-line arguments.
-class argv_sentinel
+class argv_sentinel : public _detail::sentinel_base<argv_sentinel, argv_iterator>
 {};
 
 /// An iterator over the command-line arguments.
-class argv_iterator
+class argv_iterator : public _detail::bidirectional_iterator_base<argv_iterator, const char>
 {
 public:
-    using value_type        = char;
-    using reference         = const char&;
-    using pointer           = const char*;
-    using difference_type   = std::ptrdiff_t;
-    using iterator_category = std::bidirectional_iterator_tag;
-
     constexpr argv_iterator() noexcept : _arg(nullptr), _c(nullptr) {}
 
-    //=== dereference ===//
-    constexpr reference operator*() const noexcept
+    constexpr const char& deref() const noexcept
     {
         return *_c;
     }
-    constexpr pointer operator->() const noexcept
-    {
-        return _c;
-    }
 
-    //=== positioning ===//
-    constexpr argv_iterator& operator++() noexcept
+    constexpr void increment() noexcept
     {
         LEXY_PRECONDITION(*this != argv_sentinel{});
         if (*_c == '\0')
@@ -53,17 +43,8 @@ public:
         }
         else
             ++_c;
-
-        return *this;
     }
-    constexpr argv_iterator operator++(int) noexcept
-    {
-        argv_iterator tmp(*this);
-        ++*this;
-        return tmp;
-    }
-
-    constexpr argv_iterator& operator--() noexcept
+    constexpr void decrement() noexcept
     {
         // Check whether we point to the first character of the argument.
         if (_c == *_arg)
@@ -76,42 +57,17 @@ public:
         }
         else
             --_c;
-        return *this;
-    }
-    constexpr argv_iterator operator--(int) noexcept
-    {
-        argv_iterator tmp(*this);
-        --*this;
-        return tmp;
     }
 
-    //=== comparison ===//
-    friend constexpr bool operator==(argv_iterator lhs, argv_sentinel) noexcept
+    constexpr bool equal(argv_iterator rhs) const noexcept
+    {
+        return _arg == rhs._arg && _c == rhs._c;
+    }
+    constexpr bool is_end() const noexcept
     {
         // We're at the end if we're at the last character of the last argument,
         // or have an empty argv range.
-        return lhs._c == nullptr || (*lhs._c == '\0' && lhs._arg[1] == nullptr);
-    }
-    friend constexpr bool operator!=(argv_iterator lhs, argv_sentinel) noexcept
-    {
-        return !(lhs == argv_sentinel{});
-    }
-    friend constexpr bool operator==(argv_sentinel, argv_iterator rhs) noexcept
-    {
-        return rhs == argv_sentinel{};
-    }
-    friend constexpr bool operator!=(argv_sentinel, argv_iterator rhs) noexcept
-    {
-        return !(rhs == argv_sentinel{});
-    }
-
-    friend constexpr bool operator==(argv_iterator lhs, argv_iterator rhs) noexcept
-    {
-        return lhs._arg == rhs._arg && lhs._c == rhs._c;
-    }
-    friend constexpr bool operator!=(argv_iterator lhs, argv_iterator rhs) noexcept
-    {
-        return !(lhs == rhs);
+        return _c == nullptr || (*_c == '\0' && _arg[1] == nullptr);
     }
 
 private:

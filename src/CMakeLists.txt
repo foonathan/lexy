@@ -11,6 +11,7 @@ set(header_files
         ${include_dir}/_detail/detect.hpp
         ${include_dir}/_detail/integer_sequence.hpp
         ${include_dir}/_detail/invoke.hpp
+        ${include_dir}/_detail/iterator.hpp
         ${include_dir}/_detail/memory_resource.hpp
         ${include_dir}/_detail/nttp_string.hpp
         ${include_dir}/_detail/stateless_lambda.hpp
