@@ -7,6 +7,7 @@
 #include <doctest/doctest.h>
 #include <lexy/input/string_input.hpp>
 #include <lexy/match.hpp>
+#include <lexy_ext/parse_tree_doctest.hpp>
 
 // We copy the conformance tests from https://github.com/miloyip/nativejson-benchmark.
 
@@ -293,245 +294,358 @@ TEST_CASE("parse_string")
 //=== roundtrip ===//
 namespace
 {
-auto parse(const char* str)
+auto parse_tree(const char* str)
 {
-    auto input  = lexy::zstring_input<lexy::utf8_encoding>(str);
-    auto result = lexy::parse<grammar::json>(input, lexy::noop);
+    auto input = lexy::zstring_input<lexy::utf8_encoding>(str);
+
+    lexy::parse_tree_for<decltype(input)> tree;
+    auto result = lexy::parse_as_tree<grammar::json>(tree, input, lexy::noop);
     REQUIRE(result);
-    return result.value();
+    return tree;
 }
-
-template <typename T>
-auto& get(const ast::json_value& value)
-{
-    auto ptr = std::get_if<T>(&value.v);
-    REQUIRE(ptr);
-    return *ptr;
-}
-
-auto get_number(const ast::json_value& value)
-{
-    auto number = get<ast::json_number>(value);
-    auto result = std::to_string(number.integer);
-    if (number.fraction)
-        result += "." + *number.fraction;
-    if (number.exponent)
-        result += "e" + std::to_string(*number.exponent);
-    return result;
-}
-
-using namespace ast;
 } // namespace
 
 TEST_CASE("roundtrip01")
 {
-    auto result = parse(R"([null])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    get<json_null>(array[0]);
+    auto tree = parse_tree(R"(null)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("null");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip02")
 {
-    auto result = parse(R"([true])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get<json_bool>(array[0]) == true);
+    auto tree = parse_tree(R"(true)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("true");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip03")
 {
-    auto result = parse(R"([false])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get<json_bool>(array[0]) == false);
+    auto tree = parse_tree(R"(false)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("false");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip04")
 {
-    auto result = parse(R"([0])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "0");
+    auto tree = parse_tree(R"(0)");
+
+    auto expected
+        = lexy_ext::parse_tree_desc(grammar::json{}).production(grammar::number{}).token("0");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip05")
 {
-    auto result = parse(R"(["foo"])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get<json_string>(array[0]) == "foo");
+    auto tree = parse_tree(R"("foo")");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::string{})
+                        .token("\"")
+                        .token("foo")
+                        .token("\"");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip06")
 {
-    auto result = parse(R"([])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 0);
+    auto tree = parse_tree(R"([])");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::array{})
+                        .token("[")
+                        .token("]");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip07")
 {
-    auto result = parse(R"({})");
-    auto object = get<json_object>(result);
-    REQUIRE(object.size() == 0);
+    auto tree = parse_tree(R"({})");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::object{})
+                        .token("{")
+                        .token("}");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip08")
 {
-    auto result = parse(R"([0, 1])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 2);
-    REQUIRE(get_number(array[0]) == "0");
-    REQUIRE(get_number(array[1]) == "1");
+    auto tree = parse_tree(R"([0,1])");
+
+    // clang-format off
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+        .production(grammar::array{})
+        .token("[")
+        .production(grammar::number{})
+            .token("0")
+            .finish()
+        .token(",")
+        .production(grammar::number{})
+            .token("1")
+            .finish()
+        .token("]");
+    // clang-format on
+    CHECK(tree == expected);
+}
+
+TEST_CASE("roundtrip08 - whitespace")
+{
+    auto tree = parse_tree(R"([ 0 , 1 ])");
+
+    // clang-format off
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+        .production(grammar::array{})
+        .token("[")
+        .token(" ")
+        .production(grammar::number{})
+            .token("0")
+            .finish()
+        .token(" ")
+        .token(",")
+        .token(" ")
+        .production(grammar::number{})
+            .token("1")
+            .finish()
+        .token(" ")
+        .token("]");
+    // clang-format on
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip09")
 {
-    auto result = parse(R"({"foo":"bar"})");
-    auto object = get<json_object>(result);
-    REQUIRE(object.size() == 1);
-    REQUIRE(get<json_string>(object.at("foo")) == "bar");
+    auto tree = parse_tree(R"({"foo":"bar"})");
+
+    // clang-format off
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+        .production(grammar::object{})
+        .token("{")
+        .production(grammar::string{})
+            .token("\"")
+            .token("foo")
+            .token("\"")
+            .finish()
+        .token(":")
+        .production(grammar::string{})
+            .token("\"")
+            .token("bar")
+            .token("\"")
+            .finish()
+        .token("}");
+    // clang-format on
+    CHECK(tree == expected);
+}
+
+TEST_CASE("roundtrip09 - whitespace")
+{
+    auto tree = parse_tree(R"({ "foo" : "bar" })");
+
+    // clang-format off
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+        .production(grammar::object{})
+        .token("{")
+        .token(" ")
+        .production(grammar::string{})
+            .token("\"")
+            .token("foo")
+            .token("\"")
+            .token(" ")
+            .finish()
+        .token(":")
+        .token(" ")
+        .production(grammar::string{})
+            .token("\"")
+            .token("bar")
+            .token("\"")
+            .token(" ")
+            .finish()
+        .token("}");
+    // clang-format on
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip10")
 {
-    auto result = parse(R"({"a":null,"foo":"bar"})");
-    auto object = get<json_object>(result);
-    REQUIRE(object.size() == 2);
-    get<json_null>(object.at("a"));
-    REQUIRE(get<json_string>(object.at("foo")) == "bar");
+    auto tree = parse_tree(R"({"a":null,"foo":"bar"})");
+
+    // clang-format off
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+        .production(grammar::object{})
+        .token("{")
+        .production(grammar::string{})
+            .token("\"")
+            .token("a")
+            .token("\"")
+            .finish()
+        .token(":")
+        .token("null")
+        .token(",")
+        .production(grammar::string{})
+            .token("\"")
+            .token("foo")
+            .token("\"")
+            .finish()
+        .token(":")
+        .production(grammar::string{})
+            .token("\"")
+            .token("bar")
+            .token("\"")
+            .finish()
+        .token("}");
+    // clang-format on
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip11")
 {
-    auto result = parse(R"([-1])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "-1");
+    auto tree = parse_tree(R"(-1)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("-")
+                        .token("1");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip12")
 {
-    auto result = parse(R"([-2147483648])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "-2147483648");
+    auto tree = parse_tree(R"(-2147483648)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("-")
+                        .token("2147483648");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip13")
 {
-    auto result = parse(R"([-1234567890123456789])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "-1234567890123456789");
+    auto tree = parse_tree(R"(-1234567890123456789)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("-")
+                        .token("1234567890123456789");
+    CHECK(tree == expected);
 }
 
 // 14 has an integer overflow.
 
 TEST_CASE("roundtrip15")
 {
-    auto result = parse(R"([1])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "1");
+    auto tree = parse_tree(R"(1)");
+
+    auto expected
+        = lexy_ext::parse_tree_desc(grammar::json{}).production(grammar::number{}).token("1");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip16")
 {
-    auto result = parse(R"([2147483647])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "2147483647");
+    auto tree = parse_tree(R"(2147483647)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("2147483647");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip17")
 {
-    auto result = parse(R"([4294967295])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "4294967295");
+    auto tree = parse_tree(R"(4294967295)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("4294967295");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip18")
 {
-    auto result = parse(R"([1234567890123456789])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "1234567890123456789");
+    auto tree = parse_tree(R"(1234567890123456789)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("1234567890123456789");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip19")
 {
-    auto result = parse(R"([9223372036854775807])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "9223372036854775807");
+    auto tree = parse_tree(R"(9223372036854775807)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("9223372036854775807");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip20")
 {
-    auto result = parse(R"([0.0])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "0.0");
+    auto tree = parse_tree(R"(0.0)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("0")
+                        .token(".")
+                        .token("0");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip21")
 {
-    // We're losing the sign of negative zero here, but that's okay.
+    auto tree = parse_tree(R"(-0.0)");
 
-    auto result = parse(R"([-0.0])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "0.0");
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("-")
+                        .token("0")
+                        .token(".")
+                        .token("0");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip22")
 {
-    auto result = parse(R"([1.2345])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "1.2345");
+    auto tree = parse_tree(R"(1.2345)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("1")
+                        .token(".")
+                        .token("2345");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip23")
 {
-    auto result = parse(R"([-1.2345])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "-1.2345");
+    auto tree = parse_tree(R"(-1.2345)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("-")
+                        .token("1")
+                        .token(".")
+                        .token("2345");
+    CHECK(tree == expected);
 }
 
 TEST_CASE("roundtrip24")
 {
-    auto result = parse(R"([5e-324])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "5e-324");
+    auto tree = parse_tree(R"(5e-324)");
+
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::number{})
+                        .token("5")
+                        .token("e")
+                        .token("-")
+                        .token("324");
+    CHECK(tree == expected);
 }
 
-TEST_CASE("roundtrip25")
-{
-    auto result = parse(R"([2.225073858507201e-308])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "2.225073858507201e-308");
-}
-
-TEST_CASE("roundtrip26")
-{
-    auto result = parse(R"([2.2250738585072014e-308])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "2.2250738585072014e-308");
-}
-
-TEST_CASE("roundtrip27")
-{
-    auto result = parse(R"([1.7976931348623157e308])");
-    auto array  = get<json_array>(result);
-    REQUIRE(array.size() == 1);
-    REQUIRE(get_number(array[0]) == "1.7976931348623157e308");
-}
+// roundtrip25-27 just test for precision/range, which aren't too interesting here
 

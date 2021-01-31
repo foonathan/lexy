@@ -148,7 +148,7 @@ struct json_value;
 struct number : lexy::token_production
 {
     // A signed integer parsed as int64_t.
-    struct integer
+    struct integer : lexy::transparent_production
     {
         static constexpr auto rule
             = dsl::minus_sign + dsl::integer<std::int64_t>(dsl::digits<>.no_leading_zero());
@@ -156,14 +156,14 @@ struct number : lexy::token_production
     };
 
     // The fractional part of a number parsed as the string.
-    struct fraction
+    struct fraction : lexy::transparent_production
     {
         static constexpr auto rule  = dsl::lit_c<'.'> >> dsl::capture(dsl::digits<>);
         static constexpr auto value = lexy::as_string<std::string>;
     };
 
     // The exponent of a number parsed as int64_t.
-    struct exponent
+    struct exponent : lexy::transparent_production
     {
         static constexpr auto rule = [] {
             auto exp_char = dsl::lit_c<'e'> / dsl::lit_c<'E'>;
@@ -234,7 +234,7 @@ struct object
 };
 
 // A json value.
-struct json_value
+struct json_value : lexy::transparent_production
 {
     struct expected_json_value
     {

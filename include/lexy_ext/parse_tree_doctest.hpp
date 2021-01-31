@@ -43,7 +43,7 @@ public:
             auto c = *iter;
             if (c == '"')
             {
-                _tree += "\"";
+                _tree += "\\\"";
             }
             else if (std::isprint(c))
             {
@@ -69,6 +69,11 @@ public:
             ++end;
 
         return token(kind, spelling, end);
+    }
+    template <typename CharT>
+    parse_tree_desc& token(const CharT* spelling)
+    {
+        return token(lexy::unknown_token_kind{}, spelling);
     }
 
     parse_tree_desc& production(lexy::_detail::string_view name)
