@@ -33,12 +33,7 @@ namespace lexy
 /// Base class to indicate that this production is conceptually a token.
 /// This inhibits whitespace skipping inside the production.
 struct token_production
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "token";
-    }
-};
+{};
 
 template <typename Production>
 constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
