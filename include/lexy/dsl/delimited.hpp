@@ -274,13 +274,13 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 #if LEXY_HAS_NTTP
     /// Adds an escape rule that replaces the escaped string with the replacement.
     template <lexy::_detail::string_literal Str, typename Value>
-    LEXY_CONSTEVAL auto lit(Value value)
+    LEXY_CONSTEVAL auto lit(Value value) const
     {
         return rule(lexyd::lit<Str> >> value);
     }
     /// Adds an escape rule that replaces the escaped string with itself.
     template <lexy::_detail::string_literal Str>
-    LEXY_CONSTEVAL auto lit()
+    LEXY_CONSTEVAL auto lit() const
     {
         return lit<Str>(value_str<Str>);
     }

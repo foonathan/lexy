@@ -11,23 +11,22 @@
 
 #if LEXY_HAS_NTTP // string NTTP implementation
 
+#    include <lexy/_detail/integer_sequence.hpp>
+
 namespace lexy::_detail
 {
 template <std::size_t N, typename CharT>
 struct string_literal
 {
-    CharT string[N];
+    CharT string[N == 0 ? 1 : N];
 
+    using char_type = CharT;
+
+    LEXY_CONSTEVAL string_literal(CharT c) : string{c} {}
     LEXY_CONSTEVAL string_literal(const CharT* str) : string{}
     {
         for (auto i = 0u; i != N; ++i)
             string[i] = str[i];
-    }
-    template <typename OtherCharT>
-    LEXY_CONSTEVAL string_literal(const OtherCharT* str) : string{}
-    {
-        for (auto i = 0u; i != N; ++i)
-            string[i] = CharT(str[i]);
     }
 
     LEXY_CONSTEVAL auto size() const
@@ -37,45 +36,37 @@ struct string_literal
 };
 template <std::size_t N, typename CharT>
 string_literal(const CharT (&)[N]) -> string_literal<N - 1, CharT>;
+template <typename CharT>
+string_literal(CharT) -> string_literal<1, CharT>;
 
 template <auto Str>
 struct type_string
 {
-    using char_type = std::decay_t<decltype(Str.string[0])>;
+    using char_type = typename decltype(Str)::char_type;
 
-    template <typename CharT>
-    struct _lazy
+    template <typename CharT, typename Seq>
+    struct _lazy;
+    template <typename CharT, std::size_t... I>
+    struct _lazy<CharT, index_sequence<I...>>
     {
-        static inline constexpr string_literal<N, CharT> str = Str.string;
+        static inline constexpr CharT str[] = {CharT(Str.string[I])...};
     };
 
     template <typename CharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        if constexpr (std::is_same_v<CharT, char_type>)
-            return basic_string_view<CharT>(Str.string, Str.size());
+        if constexpr (Str.size() == 0)
+            return basic_string_view<CharT>();
         else
         {
-            constexpr auto str = _lazy<CharT>::str;
-            return basic_string_viewCharT > (str.string, str.size());
+            using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
+            return basic_string_view<CharT>(lazy::str, Str.size());
         }
     }
 };
 
 template <auto C>
-struct type_char
-{
-    using char_type = std::decay_t<decltype(C)>;
-
-    template <typename CharT>
-    static constexpr auto c = C;
-
-    template <typename CharT>
-    static LEXY_CONSTEVAL auto get()
-    {
-        return basic_string_view<CharT>(&c<CharT>, 1);
-    }
-};
+using type_char = type_string<string_literal<1, std::decay_t<decltype(C)>>(C)>;
 } // namespace lexy::_detail
 
 #    define LEXY_NTTP_STRING(Str) ::lexy::_detail::type_string<::lexy::_detail::string_literal(Str)>

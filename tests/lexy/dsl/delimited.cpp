@@ -403,19 +403,20 @@ TEST_CASE("dsl::escape")
         CHECK(invalid == -2);
     }
 #if LEXY_HAS_NTTP
-    SUBCASE(".lit_c()")
+    SUBCASE(".lit()")
     {
         static constexpr auto rule = escape.lit<"a">();
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, char c)
+            LEXY_VERIFY_FN int success(const char* cur, const char* c, std::size_t length)
             {
                 LEXY_VERIFY_CHECK(cur == str + 2);
-                return c;
+                LEXY_VERIFY_CHECK(length == 1);
+                return *c;
             }
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
