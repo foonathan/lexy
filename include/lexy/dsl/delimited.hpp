@@ -6,13 +6,14 @@
 #define LEXY_DSL_DELIMITED_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/error.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
+#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -28,7 +29,7 @@ struct missing_delimiter
 
 namespace lexyd
 {
-template <typename Close, typename Content>
+template <typename Close, typename Char, typename Escape>
 struct _del : rule_base
 {
     template <typename NextParser>
@@ -38,28 +39,101 @@ struct _del : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
             typename Context::result_type
         {
-            auto begin = reader.cur();
-            auto sink  = context.sink();
+            auto sink          = context.sink();
+            auto del_begin     = reader.cur();
+            auto content_begin = del_begin;
+            auto content_end   = del_begin;
 
-            lexy::branch_matcher<Close, Reader> close{};
+            using engine = typename Char::token_engine;
+            lexy::branch_matcher<Close, Reader>  close{};
+            lexy::branch_matcher<Escape, Reader> escape{};
             while (!close.match(reader))
             {
-                // If we've reached EOF, it means we're missing the closing delimiter.
                 if (reader.eof())
                 {
-                    auto err
-                        = lexy::make_error<Reader, lexy::missing_delimiter>(begin, reader.cur());
+                    // If we've reached EOF, it means we're missing the closing delimiter.
+                    auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
+                                                                                 reader.cur());
                     return LEXY_MOV(context).error(err);
                 }
+                else if (escape.match(reader))
+                {
+                    // Before we add the escape character to the sink, we need to add the content.
+                    sink(lexy::lexeme<Reader>(content_begin, content_end));
 
+                    auto result = escape.template parse<_list_sink>(context, reader, sink);
+                    if (result.has_error())
+                        return result;
+
+                    // We begin again after the escape sequence has been parsed.
+                    content_begin = reader.cur();
+                }
                 // Parse the next character.
-                using parser = lexy::rule_parser<Content, _list_sink>;
-                auto result  = parser::parse(context, reader, sink);
-                if (result.has_error())
-                    return result;
+                else if constexpr (lexy::engine_can_fail<engine, Reader>)
+                {
+                    auto position = reader.cur();
+                    if (auto ec = engine::match(reader); ec != typename engine::error_code())
+                        return Char::token_error(context, reader, ec, position);
+                }
+                else
+                {
+                    engine::match(reader);
+                }
+
+                // Extend the content by what we've just parsed.
+                content_end = reader.cur();
             }
 
             // Finish up the list.
+            sink(lexy::lexeme<Reader>(content_begin, content_end));
+            return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
+        }
+    };
+};
+template <typename Close, typename Char>
+struct _del<Close, Char, void>
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
+            typename Context::result_type
+        {
+            auto sink          = context.sink();
+            auto del_begin     = reader.cur();
+            auto content_begin = del_begin;
+            auto content_end   = del_begin;
+
+            using engine = typename Char::token_engine;
+            lexy::branch_matcher<Close, Reader> close{};
+            while (!close.match(reader))
+            {
+                if (reader.eof())
+                {
+                    // If we've reached EOF, it means we're missing the closing delimiter.
+                    auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
+                                                                                 reader.cur());
+                    return LEXY_MOV(context).error(err);
+                }
+                else if constexpr (lexy::engine_can_fail<engine, Reader>)
+                {
+                    auto position = reader.cur();
+                    if (auto ec = engine::match(reader); ec != typename engine::error_code())
+                        return Char::token_error(context, reader, ec, position);
+                }
+                else
+                {
+                    engine::match(reader);
+                }
+
+                // Extend the content by what we've just parsed.
+                content_end = reader.cur();
+            }
+
+            // Finish up the list.
+            sink(lexy::lexeme<Reader>(content_begin, content_end));
             return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
                                                                    LEXY_FWD(args)..., sink);
         }
@@ -77,28 +151,19 @@ struct _delim_dsl
         return _delim_dsl<decltype(open), Close>{};
     }
 
-    template <typename Content>
-    LEXY_CONSTEVAL auto _get(Content) const
-    {
-        return no_whitespace(open() >> _del<Close, Content>{});
-    }
-
     /// Sets the content.
-    template <typename Content>
-    LEXY_CONSTEVAL auto operator()(Content content) const
+    template <typename Char>
+    LEXY_CONSTEVAL auto operator()(Char) const
     {
-        if constexpr (lexy::is_token<Content>)
-            return _get(capture(content));
-        else
-            return _get(content);
+        static_assert(lexy::is_token<Char>);
+        return no_whitespace(open() >> _del<Close, Char, void>{});
     }
-    template <typename Content, typename Escape>
-    LEXY_CONSTEVAL auto operator()(Content content, Escape escape) const
+    template <typename Char, typename Escape>
+    LEXY_CONSTEVAL auto operator()(Char, Escape) const
     {
-        if constexpr (lexy::is_token<Content>)
-            return _get(escape | else_ >> capture(content));
-        else
-            return _get(escape | else_ >> content);
+        static_assert(lexy::is_token<Char>);
+        static_assert(lexy::is_branch<Escape>);
+        return no_whitespace(open() >> _del<Close, Char, Escape>{});
     }
 
     /// Matches the open delimiter.

@@ -1792,15 +1792,11 @@ NOTE: The naming of `quoted`, `triple_quoted` and `single_quoted` is not very lo
 
 .`lexy/dsl/delimited.hpp`
 ----
-d(rule)  : Branch
-d(token) : Branch = d(capture(token))
+d(token) : Branch
 ----
 
-Calling `d(rule)`, where `d` is the result of a `delimiter()` call, results in a rule that matches `rule` as often as possible surrounded by the delimiters.
-Values produced by the `rule` are forwarded to a sink callback.
-
-For convenience, if passing a token, the token is captured.
-Otherwise, nothing would be passed to the sink.
+Calling `d(token)`, where `d` is the result of a `delimiter()` call, results in a rule that matches `token` as often as possible surrounded by the delimiters.
+Everything between the delimiters is captured and forwarded to a sink callback.
 
 [horizontal]
 Requires::
@@ -1808,15 +1804,16 @@ Requires::
 Branch Condition::
   Whatever the opening delimiter uses as branch condition.
 Matching::
-  Matches and consumes the opening delimiter, followed by zero or more occurrences of `rule`, followed by the closing delimiter.
-  It determines whether or not to parse another instance of `rule` using the condition of the closing delimiter.
-  Automatic whitespace skipping is disabled while matching the opening and closing delimiter, as well as `rule` using `lexy::dsl::no_whitespace()`.
+  Matches and consumes the opening delimiter, followed by zero or more occurrences of `token`, followed by the closing delimiter.
+  It determines whether or not to parse another instance of `token` using the condition of the closing delimiter.
+  Automatic whitespace skipping is disabled while matching the opening and closing delimiter, as well as `token` using `lexy::dsl::no_whitespace()`.
   After the closing delimiter has been matched and consumed, whitespace is skipped by matching and consuming `lexy::dsl::whitespace`.
 Values::
   Values produced by the opening delimiter, the finished sink (which might be empty), and values produced by the closing delimiter.
-  Every time the rule is parsed, all values produced by it are passed to the sink.
+  Everything captured by matching the `token` is forwarded to the sink.
+  The captured lexeme spans over multiple tokens; there isn't a separate one for each occurrence.
 Errors::
-  All errors raised when matching the opening delimiter and the rule.
+  All errors raised when matching the opening delimiter and the token.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
 
 [godbolt,cpp,id=nnoMYv]
@@ -1825,32 +1822,39 @@ Errors::
 dsl::quoted(dsl::code_point - dsl::ascii::control)
 ----
 
-CAUTION: When `rule` contains a `lexy::dsl::p` or `lexy::dsl::recurse` rule, whitespace skipping is re-enabled while that production is parsed.
+NOTE: The sink is only invoked once. A sink callback is only required for consistency with the overload that takes an escape sequence.
 
 [discrete]
 ==== Delimited with escape sequences
 
 .`lexy/dsl/delimited.hpp`
 ----
-d(rule, escape_branch)  : Branch
-  = d(escape_branch | else_ >> rule)
-d(token, escape_branch) : Branch
-  = d(escape_branch | else_ >> capture(token))
-
-d(rule, escape_choice)  : Branch
-  = d(escape_choice | else_ >> rule)
-d(token, escape_choice) : Branch
-  = d(escape_choice | else_ >> capture(token))
+d(token, escape)  : Branch
 ----
 
-There is a convenience overload to specify escape sequences in the delimited.
-The `choice` matches all appropriate escape sequences and produces their values.
+This overload is used to to specify escape sequences in the delimited.
+It behaves like the other overload, but also matches the `escape` rule.
 
-Calling `d(rule, escape)`, where `d` is the result of a `delimiter()` call, is equivalent to `d(escape | else_ >> rule)`, so it results in a rule that matches `escape | else_ >> rule` as often as possible surrounded by the delimiters.
-Values produced by the `rule` or `escape` are forwarded to a sink callback.
-
-For convenience, if passing a token, the token is captured.
-Otherwise, nothing would be passed to the sink.
+[horizontal]
+Requires::
+  A production whose rule contains a delimited rule must provide a sink.
+  `escape` must be a branch.
+Branch Condition::
+  Whatever the opening delimiter uses as branch condition.
+Matching::
+  Matches and consumes the opening delimiter, followed by zero or more occurrences of `escape` or `token`, followed by the closing delimiter.
+  It determines whether or not to parse another instance of `token` using the condition of the closing delimiter.
+  It first tries to match `escape`, and only then `token`.
+  .
+  Automatic whitespace skipping is disabled while matching the opening and closing delimiter, as well as `token` using `lexy::dsl::no_whitespace()`.
+  After the closing delimiter has been matched and consumed, whitespace is skipped by matching and consuming `lexy::dsl::whitespace`.
+Values::
+  Values produced by the opening delimiter, the finished sink (which might be empty), and values produced by the closing delimiter.
+  Everything captured by matching the `token` is forwarded to the sink, as well as all values produced by `escape`.
+  The captured lexeme spans over multiple tokens; there isn't a separate one for each occurrence.
+Errors::
+  All errors raised when matching the opening delimiter, `escape` and the token.
+  If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
 
 [godbolt,cpp,id=vqsfM4]
 ----
