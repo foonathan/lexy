@@ -5,7 +5,7 @@
 # Fetch doctest.
 message(STATUS "Fetching doctest")
 include(FetchContent)
-FetchContent_Declare(doctest URL https://github.com/onqtam/doctest/archive/2.4.1.zip)
+FetchContent_Declare(doctest URL https://github.com/onqtam/doctest/archive/2.4.5.zip)
 FetchContent_MakeAvailable(doctest)
 
 # A generic test target.
