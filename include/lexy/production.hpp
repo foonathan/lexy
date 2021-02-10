@@ -18,6 +18,12 @@
 
 namespace lexy
 {
+template <typename Production>
+using production_rule = std::decay_t<decltype(Production::rule)>;
+
+template <typename Production>
+constexpr bool is_production = _detail::is_detected<production_rule, Production>;
+
 /// Base class to indicate that this production is conceptually a token.
 /// This inhibits whitespace skipping inside the production.
 struct token_production
@@ -43,9 +49,6 @@ LEXY_CONSTEVAL auto production_name()
 {
     return _detail::type_name<Production>();
 }
-
-template <typename Production>
-using production_rule = std::decay_t<decltype(Production::rule)>;
 
 template <typename Production>
 using _detect_whitespace = decltype(Production::whitespace);
