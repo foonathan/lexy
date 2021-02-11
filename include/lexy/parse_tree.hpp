@@ -681,6 +681,11 @@ public:
     {
         return sibling_range(_ptr);
     }
+    bool is_last_child() const noexcept
+    {
+        // We're the last child if our pointer points to the parent.
+        return _ptr.base()->ptr.is_parent_ptr();
+    }
 
     auto lexeme() const noexcept
     {

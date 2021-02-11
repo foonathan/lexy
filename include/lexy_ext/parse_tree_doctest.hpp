@@ -53,7 +53,7 @@ public:
             else
             {
                 char buffer[16];
-                auto size = std::snprintf(buffer, 16, "\\{%x}", int(c));
+                auto size = std::snprintf(buffer, 16, "\\{%x}", unsigned(c) % 0xFF);
                 LEXY_ASSERT(0 <= size && size < 16, "formatting error");
                 _tree += buffer;
             }
