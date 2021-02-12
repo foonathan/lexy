@@ -22,6 +22,10 @@ jobs:
           - clang7
           - clang60
         build_type: [Debug, Release]
+        exclude:
+          # Bug in the optimizer
+          - image: gcc9
+            build_type: Release
 
     runs-on: ubuntu-latest
     container:
