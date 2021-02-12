@@ -669,51 +669,6 @@ public:
         return node(cur);
     }
 
-    auto children() const noexcept
-    {
-        if (auto prod = _ptr.production())
-            return children_range(prod->first_child(), prod->child_count);
-        else
-            return children_range(_detail::pt_node_ptr<Reader>{}, 0);
-    }
-
-    auto siblings() const noexcept
-    {
-        return sibling_range(_ptr);
-    }
-    bool is_last_child() const noexcept
-    {
-        // We're the last child if our pointer points to the parent.
-        return _ptr.base()->ptr.is_parent_ptr();
-    }
-
-    auto lexeme() const noexcept
-    {
-        if (auto token = _ptr.token())
-            return lexy::lexeme<Reader>(token->begin, token->end());
-        else
-            return lexy::lexeme<Reader>();
-    }
-
-    auto token() const noexcept
-    {
-        LEXY_PRECONDITION(kind().is_token());
-
-        auto token = _ptr.token();
-        auto kind  = token_kind<TokenKind>::from_raw(token->kind);
-        return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
-    }
-
-    friend bool operator==(node lhs, node rhs) noexcept
-    {
-        return lhs._ptr.base() == rhs._ptr.base();
-    }
-    friend bool operator!=(node lhs, node rhs) noexcept
-    {
-        return lhs._ptr.base() != rhs._ptr.base();
-    }
-
-private:
     class children_range
     {
     public:
@@ -788,6 +743,14 @@ private:
         friend node;
     };
 
+    auto children() const noexcept
+    {
+        if (auto prod = _ptr.production())
+            return children_range(prod->first_child(), prod->child_count);
+        else
+            return children_range(_detail::pt_node_ptr<Reader>{}, 0);
+    }
+
     class sibling_range
     {
     public:
@@ -849,6 +812,44 @@ private:
         friend node;
     };
 
+    auto siblings() const noexcept
+    {
+        return sibling_range(_ptr);
+    }
+
+    bool is_last_child() const noexcept
+    {
+        // We're the last child if our pointer points to the parent.
+        return _ptr.base()->ptr.is_parent_ptr();
+    }
+
+    auto lexeme() const noexcept
+    {
+        if (auto token = _ptr.token())
+            return lexy::lexeme<Reader>(token->begin, token->end());
+        else
+            return lexy::lexeme<Reader>();
+    }
+
+    auto token() const noexcept
+    {
+        LEXY_PRECONDITION(kind().is_token());
+
+        auto token = _ptr.token();
+        auto kind  = token_kind<TokenKind>::from_raw(token->kind);
+        return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
+    }
+
+    friend bool operator==(node lhs, node rhs) noexcept
+    {
+        return lhs._ptr.base() == rhs._ptr.base();
+    }
+    friend bool operator!=(node lhs, node rhs) noexcept
+    {
+        return lhs._ptr.base() != rhs._ptr.base();
+    }
+
+private:
     explicit node(_detail::pt_node_ptr<Reader> ptr) noexcept : _ptr(ptr) {}
     explicit node(_detail::pt_node_production<Reader>* ptr) noexcept
     {
@@ -1075,8 +1076,8 @@ private:
 
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename Callback>
-constexpr auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                             const Input& input, Callback callback)
+auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+                   const Input& input, Callback callback)
 {
     auto                handler = _pt_handler(tree, input, LEXY_MOV(callback));
     auto                reader  = input.reader();

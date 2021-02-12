@@ -797,3 +797,310 @@ The final line and column number are returned, together with the `context` which
 For ASCII encoded texts, the `code_point_token` is `lexy::dsl::ascii::character` and the `newline_token` is `lexy::dsl::newline`.
 For Unicode encoded texts, the `code_point_token` is `lexy::dsl::code_point` and the `newline_token` is `lexy::dsl::newline`.
 
+=== Parse Tree
+
+.`lexy/parse_tree.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    enum class traverse_event
+    {
+        enter,
+        exit,
+        leaf,
+    };
+
+    template <typename Reader, typename TokenKind = void,
+              typename MemoryResource = /* default */>
+    class parse_tree
+    {
+    public:
+        class builder;
+
+        constexpr parse_tree();
+        constexpr explicit parse_tree(MemoryResource* resource);
+
+        bool empty() const noexcept;
+        void clear() noexcept;
+
+        class node;
+        class node_kind;
+
+        node root() const noexcept; // requires: !empty()
+
+        class traverse_range;
+
+        traverse_range traverse(const node& n) const noexcept;
+        traverse_range traverse() const noexcept;
+    };
+
+    template <typename Input, typename TokenKind = void,
+              typename MemoryResource = /* default */>
+    using parse_tree_for = lexy::parse_tree<input_reader<Input>, TokenKind, MemoryResource>;
+
+    template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
+              typename Callback>
+    auto parse_as_tree(parse_tree<input_reader<Input>, TokenKind, MemoryResource>& tree,
+                       const Input& input, Callback callback)
+      -> result<void, typename Callback::return_type>;
+}
+----
+
+The class `lexy::parse_tree` represents a lossless untyped syntax tree.
+
+The function `lexy::parse_as_tree()` parses a `Production` on the given `input` and constructs a lossless parse tree from the result.
+The return value is an `lexy::result<void, E>`, where `E` is the return type of `callback`.
+If the production accepts the input, returns an empty optional and updates `tree` to the parse tree, otherwise, cleares the `tree` and invokes the callback with the error information (see <<Error handling>>) and returns its result.
+It will discard any values produced by parsing the rules.
+
+The resulting parse tree will contain a parent node for each production, and leaf node for every token.
+If a token is empty, it will not be added to the parse tree.
+If a production inherits from `lexy::transparent_production`, no separate node will be created;
+instead all child nodes will be added to its parent.
+Traversing the tree and concatenating the lexemes of all tokens will result in the original input.
+
+==== Manual Tree Building
+
+[source,cpp] 
+----
+template <typename Reader, typename TokenKind, typename MemoryResource>
+class parse_tree<Reader, TokenKind, MemoryResource>::builder
+{
+public:
+    template <typename Production>
+    explicit builder(parse_tree&& tree, Production production); // <1>
+    template <typename Production>
+    explicit builder(Production production); // <2>
+
+    struct production_state;
+
+    template <typename Production>
+    production_state start_production(Production production); // <3>
+    void finish_production(production_state&& s); // <4>
+
+    void token(token_kind<TokenKind> kind,
+               typename Reader::iterator begin, typename Reader::iterator end); // <5>
+
+    parse_tree finish() &&; // <6>
+};
+----
+<1> Create a builder that will re-use the memory of the existing `tree`.
+    Its root node will be associated with the given `Production`.
+<2> Same as above, but does not re-use memory.
+<3> Adds a production child node as last child of the current node and activates it.
+    Returns a handle that remembers the previous current node.
+<4> Finishes with a child production and activates its parent.
+<5> Adds a token node to the current node.
+<6> Returns the finished tree.
+
+==== Tree Node
+
+[source,cpp]
+----
+template <typename Reader, typename TokenKind, typename MemoryResource>
+class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
+{
+public:
+    bool is_root() const noexcept;
+
+    bool is_token() const noexcept;
+    bool is_production() const noexcept;
+
+    auto name() const noexcept;
+
+    friend bool operator==(node_kind lhs, node_kind rhs);
+    friend bool operator!=(node_kind lhs, node_kind rhs);
+
+    friend bool operator==(node_kind nk, token_kind<TokenKind> tk);
+    friend bool operator==(token_kind<TokenKind> tk, node_kind nk);
+    friend bool operator!=(node_kind nk, token_kind<TokenKind> tk);
+    friend bool operator!=(token_kind<TokenKind> tk, node_kind nk);
+
+    template <typename Production>
+    friend bool operator==(node_kind nk, Production);
+    template <typename Production>
+    friend bool operator==(Production p, node_kind nk);
+    template <typename Production>
+    friend bool operator!=(node_kind nk, Production p);
+    template <typename Production>
+    friend bool operator!=(Production p, node_kind nk);
+};
+----
+
+The class `node_kind` stores information over the kind of node.
+Nodes are either associated with a `Production` or a token rule.
+The root node is always a `Production` node.
+
+[source,cpp]
+----
+template <typename Reader, typename TokenKind, typename MemoryResource>
+class parse_tree<Reader, TokenKind, MemoryResource>::node
+{
+public:
+    node_kind kind() const noexcept;
+
+    node parent() const noexcept;
+
+    /* sized range */ children() const noexcept;
+
+    /* range */ siblings() const noexcept;
+
+    bool is_last_child() const noexcept;
+
+    lexy::lexeme<Reader> lexeme() const noexcept;
+    lexy::token<Reader, TokenKind> token() const noexcept;
+
+    friend bool operator==(node lhs, node rhs) noexcept;
+    friend bool operator!=(node lhs, node rhs) noexcept;
+};
+----
+
+The class `node` is a reference to a node in the tree.
+Two nodes are equal if and only if they point to the same node in the same tree.
+
+===== Parent Access
+
+[source,cpp]
+----
+node parent() const noexcept;
+----
+
+Returns a reference to a parent node.
+For the root node, returns a reference to itself.
+
+This operation is `O(number of siblings)`.
+
+===== Child Access
+
+[source,cpp]
+----
+class children_range
+{
+public:
+    class iterator; // value_type = node
+    class sentinel;
+
+    iterator begin() const noexcept;
+    sentinel end() const noexcept;
+
+    bool empty() const noexcept;
+    std::size_t size() const noexcept;
+};
+
+children_range children() const noexcept;
+----
+
+Returns a range object that iterates over all children of the node.
+For a token node, this is always the empty range.
+
+===== Sibling Access
+
+[source,cpp]
+----
+class sibling_range
+{
+public:
+    class iterator; // value_type = node
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+sibling_range siblings() const noexcept;
+----
+
+Returns a range object that iterates over all siblings of a node.
+It begins with the sibling that is immediately following the node,
+and continues until it reached the last child of the parent.
+Then iteration wraps around to the first child of the parent until it ends at the original node.
+The original node is not included in the sibling range.
+
+===== Token Access
+
+[source,cpp]
+----
+lexy::lexeme<Reader> lexeme() const noexcept; // <1>
+lexy::token<Reader, TokenKind> token() const noexcept; // <2>
+----
+<1> Returns the spelling of a token node. For a production node, returns the empty lexeme.
+<2> Returns the spelling and token kind of a token node; must not be called on a production node.
+
+==== Tree Traversal
+
+[source,cpp]
+----
+enum class traverse_event
+{
+    enter,
+    exit,
+    leaf,
+};
+----
+
+[source,cpp]
+----
+class traverse_range
+{
+public:
+    class iterator; // value_type = { traverse_event, node }
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+traverse_range traverse(const node& n) const noexcept; // <1>
+traverse_range traverse() const noexcept; // <2>
+----
+<1> Returns a range that traverses descendants of the given node.
+<2> Returns a range that traverses the root node, or an empty range if the tree is empty.
+
+The `traverse_range` iterates over a node and all its children and their children and so on.
+Its value type is a (unspecified) pair whose first member is a `lexy::traverse_event` and whose second member is a `node` reference.
+
+For a token node, the range contains only the original node with event `leaf`.
+
+For a production node, the range begins with the original node and event `enter`.
+It then does an in-order traversal of all descendants, beginning with the children of a node.
+When it reaches a token node, produces it with event `leaf`.
+When it reaches a production node, produces it with event `enter`, then all its descendants recursively, and then with event `exit`.
+After all descendants of the original node have been produced, finishes with the original node again and event `exit`.
+
+.Example
+[%collapsible]
+=====
+
+Prints a tree.
+
+[source,cpp]
+----
+auto depth = 0;
+for (auto [event, node] : tree.traverse())
+{
+    switch (event)
+    {
+    case lexy::traverse_event::enter:
+        ++depth;
+        indent(depth);
+        print_node(node);
+        break;
+    case lexy::traverse_event::exit:
+        --depth;
+        break;
+
+    case lexy::traverse_event::leaf:
+        indent(depth);
+        print_node(node);
+        break;
+    }
+}
+----
+=====
+
+NOTE: Traversing a node just does pointer chasing.
+There is no allocation or recursion involved.
+
