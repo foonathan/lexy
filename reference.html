@@ -466,10 +466,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_command_line_argument_input">Command-line argument Input</a></li>
 </ul>
 </li>
-<li><a href="#_lexemes">Lexemes</a>
+<li><a href="#_lexemes_and_tokens">Lexemes and Tokens</a>
 <ul class="sectlevel3">
-<li><a href="#_lexeme">Lexeme</a></li>
 <li><a href="#_code_point">Code point</a></li>
+<li><a href="#_lexeme">Lexeme</a></li>
+<li><a href="#_token_kind">Token Kind</a></li>
+<li><a href="#_token_kind_map">Token Kind Map</a></li>
+<li><a href="#_token">Token</a></li>
 </ul>
 </li>
 <li><a href="#_writing_custom_inputs">Writing custom Inputs</a></li>
@@ -494,6 +497,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_error_types">Error types</a></li>
 <li><a href="#_error_context">Error context</a></li>
 <li><a href="#_error_location">Error location</a></li>
+</ul>
+</li>
+<li><a href="#_parse_tree">Parse Tree</a>
+<ul class="sectlevel3">
+<li><a href="#_manual_tree_building">Manual Tree Building</a></li>
+<li><a href="#_tree_node">Tree Node</a></li>
+<li><a href="#_tree_traversal">Tree Traversal</a></li>
 </ul>
 </li>
 </ul>
@@ -1413,56 +1423,24 @@ It can be created using <code>argv_begin()</code> and <code>argv_end()</code>.</
 </div>
 </div>
 <div class="sect2">
-<h3 id="_lexemes">Lexemes</h3>
+<h3 id="_lexemes_and_tokens">Lexemes and Tokens</h3>
 <div class="paragraph">
-<p>A <strong>lexeme</strong> is a the part of the input matched by a rule.</p>
+<p>A <strong>lexeme</strong> is the part of the input matched by a token rule.
+It is represented by the class <code>lexy::lexeme</code>.
+A <strong>token</strong> is a combination of an identifier that defines the rule it matches, as well as the matched lexeme.</p>
 </div>
-<div class="sect3">
-<h4 id="_lexeme">Lexeme</h4>
-<div class="listingblock">
-<div class="title"><code>lexy/lexeme.hpp</code></div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
-{
-    template &lt;typename Reader&gt;
-    class lexeme
-    {
-    public:
-        using encoding  = typename Reader::encoding;
-        using char_type = typename encoding::char_type;
-        using iterator  = typename Reader::iterator;
-
-        constexpr lexeme() noexcept;
-        constexpr lexeme(iterator begin, iterator end) noexcept;
-
-        constexpr explicit lexeme(const Reader&amp; reader, iterator begin) noexcept
-        : lexeme(begin, reader.cur())
-        {}
-
-        constexpr bool empty() const noexcept;
-
-        constexpr iterator begin() const noexcept;
-        constexpr iterator end() const noexcept;
-
-        // Only if the iterator is a pointer.
-        constexpr const char_type* data() const noexcept;
-
-        // Only if the iterator has `operator-`.
-        constexpr std::size_t size() const noexcept;
-
-        // Only if the iterator has `operator[]`.
-        constexpr char_type operator[](std::size_t idx) const noexcept;
-    };
-
-    template &lt;typename Input&gt;
-    using lexeme_for = lexeme&lt;input_reader&lt;Input&gt;&gt;;
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The class <code>lexy::lexeme</code> represents a sub-range of the input.
-For convenience, most inputs also provide convenience typedefs that can be used instead of <code>lexy::lexeme_for</code>.</p>
-</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When talking about tokens in the context of rules, it is usually short for token rule,
+i.e. the rule that defines what is matched, not the concrete realization.
+</td>
+</tr>
+</table>
 </div>
 <div class="sect3">
 <h4 id="_code_point">Code point</h4>
@@ -1563,6 +1541,299 @@ constexpr bool is_bmp() const noexcept; <i class="conum" data-value="2"></i><b>(
 </tr>
 </table>
 </div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_lexeme">Lexeme</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/lexeme.hpp</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
+{
+    template &lt;typename Reader&gt;
+    class lexeme
+    {
+    public:
+        using encoding  = typename Reader::encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = typename Reader::iterator;
+
+        constexpr lexeme() noexcept;
+        constexpr lexeme(iterator begin, iterator end) noexcept;
+
+        constexpr explicit lexeme(const Reader&amp; reader, iterator begin) noexcept
+        : lexeme(begin, reader.cur())
+        {}
+
+        constexpr bool empty() const noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        // Only if the iterator is a pointer.
+        constexpr const char_type* data() const noexcept;
+
+        // Only if the iterator has `operator-`.
+        constexpr std::size_t size() const noexcept;
+
+        // Only if the iterator has `operator[]`.
+        constexpr char_type operator[](std::size_t idx) const noexcept;
+    };
+
+    template &lt;typename Input&gt;
+    using lexeme_for = lexeme&lt;input_reader&lt;Input&gt;&gt;;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>lexy::lexeme</code> represents a sub-range of the input.
+For convenience, most inputs also provide convenience typedefs that can be used instead of <code>lexy::lexeme_for</code>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_token_kind">Token Kind</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/token.hpp</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
+{
+    struct unknown_token_kind {};
+
+    template &lt;typename TokenKind = void&gt;
+    class token_kind
+    {
+    public:
+        constexpr token_kind() noexcept;
+        constexpr token_kind(lexy::unknown_token_kind) noexcept;
+        constexpr token_kind(TokenKind value) noexcept;
+        template &lt;typename TokenRule&gt;
+        constexpr token_kind(TokenRule token_rule) noexcept;
+
+        constexpr explicit operator bool() const noexcept;
+
+        constexpr /* see below */ name() const noexcept;
+
+        constexpr TokenKind get() const noexcept;
+
+        static constexpr std::uint_least16_t to_raw(token_kind&lt;TokenKind&gt; kind) noexcept;
+        static constexpr token_kind&lt;TokenKind&gt; from_raw(std::uint_least16_t kind) noexcept;
+
+        friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept;
+        friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept;
+    };
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>lexy::token_kind</code> identifies a token rule.
+It is merely a wrapper over the specified <code>TokenKind</code>, which is an enum.
+If <code>TokenKind</code> is <code>void</code>, it is a wrapper over an <code>int</code>.</p>
+</div>
+<div class="sect4">
+<h5 id="_constructors_2">Constructors</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr token_kind() noexcept;                         <i class="conum" data-value="1"></i><b>(1)</b>
+constexpr token_kind(lexy::unknown_token_kind) noexcept; <i class="conum" data-value="1"></i><b>(1)</b>
+
+constexpr token_kind(TokenKind value) noexcept; <i class="conum" data-value="2"></i><b>(2)</b>
+
+template &lt;typename TokenRule&gt;
+constexpr token_kind(TokenRule token_rule) noexcept; <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Creates an unknown token kind, which has the value <code>TokenKind(-1)</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Creates the specified token kind, if <code>TokenKind</code> is <code>void</code>, constructor takes an <code>int</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Creates a token kind from a token rule.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The token kind of a rule is computed as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If the token rule was associated with a token kind by calling <code>.kind&lt;value&gt;</code>, the resulting kind is the specified <code>value&gt;</code>.</p>
+</li>
+<li>
+<p>Otherwise, if the map found at <code>lexy::token_kind_map_for&lt;TokenKind&gt;</code> contains a mapping for the <code>TokenRule</code>, it uses that.</p>
+</li>
+<li>
+<p>Otherwise, the token kind is unknown.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_access">Access</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr explicit operator bool() const noexcept; <i class="conum" data-value="1"></i><b>(1)</b>
+
+constexpr /* see below */ name() const noexcept; <i class="conum" data-value="2"></i><b>(2)</b>
+
+constexpr TokenKind get() const noexcept; <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Returns <code>true</code> if the token kind is not unknown, <code>false</code> otherwise.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Returns the name of the token kind, the return type is some unspecified type like <code>std::string_view</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Returns the underlying value of the token kind.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The name of a token kind is determined as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If the <code>TokenKind</code> is <code>void</code>, the name is <code>"token"</code> for all token kinds.</p>
+</li>
+<li>
+<p>Otherwise, if the <code>TokenKind</code> is unknown, the name is <code>"token"</code>.</p>
+</li>
+<li>
+<p>Otherwise, if ADL finds an overload <code>string-like token_kind_name(TokenKind kind)</code>,
+where <code>string-like</code> is either <code>const char*</code> or a class with <code>.data()</code> and <code>.size()</code>,
+returns that as the name.</p>
+</li>
+<li>
+<p>Otherwise, the name is <code>"token"</code> for all tokens.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_token_kind_map">Token Kind Map</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/token.hpp</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
+{
+    class Token-Kind-Map
+    {
+    public:
+        template &lt;auto TokenKind, typename TokenRule&gt;
+        consteval Token-Kind-Map map(TokenRule) const;
+    };
+
+    inline constexpr auto token_kind_map = Token-Kind-Map{};
+
+    template &lt;typename TokenKind&gt;
+    constexpr auto token_kind_map_for = token_kind_map;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>There are two ways to associate a token kind with a token rule.
+Either by calling <code>.kind&lt;Kind&gt;</code> on the token rule and giving it a value there,
+or by specializing the <code>lexy::token_kind_map_for</code> for your <code>TokenKind</code> enumeration.</p>
+</div>
+<details>
+<summary class="title">Example</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">enum class my_token_kind <i class="conum" data-value="1"></i><b>(1)</b>
+{
+    code_point,
+    period,
+    open_paren,
+    close_paren,
+};
+
+<i class="conum" data-value="2"></i><b>(2)</b>
+template &lt;&gt;
+constexpr auto lexy::token_kind_map_for&lt;my_token_kind&gt;
+    = lexy::token_kind_map.map&lt;my_token_kind::code_point&gt;(lexy::dsl::code_point)
+                          .map&lt;my_token_kind::period&gt;(lexy::dsl::period)
+                          .map&lt;my_token_kind::open_paren&gt;(lexy::dsl::parenthesized.open())
+                          .map&lt;my_token_kind::close_paren&gt;(lexy::dsl::parenthesized.close());</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define your <code>TokenKind</code> enumeration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Define the mapping of token rules to enumeration values.</td>
+</tr>
+</table>
+</div>
+</div>
+</details>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The token kind is only relevant when <code>lexy::parse_as_tree()</code> is used to parse the input.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_token">Token</h4>
+<div class="listingblock">
+<div class="title"><code>lexy/token.hpp</code></div>
+<div class="content">
+<pre>namespace lexy
+{
+    template &lt;typename Reader, typename TokenKind = void&gt;
+    class token
+    {
+    public:
+        explicit constexpr token(token_kind&lt;TokenKind&gt; kind, lexy::lexeme&lt;Reader&gt; lex) noexcept;
+        explicit constexpr token(token_kind&lt;TokenKind&gt; kind,
+                                 typename Reader::iterator begin,
+                                 typename Reader::iterator end) noexcept;
+
+        constexpr token_kind&lt;TokenKind&gt; kind() const noexcept;
+        constexpr auto lexeme() const noexcept;
+
+        constexpr auto name() const noexcept { return kind().name(); }
+
+        constexpr auto position() const noexcept -&gt; typename Reader::iterator
+        {
+            return lexeme().begin();
+        }
+    };
+
+    template &lt;typename Input, typename TokenKind = void&gt;
+    using token_for = token&lt;input_reader&lt;Input&gt;, TokenKind&gt;;
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>lexy::token</code> just combines a <code>lexy::token_kind</code> and a <code>lexy::lexeme</code>.</p>
 </div>
 </div>
 </div>
@@ -1952,7 +2223,7 @@ static constexpr bool has_void_error() noexcept; <i class="conum" data-value="6"
 </tr>
 </table>
 </div>
-<h5 id="_access" class="discrete">Access</h5>
+<h5 id="_access_2" class="discrete">Access</h5>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">constexpr value_type&amp; value() &amp; noexcept;
@@ -2692,6 +2963,386 @@ The final line and column number are returned, together with the <code>context</
 <div class="paragraph">
 <p>For ASCII encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::ascii::character</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.
 For Unicode encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::code_point</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_parse_tree">Parse Tree</h3>
+<div class="listingblock">
+<div class="title"><code>lexy/parse_tree.hpp</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">namespace lexy
+{
+    enum class traverse_event
+    {
+        enter,
+        exit,
+        leaf,
+    };
+
+    template &lt;typename Reader, typename TokenKind = void,
+              typename MemoryResource = /* default */&gt;
+    class parse_tree
+    {
+    public:
+        class builder;
+
+        constexpr parse_tree();
+        constexpr explicit parse_tree(MemoryResource* resource);
+
+        bool empty() const noexcept;
+        void clear() noexcept;
+
+        class node;
+        class node_kind;
+
+        node root() const noexcept; // requires: !empty()
+
+        class traverse_range;
+
+        traverse_range traverse(const node&amp; n) const noexcept;
+        traverse_range traverse() const noexcept;
+    };
+
+    template &lt;typename Input, typename TokenKind = void,
+              typename MemoryResource = /* default */&gt;
+    using parse_tree_for = lexy::parse_tree&lt;input_reader&lt;Input&gt;, TokenKind, MemoryResource&gt;;
+
+    template &lt;typename Production, typename TokenKind, typename MemoryResource, typename Input,
+              typename Callback&gt;
+    auto parse_as_tree(parse_tree&lt;input_reader&lt;Input&gt;, TokenKind, MemoryResource&gt;&amp; tree,
+                       const Input&amp; input, Callback callback)
+      -&gt; result&lt;void, typename Callback::return_type&gt;;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>lexy::parse_tree</code> represents a lossless untyped syntax tree.</p>
+</div>
+<div class="paragraph">
+<p>The function <code>lexy::parse_as_tree()</code> parses a <code>Production</code> on the given <code>input</code> and constructs a lossless parse tree from the result.
+The return value is an <code>lexy::result&lt;void, E&gt;</code>, where <code>E</code> is the return type of <code>callback</code>.
+If the production accepts the input, returns an empty optional and updates <code>tree</code> to the parse tree, otherwise, cleares the <code>tree</code> and invokes the callback with the error information (see <a href="#_error_handling">Error handling</a>) and returns its result.
+It will discard any values produced by parsing the rules.</p>
+</div>
+<div class="paragraph">
+<p>The resulting parse tree will contain a parent node for each production, and leaf node for every token.
+If a token is empty, it will not be added to the parse tree.
+If a production inherits from <code>lexy::transparent_production</code>, no separate node will be created;
+instead all child nodes will be added to its parent.
+Traversing the tree and concatenating the lexemes of all tokens will result in the original input.</p>
+</div>
+<div class="sect3">
+<h4 id="_manual_tree_building">Manual Tree Building</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::builder
+{
+public:
+    template &lt;typename Production&gt;
+    explicit builder(parse_tree&amp;&amp; tree, Production production); <i class="conum" data-value="1"></i><b>(1)</b>
+    template &lt;typename Production&gt;
+    explicit builder(Production production); <i class="conum" data-value="2"></i><b>(2)</b>
+
+    struct production_state;
+
+    template &lt;typename Production&gt;
+    production_state start_production(Production production); <i class="conum" data-value="3"></i><b>(3)</b>
+    void finish_production(production_state&amp;&amp; s); <i class="conum" data-value="4"></i><b>(4)</b>
+
+    void token(token_kind&lt;TokenKind&gt; kind,
+               typename Reader::iterator begin, typename Reader::iterator end); <i class="conum" data-value="5"></i><b>(5)</b>
+
+    parse_tree finish() &amp;&amp;; <i class="conum" data-value="6"></i><b>(6)</b>
+};</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Create a builder that will re-use the memory of the existing <code>tree</code>.
+Its root node will be associated with the given <code>Production</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Same as above, but does not re-use memory.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Adds a production child node as last child of the current node and activates it.
+Returns a handle that remembers the previous current node.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Finishes with a child production and activates its parent.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Adds a token node to the current node.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Returns the finished tree.</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tree_node">Tree Node</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::node_kind
+{
+public:
+    bool is_root() const noexcept;
+
+    bool is_token() const noexcept;
+    bool is_production() const noexcept;
+
+    auto name() const noexcept;
+
+    friend bool operator==(node_kind lhs, node_kind rhs);
+    friend bool operator!=(node_kind lhs, node_kind rhs);
+
+    friend bool operator==(node_kind nk, token_kind&lt;TokenKind&gt; tk);
+    friend bool operator==(token_kind&lt;TokenKind&gt; tk, node_kind nk);
+    friend bool operator!=(node_kind nk, token_kind&lt;TokenKind&gt; tk);
+    friend bool operator!=(token_kind&lt;TokenKind&gt; tk, node_kind nk);
+
+    template &lt;typename Production&gt;
+    friend bool operator==(node_kind nk, Production);
+    template &lt;typename Production&gt;
+    friend bool operator==(Production p, node_kind nk);
+    template &lt;typename Production&gt;
+    friend bool operator!=(node_kind nk, Production p);
+    template &lt;typename Production&gt;
+    friend bool operator!=(Production p, node_kind nk);
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>node_kind</code> stores information over the kind of node.
+Nodes are either associated with a <code>Production</code> or a token rule.
+The root node is always a <code>Production</code> node.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::node
+{
+public:
+    node_kind kind() const noexcept;
+
+    node parent() const noexcept;
+
+    /* sized range */ children() const noexcept;
+
+    /* range */ siblings() const noexcept;
+
+    bool is_last_child() const noexcept;
+
+    lexy::lexeme&lt;Reader&gt; lexeme() const noexcept;
+    lexy::token&lt;Reader, TokenKind&gt; token() const noexcept;
+
+    friend bool operator==(node lhs, node rhs) noexcept;
+    friend bool operator!=(node lhs, node rhs) noexcept;
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The class <code>node</code> is a reference to a node in the tree.
+Two nodes are equal if and only if they point to the same node in the same tree.</p>
+</div>
+<div class="sect4">
+<h5 id="_parent_access">Parent Access</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">node parent() const noexcept;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Returns a reference to a parent node.
+For the root node, returns a reference to itself.</p>
+</div>
+<div class="paragraph">
+<p>This operation is <code>O(number of siblings)</code>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_child_access">Child Access</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">class children_range
+{
+public:
+    class iterator; // value_type = node
+    class sentinel;
+
+    iterator begin() const noexcept;
+    sentinel end() const noexcept;
+
+    bool empty() const noexcept;
+    std::size_t size() const noexcept;
+};
+
+children_range children() const noexcept;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Returns a range object that iterates over all children of the node.
+For a token node, this is always the empty range.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_sibling_access">Sibling Access</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">class sibling_range
+{
+public:
+    class iterator; // value_type = node
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+sibling_range siblings() const noexcept;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Returns a range object that iterates over all siblings of a node.
+It begins with the sibling that is immediately following the node,
+and continues until it reached the last child of the parent.
+Then iteration wraps around to the first child of the parent until it ends at the original node.
+The original node is not included in the sibling range.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_token_access">Token Access</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">lexy::lexeme&lt;Reader&gt; lexeme() const noexcept; <i class="conum" data-value="1"></i><b>(1)</b>
+lexy::token&lt;Reader, TokenKind&gt; token() const noexcept; <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Returns the spelling of a token node. For a production node, returns the empty lexeme.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Returns the spelling and token kind of a token node; must not be called on a production node.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tree_traversal">Tree Traversal</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">enum class traverse_event
+{
+    enter,
+    exit,
+    leaf,
+};</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">class traverse_range
+{
+public:
+    class iterator; // value_type = { traverse_event, node }
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+traverse_range traverse(const node&amp; n) const noexcept; <i class="conum" data-value="1"></i><b>(1)</b>
+traverse_range traverse() const noexcept; <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Returns a range that traverses descendants of the given node.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Returns a range that traverses the root node, or an empty range if the tree is empty.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The <code>traverse_range</code> iterates over a node and all its children and their children and so on.
+Its value type is a (unspecified) pair whose first member is a <code>lexy::traverse_event</code> and whose second member is a <code>node</code> reference.</p>
+</div>
+<div class="paragraph">
+<p>For a token node, the range contains only the original node with event <code>leaf</code>.</p>
+</div>
+<div class="paragraph">
+<p>For a production node, the range begins with the original node and event <code>enter</code>.
+It then does an in-order traversal of all descendants, beginning with the children of a node.
+When it reaches a token node, produces it with event <code>leaf</code>.
+When it reaches a production node, produces it with event <code>enter</code>, then all its descendants recursively, and then with event <code>exit</code>.
+After all descendants of the original node have been produced, finishes with the original node again and event <code>exit</code>.</p>
+</div>
+<details>
+<summary class="title">Example</summary>
+<div class="content">
+<div class="paragraph">
+<p>Prints a tree.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-cpp hljs" data-lang="cpp">auto depth = 0;
+for (auto [event, node] : tree.traverse())
+{
+    switch (event)
+    {
+    case lexy::traverse_event::enter:
+        ++depth;
+        indent(depth);
+        print_node(node);
+        break;
+    case lexy::traverse_event::exit:
+        --depth;
+        break;
+
+    case lexy::traverse_event::leaf:
+        indent(depth);
+        print_node(node);
+        break;
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Traversing a node just does pointer chasing.
+There is no allocation or recursion involved.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -6966,7 +7617,7 @@ It is used to make decisions in the parsing algorithm.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-02-04 21:22:56 UTC
+Last updated 2021-02-12 19:28:15 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
