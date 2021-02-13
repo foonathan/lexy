@@ -11,20 +11,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install asciidoctor
-      run: sudo gem install asciidoctor
-    - name: Create Build Environment
-      run: cmake -E make_directory build
+      run: sudo gem install asciidoctor rouge
+    - name: Setup Hugo
+      uses: peaceiris/actions-hugo@v2
+      with:
+        hugo-version: 'latest'
+        extended: true
 
-    - name: Configure
-      working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DLEXY_BUILD_TESTS=OFF -DLEXY_BUILD_EXAMPLES=OFF
     - name: Build
-      working-directory: build/
-      run: cmake --build . --target lexy_docs
+      working-directory: docs/
+      run: hugo --minify
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/html/
+        publish_dir: ./docs/public/
 

@@ -1,14 +1,15 @@
-= `lexy` Tutorial
-:caption:
+---
+title: "Tutorial - lexy"
+menu:
+  main:
+    name: "Tutorial"
+    weight: 1
+---
 :toc: left
 :toclevels: 1
-:icons: font
-:source-highlighter: highlightjs
-:highlightjs-theme: github
-:experimental:
-:github: https://github.com/foonathan/lexy
+:source-highlighter: rouge
 
-This tutorial introduces you to the basics of {github}[`lexy`].
+This tutorial introduces you to the basics of `lexy`.
 Our goal is to parse some simple configuration file of a software package.
 
 A sample input file can look like this:
@@ -91,14 +92,14 @@ As such, the general structure of the source code is as follows.
 #include <string>
 #include <vector>
 
-// <1>
+<1>
 struct PackageVersion { … };
 struct PackageConfig { … };
 
 //=== grammar ===//
 #include <lexy/dsl.hpp> // lexy::dsl::*
 
-namespace grammar // <2>
+namespace grammar <2>
 {
     …
 
@@ -111,16 +112,16 @@ namespace grammar // <2>
 
 int main()
 {
-    auto file = lexy::read_file<lexy::utf8_encoding>(filename); // <3>
+    auto file = lexy::read_file<lexy::utf8_encoding>(filename); <3>
     if (!file)
     { … }
 
     auto& input = file.value();
-    auto result = lexy::parse<grammar::config>(input, report_error_callback); // <4>
+    auto result = lexy::parse<grammar::config>(input, report_error_callback); <4>
     if (!result)
     { … }
 
-    PackageConfig config = result.value(); // <5>
+    PackageConfig config = result.value(); <5>
     …
 }
 ----
@@ -165,7 +166,7 @@ As this is rather lengthy, it is a good idea to use a namespace alias to shorten
 ----
 namespace grammar
 {
-    namespace dsl = lexy::dsl; // <1>
+    namespace dsl = lexy::dsl; <1>
 }
 ----
 <1> A convenience alias, so we can write `dsl::foo` instead of `lexy::dsl::foo` when defining the grammar.
@@ -177,9 +178,9 @@ We can put it in a production and parse it:
 .The `dsl::ascii::alpha` rule (https://godbolt.org/z/Kf9hd7[godbolt])
 [source,cpp]
 ----
-struct alpha // <1>
+struct alpha <1>
 {
-    static constexpr auto rule = dsl::ascii::alpha; // <2>
+    static constexpr auto rule = dsl::ascii::alpha; <2>
 };
 ----
 <1> The production that contains the rule.
@@ -495,11 +496,11 @@ struct version
     static constexpr auto rule = []{
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::period;
-        auto dot_version = number + dot + number + dot + number; // <1>
+        auto dot_version = number + dot + number + dot + number; <1>
 
         auto unreleased = LEXY_LIT("unreleased");
 
-        return ???; // <2>
+        return ???; <2>
     }();
 };
 ----
@@ -546,8 +547,8 @@ Such a choice corresponds to the following pseudo-code.
 .Manual implementation of choice
 [source,cpp]
 ----
-if (match(input, condition1)) // <1>
-  parse(input, rule1); // <2>
+if (match(input, condition1)) <1>
+  parse(input, rule1); <2>
 else if (match(input, condition2))
   parse(input, rule2);
 …
@@ -599,11 +600,11 @@ struct version
         auto dot    = dsl::period;
 
         auto dot_version = number + dot + number + dot + number;
-        auto dot_version_condition = dsl::digit<>; // <1>
+        auto dot_version_condition = dsl::digit<>; <1>
 
         auto unreleased = LEXY_LIT("unreleased");
 
-        return unreleased | dot_version_condition >> dot_version; // <2>
+        return unreleased | dot_version_condition >> dot_version; <2>
     }();
 };
 ----
@@ -629,11 +630,11 @@ struct version
         auto dot    = dsl::period;
 
         auto dot_version = number + dot + number + dot + number;
-        auto dot_version_condition = dsl::peek(dsl::digit<>); // <1>
+        auto dot_version_condition = dsl::peek(dsl::digit<>); <1>
 
         auto unreleased = LEXY_LIT("unreleased");
 
-        return unreleased | dot_version_condition >> dot_version; // <2>
+        return unreleased | dot_version_condition >> dot_version; <2>
     }();
 };
 ----
@@ -696,11 +697,11 @@ struct version
     // An overloaded callback.
     static constexpr auto value
       = lexy::callback<PackageVersion>(
-            [](int a, int b, int c) { // <1>
+            [](int a, int b, int c) { <1>
                 // a is the result of the first number rule, b of the second, c of the third.
                 return PackageVersion{a, b, c};
             },
-            [] { // <2>
+            [] { <2>
                 return PackageVersion{0, 0, 0};
             }
         );
@@ -725,12 +726,12 @@ struct version
         auto dot_version = number + dot + number + dot + number;
 
         auto unreleased
-          = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>; // <1>
+          = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>; <1>
 
         return unreleased | dsl::else_ >> dot_version;
     }();
 
-    static constexpr auto value = lexy::construct<PackageVersion>; // <2>
+    static constexpr auto value = lexy::construct<PackageVersion>; <2>
 };
 ----
 <1> Produce the three zeroes.
@@ -832,11 +833,11 @@ If we write `dsl::quoted(dsl::code_point)`, the sink will be invoked with the ca
 struct author
 {
     // Match zero or more code points ("characters") surrounded by quotation marks.
-    static constexpr auto rule = dsl::quoted(dsl::code_point);       // <1>
+    static constexpr auto rule = dsl::quoted(dsl::code_point);       <1>
 
     // Add each captured code point to a std::string.
-    static constexpr auto value                                       // <2>
-      = lexy::sink<std::string>([](std::string& result, auto lexeme) // <3>
+    static constexpr auto value                                       <2>
+      = lexy::sink<std::string>([](std::string& result, auto lexeme) <3>
                                 {
                                     result.append(lexeme.begin(), lexeme.end());
                                 });
@@ -903,16 +904,16 @@ struct author
     // We allow `\"`, as well as `\u` and `\U` as escape sequences.
     static constexpr auto rule = [] {
         auto cp     = dsl::code_point - dsl::ascii::control;
-        auto escape = dsl::backslash_escape                                // <1>
-                          .lit_c<'"'>()                                    // <2>
-                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  // <3>
+        auto escape = dsl::backslash_escape                                <1>
+                          .lit_c<'"'>()                                    <2>
+                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  <3>
                           .rule(dsl::lit_c<'U'> >> dsl::code_point_id<8>);
 
         return dsl::quoted(cp, escape);
     }();
 
     // Construct a UTF-8 string from the quoted content.
-    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>; // <4>
+    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>; <4>
 };
 ----
 <1> We use `\` as the escape character using `dsl::backslash_escape`.
@@ -948,10 +949,10 @@ struct integer_list
 {
     // Match a (non-empty) list of integers separated by commas.
     static constexpr auto rule = dsl::list(dsl::integer<int>(dsl::digits<>),
-                                           dsl::sep(dsl::comma)); // <1>
+                                           dsl::sep(dsl::comma)); <1>
 
     // Add them all to a std::vector<int>.
-    static constexpr auto value = lexy::as_list<std::vector<int>>; // <2>
+    static constexpr auto value = lexy::as_list<std::vector<int>>; <2>
 };
 ----
 <1> `dsl::comma` is just `dsl::lit_c<','>`.
@@ -1047,19 +1048,19 @@ We can now put everything together and parse our config:
 struct config
 {
     static constexpr auto rule = []{
-        auto make_field = [](auto name, auto rule) {              // <1>
-            return name + dsl::lit_c<'='> + rule + dsl::newline;  // <2>
+        auto make_field = [](auto name, auto rule) {              <1>
+            return name + dsl::lit_c<'='> + rule + dsl::newline;  <2>
         };
 
-        auto name_field    = make_field(LEXY_LIT("name"), dsl::p<name>); // <3>
+        auto name_field    = make_field(LEXY_LIT("name"), dsl::p<name>); <3>
         auto version_field = make_field(LEXY_LIT("version"), dsl::p<version>);
         auto authors_field
             = make_field(LEXY_LIT("authors"), dsl::p<author_list>);
 
-        return name_field + version_field + authors_field; // <4>
+        return name_field + version_field + authors_field; <4>
     }();
 
-    static constexpr auto value = lexy::construct<PackageConfig>; // <5>
+    static constexpr auto value = lexy::construct<PackageConfig>; <5>
 };
 ----
 <1> We define a little helper function that builds a rule that parses a field given its name and value.
@@ -1122,9 +1123,9 @@ Remember, tokens are things like `LEXY_LIT("name")` or `dsl::lit_c<'='>` -- prec
 ----
 struct config
 {
-    static constexpr auto whitespace = dsl::ascii::blank; // <1>
+    static constexpr auto whitespace = dsl::ascii::blank; <1>
 
-    static constexpr auto rule = [] { … } (); // <2>
+    static constexpr auto rule = [] { … } (); <2>
     static constexpr auto value = lexy::as_aggregate<PackageConfig>;
 };
 ----
@@ -1200,19 +1201,19 @@ struct config
 {
     static constexpr auto rule = [] {
         auto make_field = [](auto name, auto rule) {
-            return name >> dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws]; // <1>
+            return name >> dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws]; <1>
         };
 
-        auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>); // <2>
+        auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>); <2>
         auto version_field
             = make_field(LEXY_LIT("version"), LEXY_MEM(version) = dsl::p<version>);
         auto authors_field
             = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p<author_list>);
 
-        return dsl::combination(name_field, version_field, authors_field); // <3>
+        return dsl::combination(name_field, version_field, authors_field); <3>
     }();
 
-    static constexpr auto value = lexy::as_aggregate<PackageConfig>; // <4>
+    static constexpr auto value = lexy::as_aggregate<PackageConfig>; <4>
 };
 ----
 <1> `dsl::combination()` requires a branch condition to know which rule to parse.
@@ -1338,13 +1339,13 @@ This allows specifying the error that will be reported if the token didn't match
 ----
 struct author
 {
-    struct invalid_character // <1>
+    struct invalid_character <1>
     {
-        static constexpr auto name = "invalid string character"; // <2>
+        static constexpr auto name = "invalid string character"; <2>
     };
 
     static constexpr auto rule = [] {
-        auto cp = (dsl::code_point - dsl::ascii::control).error<invalid_character>(); // <3>
+        auto cp = (dsl::code_point - dsl::ascii::control).error<invalid_character>(); <3>
 
         …
     }();
@@ -1364,15 +1365,15 @@ This can be improved by specifying a custom tag in our `dsl::combination()` call
 ----
 struct config
 {
-    struct duplicate_field // <1>
+    struct duplicate_field <1>
     {
-        static constexpr auto name = "duplicate config field"; // <2>
+        static constexpr auto name = "duplicate config field"; <2>
     };
 
     static constexpr auto rule = [] {
         …
 
-        return dsl::combination<duplicate_field>(name_field, version_field, authors_field) // <3>
+        return dsl::combination<duplicate_field>(name_field, version_field, authors_field) <3>
                + dsl::eof[dsl::ascii::space];
     }();
 };
@@ -1415,16 +1416,16 @@ but it doesn't actually consume anything.
 ----
 struct name
 {
-    struct invalid_character // <1>
+    struct invalid_character <1>
     {
-        static constexpr auto name = "invalid name character"; // <2>
+        static constexpr auto name = "invalid name character"; <2>
     };
 
     static constexpr auto rule = [] {
         …
 
         return dsl::capture(lead_char + dsl::while_(trailing_char))
-               + dsl::require<invalid_character>(dsl::ascii::space); // <3>
+               + dsl::require<invalid_character>(dsl::ascii::space); <3>
     }();
 };
 ----
@@ -1450,16 +1451,16 @@ Likewise, we can use `dsl::prevent()`, which fails if a pattern would match, if 
 ----
 struct version
 {
-    struct forbidden_build_string // <1>
+    struct forbidden_build_string <1>
     {
-        static constexpr auto name = "build string not supported"; // <2>
+        static constexpr auto name = "build string not supported"; <2>
     };
 
     static constexpr auto rule = [] {
         …
 
         return number + dot + number + dot + number
-               + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>); // <3>
+               + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>); <3>
     }();
 };
 ----

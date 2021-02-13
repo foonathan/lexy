@@ -1,0 +1,27 @@
+---
+title: "Reference - lexy"
+menu:
+  main:
+    name: "Reference"
+    weight: 2
+---
+:toc: left
+:toclevels: 3
+:source-highlighter: rouge
+
+This is the reference documentation for `lexy`.
+
+****
+If anything in the documentation could be improved (and there is probably a lot),
+please raise an issue or -- even better -- create a PR.
+Thank you!
+****
+
+include::content/reference/inputs.adoc[]
+
+include::content/reference/parsing.adoc[]
+
+include::content/reference/dsl.adoc[]
+
+include::content/reference/glossary.adoc[]
+

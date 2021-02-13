@@ -60,7 +60,6 @@ This happens regardless of the state of automatic whitespace skipping.
 
 If the whitespace rule is used inside a choice or alternative, the entire choice/alternative is treated as whitespace instead.
 
-[horizontal]
 Requires::
   `rule` is a branch or a choice rule.
   It must not produce any values.
@@ -160,7 +159,6 @@ no_whitespace(branch) : Branch
 The `no_whitespace` rule parses the given `rule` but disables automatic whitespace skipping while doing so.
 It is a branch if given a branch.
 
-[horizontal]
 Branch Condition::
   Whatever `branch` uses as branch condition.
   Note that automatic whitespace skipping inside a branch condition is impossible anyway,
@@ -192,7 +190,6 @@ any : Token
 
 The `any` token matches anything, i.e. all the remaining input.
 
-[horizontal]
 Matches::
   All the remaining input.
 Error::
@@ -213,7 +210,6 @@ LEXY_LIT(Str) : Token
 
 The literal tokens match the specified sequence of characters.
 
-[horizontal]
 Requires::
   * `C` is a character literal.
   * `Str` is a string literal.
@@ -260,7 +256,6 @@ eof : Token
 
 The `eof` token matches EOF.
 
-[horizontal]
 Matches::
   Only if the reader is at the end of the input. It does not consume anything (it can't).
 Error::
@@ -276,7 +271,6 @@ newline : Token
 
 The `newline` token matches a newline.
 
-[horizontal]
 Matches::
    `\n` or `\r\n`, which is consumed.
 Error::
@@ -292,7 +286,6 @@ eol : Token
 
 The `eol` token matches an end-of-line (EOL).
 
-[horizontal]
 Matches::
   `\n` or `\r\n`, which is consumed.
   Also matches EOF, which is not consumed.
@@ -331,7 +324,6 @@ namespace ascii
 
 All tokens defined in `lexy::dsl::ascii` match one of the categories of ASCII characters.
 
-[horizontal]
 Matches::
   Matches and consumes one of the set of ASCII characters indicated in the comments.
 Errors::
@@ -352,7 +344,6 @@ code_point.capture() : Rule
 The `code_point` token will match and consume a well-formed Unicode code point according to the encoding of the input.
 If `code_point.capture()` is used, the consumed code point will be produced as value.
 
-[horizontal]
 Requires::
   The encoding of the input is `lexy::ascii_encoding`, `lexy::utf8_encoding`, `lexy::utf16_encoding`, or `lexy::utf32_encoding`.
 Matches::
@@ -365,11 +356,15 @@ Value::
 Errors::
   If it could not match a valid code point, it fails with a `lexy::expected_char_class` error with name `<encoding>.code_point`.
 
-[godbolt,cpp,id=YYTfoe]
+[%collapsible]
+.Example
+====
+[source,cpp]
 ----
 // Match and capture one arbitrary code point.
 dsl::code_point.capture()
 ----
+====
 
 TIP: If you want to match a specific code point, use a literal rule instead.
 This rule is useful for matching things like string literals that can contain arbitrary code points.
@@ -384,7 +379,6 @@ token - except : Token
 
 The minus rule matches the given token, but only if `except` does not match on the input the rule has consumed.
 
-[horizontal]
 Requires::
   `except` is a token.
 Matches::
@@ -412,7 +406,6 @@ token(rule) : Token
 
 The `token` rule turns an arbitrary rule into a token by parsing it and discarding all values it has produced.
 
-[horizontal]
 Matches::
   Whatever `rule` matches, which will be consumed.
 Error::
@@ -440,7 +433,6 @@ LEXY_VALUE_STR(Str) : Rule
 
 The `value_*` rules create a constant value without parsing anything.
 
-[horizontal]
 Requires::
   * `Value` is any constant.
   * `Fn` is a pointer to a function taking no arguments.
@@ -492,7 +484,6 @@ nullopt : Rule
 
 The `nullopt` rule produces a value of type `lexy::nullopt` without parsing anything.
 
-[horizontal]
 Matches::
   Any input, but does not consume anything.
 Value::
@@ -534,7 +525,6 @@ id<Id>     : Rule
 The `label` and `id` rules are used to disambiguate between two branches that create otherwise the same values but should resolve to different callbacks.
 They simply produce the empty tag object or the id to differentiate them without parsing anything.
 
-[horizontal]
 Requires::
   * `Tag` is any type.
   * `Id` is an integer constant.
@@ -570,7 +560,6 @@ capture(branch) : Branch
 The `capture()` rule takes an arbitrary rule and parses it, capturing everything it has consumed into a `lexy::lexeme`.
 It is a branch if given a branch.
 
-[horizontal]
 Branch Condition::
   The branch condition is whatever `branch` uses as a branch condition.
 Matches::
@@ -581,11 +570,15 @@ Values::
 Errors::
   All errors raised by `rule`. It cannot fail itself.
 
-[godbolt,cpp,id=77jfM5]
+[%collapsible]
+.Example
+====
+[source,cpp,id=77jfM5]
 ----
 // Captures the entire input.
 dsl::capture(dsl::any)
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::position`
@@ -597,7 +590,6 @@ position : Rule
 
 The `position` rule creates as its value an iterator to the current reader position without consuming any input.
 
-[horizontal]
 Matches::
   Any input, but does not consume anything.
 Value::
@@ -605,11 +597,15 @@ Value::
 Error::
   n/a (it does not fail)
 
-[godbolt,cpp,id=Wh86vn]
+[%collapsible]
+.Example
+====
+[source,cpp,id=Wh86vn]
 ----
 // Parses the entire input and returns the final position.
 dsl::any + dsl::position
 ----
+====
 
 TIP: Use `position` when creating an AST whose nodes are annotated with their original source position.
 
@@ -626,7 +622,6 @@ token.error<Tag>() : Token
 
 The `error()` function on tokens changes the error that is raised when a token failed.
 
-[horizontal]
 Matches::
   Matches and consumes what `token` matches.
 Error::
@@ -646,7 +641,6 @@ error<Tag>(rule) : Branch
 The `error` rule always fails and produces an error with the given tag.
 For the second version, the rule is matched first to determine the error range.
 
-[horizontal]
 Branch Condition::
   Branch is always taken.
 Matches::
@@ -670,20 +664,23 @@ prevent<Tag>(rule) : Rule
 
 The `require` and `prevent` rules can be used to lookahead and fail if the input matches or does not match the token.
 
-[horizontal]
 Matches::
   Both match the `rule` without consuming input (or producing values or errors).
   `require` fails if the `rule` did not match; `rule` fails if it did.
 Error::
   An error object of the specified `Tag`.
 
-[godbolt,cpp,id=n7zM4d]
+[%collapsible]
+.Example
+====
+[source,cpp,id=n7zM4d]
 ----
 // Parses a sequence of digits but raises an error with tag `forbidden_leading_zero` if a zero is followed by more digits.
 // Note: this is already available as `dsl::digits<>.no_leading_zero()`.
 dsl::zero >> dsl::prevent<forbidden_leading_zero>(dsl::digits<>)
     | dsl::digits<>
 ----
+====
 
 TIP: Use `prevent` together with `times` to prevent the rule from matching more than the specified number of times.
 
@@ -756,7 +753,6 @@ rule + rule : Rule
 
 A sequence rule matches multiple rules one after the other.
 
-[horizontal]
 Matches::
   Matches and consume the first rule, then matches and consumes the second rule, and so on.
   Only succeeds if all of them succeed.
@@ -777,7 +773,6 @@ The `operator>>` is used to turn a rule into a branch by giving it a branch cond
 If the branch is used as a normal rule, it first matches the condition followed by the rule.
 If it is used in a context that requires a branch, the branch is checked to determine whether it should be taken.
 
-[horizontal]
 Branch Condition::
   Whatever `branch` uses as branch condition.
 Matches::
@@ -798,7 +793,6 @@ if_(branch) : Rule
 
 The `if_` rule matches a branch only if its condition matches.
 
-[horizontal]
 Matches::
   First matches the branch condition.
   If that succeeds, consumes it and matches and consumes the rest of the branch.
@@ -809,11 +803,15 @@ Errors::
   Any errors produced by the branch.
   It will only fail after the condition has been matched.
 
-[godbolt,cpp,id=GaxjbP]
+[%collapsible]
+.Example
+====
+[source,cpp,id=GaxjbP]
 ----
 // Matches an optional C style comment.
 dsl::if_(LEXY_LIT("/*") >> dsl::until(LEXY_LIT("*/")))
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::opt`
@@ -826,7 +824,6 @@ opt(branch) : Rule = branch | else_ >> nullopt
 The `opt` rule matches a branch only if its condition matches.
 Unlike `if_`, if the branch was not taken, it produces a `lexy::nullopt`.
 
-[horizontal]
 Matches::
   First matches the branch condition.
   If that succeeds, consumes it and matches and consumes the rest of the branch.
@@ -838,13 +835,17 @@ Errors::
   Any errors produced by the branch.
   It will only fail after the condition has been matched.
 
-[godbolt,cpp,id=1vK39o]
+[%collapsible]
+.Example
+====
+[source,cpp,id=1vK39o]
 ----
 // Matches an optional list of alpha characters.
 // (The id<0> is just there, so the sink will be invoked on each character).
 // If no items are present, it will default construct the list type.
 dsl::opt(dsl::list(dsl::ascii::alpha >> dsl::id<0>))
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::operator|`
@@ -856,7 +857,6 @@ branch  | branch  : Rule
 
 A choice rule matches the first branch in order whose condition was matched.
 
-[horizontal]
 Matches::
   Tries to match the condition of each branch in the order they were specified.
   As soon as one branch condition matches, matches and consumes that branch without ever backtracking to try another branch.
@@ -867,7 +867,10 @@ Errors::
   Any errors raised by the then of the selected branch.
   If no branch condition matched, a generic error with tag `lexy::exhausted_choice`.
 
-[godbolt,cpp,id=aaEnW7]
+[%collapsible]
+.Example
+====
+[source,cpp,id=aaEnW7]
 ----
 // A contrived example to illustrate the behavior of choice.
 // Note that branch with id 1 will never be taken, as branch 0 takes everything starting with a and then fails if it isn't followed by bc.
@@ -877,6 +880,7 @@ dsl::id<0>(LEXY_LIT("a") >> LEXY_LIT("bc"))
   | dsl::id<2>(LEXY_LIT("bc"))
   | dsl::id<3>(LEXY_LIT("b"))
 ----
+====
 
 NOTE: The C++ operator precedence is specified in such a way that `condition >> a | else_ >> b` works.
 The compiler might warn that the precedence is not intuitive without parentheses, but in the context of this DSL it is the expected result.
@@ -893,7 +897,6 @@ token / token : Token
 
 An alternative rule tries to match each token in order, backtracking if necessary.
 
-[horizontal]
 Matches::
   Tries to match each token in the order they were specified.
   As soon as one token matches, consumes it and succeeds.
@@ -922,7 +925,6 @@ Switch cases can be added by calling `.case_()`; they are tried in order.
 A default case is added using `.default_()`; it is taken unconditionally.
 Alternatively, an error case can be added using `.error<Tag>()`; it produces an error if no previous case has matched.
 
-[horizontal]
 Matches::
   First matches and consumes the switched rule.
   What the rule has consumed is then taken as the entire input for matching the switch cases.
@@ -937,7 +939,10 @@ Errors::
   If the switch had an error case, a generic error with the specified `Tag` is raised whose range is everything consumed by the switched rule.
   Otherwise, a generic error with tag `lexy::exhausted_switch` is raised.
 
-[godbolt,cpp,id=G87Mqf]
+[%collapsible]
+.Example
+====
+[source,cpp,id=G87Mqf]
 ----
 // Parse identifiers (one or more alpha numeric characters) but detect the three reserved keywords.
 // We use `+ dsl::eof` in the case condition to ensure that `boolean` is not matched as `bool`.
@@ -949,6 +954,7 @@ dsl::switch_(dsl::while_one(dsl::ascii::alnum))
 
 // Note: a more efficient and convenient method for handling keywords is planned.
 ----
+====
 
 NOTE: It does not matter if the then of a case does not consume everything the original rule has consumed.
 As soon as the then has matched everything parsing continues from the reader position after the switched rule has been matched.
@@ -966,7 +972,6 @@ until(token).or_eof() : Token = until(token / eof)
 
 The `until` token consumes all input until the specified `token` matches, then consumes that.
 
-[horizontal]
 Matches::
   If the closing `token` matches, consumes it and succeeds.
   Otherwise, consumes one code unit and tries again.
@@ -975,12 +980,16 @@ Errors::
   It can only fail if the reader has reached the end of the input without matching the condition.
   Then it raises the same error as raised if the condition would be matched at EOF.
 
-[godbolt,cpp,id=Yn4WTj]
+[%collapsible]
+.Example
+====
+[source,cpp,id=Yn4WTj]
 ----
 // Matches a C style comment.
 // Note that we don't care what it contains.
 LEXY_LIT("/*") >> dsl::until(LEXY_LIT("*/"))
 ----
+====
 
 NOTE: `until` includes the `token`.
 
@@ -996,7 +1005,6 @@ break_ : Rule
 
 The `loop` rule matches the given rule repeatedly until it either fails to match or a `break_` rule was matched.
 
-[horizontal]
 Requires::
   `rule` must not produce any values.
   `break_` must be used inside a loop.
@@ -1024,7 +1032,6 @@ while_(branch) : Rule
 
 The `while` rule matches a branch as long as it condition has matched.
 
-[horizontal]
 Requires::
   `branch` must not produce any values.
 Matches::
@@ -1059,11 +1066,15 @@ do_while(branch, condition_branch) : Branch = branch >> while_(condition_branch 
 
 The `do_while` rule matches a rule first unconditionally, and then again repeatedly while the rule matches.
 
-[godbolt,cpp,id=4dzEK7]
+[%collapsible]
+.Example
+====
+[source,cpp,id=4dzEK7]
 ----
 // Equivalent to `dsl::list(dsl::ascii::alpha, dsl::sep(dsl::comma))` but does not produce a value.
 dsl::do_while(dsl::ascii::alpha, dsl::comma)
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::sep` and `lexy::dsl::trailing_sep`
@@ -1110,7 +1121,6 @@ twice(rule, sep) : Rule = times<2>(rule, sep)
 The `times` rule repeats the rule `N` times with optional separator in between and collects all produced values into an array.
 The `twice` rule is a convenience alias for `N = 2`.
 
-[horizontal]
 Requires::
   The separator must not produce any values.
   All values produced by the parsing the rule must have a common type.
@@ -1124,11 +1134,15 @@ Values::
 Errors::
   All errors raised by matching the rule or separator.
 
-[godbolt,cpp,id=hrTKaT]
+[%collapsible]
+.Example
+====
+[source,cpp,id=hrTKaT]
 ----
 // Parses an IPv4 address (4 uint8_t's seperated by periods).
 dsl::times<4>(dsl::integer<std::uint8_t>(dsl::digits<>), dsl::sep(dsl::period))
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::list`
@@ -1145,7 +1159,6 @@ list(branch, sep) : Branch
 The `list` rule matches a rule one or more times, optionally separated by a separator.
 Values produced by the list items are forwarded to a sink callback.
 
-[horizontal]
 Branch Condition::
   Whatever `branch` uses as branch condition.
 Requires::
@@ -1163,7 +1176,10 @@ Values::
 Errors::
   All errors raised when parsing the item rule or separator.
 
-[godbolt,cpp,id=sE873v]
+[%collapsible]
+.Example
+====
+[source,cpp,id=sE873v]
 ----
 // Parses a list of integers seperated by (a potentially trailing) comma.
 // As the separator is trailing, it cannot be used to determine the end of the list.
@@ -1172,6 +1188,7 @@ Errors::
 dsl::list(dsl::peek(dsl::digit<>) >> dsl::integer<int>(dsl::digits<>),
           dsl::trailing_sep(dsl::comma))
 ----
+====
 
 TIP: Use one of the bracketing rules if your list item does not have an easy condition and the list is surrounded by given tokens anyway.
 
@@ -1187,7 +1204,6 @@ opt_list(branch, sep) : Rule
 The `opt_list` rule matches a rule zero or more times, optionally separated by a separator.
 Values produced by the list items are forwarded to a sink callback.
 
-[horizontal]
 Requires::
   The item rule must be a branch.
   A production whose rule contains `opt_list()` must provide a sink.
@@ -1213,7 +1229,6 @@ combination<Tag>(branch1, branch2, ...) : Rule
 The `combination` rule matches each of the sub-rules exactly once but in any order.
 Values produced by the rules are forwarded to a sink.
 
-[horizontal]
 Requires::
   A production whose rule contains `combination()` must provide a sink.
 Matches::
@@ -1231,11 +1246,15 @@ Errors::
   If a branch is matched twice, a generic error is raised.
   It has the specified tag or `lexy::combination_duplicate` if none was specified.
 
-[godbolt,cpp,id=bjKqvj]
+[%collapsible]
+.Example
+====
+[source,cpp,id=bjKqvj]
 ----
 // Matches 'a', 'b', or 'c', in any order.
 dsl::combination(dsl::lit_c<'a'>, dsl::lit_c<'b'>, dsl::lit_c<'c'>)
 ----
+====
 
 WARNING: The branches are tried in order. If an earlier branch always takes precedence over a later one, the combination can never be successful.
 
@@ -1251,7 +1270,6 @@ partial_combination<Tag>(branch1, branch2, ...) : Rule
 The `partial_combination` rule matches each of the sub-rules at most once but in any order.
 Values produced by the rules are forwarded to a sink.
 
-[horizontal]
 Requires::
   A production whose rule contains `partial_combination()` must provide a sink.
 Matches::
@@ -1268,11 +1286,15 @@ Errors::
   If a rule is matched twice, a generic error is raised.
   It has the specified tag or `lexy::combination_duplicate` if none was specified.
 
-[godbolt,cpp,id=85dv9W]
+[%collapsible]
+.Example
+====
+[source,cpp,id=85dv9W]
 ----
 // Matches a subset of 'a', 'b', or 'c', in any order.
 dsl::partial_combination(dsl::lit_c<'a'>, dsl::lit_c<'b'>, dsl::lit_c<'c'>)
 ----
+====
 
 WARNING: The branches are tried in order. If an earlier branch always takes precedence over a later one, the combination can never be successful.
 
@@ -1293,7 +1315,6 @@ recurse<Production> : Rule
 The `p` and `recurse` rules parses the rule of another production.
 The `p` rule is a branch, if the rule of the other production is a branch.
 
-[horizontal]
 Requires::
   For `p`, the `Production` is a complete type at the point of the rule definition.
   The `recurse` rule has no such limitations.
@@ -1310,11 +1331,15 @@ Errors::
   If matching fails, `Production::rule` will raise an error which is handled in the context of `Production`.
   This results in a failed result object, which is converted to our result type and returned.
 
-[godbolt,cpp,id=oj9T3n]
+[%collapsible]
+.Example
+====
+[source,cpp,id=oj9T3n]
 ----
 // Parse a sub production followed by an exclamation mark.
 dsl::p<sub_production> + dsl::lit_c<'!'>
 ----
+====
 
 TIP: While `recurse` can be used to implement direct recursion (e.g. `prefix >> dsl::p<current_production> | dsl::else_ >> end` to match zero or more `prefix` followed by `end`), it is better to use loops instead.
 
@@ -1336,7 +1361,6 @@ return_ : Rule
 Conceptually, each production has an associated function that parses the specified rule.
 The `return_` rule will exit that function early, without parsing subsequent rules.
 
-[horizontal]
 Requires::
   It must not be used inside loops.
 Matches::
@@ -1347,12 +1371,16 @@ Values::
 Errors::
   n/a (it does not fail)
 
-[godbolt,cpp,id=zrbcaq]
+[%collapsible]
+.Example
+====
+[source,cpp,id=zrbcaq]
 ----
 // Match an opening parenthesis followed by 'a' or 'b'.
 // If it is followed by 'b', the closing parenthesis is not matched anymore.
 dsl::parenthesized(dsl::lit_c<'a'> | dsl::lit_c<'b'> >> dsl::return_)
 ----
+====
 
 CAUTION: When using `return_` together with the context sensitive parsing facilities, remember to pop all context objects before the return.
 
@@ -1447,7 +1475,10 @@ parenthesized = round_bracketed
 
 Common sets of open and close brackets are pre-defined.
 
-[godbolt,cpp,id=G9MPKh]
+[%collapsible]
+.Example
+====
+[source,cpp,id=G9MPKh]
 ----
 // Parses a list of integers seperated by (a potentially trailing) comma surrounded by parentheses.
 // The same example without the parentheses was also used for list,
@@ -1456,6 +1487,7 @@ Common sets of open and close brackets are pre-defined.
 dsl::parenthesized.list(dsl::integer<int>(dsl::digits<>),
                         dsl::trailing_sep(dsl::comma))
 ----
+====
 
 === Numbers
 
@@ -1499,6 +1531,7 @@ The set of allowed digits and their values is specified using a `Base`, which is
 ==== `lexy::integer_traits`
 
 .`lexy/dsl/integer.hpp`
+[source,cpp]
 ----
 namespace lexy
 {
@@ -1564,7 +1597,6 @@ zero : Token
 
 The `zero` token matches the zero digit.
 
-[horizontal]
 Matches::
     Matches and consumes the zero digit `0`.
 Errors::
@@ -1580,7 +1612,6 @@ digit<Base> : Token
 
 The `digit` token matches a digit of the specified base or `decimal` if no base was specified.
 
-[horizontal]
 Matches::
     Matches and consumes any of the valid digits of the base.
 Errors::
@@ -1602,7 +1633,6 @@ Calling `.sep()` allows adding a digit separator token that can be present at an
 Calling `.no_leading_zero()` raises an error if one or more leading zeros are encountered.
 The calls to `.sep()` and `.no_leading_zero()` can be chained.
 
-[horizontal]
 Matches::
   Matches and consumes one or more digits of the specified base.
   If a separator was added, it tries to match it after every digit.
@@ -1614,11 +1644,15 @@ Errors::
   All errors raised by `digit<Base>`, which can only happen for the initial digit.
   Raises a generic error with tag `lexy::forbidden_leading_zero` if a leading zero was matched.
 
-[godbolt,cpp,id=Kq1vez]
+[%collapsible]
+.Example
+====
+[source,cpp,id=Kq1vez]
 ----
 // Matches upper-case hexadecimal digits seperated by ' without leading zeroes.
 dsl::digits<dsl::hex_upper>.sep(dsl::digit_sep_tick).no_leading_zero()
 ----
+====
 
 NOTE: The separator can be placed at any point between two digits.
 There is no validation of rules to ensure it is a thousand separator or similar conventions.
@@ -1647,7 +1681,6 @@ n_digits<N, Base>.sep(token) : Token
 The `n_digits` token matches exactly `N` digits in the specified base or `decimal` if no base was specified.
 Calling `.sep()` allows adding a digit separator token that can be present at any point between two digits, but is not required.
 
-[horizontal]
 Matches::
   Matches and consumes exactly `N` digits of the specified base.
   If a separator was added, it tries to match it after every digit.
@@ -1658,11 +1691,15 @@ Errors::
   All errors raised by `digit<Base>`, which can happen if less than `N` digits are available.
   Raises a generic error with tag `lexy::forbidden_leading_zero` if a leading zero was matched.
 
-[godbolt,cpp,id=1YcrGa]
+[%collapsible]
+.Example
+====
+[source,cpp,id=1YcrGa]
 ----
 // Matches 4 upper-case hexadecimal digits seperated by '.
 dsl::n_digits<4, dsl::hex_upper>.sep(dsl::digit_sep_tick)
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::integer`
@@ -1676,7 +1713,6 @@ The `integer` rule converts the lexeme matched by the `token` into an integer of
 The `Base` can be omitted if the token is `digits` or `n_digits`.
 It will then be deduced from the token.
 
-[horizontal]
 Matches::
   Matches and consumes what `token` matches.
 Values::
@@ -1687,13 +1723,17 @@ Errors::
   Any errors raised by matching the token.
   If the integer type `T` is bounded and the integer value would overflow, a generic error with tag `lexy::integer_overflow` is raised.
 
-[godbolt,cpp,id=6ThWPn]
+[%collapsible]
+.Example
+====
+[source,cpp,id=6ThWPn]
 ----
 // Matches upper-case hexadecimal digits seperated by ' without leading zeroes.
 // Converts them into an integer, the base is deduced from the token.
 dsl::integer<int>(dsl::digits<dsl::hex_upper>
                         .sep(dsl::digit_sep_tick).no_leading_zero())
 ----
+====
 
 [discrete]
 ==== `lexy::dsl::code_point_id`
@@ -1706,7 +1746,6 @@ code_point_id<N, Base> : Rule = integer<lexy::code_point>(n_digits<N, Base>)
 The `code_point_id` rule is a convenience rule that parses a code point.
 It matches `N` digits in the specified base, which defaults to `hex`, and converts it into a code point.
 
-[horizontal]
 Matches::
   Matches and consumes exactly `N` digits of the specified base.
 Values::
@@ -1728,7 +1767,6 @@ sign : Rule
 
 The `plus_sign`, `minus_sign`, and `sign` rule match an optional sign.
 
-[horizontal]
 Matches::
   `plus_sign`:::
     Matches and consumes a `+` character, if there is one.
@@ -1743,11 +1781,15 @@ Values:::
 Errors::
   n/a (they don't fail)
 
-[godbolt,cpp,id=7exP55]
+[%collapsible]
+.Example
+====
+[source,cpp,id=7exP55]
 ----
 // Parse a decimal integer with optional minus sign.
 dsl::minus_sign + dsl::integer<int>(dsl::digits<>)
 ----
+====
 
 TIP: The callback `lexy::as_integer` takes the value produced by the sign rules together with an integer produced by the `integer` rule and negates it if necessary.
 
@@ -1798,7 +1840,6 @@ d(token) : Branch
 Calling `d(token)`, where `d` is the result of a `delimiter()` call, results in a rule that matches `token` as often as possible surrounded by the delimiters.
 Everything between the delimiters is captured and forwarded to a sink callback.
 
-[horizontal]
 Requires::
   A production whose rule contains a delimited rule must provide a sink.
 Branch Condition::
@@ -1816,11 +1857,15 @@ Errors::
   All errors raised when matching the opening delimiter and the token.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
 
-[godbolt,cpp,id=nnoMYv]
+[%collapsible]
+.Example
+====
+[source,cpp,id=nnoMYv]
 ----
 // Match a string consisting of code points that aren't control characters.
 dsl::quoted(dsl::code_point - dsl::ascii::control)
 ----
+====
 
 NOTE: The sink is only invoked once. A sink callback is only required for consistency with the overload that takes an escape sequence.
 
@@ -1835,7 +1880,6 @@ d(token, escape)  : Branch
 This overload is used to to specify escape sequences in the delimited.
 It behaves like the other overload, but also matches the `escape` rule.
 
-[horizontal]
 Requires::
   A production whose rule contains a delimited rule must provide a sink.
   `escape` must be a branch.
@@ -1856,13 +1900,17 @@ Errors::
   All errors raised when matching the opening delimiter, `escape` and the token.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
 
-[godbolt,cpp,id=vqsfM4]
+[%collapsible]
+.Example
+====
+[source,cpp,id=vqsfM4]
 ----
 // Match a string consisting of code points that aren't control characters.
 // `\"` can be used to add a `"` to the string.
 dsl::quoted(dsl::code_point - dsl::ascii::control,
             LEXY_LIT("\\\"") >> dsl::value_c<'"'>)
 ----
+====
 
 NOTE: The closing delimiter is used as termination condition here as well.
 If the escape sequence starts with a closing delimiter, it will not be matched.
@@ -1926,7 +1974,10 @@ dollar_escape    = escape(lit_c<'$'>)
 
 Common escape characters are predefined.
 
-[godbolt,cpp,id=71EEWY]
+[%collapsible]
+.Example
+====
+[source,cpp,id=71EEWY]
 ----
 // Match a string consisting of code points that aren't control characters.
 // `\"` can be used to add a `"` to the string.
@@ -1936,6 +1987,7 @@ dsl::quoted(dsl::code_point - dsl::ascii::control,
               .lit_c<'"'>()
               .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)
 ----
+====
 
 === Aggregates
 
@@ -1950,7 +2002,6 @@ LEXY_MEM(Name) = branch : Branch
 
 The `member` rule together with the `lexy::as_aggregate<T>` callback assigns the values produced by the rule given to it via `=` to the specified member of the aggregate `T`.
 
-[horizontal]
 Requires::
   A production that contains a member rule needs to use `lexy::as_aggregate<T>` as sink or callback.
   The rule must produce exactly one value.
@@ -1970,7 +2021,10 @@ It then constructs an object of type `T` using value initialization and for each
 This works either as callback or a sink.
 If a member is specified more than once, the final value is stored at the end.
 
-[godbolt,cpp,id=EMYGx1]
+[%collapsible]
+.Example
+====
+[source,cpp,id=EMYGx1]
 ----
 // Parses two integers separated by commas.
 // The first integer is assigned to a member called `second`,
@@ -1979,6 +2033,7 @@ If a member is specified more than once, the final value is stored at the end.
 + dsl::comma
 + (LEXY_MEM(first) = dsl::integer<int>(dsl::digits<>))
 ----
+====
 
 === Context sensitive parsing
 
@@ -2035,7 +2090,6 @@ context_counter<Id>.select(rule_true, rule_false) : Rule
 The `.select()` rule selects on the given rules depending on the value of the flag with the given `Id`.
 It then parses the selected rule.
 
-[horizontal]
 Matches::
   If the value of the flag is `true`, matches and  consumes `rule_true`.
   Otherwise, matches and  consumes `rule_false`.
@@ -2090,7 +2144,6 @@ context_counter<Id>.pop(rule)  : Rule
 The `.push()`/`.pop()` rules parse the given `rule`.
 The counter with the given `Id` is then incremented/decremented by the number of characters (code units) consumed by `rule`.
 
-[horizontal]
 Matches::
   Matches and  consumes `rule`.
 Values::
@@ -2105,7 +2158,6 @@ context_counter<Id>.compare<Value>(rule_less, rule_eq, rule_greater) : Rule
 The `.compare()` rule compares the value of the counter with the given `Id` to `Value`.
 It then parses one of the three given rules, depending on the result.
 
-[horizontal]
 Matches::
   If the value of the counter is less than `Value`, matches and  consumes `rule_less`.
   If the value of the counter is equal than `Value`, matches and  consumes `rule_eq`.
@@ -2151,7 +2203,6 @@ context_lexeme<Id>.capture(rule) : Rule
 The `.capture()` rule parses the given `rule`.
 The lexeme with the given `Id` is then set to view everything the `rule` has consumed as-if `lexy::dsl::capture()` was used.
 
-[horizontal]
 Matches::
   Matches and  consumes `rule.`
 Values::
@@ -2168,7 +2219,6 @@ The temporary lexeme is then compared with the lexeme given by the `Id`.
 If the two lexemes are equal, parsing continues.
 Otherwise, the rule fails, producing an error with the given `ErrorTag`.
 
-[horizontal]
 Matches::
   Matches and  consumes `rule.`
 Values::
@@ -2190,7 +2240,6 @@ bom<Encoding, Endianness> : Token
 
 The `bom` token matches the byte-order mark (BOM) for the given encoding and `lexy::encoding_endianness`.
 
-[horizontal]
 Requires::
   `Endianness` is `lexy::encoding_endianness::little` or `lexy::encoding_endianness::big`.
 Matches::
@@ -2198,11 +2247,15 @@ Matches::
 Errors::
   A `lexy::expected_char_class` error with the name `BOM.<encoding>-<endianness>` if the BOM was not matched.
 
-[godbolt,cpp,id=xbnEYs]
+[%collapsible]
+.Example
+====
+[source,cpp,id=xbnEYs]
 ----
 // Matches the UTF-16 big endian BOM (0xFE, 0xFF).
 dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::big>
 ----
+====
 
 NOTE: There is a UTF-8 BOM, but it is the same regardless of endianness.
 
@@ -2222,7 +2275,6 @@ The specified `rule` will be matched using a `Reader` whose encoding is `Encodin
 If no `Endianness` is specified, the default is `lexy::encoding_endianness::bom`, and a BOM is matched on the input to determine the endianness.
 If no BOM is present, big endian is assumed.
 
-[horizontal]
 Requires::
   The input's encoding is a single-byte encoding (usually `lexy::raw_encoding`).
 Matches::
@@ -2235,12 +2287,16 @@ Errors::
   All errors raised by the rule.
   The error type uses the original reader, not the encoded reader that does the input translation.
 
-[godbolt,cpp,id=Y51r9v]
+[%collapsible]
+.Example
+====
+[source,cpp,id=Y51r9v]
 ----
 // Matches a UTF-8 code point, followed by an ASCII code point.
 dsl::encode<lexy::utf8_encoding>(dsl::code_point)
     + dsl::encode<lexy::ascii_encoding>(dsl::code_point)
 ----
+====
 
 === Custom rules
 

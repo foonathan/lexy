@@ -24,8 +24,5 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         enable_testing()
         add_subdirectory(tests)
     endif()
-
-    # We always add docs, as it doesn't do anything by default.
-    add_subdirectory(docs)
 endif()
 

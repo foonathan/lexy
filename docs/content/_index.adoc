@@ -1,8 +1,6 @@
-= `lexy`
-
-image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json[Project Status,link=https://www.jonathanmueller.dev/project/]
-image:https://github.com/foonathan/lexy/workflows/Main%20CI/badge.svg[Build Status]
-image:https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4YNK41S9[codecov,link=https://codecov.io/gh/foonathan/lexy]
+---
+---
+:source-highlighter: rouge
 
 `lexy` is a parser combinator library for {cpp}17 and onwards.
 It allows you to write a parser by specifying it in a convenient {cpp} DSL,
@@ -43,7 +41,7 @@ struct ipv4_address
 
 See https://github.com/foonathan/lexy/tree/main/examples[examples/] for more examples, such as a fully conforming JSON parser,
 a (subset of) XML parser, or an interactive REPL for a bash-like language, among others.
-Or jump directly to the https://lexy.foonathan.net/tutorial/[tutorial] to learn how to write your own grammars.
+Or jump directly to the link:/tutorial/[tutorial] to learn how to write your own grammars.
 
 == Features
 
@@ -145,7 +143,7 @@ How bad are the {cpp} error messages if you mess something up?::
 
 How fast is it?::
   Benchmarks are available in the `benchmarks/` directory.
-  A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available https://lexy.foonathan.net/benchmark_json/[here].
+  A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available link:/benchmark_json/[here].
 
 Why is it called lexy?::
   I previously had a tokenizer library called `foonathan/lex`.
@@ -172,4 +170,3 @@ Refer to that header for details.
 
 The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as MSVC and clang-cl.
 It requires {cpp}17 support, but works best with {cpp}20.
-

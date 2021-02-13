@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang=en-US>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+        {{ .Title | default .Site.Title }}
+    </title>
+
+    {{ $style := resources.Get "css/style.scss" | resources.ToCSS | resources.Minify }}
+    <style>{{ $style.Content | safeCSS }}</style>
+</head>
+<body>
+    <nav id="menu">
+        <div class="menu-container">
+        <ul id="home">
+            <li>
+                <a href="/">{{ .Site.Title }}</a>
+            </li>
+        </ul>
+        <ul id="main">
+        {{ $currentPage := . }}
+        {{ with .Site.Menus.main }}
+        {{ range sort . }}
+            <li>
+                <a class="{{ if ($currentPage.IsMenuCurrent "main" .) }}active{{ end }}" href="{{ .URL | relURL }}">{{ .Name }}</a>
+            </li>
+        {{ end }}
+        {{ end }}
+        </ul>
+    </nav>
+    <main id="content">
+        {{- block "main" . }}{{- end }}
+    </main>
+    <footer id="page-footer">
+      <section class="copyright">
+          &copy; {{ .Site.Copyright }}
+      </section>
+      <section class="patreon">
+          <a target="_blank" href="https://jonathanmueller.dev/support-me/">Support me!</a>.
+      </section>
+      <section class="poweredby">
+          Made with <a target="_blank" href="https://gohugo.io">Hugo</a>.
+      </section>
+    </footer>
+</body>
+</html>
