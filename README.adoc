@@ -8,6 +8,8 @@ image:https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4
 It allows you to write a parser by specifying it in a convenient {cpp} DSL,
 which gives you all the flexibility and control of a handwritten parser without all the manual work.
 
+Documentation: https://lexy.foonathan.net/[lexy.foonathan.net]
+
 .IPv4 address parser: try it on https://godbolt.org/z/b83Gsr[Compiler Explorer]
 [source,cpp]
 ----
