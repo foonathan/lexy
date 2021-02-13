@@ -1,0 +1,502 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>lexy: C++ parser combinator library</title><style>:root{--white: white;--header-white: rgba(255, 255, 255, .75);--background-color: #fdfdfd;--default-color: #101010;--heading-color: #0A0A0A;--link-color: #2A2A2A;--gray-highlight-color: #aaaaaa;--highlight-color: #2861ce}@media(prefers-color-scheme:dark){:root{--white: #020202;--header-white: rgba(2, 2, 2, .75);--background-color: #222222;--default-color: #efefef;--heading-color: #f5f5f5;--link-color: #d5d5d5;--gray-highlight-color: #555555}}nav#menu div.menu-container,main{max-width:1200px;margin:0 auto;padding:0 10px}@media(min-width:800px){article{max-width:900px;margin:0 auto;padding:0 10px}}html{position:relative;min-height:100%;margin:0;padding:0}body{font-family:serif;font-size:18px;color:var(--default-color);background-color:var(--background-color);width:100%;padding:0;margin:0}main{margin-bottom:75px}h1,h2,h3,h4,h5,h6{font-family:sans-serif;font-weight:700;line-height:1.15em;color:var(--heading-color);margin:0 0 .4em}h1{font-size:2em}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h5{font-size:1.15em}h6{font-size:1.1em}a{color:var(--link-color);transition:color ease .3s}a:hover{color:var(--highlight-color)}a:focus{outline:none}br{margin:1em}article p,article ul,article ol,article dl{hyphens:auto;text-align:justify}nav#menu{width:100%;padding:0;background-color:var(--white);border-bottom:2px solid var(--highlight-color);font-family:sans-serif;font-size:1.3em}nav#menu div.menu-container{display:flex}nav#menu div.menu-container ul{display:flex;flex-direction:row;align-items:center;padding:0;list-style:none}nav#menu div.menu-container ul li a{text-decoration:none}nav#menu div.menu-container ul li a.active{border-width:0 0 2px;border-style:solid;border-color:var(--highlight-color)}nav#menu div.menu-container ul#home{padding-left:0;padding-right:10px}nav#menu div.menu-container ul#home li{font-weight:700}nav#menu div.menu-container ul#main{margin-left:auto}nav#menu div.menu-container ul#main li{padding-left:20px}@media(max-width:600px){nav#menu div.menu-container ul#main{flex-direction:column;align-items:flex-end;margin:5px 10px 0 auto}}footer#page-footer{position:absolute;bottom:0;left:0;right:0;height:2em;display:flex;justify-content:space-between;font-size:.8em;font-weight:200;line-height:1em;border-top:1px solid #ccc}footer#page-footer section{padding-left:1em;padding-right:1em;padding-top:.5em;width:100%}footer#page-footer .copyright{text-align:left}footer#page-footer .patreon{text-align:center}footer#page-footer .poweredby{text-align:right}@media(max-width:450px){footer#page-footer{flex-direction:column;align-items:flex-start}footer#page-footer section{text-align:initial!important;width:initial}}aside.toc{display:none}@media(min-width:1200px){aside.toc{display:initial;position:sticky;top:1em;float:left;width:300px}aside.toc header{font-weight:700}aside.toc ul{list-style:none;padding:0}aside.toc ul ul{padding-left:1em;padding-bottom:.5em}aside.toc a{text-decoration:none}aside.toc~article{padding-left:300px}}article .admonitionblock{margin-bottom:1em}article .admonitionblock td.icon{width:75px;font-weight:700;border-right:1px solid var(--gray-highlight-color);padding:.5em}article .admonitionblock td.content{padding-left:.5em}article details{padding-bottom:1em}article details summary{font-weight:700}article dl dt{font-weight:700}article dl dd{margin-top:-.9em}article dl dd dt{margin-top:.9em}article div.sidebarblock{border:1px solid var(--gray-highlight-color);padding:.75em;margin:1em}article div.sidebarblock p{margin:0}article :not(td)>div.title{font-style:italic;margin-bottom:-.9em}article code{font-family:Inconsolata,monospace,sans-serif}article pre{overflow:auto;padding:10px;background:var(--white);border:1px solid var(--gray-highlight-color);line-height:1.1}article .colist{margin-top:-.5em}article .colist ol{counter-reset:list}article .colist ol li{counter-increment:list;padding-left:1em}article .colist ol ::marker{content:"(" counter(list)")";font-weight:700}article .colist p{margin:0}article .highlight{}article .highlight .c{color:#998;font-style:italic}article .highlight .k{color:#458;font-weight:700}article .highlight .o{color:red}article .highlight .p{color:red}article .highlight .err{color:red}article .highlight .cm{color:#998;font-style:italic}article .highlight .cp{color:green;font-weight:700}article .highlight .c1{color:#998;font-style:italic}article .highlight .cs{color:#999;font-weight:700;font-style:italic}article .highlight .gd{color:#000;background-color:#fdd}article .highlight .gd .x{color:#000;background-color:#faa}article .highlight .ge{font-style:italic}article .highlight .gr{color:#a00}article .highlight .gh{color:#999}article .highlight .gi{color:#000;background-color:#dfd}article .highlight .gi .x{color:#000;background-color:#afa}article .highlight .go{color:#888}article .highlight .gp{color:#555}article .highlight .gs{font-weight:700}article .highlight .gu{color:#aaa}article .highlight .gt{color:#a00}article .highlight .kc{color:#458;font-weight:700}article .highlight .kd{color:#458;font-weight:700}article .highlight .kp{color:#458;font-weight:700}article .highlight .kr{color:#458;font-weight:700}article .highlight .kt{color:#458;font-weight:700}article .highlight .m{color:#ff8000}article .highlight .s{color:green}article .highlight .ow{font-weight:700}article .highlight .w{color:#bbb}article .highlight .mf{color:#ff8000}article .highlight .mh{color:#ff8000}article .highlight .mi{color:#ff8000}article .highlight .mo{color:#ff8000}article .highlight .sb{color:#d14}article .highlight .sc{color:#d14}article .highlight .sd{color:#d14}article .highlight .s2{color:#d14}article .highlight .se{color:#d14}article .highlight .sh{color:#d14}article .highlight .si{color:#d14}article .highlight .sx{color:#d14}article .highlight .sr{color:#009926}article .highlight .s1{color:#d14}article .highlight .ss{color:#990073}article .highlight .bp{color:#999}article .highlight .vc{color:teal}article .highlight .vg{color:teal}article .highlight .vi{color:teal}article .highlight .il{color:#099}</style></head><body><nav id=menu><div class=menu-container><ul id=home><li><a href=/>lexy: C++ parser combinator library</a></li></ul><ul id=main><li><a href=/tutorial/>Tutorial</a></li><li><a href=/reference/>Reference</a></li><li><a href=https://github.com/foonathan/lexy>GitHub</a></li></ul></nav><main id=content><aside class=toc><header><a href=#>Table of Contents</a></header><nav id=TableOfContents></nav></aside><article><div class=sect1><h2 id=_inputs_and_encodings>Inputs and Encodings</h2><div class=sectionbody><div class=paragraph><p>An <code>Input</code> defines the input that will be parsed by <code>lexy</code>.
+It has a corresponding <code>Encoding</code> that controls, among other things, its character type and whether certain rules are available.
+The <code>Input</code> itself is unchanging and it produces a <code>Reader</code> which remembers the current position of the input during parsing.</p></div><div class=sect2><h3 id=_encodings>Encodings</h3><div class=listingblock><div class=title><code>lexy/encoding.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    struct default_encoding;
+    struct ascii_encoding;
+    struct utf8_encoding;
+    struct utf16_encoding;
+    struct utf32_encoding;
+    struct raw_encoding;
+
+    template &lt;typename CharT&gt;
+    using deduce_encoding = /* see below */;
+
+    enum class encoding_endianness;
+}</code></pre></div></div><div class=paragraph><p>An <code>Encoding</code> is a set of pre-defined policy classes that determine the text encoding of an input.</p></div><div class=paragraph><p>Each encoding has a <em>primary character type</em>, which is the character type of the input.
+It can also have a <em>secondary character type</em>, which the input should accept, but internally convert to the primary character type.
+For example, <code>lexy::utf8_encoding’s primary character type is `char8_t</code>, but it also accepts <code>char</code>.</p></div><div class=paragraph><p>The encoding also has an <em>integer type</em>, which can store either any valid character (code unit to be precise) or a special EOF value, similar to <code>std::char_traits</code>.
+For some encodings, the integer type can be the same as the character type as not all values are valid code units.
+This allows optimizations.</p></div><div class=paragraph><p>Certain rules can require a certain encodings.
+For example, <code>lexy::dsl::code_point</code> does not work with the <code>lexy::default_encoding</code>, and <code>lexy::dsl::encode</code> requires <code>lexy::raw_encoding</code>.</p></div><div class=sect3><h4 id=_the_supported_encodings>The supported encodings</h4><div class=dlist><dl><dt class=hdlist1><code>lexy::default_encoding</code></dt><dd><p>The encoding that will be used when no other encoding is specified.
+Its character type is <code>char</code> and it can work with any 8-bit encoding (ASCII, UTF-8, extended ASCII etc.).
+Only use this encoding if you don’t know the exact encoding of your input.</p></dd><dt class=hdlist1><code>lexy::ascii_encoding</code></dt><dd><p>Assumes the input is valid ASCII. Its character type is <code>char</code>.</p></dd><dt class=hdlist1><code>lexy::utf8_encoding</code></dt><dd><p>Assumes the input is valid UTF-8. Its character type is <code>char8_t</code>, but it also accepts <code>char</code>.</p></dd><dt class=hdlist1><code>lexy::utf16_encoding</code></dt><dd><p>Assumes the input is valid UTF-16. Its character type is <code>char16_t</code>, but it also accepts <code>wchar_t</code> on Windows.</p></dd><dt class=hdlist1><code>lexy::utf32_encoding</code></dt><dd><p>Assumes the input is valid UTF-32. Its character type is <code>char32_t</code>, but it also accepts <code>wchar_t</code> on Linux.</p></dd><dt class=hdlist1><code>lexy::raw_encoding</code></dt><dd><p>Does not assume the input is text. Its character type is <code>unsigned char</code>, but it also accepts <code>char</code>.
+Use this encoding if you’re not parsing text or if you’re parsing text consisting of multiple encodings.</p></dd></dl></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>If you specify an encoding that does not match the inputs actual encoding, e.g. you say it is UTF-8 but in reality it is some Windows code page, the library will handle it by generating parse errors.
+The worst that can happen is that you’ll get an unexpected EOF error because the input contains the character that is used to signal EOF in the encoding.</td></tr></tbody></table></div></div><div class=sect3><h4 id=_deducing_encoding>Deducing encoding</h4><div class=paragraph><p>If you don’t specify an encoding for your input, <code>lexy</code> can sometimes deduce it by matching the character type to the primary character type.
+For example, a string of <code>char8_t</code> will be deduce it to be <code>lexy::utf8_encoding</code>.
+If the character type is <code>char</code>, <code>lexy</code> will deduce <code>lexy::default_encoding</code> (unless that has been overriden by a build option).</p></div></div><div class=sect3><h4 id=_encoding_endianness>Encoding endianness</h4><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>enum class encoding_endianness
+{
+    little,
+    big,
+    bom,
+};</code></pre></div></div><div class=paragraph><p>In-memory, UTF-16 and UTF-32 come in two flavors: big and little endian.
+Which version is used, can be specified with the <code>encoding_endianness</code> enumeration.
+This is only relevant when e.g. reading data from files.</p></div><div class=dlist><dl><dt class=hdlist1>little</dt><dd><p>The encoding is written using little endian.
+For single-byte encodings, this has no effect.</p></dd><dt class=hdlist1>big</dt><dd><p>The encoding is written using big endian.
+For single-byte encodings, this has no effect.</p></dd><dt class=hdlist1>bom</dt><dd><p>The endianness is determined using the byte-order mark (BOM) of the encoding.
+If no BOM is present, defaults to big endian as per Unicode recommendation.
+For UTF-8, this will skip the optional BOM, but has otherwise no effect.
+For non-Unicode encodings, this has no effect.</p></dd></dl></div></div></div><div class=sect2><h3 id=_the_pre_defined_inputs>The pre-defined Inputs</h3><div class=sect3><h4 id=_null_input>Null input</h4><div class=listingblock><div class=title><code>lexy/input/null_input.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Encoding = default_encoding&gt;
+    class null_input
+    {
+    public:
+        constexpr Reader reader() const&amp; noexcept;
+    };
+
+    template &lt;typename Encoding = default_encoding&gt;
+    using null_lexeme = lexeme_for&lt;null_input&lt;Encoding&gt;&gt;;
+    template &lt;typename Tag, typename Encoding = default_encoding&gt;
+    using null_error = error_for&lt;null_input&lt;Encoding&gt;, Tag&gt;;
+    template &lt;typename Production, typename Encoding = default_encoding&gt;
+    using null_error_context = error_context&lt;Production, null_input&lt;Encoding&gt;&gt;;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::null_input</code> is an input that is always empty.</p></div></div><div class=sect3><h4 id=_range_input>Range input</h4><div class=listingblock><div class=title><code>lexy/input/range_input.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Encoding, typename Iterator, typename Sentinel = Iterator&gt;
+    class range_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = Iterator;
+
+        constexpr range_input() noexcept;
+        constexpr range_input(Iterator begin, Sentinel end) noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        constexpr Reader reader() const&amp; noexcept;
+    };
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::range_input</code> is an input that represents the range <code>[begin, end)</code>.
+CTAD can be used to deduce the encoding from the value type of the iterator.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The input is a lightweight view and does not own any data.</td></tr></tbody></table></div><div class="admonitionblock tip"><table><tbody><tr><td class=icon><div class=title>Tip</div></td><td class=content>Use <code>lexy::string_input</code> instead if the range is contiguous.</td></tr></tbody></table></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Using the range input to parse content from a list.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>std::list&lt;char8_t&gt; list = …;
+
+// Create the input, deducing the encoding.
+auto input = lexy::range_input(list.begin(), list.end());</code></pre></div></div></div></details></div><div class=sect3><h4 id=_string_input>String input</h4><div class=listingblock><div class=title><code>lexy/input/string_input.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Encoding = default_encoding&gt;
+    class string_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = const char_type*;
+
+        constexpr string_input() noexcept;
+
+        template &lt;typename CharT&gt;
+        constexpr string_input(const CharT* begin, const CharT* end) noexcept;
+        template &lt;typename CharT&gt;
+        constexpr string_input(const CharT* data, std::size_t size) noexcept;
+
+        template &lt;typename View&gt;
+        constexpr explicit string_input(const View&amp; view) noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        constexpr Reader reader() const&amp; noexcept;
+    };
+
+    template &lt;typename Encoding, typename CharT&gt;
+    constexpr auto zstring_input(const CharT* str) noexcept;
+    template &lt;typename CharT&gt;
+    constexpr auto zstring_input(const CharT* str) noexcept;
+
+    template &lt;typename Encoding = default_encoding&gt;
+    using string_lexeme = lexeme_for&lt;string_input&lt;Encoding&gt;&gt;;
+    template &lt;typename Tag, typename Encoding = default_encoding&gt;
+    using string_error = error_for&lt;string_input&lt;Encoding&gt;, Tag&gt;;
+    template &lt;typename Production, typename Encoding = default_encoding&gt;
+    using string_error_context = error_context&lt;Production, string_input&lt;Encoding&gt;&gt;;
+} // namespace lexy</code></pre></div></div><div class=paragraph><p>The class <code>lexy::string_input</code> is an input that represents the string view defined by the constructors.
+CTAD can be used to deduce the encoding from the character type.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The input is a lightweight view and does not own any data.
+Use <code>lexy::buffer</code> if you want an owning version.</td></tr></tbody></table></div><div class=sect4><h5 id=_pointer_constructor>Pointer constructor</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename CharT&gt;
+constexpr string_input(const CharT* begin, const CharT* end) noexcept; // <b class=conum>(1)</b>
+template &lt;typename CharT&gt;
+constexpr string_input(const CharT* data, std::size_t size) noexcept; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>The input is the contiguous range <code>[begin, end)</code>.</p></li><li><p>The input is the contiguous range <code>[data, data + size)</code>.</p></li></ol></div><div class=paragraph><p><code>CharT</code> must be the primary or secondary character type of the encoding.</p></div></div><div class=sect4><h5 id=_view_constructor>View constructor</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename View&gt;
+constexpr explicit string_input(const View&amp; view) noexcept;</code></pre></div></div><div class=paragraph><p>The input is given by the <code>View</code>, which requires a <code>.data()</code> and <code>.size()</code> member.
+The character type of the <code>View</code> must be the primary or secondary character type of the encoding.</p></div></div><div class=sect4><h5 id=_null_terminated_string_functions>Null-terminated string functions</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Encoding, typename CharT&gt;
+constexpr auto zstring_input(const CharT* str) noexcept; // <b class=conum>(1)</b>
+template &lt;typename CharT&gt;
+constexpr auto zstring_input(const CharT* str) noexcept; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Use the specified encoding.</p></li><li><p>Deduce the encoding from the character type.</p></li></ol></div><div class=paragraph><p>The input is given by the range <code>[str, end)</code>, where <code>end</code> is a pointer to the first null character of the string.
+The return type is an appropriate <code>lexy::string_input</code> instantiation.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Using the string input to parse content from a <code>std::string</code>.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>std::string str = …;
+auto input = lexy::string_input(str);</code></pre></div></div><div class=paragraph><p>Using the string input to parse content from a string literal.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>auto input = lexy::zstring_input(u&#34;Hello World!&#34;);</code></pre></div></div></div></details></div></div><div class=sect3><h4 id=_buffer_input>Buffer Input</h4><div class=listingblock><div class=title><code>lexy/input/buffer.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+template &lt;typename Encoding       = default_encoding,
+          typename MemoryResource = /* default resource */&gt;
+class buffer
+{
+public:
+    using encoding  = Encoding;
+    using char_type = typename encoding::char_type;
+
+    class builder;
+
+    constexpr buffer() noexcept;
+    constexpr explicit buffer(MemoryResource* resource) noexcept;
+
+    template &lt;typename CharT&gt;
+    explicit buffer(const CharT* data, std::size_t size,
+                    MemoryResource* resource = /* default resource */);
+    template &lt;typename CharT&gt;
+    explicit buffer(const CharT* begin, const CharT* end,
+                    MemoryResource* resource = /* default resource */);
+
+    template &lt;typename View&gt;
+    explicit buffer(const View&amp;     view,
+                    MemoryResource* resource = /* default resource */);
+
+    buffer(const buffer&amp; other, MemoryResource* resource);
+
+    const char_type* begin() const noexcept;
+    const char_type* end() const noexcept;
+
+    const char_type* data() const noexcept;
+
+    bool empty() const noexcept;
+
+    std::size_t size() const noexcept;
+    std::size_t length() const noexcept;
+
+    Reader reader() const&amp; noexcept;
+};
+
+template &lt;typename Encoding, encoding_endianness Endianness&gt;
+constexpr auto make_buffer;
+
+template &lt;typename Encoding       = default_encoding,
+          typename MemoryResource = /* default resource */&gt;
+using buffer_lexeme = lexeme_for&lt;buffer&lt;Encoding, MemoryResource&gt;&gt;;
+template &lt;typename Tag, typename Encoding = default_encoding,
+          typename MemoryResource = /* default resource */&gt;
+using buffer_error = error_for&lt;buffer&lt;Encoding, MemoryResource&gt;, Tag&gt;;
+template &lt;typename Production, typename Encoding = default_encoding,
+          typename MemoryResource = /* default resource */&gt;
+using buffer_error_context = error_context&lt;Production, buffer&lt;Encoding, MemoryResource&gt;&gt;;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::buffer</code> is an immutable, owning variant of <code>lexy::string_input</code>.
+The memory for the input is allocated using the <code>MemoryResource</code>, which is a class with the same interface as <code>std::pmr::memory_resource</code>.
+By default, it uses a <code>new</code> and <code>delete</code> for the allocation, just like <code>std::pmr::new_delete_resource</code>.
+Construction of the buffer is just like <code>lexy::string_input</code>, except for the additional <code>MemoryResource</code> parameter.
+Once a memory resource has been specified, it will not propagate on assignment.</p></div><div class="admonitionblock tip"><table><tbody><tr><td class=icon><div class=title>Tip</div></td><td class=content>As the buffer owns the input, it can terminate it with the EOF character for encodings that have the same character and integer type.
+This eliminates the "is the reader at eof?"-branch during parsing.</td></tr></tbody></table></div><div class=sect4><h5 id=_builder>Builder</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class builder
+{
+public:
+    explicit builder(std::size_t     size,
+                     MemoryResource* resource = /* default resource */);
+
+    char_type* data() const noexcept;
+    std::size_t size() const noexcept;
+
+    buffer finish() &amp;&amp; noexcept;
+};</code></pre></div></div><div class=paragraph><p>The <code>builder</code> class separates the allocation and copying of the buffer data.
+This allows, for example, writing into the immutable buffer from a file.
+The constructor allocates memory for <code>size</code> characters, then <code>data()</code> gives a mutable pointer to that memory.</p></div></div><div class=sect4><h5 id=_make_buffer>Make buffer</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>struct /* unspecified */
+{
+    auto operator()(const void* memory, std::size_t size) const;
+
+    template &lt;typename MemoryResource&gt;
+    auto operator()(const void* memory, std::size_t size, MemoryResource* resource) const;
+};
+
+template &lt;typename Encoding, encoding_endianness Endianness&gt;
+constexpr auto make_buffer = /* unspecified */;</code></pre></div></div><div class=paragraph><p><code>lexy::make_buffer</code> is a function object that constructs a <code>lexy::buffer</code> of the specified encoding from raw memory.
+If necessary, it will take care of the endianness conversion as instructed by the <code>lexy::encoding_endianness</code> enumeration.
+Any BOM, if present, will not be part of the input.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Using a buffer to parse content from a <code>std::string</code> using UTF-8.
+This enables the sentinel optimization.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>std::string str = …;
+auto input = lexy::buffer&lt;lexy::utf8_encoding&gt;(str);</code></pre></div></div><div class=paragraph><p>Using a buffer to parse a memory-mapped file containing little endian UTF-16.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>auto ptr = mmap(…);
+
+constexpr auto make_utf16_little = lexy::make_buffer&lt;lexy::utf16_encoding,
+                                        lexy::encoding_endianness::little&gt;;
+auto input = make_utf16_little(ptr, length);</code></pre></div></div></div></details></div></div><div class=sect3><h4 id=_file_input>File Input</h4><div class=listingblock><div class=title><code>lexy/input/file.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    enum class file_error
+    {
+        os_error,
+        file_not_found,
+        permission_denied,
+    };
+
+    template &lt;typename Encoding          = default_encoding,
+              encoding_endianness Endian = encoding_endianness::bom,
+              typename MemoryResource&gt;
+    auto read_file(const char*     path,
+                   MemoryResource* resource = /* default resource */)
+        -&gt; result&lt;buffer&lt;Encoding, MemoryResource&gt;, file_error&gt;;
+}</code></pre></div></div><div class=paragraph><p>The function <code>lexy::read_file()</code> reads the file at the specified path using the specified encoding and endianness.
+On success, it returns a <code>lexy::result</code> containing a <code>lexy::buffer</code> with the file contents.
+On failure, it returns a <code>lexy::result</code> containing the error code.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Reading UTF-16 from a file with a BOM.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>auto result = lexy::read_file&lt;lexy::utf16_encoding&gt;(&#34;input.txt&#34;);
+if (!result)
+    throw my_file_read_error_exception(result.error()); // <b class=conum>(1)</b>
+
+auto input = std::move(result).value(); // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Throw an exception giving it the <code>lexy::file_error</code>.</p></li><li><p>Move the buffer out of the result and use it as input.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_shell_input>Shell Input</h4><div class=listingblock><div class=title><code>lexy/input/shell.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Encoding = default_encoding&gt;
+    struct default_prompt;
+
+    template &lt;typename Prompt = default_prompt&lt;&gt;&gt;
+    class shell
+    {
+    public:
+        using encoding    = typename Prompt::encoding;
+        using char_type   = typename encoding::char_type;
+        using prompt_type = Prompt;
+
+        shell();
+        explicit shell(Prompt prompt);
+
+        bool is_open() const noexcept;
+
+        Input prompt_for_input();
+
+        class writer;
+        template &lt;typename... Args&gt;
+        writer write_message(Args&amp;&amp;... args);
+
+        Prompt&amp; get_prompt() noexcept;
+        const Prompt&amp; get_prompt() const noexcept;
+    };
+
+    template &lt;typename Prompt = default_prompt&lt;&gt;&gt;
+    using shell_lexeme = /* unspecified */;
+    template &lt;typename Tag, typename Prompt = default_prompt&lt;&gt;&gt;
+    using shell_error = /* unspecified */;
+    template &lt;typename Production, typename Prompt = default_prompt&lt;&gt;&gt;
+    using shell_error_context = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::shell</code> creates an interactive shell to ask for user input and write messages out.
+The exact behavior is controlled by the <code>Prompt</code>.
+By default, it uses <code>lexy::default_prompt</code> which reads from <code>stdin</code> and writes to <code>stdout</code>.</p></div><div class="admonitionblock warning"><table><tbody><tr><td class=icon><div class=title>Warning</div></td><td class=content>The interface of a <code>Prompt</code> is currently experimental.
+Refer to <code>lexy::default_prompt</code> if you want to write your own.</td></tr></tbody></table></div><div class=sect4><h5 id=_state>State</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>bool is_open() const noexcept;</code></pre></div></div><div class=paragraph><p>A shell is initially open and can receive input, but the user can close the shell.
+For <code>lexy::default_prompt</code>, the shell is closed if the user enters EOF e.g. by pressing kbd:[Ctrl + D] under Linux.</p></div><div class=paragraph><p><code>is_open()</code> returns <code>false</code> if the user has closed it, and <code>true</code> otherwise.</p></div></div><div class=sect4><h5 id=_input>Input</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>Input prompt_for_input();</code></pre></div></div><div class=paragraph><p>A shell object is not itself an <code>Input</code>, but it can be used to create one.
+Calling <code>prompt_for_input()</code> will ask the user to enter some input, and then return an unspecified <code>Input</code> type that refers to that input.
+If parsing reaches the end of the input and the shell is still open, it will automatically ask the user for continuation input that will be appended to the current input.
+Once parsing of the input is done, <code>prompt_for_input()</code> can be called again to request new input from the user.</p></div><div class="admonitionblock warning"><table><tbody><tr><td class=icon><div class=title>Warning</div></td><td class=content>Calling <code>prompt_for_input()</code> again will invalidate all memory used by the previous input.</td></tr></tbody></table></div><div class=paragraph><p>The <code>lexy::default_prompt</code> asks for input by display <code>> ` and reading an entire line from `stdin</code>.
+If continuation input is requested, it will display `. ` and reads another line.</p></div></div><div class=sect4><h5 id=_output>Output</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class writer
+{
+public:
+    // non-copyable
+
+    template &lt;typename CharT&gt;
+    writer&amp; operator()(const CharT* str, std::size_t length);
+    template &lt;typename CharT&gt;
+    writer&amp; operator()(const CharT* str);
+    template &lt;typename CharT&gt;
+    writer&amp; operator()(CharT c);
+
+    writer&amp; operator()(lexy::lexeme_for&lt;/* input type */&gt; lexeme);
+};
+
+template &lt;typename... Args&gt;
+writer write_message(Args&amp;&amp;... args);</code></pre></div></div><div class=paragraph><p>Calling <code>write_message()</code> will prepare the prompt for displaying a message and returns a <code>writer</code> function object that can be used to specify the contents of the message.
+The arguments of <code>write_message()</code> are forwarded to the prompt and can be used to distinguish between e.g. normal and error messages.
+The <code>writer</code> can be invoked multiple times to give different parts of the message; the entire message is written out when the writer is destroyed.
+A <code>writer</code> can only write messages whose character type are the primary or secondary character type of the encoding.</p></div><div class=paragraph><p>Using <code>lexy::default_prompt</code> does not require any message arguments and it will simply write the message to <code>stdout</code>, appending a newline at the end.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>An interactive REPL.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>lexy::shell&lt;&gt; shell;
+while (shell.is_open())
+{
+    auto input = shell.prompt_for_input(); // <b class=conum>(1)</b>
+    auto result = lexy::parse&lt;expression&gt;(input, …); // <b class=conum>(2)</b>
+    if (result)
+        shell.write_message()(result.value()); // <b class=conum>(3)</b>
+}</code></pre></div></div><div class="colist arabic"><ol><li><p>Ask the user to enter more input.</p></li><li><p>Parse the input, requesting continuation input if necessary.</p></li><li><p>Write the result.</p></li></ol></div><div class=paragraph><p>For a full example, see <code>examples/shell.cpp</code>.</p></div></div></details></div></div><div class=sect3><h4 id=_command_line_argument_input>Command-line argument Input</h4><div class=listingblock><div class=title><code>lexy/input/argv_input.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    class argv_sentinel;
+    class argv_iterator;
+
+    constexpr argv_iterator argv_begin(int argc, char* argv[]) noexcept;
+    constexpr argv_iterator argv_end(int argc, char* argv[]) noexcept;
+
+    template &lt;typename Encoding = default_encoding&gt;
+    class argv_input
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = argv_iterator;
+
+        constexpr argv_input() = default;
+        constexpr argv_input(argv_iterator begin, argv_iterator end) noexcept;
+        constexpr argv_input(int argc, char* argv[]) noexcept;
+
+        constexpr Reader reader() const&amp; noexcept;
+    };
+
+    template &lt;typename Encoding = default_encoding&gt;
+    using argv_lexeme = lexeme_for&lt;argv_input&lt;Encoding&gt;&gt;;
+    template &lt;typename Tag, typename Encoding = default_encoding&gt;
+    using argv_error = error_for&lt;argv_input&lt;Encoding&gt;, Tag&gt;;
+    template &lt;typename Production, typename Encoding = default_encoding&gt;
+    using argv_error_context = error_context&lt;Production, argv_input&lt;Encoding&gt;&gt;;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::argv_input</code> is an input that uses the command-line arguments passed to <code>main()</code>.
+It excludes <code>argv[0]</code>, which is the executable name, and includes <code>\0</code> as a separator between command line arguments.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The input is a lightweight view and does not own any data.</td></tr></tbody></table></div><div class=sect4><h5 id=_command_line_iterators>Command-line iterators</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class argv_sentinel;
+class argv_iterator;
+
+constexpr argv_iterator argv_begin(int argc, char* argv[]) noexcept;
+constexpr argv_iterator argv_end(int argc, char* argv[]) noexcept;</code></pre></div></div><div class=paragraph><p>The <code>lexy::argv_iterator</code> is a bidirectional iterator iterating over the command-line arguments excluding the initial argument which is the executable name.
+It can be created using <code>argv_begin()</code> and <code>argv_end()</code>.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Use the command line arguments as input.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>int main(int argc, char* argv[])
+{
+    auto input = lexy::argv_input(argc, argv);
+    …
+}</code></pre></div></div><div class=paragraph><p>If the program is invoked with <code>./a.out a 123 b</code>, the input will be <code>a\0123\0b</code>.</p></div></div></details></div></div></div><div class=sect2><h3 id=_lexemes_and_tokens>Lexemes and Tokens</h3><div class=paragraph><p>A <strong>lexeme</strong> is the part of the input matched by a token rule.
+It is represented by the class <code>lexy::lexeme</code>.
+A <strong>token</strong> is a combination of an identifier that defines the rule it matches, as well as the matched lexeme.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>When talking about tokens in the context of rules, it is usually short for token rule,
+i.e. the rule that defines what is matched, not the concrete realization.</td></tr></tbody></table></div><div class=sect3><h4 id=_code_point>Code point</h4><div class=listingblock><div class=title><code>lexy/encoding.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    class code_point
+    {
+    public:
+        constexpr code_point() noexcept;
+        constexpr explicit code_point(char32_t value) noexcept;
+
+        constexpr char32_t value() const noexcept;
+
+        constexpr bool is_valid() const noexcept;
+        constexpr bool is_surrogate() const noexcept;
+        constexpr bool is_scalar() const noexcept;
+
+        constexpr bool is_ascii() const noexcept;
+        constexpr bool is_bmp() const noexcept;
+
+        friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept;
+        friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept;
+    };
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::code_point</code> represents a single code point from the input.
+It is merely a wrapper over a <code>char32_t</code> that contains the numerical code.</p></div><div class=sect4><h5 id=_constructors>Constructors</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr code_point() noexcept; // <b class=conum>(1)</b>
+constexpr explicit code_point(char32_t value) noexcept; <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Creates an invalid code point.</p></li><li><p>Creates the specified code point. The value will be returned from <code>value()</code> unchanged.</p></li></ol></div></div><div class=sect4><h5 id=_validity>Validity</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr bool is_valid() const noexcept; // <b class=conum>(1)</b>
+constexpr bool is_surrogate() const noexcept; // <b class=conum>(2)</b>
+constexpr bool is_scalar() const noexcept; // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if the code point is less than <code>0x10’FFFF</code>, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if the code point is a UTF-16 surrogate, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if the code point is valid and not a surrogate, <code>false</code> otherwise.</p></li></ol></div></div><div class=sect4><h5 id=_category>Category</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr bool is_ascii() const noexcept; // <b class=conum>(1)</b>
+constexpr bool is_bmp() const noexcept; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if the code point is ASCII (7-bit value), <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if the code point is in the Unicode BMP (16-bit value), <code>false</code> otherwise.</p></li></ol></div></div></div><div class=sect3><h4 id=_lexeme>Lexeme</h4><div class=listingblock><div class=title><code>lexy/lexeme.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Reader&gt;
+    class lexeme
+    {
+    public:
+        using encoding  = typename Reader::encoding;
+        using char_type = typename encoding::char_type;
+        using iterator  = typename Reader::iterator;
+
+        constexpr lexeme() noexcept;
+        constexpr lexeme(iterator begin, iterator end) noexcept;
+
+        constexpr explicit lexeme(const Reader&amp; reader, iterator begin) noexcept
+        : lexeme(begin, reader.cur())
+        {}
+
+        constexpr bool empty() const noexcept;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        // Only if the iterator is a pointer.
+        constexpr const char_type* data() const noexcept;
+
+        // Only if the iterator has `operator-`.
+        constexpr std::size_t size() const noexcept;
+
+        // Only if the iterator has `operator[]`.
+        constexpr char_type operator[](std::size_t idx) const noexcept;
+    };
+
+    template &lt;typename Input&gt;
+    using lexeme_for = lexeme&lt;input_reader&lt;Input&gt;&gt;;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::lexeme</code> represents a sub-range of the input.
+For convenience, most inputs also provide convenience typedefs that can be used instead of <code>lexy::lexeme_for</code>.</p></div></div><div class=sect3><h4 id=_token_kind>Token Kind</h4><div class=listingblock><div class=title><code>lexy/token.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    struct unknown_token_kind {};
+
+    template &lt;typename TokenKind = void&gt;
+    class token_kind
+    {
+    public:
+        constexpr token_kind() noexcept;
+        constexpr token_kind(lexy::unknown_token_kind) noexcept;
+        constexpr token_kind(TokenKind value) noexcept;
+        template &lt;typename TokenRule&gt;
+        constexpr token_kind(TokenRule token_rule) noexcept;
+
+        constexpr explicit operator bool() const noexcept;
+
+        constexpr /* see below */ name() const noexcept;
+
+        constexpr TokenKind get() const noexcept;
+
+        static constexpr std::uint_least16_t to_raw(token_kind&lt;TokenKind&gt; kind) noexcept;
+        static constexpr token_kind&lt;TokenKind&gt; from_raw(std::uint_least16_t kind) noexcept;
+
+        friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept;
+        friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept;
+    };
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::token_kind</code> identifies a token rule.
+It is merely a wrapper over the specified <code>TokenKind</code>, which is an enum.
+If <code>TokenKind</code> is <code>void</code>, it is a wrapper over an <code>int</code>.</p></div><div class=sect4><h5 id=_constructors_2>Constructors</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr token_kind() noexcept;                         // <b class=conum>(1)</b>
+constexpr token_kind(lexy::unknown_token_kind) noexcept; // <b class=conum>(1)</b>
+
+constexpr token_kind(TokenKind value) noexcept; // <b class=conum>(2)</b>
+
+template &lt;typename TokenRule&gt;
+constexpr token_kind(TokenRule token_rule) noexcept; // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Creates an unknown token kind, which has the value <code>TokenKind(-1)</code>.</p></li><li><p>Creates the specified token kind, if <code>TokenKind</code> is <code>void</code>, constructor takes an <code>int</code>.</p></li><li><p>Creates a token kind from a token rule.</p></li></ol></div><div class=paragraph><p>The token kind of a rule is computed as follows:</p></div><div class=ulist><ul><li><p>If the token rule was associated with a token kind by calling <code>.kind&lt;value></code>, the resulting kind is the specified <code>value></code>.</p></li><li><p>Otherwise, if the map found at <code>lexy::token_kind_map_for&lt;TokenKind></code> contains a mapping for the <code>TokenRule</code>, it uses that.</p></li><li><p>Otherwise, the token kind is unknown.</p></li></ul></div></div><div class=sect4><h5 id=_access>Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr explicit operator bool() const noexcept; // <b class=conum>(1)</b>
+
+constexpr /* see below */ name() const noexcept; // <b class=conum>(2)</b>
+
+constexpr TokenKind get() const noexcept; // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if the token kind is not unknown, <code>false</code> otherwise.</p></li><li><p>Returns the name of the token kind, the return type is some unspecified type like <code>std::string_view</code>.</p></li><li><p>Returns the underlying value of the token kind.</p></li></ol></div><div class=paragraph><p>The name of a token kind is determined as follows:</p></div><div class=ulist><ul><li><p>If the <code>TokenKind</code> is <code>void</code>, the name is <code>"token"</code> for all token kinds.</p></li><li><p>Otherwise, if the <code>TokenKind</code> is unknown, the name is <code>"token"</code>.</p></li><li><p>Otherwise, if ADL finds an overload <code>string-like token_kind_name(TokenKind kind)</code>,
+where <code>string-like</code> is either <code>const char*</code> or a class with <code>.data()</code> and <code>.size()</code>,
+returns that as the name.</p></li><li><p>Otherwise, the name is <code>"token"</code> for all tokens.</p></li></ul></div></div></div><div class=sect3><h4 id=_token_kind_map>Token Kind Map</h4><div class=listingblock><div class=title><code>lexy/token.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    class Token-Kind-Map
+    {
+    public:
+        template &lt;auto TokenKind, typename TokenRule&gt;
+        consteval Token-Kind-Map map(TokenRule) const;
+    };
+
+    inline constexpr auto token_kind_map = Token-Kind-Map{};
+
+    template &lt;typename TokenKind&gt;
+    constexpr auto token_kind_map_for = token_kind_map;
+}</code></pre></div></div><div class=paragraph><p>There are two ways to associate a token kind with a token rule.
+Either by calling <code>.kind&lt;Kind></code> on the token rule and giving it a value there,
+or by specializing the <code>lexy::token_kind_map_for</code> for your <code>TokenKind</code> enumeration.</p></div><details><summary class=title>Example</summary><div class=content><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>enum class my_token_kind // <b class=conum>(1)</b>
+{
+    code_point,
+    period,
+    open_paren,
+    close_paren,
+};
+
+// <b class=conum>(2)</b>
+template &lt;&gt;
+constexpr auto lexy::token_kind_map_for&lt;my_token_kind&gt;
+    = lexy::token_kind_map.map&lt;my_token_kind::code_point&gt;(lexy::dsl::code_point)
+                          .map&lt;my_token_kind::period&gt;(lexy::dsl::period)
+                          .map&lt;my_token_kind::open_paren&gt;(lexy::dsl::parenthesized.open())
+                          .map&lt;my_token_kind::close_paren&gt;(lexy::dsl::parenthesized.close());</code></pre></div></div><div class="colist arabic"><ol><li><p>Define your <code>TokenKind</code> enumeration.</p></li><li><p>Define the mapping of token rules to enumeration values.</p></li></ol></div></div></details><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The token kind is only relevant when <code>lexy::parse_as_tree()</code> is used to parse the input.</td></tr></tbody></table></div></div><div class=sect3><h4 id=_token>Token</h4><div class=listingblock><div class=title><code>lexy/token.hpp</code></div><div class=content><pre>namespace lexy
+{
+    template &lt;typename Reader, typename TokenKind = void&gt;
+    class token
+    {
+    public:
+        explicit constexpr token(token_kind&lt;TokenKind&gt; kind, lexy::lexeme&lt;Reader&gt; lex) noexcept;
+        explicit constexpr token(token_kind&lt;TokenKind&gt; kind,
+                                 typename Reader::iterator begin,
+                                 typename Reader::iterator end) noexcept;
+
+        constexpr token_kind&lt;TokenKind&gt; kind() const noexcept;
+        constexpr auto lexeme() const noexcept;
+
+        constexpr auto name() const noexcept { return kind().name(); }
+
+        constexpr auto position() const noexcept -&gt; typename Reader::iterator
+        {
+            return lexeme().begin();
+        }
+    };
+
+    template &lt;typename Input, typename TokenKind = void&gt;
+    using token_for = token&lt;input_reader&lt;Input&gt;, TokenKind&gt;;
+}</pre></div></div><div class=paragraph><p>The class <code>lexy::token</code> just combines a <code>lexy::token_kind</code> and a <code>lexy::lexeme</code>.</p></div></div></div><div class=sect2><h3 id=_writing_custom_inputs>Writing custom Inputs</h3><div class=listingblock><div class=title>The <code>Input</code> concept</div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class Input
+{
+public:
+    Reader reader() const&amp;;
+};</code></pre></div></div><div class=paragraph><p>An <code>Input</code> is just a class with a <code>reader()</code> member function that returns a <code>Reader</code> to the beginning of the input.
+The type alias <code>lexy::input_reader&lt;Reader></code> returns the type of the corresponding reader.</p></div><div class="admonitionblock warning"><table><tbody><tr><td class=icon><div class=title>Warning</div></td><td class=content>The interface of a <code>Reader</code> is currently experimental.
+Refer to the comments in <code>lexy/input/base.hpp</code>.</td></tr></tbody></table></div></div></div></div></article></main><footer id=page-footer><section class=copyright>&copy; 2020-2021</section><section class=patreon><a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>.</section><section class=poweredby>Made with <a target=_blank href=https://gohugo.io>Hugo</a>.</section></footer></body></html>

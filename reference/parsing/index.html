@@ -1,0 +1,574 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>lexy: C++ parser combinator library</title><style>:root{--white: white;--header-white: rgba(255, 255, 255, .75);--background-color: #fdfdfd;--default-color: #101010;--heading-color: #0A0A0A;--link-color: #2A2A2A;--gray-highlight-color: #aaaaaa;--highlight-color: #2861ce}@media(prefers-color-scheme:dark){:root{--white: #020202;--header-white: rgba(2, 2, 2, .75);--background-color: #222222;--default-color: #efefef;--heading-color: #f5f5f5;--link-color: #d5d5d5;--gray-highlight-color: #555555}}nav#menu div.menu-container,main{max-width:1200px;margin:0 auto;padding:0 10px}@media(min-width:800px){article{max-width:900px;margin:0 auto;padding:0 10px}}html{position:relative;min-height:100%;margin:0;padding:0}body{font-family:serif;font-size:18px;color:var(--default-color);background-color:var(--background-color);width:100%;padding:0;margin:0}main{margin-bottom:75px}h1,h2,h3,h4,h5,h6{font-family:sans-serif;font-weight:700;line-height:1.15em;color:var(--heading-color);margin:0 0 .4em}h1{font-size:2em}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h5{font-size:1.15em}h6{font-size:1.1em}a{color:var(--link-color);transition:color ease .3s}a:hover{color:var(--highlight-color)}a:focus{outline:none}br{margin:1em}article p,article ul,article ol,article dl{hyphens:auto;text-align:justify}nav#menu{width:100%;padding:0;background-color:var(--white);border-bottom:2px solid var(--highlight-color);font-family:sans-serif;font-size:1.3em}nav#menu div.menu-container{display:flex}nav#menu div.menu-container ul{display:flex;flex-direction:row;align-items:center;padding:0;list-style:none}nav#menu div.menu-container ul li a{text-decoration:none}nav#menu div.menu-container ul li a.active{border-width:0 0 2px;border-style:solid;border-color:var(--highlight-color)}nav#menu div.menu-container ul#home{padding-left:0;padding-right:10px}nav#menu div.menu-container ul#home li{font-weight:700}nav#menu div.menu-container ul#main{margin-left:auto}nav#menu div.menu-container ul#main li{padding-left:20px}@media(max-width:600px){nav#menu div.menu-container ul#main{flex-direction:column;align-items:flex-end;margin:5px 10px 0 auto}}footer#page-footer{position:absolute;bottom:0;left:0;right:0;height:2em;display:flex;justify-content:space-between;font-size:.8em;font-weight:200;line-height:1em;border-top:1px solid #ccc}footer#page-footer section{padding-left:1em;padding-right:1em;padding-top:.5em;width:100%}footer#page-footer .copyright{text-align:left}footer#page-footer .patreon{text-align:center}footer#page-footer .poweredby{text-align:right}@media(max-width:450px){footer#page-footer{flex-direction:column;align-items:flex-start}footer#page-footer section{text-align:initial!important;width:initial}}aside.toc{display:none}@media(min-width:1200px){aside.toc{display:initial;position:sticky;top:1em;float:left;width:300px}aside.toc header{font-weight:700}aside.toc ul{list-style:none;padding:0}aside.toc ul ul{padding-left:1em;padding-bottom:.5em}aside.toc a{text-decoration:none}aside.toc~article{padding-left:300px}}article .admonitionblock{margin-bottom:1em}article .admonitionblock td.icon{width:75px;font-weight:700;border-right:1px solid var(--gray-highlight-color);padding:.5em}article .admonitionblock td.content{padding-left:.5em}article details{padding-bottom:1em}article details summary{font-weight:700}article dl dt{font-weight:700}article dl dd{margin-top:-.9em}article dl dd dt{margin-top:.9em}article div.sidebarblock{border:1px solid var(--gray-highlight-color);padding:.75em;margin:1em}article div.sidebarblock p{margin:0}article :not(td)>div.title{font-style:italic;margin-bottom:-.9em}article code{font-family:Inconsolata,monospace,sans-serif}article pre{overflow:auto;padding:10px;background:var(--white);border:1px solid var(--gray-highlight-color);line-height:1.1}article .colist{margin-top:-.5em}article .colist ol{counter-reset:list}article .colist ol li{counter-increment:list;padding-left:1em}article .colist ol ::marker{content:"(" counter(list)")";font-weight:700}article .colist p{margin:0}article .highlight{}article .highlight .c{color:#998;font-style:italic}article .highlight .k{color:#458;font-weight:700}article .highlight .o{color:red}article .highlight .p{color:red}article .highlight .err{color:red}article .highlight .cm{color:#998;font-style:italic}article .highlight .cp{color:green;font-weight:700}article .highlight .c1{color:#998;font-style:italic}article .highlight .cs{color:#999;font-weight:700;font-style:italic}article .highlight .gd{color:#000;background-color:#fdd}article .highlight .gd .x{color:#000;background-color:#faa}article .highlight .ge{font-style:italic}article .highlight .gr{color:#a00}article .highlight .gh{color:#999}article .highlight .gi{color:#000;background-color:#dfd}article .highlight .gi .x{color:#000;background-color:#afa}article .highlight .go{color:#888}article .highlight .gp{color:#555}article .highlight .gs{font-weight:700}article .highlight .gu{color:#aaa}article .highlight .gt{color:#a00}article .highlight .kc{color:#458;font-weight:700}article .highlight .kd{color:#458;font-weight:700}article .highlight .kp{color:#458;font-weight:700}article .highlight .kr{color:#458;font-weight:700}article .highlight .kt{color:#458;font-weight:700}article .highlight .m{color:#ff8000}article .highlight .s{color:green}article .highlight .ow{font-weight:700}article .highlight .w{color:#bbb}article .highlight .mf{color:#ff8000}article .highlight .mh{color:#ff8000}article .highlight .mi{color:#ff8000}article .highlight .mo{color:#ff8000}article .highlight .sb{color:#d14}article .highlight .sc{color:#d14}article .highlight .sd{color:#d14}article .highlight .s2{color:#d14}article .highlight .se{color:#d14}article .highlight .sh{color:#d14}article .highlight .si{color:#d14}article .highlight .sx{color:#d14}article .highlight .sr{color:#009926}article .highlight .s1{color:#d14}article .highlight .ss{color:#990073}article .highlight .bp{color:#999}article .highlight .vc{color:teal}article .highlight .vg{color:teal}article .highlight .vi{color:teal}article .highlight .il{color:#099}</style></head><body><nav id=menu><div class=menu-container><ul id=home><li><a href=/>lexy: C++ parser combinator library</a></li></ul><ul id=main><li><a href=/tutorial/>Tutorial</a></li><li><a href=/reference/>Reference</a></li><li><a href=https://github.com/foonathan/lexy>GitHub</a></li></ul></nav><main id=content><aside class=toc><header><a href=#>Table of Contents</a></header><nav id=TableOfContents></nav></aside><article><div class=sect1><h2 id=_matching_parsing_and_validating>Matching, parsing and validating</h2><div class=sectionbody><div class=listingblock><div class=title>The <code>Production</code> concept</div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>struct Production
+{
+    static constexpr auto rule = …;
+    static constexpr auto whitespace = …; // optional
+
+    static constexpr auto value = …; // optional
+};</code></pre></div></div><div class=paragraph><p>A <code>Production</code> is type containing a rule and optional callbacks that produce the value.
+A grammar contains an entry production where parsing begins and all productions referenced by it.</p></div><div class="admonitionblock tip"><table><tbody><tr><td class=icon><div class=title>Tip</div></td><td class=content>It is recommended to put all productions of a grammar into a separate namespace.</td></tr></tbody></table></div><div class=paragraph><p>By passing the entry production of the grammar to <code>lexy::match()</code>, <code>lexy::parse()</code>, or <code>lexy::validate()</code>, the production is parsed.</p></div><h3 id=_matching class=discrete>Matching</h3><div class=listingblock><div class=title><code>lexy/match.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Production, typename Input&gt;
+    constexpr bool match(const Input&amp; input);
+}</code></pre></div></div><div class=paragraph><p>The function <code>lexy::match()</code> matches the <code>Production</code> on the given <code>input</code>.
+If the production accepts the input, returns <code>true</code>, otherwise, returns <code>false</code>.
+It will discard any values produced and does not give detailed information about why the production did not accept the input.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>A production does not necessarily need to consume the entire input for it to match.
+Add <code>lexy::dsl::eof</code> to the end if the production should consume the entire input.</td></tr></tbody></table></div><h3 id=_validating class=discrete>Validating</h3><div class=listingblock><div class=title><code>lexy/validate.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Production, typename Input, typename Callback&gt;
+    constexpr auto validate(const Input&amp; input, Callback callback)
+        -&gt; result&lt;/* see below */&gt;;
+}</code></pre></div></div><div class=paragraph><p>The function <code>lexy::validate()</code> validates that the <code>Production</code> matches on the given <code>input</code>.
+The return value is an <code>lexy::result&lt;void, E></code>, where <code>E</code> is the return type of <code>callback</code>.
+If the production accepts the input, returns an empty optional, otherwise, invokes the callback with the error information (see <a href=#_error_handling>Error handling</a>) and returns its result.
+It will discard any values produced.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>A production does not necessarily need to consume the entire input for it to match.
+Add <code>lexy::dsl::eof</code> to the end if the production should consume the entire input.</td></tr></tbody></table></div><h3 id=_parsing class=discrete>Parsing</h3><div class=listingblock><div class=title><code>lexy/parse.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Production, typename Input, typename Callback&gt;
+    constexpr auto parse(const Input&amp; input, Callback callback)
+        -&gt; result&lt;/* see below */&gt;;
+
+    template &lt;typename Production, typename Input, typename State, typename Callback&gt;
+    constexpr auto parse(const Input&amp; input, State&amp;&amp; state, Callback callback)
+        -&gt; result&lt;/* see below */&gt;;
+}</code></pre></div></div><div class=paragraph><p>The function <code>lexy::parse()</code> parses the <code>Production</code> on the given <code>input</code>.
+The return value is a <code>lexy::result&lt;T, E></code>, where <code>T</code> is the return type of the <code>Production::value</code> or <code>Production::list</code> callback,
+and <code>E</code> is the return type of the <code>callback</code>.
+If the production accepts the input, invokes <code>Production::value</code> (see below) with the produced values and returns their result.
+Otherwise, invokes <code>callback</code> with the error information (see <a href=#_error_handling>Error handling</a>) and returns its result.</p></div><div class=paragraph><p>The return value on success is determined using <code>Production::value</code> depending on three cases:</p></div><div class=ulist><ul><li><p><code>Production::rule</code> does not contain a list. Then all arguments will be forwarded to <code>Production::value</code> as a callback whose result is returned.
+The <code>Production::value</code> callback must be present.</p></li><li><p><code>Production::rule</code> contains a list and no other rule produces a value. Then <code>Production::value</code> will be used as sink for the list values.
+If <code>Production::value</code> is also a callback that accepts the result of the sink as argument,
+it will be invoked with the sink result and the processed result returned.
+Otherwise, the result of the sink is the final result.</p></li><li><p><code>Production::rule</code> contains a list and other rules produce values as well.
+Then <code>Production::value</code> will be used as sink for the list values.
+The sink result will be added to the other values in order and everything forwarded to <code>Production::value</code> as a callback.
+The callback result is then returned.</p></li></ul></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The callback <code>operator>></code> is useful for case 3 to create a combined callback and sink with the desired behavior.</td></tr></tbody></table></div><div class=paragraph><p>The second overload of <code>lexy::parse()</code> allows passing an arbitrary state argument.
+This will be made available to the <code>lexy::dsl::parse_state</code> and <code>lexy::dsl::parse_state_member</code> rules which can forward it to the <code>Production::value</code> callback.</p></div><div class=sect2><h3 id=_result>Result</h3><div class=listingblock><div class=title><code>lexy/result.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    struct result_empty_t {};
+    constexpr auto result_empty = result_empty_t{};
+
+    struct result_value_t {};
+    constexpr auto result_value = result_value_t{};
+
+    struct result_error_t {};
+    constexpr auto result_error = result_error_t{};
+
+    template &lt;typename T, typename E&gt;
+    class result
+    {
+    public:
+        using value_type = /* see below */;
+        using error_type = /* see below */;
+
+        constexpr result(result_empty_t);
+
+        template &lt;typename... Args&gt;
+        constexpr result(result_value_t, Args&amp;&amp;... args);
+        template &lt;typename... Args&gt;
+        constexpr result(result_error_t, Args&amp;&amp;... args);
+
+        template &lt;typename U&gt;
+        constexpr explicit result(const result&lt;U, E&gt;&amp; other);
+        template &lt;typename U&gt;
+        constexpr explicit result(result&lt;U, E&gt;&amp;&amp; other);
+
+        template &lt;typename Arg&gt;
+        constexpr explicit result(Arg&amp;&amp; arg);
+
+        constexpr explicit operator bool() const noexcept;
+        constexpr bool has_value() const noexcept;
+        constexpr bool has_error() const noexcept;
+
+        static constexpr bool has_void_value() noexcept;
+        static constexpr bool has_void_error() noexcept;
+
+        constexpr value_type&amp; value() &amp; noexcept;
+        constexpr const value_type&amp; value() const&amp; noexcept;
+        constexpr value_type&amp;&amp; value() &amp;&amp; noexcept;
+        constexpr const value_type&amp;&amp; value() const&amp;&amp; noexcept;
+
+        constexpr error_type&amp; error() &amp; noexcept;
+        constexpr const error_type&amp; error() const&amp; noexcept;
+        constexpr error_type&amp;&amp; error() &amp;&amp; noexcept;
+        constexpr const error_type&amp;&amp; error() const&amp;&amp; noexcept;
+    };
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::result&lt;T, E></code> stores either a value <code>T</code> or an error <code>E</code> (or nothing) and is used to return the result of parsing.
+<code>T</code> and <code>E</code> can be <code>void</code>; in that case it is internally translated to the tag types <code>result_value_t</code> or <code>result_error_t</code>, respectively, which is reflected in the <code>value_type</code> and <code>error_type</code> typedefs as well.</p></div><div class="admonitionblock tip"><table><tbody><tr><td class=icon><div class=title>Tip</div></td><td class=content><code>lexy::result&lt;T, void></code> is like <code>std::optional&lt;T></code> and <code>lexy::result&lt;void, void></code> is like <code>bool</code>.</td></tr></tbody></table></div><div class=paragraph><p>Once a result is created containing a value or error, it can never change that state.</p></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content><code>lexy::result</code> was created for use by the library only.
+While it can be used as a general purpose result monad (which we leverage for <code>lexy::read_file()</code>), it is better to us a designated library for it.</td></tr></tbody></table></div><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>Every <code>lexy::result</code> object returned by the library is never empty.
+The empty state is just used internally and not exposed to the user (unless of course, the user explicitly creates an empty result).</td></tr></tbody></table></div><h5 id=_creation class=discrete>Creation</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr result(result_empty_t); // <b class=conum>(1)</b>
+
+template &lt;typename... Args&gt;
+constexpr result(result_value_t, Args&amp;&amp;... args); // <b class=conum>(2)</b>
+template &lt;typename... Args&gt;
+constexpr result(result_error_t, Args&amp;&amp;... args); // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Creates a result that is empty.</p></li><li><p>Creates a result containing the value constructed by forwarding the arguments.</p></li><li><p>Creates a result containing the error constructed by forwarding the arguments.</p></li></ol></div><h5 id=_conversion class=discrete>Conversion</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename U&gt;
+constexpr explicit result(const result&lt;U, E&gt;&amp; other); // <b class=conum>(1)</b>
+template &lt;typename U&gt;
+constexpr explicit result(result&lt;U, E&gt;&amp;&amp; other); // <b class=conum>(2)</b>
+
+template &lt;typename Arg&gt;
+constexpr explicit result(Arg&amp;&amp; arg); // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Converts an errored <code>result&lt;U, E></code> to a <code>result&lt;T, E></code> by copying the error.</p></li><li><p>Converts an errored <code>result&lt;U, E></code> to a <code>result&lt;T, E></code> by moving the error.</p></li><li><p>Only available for <code>result&lt;T, void></code> or <code>result&lt;void, E></code>. Constructs the value/error by forwarding the argument.</p></li></ol></div><h5 id=_state class=discrete>State</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr explicit operator bool() const noexcept; // <b class=conum>(1)</b>
+constexpr bool is_empty() const noexcept;  // <b class=conum>(2)</b>
+constexpr bool has_value() const noexcept; // <b class=conum>(3)</b>
+constexpr bool has_error() const noexcept; // <b class=conum>(4)</b>
+
+static constexpr bool has_void_value() noexcept; // <b class=conum>(5)</b>
+static constexpr bool has_void_error() noexcept; // <b class=conum>(6)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if it contains a value, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if it is empty (contains neither value nor error), <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if it contains a value, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if it contains an error, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if <code>T == void</code>, <code>false</code> otherwise.</p></li><li><p>Returns <code>true</code> if <code>E == void</code>, <code>false</code> otherwise.</p></li></ol></div><h5 id=_access class=discrete>Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr value_type&amp; value() &amp; noexcept;
+constexpr const value_type&amp; value() const&amp; noexcept;
+constexpr value_type&amp;&amp; value() &amp;&amp; noexcept;
+constexpr const value_type&amp;&amp; value() const&amp;&amp; noexcept;
+
+constexpr error_type&amp; error() &amp; noexcept;
+constexpr const error_type&amp; error() const&amp; noexcept;
+constexpr error_type&amp;&amp; error() &amp;&amp; noexcept;
+constexpr const error_type&amp;&amp; error() const&amp;&amp; noexcept;</code></pre></div></div><div class=paragraph><p>Returns the stored value or error, respectively.</p></div></div><div class=sect2><h3 id=_callbacks>Callbacks</h3><div class=listingblock><div class=title>The <code>Callback</code> concept</div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>struct Callback
+{
+    using return_type = …;
+
+    return_type operator()(Args&amp;&amp;... args) const;
+};
+
+struct Sink
+{
+    class _sink // exposition only
+    {
+    public:
+        using return_type = …;
+
+        void operator()(Args&amp;&amp;... args);
+
+        return_type&amp;&amp; finish() &amp;&amp;;
+    };
+
+    _sink sink() const;
+};</code></pre></div></div><div class=paragraph><p>A <code>Callback</code> is a function object whose return type is specified by a member typedef.
+A <code>Sink</code> is a type with a <code>sink()</code> member function that returns a callback.
+The callback can be invoked multiple times and the final value is return by calling <code>.finish()</code>.</p></div><div class=paragraph><p>Callbacks are used by <code>lexy</code> to compute the parse result and handle error values.
+They can either be written manually implementing to the above concepts or composed from the pre-defined concepts.</p></div><div class=sect3><h4 id=_callback_adapters>Callback adapters</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename ReturnType = void, typename... Fns&gt;
+    constexpr Callback callback(Fns&amp;&amp;... fns);
+}</code></pre></div></div><div class=paragraph><p>Creates a callback with the given <code>ReturnType</code> from multiple functions.
+When calling the resulting callback, it will use overload resolution to determine the correct function to call.
+It supports function pointers, lambdas, and member function or data pointers.</p></div><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename T, typename... Fns&gt;
+    constexpr Sink sink(Fns&amp;&amp;... fns);
+}</code></pre></div></div><div class=paragraph><p>Creates a sink constructing the given <code>T</code> using the given functions.
+The sink will value-construct the <code>T</code> and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
+It supports function pointers, lambdas, and member function or data pointers.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Creating a sink that will add all values.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr auto adder = lexy::sink&lt;int&gt;([](int&amp; cur, int arg) { cur += arg; }); // <b class=conum>(1)</b>
+
+auto s = adder.sink(); // <b class=conum>(2)</b>
+s(1);
+s(2);
+s(3);
+auto result = std::move(s).finish();
+assert(result == 1 + 2 + 3);</code></pre></div></div><div class="colist arabic"><ol><li><p>Define the sink.</p></li><li><p>Use it.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_callback_composition>Callback composition</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename First, typename Second&gt;
+    constexpr auto operator|(First first, Second second); // <b class=conum>(1)</b>
+
+    template &lt;typename Sink, typename Callback&gt;
+    constexpr auto operator&gt;&gt;(Sink sink, Callback callback); // <b class=conum>(2)</b>
+
+}</code></pre></div></div><div class="colist arabic"><ol><li><p>The result of <code>first | second</code>, where <code>first</code> and <code>second</code> are both callbacks, is another callback that first invokes <code>first</code> and then passes the result to <code>second</code>.
+The result cannot be used as sink.</p></li><li><p>The result of <code>sink | callback</code>, is a sink and a callback.
+As a sink, it behaves just like <code>sink</code>.
+As a callback, it takes the result of the <code>sink</code> as well as any other arguments and forwards them to <code>callback</code>.</p></li></ol></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Build a string, then get its length.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr auto make_string = lexy::callback&lt;std::string&gt;([](const char* str) { return str; });
+constexpr auto string_length = lexy::callback&lt;std::size_t&gt;(&amp;std::string::size);
+
+constexpr auto inefficient_strlen = make_string | string_length; // <b class=conum>(1)</b>
+
+assert(inefficient_strlen(&#34;1234&#34;) == 4); // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Compose the two callbacks.</p></li><li><p>Use it.</p></li></ol></div></div></details><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>The callback <code>operator>></code> is used for productions whose rule contain both a list and produce other values.
+The list will be constructed using the <code>sink</code> and then everything will be passed to <code>callback</code>.</td></tr></tbody></table></div></div><div class=sect3><h4 id=_the_no_op_callback>The no-op callback</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    constexpr auto noop = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p><code>lexy::noop</code> is both a callback and a sink.
+It ignores all arguments passed to it and its return type is <code>void</code>.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Parse the production, but do nothing on errors.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>auto result = lexy::parse&lt;my_production&gt;(my_input, lexy::noop); // <b class=conum>(1)</b>
+if (!result)
+    throw my_parse_error(); // <b class=conum>(2)</b>
+auto value = result.value(); // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Parse <code>my_production</code>. If an error occurs, just return a <code>result&lt;T, void></code> in the error state.</p></li><li><p><code>lexy::noop</code> does not make errors disappear, they still need to be handled.</p></li><li><p>Do something with the parsed value.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_constructing_objects>Constructing objects</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename T&gt;
+    constexpr auto forward = /* unspecified */;
+
+    template &lt;typename T&gt;
+    constexpr auto construct = /* unspecified */;
+
+    template &lt;typename T, typename PtrT = T*&gt;
+    constexpr auto new_ = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p>The callback <code>lexy::forward&lt;T></code> can accept either a <code>const T&</code> or a <code>T&&</code> and forwards it.
+It does not have a sink.</p></div><div class=paragraph><p>The callback <code>lexy::construct&lt;T></code> constructs a <code>T</code> by forwarding all arguments to a suitable constructor.
+If the type does not have a constructor, it forwards all arguments using brace initialization.
+It does not have a sink.</p></div><div class=paragraph><p>The callback <code>lexy::new_&lt;T, PtrT></code> works just like <code>lexy::construct&lt;T></code>, but it constructs the object on the heap by calling <code>new</code>.
+The resulting pointer is then converted to the specified <code>PtrT</code>.
+It does not have a sink.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>A callback that creates a <code>std::unique_ptr&lt;std::string></code>.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr auto make_unique_str = lexy::new_&lt;std::string, std::unique_ptr&lt;std::string&gt;&gt;; // <b class=conum>(1)</b>
+
+constexpr auto make_unique_str2 = lexy::new_&lt;std::string&gt; | lexy::construct&lt;std::unique_ptr&lt;std::string&gt;&gt;; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Specify a suitable <code>PtrT</code>.</p></li><li><p>Equivalent version that uses composition and <code>lexy::construct</code> instead.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_constructing_lists>Constructing lists</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename T&gt;
+    constexpr auto as_list = /* unspecified */;
+
+    template &lt;typename T&gt;
+    constexpr auto as_collection = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p><code>lexy::as_list&lt;T></code> is both a callback and a sink.
+As a callback, it forwards all arguments to the <code>std::initializer_list</code> constructor of <code>T</code> and returns the result.
+As a sink, it first default constructs a <code>T</code> and then repeatedly calls <code>push_back()</code> for single arguments and <code>emplace_back()</code> otherwise.</p></div><div class=paragraph><p><code>lexy::as_collection&lt;T></code> is like <code>lexy::as_list&lt;T></code>, but instead of calling <code>push_back()</code> and <code>emplace_back()</code>, it calls <code>insert()</code> and <code>emplace()</code>.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Create a <code>std::vector&lt;int></code> and <code>std::set&lt;int></code>.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr auto as_int_vector = lexy::as_list&lt;std::vector&lt;int&gt;&gt;;
+constexpr auto as_int_set = lexy::as_collection&lt;std::set&lt;int&gt;&gt;;</code></pre></div></div></div></details></div><div class=sect3><h4 id=_constructing_strings>Constructing strings</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename String, typename Encoding = /* see below */&gt;
+    constexpr auto as_string = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p><code>lexy::as_string&lt;String, Encoding></code> is both a callback and a sink.
+It constructs a <code>String</code> object in the given <code>Encoding</code>.
+If no encoding is specified, it deduces one from the character type of the string.</p></div><div class=paragraph><p>As a callback, it constructs the string directly from the given argument.
+Then it accepts:</p></div><div class=ulist><ul><li><p>A reference to an existing <code>String</code> object, which is forwarded as the result.</p></li><li><p>A <code>const CharT*</code> and a <code>std::size_t</code>, where <code>CharT</code> is a compatible character type. The two arguments are forwarded to a <code>String</code> constructor.</p></li><li><p>A <code>lexy::lexeme&lt;Reader> lex</code>, where <code>Reader::iterator</code> is a pointer.
+The character type of the reader must be compatible with the encoding.
+It constructs the string using <code>String(lex.data(), lex.size())</code> (potentially casting the pointer type if necessary).</p></li><li><p>A <code>lexy::lexeme&lt;Reader> lex</code>, where <code>Reader::iterator</code> is not a pointer.
+It constructs the string using <code>String(lex.begin(), lex.end())</code>.
+The range constructor has to take care of any necessary character conversion.</p></li><li><p>A <code>lexy::code_point</code>. It is encoded into a local character array according to the specified <code>Encoding</code>.
+Then the string is constructed using a two-argument <code>(const CharT*, std::size_t)</code> constructor.</p></li></ul></div><div class=paragraph><p>As a sink, it first default constructs the string.
+Then it will repeatedly append the following arguments:</p></div><div class=ulist><ul><li><p>A single <code>CharT</code>, which is convertible to the strings character type.
+It is appended by calling <code>.push_back()</code>.</p></li><li><p>A reference to an existing <code>String</code> object, which is appended by calling <code>.append()</code>.</p></li><li><p>A <code>const CharT*</code> and a <code>std::size_t</code>, where <code>CharT</code> is a compatible character type.
+The two arguments are forwarded to <code>.append()</code>.</p></li><li><p>A <code>lexy::lexeme&lt;Reader> lex</code>, where <code>Reader::iterator</code> is a pointer.
+The character type of the reader must be compatible with the encoding.
+It is appended using <code>.append(lex.data(), lex.size())</code> (potentially casting the pointer type if necessary).</p></li><li><p>A <code>lexy::lexeme&lt;Reader> lex</code>, where <code>Reader::iterator</code> is not a pointer.
+It constructs the string using <code>.append(lex.begin(), lex.end())</code>.
+The range append function has to take care of any necessary character conversion.</p></li><li><p>A <code>lexy::code_point</code>. It is encoded into a local character array according to the specified <code>Encoding</code>.
+Then it is appended to the string using a two-argument <code>.append(const CharT*, std::size_t)</code> overload.</p></li></ul></div><details><summary class=title>Example</summary><div class=content><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>constexpr auto as_utf16_string = lexy::as_string&lt;std::u16string&gt;;                   // <b class=conum>(1)</b>
+constexpr auto as_utf8_string  = lexy::as_string&lt;std::string, lexy::utf8_encoding&gt;; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Constructs a <code>std::u16string</code>, deducing the encoding as UTF-16.</p></li><li><p>Constructs a <code>std::string</code>, specifying the encoding as UTF-8.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_rule_specific_callbacks>Rule-specific callbacks</h4><div class=listingblock><div class=title><code>lexy/callback.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename T&gt;
+    constexpr auto as_aggregate = /* unspecified */;
+
+    template &lt;typename T&gt;
+    constexpr auto as_integer = /* unspecified */;
+}</code></pre></div></div><div class=paragraph><p>The callback and sink <code>lexy::as_aggregate&lt;T></code> is only used together with the <code>lexy::dsl::member</code> rule and documented there.</p></div><div class=paragraph><p>The callback <code>lexy::as_integer&lt;T></code> constructs an integer type <code>T</code> and has two overloads:</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Integer&gt;
+T operator()(const Integer&amp; value) const; // <b class=conum>(1)</b>
+
+template &lt;typename Integer&gt;
+T operator()(int sign, const Integer&amp; value) const; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>T(value)</code>.</p></li><li><p>Returns <code>T(sign * value)</code>.</p></li></ol></div><div class=paragraph><p>The second overload is meant to be used together with <code>lexy::dsl::sign</code> and related rules.</p></div></div></div><div class=sect2><h3 id=_error_handling>Error handling</h3><div class=paragraph><p>Parsing errors are reported by constructing a <code>lexy::error</code> object and passing it to the error callback of <code>lexy::parse</code> and <code>lexy::validate</code> together with the <code>lexy::error_context</code>.</p></div><div class=paragraph><p>As such, an error callback looks like this:</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class ErrorCallback
+{
+public:
+    using return_type = /* … */;
+
+    template &lt;typename Production, typename Input, typename Tag&gt;
+    return_type operator()(const lexy::error_context&lt;Production, Input&gt;&amp; context,
+                           const lexy::error&lt;lexy::input_reader&lt;Input&gt;, Tag&gt;&amp; error) const;
+};</code></pre></div></div><div class=paragraph><p>Of course, overloading can be used to differentiate between various error types and contexts.</p></div><div class=sect3><h4 id=_error_types>Error types</h4><div class=listingblock><div class=title><code>lexy/error.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Reader, typename Tag&gt;
+    class error;
+
+    struct expected_literal {};
+    template &lt;typename Reader&gt;
+    class error&lt;Reader, expected_literal&gt;;
+
+    struct expected_char_class {};
+    template &lt;typename Reader&gt;
+    class error&lt;Reader, expected_char_class&gt;;
+
+    template &lt;typename Input, typename Tag&gt;
+    using error_for = error&lt;input_reader&lt;Input&gt;, Tag&gt;;
+
+    template &lt;typename Reader, typename Tag, typename ... Args&gt;
+    constexpr auto make_error(Args&amp;&amp;... args);
+}</code></pre></div></div><div class=paragraph><p>All errors are represented by instantiations of <code>lexy::error&lt;Reader, Tag></code>.
+The <code>Tag</code> is an empty type that specifies the kind of error.
+There are specializations for two tags to store additional information.</p></div><div class=paragraph><p>The function <code>lexy::make_error</code> constructs an error object given the reader and tag by forwarding all the arguments.</p></div><div class=sect4><h5 id=_generic_error>Generic error</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Reader, typename Tag&gt;
+class error
+{
+    using iterator = typename Reader::iterator;
+
+public:
+    constexpr explicit error(iterator pos) noexcept;
+    constexpr explicit error(iterator begin, iterator end) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr iterator begin() const noexcept;
+    constexpr iterator end() const noexcept;
+
+    constexpr /* see below */ message() const noexcept;
+};</code></pre></div></div><div class=paragraph><p>The primary class template <code>lexy::error&lt;Reader, Tag></code> represents a generic error without additional metadata.
+It can either be constructed giving it a single position, then <code>position() == begin() == end()</code>;
+or a range of the input, then <code>position() == begin() ⇐ end()</code>.</p></div><div class=paragraph><p>The <code>message()</code> is determined using the <code>Tag</code>.
+By default, it returns the type name of <code>Tag</code> after removing the top-level namespace name.
+This can be overridden by defining either <code>Tag::name()</code> or <code>Tag::name</code>.
+The result is an unspecified type similar to <code>std::string_view</code>.</p></div></div><div class=sect4><h5 id=_expected_literal_error>Expected literal error</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>struct expected_literal
+{};
+
+template &lt;typename Reader&gt;
+class error&lt;Reader, expected_literal&gt;
+{
+    using iterator    = typename Reader::iterator;
+    using string_view = /* see below */;
+
+public:
+    constexpr explicit error(iterator position,
+                             string_view string, std::size_t index) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr string_view string() const noexcept;
+    constexpr string_view::char_type character() const noexcept;
+
+    constexpr std::size_t index() const noexcept;
+};</code></pre></div></div><div class=paragraph><p>A specialization of <code>lexy::error</code> is provided if <code>Tag == lexy::expected_literal</code>.
+It represents the error where a literal string was expected, but could not be matched.
+It is mainly raised by the <code>lexy::dsl::lit</code> rule.</p></div><div class=paragraph><p>The error happens at a given <code>position()</code> and with a given <code>string()</code>.
+The <code>index()</code> is the index into the string where matching failed; e.g. <code>0</code> if the input starts with a different character, <code>2</code> if the first two characters matched, etc.
+The <code>character()</code> is the string character at that index.</p></div><div class=paragraph><p>The unspecified <code>string_view</code> type is like <code>std::string_view</code>.
+Its character type must match the encoding of the <code>Reader</code>.</p></div></div><div class=sect4><h5 id=_character_class_error>Character class error</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>struct expected_char_class
+{};
+
+template &lt;typename Reader&gt;
+class error&lt;Reader, expected_char_class&gt;
+{
+    using iterator = typename Reader::iterator;
+
+public:
+    constexpr explicit error(iterator position, const char* name) noexcept;
+
+    constexpr iterator position() const noexcept;
+
+    constexpr /* see below */ name() const noexcept;
+};</code></pre></div></div><div class=paragraph><p>A specialization of <code>lexy::error</code> is provided if <code>Tag == lexy::expected_char_class</code>.
+It represents the error where any character from a given set of characters was expected, but could not be matched.
+It is raised by the <code>lexy::dsl::ascii::*</code> rules or <code>lexy::dsl::newline</code>, among others.</p></div><div class=paragraph><p>The error happens at the given <code>position()</code> and a symbolic name of the character class is returned by <code>name()</code>.
+The return type of <code>name()</code> is an unspecified type similar to <code>std::string_view</code>.</p></div><div class=paragraph><p>By convention, the name format used is <code>&lt;group>.&lt;name></code> or <code>&lt;name></code>, where both <code>&lt;group></code> and <code>&lt;name></code> consist of characters.
+Examples include <code>newline</code>, <code>ASCII.alnum</code> and <code>digit.decimal</code>.</p></div></div></div><div class=sect3><h4 id=_error_context>Error context</h4><div class=listingblock><div class=title><code>lexy/error.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Production, typename Input&gt;
+    class error_context
+    {
+        using iterator = typename input_reader&lt;Input&gt;::iterator;
+
+    public:
+        constexpr explicit error_context(const Input&amp; input, iterator pos) noexcept;
+
+        constexpr const Input&amp; input() const noexcept;
+
+        static consteval /* see below */ production();
+
+        constexpr iterator position() const noexcept;
+    };
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::error_context&lt;Production, Input></code> contain information about the context where the error occurred.</p></div><div class=paragraph><p>The entire input containing the error is returned by <code>input()</code>.</p></div><div class=paragraph><p>The <code>Production</code> whose rule has raised the error is specified as template parameter and its name returned by <code>production()</code>.
+Like <code>lexy::error&lt;Reader, Tag>::message()</code>, it returns the name of the type without the top level namespace name.
+This can be overridden by defining <code>Production::name()</code> or <code>Production::name</code>.
+The result is an unspecified type similar to <code>std::string_view</code>.</p></div><div class=paragraph><p>The <code>position()</code> of the error context is the input position where the production started parsing.</p></div></div><div class=sect3><h4 id=_error_location>Error location</h4><div class=listingblock><div class=title><code>lexy/error_location.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    template &lt;typename Reader&gt;
+    struct error_location
+    {
+        std::size_t line, column;
+        lexeme&lt;Reader&gt; context;
+    };
+
+    template &lt;typename Input&gt;
+    using error_location_for = error_location&lt;input_reader&lt;Input&gt;&gt;;
+
+    template &lt;typename Input, typename TokenCP, typename TokenNL&gt;
+    constexpr auto make_error_location(const Input&amp; input,
+                                       typename input_reader&lt;Input&gt;::iterator pos,
+                                       TokenCP code_point_token,
+                                       TokenNL newline_token)
+        -&gt; error_location_for&lt;Input&gt;;
+}</code></pre></div></div><div class=paragraph><p>The header <code>lexy/error_location.hpp</code> provides a utility function <code>lexy::make_error_location()</code> to convert an error position,
+which is always given via an iterator, into the traditional line/column format.</p></div><div class=paragraph><p>The function takes the position into the input, as well as two tokens.
+It then determines the line and column by repeatedly parsing the two tokens until the error position is reached.
+Every time the <code>code_point_token</code> matches, the column is increased by one.
+Every time the <code>newline_token</code> matches, the column is reset to one and the line increased by one.
+If neither token matches, column is increased by one and the next code unit skipped.
+The final line and column number are returned, together with the <code>context</code> which is a lexeme containing the entire line where the error occurred.</p></div><div class=paragraph><p>For ASCII encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::ascii::character</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.
+For Unicode encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::code_point</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.</p></div></div></div><div class=sect2><h3 id=_parse_tree>Parse Tree</h3><div class=listingblock><div class=title><code>lexy/parse_tree.hpp</code></div><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>namespace lexy
+{
+    enum class traverse_event
+    {
+        enter,
+        exit,
+        leaf,
+    };
+
+    template &lt;typename Reader, typename TokenKind = void,
+              typename MemoryResource = /* default */&gt;
+    class parse_tree
+    {
+    public:
+        class builder;
+
+        constexpr parse_tree();
+        constexpr explicit parse_tree(MemoryResource* resource);
+
+        bool empty() const noexcept;
+        void clear() noexcept;
+
+        class node;
+        class node_kind;
+
+        node root() const noexcept; // requires: !empty()
+
+        class traverse_range;
+
+        traverse_range traverse(const node&amp; n) const noexcept;
+        traverse_range traverse() const noexcept;
+    };
+
+    template &lt;typename Input, typename TokenKind = void,
+              typename MemoryResource = /* default */&gt;
+    using parse_tree_for = lexy::parse_tree&lt;input_reader&lt;Input&gt;, TokenKind, MemoryResource&gt;;
+
+    template &lt;typename Production, typename TokenKind, typename MemoryResource, typename Input,
+              typename Callback&gt;
+    auto parse_as_tree(parse_tree&lt;input_reader&lt;Input&gt;, TokenKind, MemoryResource&gt;&amp; tree,
+                       const Input&amp; input, Callback callback)
+      -&gt; result&lt;void, typename Callback::return_type&gt;;
+}</code></pre></div></div><div class=paragraph><p>The class <code>lexy::parse_tree</code> represents a lossless untyped syntax tree.</p></div><div class=paragraph><p>The function <code>lexy::parse_as_tree()</code> parses a <code>Production</code> on the given <code>input</code> and constructs a lossless parse tree from the result.
+The return value is an <code>lexy::result&lt;void, E></code>, where <code>E</code> is the return type of <code>callback</code>.
+If the production accepts the input, returns an empty optional and updates <code>tree</code> to the parse tree, otherwise, cleares the <code>tree</code> and invokes the callback with the error information (see <a href=#_error_handling>Error handling</a>) and returns its result.
+It will discard any values produced by parsing the rules.</p></div><div class=paragraph><p>The resulting parse tree will contain a parent node for each production, and leaf node for every token.
+If a token is empty, it will not be added to the parse tree.
+If a production inherits from <code>lexy::transparent_production</code>, no separate node will be created;
+instead all child nodes will be added to its parent.
+Traversing the tree and concatenating the lexemes of all tokens will result in the original input.</p></div><div class=sect3><h4 id=_manual_tree_building>Manual Tree Building</h4><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::builder
+{
+public:
+    template &lt;typename Production&gt;
+    explicit builder(parse_tree&amp;&amp; tree, Production production); // <b class=conum>(1)</b>
+    template &lt;typename Production&gt;
+    explicit builder(Production production); // <b class=conum>(2)</b>
+
+    struct production_state;
+
+    template &lt;typename Production&gt;
+    production_state start_production(Production production); // <b class=conum>(3)</b>
+    void finish_production(production_state&amp;&amp; s); // <b class=conum>(4)</b>
+
+    void token(token_kind&lt;TokenKind&gt; kind,
+               typename Reader::iterator begin, typename Reader::iterator end); // <b class=conum>(5)</b>
+
+    parse_tree finish() &amp;&amp;; // <b class=conum>(6)</b>
+};</code></pre></div></div><div class="colist arabic"><ol><li><p>Create a builder that will re-use the memory of the existing <code>tree</code>.
+Its root node will be associated with the given <code>Production</code>.</p></li><li><p>Same as above, but does not re-use memory.</p></li><li><p>Adds a production child node as last child of the current node and activates it.
+Returns a handle that remembers the previous current node.</p></li><li><p>Finishes with a child production and activates its parent.</p></li><li><p>Adds a token node to the current node.</p></li><li><p>Returns the finished tree.</p></li></ol></div></div><div class=sect3><h4 id=_tree_node>Tree Node</h4><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::node_kind
+{
+public:
+    bool is_root() const noexcept;
+
+    bool is_token() const noexcept;
+    bool is_production() const noexcept;
+
+    auto name() const noexcept;
+
+    friend bool operator==(node_kind lhs, node_kind rhs);
+    friend bool operator!=(node_kind lhs, node_kind rhs);
+
+    friend bool operator==(node_kind nk, token_kind&lt;TokenKind&gt; tk);
+    friend bool operator==(token_kind&lt;TokenKind&gt; tk, node_kind nk);
+    friend bool operator!=(node_kind nk, token_kind&lt;TokenKind&gt; tk);
+    friend bool operator!=(token_kind&lt;TokenKind&gt; tk, node_kind nk);
+
+    template &lt;typename Production&gt;
+    friend bool operator==(node_kind nk, Production);
+    template &lt;typename Production&gt;
+    friend bool operator==(Production p, node_kind nk);
+    template &lt;typename Production&gt;
+    friend bool operator!=(node_kind nk, Production p);
+    template &lt;typename Production&gt;
+    friend bool operator!=(Production p, node_kind nk);
+};</code></pre></div></div><div class=paragraph><p>The class <code>node_kind</code> stores information over the kind of node.
+Nodes are either associated with a <code>Production</code> or a token rule.
+The root node is always a <code>Production</code> node.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>template &lt;typename Reader, typename TokenKind, typename MemoryResource&gt;
+class parse_tree&lt;Reader, TokenKind, MemoryResource&gt;::node
+{
+public:
+    node_kind kind() const noexcept;
+
+    node parent() const noexcept;
+
+    /* sized range */ children() const noexcept;
+
+    /* range */ siblings() const noexcept;
+
+    bool is_last_child() const noexcept;
+
+    lexy::lexeme&lt;Reader&gt; lexeme() const noexcept;
+    lexy::token&lt;Reader, TokenKind&gt; token() const noexcept;
+
+    friend bool operator==(node lhs, node rhs) noexcept;
+    friend bool operator!=(node lhs, node rhs) noexcept;
+};</code></pre></div></div><div class=paragraph><p>The class <code>node</code> is a reference to a node in the tree.
+Two nodes are equal if and only if they point to the same node in the same tree.</p></div><div class=sect4><h5 id=_parent_access>Parent Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>node parent() const noexcept;</code></pre></div></div><div class=paragraph><p>Returns a reference to a parent node.
+For the root node, returns a reference to itself.</p></div><div class=paragraph><p>This operation is <code>O(number of siblings)</code>.</p></div></div><div class=sect4><h5 id=_child_access>Child Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class children_range
+{
+public:
+    class iterator; // value_type = node
+    class sentinel;
+
+    iterator begin() const noexcept;
+    sentinel end() const noexcept;
+
+    bool empty() const noexcept;
+    std::size_t size() const noexcept;
+};
+
+children_range children() const noexcept;</code></pre></div></div><div class=paragraph><p>Returns a range object that iterates over all children of the node.
+For a token node, this is always the empty range.</p></div></div><div class=sect4><h5 id=_sibling_access>Sibling Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class sibling_range
+{
+public:
+    class iterator; // value_type = node
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+sibling_range siblings() const noexcept;</code></pre></div></div><div class=paragraph><p>Returns a range object that iterates over all siblings of a node.
+It begins with the sibling that is immediately following the node,
+and continues until it reached the last child of the parent.
+Then iteration wraps around to the first child of the parent until it ends at the original node.
+The original node is not included in the sibling range.</p></div></div><div class=sect4><h5 id=_token_access>Token Access</h5><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>lexy::lexeme&lt;Reader&gt; lexeme() const noexcept; // <b class=conum>(1)</b>
+lexy::token&lt;Reader, TokenKind&gt; token() const noexcept; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns the spelling of a token node. For a production node, returns the empty lexeme.</p></li><li><p>Returns the spelling and token kind of a token node; must not be called on a production node.</p></li></ol></div></div></div><div class=sect3><h4 id=_tree_traversal>Tree Traversal</h4><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>enum class traverse_event
+{
+    enter,
+    exit,
+    leaf,
+};</code></pre></div></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>class traverse_range
+{
+public:
+    class iterator; // value_type = { traverse_event, node }
+
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    bool empty() const noexcept;
+};
+
+traverse_range traverse(const node&amp; n) const noexcept; // <b class=conum>(1)</b>
+traverse_range traverse() const noexcept; // <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns a range that traverses descendants of the given node.</p></li><li><p>Returns a range that traverses the root node, or an empty range if the tree is empty.</p></li></ol></div><div class=paragraph><p>The <code>traverse_range</code> iterates over a node and all its children and their children and so on.
+Its value type is a (unspecified) pair whose first member is a <code>lexy::traverse_event</code> and whose second member is a <code>node</code> reference.</p></div><div class=paragraph><p>For a token node, the range contains only the original node with event <code>leaf</code>.</p></div><div class=paragraph><p>For a production node, the range begins with the original node and event <code>enter</code>.
+It then does an in-order traversal of all descendants, beginning with the children of a node.
+When it reaches a token node, produces it with event <code>leaf</code>.
+When it reaches a production node, produces it with event <code>enter</code>, then all its descendants recursively, and then with event <code>exit</code>.
+After all descendants of the original node have been produced, finishes with the original node again and event <code>exit</code>.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Prints a tree.</p></div><div class=listingblock><div class=content><pre class=highlight><code class=language-cpp data-lang=cpp>auto depth = 0;
+for (auto [event, node] : tree.traverse())
+{
+    switch (event)
+    {
+    case lexy::traverse_event::enter:
+        ++depth;
+        indent(depth);
+        print_node(node);
+        break;
+    case lexy::traverse_event::exit:
+        --depth;
+        break;
+
+    case lexy::traverse_event::leaf:
+        indent(depth);
+        print_node(node);
+        break;
+    }
+}</code></pre></div></div></div></details><div class="admonitionblock note"><table><tbody><tr><td class=icon><div class=title>Note</div></td><td class=content>Traversing a node just does pointer chasing.
+There is no allocation or recursion involved.</td></tr></tbody></table></div></div></div></div></div></article></main><footer id=page-footer><section class=copyright>&copy; 2020-2021</section><section class=patreon><a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>.</section><section class=poweredby>Made with <a target=_blank href=https://gohugo.io>Hugo</a>.</section></footer></body></html>

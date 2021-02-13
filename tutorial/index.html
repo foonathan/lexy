@@ -1,0 +1,752 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Tutorial - lexy</title><style>:root{--white: white;--header-white: rgba(255, 255, 255, .75);--background-color: #fdfdfd;--default-color: #101010;--heading-color: #0A0A0A;--link-color: #2A2A2A;--gray-highlight-color: #aaaaaa;--highlight-color: #2861ce}@media(prefers-color-scheme:dark){:root{--white: #020202;--header-white: rgba(2, 2, 2, .75);--background-color: #222222;--default-color: #efefef;--heading-color: #f5f5f5;--link-color: #d5d5d5;--gray-highlight-color: #555555}}nav#menu div.menu-container,main{max-width:1200px;margin:0 auto;padding:0 10px}@media(min-width:800px){article{max-width:900px;margin:0 auto;padding:0 10px}}html{position:relative;min-height:100%;margin:0;padding:0}body{font-family:serif;font-size:18px;color:var(--default-color);background-color:var(--background-color);width:100%;padding:0;margin:0}main{margin-bottom:75px}h1,h2,h3,h4,h5,h6{font-family:sans-serif;font-weight:700;line-height:1.15em;color:var(--heading-color);margin:0 0 .4em}h1{font-size:2em}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h5{font-size:1.15em}h6{font-size:1.1em}a{color:var(--link-color);transition:color ease .3s}a:hover{color:var(--highlight-color)}a:focus{outline:none}br{margin:1em}article p,article ul,article ol,article dl{hyphens:auto;text-align:justify}nav#menu{width:100%;padding:0;background-color:var(--white);border-bottom:2px solid var(--highlight-color);font-family:sans-serif;font-size:1.3em}nav#menu div.menu-container{display:flex}nav#menu div.menu-container ul{display:flex;flex-direction:row;align-items:center;padding:0;list-style:none}nav#menu div.menu-container ul li a{text-decoration:none}nav#menu div.menu-container ul li a.active{border-width:0 0 2px;border-style:solid;border-color:var(--highlight-color)}nav#menu div.menu-container ul#home{padding-left:0;padding-right:10px}nav#menu div.menu-container ul#home li{font-weight:700}nav#menu div.menu-container ul#main{margin-left:auto}nav#menu div.menu-container ul#main li{padding-left:20px}@media(max-width:600px){nav#menu div.menu-container ul#main{flex-direction:column;align-items:flex-end;margin:5px 10px 0 auto}}footer#page-footer{position:absolute;bottom:0;left:0;right:0;height:2em;display:flex;justify-content:space-between;font-size:.8em;font-weight:200;line-height:1em;border-top:1px solid #ccc}footer#page-footer section{padding-left:1em;padding-right:1em;padding-top:.5em;width:100%}footer#page-footer .copyright{text-align:left}footer#page-footer .patreon{text-align:center}footer#page-footer .poweredby{text-align:right}@media(max-width:450px){footer#page-footer{flex-direction:column;align-items:flex-start}footer#page-footer section{text-align:initial!important;width:initial}}aside.toc{display:none}@media(min-width:1200px){aside.toc{display:initial;position:sticky;top:1em;float:left;width:300px}aside.toc header{font-weight:700}aside.toc ul{list-style:none;padding:0}aside.toc ul ul{padding-left:1em;padding-bottom:.5em}aside.toc a{text-decoration:none}aside.toc~article{padding-left:300px}}article .admonitionblock{margin-bottom:1em}article .admonitionblock td.icon{width:75px;font-weight:700;border-right:1px solid var(--gray-highlight-color);padding:.5em}article .admonitionblock td.content{padding-left:.5em}article details{padding-bottom:1em}article details summary{font-weight:700}article dl dt{font-weight:700}article dl dd{margin-top:-.9em}article dl dd dt{margin-top:.9em}article div.sidebarblock{border:1px solid var(--gray-highlight-color);padding:.75em;margin:1em}article div.sidebarblock p{margin:0}article :not(td)>div.title{font-style:italic;margin-bottom:-.9em}article code{font-family:Inconsolata,monospace,sans-serif}article pre{overflow:auto;padding:10px;background:var(--white);border:1px solid var(--gray-highlight-color);line-height:1.1}article .colist{margin-top:-.5em}article .colist ol{counter-reset:list}article .colist ol li{counter-increment:list;padding-left:1em}article .colist ol ::marker{content:"(" counter(list)")";font-weight:700}article .colist p{margin:0}article .highlight{}article .highlight .c{color:#998;font-style:italic}article .highlight .k{color:#458;font-weight:700}article .highlight .o{color:red}article .highlight .p{color:red}article .highlight .err{color:red}article .highlight .cm{color:#998;font-style:italic}article .highlight .cp{color:green;font-weight:700}article .highlight .c1{color:#998;font-style:italic}article .highlight .cs{color:#999;font-weight:700;font-style:italic}article .highlight .gd{color:#000;background-color:#fdd}article .highlight .gd .x{color:#000;background-color:#faa}article .highlight .ge{font-style:italic}article .highlight .gr{color:#a00}article .highlight .gh{color:#999}article .highlight .gi{color:#000;background-color:#dfd}article .highlight .gi .x{color:#000;background-color:#afa}article .highlight .go{color:#888}article .highlight .gp{color:#555}article .highlight .gs{font-weight:700}article .highlight .gu{color:#aaa}article .highlight .gt{color:#a00}article .highlight .kc{color:#458;font-weight:700}article .highlight .kd{color:#458;font-weight:700}article .highlight .kp{color:#458;font-weight:700}article .highlight .kr{color:#458;font-weight:700}article .highlight .kt{color:#458;font-weight:700}article .highlight .m{color:#ff8000}article .highlight .s{color:green}article .highlight .ow{font-weight:700}article .highlight .w{color:#bbb}article .highlight .mf{color:#ff8000}article .highlight .mh{color:#ff8000}article .highlight .mi{color:#ff8000}article .highlight .mo{color:#ff8000}article .highlight .sb{color:#d14}article .highlight .sc{color:#d14}article .highlight .sd{color:#d14}article .highlight .s2{color:#d14}article .highlight .se{color:#d14}article .highlight .sh{color:#d14}article .highlight .si{color:#d14}article .highlight .sx{color:#d14}article .highlight .sr{color:#009926}article .highlight .s1{color:#d14}article .highlight .ss{color:#990073}article .highlight .bp{color:#999}article .highlight .vc{color:teal}article .highlight .vg{color:teal}article .highlight .vi{color:teal}article .highlight .il{color:#099}</style></head><body><nav id=menu><div class=menu-container><ul id=home><li><a href=/>lexy: C++ parser combinator library</a></li></ul><ul id=main><li><a class=active href=/tutorial/>Tutorial</a></li><li><a href=/reference/>Reference</a></li><li><a href=https://github.com/foonathan/lexy>GitHub</a></li></ul></nav><main id=content><aside class=toc><header><a href=#>Table of Contents</a></header><nav id=TableOfContents><ul><li><a href=#_overview>Overview</a></li><li><a href=#_parsing_the_package_name>Parsing the package name</a></li><li><a href=#_parsing_the_package_version>Parsing the package version</a></li><li><a href=#_extending_the_version_field>Extending the version field</a></li><li><a href=#_parsing_one_package_author>Parsing one package author</a></li><li><a href=#_parsing_the_package_authors>Parsing the package authors</a></li><li><a href=#_parsing_the_package_config>Parsing the package config</a></li><li><a href=#_error_handling>Error handling</a></li></ul></nav></aside><article><div class=paragraph><p>This tutorial introduces you to the basics of <code>lexy</code>.
+Our goal is to parse some simple configuration file of a software package.</p></div><div class=paragraph><p>A sample input file can look like this:</p></div><div class=listingblock><div class=title><code>package.config</code></div><div class=content><pre>name    = lexy
+version = 0.0.0
+authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>And we want to parse it into the following C++ data structure using <code>lexy</code>:</p></div><div class=listingblock><div class=title><code>PackageConfig</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>PackageVersion</span>
+<span class=p>{</span>
+    <span class=kt>int</span> <span class=n>major</span><span class=p>;</span>
+    <span class=kt>int</span> <span class=n>minor</span><span class=p>;</span>
+    <span class=kt>int</span> <span class=n>patch</span><span class=p>;</span>
+<span class=p>};</span>
+
+<span class=k>struct</span> <span class=nc>PackageConfig</span>
+<span class=p>{</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>string</span>              <span class=n>name</span><span class=p>;</span>
+    <span class=n>PackageVersion</span>           <span class=n>version</span><span class=p>;</span>
+    <span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span> <span class=n>authors</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>The final source code can be found at <a href=https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp><code>examples/tutorial.cpp</code></a>.</p></div><div class=sidebarblock><div class=content><div class=paragraph><p>If anything in the tutorial could be improved (and there is probably a lot),
+please raise an issue or — even better — create a PR.
+Thank you!</p></div></div></div><div class=sect1><h2 id=_overview>Overview</h2><div class=sectionbody><div class=paragraph><p>To parse something we need to do three things.</p></div><div class="olist arabic"><ol class=arabic><li><p>We define the <em>grammar</em>.
+In C++, a grammar is contained in a namespace, usually called <code>grammar</code>.</p><div class=paragraph><p>It contains one or more <em>productions</em>, which are empty structs with a <code>rule</code> member.
+Each production corresponds to one function of the generated recursive descent parser.
+They produce a single value of a user controlled type.
+Here, we could imagine at minimum a production for parsing a <code>PackageVersion</code> and another one for parsing a <code>PackageConfig</code>.</p></div><div class=paragraph><p>The <em>rule</em> of a production does all the heavy lifting.
+It describes what is valid input and what is not, how many characters are consumed by the input, and it will produce zero or more values.
+All values are then combined into the single result of the production using a separately specified <em>callback</em>.</p></div></li><li><p>We create an <code>Input</code> object.
+It contains the concrete input we want to parse.
+The library provides different kinds of inputs, from the simple <code>lexy::string_input</code> which acts like a <code>std::string_view</code>,
+to the complex <code>lexy::shell</code>, which provides an interactive REPL.</p><div class=paragraph><p>In this step, we also specify the <em>encoding</em> of the input.
+This can be plain old ASCII, some Unicode encoding like UTF-8, or bytes as opposed to text.
+The encoding controls the behavior of many rules as it determines what valid code points are.</p></div><div class=paragraph><p>When reading input from a file, we may also need to specify a given endianness or let the library figure it out using a byte-order mark.</p></div></li><li><p>Once we have a grammar and input, we can parse it by calling <code>lexy::parse</code>.
+This will parse the input and convert it according to the rules of the grammar and converts it into the specified type.
+If an error occurs, it will invoke a callback we have specified with detailled error information.
+We can then either print it immediately, or store the error in some custom diagnostic object.</p><div class=paragraph><p>We can also choose to simply validate the input using <code>lexy::validate</code>.
+Then we don’t convert it to a value and only log error messages if it is ill-formed.</p></div></li></ol></div><div class=paragraph><p>As such, the general structure of the source code is as follows.</p></div><div class=listingblock><div class=title><code>examples/tutorial.cpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=cp>#include &lt;string&gt;
+#include &lt;vector&gt;
+</span>
+<b class=conum>(1)</b>
+<span class=k>struct</span> <span class=nc>PackageVersion</span> <span class=p>{</span> <span class=err>…</span> <span class=p>};</span>
+<span class=k>struct</span> <span class=nc>PackageConfig</span> <span class=p>{</span> <span class=err>…</span> <span class=p>};</span>
+
+<span class=c1>//=== grammar ===//</span>
+<span class=cp>#include &lt;lexy/dsl.hpp&gt; // lexy::dsl::*
+</span>
+<span class=k>namespace</span> <span class=n>grammar</span> <b class=conum>(2)</b>
+<span class=p>{</span>
+    <span class=err>…</span>
+
+    <span class=k>struct</span> <span class=nc>config</span> <span class=p>{</span> <span class=err>…</span> <span class=p>};</span>
+<span class=p>}</span>
+
+<span class=c1>//=== parsing ===//</span>
+<span class=cp>#include &lt;lexy/input/file.hpp&gt; // lexy::read_file
+#include &lt;lexy/parse.hpp&gt;      // lexy::parse
+</span>
+<span class=kt>int</span> <span class=nf>main</span><span class=p>()</span>
+<span class=p>{</span>
+    <span class=k>auto</span> <span class=n>file</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>read_file</span><span class=o>&lt;</span><span class=n>lexy</span><span class=o>::</span><span class=n>utf8_encoding</span><span class=o>&gt;</span><span class=p>(</span><span class=n>filename</span><span class=p>);</span> <b class=conum>(3)</b>
+    <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>file</span><span class=p>)</span>
+    <span class=p>{</span> <span class=err>…</span> <span class=p>}</span>
+
+    <span class=k>auto</span><span class=o>&amp;</span> <span class=n>input</span> <span class=o>=</span> <span class=n>file</span><span class=p>.</span><span class=n>value</span><span class=p>();</span>
+    <span class=k>auto</span> <span class=n>result</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>parse</span><span class=o>&lt;</span><span class=n>grammar</span><span class=o>::</span><span class=n>config</span><span class=o>&gt;</span><span class=p>(</span><span class=n>input</span><span class=p>,</span> <span class=n>report_error_callback</span><span class=p>);</span> <b class=conum>(4)</b>
+    <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>result</span><span class=p>)</span>
+    <span class=p>{</span> <span class=err>…</span> <span class=p>}</span>
+
+    <span class=n>PackageConfig</span> <span class=n>config</span> <span class=o>=</span> <span class=n>result</span><span class=p>.</span><span class=n>value</span><span class=p>();</span> <b class=conum>(5)</b>
+    <span class=err>…</span>
+<span class=p>}</span></code></pre></div></div><div class="colist arabic"><ol><li><p>The user code that defines the C++ data structures.
+It does not need to know anything about <code>lexy</code>.</p></li><li><p>The grammar. It contains multiple productions, but the entry production is <code>grammar::config</code>.
+This is the production we’re parsing.</p></li><li><p>We want to read the config from a file, so we use <code>lexy::read_file</code>.
+We specify that the file uses UTF-8 as the input encoding.
+Reading a file can fail, so we need to handle that (not shown here).</p></li><li><p>Then we can parse our entry production using <code>lexy::parse</code>.
+We give it our file input and a callback to invoke on errors (not shown here).
+Parsing can fail, so we need to handle that (not shown here).</p></li><li><p>If everything succeeded, we can access our parsed config object and work with it.</p></li></ol></div><div class=paragraph><p>The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
+Refer to the documentation for further details on the surrounding infrastructure.</p></div><div class=paragraph><p>Again, the full final source code can be found at <a href=https://github.com/foonathan/lexy/blob/main/examples/tutorial.cpp><code>examples/tutorial.cpp</code></a>.</p></div></div></div><div class=sect1><h2 id=_parsing_the_package_name>Parsing the package name</h2><div class=sectionbody><div class=paragraph><p>We will create a separate production for each of the fields (name, version, authors).
+Let’s start with the production for the name, as that is the simplest one.</p></div><div class=listingblock><div class=title>Package name</div><div class=content><pre>name = lexy</pre></div></div><div class=paragraph><p>Here, we’re only concerned with the part after the equal sign, so the <code>lexy</code> in the example above.
+A package name follows the same rules as a C++ identifier, except that leading underscores are not allowed.
+As a regex, a name is described by <code>[a-zA-Z][a-zA-Z_0-9]*</code>, so one alpha character, followed by zero or more alphanumeric characters or underscores.</p></div><div class=paragraph><p>How can we express this as a <code>lexy</code> rule?</p></div><div class=paragraph><p>Every rule is defined in the namespace <code>lexy::dsl</code>.
+As this is rather lengthy, it is a good idea to use a namespace alias to shorten it.</p></div><div class=listingblock><div class=title>The namespace alias</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>grammar</span>
+<span class=p>{</span>
+    <span class=k>namespace</span> <span class=n>dsl</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>dsl</span><span class=p>;</span> <b class=conum>(1)</b>
+<span class=p>}</span></code></pre></div></div><div class="colist arabic"><ol><li><p>A convenience alias, so we can write <code>dsl::foo</code> instead of <code>lexy::dsl::foo</code> when defining the grammar.</p></li></ol></div><div class=paragraph><p>Luckily for us, there are predefined rules for the various ASCII classifications.
+One of those, is the rule <code>dsl::ascii::alpha</code>: this rule matches one of <code>a-zA-Z</code> and consumes it from the input.
+We can put it in a production and parse it:</p></div><div class=listingblock><div class=title>The <code>dsl::ascii::alpha</code> rule (<a href=https://godbolt.org/z/Kf9hd7>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>alpha</span> <b class=conum>(1)</b>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span><span class=p>;</span> <b class=conum>(2)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>The production that contains the rule.</p></li><li><p>The rule itself, it is a <code>static</code> constant.</p></li></ol></div><div class=paragraph><p>Likewise, <code>dsl::ascii::alnum</code> matches one of <code>a-zA-Z0-9</code>.
+To match a single underscore, we can use <code>dsl::lit_c&lt;'_'></code>.
+The latter rule matches and consumes the specified character.</p></div><div class=paragraph><p>All of the three rules are so called <em>tokens</em>: they are the fundamental, atomic parse unit of the input.
+Tokens play an essential role in parsing as we’ll see, because the library can easily check whether a token matches at a given position.</p></div><div class=paragraph><p>Of course, here we don’t want a single alpha(numeric) character or underscore,
+we want one alpha character followed by zero or more alphanumeric characters or underscores.
+For that, we need to combine rules.</p></div><div class=paragraph><p>The simplest way to combine rules is using the sequence rule.
+The sequence rule matches one rule after the other in the specified order.
+It is implemented using an overload <code>operator+</code>:</p></div><div class=listingblock><div class=title>The sequence rule (<a href=https://godbolt.org/z/3aTaK7>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Match an alpha character, followed by an alphanumeric character, followed by a literal c.</span>
+<span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alnum</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;_&#39;</span><span class=o>&gt;</span></code></pre></div></div><div class=paragraph><p>The sequence rule is alright, but it is static.
+How can we match a dynamic amount of alpha numeric characters after the initial alpha character?
+For that, we can use the while rule.
+The while rule takes a rule and matches it as often as possible.</p></div><div class=listingblock><div class=title>The while rule (<a href=https://godbolt.org/z/h5jGnz>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Match an alpha character, followed by zero or more alphanumeric characters.</span>
+<span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alnum</span><span class=p>)</span></code></pre></div></div><div class=paragraph><p>The while rule is different from all other rules we’ve seen:
+it needs to decide whether it should match again or be done with it.
+If the argument is a token, that can be done very easily — just try to match the token (remember: that can be done very efficiently)
+If it matched, it works.
+Otherwise, it backtracks to the previous position and is done.</p></div><div class=paragraph><p>Let’s consider a more complex token to see how it works: <code>LEXY_LIT("ab")</code>.
+This one is equivalent to <code>dsl::lit_c&lt;'a'> + dsl::lit_c&lt;'b'></code> (match <code>a</code> then <code>b</code>), but it is a single token, not a sequence of tokens.
+If you have a C++20 compiler, you can write it as <code>dsl::lit&lt;"ab"></code> without using a macro.</p></div><div class=listingblock><div class=title>Parsing <code>dsl::while_(LEXY_LIT("ab"))</code></div><div class=content><pre>ababa
+^ start, try to match ab
+
+ababa
+--^ that worked, try to match it again
+
+ababa
+----^ that worked, try to match it again
+
+ababa
+-----^ that did not work, we&#39;re missing a `b`, backtrack!
+
+ababa
+----^ done, next character on input is `a`</pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p>Don’t worry about backtracking.
+The library will only do it when you’ve explicitly requested it, or when it is efficient like here.</p></div></div></div><div class=paragraph><p>Back to our problem at hand: we’re almost there now!
+All we need is to allow the underscore as well as an alphanumeric character in the while loop.</p></div><div class=paragraph><p>For that, we can use the alternative rule, which matches one of the given token.
+It does that by trying to match each token in order.
+If that works, great.
+Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
+Remember, for tokens this is efficient.
+As the alternative rule matches only exactly one token, it is also considered to be a token itself
+(although it’s strictly speaking another combination of tokens).</p></div><div class=paragraph><p>In the DSL, the alternative rule is implemented using <code>operator/</code> (read "or").
+With all that, we can finally write our first production:</p></div><div class=listingblock><div class=title>The <code>name</code> production (<a href=https://godbolt.org/z/bdn39v>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span>
+<span class=p>{</span>
+    <span class=c1>// Match an alpha character, followed by zero or more alphanumeric characters or underscores.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+        <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alnum</span> <span class=o>/</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;_&#39;</span><span class=o>&gt;</span><span class=p>);</span>
+<span class=p>};</span></code></pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p>If we have an alternative rule of literals, as in <code>LEXY_LIT("abc") / LEXY_LIT("ab") / LEXY_LIT("b")</code>,
+it can be parsed without any backtracking.
+This is done by constructing a <a href=https://en.wikipedia.org/wiki/Trie>trie</a> at compile-time and looking for the input in there.</p></div></div></div><div class=paragraph><p>The production is now almost done.
+We can use <code>lexy::validate()</code> to give it some input and raise an error if it does not match the rule,
+or we can use <code>lexy::match()</code> to just give us a <code>true</code>/<code>false</code> result.
+But we want to <code>lexy::parse()</code> it and get a <code>std::string</code>.
+To implement that, we need to do two things.</p></div><div class=paragraph><p>First, we need to remember everything we’ve just matched by the rule, so we can convert that into the <code>std::string</code> later on.
+This is done using <code>dsl::capture()</code>.
+This rule takes another rule as input and parses it.
+However, it is also the first rule that produces a value:
+When parsing a <code>dsl::capture()</code> rule, we get a <code>lexy::lexeme</code> (basically a <code>std::string_view</code>) that views all the input the rule has matched.
+This is exactly what we then want to turn into our <code>std::string</code>.</p></div><div class=paragraph><p>Second, we need to specify what value our production should return when it’s parsed.
+When we <code>lexy::parse()</code> a production, we parse the rule of the production.
+As we have just seen, this can produce one or more values, like <code>lexy::lexeme</code>.
+All those value are then forwarded to a callback which constructs the result of the parse operation.</p></div><div class=paragraph><p>A <em>callback</em> is just a function object (so a class with <code>operator()</code>) that also has a <code>return_type</code> typedef.
+We can easily build one using the utility function <code>lexy::callback&lt;T>()</code> which takes one or more lambdas and creates a callback that returns a <code>T</code>.
+A callback is added to a production using a <code>static constexpr auto value</code> member.</p></div><div class=paragraph><p>So we need to wrap our rule in <code>dsl::capture()</code>, so we actually get a value for our callback,
+and then add a callback that takes the lexeme and converts it into a <code>std::string</code> which is the final result of parsing the production.</p></div><div class=listingblock><div class=title>The <code>name</code> production with <code>capture()</code> and value</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span>
+<span class=p>{</span>
+    <span class=c1>// Match an alpha character, followed by zero or more alphanumeric characters or underscores.</span>
+    <span class=c1>// Captures it all into a lexeme.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+        <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alnum</span> <span class=o>/</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;_&#39;</span><span class=o>&gt;</span><span class=p>));</span>
+
+    <span class=c1>// The final value of this production is a std::string we&#39;ve created from the lexeme.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span>
+        <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>callback</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>([](</span><span class=k>auto</span> <span class=n>lexeme</span><span class=p>)</span> <span class=p>{</span> <span class=k>return</span> <span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=p>(</span><span class=n>lexeme</span><span class=p>.</span><span class=n>begin</span><span class=p>(),</span> <span class=n>lexeme</span><span class=p>.</span><span class=n>end</span><span class=p>());</span> <span class=p>});</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>To finish it up, there are two things we can improve.
+First, converting a <code>lexy::lexeme</code> to a <code>std::string</code> is an incredible common thing you want to do,
+so the library provides the callback <code>lexy::as_string&lt;std::string></code> for it.
+Second, the rule definition has become somewhat unreadable as its one big expression.
+We can use an immediately invoked lambda to improve that.</p></div><div class=listingblock><div class=title>The final <code>name</code> production (<a href=https://godbolt.org/z/v7rPbs>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span>
+<span class=p>{</span>
+    <span class=c1>// Match an alpha character, followed by zero or more alphanumeric characters or underscores.</span>
+    <span class=c1>// Captures it all into a lexeme.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=k>auto</span> <span class=n>lead_char</span>     <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alpha</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>trailing_char</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>alnum</span> <span class=o>/</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;_&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>lead_char</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>trailing_char</span><span class=p>));</span>
+    <span class=p>}();</span>
+
+    <span class=c1>// The final value of this production is a std::string we&#39;ve created from the lexeme.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>If now parse the <code>name</code> production, we will get a <code>std::string</code>.
+First field done, let’s move on to the next one.</p></div></div></div><div class=sect1><h2 id=_parsing_the_package_version>Parsing the package version</h2><div class=sectionbody><div class=paragraph><p>The next field is the version.</p></div><div class=listingblock><div class=title>Package version</div><div class=content><pre>version = 0.0.0</pre></div></div><div class=paragraph><p>Again, we’re only concerned with the value after the equal sign for now.
+It consists of three numbers separated by dots, where a number is a non-empty sequence of digits.</p></div><div class=paragraph><p>The token <code>dsl::ascii::digit</code> matches one digit 0-9.
+To match an arbitrary amount of digits, we can again use the while rule.
+However, this would also allow zero digits, which we don’t want.
+So instead we use <code>dsl::while_one(dsl::ascii::digit)</code>, which is equivalent to <code>dsl::ascii::digit + dsl::while_(dsl::ascii::digit)</code>:
+it needs at least one digit, and then zero or more.</p></div><div class=listingblock><div class=title>Digits</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Match one or more digits.</span>
+<span class=n>dsl</span><span class=o>::</span><span class=n>while_one</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>digit</span><span class=p>)</span></code></pre></div></div><div class=paragraph><p>Matching one or more digits is common, so there is a predefined rule (token actually): <code>dsl::digits</code>.
+It takes an optional template parameter to specify the base,
+for example <code>dsl::digits&lt;dsl::octal></code> would only match <code>0-7</code>,
+whereas <code>dsl::digits&lt;dsl::hex_upper></code> would match <code>0-9A-F</code>.
+If we don’t specify a base, it defaults to <code>dsl::decimal</code>.</p></div><div class=listingblock><div class=title>The digits token (<a href=https://godbolt.org/z/6TnKeY>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Match one or more decimal digits.</span>
+<span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span></code></pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p><code>dsl::digits&lt;></code> actually provides a couple of additional features over the <code>dsl::while_one()</code>.
+For example, we could prevent leading zeros or automatically allow an optional digit separator.
+None of that is needed here, however.</p></div></div></div><div class=paragraph><p>Just like with the <code>name</code> production, neither <code>dsl::digits&lt;></code> nor <code>dsl::while_one()</code> actually produce a value when parsed.
+To get the actual integer represented by the digits, we can do the same thing as we did before:
+Use <code>dsl::capture(dsl::digits&lt;>)</code> to match digits and get a <code>lexy::lexeme</code>, then use a callback that takes the lexeme and converts it into an <code>int</code>.
+However, this approach does not work due to the possibility of integer overflow:
+<code>dsl::digits&lt;></code> matches an arbitrarily long sequence of digits, but only a subset of those are <code>int`s.
+`lexy</code> considers integer overflow a parse error, which can only be raised by a rule.</p></div><div class=paragraph><p>So instead we can use the <code>dsl::integer&lt;T>()</code> rule.
+Just like <code>dsl::capture()</code>, it takes another rule and matches it.
+The resulting digits are then captured, but not as a <code>lexy::lexeme</code> but as the specified integer <code>T</code>.</p></div><div class=paragraph><p>While doing the conversion, <code>dsl::integer</code> ignores any character that is not a digit, so you can use it even if you have digit separators in your rule.
+What is or is not a digit, as well as the base used for conversion, is again determined using the policy classes <code>dsl::decimal</code>, <code>dsl::octal</code>, and so on.
+You can specify them manually using <code>dsl::integer&lt;int, dsl::decimal>(my_digit_rule)</code>, but if your digit rule is <code>dsl::digits&lt;></code>, the base is detected automatically.</p></div><div class=paragraph><p>The following sample production matches a single <code>int</code> using <code>dsl::integer</code> and <code>dsl::digits</code>.</p></div><div class=listingblock><div class=title>The integer rule (<a href=https://godbolt.org/z/KnWjxY>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>integer</span>
+<span class=p>{</span>
+    <span class=c1>// Matches one or more decimal digits, then converts those into an `int`.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>)</span>
+
+    <span class=c1>// The rule produces a single value, the parsed `int`.</span>
+    <span class=c1>// We simply forward that one to use as the result of parsing the `integer` production.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>Now we can just use the integer rule and put it in sequence together with <code>dsl::lit_c&lt;'.'></code> to match the three numbers separated by integer.
+If we match a sequence of rules, where some produce values, all values are preserved and forwarded to the callback in the same order.
+The <code>dsl::lit_c</code> rule does not produce any values, so our callback will be invoked with three values: the ints from each <code>dsl::integer</code> rule.
+We then use a callback that takes those three integers and constructs the <code>PackageVersion</code> as the result.</p></div><div class=listingblock><div class=title>The <code>version</code> production</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=c1>// Match three integers separated by dots.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;.&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+
+        <span class=c1>// Each number rule produces an int, each dot rule produces nothing.</span>
+        <span class=k>return</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+    <span class=p>}();</span>
+
+    <span class=c1>// Construct a PackageVersion as the result of the production.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span>
+      <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>callback</span><span class=o>&lt;</span><span class=n>PackageVersion</span><span class=o>&gt;</span><span class=p>([](</span><span class=kt>int</span> <span class=n>a</span><span class=p>,</span> <span class=kt>int</span> <span class=n>b</span><span class=p>,</span> <span class=kt>int</span> <span class=n>c</span><span class=p>)</span> <span class=p>{</span>
+            <span class=c1>// a is the result of the first number rule, b of the second, c of the third.</span>
+            <span class=k>return</span> <span class=n>PackageVersion</span><span class=p>{</span><span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span><span class=p>};</span>
+        <span class=p>});</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>We can again clean this up a bit.
+<code>lexy</code> predefines <code>dsl::period</code> to match a '.' character, which looks cleaner than <code>dsl::lit_c&lt;'.'></code>.
+Constructing a type from arguments is also a common callback, so it is provided as <code>lexy::construct&lt;T></code>, which does <code>T(args…​)</code> if that compiles and <code>T{args…​}</code> otherwise.</p></div><div class=listingblock><div class=title>The final <code>version</code> production (<a href=https://godbolt.org/z/G6KcsM>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=c1>// Match three integers separated by dots.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>period</span><span class=p>;</span>
+
+        <span class=k>return</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+    <span class=p>}();</span>
+
+    <span class=c1>// Construct a PackageVersion as the result of the production.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>construct</span><span class=o>&lt;</span><span class=n>PackageVersion</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>We can now use this production to parse <code>PackageVersion</code>.</p></div></div></div><div class=sect1><h2 id=_extending_the_version_field>Extending the version field</h2><div class=sectionbody><div class=paragraph><p>Let’s stick with the <code>version</code> production a bit and extend it.
+We also want to allow the special version number <code>unreleased</code> as an alternate spelling for <code>0.0.0</code>.</p></div><div class=paragraph><p>Parsing <code>unreleased</code> is easy: just use the <code>LEXY_LIT("unreleased")</code> token:</p></div><div class=listingblock><div class=title>Adding <code>unreleased</code> support</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>period</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span> <b class=conum>(1)</b>
+
+        <span class=k>auto</span> <span class=n>unreleased</span> <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=o>???</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>For convenience, we put the previous rule in a variable <code>dot_version</code>.</p></li><li><p>What do we put here?</p></li></ol></div><div class=paragraph><p>But how do we can we parse either <code>unreleased</code> or <code>dot_version</code>?</p></div><div class=paragraph><p>We’ve already seen the alternative rule <code>/</code>, which allowed us to parse one of the specified tokens.
+However, <code>number + dot + number + dot + number</code> is not a token, so we can’t use <code>/</code>.
+And this is a good thing!</p></div><div class=paragraph><p>If we were able to write <code>dot_version / unreleased</code>, this might lead to arbitrary backtracking.
+In particular, rules can have arbitrary side-effects that then might happen unnecessarily.
+So <code>lexy</code> strictly limits backtracking.</p></div><div class=paragraph><p>What we need here is a special <em>branch</em> rule.
+This is a rule that has an associated condition.
+If the condition matches, the branch can be taken and will be parsed without further backtracking.
+If the condition didn’t match, the parsing algorithm needs to look for another alternative to go.
+Matching the condition uses a special efficient implementation, so backtracking it is acceptable.</p></div><div class=paragraph><p>Every token is also a branch, and many simple rules such as a sequence of tokens are also branches.
+The same is true for <code>dsl::capture()</code> if it captures a token or branch.
+Then the argument is the branch condition, which is only really captured once the branch has been taken.</p></div><div class=paragraph><p>And even if you have a rule that isn’t a branch, don’t worry, there is a way to turn an arbitrary rule into a branch.
+We just need to give it a condition, which is another branch rule (usually a token).
+This can be done using <code>operator>></code>: <code>condition >> rule</code>.
+This will check whether <code>condition</code> matches, and take the branch parsing <code>rule</code> if it does.
+Once the algorithm starts parsing <code>rule</code> it has already committed and will never backtrack.</p></div><div class=paragraph><p>The alternative rule <code>/</code> requires only tokens, but it has a big sister: the choice rule <code>|</code>.
+This requires branches as arguments and parses the first branch whose condition matches.</p></div><div class=listingblock><div class=title>The choice rule</div><div class=content><pre>// In C++, this has the operator precedence we want, which worked out nicely.
+condition1 &gt;&gt; rule1 | condition2 &gt;&gt; rule2 | ...</pre></div></div><div class=paragraph><p>Such a choice corresponds to the following pseudo-code.</p></div><div class=listingblock><div class=title>Manual implementation of choice</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>if</span> <span class=p>(</span><span class=n>match</span><span class=p>(</span><span class=n>input</span><span class=p>,</span> <span class=n>condition1</span><span class=p>))</span> <b class=conum>(1)</b>
+  <span class=n>parse</span><span class=p>(</span><span class=n>input</span><span class=p>,</span> <span class=n>rule1</span><span class=p>);</span> <b class=conum>(2)</b>
+<span class=k>else</span> <span class=nf>if</span> <span class=p>(</span><span class=n>match</span><span class=p>(</span><span class=n>input</span><span class=p>,</span> <span class=n>condition2</span><span class=p>))</span>
+  <span class=n>parse</span><span class=p>(</span><span class=n>input</span><span class=p>,</span> <span class=n>rule2</span><span class=p>);</span>
+<span class=err>…</span></code></pre></div></div><div class="colist arabic"><ol><li><p>If we match a condition, we take the branch.
+Of course, this requires backtracking if the condition did not match.</p></li><li><p>When the condition did match, the input is not rewound and we can continue with the rule.
+If any errors occur now, it’s too late — we’ve committed to this branch and issue an error.</p></li></ol></div><div class=paragraph><p>Note that we will not backtrack after a branch condition has been matched, no matter what!
+This is illustrated in the following example, where we use <code>dsl::while_()</code> with a branch.</p></div><div class=listingblock><div class=title>Parsing <code>dsl::while_(dsl::lit_c&lt;'a'> >> dsl::lit_c&lt;'b'> + dsl::lit_c&lt;'c'>)</code></div><div class=content><pre>abcabcabd
+^ start, try to match the condition
+
+abcabcabd
+-^ condition matched, we take the branch
+
+abcabcabd
+---^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+----^ condition matched, we take the branch
+
+abcabcabd
+------^ branch matched, try to match condition of the next iteration
+
+abcabcabd
+-------^ condition matched, we take the branch
+
+abcabcabd
+--------^ error: expected `c` not `d`, however we no longer bracktrack - branch was taken</pre></div></div><div class=paragraph><p>With the choice rule, we can now parse <code>unreleased</code> or <code>dot_version</code>.
+As <code>unreleased</code> is a token, it is already a branch.
+But <code>dot_version</code> isn’t, so we need to give it a condition.
+Something like this does not work:</p></div><div class=listingblock><div class=title><code>unreleased</code> or <code>dot_version</code>, first attempt</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>period</span><span class=p>;</span>
+
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version_condition</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>digit</span><span class=o>&lt;&gt;</span><span class=p>;</span> <b class=conum>(1)</b>
+
+        <span class=k>auto</span> <span class=n>unreleased</span> <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>unreleased</span> <span class=o>|</span> <span class=n>dot_version_condition</span> <span class=o>&gt;&gt;</span> <span class=n>dot_version</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We only want to parse <code>dot_version</code> if we have a decimal digit, which is checked by <code>dsl::digit&lt;></code>.</p></li><li><p>A choice of the two branches.</p></li></ol></div><div class=paragraph><p>If we haven an input like <code>1.2.3</code>, we first try to match <code>unreleased</code>.
+This fails, so we try to match the condition of the second branch.
+<code>dsl::digit&lt;></code> matches, so we take the branch.
+However, <code>dsl::digit&lt;></code> consumes the digit!
+What is left once we try to parse <code>dot_version</code> is only <code>.2.3</code>, which is wrong.</p></div><div class=paragraph><p>We need to check for a digit without consuming it.
+This can be done with <code>dsl::peek()</code>.</p></div><div class=listingblock><div class=title><code>unreleased</code> or <code>dot_version</code>, second attempt</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>period</span><span class=p>;</span>
+
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version_condition</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>peek</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digit</span><span class=o>&lt;&gt;</span><span class=p>);</span> <b class=conum>(1)</b>
+
+        <span class=k>auto</span> <span class=n>unreleased</span> <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>unreleased</span> <span class=o>|</span> <span class=n>dot_version_condition</span> <span class=o>&gt;&gt;</span> <span class=n>dot_version</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We only want to parse <code>dot_version</code> if we have a decimal digit, which is checked by <code>dsl::digit&lt;></code>.
+<code>dsl::peek()</code> is a branch that matches the rule without consuming it.</p></li><li><p>A choice of the two branches.</p></li></ol></div><div class=paragraph><p>This works, but we can do better.
+Remember that the choice tries each branch strictly in order.
+So once it’s clear that it isn’t <code>unreleased</code>, it has to be <code>dot_version</code> (or is an error).
+This means that as condition of <code>dot_version</code>, we can just use a branch that is always taken.
+This branch is called <code>dsl::else_</code>.</p></div><div class=listingblock><div class=title><code>unreleased</code> or <code>dot_version</code>, third attempt</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>period</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+
+        <span class=k>auto</span> <span class=n>unreleased</span> <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>unreleased</span> <span class=o>|</span> <span class=n>dsl</span><span class=o>::</span><span class=n>else_</span> <span class=o>&gt;&gt;</span> <span class=n>dot_version</span><span class=p>;</span>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>Now we’re successfully matching the input, we just need to produce a correct <code>PackageVersion</code>.
+Let’s consider the values produced by the choice rule.
+If our input is a version number like <code>1.2.3</code>, we’re producing three ints, just as before.
+But if our input is <code>unreleased</code> we’re not producing any values.</p></div><div class=paragraph><p>There are three things we can do.</p></div><div class=paragraph><p>The first solution is two simply add a default constructor to <code>PackageVersion</code>.
+If we parse <code>unreleased</code>, the <code>lexy::construct&lt;PackageVersion></code> callback will be invoked with zero arguments which will itself invoke the default constructor of <code>PackageVersion</code>.</p></div><div class=paragraph><p>The second solution is to write a callback that has two overloads.
+The first one takes three ints and forwards them to the <code>PackageVersion</code>.
+The second one takes no arguments and creates a <code>0.0.0</code> <code>PackageVersion</code> manually.</p></div><div class=listingblock><div class=title>Overloaded callback for the <code>version</code> production (<a href=https://godbolt.org/z/TzxT7d>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;.&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+
+        <span class=k>auto</span> <span class=n>unreleased</span> <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>unreleased</span> <span class=o>|</span> <span class=n>dsl</span><span class=o>::</span><span class=n>else_</span> <span class=o>&gt;&gt;</span> <span class=n>dot_version</span><span class=p>;</span>
+    <span class=p>}();</span>
+
+    <span class=c1>// An overloaded callback.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span>
+      <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>callback</span><span class=o>&lt;</span><span class=n>PackageVersion</span><span class=o>&gt;</span><span class=p>(</span>
+            <span class=p>[](</span><span class=kt>int</span> <span class=n>a</span><span class=p>,</span> <span class=kt>int</span> <span class=n>b</span><span class=p>,</span> <span class=kt>int</span> <span class=n>c</span><span class=p>)</span> <span class=p>{</span> <b class=conum>(1)</b>
+                <span class=c1>// a is the result of the first number rule, b of the second, c of the third.</span>
+                <span class=k>return</span> <span class=n>PackageVersion</span><span class=p>{</span><span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span><span class=p>};</span>
+            <span class=p>},</span>
+            <span class=p>[]</span> <span class=p>{</span> <b class=conum>(2)</b>
+                <span class=k>return</span> <span class=n>PackageVersion</span><span class=p>{</span><span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>};</span>
+            <span class=p>}</span>
+        <span class=p>);</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>This callback will be invoked when we parse <code>dot_version</code>.</p></li><li><p>This callback will be invoked when we parse <code>unreleased</code>.</p></li></ol></div><div class=paragraph><p>The third solution is two produce three ints even if we take the <code>unreleased</code> branch.
+This can be done with the <code>dsl::value_c&lt;Constant></code> production.
+It will accept any input without consuming anything, but it will always produce a value — the specified <code>Constant</code>.
+So we extend the <code>unreleased</code> branch to produce three zeroes once we take the branch:</p></div><div class=listingblock><div class=title>Using <code>dsl::value_c</code> for the version production (<a href=https://godbolt.org/z/1nWvEn>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>number</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>dot</span>    <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;.&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>dot_version</span> <span class=o>=</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span><span class=p>;</span>
+
+        <span class=k>auto</span> <span class=n>unreleased</span>
+          <span class=o>=</span> <span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;unreleased&#34;</span><span class=p>)</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>value_c</span><span class=o>&lt;</span><span class=mi>0</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>value_c</span><span class=o>&lt;</span><span class=mi>0</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>value_c</span><span class=o>&lt;</span><span class=mi>0</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(1)</b>
+
+        <span class=k>return</span> <span class=n>unreleased</span> <span class=o>|</span> <span class=n>dsl</span><span class=o>::</span><span class=n>else_</span> <span class=o>&gt;&gt;</span> <span class=n>dot_version</span><span class=p>;</span>
+    <span class=p>}();</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>construct</span><span class=o>&lt;</span><span class=n>PackageVersion</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(2)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Produce the three zeroes.</p></li><li><p>This callback will always be invoked with three integers.</p></li></ol></div><div class=paragraph><p>To illustrate the most rules, I’ve decided to just stick with this solution.
+Your preference may vary, of course.</p></div></div></div><div class=sect1><h2 id=_parsing_one_package_author>Parsing one package author</h2><div class=sectionbody><div class=paragraph><p>Before we go and parse the list of authors, we need to parse an individual one.</p></div><div class=listingblock><div class=title>Package author</div><div class=content><pre>authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>One author is just a quoted string.</p></div><div class=paragraph><p>We can easily parse it using the tools we’ve already covered:</p></div><div class=listingblock><div class=title>String parsing, first attempt</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=c1>// Match zero or more code points (&#34;characters&#34;) surrounded by quotation marks.</span>
+    <span class=c1>// We capture the content without the quotes.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+      <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span><span class=p>))</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+
+    <span class=c1>// Convert the captured lexeme into a std::string.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>However, this attempt does not quite work.
+First of all, we don’t want <em>arbitrary</em> code points in our string.
+It shouldn’t contain characters like line breaks.
+More importantly, the rule can never succeed.</p></div><div class=paragraph><p>The while rule uses the branch condition to determine whether or not it should try another iteration.
+Here, our branch is the token <code>dsl::code_point</code>, so the entire rule is used as condition.
+We repeat as long as we match code points, this includes the closing <code>"</code> character.</p></div><div class=sidebarblock><div class=content><div class=paragraph><p>If we had the equivalent regex <code>".*"</code>, it would just work fine.
+The regex star operator only repeats the rule as often as its necessary to make the pattern work.</p></div><div class=paragraph><p>Such "magic" is not done in <code>lexy</code>.
+It does exactly what you say it should do.</p></div></div></div><div class=paragraph><p>To fix this, we need a branch condition.
+We only want to match code points while we don’t have the closing <code>"</code>.
+For that, we can use <code>dsl::peek_not()</code>, which checks whether a rule would not match at the input without consuming anything.</p></div><div class=listingblock><div class=title>String parsing, second attempt (<a href=https://godbolt.org/z/eca4E9>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=c1>// Match zero or more code points (&#34;characters&#34;) surrounded by quotation marks.</span>
+    <span class=c1>// We capture the content without the quotes.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+      <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span>
+        <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>peek_not</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>)</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span><span class=p>))</span>
+        <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+
+    <span class=c1>// Convert the captured lexeme into a std::string.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>While this works, it is not as efficient as it could be:
+To determine whether we should parse another character, we need to peek for it in the input.
+If it would match, we’re done — but don’t match it yet.
+Immediately afterwards, we do match it again.</p></div><div class=paragraph><p>It’s also not quite as compact as I would like.</p></div><div class=paragraph><p>Luckily, parsing a quoted string is a common problem, so there is a predefined function in the library.
+We can use <code>dsl::quoted(dsl::code_point)</code> to match zero or more code points surrounded by quotes.
+The closing <code>"</code> is used as the condition to detect the end of the string, like we’ve just implemented, only more efficiently.</p></div><div class=paragraph><p><code>dsl::quoted()</code> works differently than the other rules we’ve seen so far.
+Every rule that produced a value like <code>dsl::capture()</code> or <code>dsl::integer</code> produces only a single value.
+<code>dsl::quoted()</code> on the other hand can produce arbitrarily many values, for example one per iteration.
+As such, the values are not all collected as a parameter pack and forwarded to a callback, but instead a <em>sink</em> is used.</p></div><div class=paragraph><p>A sink is a callback that can be invoked multiple times.
+Every time it is invoked, all arguments are somehow added to an internal value, which is retrieved by calling <code>.finish()</code>.
+This allows building a container or <code>std::string</code>.
+If we write <code>dsl::quoted(dsl::code_point)</code>, the sink will be invoked with the captured code point in each iteration.</p></div><div class=listingblock><div class=title>String parsing, third attempt (<a href=https://godbolt.org/z/4eczx4>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=c1>// Match zero or more code points (&#34;characters&#34;) surrounded by quotation marks.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>quoted</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span><span class=p>);</span>       <b class=conum>(1)</b>
+
+    <span class=c1>// Add each captured code point to a std::string.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span>                                       <b class=conum>(2)</b>
+      <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>sink</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>([](</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&amp;</span> <span class=n>result</span><span class=p>,</span> <span class=k>auto</span> <span class=n>lexeme</span><span class=p>)</span> <b class=conum>(3)</b>
+                                <span class=p>{</span>
+                                    <span class=n>result</span><span class=p>.</span><span class=n>append</span><span class=p>(</span><span class=n>lexeme</span><span class=p>.</span><span class=n>begin</span><span class=p>(),</span> <span class=n>lexeme</span><span class=p>.</span><span class=n>end</span><span class=p>());</span>
+                                <span class=p>});</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We want code points surrounded by quotes.
+<code>dsl::code_point</code> is a pattern, so it will be automatically `dsl::capture()`d for us in each iteration.</p></li><li><p>To provide a sink we use <code>::value</code> just as before.</p></li><li><p><code>lexy::sink</code> creates a sink for us.
+It constructs an empty <code>std::string</code> and then invokes the lambda with each captured lexeme.
+We then append that to the string.</p></li></ol></div><div class=sidebarblock><div class=content><div class=paragraph><p><code>dsl::quoted()</code> isn’t actually a function, but a function object.
+In the library, <code>dsl::quoted()</code> is defined as follows:</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>constexpr</span> <span class=k>auto</span> <span class=n>quoted</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>delimited</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>);</span></code></pre></div></div><div class=paragraph><p>You can use <code>dsl::delimited()</code> to define your own delimiters by giving it a pattern and then give it the rule that is being delimited by it.</p></div></div></div><div class=paragraph><p>Constructing a <code>std::string</code> by repeatedly appending a <code>lexy::lexeme</code> is a common use case,
+so we can also use <code>lexy::as_string&lt;std::string></code> for it.
+<code>lexy::as_string</code> is not just a callback that will construct a string from one argument,
+but also a sink that will repeatedly append the arguments to the string.</p></div><div class=paragraph><p>We also haven’t forbidden input such as <code>"First line\nSecond line"</code>, where <code>\n</code> is a literal line break inside the string.
+To do that, we need to prevent certain code points from occurring in our string.
+We can do that using the minus rule implemented as <code>operator-</code>.
+<code>a - b</code> matches <code>a</code> but only succeeds if <code>b</code> did not match the input <code>a</code> just matched.
+With that, we can "subtract" certain character classes from our token.</p></div><div class=listingblock><div class=title>String parsing, fourth attempt (<a href=https://godbolt.org/z/crvhsM>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=c1>// Match zero or more non-control code points (&#34;characters&#34;) surrounded by quotation marks.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>quoted</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>);</span>
+
+    <span class=c1>// Construct a string from the quoted content.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>Here, we’ve prevented all control characters from occurring inside the string.</p></div><div class=paragraph><p>But what if we want to include a control character in the author’s name (however, unlikely)?
+Or more importantly, how do we get a <code>"</code> in our string?
+<code>dsl::quoted()</code> will end once it reaches the final <code>"</code>.</p></div><div class=paragraph><p>For that, we need escape sequences.
+They can be very conveniently defined using another rule and added to the string as the second argument.</p></div><div class=listingblock><div class=title>String parsing, final attempt (<a href=https://godbolt.org/z/hMs4xn>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=c1>// Match zero or more non-control code points (&#34;characters&#34;) surrounded by quotation marks.</span>
+    <span class=c1>// We allow `\&#34;`, as well as `\u` and `\U` as escape sequences.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=k>auto</span> <span class=n>cp</span>     <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>;</span>
+        <span class=k>auto</span> <span class=n>escape</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>backslash_escape</span>                                <b class=conum>(1)</b>
+                          <span class=p>.</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>()</span>                                    <b class=conum>(2)</b>
+                          <span class=p>.</span><span class=n>rule</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;u&#39;</span><span class=o>&gt;</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point_id</span><span class=o>&lt;</span><span class=mi>4</span><span class=o>&gt;</span><span class=p>)</span>  <b class=conum>(3)</b>
+                          <span class=p>.</span><span class=n>rule</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;U&#39;</span><span class=o>&gt;</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point_id</span><span class=o>&lt;</span><span class=mi>8</span><span class=o>&gt;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>quoted</span><span class=p>(</span><span class=n>cp</span><span class=p>,</span> <span class=n>escape</span><span class=p>);</span>
+    <span class=p>}();</span>
+
+    <span class=c1>// Construct a UTF-8 string from the quoted content.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=p>,</span> <span class=n>lexy</span><span class=o>::</span><span class=n>utf8_encoding</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(4)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We use <code>\</code> as the escape character using <code>dsl::backslash_escape</code>.
+Alternatively, we could have used <code>dsl::escape(dsl::lit_c&lt;'\\'>)</code>.</p></li><li><p>We want <code>\"</code> to mean <code>"</code>.
+Using <code>.lit_c&lt;'"'>()</code> is equivalent to <code>.rule(dsl::lit_c&lt;'"'> >> dsl::value_c&lt;'"'>)</code>.
+Whenever we encounter a <code>"</code> after the <code>\</code>, we produce the literal constant value <code>"</code>,
+which will be added to our sink.</p></li><li><p>These two lines define <code>\uXXXX</code> and <code>\uXXXXXXXX</code> to specify character codes.
+<code>dsl::code_point_id&lt;N></code> is just a convenience for a <code>dsl::integer</code> rule that parses a code point using <code>N</code> hex digits.</p></li><li><p>The <code>\u</code> and <code>\U</code> rules all produce a <code>lexy::code_point</code>.
+<code>lexy::as_string</code> can only convert it back into a string, if we tell it the encoding we want.
+So we add <code>lexy::utf8_encoding</code> as the second optional argument to enable that.</p></li></ol></div></div></div><div class=sect1><h2 id=_parsing_the_package_authors>Parsing the package authors</h2><div class=sectionbody><div class=paragraph><p>Now we know how to parse one author, but the field can take a list of authors surrounded by square brackets.</p></div><div class=listingblock><div class=title>Package author</div><div class=content><pre>authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>Before you try writing something with <code>dsl::while_()</code>, this won’t actually work.
+The reason for that is that <code>dsl::while_()</code> does not work with rules that produce values, as <code>dsl::while_()</code> does not use a sink.
+Instead we need to use <code>dsl::list(rule, sep)</code>.
+This matches a (non-empty) list of <code>rule</code> separated by <code>sep</code>.</p></div><div class=listingblock><div class=title>The list rule (<a href=https://godbolt.org/z/GK7McT>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>integer_list</span>
+<span class=p>{</span>
+    <span class=c1>// Match a (non-empty) list of integers separated by commas.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>list</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>integer</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>digits</span><span class=o>&lt;&gt;</span><span class=p>),</span>
+                                           <span class=n>dsl</span><span class=o>::</span><span class=n>sep</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>comma</span><span class=p>));</span> <b class=conum>(1)</b>
+
+    <span class=c1>// Add them all to a std::vector&lt;int&gt;.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_list</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;&gt;</span><span class=p>;</span> <b class=conum>(2)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p><code>dsl::comma</code> is just <code>dsl::lit_c&lt;','></code>.
+We wrap it in <code>dsl::sep()</code> to indicate that this is a normal separator that is required between each item.</p></li><li><p>The list will pass each value to the sink.
+Here, we’ve used <code>lexy::as_list</code>, which repeatedly calls <code>.push_back()</code>.</p></li></ol></div><div class=paragraph><p>How does the list know when to repeat an item?
+In general, this would require a branch whose condition will determine that.
+Here we don’t need a branch, as our separator is <code>dsl::sep()</code>.
+As this separator can only occur between items, we’re done with the list if we didn’t match a separator after our item.</p></div><div class=paragraph><p>If we wanted to use <code>dsl::trailing_sep()</code>, which allows an optional trailing separator, this is no longer possible.
+Then we need to add a condition to our list item, like <code>dsl::peek(dsl::digit&lt;>)</code>.</p></div><div class=paragraph><p>Using <code>dsl::list()</code>, implementing an <code>author_list</code> production is pretty straightforward.
+Our list item is <code>dsl::p&lt;author></code>.
+This rule parses the specified production and it will produce the value of the production.
+Here, the value is a <code>std::string</code> and we add that to our <code>std::vector&lt;std::string></code>.</p></div><div class=listingblock><div class=title>The <code>author_list</code> production</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author_list</span>
+<span class=p>{</span>
+    <span class=c1>// Match a comma separated (non-empty) list of authors surrounded by square brackets.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+      <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;[&#39;</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>list</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>author</span><span class=o>&gt;</span><span class=p>,</span> <span class=n>dsl</span><span class=o>::</span><span class=n>sep</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>comma</span><span class=p>))</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;]&#39;</span><span class=o>&gt;</span><span class=p>;</span>
+
+    <span class=c1>// Collect all authors into a std::vector.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_list</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p>If we wanted to use <code>dsl::trailing_sep()</code> or even no separator, we would need a branch.
+Luckily, <code>dsl::p</code> is a branch if the rule of the production is a branch,
+and <code>dsl::quoted()</code> is a branch whose condition is the initial <code>"</code>.
+As such, <code>dsl::p&lt;author></code> is a branch already.</p></div></div></div><div class=paragraph><p>Surrounding things with some sort of brackets is also quite common.
+As such, the library provides <code>dsl::brackets()</code> to define a set of open and closing brackets,
+which can then be applied to a rule.
+<code>dsl::square_bracketed</code> as <code>dsl::brackets(dsl::lit_c&lt;'['>, dsl::lit_c&lt;']'>)</code> is already predefined, so we can use it.</p></div><div class=paragraph><p>Writing <code>dsl::square_bracketed(rule)</code> will match the <code>rule</code> surrounded by square brackets.
+For the specific case of <code>dsl::list()</code>, we can also use <code>dsl::square_bracketed.list(item, sep)</code> instead.
+This has the additional advantage that the closing bracket will be used as branch condition for the list item.</p></div><div class=listingblock><div class=title>The final <code>author_list</code> production (<a href=https://godbolt.org/z/bPM1P9>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author_list</span>
+<span class=p>{</span>
+    <span class=c1>// Match a comma separated (non-empty) list of authors surrounded by square brackets.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span>
+        <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>square_bracketed</span><span class=p>.</span><span class=n>list</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>author</span><span class=o>&gt;</span><span class=p>,</span> <span class=n>dsl</span><span class=o>::</span><span class=n>sep</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>comma</span><span class=p>));</span>
+
+    <span class=c1>// Collect all authors into a std::vector.</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_list</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p>To recap all the implicit branch condition:</p></div><div class=ulist><ul><li><p>Using <code>dsl::sep()</code> as list separator does not require a branch to parse a list.
+The separator itself is used to determine whether or not we need another list item.
+If we wanted to use <code>dsl::trailing_sep()</code> or no list separator, we would need a branch.</p></li><li><p>The <code>dsl::p</code> rule is branch if the production rule is a branch.</p></li><li><p><code>dsl::quoted()</code> is a branch that uses the initial quotation mark as condition.
+The same is true for every <code>dsl::delimited()</code>.</p></li><li><p><code>dsl::square_bracketed()</code> is a branch that uses the initial opening square bracket as condition.
+The same is true for every <code>dsl::bracketed()</code>.</p></li><li><p>Using <code>dsl::square_bracketed.list(…​)</code> does never require a branch condition in the list item.
+The list is considered done if we have the closing square bracket, similar to the way <code>dsl::quoted()</code> worked.
+The same is true for every <code>dsl::bracketed()</code>.</p></li></ul></div><div class=paragraph><p>So while <code>lexy</code> requires branches every time it needs to make a decision,
+in many situations, the branches can be hidden away.
+This is thanks to the utility rules such as <code>dsl::delimited()</code> and <code>dsl::bracketed()</code>.
+There is also <code>dsl::terminated()</code>, which works just like <code>dsl::bracketed()</code> but it has only a closing "bracket" not an opening one.</p></div></div></div></div></div><div class=sect1><h2 id=_parsing_the_package_config>Parsing the package config</h2><div class=sectionbody><div class=paragraph><p>We can now put everything together and parse our config:</p></div><div class=listingblock><div class=title>The <code>config</code> production</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>make_field</span> <span class=o>=</span> <span class=p>[](</span><span class=k>auto</span> <span class=n>name</span><span class=p>,</span> <span class=k>auto</span> <span class=n>rule</span><span class=p>)</span> <span class=p>{</span>              <b class=conum>(1)</b>
+            <span class=k>return</span> <span class=n>name</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;=&#39;</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>rule</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>newline</span><span class=p>;</span>  <b class=conum>(2)</b>
+        <span class=p>};</span>
+
+        <span class=k>auto</span> <span class=n>name_field</span>    <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;name&#34;</span><span class=p>),</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>name</span><span class=o>&gt;</span><span class=p>);</span> <b class=conum>(3)</b>
+        <span class=k>auto</span> <span class=n>version_field</span> <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;version&#34;</span><span class=p>),</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>version</span><span class=o>&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>authors_field</span>
+            <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;authors&#34;</span><span class=p>),</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>author_list</span><span class=o>&gt;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>name_field</span> <span class=o>+</span> <span class=n>version_field</span> <span class=o>+</span> <span class=n>authors_field</span><span class=p>;</span> <b class=conum>(4)</b>
+    <span class=p>}();</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>construct</span><span class=o>&lt;</span><span class=n>PackageConfig</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(5)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We define a little helper function that builds a rule that parses a field given its name and value.</p></li><li><p>Each field consists of the name, an equal sign, the value rule, and a newline matched by the <code>dsl::newline</code> token.</p></li><li><p>Define each field using the productions we’ve built above.</p></li><li><p>Match them all in order.</p></li><li><p>Construct the package config from the resulting <code>std::string</code>, <code>PackageVersion</code> and <code>std::vector&lt;std::string></code>.</p></li></ol></div><div class=paragraph><p>This works!</p></div><div class=paragraph><p>We can now almost parse the sample input I’ve given above:</p></div><div class=listingblock><div class=title><code>package.config</code></div><div class=content><pre>name=lexy
+version=0.0.0
+authors=[&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>We don’t support whitespace between the elements.
+We want to support ASCII blank characters (space and tab) surrounding the equal sign and the brackets and comma of the author list.
+This can be done either manually or automatically.</p></div><div class=sect2><h3 id=_manual_whitespace_skipping>Manual whitespace skipping</h3><div class=paragraph><p>To do this manually, we can use <code>dsl::whitespace(dsl::ascii::blank)</code>.
+This rule, like <code>dsl::while_()</code>, matches zero or more occurrences of the given rule (but internally it is treated as whitespace, not actual text).
+We then insert it wherever we need to skip whitespace.</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Define whitespace globally for convenience.</span>
+<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>ws</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespace</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>:::</span><span class=n>blank</span><span class=p>).</span>
+
+<span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]{</span>
+        <span class=k>auto</span> <span class=n>make_field</span> <span class=o>=</span> <span class=p>[](</span><span class=k>auto</span> <span class=n>name</span><span class=p>,</span> <span class=k>auto</span> <span class=n>rule</span><span class=p>)</span> <span class=p>{</span>
+            <span class=c1>// Skip whitespace surrounding the equal sign and before the newline.</span>
+            <span class=k>return</span> <span class=n>name</span> <span class=o>+</span> <span class=n>ws</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;=&#39;</span><span class=o>&gt;</span> <span class=o>+</span> <span class=n>ws</span> <span class=o>+</span> <span class=n>rule</span> <span class=o>+</span> <span class=n>ws</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>newline</span><span class=p>;</span>
+        <span class=p>};</span>
+
+        <span class=err>…</span>
+    <span class=p>}();</span>
+<span class=p>};</span>
+
+<span class=c1>// Likewise, add it to the author_list production.</span></code></pre></div></div></div><div class=sect2><h3 id=_automatic_whitespace_skipping>Automatic whitespace skipping</h3><div class=paragraph><p>Skipping whitespace manually is a good idea when whitespace is only needed in a couple of places or you’re copying a grammar that already specifies whitespace.
+Here, however, it just adds extra noise to the rule.</p></div><div class=paragraph><p>So instead we can instruct <code>lexy</code> to skip whitespace automatically for us.
+We just need to tell the library what whitespace is, and it will automatically skip one after it parses a token.
+Remember, tokens are things like <code>LEXY_LIT("name")</code> or <code>dsl::lit_c&lt;'='></code> — precisely where we inserted <code>ws</code> in the example above!</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>whitespace</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>blank</span><span class=p>;</span> <b class=conum>(1)</b>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span> <span class=err>…</span> <span class=p>}</span> <span class=p>();</span> <b class=conum>(2)</b>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_aggregate</span><span class=o>&lt;</span><span class=n>PackageConfig</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define what whitespace is for our grammar.</p></li><li><p>Nothing needs to change in any of the rules here!</p></li></ol></div><div class=paragraph><p>We enable whitespace by adding a <code>whitespace</code> member to the root production, i.e. the production we’re actually parsing.
+And that’s all: now <code>lexy</code> will skip whitespace after every token of our grammar.</p></div><div class=paragraph><p>This is a bit much, however.
+For example, the following now parses:</p></div><div class=listingblock><div class=content><pre>name    = le   x  y
+version = 0.  0  .0
+authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>The <code>name</code> production consists of a sequence of tokens like <code>dsl::ascii::alpha</code>.
+<code>lexy</code> will skip whitespace after every one of them.
+Likewise, it will skip whitespace after the <code>dsl::period</code> and <code>dsl::digits</code> of the <code>version</code> production.</p></div><div class=paragraph><p>So we need to disable whitespace skipping there.
+Conceptually, the <code>name</code> and <code>version</code> production should be treated just like tokens:
+we don’t want whitespace inside of them, but only skip it afterwards.
+We can get that behavior by inheriting them from <code>lexy::token_production</code>:</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span> <span class=o>:</span> <span class=n>lexy</span><span class=o>::</span><span class=n>token_production</span>
+<span class=p>{</span>
+    <span class=err>…</span>
+<span class=p>};</span>
+
+<span class=k>struct</span> <span class=nc>version</span> <span class=o>:</span> <span class=n>lexy</span><span class=o>::</span><span class=n>token_production</span>
+<span class=p>{</span>
+    <span class=err>…</span>
+<span class=p>};</span>
+
+<span class=c1>// Other productions unchanged.</span></code></pre></div></div><div class=paragraph><p>Now when we parse the name and version field, <code>lexy</code> disables whitespace skipping for the tokens inside the productions,
+and will only skip spaces afterwards.</p></div><div class=paragraph><p>Note that we don’t need to do the same for the <code>author</code> production.
+While it is also a production that should be treated as a single token (a string literal),
+whitespace skipping inside of <code>dsl::quoted()</code> is disabled automatically for us.
+So <code>" Jonathan Müller"</code> will always include the leading spaces.</p></div><div class=paragraph><p>To recap, to enable automatic whitespace skipping, we just need to do the following:</p></div><div class=ulist><ul><li><p>Add a <code>static constexpr auto whitespace</code> member that defines whitespace to our root production <code>config</code>.</p></li><li><p>Disable whitespace skipping inside the <code>name</code> and <code>version</code> field by inheriting the productions from <code>lexy::token_production</code>.</p></li></ul></div><div class=paragraph><p>Now we can parse the package config shown in the beginning of the tutorial!</p></div></div><div class=sect2><h3 id=_arbitrary_ordering_of_fields>Arbitrary ordering of fields</h3><div class=paragraph><p>One final feature we might want to support is parsing fields in arbitrary order.
+This can be done with the <code>dsl::combination()</code> rule, which matches the specified set of rules once, but in any order.
+The values of each rule are passed to a sink, to prevent exponential template instantiations.
+This is a problem though: how can we know which value should be assigned to which member of our <code>PackageConfig</code>?</p></div><div class=paragraph><p>We can specify a given member using <code>LEXY_MEM(name) = rule</code>.
+This says that the value produced by <code>rule</code> should be assigned to a member named <code>name</code>.
+The <code>lexy::as_aggregate&lt;T></code> sink then constructs a <code>T</code> object and processes all member assignments, in whatever order they might occur.</p></div><div class=listingblock><div class=title>The final <code>config</code> production</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=k>auto</span> <span class=n>make_field</span> <span class=o>=</span> <span class=p>[](</span><span class=k>auto</span> <span class=n>name</span><span class=p>,</span> <span class=k>auto</span> <span class=n>rule</span><span class=p>)</span> <span class=p>{</span>
+            <span class=k>return</span> <span class=n>name</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;=&#39;</span><span class=o>&gt;</span><span class=p>[</span><span class=n>ws</span><span class=p>]</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespaced</span><span class=p>(</span><span class=n>rule</span><span class=p>,</span> <span class=n>ws</span><span class=p>)</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>newline</span><span class=p>[</span><span class=n>ws</span><span class=p>];</span> <b class=conum>(1)</b>
+        <span class=p>};</span>
+
+        <span class=k>auto</span> <span class=n>name_field</span>    <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;name&#34;</span><span class=p>),</span> <span class=n>LEXY_MEM</span><span class=p>(</span><span class=n>name</span><span class=p>)</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>name</span><span class=o>&gt;</span><span class=p>);</span> <b class=conum>(2)</b>
+        <span class=k>auto</span> <span class=n>version_field</span>
+            <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;version&#34;</span><span class=p>),</span> <span class=n>LEXY_MEM</span><span class=p>(</span><span class=n>version</span><span class=p>)</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>version</span><span class=o>&gt;</span><span class=p>);</span>
+        <span class=k>auto</span> <span class=n>authors_field</span>
+            <span class=o>=</span> <span class=n>make_field</span><span class=p>(</span><span class=n>LEXY_LIT</span><span class=p>(</span><span class=s>&#34;authors&#34;</span><span class=p>),</span> <span class=n>LEXY_MEM</span><span class=p>(</span><span class=n>authors</span><span class=p>)</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>p</span><span class=o>&lt;</span><span class=n>author_list</span><span class=o>&gt;</span><span class=p>);</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>);</span> <b class=conum>(3)</b>
+    <span class=p>}();</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_aggregate</span><span class=o>&lt;</span><span class=n>PackageConfig</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(4)</b>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p><code>dsl::combination()</code> requires a branch condition to know which rule to parse.
+Luckily, we can use the name of the field for that.</p></li><li><p>Each rule now contains the assignment to the appropriate member.</p></li><li><p>Instead of a sequence, we now have <code>dsl::combination()</code>.</p></li><li><p>We use <code>lexy::as_aggregate&lt;PackageConfig></code> as our sink.</p></li></ol></div><div class=paragraph><p>This will match each field exactly once, but in any order.</p></div></div></div></div><div class=sect1><h2 id=_error_handling>Error handling</h2><div class=sectionbody><div class=paragraph><p>Our parser now handles all well-formed input, but what about wrong input?</p></div><div class=sect2><h3 id=_parsing_the_entire_input>Parsing the entire input</h3><div class=paragraph><p>The first thing you might notice is that you can freely append stuff at the end of the config file.</p></div><div class=listingblock><div class=title><code>package.config</code></div><div class=content><pre>name    = lexy
+version = 0.0.0
+authors = [&#34;Jonathan Müller&#34;]
+Hello World!
+asdfjlagnlwefhjlaghlhl</pre></div></div><div class=paragraph><p>The reason for that is simple: when we parse a production, we only consume as much input as necessary for it and don’t look at anything else.
+To prevent that, we need to use <code>dsl::eof</code>.
+This token only matches when we’re at the end of the input.</p></div><div class=listingblock><div class=title>Preventing trailing input</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=err>…</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>)</span>
+                <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>eof</span><span class=p>;</span>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class=paragraph><p>Note that this does not allow trailing newlines, as we’ve required EOF immediately after all the fields.
+To fix that, we can manually instruct <code>lexy</code> to skip any whitespace character, not just blanks.</p></div><div class=listingblock><div class=title>Allowing trailing newlines</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=err>…</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>)</span>
+                <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespace</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>)</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>eof</span><span class=p>;</span>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div></div><div class=sect2><h3 id=_error_messages>Error messages</h3><div class=paragraph><p>When the parsing algorithm fails to parse something, parsing stops and an error is raised.
+This error is passed to the error callback passed as second argument to <code>lexy::parse()</code> and <code>lexy::validate()</code>.
+The callback is invoked with two arguments.
+The first is a <code>lexy::error_context&lt;Production, Input></code>, which contains contextual information like the name and location of the production that failed.
+The second is a <code>lexy::error&lt;Reader, Tag></code>.
+It always is associated with a location, but can have additional information depending on the <code>Tag</code>.</p></div><div class=dlist><dl><dt class=hdlist1><code>lexy::error&lt;Reader, lexy::expected_literal></code></dt><dd><p>A <code>lexy::expected_literal</code> error is raised when we’ve instructed the parse algorithm to parse a literal sequence of characters, but it couldn’t match those.
+It contains information about the expected literal and at which position and character matching failed.</p></dd><dt class=hdlist1><code>lexy::error&lt;Reader, lexy::expected_char_class></code></dt><dd><p>A <code>lexy::expected_char_class</code> error is raised when we’ve instructed the parse algorithm to parse one of a specified set of characters, but it couldn’t match any of those.
+It contains a user-friendly name of the character class.</p></dd><dt class=hdlist1><code>lexy::error&lt;Reader, Tag></code></dt><dd><p>Otherwise, it is a generic error. The <code>Tag</code> is an empty class that can be given a message, which the error reports.
+It is raised for example by a choice where no branch has matched.</p></dd></dl></div><div class=paragraph><p>In the full source code found at <code>examples/tutorial.cpp</code>, the error callback is <code>lexy_ex::report_error</code>.
+This callback is not part of the library proper, but can be copied and adapted for your own needs.
+It simply formats the error nicely and prints it to <code>stderr</code>.</p></div><div class=paragraph><p>By default, the error messages are pretty good.
+You can try various malformed input and see what the library reports.
+Some error messages are given.</p></div><div class=listingblock><div class=title>Name that starts with an underscore.</div><div class=content><pre>error: while parsing name
+     |
+ 1: 8| name = _lexy
+     |        ^ expected &#39;ASCII.alpha&#39; character</pre></div></div><div class=listingblock><div class=title>Missing version number</div><div class=content><pre>error: while parsing version
+     |
+ 2:11| version = 0.0
+     |           ~~~^ expected &#39;.&#39;</pre></div></div><div class=listingblock><div class=title>Author name not quoted.</div><div class=content><pre>error: while parsing author_list
+     |
+ 3:12| authors = [Jonathan Müller]
+     |            ^ expected &#39;&#34;&#39;</pre></div></div></div><div class=sect2><h3 id=_specifying_custom_error_tags>Specifying custom error tags</h3><div class=paragraph><p>However, some generic errors are a bit confusing if you haven’t written the grammar.
+For example, if you write a string literal that contains a control character, you get the generic <code>minus failure</code> error message.
+Luckily, the minus rule is actually a token and every token has a <code>.error()</code> member function.
+This allows specifying the error that will be reported if the token didn’t match.</p></div><div class=listingblock><div class=title><code>author</code> production with <code>dsl::try_</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
+<span class=p>{</span>
+    <span class=k>struct</span> <span class=nc>invalid_character</span> <b class=conum>(1)</b>
+    <span class=p>{</span>
+        <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;invalid string character&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>};</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=k>auto</span> <span class=n>cp</span> <span class=o>=</span> <span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>).</span><span class=n>error</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>();</span> <b class=conum>(3)</b>
+
+        <span class=err>…</span>
+    <span class=p>}();</span>
+
+    <span class=err>…</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>The tag that will be associated with the error.</p></li><li><p>We override the default message (which would be <code>author::invalid_character</code>) to the more friendly <code>invalid string character</code>.</p></li><li><p>We specify that on token failure, we want a generic error with the given tag.</p></li></ol></div><div class=paragraph><p>Likewise, if we specify the same field twice we get the generic <code>combination duplicate</code> error message.
+This can be improved by specifying a custom tag in our <code>dsl::combination()</code> call.</p></div><div class=listingblock><div class=title><code>config</code> production with tagged <code>dsl::combination()</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+<span class=p>{</span>
+    <span class=k>struct</span> <span class=nc>duplicate_field</span> <b class=conum>(1)</b>
+    <span class=p>{</span>
+        <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;duplicate config field&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>};</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=err>…</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=o>&lt;</span><span class=n>duplicate_field</span><span class=o>&gt;</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>)</span> <b class=conum>(3)</b>
+               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>eof</span><span class=p>[</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>];</span>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define the tag.</p></li><li><p>Override the default message (<code>config::duplicate_field</code> would actually be ok).</p></li><li><p>Specify the error on failure.</p></li></ol></div><div class=paragraph><p>Now an invalid string character is reported as <code>invalid string character</code> and a duplicated config field as <code>duplicate config field</code>:</p></div><div class=listingblock><div class=title>Missing closing string delimiter</div><div class=content><pre>error: while parsing author
+     |
+ 3:28| authors = [&#34;Jonathan Müller]
+     |              ~~~~~~~~~~~~~~~^ invalid string character</pre></div></div><div class=listingblock><div class=title>Duplicate config field error</div><div class=content><pre>error: while parsing config
+     |
+ 1: 1| name = lexy
+     | ^ beginning here
+     |
+ 3: 1| version = 0.0.0
+     | ^^^^^^^^^^^^^^^ duplicate config field</pre></div></div></div><div class=sect2><h3 id=_using_dslrequire_and_dslprevent_to_handle_common_mistakes>Using <code>dsl::require()</code> and <code>dsl::prevent()</code> to handle common mistakes</h3><div class=paragraph><p>There are more error messages that could be improved.
+For example, when you have a name like <code>my-package</code>, you get an "expected newline" error pointing to the first <code>-</code>, as that’s where the name production stops parsing.
+We can improve that using <code>dsl::require()</code>.
+This rule raises an error with the specified tag if the pattern would not match at the input,
+but it doesn’t actually consume anything.</p></div><div class=listingblock><div class=title><code>name</code> production with <code>dsl::require</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span>
+<span class=p>{</span>
+    <span class=k>struct</span> <span class=nc>invalid_character</span> <b class=conum>(1)</b>
+    <span class=p>{</span>
+        <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;invalid name character&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>};</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=err>…</span>
+
+        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>lead_char</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>trailing_char</span><span class=p>))</span>
+               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>require</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>);</span> <b class=conum>(3)</b>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define a tag.</p></li><li><p>Give it a custom message.</p></li><li><p>Issue the error unless the name is followed by the required space character (either trailing whitespace or the newline).</p></li></ol></div><div class=paragraph><p>Now the error message looks like this instead.</p></div><div class=listingblock><div class=title>Invalid name character error</div><div class=content><pre>error: while parsing name
+     |
+ 1:10| name = my-package
+     |        ~~^ invalid name character</pre></div></div><div class=paragraph><p>Likewise, we can use <code>dsl::prevent()</code>, which fails if a pattern would match, if we were to specify a build string in our version.</p></div><div class=listingblock><div class=title><code>version</code> production with <code>dsl::prevent()</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
+<span class=p>{</span>
+    <span class=k>struct</span> <span class=nc>forbidden_build_string</span> <b class=conum>(1)</b>
+    <span class=p>{</span>
+        <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;build string not supported&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>};</span>
+
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
+        <span class=err>…</span>
+
+        <span class=k>return</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span>
+               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>prevent</span><span class=o>&lt;</span><span class=n>forbidden_build_string</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;-&#39;</span><span class=o>&gt;</span><span class=p>);</span> <b class=conum>(3)</b>
+    <span class=p>}();</span>
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define a tag.</p></li><li><p>Give it a custom message.</p></li><li><p>Raise the error when the beginning of a build string is encountered.</p></li></ol></div><div class=listingblock><div class=title>Forbidden build string</div><div class=content><pre>error: while parsing version
+     |
+ 2:16| version = 0.0.0-alpha
+     |           ~~~~~^ build string not supported</pre></div></div><div class=paragraph><p>Many more things can be done, once common errors are known.</p></div><hr><div class=paragraph><p>Congratulations, you’ve worked through your first parser!</p></div><div class=paragraph><p>Now you know everything to get started with parsing your own input.
+Check out the reference documentation for specific rules.</p></div></div></div></div></article></main><footer id=page-footer><section class=copyright>&copy; 2020-2021</section><section class=patreon><a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>.</section><section class=poweredby>Made with <a target=_blank href=https://gohugo.io>Hugo</a>.</section></footer></body></html>
