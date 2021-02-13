@@ -17,11 +17,11 @@ please raise an issue or -- even better -- create a PR.
 Thank you!
 ****
 
-include::content/reference/inputs.adoc[]
+include::content/_reference/inputs.adoc[]
 
-include::content/reference/parsing.adoc[]
+include::content/_reference/parsing.adoc[]
 
-include::content/reference/dsl.adoc[]
+include::content/_reference/dsl.adoc[]
 
-include::content/reference/glossary.adoc[]
+include::content/_reference/glossary.adoc[]
 
