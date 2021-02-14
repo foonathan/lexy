@@ -1,0 +1,197 @@
+{{ define "main" }}
+
+<section id="playground">
+
+<section id="toolbar">
+    <div class="toolbar-editor-options">
+        <input type="checkbox" id="toolbar-vim"/>
+        <label for="toolbar-vim" title="Enable/disable vim bindings.">Vim</label>
+
+        <input type="checkbox" id="toolbar-wrap" checked />
+        <label for="toolbar-wrap" title="Enable/disable word wrap.">Wrap</label>
+    </div>
+
+    <div class="toolbar-run-options">
+        <label for="toolbar-production">Entry production:</label>
+        <select id="toolbar-production"></select>
+
+        <button id="toolbar-run" type="button">Run</button>
+    </div>
+</section>
+
+<section id="editors">
+    <div class="editor-container">
+        <div class="editor" id="editor-grammar"></div>
+    </div>
+    <div class="editor-container">
+        <div class="editor" id="editor-input"></div>
+    </div>
+</section>
+
+<section id="output">
+<div class="output-container" id="output-graph"></div>
+<textarea class="output-container" id="output-text"
+    cols="80" rows="10"
+    autocomplete=off readonly=true>
+</textarea>
+</section>
+
+<section>
+    {{ .Content }}
+</section>
+
+{{ $style := resources.Get "css/playground.scss" | resources.ToCSS | resources.Minify }}
+<style>{{ $style.Content | safeCSS }}</style>
+
+{{ $playground := resources.Get "js/playground.js" | resources.ExecuteAsTemplate "playground.js" . }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+<script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+<script type="module">
+import * as playground from "{{ $playground.Permalink }}";
+
+const toolbar_vim        = document.getElementById("toolbar-vim");
+const toolbar_wrap       = document.getElementById("toolbar-wrap");
+const toolbar_production = document.getElementById("toolbar-production");
+const toolbar_run        = document.getElementById("toolbar-run");
+
+const editor_grammar = ace.edit("editor-grammar");
+const editor_input = ace.edit("editor-input");
+
+const output_text  = document.getElementById("output-text");
+const output_graph = document.getElementById("output-graph");
+
+function update_toolbar_production()
+{
+    const source      = editor_grammar.getValue();
+    const productions = playground.list_of_productions(source);
+
+    // Clear and re-populate selection.
+    const current_selection = toolbar_production.value;
+    toolbar_production.innerHTML = '';
+    for (var prod of productions)
+    {
+        var option = document.createElement("option");
+        option.value = prod;
+        option.innerHTML = `<code>${prod}</code>`;
+        option.selected = (prod == current_selection);
+
+        toolbar_production.appendChild(option);
+    }
+}
+
+function load()
+{
+    const storage = window.sessionStorage;
+    const default_grammar = `struct production
+{
+    static constexpr auto rule = LEXY_LIT("Hello") + dsl::ascii::space + LEXY_LIT("World!") + dsl::eof;
+};
+`;
+    const default_input = "Hello World!";
+
+    editor_grammar.setValue(storage.getItem('editor-grammar') || default_grammar, 1);
+    editor_input.setValue(storage.getItem('editor-input') || default_input, 1);
+
+    update_toolbar_production();
+    toolbar_production.value = storage.getItem('toolbar-production') || "";
+}
+
+function save()
+{
+    const storage = window.sessionStorage;
+
+    storage.setItem('editor-grammar', editor_grammar.getValue());
+    storage.setItem('editor-input', editor_input.getValue());
+    storage.setItem('toolbar-production', toolbar_production.value);
+}
+
+function toggle_vim()
+{
+    for (var editor of [editor_grammar, editor_input])
+    {
+        if (toolbar_vim.checked)
+            editor.setKeyboardHandler("ace/keyboard/vim");
+        else
+            editor.setKeyboardHandler("");
+    }
+}
+function toggle_wrap()
+{
+    for (var editor of [editor_grammar, editor_input])
+        editor.getSession().setUseWrapMode(toolbar_wrap.checked);
+}
+
+async function run()
+{
+    toolbar_run.disabled = true;
+
+    const source = playground.preprocess_source(editor_grammar.getValue(), toolbar_production.value);
+    const input  = editor_input.getValue();
+
+    const result = await playground.compile_and_run(source, input);
+    if (result.success)
+    {
+        if (result.code == 0)
+        {
+            d3.select(output_graph).graphviz().renderDot(result.stdout);
+            output_text.style.display = "none";
+            output_graph.style.display = "block";
+        }
+        else
+        {
+            output_text.value = result.stderr;
+            output_text.style.display = "block";
+            output_graph.style.display = "none";
+        }
+    }
+    else
+    {
+        output_text.value = result.message;
+        output_text.style.display = "block";
+        output_graph.style.display = "none";
+    }
+
+    toolbar_run.disabled = false;
+}
+
+function debounce(func, delay)
+{
+    var timeout;
+    return function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(func, delay);
+    };
+}
+
+window.addEventListener('load', () => {
+    ace.debounceChangePeriod = 1000;
+
+    editor_grammar.setTheme("ace/theme/github");
+    editor_grammar.session.setMode("ace/mode/c_cpp");
+
+    editor_input.setTheme("ace/theme/github");
+    editor_input.session.setMode("ace/mode/text");
+
+    load();
+    editor_grammar.getSession().on('change', debounce(save, 1000));
+    editor_input.getSession().on('change', debounce(save, 1000));
+
+    editor_grammar.getSession().on('change', debounce(update_toolbar_production, 1000));
+
+    editor_grammar.getSession().on('change', debounce(run, 1000));
+    editor_input.getSession().on('change', debounce(run, 1000));
+
+    toolbar_vim.addEventListener("click", toggle_vim);
+    toolbar_wrap.addEventListener("click", toggle_wrap);
+    toolbar_run.addEventListener("click", run);
+
+    toggle_vim();
+    toggle_wrap();
+    update_toolbar_production();
+    run();
+});
+</script>
+
+{{ end }}

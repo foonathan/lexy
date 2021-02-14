@@ -11,6 +11,6 @@ endLevel = 3
 [menu]
     [[menu.main]]
     name = "GitHub"
-    weight = 3
+    weight = 4
     url = "https://github.com/foonathan/lexy"
 

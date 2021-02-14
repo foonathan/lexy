@@ -1,12 +1,16 @@
 {{ define "main" }}
+<main>
 
+{{ if .TableOfContents }}
 <aside class="toc">
     <header><a href="#">Table of Contents</a></header>
     {{ .TableOfContents }}
 </aside>
+{{ end }}
 
 <article>
     {{ .Content }}
 </article>
 
+</main>
 {{ end }}
