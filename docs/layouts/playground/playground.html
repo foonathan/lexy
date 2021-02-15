@@ -181,9 +181,11 @@ window.addEventListener('load', () => {
 
     editor_grammar.setTheme("ace/theme/github");
     editor_grammar.session.setMode("ace/mode/c_cpp");
+    editor_grammar.setShowPrintMargin(false);
 
     editor_input.setTheme("ace/theme/github");
     editor_input.session.setMode("ace/mode/text");
+    editor_input.setShowPrintMargin(false);
 
     load();
     editor_grammar.getSession().on('change', debounce(save, 1000));
