@@ -651,6 +651,11 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::node
 {
 public:
+    void* address() const noexcept
+    {
+        return _ptr.base();
+    }
+
     auto kind() const noexcept
     {
         return node_kind(_ptr);
