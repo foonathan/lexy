@@ -72,10 +72,14 @@ void dump_parse_tree(std::FILE*                                                 
             {
                 if (c == '"')
                     std::fputs(R"(\")", out);
+                else if (c == '\n')
+                    std::fputs("\\n", out);
+                else if (c == '\r')
+                    std::fputs("\\r", out);
                 else if (std::isprint(c))
                     std::fputc(c, out);
                 else
-                    std::fprintf(out, "\\{%x}", unsigned(c) & 0xFF);
+                    std::fprintf(out, "\\x%02X", unsigned(c) & 0xFF);
             }
             std::fputs("\"\n", out);
             break;

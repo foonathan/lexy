@@ -44,7 +44,7 @@ constexpr auto test_file_name = "lexy-dump_parse_tree.test.delete-me";
 TEST_CASE("dump_parse_tree()")
 {
     using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
-    auto input       = lexy::zstring_input("123(abc\"\x84)321");
+    auto input       = lexy::zstring_input("123(abc\"\n\x84)321");
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
@@ -53,12 +53,12 @@ TEST_CASE("dump_parse_tree()")
         auto child     = builder.start_production(child_p{});
         auto sub_child = builder.start_production(child_p{});
         builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-        builder.token(token_kind::c, input.begin() + 4, input.begin() + 9);
-        builder.token(token_kind::b, input.begin() + 9, input.begin() + 10);
+        builder.token(token_kind::c, input.begin() + 4, input.begin() + 10);
+        builder.token(token_kind::b, input.begin() + 10, input.begin() + 11);
         builder.finish_production(LEXY_MOV(sub_child));
         builder.finish_production(LEXY_MOV(child));
 
-        builder.token(token_kind::a, input.begin() + 10, input.end());
+        builder.token(token_kind::a, input.begin() + 11, input.end());
 
         return LEXY_MOV(builder).finish();
     }();
@@ -78,7 +78,7 @@ TEST_CASE("dump_parse_tree()")
 ├──child_p:
 │  └──child_p:
 │     ├──b: "("
-│     ├──c: "abc\"\{84}"
+│     ├──c: "abc\"\n\x84"
 │     └──b: ")"
 └──a: "321"
 )*");
@@ -94,7 +94,7 @@ TEST_CASE("dump_parse_tree()")
 - child_p:
   - child_p:
     - b: "("
-    - c: "abc\"\{84}"
+    - c: "abc\"\n\x84"
     - b: ")"
 - a: "321"
 )*");
