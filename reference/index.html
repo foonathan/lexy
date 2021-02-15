@@ -985,6 +985,8 @@ The root node is always a <code>Production</code> node.</p></div><div class=list
 <span class=k>class</span> <span class=nc>parse_tree</span><span class=o>&lt;</span><span class=n>Reader</span><span class=p>,</span> <span class=n>TokenKind</span><span class=p>,</span> <span class=n>MemoryResource</span><span class=o>&gt;::</span><span class=n>node</span>
 <span class=p>{</span>
 <span class=nl>public:</span>
+    <span class=kt>void</span><span class=o>*</span> <span class=n>address</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+
     <span class=n>node_kind</span> <span class=n>kind</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
     <span class=n>node</span> <span class=n>parent</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>

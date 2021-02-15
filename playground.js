@@ -1,5 +1,6 @@
 const api = "https://godbolt.org/api/";
-const compiler = "clang_trunk";
+const compiler_id = "clang_trunk";
+const lexy_id = { id: 'lexy', version: 'trunk' };
 
 export function list_of_productions(source)
 {
@@ -13,16 +14,21 @@ export function list_of_productions(source)
     return result;
 }
 
-export function preprocess_source(source, production)
+export function preprocess_source(target, source, production)
 {
     
     
+    
+    
 
-    const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`
-    return [macros, String.raw`#include <lexy/dsl.hpp>
+    if (target == 'playground')
+    {
+        const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`
+        const prefix = String.raw`#include <lexy/dsl.hpp>
 namespace dsl = lexy::dsl;
 #line 0 "grammar.cpp"
-`, source, String.raw`#line 1 "playground.cpp"
+`;
+        const main = String.raw`#line 1 "playground.cpp"
 #include <cctype>
 #include <lexy/parse_tree.hpp>
 #include <lexy_ext/cfile.hpp>
@@ -85,8 +91,41 @@ int main()
     }
     std::puts("}");
 }
+`;
 
-` ].join("\n");
+        return macros + '\n' + prefix + source + '\n' + main;
+    }
+    else
+    {
+        const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`;
+        const prefix = String.raw`#include <lexy/dsl.hpp>
+
+namespace dsl = lexy::dsl;
+
+//=== grammar ===//
+`;
+        const main = String.raw`//=== main function ===//
+#include <lexy/parse_tree.hpp>
+#include <lexy_ext/cfile.hpp>
+#include <lexy_ext/parse_tree_dump.hpp>
+#include <lexy_ext/report_error.hpp>
+
+int main()
+{
+    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).value();
+
+    lexy::parse_tree_for<decltype(input)> tree;
+    auto                                  result
+        = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
+    if (!result)
+        return 1;
+
+    lexy_ext::dump_parse_tree(stdout, tree);
+}
+`;
+
+        return macros + '\n' + prefix + source + '\n' + main;
+    }
 }
 
 export async function compile_and_run(source, input)
@@ -100,11 +139,11 @@ export async function compile_and_run(source, input)
     body.options.compilerOptions = { executorRequest: true };
     body.options.filters = { execute: true };
     body.options.tools = [];
-    body.options.libraries = [ { id: 'lexy', version: 'trunk' } ];
+    body.options.libraries = [ lexy_id ];
 
     body.lang = "c++";
 
-    const response = await fetch(api + "compiler/" + compiler + "/compile", {
+    const response = await fetch(api + "compiler/" + compiler_id + "/compile", {
         method: "POST",
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(body)
@@ -122,5 +161,30 @@ export async function compile_and_run(source, input)
         var message = result.buildResult.stderr.map(x => x.text).join("\n");
         return { success: false, message: message };
     }
+}
+
+export async function get_godbolt_url(source, input)
+{
+    var session = {};
+    session.id = 1;
+    session.language = "c++";
+    session.source = source;
+    session.compilers = [];
+
+    var compiler = {};
+    compiler.id = compiler_id;
+    compiler.libs = [ lexy_id ];
+    compiler.options = "-std=c++20";
+    session.executors = [{ compiler: compiler, stdin: input }];
+
+    const response = await fetch(api + "shortener", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ sessions: [session] })
+    });
+    console.log(session);
+    const result = await response.json();
+    console.log(result);
+    return result.url;
 }
 

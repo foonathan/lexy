@@ -3,16 +3,19 @@
 <input type=checkbox id=toolbar-wrap checked>
 <label for=toolbar-wrap title="Enable/disable word wrap.">Wrap</label></div><div class=toolbar-run-options><label for=toolbar-production>Entry production:</label>
 <select id=toolbar-production></select>
-<button id=toolbar-run type=button>Run</button></div></section><section id=editors><div class=editor-container><div class=editor id=editor-grammar></div></div><div class=editor-container><div class=editor id=editor-input></div></div></section><section id=output><div class=output-container id=output-graph></div><textarea class=output-container id=output-text cols=80 rows=10 autocomplete=off readonly>
+<button id=toolbar-run type=button>Run</button>
+<button id=toolbar-godbolt type=button>
+<img src=https://godbolt.org/favicon.ico alt="CE logo" title="View on Compiler Explorer."></button></div></section><section id=editors><div class=editor-container><div class=editor id=editor-grammar></div></div><div class=editor-container><div class=editor id=editor-input></div></div></section><section id=output><div class=output-container id=output-graph></div><textarea class=output-container id=output-text cols=80 rows=10 autocomplete=off readonly>
 </textarea></section><section><p>Enter the grammar in the left editor (<code>lexy/dsl.hpp</code> and namespace alias <code>dsl</code> is pre-included) and the input in the right editor.
 The result of parsing the selected entry production on that input is displayed in the bottom window.
-The encoding is <code>lexy::utf8_encoding</code>.</p><p>The online playground is powered by <a href=https://godbolt.org/>Compiler Explorer</a>, <a href=https://ace.c9.io/>Ace</a>, and <a href=https://github.com/magjac/d3-graphviz>d3-graphviz</a>.</p></section><style>:root{--white: white;--header-white: rgba(255, 255, 255, .75);--background-color: #fdfdfd;--default-color: #101010;--heading-color: #0A0A0A;--link-color: #2A2A2A;--gray-highlight-color: #aaaaaa;--highlight-color: #2861ce}@media(prefers-color-scheme:dark){:root{--white: #020202;--header-white: rgba(2, 2, 2, .75);--background-color: #222222;--default-color: #efefef;--heading-color: #f5f5f5;--link-color: #d5d5d5;--gray-highlight-color: #555555}}#playground{padding:1em}#toolbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1em}#toolbar input[type=checkbox]{vertical-align:middle}#editors{display:flex;flex-wrap:wrap;margin-bottom:5px}#editors .editor-container{flex-grow:1;min-width:30em;height:30em;border:1px solid var(--gray-highlight-color);margin:5px}#editors .editor{position:relative;width:100%;height:100%}#output{display:flex;margin:5px}#output .output-container{flex-grow:1;border:1px solid var(--gray-highlight-color)}#output #output-text{resize:none}#output #output-graph{display:none}#output #output-graph svg{width:100%}</style><script src=https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js></script><script src=https://d3js.org/d3.v5.min.js></script><script src=https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js></script><script src=https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js></script><script type=module>
+The encoding is <code>lexy::utf8_encoding</code>.</p><p>The online playground is powered by <a href=https://godbolt.org/>Compiler Explorer</a>, <a href=https://ace.c9.io/>Ace</a>, and <a href=https://github.com/magjac/d3-graphviz>d3-graphviz</a>.</p></section><style>:root{--white: white;--header-white: rgba(255, 255, 255, .75);--background-color: #fdfdfd;--default-color: #101010;--heading-color: #0A0A0A;--link-color: #2A2A2A;--gray-highlight-color: #aaaaaa;--highlight-color: #2861ce}@media(prefers-color-scheme:dark){:root{--white: #020202;--header-white: rgba(2, 2, 2, .75);--background-color: #222222;--default-color: #efefef;--heading-color: #f5f5f5;--link-color: #d5d5d5;--gray-highlight-color: #555555}}#playground{padding:1em}#toolbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1em}#toolbar input[type=checkbox]{vertical-align:middle}#toolbar #toolbar-godbolt{padding:0}#toolbar #toolbar-godbolt img{height:1em}#editors{display:flex;flex-wrap:wrap;margin-bottom:5px}#editors .editor-container{flex-grow:1;min-width:30em;height:30em;border:1px solid var(--gray-highlight-color);margin:5px}#editors .editor{position:relative;width:100%;height:100%}#output{display:flex;margin:5px}#output .output-container{flex-grow:1;border:1px solid var(--gray-highlight-color)}#output #output-text{resize:none}#output #output-graph{display:none}#output #output-graph svg{width:100%}</style><script src=https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js></script><script src=https://d3js.org/d3.v5.min.js></script><script src=https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js></script><script src=https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js></script><script type=module>
 import * as playground from "https:\/\/lexy.foonathan.net\/playground.js";
 
 const toolbar_vim        = document.getElementById("toolbar-vim");
 const toolbar_wrap       = document.getElementById("toolbar-wrap");
 const toolbar_production = document.getElementById("toolbar-production");
 const toolbar_run        = document.getElementById("toolbar-run");
+const toolbar_godbolt    = document.getElementById("toolbar-godbolt");
 
 const editor_grammar = ace.edit("editor-grammar");
 const editor_input = ace.edit("editor-input");
@@ -85,7 +88,7 @@ async function run()
 {
     toolbar_run.disabled = true;
 
-    const source = playground.preprocess_source(editor_grammar.getValue(), toolbar_production.value);
+    const source = playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
 
     const result = await playground.compile_and_run(source, input);
@@ -114,6 +117,13 @@ async function run()
     toolbar_run.disabled = false;
 }
 
+async function view_on_godbolt()
+{
+    const source = playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
+    const input  = editor_input.getValue();
+    window.location.href = await playground.get_godbolt_url(source, input);
+}
+
 function debounce(func, delay)
 {
     var timeout;
@@ -128,9 +138,11 @@ window.addEventListener('load', () => {
 
     editor_grammar.setTheme("ace/theme/github");
     editor_grammar.session.setMode("ace/mode/c_cpp");
+    editor_grammar.setShowPrintMargin(false);
 
     editor_input.setTheme("ace/theme/github");
     editor_input.session.setMode("ace/mode/text");
+    editor_input.setShowPrintMargin(false);
 
     load();
     editor_grammar.getSession().on('change', debounce(save, 1000));
@@ -144,6 +156,7 @@ window.addEventListener('load', () => {
     toolbar_vim.addEventListener("click", toggle_vim);
     toolbar_wrap.addEventListener("click", toggle_wrap);
     toolbar_run.addEventListener("click", run);
+    toolbar_godbolt.addEventListener("click", view_on_godbolt);
 
     toggle_vim();
     toggle_wrap();
