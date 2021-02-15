@@ -16,6 +16,9 @@
         <select id="toolbar-production"></select>
 
         <button id="toolbar-run" type="button">Run</button>
+        <button id="toolbar-godbolt" type="button">
+            <img src="https://godbolt.org/favicon.ico" alt="CE logo" title="View on Compiler Explorer.">
+        </button>
     </div>
 </section>
 
@@ -55,6 +58,7 @@ const toolbar_vim        = document.getElementById("toolbar-vim");
 const toolbar_wrap       = document.getElementById("toolbar-wrap");
 const toolbar_production = document.getElementById("toolbar-production");
 const toolbar_run        = document.getElementById("toolbar-run");
+const toolbar_godbolt    = document.getElementById("toolbar-godbolt");
 
 const editor_grammar = ace.edit("editor-grammar");
 const editor_input = ace.edit("editor-input");
@@ -156,6 +160,13 @@ async function run()
     toolbar_run.disabled = false;
 }
 
+async function view_on_godbolt()
+{
+    const source = playground.preprocess_source(editor_grammar.getValue(), toolbar_production.value);
+    const input  = editor_input.getValue();
+    window.location.href = await playground.get_godbolt_url(source, input);
+}
+
 function debounce(func, delay)
 {
     var timeout;
@@ -186,6 +197,7 @@ window.addEventListener('load', () => {
     toolbar_vim.addEventListener("click", toggle_vim);
     toolbar_wrap.addEventListener("click", toggle_wrap);
     toolbar_run.addEventListener("click", run);
+    toolbar_godbolt.addEventListener("click", view_on_godbolt);
 
     toggle_vim();
     toggle_wrap();

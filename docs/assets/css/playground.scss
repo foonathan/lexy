@@ -15,6 +15,14 @@
     {
         vertical-align: middle;
     }
+
+    #toolbar-godbolt {
+        padding: 0;
+
+        img {
+            height: 1em;
+        }
+    }
 }
 
 #editors {

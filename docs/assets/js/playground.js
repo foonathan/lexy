@@ -1,5 +1,6 @@
 const api = "https://godbolt.org/api/";
-const compiler = "clang_trunk";
+const compiler_id = "clang_trunk";
+const lexy_id = { id: 'lexy', version: 'trunk' };
 
 export function list_of_productions(source)
 {
@@ -33,11 +34,11 @@ export async function compile_and_run(source, input)
     body.options.compilerOptions = { executorRequest: true };
     body.options.filters = { execute: true };
     body.options.tools = [];
-    body.options.libraries = [ { id: 'lexy', version: 'trunk' } ];
+    body.options.libraries = [ lexy_id ];
 
     body.lang = "c++";
 
-    const response = await fetch(api + "compiler/" + compiler + "/compile", {
+    const response = await fetch(api + "compiler/" + compiler_id + "/compile", {
         method: "POST",
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(body)
@@ -55,5 +56,30 @@ export async function compile_and_run(source, input)
         var message = result.buildResult.stderr.map(x => x.text).join("\n");
         return { success: false, message: message };
     }
+}
+
+export async function get_godbolt_url(source, input)
+{
+    var session = {};
+    session.id = 1;
+    session.language = "c++";
+    session.source = source;
+    session.compilers = [];
+
+    var compiler = {};
+    compiler.id = compiler_id;
+    compiler.libs = [ lexy_id ];
+    compiler.options = "-std=c++20";
+    session.executors = [{ compiler: compiler, stdin: input }];
+
+    const response = await fetch(api + "shortener", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ sessions: [session] })
+    });
+    console.log(session);
+    const result = await response.json();
+    console.log(result);
+    return result.url;
 }
 
