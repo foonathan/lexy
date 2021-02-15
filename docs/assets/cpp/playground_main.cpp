@@ -19,7 +19,7 @@ int main()
 
     lexy::parse_tree_for<decltype(input)> tree;
     auto                                  result
-        = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ex::report_error);
+        = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
     if (!result)
         return 1;
 
