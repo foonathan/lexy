@@ -131,7 +131,7 @@ async function run()
 {
     toolbar_run.disabled = true;
 
-    const source = playground.preprocess_source(editor_grammar.getValue(), toolbar_production.value);
+    const source = playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
 
     const result = await playground.compile_and_run(source, input);
@@ -162,7 +162,7 @@ async function run()
 
 async function view_on_godbolt()
 {
-    const source = playground.preprocess_source(editor_grammar.getValue(), toolbar_production.value);
+    const source = playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
     window.location.href = await playground.get_godbolt_url(source, input);
 }

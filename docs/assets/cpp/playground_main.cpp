@@ -61,4 +61,3 @@ int main()
     }
     std::puts("}");
 }
-

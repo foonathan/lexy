@@ -14,13 +14,29 @@ export function list_of_productions(source)
     return result;
 }
 
-export function preprocess_source(source, production)
+export function preprocess_source(target, source, production)
 {
-    {{ $source_prefix := resources.Get "cpp/playground_prefix.cpp" }}
-    {{ $source_main := resources.Get "cpp/playground_main.cpp" }}
+    {{ $playground_prefix := resources.Get "cpp/playground_prefix.cpp" }}
+    {{ $playground_main   := resources.Get "cpp/playground_main.cpp" }}
+    {{ $godbolt_prefix := resources.Get "cpp/godbolt_prefix.cpp" }}
+    {{ $godbolt_main   := resources.Get "cpp/godbolt_main.cpp" }}
 
-    const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`
-    return [macros, String.raw`{{ $source_prefix.Content }}`, source, String.raw`{{ $source_main.Content }}` ].join("\n");
+    if (target == 'playground')
+    {
+        const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`
+        const prefix = String.raw`{{ $playground_prefix.Content }}`;
+        const main = String.raw`{{ $playground_main.Content }}`;
+
+        return macros + '\n' + prefix + source + '\n' + main;
+    }
+    else
+    {
+        const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`;
+        const prefix = String.raw`{{ $godbolt_prefix.Content }}`;
+        const main = String.raw`{{ $godbolt_main.Content }}`;
+
+        return macros + '\n' + prefix + source + '\n' + main;
+    }
 }
 
 export async function compile_and_run(source, input)
