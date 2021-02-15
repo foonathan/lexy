@@ -3,6 +3,7 @@
 #  found in the top-level directory of this distribution.
 
 set(tests
+        cfile.cpp
         parse_tree_algorithm.cpp
         parse_tree_doctest.cpp
         parse_tree_dump.cpp
