@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef EXAMPLE_REPORT_ERROR_HPP_INCLUDED
-#define EXAMPLE_REPORT_ERROR_HPP_INCLUDED
+#ifndef LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
+#define LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 
 #include <cstdio>
 #include <lexy/callback.hpp>
@@ -12,7 +12,7 @@
 #include <lexy/error.hpp>
 #include <lexy/error_location.hpp>
 
-namespace lexy_ex
+namespace lexy_ext
 {
 template <typename Reader>
 void _print_location(const lexy::error_location<Reader>& location)
@@ -105,7 +105,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
     _print_message(location, error);
     std::putc('\n', stderr);
 });
-} // namespace lexy_ex
+} // namespace lexy_ext
 
-#endif // EXAMPLE_REPORT_ERROR_HPP_INCLUDED
+#endif // LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 

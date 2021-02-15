@@ -11,7 +11,7 @@
 #include <lexy/input/file.hpp> // lexy::read_file
 #include <lexy/parse.hpp>      // lexy::parse
 
-#include "report_error.hpp" // lexy_ex::report_error
+#include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 
 // Parses an email as defined by a simplified subset of RFC 5322
 // (https://tools.ietf.org/html/rfc5322).
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     }
 
     auto& input   = file.value();
-    auto  message = lexy::parse<grammar::message>(input, lexy_ex::report_error);
+    auto  message = lexy::parse<grammar::message>(input, lexy_ext::report_error);
     if (!message)
         return 2;
 

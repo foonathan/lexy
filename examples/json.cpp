@@ -15,7 +15,7 @@
 #include <lexy/input/file.hpp> // lexy::read_file
 #include <lexy/parse.hpp>      // lexy::parse
 
-#include "report_error.hpp" // lexy_ex::report_error
+#include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 
 // Datastructures for storing JSON.
 // Not really the point of the example, so as simple as possible.
@@ -288,7 +288,7 @@ int main(int argc, char** argv)
     }
 
     auto& input = file.value();
-    auto  json  = lexy::parse<grammar::json>(input, lexy_ex::report_error);
+    auto  json  = lexy::parse<grammar::json>(input, lexy_ext::report_error);
     if (!json)
         return 2;
 

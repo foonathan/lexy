@@ -10,7 +10,7 @@
 #include <lexy/input/shell.hpp>
 #include <lexy/parse.hpp>
 
-#include "report_error.hpp"
+#include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 
 // A shell with a couple of basic commands.
 namespace shell
@@ -231,7 +231,7 @@ int main()
         auto input = intp.shell.prompt_for_input();
 
         // Then we parse the command.
-        auto result = lexy::parse<grammar::command>(input, intp, lexy_ex::report_error);
+        auto result = lexy::parse<grammar::command>(input, intp, lexy_ext::report_error);
         if (!result)
             continue;
 

@@ -11,7 +11,7 @@
 #include <lexy/input/file.hpp> // lexy::read_file
 #include <lexy/parse.hpp>      // lexy::parse
 
-#include "report_error.hpp" // lexy_ex::report_error
+#include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 
 struct PackageVersion
 {
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     }
 
     auto& input  = file.value();
-    auto  result = lexy::parse<grammar::config>(input, lexy_ex::report_error);
+    auto  result = lexy::parse<grammar::config>(input, lexy_ext::report_error);
     if (!result)
         return 2;
     auto& config = result.value();
