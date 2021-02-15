@@ -34,6 +34,7 @@ h6 {
     line-height: 1.15em;
     color: $heading-color;
     margin: 0 0 0.4em 0;
+    hyphens: auto;
 }
 h1 {
     font-size: 2em;
@@ -75,7 +76,8 @@ article {
 article p,
 article ul,
 article ol,
-article dl {
+article dl,
+article td {
     hyphens: auto;
     text-align: justify;
 }
