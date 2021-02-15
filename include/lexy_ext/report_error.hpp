@@ -59,7 +59,9 @@ template <typename Reader>
 void _print_message(const lexy::error_location<Reader>&,
                     const lexy::error<Reader, lexy::expected_literal>& e)
 {
-    std::fprintf(stderr, "^ expected '%.*s'", int(e.string().size()),
+    for (auto i = 0u; i != e.index(); ++i)
+        std::fputc('^', stderr);
+    std::fprintf(stderr, " expected '%.*s'", int(e.string().size()),
                  reinterpret_cast<const char*>(e.string().data()));
 }
 
