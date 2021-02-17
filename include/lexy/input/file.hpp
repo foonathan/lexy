@@ -61,7 +61,7 @@ auto read_file(const char*     path,
             auto user_data = static_cast<user_data_t*>(_user_data);
 
             user_data->buffer
-                = lexy::make_buffer<Encoding, Endian>(memory, size, user_data->resource);
+                = lexy::make_buffer_from_raw<Encoding, Endian>(memory, size, user_data->resource);
         },
         &user_data);
 

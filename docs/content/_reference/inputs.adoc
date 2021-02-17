@@ -329,7 +329,7 @@ public:
 };
 
 template <typename Encoding, encoding_endianness Endianness>
-constexpr auto make_buffer;
+constexpr auto make_buffer_from_raw;
 
 template <typename Encoding       = default_encoding,
           typename MemoryResource = /* default resource */>
@@ -373,7 +373,7 @@ The `builder` class separates the allocation and copying of the buffer data.
 This allows, for example, writing into the immutable buffer from a file.
 The constructor allocates memory for `size` characters, then `data()` gives a mutable pointer to that memory.
 
-===== Make buffer
+===== Make buffer from raw memory
 
 [source,cpp]
 ----
@@ -386,10 +386,10 @@ struct /* unspecified */
 };
 
 template <typename Encoding, encoding_endianness Endianness>
-constexpr auto make_buffer = /* unspecified */;
+constexpr auto make_buffer_from_raw = /* unspecified */;
 ----
 
-`lexy::make_buffer` is a function object that constructs a `lexy::buffer` of the specified encoding from raw memory.
+`lexy::make_buffer_from_raw` is a function object that constructs a `lexy::buffer` of the specified encoding from raw memory.
 If necessary, it will take care of the endianness conversion as instructed by the `lexy::encoding_endianness` enumeration.
 Any BOM, if present, will not be part of the input.
 
@@ -411,8 +411,8 @@ Using a buffer to parse a memory-mapped file containing little endian UTF-16.
 ----
 auto ptr = mmap(…);
 
-constexpr auto make_utf16_little = lexy::make_buffer<lexy::utf16_encoding,
-                                        lexy::encoding_endianness::little>;
+constexpr auto make_utf16_little
+  = lexy::make_buffer_from_raw<lexy::utf16_encoding, lexy::encoding_endianness::little>;
 auto input = make_utf16_little(ptr, length);
 ----
 ====

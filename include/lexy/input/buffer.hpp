@@ -376,7 +376,7 @@ struct _make_buffer<utf32_encoding, encoding_endianness::bom>
 
 /// Creates a buffer with the specified encoding/endianness from raw memory.
 template <typename Encoding, encoding_endianness Endianness>
-constexpr auto make_buffer = _make_buffer<Encoding, Endianness>{};
+constexpr auto make_buffer_from_raw = _make_buffer<Encoding, Endianness>{};
 
 //=== convenience typedefs ===//
 template <typename Encoding       = default_encoding,

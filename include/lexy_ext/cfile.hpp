@@ -62,8 +62,8 @@ auto read_file(std::FILE*      file,
     if (error != lexy::file_error::_success)
         return {lexy::result_error, error};
 
-    auto buffer
-        = lexy::make_buffer<Encoding, Endian>(builder.read_data(), builder.read_size(), resource);
+    auto buffer = lexy::make_buffer_from_raw<Encoding, Endian>(builder.read_data(),
+                                                               builder.read_size(), resource);
     return {lexy::result_value, LEXY_MOV(buffer)};
 }
 } // namespace lexy_ext

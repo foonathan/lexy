@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-02-17
+
+* Renamed `lexy::make_buffer` to `lexy::make_buffer_from_raw`.
+
 == 2021-02-04
 
 Removed support for arbitrary rules as content of a `dsl::delimited()` rule, no only tokens are allowed.
