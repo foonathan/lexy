@@ -4,6 +4,7 @@ languageCode = "en-us"
 copyright = "2020-2021"
 
 ignoreFiles = [ "_reference" ]
+disableKinds = ["RSS", "taxonomy", "taxonomyTerm"]
 
 [markup.tableOfContents]
 endLevel = 3
