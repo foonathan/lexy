@@ -494,7 +494,10 @@ struct _as_string
                 return String(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
         }
         else
+        {
+            // We're assuming the string constructor can do any necessary conversion/transcoding.
             return String(lex.begin(), lex.end());
+        }
     }
 
     constexpr String operator()(code_point cp) const
@@ -548,6 +551,8 @@ struct _as_string
             }
             else
             {
+                // We're assuming the string append function can do any necessary
+                // conversion/transcoding.
                 _result.append(lex.begin(), lex.end());
             }
         }
