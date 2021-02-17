@@ -166,7 +166,7 @@ The return type is an appropriate <code>lexy::string_input</code> instantiation.
 <span class=p>};</span>
 
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Encoding</span><span class=p>,</span> <span class=n>encoding_endianness</span> <span class=n>Endianness</span><span class=p>&gt;</span>
-<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_buffer</span><span class=p>;</span>
+<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_buffer_from_raw</span><span class=p>;</span>
 
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Encoding</span>       <span class=o>=</span> <span class=n>default_encoding</span><span class=p>,</span>
           <span class=k>typename</span> <span class=nc>MemoryResource</span> <span class=o>=</span> <span class=cm>/* default resource */</span><span class=p>&gt;</span>
@@ -194,7 +194,7 @@ This eliminates the "is the reader at eof?"-branch during parsing.</td></tr></tb
     <span class=n>buffer</span> <span class=n>finish</span><span class=p>()</span> <span class=o>&amp;&amp;</span> <span class=k>noexcept</span><span class=p>;</span>
 <span class=p>};</span></code></pre></div></div><div class=paragraph><p>The <code>builder</code> class separates the allocation and copying of the buffer data.
 This allows, for example, writing into the immutable buffer from a file.
-The constructor allocates memory for <code>size</code> characters, then <code>data()</code> gives a mutable pointer to that memory.</p></div></div><div class=sect4><h5 id=_make_buffer>Make buffer</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=cm>/* unspecified */</span>
+The constructor allocates memory for <code>size</code> characters, then <code>data()</code> gives a mutable pointer to that memory.</p></div></div><div class=sect4><h5 id=_make_buffer_from_raw_memory>Make buffer from raw memory</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=cm>/* unspecified */</span>
 <span class=p>{</span>
     <span class=k>auto</span> <span class=k>operator</span><span class=p>()(</span><span class=k>const</span> <span class=kt>void</span><span class=o>*</span> <span class=n>memory</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=kt>size_t</span> <span class=n>size</span><span class=p>)</span> <span class=k>const</span><span class=p>;</span>
 
@@ -203,14 +203,14 @@ The constructor allocates memory for <code>size</code> characters, then <code>da
 <span class=p>};</span>
 
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Encoding</span><span class=p>,</span> <span class=n>encoding_endianness</span> <span class=n>Endianness</span><span class=p>&gt;</span>
-<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_buffer</span> <span class=o>=</span> <span class=cm>/* unspecified */</span><span class=p>;</span></code></pre></div></div><div class=paragraph><p><code>lexy::make_buffer</code> is a function object that constructs a <code>lexy::buffer</code> of the specified encoding from raw memory.
+<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_buffer_from_raw</span> <span class=o>=</span> <span class=cm>/* unspecified */</span><span class=p>;</span></code></pre></div></div><div class=paragraph><p><code>lexy::make_buffer_from_raw</code> is a function object that constructs a <code>lexy::buffer</code> of the specified encoding from raw memory.
 If necessary, it will take care of the endianness conversion as instructed by the <code>lexy::encoding_endianness</code> enumeration.
 Any BOM, if present, will not be part of the input.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>Using a buffer to parse content from a <code>std::string</code> using UTF-8.
 This enables the sentinel optimization.</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=n>std</span><span class=o>::</span><span class=n>string</span> <span class=n>str</span> <span class=o>=</span> <span class=err>…</span><span class=p>;</span>
 <span class=k>auto</span> <span class=n>input</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>buffer</span><span class=o>&lt;</span><span class=n>lexy</span><span class=o>::</span><span class=n>utf8_encoding</span><span class=o>&gt;</span><span class=p>(</span><span class=n>str</span><span class=p>);</span></code></pre></div></div><div class=paragraph><p>Using a buffer to parse a memory-mapped file containing little endian UTF-16.</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>auto</span> <span class=n>ptr</span> <span class=o>=</span> <span class=n>mmap</span><span class=p>(</span><span class=err>…</span><span class=p>);</span>
 
-<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_utf16_little</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>make_buffer</span><span class=o>&lt;</span><span class=n>lexy</span><span class=o>::</span><span class=n>utf16_encoding</span><span class=p>,</span>
-                                        <span class=n>lexy</span><span class=o>::</span><span class=n>encoding_endianness</span><span class=o>::</span><span class=n>little</span><span class=o>&gt;</span><span class=p>;</span>
+<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_utf16_little</span>
+  <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>make_buffer_from_raw</span><span class=o>&lt;</span><span class=n>lexy</span><span class=o>::</span><span class=n>utf16_encoding</span><span class=p>,</span> <span class=n>lexy</span><span class=o>::</span><span class=n>encoding_endianness</span><span class=o>::</span><span class=n>little</span><span class=o>&gt;</span><span class=p>;</span>
 <span class=k>auto</span> <span class=n>input</span> <span class=o>=</span> <span class=n>make_utf16_little</span><span class=p>(</span><span class=n>ptr</span><span class=p>,</span> <span class=n>length</span><span class=p>);</span></code></pre></div></div></div></details></div></div><div class=sect3><h4 id=_file_input>File Input</h4><div class=listingblock><div class=title><code>lexy/input/file.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
 <span class=p>{</span>
     <span class=k>enum</span> <span class=k>class</span> <span class=nc>file_error</span>
