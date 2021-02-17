@@ -182,9 +182,25 @@ export async function get_godbolt_url(source, input)
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({ sessions: [session] })
     });
-    console.log(session);
+    return (await response.json()).url;
+}
+
+export async function load_godbolt_url(id)
+{
+    const response = await fetch(api + "shortlinkinfo/" + id);
     const result = await response.json();
-    console.log(result);
-    return result.url;
+
+    const session = result.sessions[0];
+    const source = session.source;
+    const input = session.executors[0].stdin;
+
+    const production_regex = /#define LEXY_PLAYGROUND_PRODUCTION ([a-zA-Z_0-9]+)/;
+    const production = production_regex.exec(source)[1];
+
+    const grammar_regex = /\/\/=== grammar ===\/\/([^]*)\/\/=== main function ===\/\//;
+    let grammar = grammar_regex.exec(source)[1];
+    grammar = grammar.trim();
+
+    return { grammar: grammar, input: input, production: production };
 }
 
