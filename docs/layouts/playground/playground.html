@@ -91,9 +91,17 @@ function update_toolbar_production()
 async function load()
 {
     const storage = window.sessionStorage;
-    const default_grammar = `struct production
+    const default_grammar = `struct name
 {
-    static constexpr auto rule = LEXY_LIT("Hello") + dsl::ascii::space + LEXY_LIT("World!") + dsl::eof;
+    static constexpr auto rule = dsl::while_(dsl::ascii::alnum / dsl::lit_c<'_'> / dsl::lit_c<'-'>);
+};
+
+struct production
+{
+    static constexpr auto rule = []{
+        auto greeting = LEXY_LIT("Hello");
+        return greeting + dsl::ascii::space + dsl::p<name> + dsl::lit_c<'!'> + dsl::eof;
+    }();
 };
 `;
     const default_input = "Hello World!";
@@ -192,8 +200,6 @@ function debounce(func, delay)
 }
 
 window.addEventListener('load', async() => {
-    ace.debounceChangePeriod = 1000;
-
     editor_grammar.setTheme("ace/theme/github");
     editor_grammar.session.setMode("ace/mode/c_cpp");
     editor_grammar.setShowPrintMargin(false);
