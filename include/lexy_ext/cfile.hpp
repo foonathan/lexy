@@ -11,39 +11,6 @@
 
 namespace lexy_ext
 {
-inline lexy::file_error _read_cfile(std::FILE* file, lexy::_detail::buffer_builder<char>& buffer)
-{
-    while (true)
-    {
-        const auto buffer_size = buffer.write_size();
-        LEXY_ASSERT(buffer_size > 0, "buffer empty?!");
-
-        // Read into the entire write area of the buffer from the file,
-        // commiting what we've just read.
-        const auto read = std::fread(buffer.write_data(), sizeof(char), buffer_size, file);
-        buffer.commit(read);
-
-        // Check whether we have exhausted the file.
-        if (read < buffer_size)
-        {
-            if (std::ferror(file))
-                // We have a read error.
-                return lexy::file_error::os_error;
-
-            // We should have reached the end of the file.
-            LEXY_ASSERT(std::feof(file), "why did fread() not read enough?");
-            break;
-        }
-
-        // We've filled the entire buffer and need more space.
-        // This grow might be unnecessary if we're just so happen to reach EOF with the next
-        // input, but checking this requires reading more input.
-        buffer.grow();
-    }
-
-    return lexy::file_error::_success;
-}
-
 /// Reads from a FILE as opposed to a path.
 template <typename Encoding                = lexy::default_encoding,
           lexy::encoding_endianness Endian = lexy::encoding_endianness::bom,
@@ -57,10 +24,36 @@ auto read_file(std::FILE*      file,
     else if (std::ferror(file))
         return {lexy::result_error, lexy::file_error::os_error};
 
+    // We can't use ftell() to get file size, as the file might not be open in binary mode.
+    // So instead use a conservative loop.
     lexy::_detail::buffer_builder<char> builder;
-    auto                                error = _read_cfile(file, builder);
-    if (error != lexy::file_error::_success)
-        return {lexy::result_error, error};
+    while (true)
+    {
+        const auto buffer_size = builder.write_size();
+        LEXY_ASSERT(buffer_size > 0, "buffer empty?!");
+
+        // Read into the entire write area of the buffer from the file,
+        // commiting what we've just read.
+        const auto read = std::fread(builder.write_data(), sizeof(char), buffer_size, file);
+        builder.commit(read);
+
+        // Check whether we have exhausted the file.
+        if (read < buffer_size)
+        {
+            if (std::ferror(file))
+                // We have a read error.
+                return {lexy::result_error, lexy::file_error::os_error};
+
+            // We should have reached the end of the file.
+            LEXY_ASSERT(std::feof(file), "why did fread() not read enough?");
+            break;
+        }
+
+        // We've filled the entire buffer and need more space.
+        // This grow might be unnecessary if we're just so happen to reach EOF with the next
+        // input, but checking this requires reading more input.
+        builder.grow();
+    }
 
     auto buffer = lexy::make_buffer_from_raw<Encoding, Endian>(builder.read_data(),
                                                                builder.read_size(), resource);

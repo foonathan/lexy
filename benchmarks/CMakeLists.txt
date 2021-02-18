@@ -9,4 +9,5 @@ FetchContent_Declare(nanobench URL https://github.com/martinus/nanobench/archive
 FetchContent_MakeAvailable(nanobench)
 
 add_subdirectory(json)
+add_subdirectory(file)
 

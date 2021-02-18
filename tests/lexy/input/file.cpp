@@ -47,7 +47,7 @@ TEST_CASE("read_file")
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
     }
-    SUBCASE("small file")
+    SUBCASE("tiny file")
     {
         write_test_data("abc");
 
@@ -70,7 +70,7 @@ TEST_CASE("read_file")
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
     }
-    SUBCASE("big file")
+    SUBCASE("small file")
     {
         {
             auto file = std::fopen(test_file_name, "wb");
@@ -93,6 +93,70 @@ TEST_CASE("read_file")
         }
 
         for (auto i = 0; i != 1024; ++i)
+        {
+            CHECK(reader.peek() == 'b');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
+    }
+    SUBCASE("medium file")
+    {
+        {
+            auto file = std::fopen(test_file_name, "wb");
+            for (auto i = 0; i != 10 * 1024; ++i)
+                std::fputc('a', file);
+            for (auto i = 0; i != 10 * 1024; ++i)
+                std::fputc('b', file);
+            std::fclose(file);
+        }
+
+        auto buffer = lexy::read_file(test_file_name);
+        REQUIRE(buffer);
+
+        auto reader = buffer.value().reader();
+        for (auto i = 0; i != 10 * 1024; ++i)
+        {
+            CHECK(reader.peek() == 'a');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        for (auto i = 0; i != 10 * 1024; ++i)
+        {
+            CHECK(reader.peek() == 'b');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
+    }
+    SUBCASE("big file")
+    {
+        {
+            auto file = std::fopen(test_file_name, "wb");
+            for (auto i = 0; i != 200 * 1024; ++i)
+                std::fputc('a', file);
+            for (auto i = 0; i != 200 * 1024; ++i)
+                std::fputc('b', file);
+            std::fclose(file);
+        }
+
+        auto buffer = lexy::read_file(test_file_name);
+        REQUIRE(buffer);
+
+        auto reader = buffer.value().reader();
+        for (auto i = 0; i != 200 * 1024; ++i)
+        {
+            CHECK(reader.peek() == 'a');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        for (auto i = 0; i != 200 * 1024; ++i)
         {
             CHECK(reader.peek() == 'b');
             CHECK(!reader.eof());
