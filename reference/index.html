@@ -418,7 +418,7 @@ For convenience, most inputs also provide convenience typedefs that can be used 
 
         <span class=k>constexpr</span> <span class=k>explicit</span> <span class=k>operator</span> <span class=kt>bool</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-        <span class=k>constexpr</span> <span class=cm>/* see below */</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+        <span class=k>constexpr</span> <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
         <span class=k>constexpr</span> <span class=n>TokenKind</span> <span class=n>get</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
@@ -438,10 +438,9 @@ If <code>TokenKind</code> is <code>void</code>, it is a wrapper over an <code>in
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>TokenRule</span><span class=p>&gt;</span>
 <span class=k>constexpr</span> <span class=n>token_kind</span><span class=p>(</span><span class=n>TokenRule</span> <span class=n>token_rule</span><span class=p>)</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Creates an unknown token kind, which has the value <code>TokenKind(-1)</code>.</p></li><li><p>Creates the specified token kind, if <code>TokenKind</code> is <code>void</code>, constructor takes an <code>int</code>.</p></li><li><p>Creates a token kind from a token rule.</p></li></ol></div><div class=paragraph><p>The token kind of a rule is computed as follows:</p></div><div class=ulist><ul><li><p>If the token rule was associated with a token kind by calling <code>.kind&lt;value></code>, the resulting kind is the specified <code>value></code>.</p></li><li><p>Otherwise, if the map found at <code>lexy::token_kind_map_for&lt;TokenKind></code> contains a mapping for the <code>TokenRule</code>, it uses that.</p></li><li><p>Otherwise, the token kind is unknown.</p></li></ul></div></div><div class=sect4><h5 id=_access>Access</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>constexpr</span> <span class=k>explicit</span> <span class=k>operator</span> <span class=kt>bool</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(1)</b>
 
-<span class=k>constexpr</span> <span class=cm>/* see below */</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(2)</b>
+<span class=k>constexpr</span> <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(2)</b>
 
-<span class=k>constexpr</span> <span class=n>TokenKind</span> <span class=n>get</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if the token kind is not unknown, <code>false</code> otherwise.</p></li><li><p>Returns the name of the token kind, the return type is some unspecified type like <code>std::string_view</code>.</p></li><li><p>Returns the underlying value of the token kind.</p></li></ol></div><div class=paragraph><p>The name of a token kind is determined as follows:</p></div><div class=ulist><ul><li><p>If the <code>TokenKind</code> is <code>void</code>, the name is <code>"token"</code> for all token kinds.</p></li><li><p>Otherwise, if the <code>TokenKind</code> is unknown, the name is <code>"token"</code>.</p></li><li><p>Otherwise, if ADL finds an overload <code>string-like token_kind_name(TokenKind kind)</code>,
-where <code>string-like</code> is either <code>const char*</code> or a class with <code>.data()</code> and <code>.size()</code>,
+<span class=k>constexpr</span> <span class=n>TokenKind</span> <span class=n>get</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span> // <b class=conum>(3)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Returns <code>true</code> if the token kind is not unknown, <code>false</code> otherwise.</p></li><li><p>Returns the name of the token kind.</p></li><li><p>Returns the underlying value of the token kind.</p></li></ol></div><div class=paragraph><p>The name of a token kind is determined as follows:</p></div><div class=ulist><ul><li><p>If the <code>TokenKind</code> is <code>void</code>, the name is <code>"token"</code> for all token kinds.</p></li><li><p>Otherwise, if the <code>TokenKind</code> is unknown, the name is <code>"token"</code>.</p></li><li><p>Otherwise, if ADL finds an overload <code>const char* token_kind_name(TokenKind kind)</code>,
 returns that as the name.</p></li><li><p>Otherwise, the name is <code>"token"</code> for all tokens.</p></li></ul></div></div></div><div class=sect3><h4 id=_token_kind_map>Token Kind Map</h4><div class=listingblock><div class=title><code>lexy/token.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
 <span class=p>{</span>
     <span class=k>class</span> <span class=nc>Token</span><span class=o>-</span><span class=n>Kind</span><span class=o>-</span><span class=n>Map</span>
@@ -790,20 +789,18 @@ There are specializations for two tags to store additional information.</p></div
     <span class=k>constexpr</span> <span class=n>iterator</span> <span class=n>begin</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
     <span class=k>constexpr</span> <span class=n>iterator</span> <span class=n>end</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-    <span class=k>constexpr</span> <span class=cm>/* see below */</span> <span class=n>message</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+    <span class=k>constexpr</span> <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>message</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 <span class=p>};</span></code></pre></div></div><div class=paragraph><p>The primary class template <code>lexy::error&lt;Reader, Tag></code> represents a generic error without additional metadata.
 It can either be constructed giving it a single position, then <code>position() == begin() == end()</code>;
 or a range of the input, then <code>position() == begin() ⇐ end()</code>.</p></div><div class=paragraph><p>The <code>message()</code> is determined using the <code>Tag</code>.
 By default, it returns the type name of <code>Tag</code> after removing the top-level namespace name.
-This can be overridden by defining either <code>Tag::name()</code> or <code>Tag::name</code>.
-The result is an unspecified type similar to <code>std::string_view</code>.</p></div></div><div class=sect4><h5 id=_expected_literal_error>Expected literal error</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>expected_literal</span>
+This can be overridden by defining either <code>Tag::name()</code> or <code>Tag::name</code>.</p></div></div><div class=sect4><h5 id=_expected_literal_error>Expected literal error</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>expected_literal</span>
 <span class=p>{};</span>
 
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Reader</span><span class=p>&gt;</span>
 <span class=k>class</span> <span class=nc>error</span><span class=o>&lt;</span><span class=n>Reader</span><span class=p>,</span> <span class=n>expected_literal</span><span class=o>&gt;</span>
 <span class=p>{</span>
     <span class=k>using</span> <span class=n>iterator</span>    <span class=o>=</span> <span class=k>typename</span> <span class=n>Reader</span><span class=o>::</span><span class=n>iterator</span><span class=p>;</span>
-    <span class=k>using</span> <span class=n>string_view</span> <span class=o>=</span> <span class=cm>/* see below */</span><span class=p>;</span>
 
 <span class=nl>public:</span>
     <span class=k>constexpr</span> <span class=k>explicit</span> <span class=n>error</span><span class=p>(</span><span class=n>iterator</span> <span class=n>position</span><span class=p>,</span>
@@ -811,16 +808,15 @@ The result is an unspecified type similar to <code>std::string_view</code>.</p><
 
     <span class=k>constexpr</span> <span class=n>iterator</span> <span class=n>position</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-    <span class=k>constexpr</span> <span class=n>string_view</span> <span class=n>string</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
-    <span class=k>constexpr</span> <span class=n>string_view</span><span class=o>::</span><span class=n>char_type</span> <span class=n>character</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+    <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>string</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span> <span class=o>-&gt;</span> <span class=k>const</span> <span class=k>typename</span> <span class=n>Reader</span><span class=o>::</span><span class=n>char_type</span><span class=o>*</span><span class=p>;</span>
+    <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>character</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span> <span class=o>-&gt;</span> <span class=k>typename</span> <span class=n>Reader</span><span class=o>::</span><span class=n>char_type</span><span class=p>;</span>
 
     <span class=k>constexpr</span> <span class=n>std</span><span class=o>::</span><span class=kt>size_t</span> <span class=n>index</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 <span class=p>};</span></code></pre></div></div><div class=paragraph><p>A specialization of <code>lexy::error</code> is provided if <code>Tag == lexy::expected_literal</code>.
 It represents the error where a literal string was expected, but could not be matched.
 It is mainly raised by the <code>lexy::dsl::lit</code> rule.</p></div><div class=paragraph><p>The error happens at a given <code>position()</code> and with a given <code>string()</code>.
 The <code>index()</code> is the index into the string where matching failed; e.g. <code>0</code> if the input starts with a different character, <code>2</code> if the first two characters matched, etc.
-The <code>character()</code> is the string character at that index.</p></div><div class=paragraph><p>The unspecified <code>string_view</code> type is like <code>std::string_view</code>.
-Its character type must match the encoding of the <code>Reader</code>.</p></div></div><div class=sect4><h5 id=_character_class_error>Character class error</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>expected_char_class</span>
+The <code>character()</code> is the string character at that index.</p></div></div><div class=sect4><h5 id=_character_class_error>Character class error</h5><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>expected_char_class</span>
 <span class=p>{};</span>
 
 <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Reader</span><span class=p>&gt;</span>
@@ -833,11 +829,11 @@ Its character type must match the encoding of the <code>Reader</code>.</p></div>
 
     <span class=k>constexpr</span> <span class=n>iterator</span> <span class=n>position</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-    <span class=k>constexpr</span> <span class=cm>/* see below */</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+    <span class=k>constexpr</span> <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 <span class=p>};</span></code></pre></div></div><div class=paragraph><p>A specialization of <code>lexy::error</code> is provided if <code>Tag == lexy::expected_char_class</code>.
 It represents the error where any character from a given set of characters was expected, but could not be matched.
 It is raised by the <code>lexy::dsl::ascii::*</code> rules or <code>lexy::dsl::newline</code>, among others.</p></div><div class=paragraph><p>The error happens at the given <code>position()</code> and a symbolic name of the character class is returned by <code>name()</code>.
-The return type of <code>name()</code> is an unspecified type similar to <code>std::string_view</code>.</p></div><div class=paragraph><p>By convention, the name format used is <code>&lt;group>.&lt;name></code> or <code>&lt;name></code>, where both <code>&lt;group></code> and <code>&lt;name></code> consist of characters.
+By convention, the name format used is <code>&lt;group>.&lt;name></code> or <code>&lt;name></code>, where both <code>&lt;group></code> and <code>&lt;name></code> consist of characters.
 Examples include <code>newline</code>, <code>ASCII.alnum</code> and <code>digit.decimal</code>.</p></div></div></div><div class=sect3><h4 id=_error_context>Error context</h4><div class=listingblock><div class=title><code>lexy/error.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
 <span class=p>{</span>
     <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Production</span><span class=p>,</span> <span class=k>typename</span> <span class=nc>Input</span><span class=p>&gt;</span>
@@ -850,14 +846,13 @@ Examples include <code>newline</code>, <code>ASCII.alnum</code> and <code>digit.
 
         <span class=k>constexpr</span> <span class=k>const</span> <span class=n>Input</span><span class=o>&amp;</span> <span class=n>input</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-        <span class=k>static</span> <span class=n>consteval</span> <span class=cm>/* see below */</span> <span class=n>production</span><span class=p>();</span>
+        <span class=k>static</span> <span class=n>consteval</span> <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>production</span><span class=p>();</span>
 
         <span class=k>constexpr</span> <span class=n>iterator</span> <span class=n>position</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
     <span class=p>};</span>
 <span class=p>}</span></code></pre></div></div><div class=paragraph><p>The class <code>lexy::error_context&lt;Production, Input></code> contain information about the context where the error occurred.</p></div><div class=paragraph><p>The entire input containing the error is returned by <code>input()</code>.</p></div><div class=paragraph><p>The <code>Production</code> whose rule has raised the error is specified as template parameter and its name returned by <code>production()</code>.
 Like <code>lexy::error&lt;Reader, Tag>::message()</code>, it returns the name of the type without the top level namespace name.
-This can be overridden by defining <code>Production::name()</code> or <code>Production::name</code>.
-The result is an unspecified type similar to <code>std::string_view</code>.</p></div><div class=paragraph><p>The <code>position()</code> of the error context is the input position where the production started parsing.</p></div></div><div class=sect3><h4 id=_error_location>Error location</h4><div class=listingblock><div class=title><code>lexy/error_location.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
+This can be overridden by defining <code>Production::name()</code> or <code>Production::name</code>.</p></div><div class=paragraph><p>The <code>position()</code> of the error context is the input position where the production started parsing.</p></div></div><div class=sect3><h4 id=_error_location>Error location</h4><div class=listingblock><div class=title><code>lexy/error_location.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
 <span class=p>{</span>
     <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Reader</span><span class=p>&gt;</span>
     <span class=k>struct</span> <span class=nc>error_location</span>
@@ -961,7 +956,7 @@ Returns a handle that remembers the previous current node.</p></li><li><p>Finish
     <span class=kt>bool</span> <span class=n>is_token</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
     <span class=kt>bool</span> <span class=n>is_production</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
-    <span class=k>auto</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
+    <span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>name</span><span class=p>()</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>;</span>
 
     <span class=k>friend</span> <span class=kt>bool</span> <span class=k>operator</span><span class=o>==</span><span class=p>(</span><span class=n>node_kind</span> <span class=n>lhs</span><span class=p>,</span> <span class=n>node_kind</span> <span class=n>rhs</span><span class=p>);</span>
     <span class=k>friend</span> <span class=kt>bool</span> <span class=k>operator</span><span class=o>!=</span><span class=p>(</span><span class=n>node_kind</span> <span class=n>lhs</span><span class=p>,</span> <span class=n>node_kind</span> <span class=n>rhs</span><span class=p>);</span>
