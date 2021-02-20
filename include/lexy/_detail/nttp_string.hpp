@@ -56,7 +56,7 @@ struct type_string
     static LEXY_CONSTEVAL auto get()
     {
         using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
-        return basic_string_view<CharT>(lazy::str, Str.size());
+        return basic_string_view<CharT>(null_terminated{}, lazy::str, Str.size());
     }
 };
 
@@ -84,7 +84,8 @@ struct type_string
     template <typename OtherCharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        return basic_string_view<OtherCharT>(_lazy<OtherCharT>::str, sizeof...(Cs));
+        return basic_string_view<OtherCharT>(null_terminated{}, _lazy<OtherCharT>::str,
+                                             sizeof...(Cs));
     }
 };
 

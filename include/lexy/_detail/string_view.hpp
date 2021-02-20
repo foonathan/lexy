@@ -10,27 +10,39 @@
 
 namespace lexy::_detail
 {
+struct null_terminated
+{};
+
 template <typename CharT>
 class basic_string_view
 {
+    static constexpr CharT empty_string[] = {CharT()};
+
 public:
     using char_type = CharT;
 
     //=== constructor ===//
-    constexpr basic_string_view() noexcept : _ptr(nullptr), _size(0u) {}
+    constexpr basic_string_view() noexcept : _ptr(empty_string), _size(0u), _null_terminated(true)
+    {}
 
-    constexpr basic_string_view(const char_type* str) noexcept : _ptr(str), _size(0u)
+    constexpr basic_string_view(const char_type* str) noexcept
+    : _ptr(str), _size(0u), _null_terminated(true)
     {
         while (*str++)
             ++_size;
     }
 
     constexpr basic_string_view(const char_type* ptr, std::size_t size) noexcept
-    : _ptr(ptr), _size(size)
+    : _ptr(ptr), _size(size), _null_terminated(false)
     {}
+    constexpr basic_string_view(null_terminated, const char_type* ptr, std::size_t size) noexcept
+    : _ptr(ptr), _size(size), _null_terminated(true)
+    {
+        LEXY_PRECONDITION(_ptr[_size] == CharT());
+    }
 
     constexpr basic_string_view(const char_type* begin, const char_type* end) noexcept
-    : _ptr(begin), _size(std::size_t(end - begin))
+    : _ptr(begin), _size(std::size_t(end - begin)), _null_terminated(false)
     {
         LEXY_PRECONDITION(begin <= end);
     }
@@ -81,6 +93,17 @@ public:
         return _ptr;
     }
 
+    constexpr bool is_null_terminated() const noexcept
+    {
+        return _null_terminated;
+    }
+
+    constexpr const char_type* c_str() const noexcept
+    {
+        LEXY_PRECONDITION(is_null_terminated());
+        return _ptr;
+    }
+
     //=== operations ===//
     static constexpr std::size_t npos = std::size_t(-1);
 
@@ -94,6 +117,7 @@ public:
     {
         LEXY_PRECONDITION(n <= _size);
         _size -= n;
+        _null_terminated = false;
     }
 
     constexpr basic_string_view substr(std::size_t pos, std::size_t length = npos) const noexcept
@@ -101,12 +125,15 @@ public:
         LEXY_PRECONDITION(pos < _size);
         if (length >= _size - pos)
         {
-            auto begin = _ptr + pos;
-            auto end   = _ptr + _size;
-            return basic_string_view(begin, end);
+            auto result             = basic_string_view(_ptr + pos, end());
+            result._null_terminated = _null_terminated;
+            return result;
         }
         else
+        {
+            // Note that we're loosing null-terminated-ness.
             return basic_string_view(_ptr + pos, length);
+        }
     }
 
     constexpr bool starts_with(basic_string_view prefix) const
@@ -152,6 +179,7 @@ public:
 private:
     const CharT* _ptr;
     std::size_t  _size;
+    bool         _null_terminated;
 };
 using string_view = basic_string_view<char>;
 } // namespace lexy::_detail

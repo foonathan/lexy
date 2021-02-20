@@ -9,12 +9,16 @@
 TEST_CASE("string_view")
 {
     lexy::_detail::string_view str = "abc";
+    REQUIRE(str.is_null_terminated());
     REQUIRE(str.size() == 3);
     REQUIRE(str == "abc");
 
     REQUIRE(str.substr(1) == "bc");
+    REQUIRE(str.substr(1).is_null_terminated());
     REQUIRE(str.substr(1, 1) == "b");
+    REQUIRE(!str.substr(1, 1).is_null_terminated());
     REQUIRE(str.substr(1, 24) == "bc");
+    REQUIRE(str.substr(1, 24).is_null_terminated());
 
     REQUIRE(str.find("bc") == 1);
     REQUIRE(str.find("a", 1) == std::size_t(-1));
