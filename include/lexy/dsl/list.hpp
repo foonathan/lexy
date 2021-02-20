@@ -137,8 +137,47 @@ struct _list_loop<Item, _tsep<Sep>, NextParser, PrevArgs...>
             // Parse item.
             lexy::branch_matcher<Item, Reader> branch{};
             if (!branch.match(reader))
-                // No longer match additional items, done with list.
+                // No longer match additional items, done with list (we had a trailing separator).
                 break;
+
+            result = branch.template parse<_list_sink>(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+        }
+
+        return _list_finish<NextParser, PrevArgs...>::parse(context, reader, LEXY_FWD(args)...,
+                                                            sink);
+    }
+};
+template <typename Item, typename Sep, typename Tag, typename NextParser, typename... PrevArgs>
+struct _list_loop<Item, _ntsep<Sep, Tag>, NextParser, PrevArgs...>
+{
+    template <typename Context, typename Reader, typename Sink>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
+        typename Context::result_type
+    {
+        while (true)
+        {
+            // Check whether we have a separator.
+            auto                              sep_begin = reader.cur();
+            lexy::branch_matcher<Sep, Reader> sep{};
+            if (!sep.match(reader))
+                break;
+
+            // Parse the separator.
+            auto result = sep.template parse<_list_sink>(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+            auto sep_end = reader.cur();
+
+            // Parse item.
+            lexy::branch_matcher<Item, Reader> branch{};
+            if (!branch.match(reader))
+            {
+                // We had a trailing separator, which is not allowed.
+                auto err = lexy::make_error<Reader, Tag>(sep_begin, sep_end);
+                return LEXY_MOV(context).error(err);
+            }
 
             result = branch.template parse<_list_sink>(context, reader, sink);
             if (result.has_error())
@@ -220,6 +259,42 @@ struct _list_loop_term<Term, Item, _tsep<Sep>, NextParser, PrevArgs...>
             // Check for trailing separator.
             if (term.match(reader))
                 break;
+
+            result = item_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+        }
+
+        return _list_finish<NextParser, PrevArgs...>::parse_branch(term, context, reader,
+                                                                   LEXY_FWD(args)..., sink);
+    }
+};
+template <typename Term, typename Item, typename Sep, typename Tag, typename NextParser,
+          typename... PrevArgs>
+struct _list_loop_term<Term, Item, _ntsep<Sep, Tag>, NextParser, PrevArgs...>
+{
+    template <typename Context, typename Reader, typename Sink>
+    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink) ->
+        typename Context::result_type
+    {
+        lexy::branch_matcher<Term, Reader> term{};
+        while (!term.match(reader))
+        {
+            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+            using sep_parser  = typename lexy::rule_parser<Sep, _list_sink>;
+
+            auto sep_begin = reader.cur();
+            auto result    = sep_parser::parse(context, reader, sink);
+            if (result.has_error())
+                return LEXY_MOV(result);
+            auto sep_end = reader.cur();
+
+            if (term.match(reader))
+            {
+                // We had a trailing separator, which is not allowed.
+                auto err = lexy::make_error<Reader, Tag>(sep_begin, sep_end);
+                return LEXY_MOV(context).error(err);
+            }
 
             result = item_parser::parse(context, reader, sink);
             if (result.has_error())
@@ -312,6 +387,15 @@ LEXY_CONSTEVAL auto list(Item, _tsep<Sep>)
     static_assert(lexy::is_branch<Item>,
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
+}
+
+/// Parses a list of items with the specified separator that cannot be trailing.
+template <typename Item, typename Sep, typename Tag>
+LEXY_CONSTEVAL auto list(Item, _ntsep<Sep, Tag>)
+{
+    static_assert(lexy::is_branch<Item>,
+                  "list() with forbidden trailing separator requires a branch condition");
+    return _lst<Item, _ntsep<Sep, Tag>>{};
 }
 } // namespace lexyd
 

@@ -1083,6 +1083,9 @@ dsl::do_while(dsl::ascii::alpha, dsl::comma)
 ----
 sep(branch)
 trailing_sep(branch)
+
+no_trailing_sep(branch)
+no_trailing_sep(branch).error<Tag>
 ----
 
 `sep` and `trailing_sep` are used to specify a separator between repeated items; they are not rules that can be parsed directly.
@@ -1092,6 +1095,10 @@ If it would match after the last item, it is not consumed by the rule.
 
 Use `trailing_sep(branch)` to indicate that `branch` has to be consumed between two items and can occur after the final item.
 If it matches after the last item, it is consumed as well.
+
+Use `no_trailing_sep(branch)` to indicate that `branch` has to be consumed between two items.
+If it would match after the last item, an error is raised.
+It has the tag `lexy::unexpected_trailing_separator` unless a different one was specified using `.error`.
 
 [discrete]
 ==== `lexy::dsl::times`

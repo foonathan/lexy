@@ -6,6 +6,7 @@
 #define LEXY_DSL_TIMES_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
@@ -51,6 +52,20 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule, _tsep<Sep> sep)
     {
         (void)sep;
         return rule + if_(Sep{});
+    }
+    else
+    {
+        return rule + Sep{} + _gen_times<N - 1>(rule, sep);
+    }
+}
+
+template <std::size_t N, typename Rule, typename Sep, typename Tag>
+LEXY_CONSTEVAL auto _gen_times(Rule rule, _ntsep<Sep, Tag> sep)
+{
+    if constexpr (N == 1)
+    {
+        (void)sep;
+        return rule + if_(Sep{} >> error<Tag>);
     }
     else
     {

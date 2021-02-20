@@ -142,74 +142,9 @@ TEST_CASE("dsl::list() sep")
 
     auto no_sep = LEXY_VERIFY("abcabc");
     CHECK(no_sep == 1);
-}
 
-TEST_CASE("dsl::list() sep capture")
-{
-    static constexpr auto rule
-        = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(capture(LEXY_LIT(","))));
-    CHECK(lexy::is_rule<decltype(rule)>);
-
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN auto list()
-        {
-            struct b
-            {
-                int count = 0;
-
-                using return_type = int;
-
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
-                {
-                    count += 3;
-                }
-                LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
-                {
-                    LEXY_VERIFY_CHECK(lex.size() == 1);
-                    ++count;
-                }
-
-                LEXY_VERIFY_FN int finish() &&
-                {
-                    return count;
-                }
-            };
-            return b{};
-        }
-
-        LEXY_VERIFY_FN int success(const char* cur, int count)
-        {
-            LEXY_VERIFY_CHECK(cur - str == count);
-            return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-            return -1;
-        }
-    };
-
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
-
-    auto one = LEXY_VERIFY("abc");
-    CHECK(one == 3);
-    auto two = LEXY_VERIFY("abc,abc");
-    CHECK(two == 7);
-    auto three = LEXY_VERIFY("abc,abc,abc");
-    CHECK(three == 11);
-
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
-    auto one_partial = LEXY_VERIFY("abc,ab");
-    CHECK(one_partial == -1);
-
-    auto no_sep = LEXY_VERIFY("abcabc");
-    CHECK(no_sep == 3);
+    auto trailing = LEXY_VERIFY("abc,");
+    CHECK(trailing == -1);
 }
 
 TEST_CASE("dsl::list() trailing_sep")
@@ -279,10 +214,10 @@ TEST_CASE("dsl::list() trailing_sep")
     CHECK(trailing == 1);
 }
 
-TEST_CASE("dsl::list() trailing_sep capture")
+TEST_CASE("dsl::list() no_trailing_sep")
 {
     static constexpr auto rule
-        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(capture(LEXY_LIT(","))));
+        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, no_trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -299,11 +234,6 @@ TEST_CASE("dsl::list() trailing_sep capture")
 
                 LEXY_VERIFY_FN void operator()(lexy::id<0>)
                 {
-                    count += 3;
-                }
-                LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
-                {
-                    LEXY_VERIFY_CHECK(lex.size() == 1);
                     ++count;
                 }
 
@@ -317,7 +247,10 @@ TEST_CASE("dsl::list() trailing_sep capture")
 
         LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            LEXY_VERIFY_CHECK(cur - str == count);
+            if (cur[-1] == ',')
+                LEXY_VERIFY_CHECK(cur - str == 4 * count);
+            else
+                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
             return count;
         }
 
@@ -327,6 +260,11 @@ TEST_CASE("dsl::list() trailing_sep capture")
             LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
+        LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator> e)
+        {
+            LEXY_VERIFY_CHECK(*e.begin() == ',');
+            return -2;
+        }
     };
 
     auto empty = LEXY_VERIFY("");
@@ -335,17 +273,17 @@ TEST_CASE("dsl::list() trailing_sep capture")
     CHECK(partial == -1);
 
     auto one = LEXY_VERIFY("abc");
-    CHECK(one == 3);
+    CHECK(one == 1);
     auto two = LEXY_VERIFY("abc,abc");
-    CHECK(two == 7);
+    CHECK(two == 2);
     auto three = LEXY_VERIFY("abc,abc,abc");
-    CHECK(three == 11);
+    CHECK(three == 3);
 
     auto no_sep = LEXY_VERIFY("abcabc");
-    CHECK(no_sep == 3);
+    CHECK(no_sep == 1);
 
     auto trailing = LEXY_VERIFY("abc,");
-    CHECK(trailing == 4);
+    CHECK(trailing == -2);
 }
 
 TEST_CASE("dsl::opt_list())")
@@ -523,5 +461,73 @@ TEST_CASE("dsl::opt_list() trailing_sep")
 
     auto trailing = LEXY_VERIFY("abc,");
     CHECK(trailing == 1);
+}
+
+TEST_CASE("dsl::opt_list() no_trailing_sep")
+{
+    static constexpr auto rule
+        = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, no_trailing_sep(LEXY_LIT(",")));
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        LEXY_VERIFY_FN auto list()
+        {
+            struct b
+            {
+                int count = 0;
+
+                using return_type = int;
+
+                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                {
+                    ++count;
+                }
+
+                LEXY_VERIFY_FN int finish() &&
+                {
+                    return count;
+                }
+            };
+            return b{};
+        }
+
+        LEXY_VERIFY_FN int success(const char* cur, int count)
+        {
+            if (count == 0)
+                LEXY_VERIFY_CHECK(cur == str);
+            else if (cur[-1] == ',')
+                LEXY_VERIFY_CHECK(cur - str == 4 * count);
+            else
+                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
+            return count;
+        }
+
+        LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator> e)
+        {
+            LEXY_VERIFY_CHECK(*e.begin() == ',');
+            return -1;
+        }
+    };
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty == 0);
+    auto partial = LEXY_VERIFY("ab");
+    CHECK(partial == 0);
+
+    auto one = LEXY_VERIFY("abc");
+    CHECK(one == 1);
+    auto two = LEXY_VERIFY("abc,abc");
+    CHECK(two == 2);
+    auto three = LEXY_VERIFY("abc,abc,abc");
+    CHECK(three == 3);
+
+    auto no_sep = LEXY_VERIFY("abcabc");
+    CHECK(no_sep == 1);
+
+    auto trailing = LEXY_VERIFY("abc,");
+    CHECK(trailing == -1);
 }
 

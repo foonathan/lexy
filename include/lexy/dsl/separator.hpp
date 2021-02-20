@@ -7,6 +7,17 @@
 
 #include <lexy/dsl/base.hpp>
 
+namespace lexy
+{
+struct unexpected_trailing_separator
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "unexpected trailing separator";
+    }
+};
+} // namespace lexy
+
 namespace lexyd
 {
 template <typename Branch>
@@ -31,6 +42,22 @@ LEXY_CONSTEVAL auto trailing_sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
     return _tsep<Branch>{};
+}
+
+template <typename Branch, typename Tag = lexy::unexpected_trailing_separator>
+struct _ntsep
+{
+    template <typename NewTag>
+    static constexpr _ntsep<Branch, NewTag> error = {};
+};
+
+/// Defines a separator for a list that cannot be trailing.
+/// Explicitly checks for a trailing separator and raises an error.
+template <typename Branch>
+LEXY_CONSTEVAL auto no_trailing_sep(Branch)
+{
+    static_assert(lexy::is_branch<Branch>);
+    return _ntsep<Branch>{};
 }
 } // namespace lexyd
 

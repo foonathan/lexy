@@ -209,13 +209,22 @@ struct string
     static constexpr auto value = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
 };
 
+struct unexpected_trailing_comma
+{
+    static constexpr auto name = "unexpected trailing comma";
+};
+
 // A json value that is an array.
 struct array
 {
-    // A (potentially empty) list of json values, seperated by comma and surrouned by square
-    // brackets. Use trailing_sep() here to allow trailing commas.
+    // A (potentially empty) list of json values, seperated by comma and surrounded by square
+    // brackets.
     static constexpr auto rule
-        = dsl::square_bracketed.opt_list(dsl::recurse<json_value>, sep(dsl::comma));
+        = dsl::square_bracketed
+              .opt_list(dsl::recurse<json_value>,
+                        // We're explicitly preventing a trailing separator.
+                        // Use `dsl::trailing_sep()` if you want to allow it.
+                        dsl::no_trailing_sep(dsl::comma).error<unexpected_trailing_comma>);
 
     static constexpr auto value = lexy::as_list<ast::json_array>;
 };
@@ -225,9 +234,13 @@ struct object
 {
     static constexpr auto rule = [] {
         auto item = dsl::p<string> + dsl::colon + dsl::recurse<json_value>;
-        // A (potentially empty) list of items, seperated by comma and surrouned by curly brackets.
-        // Use trailing_sep() here to allow trailing commas.
-        return dsl::curly_bracketed.opt_list(item, dsl::sep(dsl::comma));
+
+        // We're explicitly preventing a trailing separator.
+        // Use `dsl::trailing_sep()` if you want to allow it.
+        auto sep = dsl::no_trailing_sep(dsl::comma).error<unexpected_trailing_comma>;
+
+        // A (potentially empty) list of items, seperated by comma and surrounded by curly brackets.
+        return dsl::curly_bracketed.opt_list(item, sep);
     }();
 
     static constexpr auto value = lexy::as_collection<ast::json_object>;
@@ -236,6 +249,8 @@ struct object
 // A json value.
 struct json_value : lexy::transparent_production
 {
+    static constexpr auto name = "json value";
+
     struct expected_json_value
     {
         static LEXY_CONSTEVAL auto name()
@@ -252,7 +267,7 @@ struct json_value : lexy::transparent_production
         auto primitive = null | true_ | false_ | dsl::p<number> | dsl::p<string>;
         auto complex   = dsl::p<object> | dsl::p<array>;
 
-        return primitive | complex | dsl::else_ >> dsl::error<expected_json_value>;
+        return primitive | complex | dsl::error<expected_json_value>;
     }();
 
     static constexpr auto value = lexy::construct<ast::json_value>;

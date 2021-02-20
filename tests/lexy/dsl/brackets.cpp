@@ -43,6 +43,10 @@ TEST_CASE("dsl::bracketed")
         {
             return -1;
         }
+        LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
+        {
+            return -2;
+        }
     };
 
     SUBCASE("round_brackets")
@@ -161,6 +165,20 @@ TEST_CASE("dsl::bracketed")
         auto trailing = LEXY_VERIFY("(abc,abc,)");
         CHECK(trailing == 10);
     }
+    SUBCASE("list - no trailing sep")
+    {
+        static constexpr auto rule
+            = lexy::dsl::parenthesized.list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("(abc)");
+        CHECK(one == 5);
+        auto two = LEXY_VERIFY("(abc,abc)");
+        CHECK(two == 9);
+        auto trailing = LEXY_VERIFY("(abc,abc,)");
+        CHECK(trailing == -2);
+    }
     SUBCASE("opt_list - no sep")
     {
         static constexpr auto rule = lexy::dsl::parenthesized.opt_list(inner);
@@ -199,6 +217,20 @@ TEST_CASE("dsl::bracketed")
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
         CHECK(trailing == 10);
+    }
+    SUBCASE("opt_list - no trailing sep")
+    {
+        static constexpr auto rule
+            = lexy::dsl::parenthesized.opt_list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero == 2);
+        auto one = LEXY_VERIFY("(abc)");
+        CHECK(one == 5);
+        auto two = LEXY_VERIFY("(abc,abc)");
+        CHECK(two == 9);
+        auto trailing = LEXY_VERIFY("(abc,abc,)");
+        CHECK(trailing == -2);
     }
 }
 

@@ -44,6 +44,10 @@ TEST_CASE("dsl::terminator")
         {
             return -1;
         }
+        LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
+        {
+            return -2;
+        }
     };
 
     SUBCASE("basic")
@@ -124,6 +128,20 @@ TEST_CASE("dsl::terminator")
         auto trailing = LEXY_VERIFY("abc,abc,;");
         CHECK(trailing == 9);
     }
+    SUBCASE("list - no trailing sep")
+    {
+        static constexpr auto rule
+            = terminator.list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == -1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == -2);
+    }
     SUBCASE("opt_list - no sep")
     {
         static constexpr auto rule = terminator.opt_list(inner);
@@ -161,6 +179,20 @@ TEST_CASE("dsl::terminator")
         CHECK(two == 8);
         auto trailing = LEXY_VERIFY("abc,abc,;");
         CHECK(trailing == 9);
+    }
+    SUBCASE("opt_list - no trailing sep")
+    {
+        static constexpr auto rule
+            = terminator.opt_list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
+
+        auto zero = LEXY_VERIFY(";");
+        CHECK(zero == 1);
+        auto one = LEXY_VERIFY("abc;");
+        CHECK(one == 4);
+        auto two = LEXY_VERIFY("abc,abc;");
+        CHECK(two == 8);
+        auto trailing = LEXY_VERIFY("abc,abc,;");
+        CHECK(trailing == -2);
     }
 }
 
