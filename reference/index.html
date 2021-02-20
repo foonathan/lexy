@@ -852,32 +852,7 @@ Examples include <code>newline</code>, <code>ASCII.alnum</code> and <code>digit.
     <span class=p>};</span>
 <span class=p>}</span></code></pre></div></div><div class=paragraph><p>The class <code>lexy::error_context&lt;Production, Input></code> contain information about the context where the error occurred.</p></div><div class=paragraph><p>The entire input containing the error is returned by <code>input()</code>.</p></div><div class=paragraph><p>The <code>Production</code> whose rule has raised the error is specified as template parameter and its name returned by <code>production()</code>.
 Like <code>lexy::error&lt;Reader, Tag>::message()</code>, it returns the name of the type without the top level namespace name.
-This can be overridden by defining <code>Production::name()</code> or <code>Production::name</code>.</p></div><div class=paragraph><p>The <code>position()</code> of the error context is the input position where the production started parsing.</p></div></div><div class=sect3><h4 id=_error_location>Error location</h4><div class=listingblock><div class=title><code>lexy/error_location.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
-<span class=p>{</span>
-    <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Reader</span><span class=p>&gt;</span>
-    <span class=k>struct</span> <span class=nc>error_location</span>
-    <span class=p>{</span>
-        <span class=n>std</span><span class=o>::</span><span class=kt>size_t</span> <span class=n>line</span><span class=p>,</span> <span class=n>column</span><span class=p>;</span>
-        <span class=n>lexeme</span><span class=o>&lt;</span><span class=n>Reader</span><span class=o>&gt;</span> <span class=n>context</span><span class=p>;</span>
-    <span class=p>};</span>
-
-    <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Input</span><span class=p>&gt;</span>
-    <span class=k>using</span> <span class=n>error_location_for</span> <span class=o>=</span> <span class=n>error_location</span><span class=o>&lt;</span><span class=n>input_reader</span><span class=o>&lt;</span><span class=n>Input</span><span class=o>&gt;&gt;</span><span class=p>;</span>
-
-    <span class=k>template</span> <span class=o>&lt;</span><span class=k>typename</span> <span class=nc>Input</span><span class=p>,</span> <span class=k>typename</span> <span class=nc>TokenCP</span><span class=p>,</span> <span class=k>typename</span> <span class=nc>TokenNL</span><span class=p>&gt;</span>
-    <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>make_error_location</span><span class=p>(</span><span class=k>const</span> <span class=n>Input</span><span class=o>&amp;</span> <span class=n>input</span><span class=p>,</span>
-                                       <span class=k>typename</span> <span class=n>input_reader</span><span class=o>&lt;</span><span class=n>Input</span><span class=o>&gt;::</span><span class=n>iterator</span> <span class=n>pos</span><span class=p>,</span>
-                                       <span class=n>TokenCP</span> <span class=n>code_point_token</span><span class=p>,</span>
-                                       <span class=n>TokenNL</span> <span class=n>newline_token</span><span class=p>)</span>
-        <span class=o>-&gt;</span> <span class=n>error_location_for</span><span class=o>&lt;</span><span class=n>Input</span><span class=o>&gt;</span><span class=p>;</span>
-<span class=p>}</span></code></pre></div></div><div class=paragraph><p>The header <code>lexy/error_location.hpp</code> provides a utility function <code>lexy::make_error_location()</code> to convert an error position,
-which is always given via an iterator, into the traditional line/column format.</p></div><div class=paragraph><p>The function takes the position into the input, as well as two tokens.
-It then determines the line and column by repeatedly parsing the two tokens until the error position is reached.
-Every time the <code>code_point_token</code> matches, the column is increased by one.
-Every time the <code>newline_token</code> matches, the column is reset to one and the line increased by one.
-If neither token matches, column is increased by one and the next code unit skipped.
-The final line and column number are returned, together with the <code>context</code> which is a lexeme containing the entire line where the error occurred.</p></div><div class=paragraph><p>For ASCII encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::ascii::character</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.
-For Unicode encoded texts, the <code>code_point_token</code> is <code>lexy::dsl::code_point</code> and the <code>newline_token</code> is <code>lexy::dsl::newline</code>.</p></div></div></div><div class=sect2><h3 id=_parse_tree>Parse Tree</h3><div class=listingblock><div class=title><code>lexy/parse_tree.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
+This can be overridden by defining <code>Production::name()</code> or <code>Production::name</code>.</p></div><div class=paragraph><p>The <code>position()</code> of the error context is the input position where the production started parsing.</p></div></div></div><div class=sect2><h3 id=_parse_tree>Parse Tree</h3><div class=listingblock><div class=title><code>lexy/parse_tree.hpp</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>namespace</span> <span class=n>lexy</span>
 <span class=p>{</span>
     <span class=k>enum</span> <span class=k>class</span> <span class=nc>traverse_event</span>
     <span class=p>{</span>
