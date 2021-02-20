@@ -24,7 +24,7 @@ TEST_CASE("dsl::newline")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == "newline");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("newline"));
             return -1;
         }
     };
@@ -64,7 +64,7 @@ TEST_CASE("dsl::eol")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == "EOL");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOL"));
             return -1;
         }
     };

@@ -106,7 +106,7 @@ public:
         return _pos;
     }
 
-    constexpr _detail::string_view character_class() const noexcept
+    constexpr const char* character_class() const noexcept
     {
         return _name;
     }

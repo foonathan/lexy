@@ -28,7 +28,8 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.control");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.control"));
                 return -1;
             }
         };
@@ -62,7 +63,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.blank");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.blank"));
                 return -1;
             }
         };
@@ -96,7 +97,8 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.newline");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.newline"));
                 return -1;
             }
         };
@@ -130,7 +132,8 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.other-space");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.other-space"));
                 return -1;
             }
         };
@@ -164,7 +167,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.space");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.space"));
                 return -1;
             }
         };
@@ -198,7 +201,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.lower");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.lower"));
                 return -1;
             }
         };
@@ -232,7 +235,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.upper");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
                 return -1;
             }
         };
@@ -266,7 +269,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.alpha");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alpha"));
                 return -1;
             }
         };
@@ -300,7 +303,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.digit");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.digit"));
                 return -1;
             }
         };
@@ -334,7 +337,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.alnum");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alnum"));
                 return -1;
             }
         };
@@ -368,7 +371,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.punct");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.punct"));
                 return -1;
             }
         };
@@ -402,7 +405,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.graph");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.graph"));
                 return -1;
             }
         };
@@ -436,7 +439,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.print");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.print"));
                 return -1;
             }
         };
@@ -470,7 +473,7 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII");
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
                 return -1;
             }
         };

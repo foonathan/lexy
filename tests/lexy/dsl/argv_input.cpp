@@ -27,7 +27,8 @@ TEST_CASE("atom: argv_separator")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "argv-separator");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("argv-separator"));
                 return -1;
             }
         };

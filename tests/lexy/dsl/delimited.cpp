@@ -254,7 +254,7 @@ TEST_CASE("dsl::delimited with escape")
         }
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
-            LEXY_VERIFY_CHECK(e.character_class() == "ASCII");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
             return -3;
         }
         LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)

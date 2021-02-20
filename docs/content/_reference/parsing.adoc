@@ -705,7 +705,7 @@ public:
 
     constexpr iterator position() const noexcept;
 
-    constexpr /* see below */ name() const noexcept;
+    constexpr const char* name() const noexcept;
 };
 ----
 
@@ -714,8 +714,6 @@ It represents the error where any character from a given set of characters was e
 It is raised by the `lexy::dsl::ascii::*` rules or `lexy::dsl::newline`, among others.
 
 The error happens at the given `position()` and a symbolic name of the character class is returned by `name()`.
-The return type of `name()` is an unspecified type similar to `std::string_view`.
-
 By convention, the name format used is `<group>.<name>` or `<name>`, where both `<group>` and `<name>` consist of characters.
 Examples include `newline`, `ASCII.alnum` and `digit.decimal`.
 

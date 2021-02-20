@@ -136,7 +136,7 @@ TEST_CASE("dsl::zero")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == "digit.zero");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("digit.zero"));
             return -1;
         }
     };
@@ -172,7 +172,7 @@ TEST_CASE("dsl::digit")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == "digit.octal");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("digit.octal"));
             return -1;
         }
     };
@@ -213,7 +213,8 @@ TEST_CASE("dsl::digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
         };
@@ -251,7 +252,8 @@ TEST_CASE("dsl::digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
@@ -295,7 +297,8 @@ TEST_CASE("dsl::digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
         };
@@ -343,7 +346,8 @@ TEST_CASE("dsl::digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
@@ -399,7 +403,8 @@ TEST_CASE("dsl::n_digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
         };
@@ -436,7 +441,8 @@ TEST_CASE("dsl::n_digits")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "digit.decimal");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("digit.decimal"));
                 return -1;
             }
         };

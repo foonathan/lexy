@@ -69,8 +69,7 @@ template <typename Reader>
 void _print_message(const lexy::error_location<Reader>&,
                     const lexy::error<Reader, lexy::expected_char_class>& e)
 {
-    std::fprintf(stderr, "^ expected '%.*s' character", int(e.character_class().size()),
-                 e.character_class().data());
+    std::fprintf(stderr, "^ expected '%s' character", e.character_class());
 }
 
 // The error callback that prints to stderr.

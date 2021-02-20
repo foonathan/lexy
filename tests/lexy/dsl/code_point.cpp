@@ -31,7 +31,8 @@ TEST_CASE("dsl::code_point")
                 lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.code_point"));
                 return -1;
             }
         };
@@ -57,7 +58,8 @@ TEST_CASE("dsl::code_point")
                 lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-8.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-8.code_point"));
                 return -1;
             }
         };
@@ -83,7 +85,8 @@ TEST_CASE("dsl::code_point")
                 lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-16.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-16.code_point"));
                 return -1;
             }
         };
@@ -109,7 +112,8 @@ TEST_CASE("dsl::code_point")
                 lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-32.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-32.code_point"));
                 return -1;
             }
         };
@@ -144,7 +148,8 @@ TEST_CASE("dsl::code_point.capture()")
                 lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "ASCII.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.code_point"));
                 return -1;
             }
         };
@@ -170,7 +175,8 @@ TEST_CASE("dsl::code_point.capture()")
                 lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-8.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-8.code_point"));
                 return -1;
             }
         };
@@ -196,7 +202,8 @@ TEST_CASE("dsl::code_point.capture()")
                 lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-16.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-16.code_point"));
                 return -1;
             }
         };
@@ -222,7 +229,8 @@ TEST_CASE("dsl::code_point.capture()")
                 lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == "UTF-32.code_point");
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("UTF-32.code_point"));
                 return -1;
             }
         };

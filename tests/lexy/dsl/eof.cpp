@@ -25,7 +25,7 @@ TEST_CASE("dsl::eof")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == "EOF");
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
             return -1;
         }
     };
