@@ -10,34 +10,34 @@
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/newline.hpp>
 #include <lexy/error.hpp>
-#include <lexy/error_location.hpp>
+#include <lexy_ext/input_location.hpp>
 
 namespace lexy_ext
 {
-template <typename Reader>
-void _print_location(const lexy::error_location<Reader>& location)
+template <typename Location>
+void _print_location(Location location)
 {
     std::fputs("     | \n", stderr);
 
-    std::fprintf(stderr, "%2zd:%2zd| ", location.line, location.column);
-    for (auto c : location.context)
+    std::fprintf(stderr, "%2zd:%2zd| ", location.line_nr(), location.column_nr());
+    for (auto c : location.context())
         std::fputc(c, stderr);
     std::fputc('\n', stderr);
 }
 
-template <typename Reader>
-void _print_message_indent(const lexy::error_location<Reader>& location)
+template <typename Location>
+void _print_message_indent(Location location)
 {
     std::fputs("     | ", stderr);
-    for (auto i = 0u; i != location.column - 1; ++i)
+    for (auto i = 0u; i != location.column_nr() - 1; ++i)
         std::fputc(' ', stderr);
 
     // The next character printed will be under the error location of the column above.
 }
 
 // Print a generic error.
-template <typename Reader, typename Tag>
-void _print_message(const lexy::error_location<Reader>& location, const lexy::error<Reader, Tag>& e)
+template <typename Location, typename Reader, typename Tag>
+void _print_message(Location location, const lexy::error<Reader, Tag>& e)
 {
     if (e.begin() == e.end())
         std::fputc('^', stderr);
@@ -45,7 +45,7 @@ void _print_message(const lexy::error_location<Reader>& location, const lexy::er
     {
         for (auto cur = e.begin(); cur != e.end(); ++cur)
         {
-            if (cur == location.context.end())
+            if (cur == location.context().end())
                 break; // More than one line.
             std::fputc('^', stderr);
         }
@@ -55,9 +55,8 @@ void _print_message(const lexy::error_location<Reader>& location, const lexy::er
 }
 
 // Print an expected_literal error.
-template <typename Reader>
-void _print_message(const lexy::error_location<Reader>&,
-                    const lexy::error<Reader, lexy::expected_literal>& e)
+template <typename Location, typename Reader>
+void _print_message(Location, const lexy::error<Reader, lexy::expected_literal>& e)
 {
     for (auto i = 0u; i != e.index(); ++i)
         std::fputc('^', stderr);
@@ -65,9 +64,8 @@ void _print_message(const lexy::error_location<Reader>&,
 }
 
 // Print an expected_char_class error.
-template <typename Reader>
-void _print_message(const lexy::error_location<Reader>&,
-                    const lexy::error<Reader, lexy::expected_char_class>& e)
+template <typename Location, typename Reader>
+void _print_message(Location, const lexy::error<Reader, lexy::expected_char_class>& e)
 {
     std::fprintf(stderr, "^ expected '%s' character", e.character_class());
 }
@@ -75,18 +73,18 @@ void _print_message(const lexy::error_location<Reader>&,
 // The error callback that prints to stderr.
 constexpr auto report_error = lexy::callback([](const auto& context, const auto& error) {
     // Convert the context location and error location into line/column information.
-    auto context_location
-        = lexy::make_error_location(context.input(), context.position(),
-                                    lexy::dsl::ascii::character, lexy::dsl::newline);
-    auto location = lexy::make_error_location(context.input(), error.position(),
-                                              lexy::dsl::ascii::character, lexy::dsl::newline);
+    lexy_ext::input_location_finder finder(context.input(), lexy::dsl::ascii::character,
+                                           lexy::dsl::newline);
+    auto                            context_location = finder.find(context.position());
+    auto                            location         = finder.find(error.position(),
+                                context_location); // error position is after context position
 
     // Print the main error headline.
     auto prod_name = context.production();
     std::fflush(stdout);
     std::fprintf(stderr, "error: while parsing %s\n", prod_name);
 
-    if (location.line != context_location.line)
+    if (location.line_nr() != context_location.line_nr())
     {
         _print_location(context_location);
         _print_message_indent(context_location);
@@ -98,7 +96,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
     {
         _print_location(location);
         _print_message_indent(context_location);
-        for (auto i = context_location.column; i != location.column; ++i)
+        for (auto i = context_location.column_nr(); i != location.column_nr(); ++i)
             std::fputc('~', stderr);
     }
 
