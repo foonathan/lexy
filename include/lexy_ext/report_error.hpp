@@ -61,7 +61,7 @@ void _print_message(const lexy::error_location<Reader>&,
 {
     for (auto i = 0u; i != e.index(); ++i)
         std::fputc('^', stderr);
-    std::fprintf(stderr, " expected '%.*s'", int(e.string().size()),
+    std::fprintf(stderr, "^ expected '%.*s'", int(e.string().size()),
                  reinterpret_cast<const char*>(e.string().data()));
 }
 
