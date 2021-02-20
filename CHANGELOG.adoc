@@ -5,12 +5,12 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-02-21
 
-Unified error interface:
-
-* `.error<Tag>()` has become `.error<Tag>` (e.g. for tokens, `dsl::switch()`).
-* `f<Tag>(...)` has become `f(...).error<Tag>` (e.g. for `dsl::require()`).
-* `ctx.require<Tag>()` has become `ctx.require().error<Tag>`.
-* `dsl::[partial_]combination()` now have `.missing_error<Tag>` and `.duplicate_error<Tag>` members.
+* Unified error interface:
+  ** `.error<Tag>()` has become `.error<Tag>` (e.g. for tokens, `dsl::switch()`).
+  ** `f<Tag>(...)` has become `f(...).error<Tag>` (e.g. for `dsl::require()`).
+  ** `ctx.require<Tag>()` has become `ctx.require().error<Tag>`.
+  ** `dsl::[partial_]combination()` now have `.missing_error<Tag>` and `.duplicate_error<Tag>` members.
+* **Behavior change**: if `dsl::code_point_id` overflows, the tag is now `lexy::invalid_code_point` instead of `lexy::integer_overflow`.
 
 == 2021-02-20
 

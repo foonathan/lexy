@@ -269,7 +269,7 @@ struct _bounded_integer_parser
 };
 
 // Continuation of integer that assumes the rule is already dealt with.
-template <typename T, typename Base, bool AssumeOnlyDigits>
+template <typename T, typename Base, bool AssumeOnlyDigits, typename Tag>
 struct _int_p : rule_base
 {
     using integer_parser
@@ -283,8 +283,8 @@ struct _int_p : rule_base
         LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Iterator begin, Args&&... args)
             -> typename Context::result_type
         {
-            using error_type
-                = lexy::error<typename Reader::canonical_reader, lexy::integer_overflow>;
+            using tag        = std::conditional_t<std::is_void_v<Tag>, lexy::integer_overflow, Tag>;
+            using error_type = lexy::error<typename Reader::canonical_reader, tag>;
 
             auto result = typename integer_parser::result_type(0);
             if (integer_parser::parse(result, begin, reader.cur()))
@@ -317,47 +317,59 @@ struct _int_c : rule_base
 template <typename T, typename Base, typename Rule>
 LEXY_CONSTEVAL auto integer(Rule)
 {
-    return _int_c<Rule>{} + _int_p<T, Base, false>{};
+    return _int_c<Rule>{} + _int_p<T, Base, false, void>{};
 }
 
 template <typename T, typename Base>
 LEXY_CONSTEVAL auto integer(_digits<Base>)
 {
-    return _int_c<_digits<Base>>{} + _int_p<T, Base, true>{};
+    return _int_c<_digits<Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, typename Sep>
 LEXY_CONSTEVAL auto integer(_digits_s<Base, Sep>)
 {
-    return _int_c<_digits_s<Base, Sep>>{} + _int_p<T, Base, false>{};
+    return _int_c<_digits_s<Base, Sep>>{} + _int_p<T, Base, false, void>{};
 }
 template <typename T, typename Base>
 LEXY_CONSTEVAL auto integer(_digits_t<Base>)
 {
-    return _int_c<_digits_t<Base>>{} + _int_p<T, Base, true>{};
+    return _int_c<_digits_t<Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, typename Sep>
 LEXY_CONSTEVAL auto integer(_digits_st<Base, Sep>)
 {
-    return _int_c<_digits_st<Base, Sep>>{} + _int_p<T, Base, false>{};
+    return _int_c<_digits_st<Base, Sep>>{} + _int_p<T, Base, false, void>{};
 }
 
 template <typename T, typename Base, std::size_t N>
 LEXY_CONSTEVAL auto integer(_ndigits<N, Base>)
 {
-    return _int_c<_ndigits<N, Base>>{} + _int_p<T, Base, true>{};
+    return _int_c<_ndigits<N, Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
 LEXY_CONSTEVAL auto integer(_ndigits_s<N, Base, Sep>)
 {
-    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true>{};
+    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true, void>{};
 }
 } // namespace lexyd
+
+namespace lexy
+{
+struct invalid_code_point
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "invalid code point";
+    }
+};
+} // namespace lexy
 
 namespace lexyd
 {
 /// Matches the number of a code point.
 template <std::size_t N, typename Base = hex>
-constexpr auto code_point_id = integer<lexy::code_point>(n_digits<N, Base>);
+constexpr auto code_point_id = _int_c<_ndigits<N, Base>>{}
+                               + _int_p<lexy::code_point, Base, true, lexy::invalid_code_point>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED

@@ -1741,7 +1741,7 @@ dsl::integer<int>(dsl::digits<dsl::hex_upper>
 
 .`lexy/dsl/integer.hpp`
 ----
-code_point_id<N, Base> : Rule = integer<lexy::code_point>(n_digits<N, Base>)
+code_point_id<N, Base> : Rule = integer<lexy::code_point>(n_digits<N, Base>) // approximatively
 ----
 
 The `code_point_id` rule is a convenience rule that parses a code point.
@@ -1753,7 +1753,7 @@ Values::
   The `lexy::code_point` that is specified using those digits.
 Errors::
   The same error as `digit<Base>` if fewer than `N` digits are available.
-  A generic error with tag `lexy::integer_overflow` if the code point value would exceed the maximum code point.
+  A generic error with tag `lexy::invalid_code_point` if the code point value would exceed the maximum code point.
 
 [discrete]
 ==== `lexy::dsl::plus_sign`, `lexy::dsl::minus_sign`, and `lexy::dsl::sign`
