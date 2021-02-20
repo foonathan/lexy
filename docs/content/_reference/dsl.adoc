@@ -1223,7 +1223,8 @@ Errors::
 .`lexy/dsl/combination.hpp`
 ----
 combination(branch1, branch2, ...) : Rule
-combination(branch1, branch2, ...).error<Tag> : Rule
+combination(branch1, branch2, ...).duplicate_error<Tag> : Rule
+combination(branch1, branch2, ...).missing_error<Tag> : Rule
 ----
 
 The `combination` rule matches each of the sub-rules exactly once but in any order.
@@ -1242,9 +1243,9 @@ Values::
 Errors::
   All errors raised by parsing the branches.
   If no branch is matched, but there are still missing branches,
-  a generic error with tag `lexy::exhausted_choice` is raised.
-  If a branch is matched twice, a generic error is raised.
-  It has the specified tag or `lexy::combination_duplicate` if none was specified.
+  a generic error with the tag specified using `missing_error` is raised, or `lexy::exhausted_choice` if there was none.
+  If a branch is matched twice,
+  a generic error with the tag specified using `duplicate_error` is raised, or `lexy::combination_duplicate` if there was none.
 
 [%collapsible]
 .Example
@@ -1264,7 +1265,7 @@ WARNING: The branches are tried in order. If an earlier branch always takes prec
 .`lexy/dsl/combination.hpp`
 ----
 partial_combination(branch1, branch2, ...) : Rule
-partial_combination(branch1, branch2, ...).error<Tag> : Rule
+partial_combination(branch1, branch2, ...).duplicate_error<Tag> : Rule
 ----
 
 The `partial_combination` rule matches each of the sub-rules at most once but in any order.
@@ -1283,8 +1284,8 @@ Values::
   All values produced by the branches are passed to the sink which is invoked once per iteration.
 Errors::
   All errors raised by parsing the branches.
-  If a rule is matched twice, a generic error is raised.
-  It has the specified tag or `lexy::combination_duplicate` if none was specified.
+  If a branch is matched twice,
+  a generic error with the tag specified using `duplicate_error` is raised, or `lexy::combination_duplicate` if there was none.
 
 [%collapsible]
 .Example

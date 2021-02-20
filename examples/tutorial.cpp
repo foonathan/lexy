@@ -110,6 +110,10 @@ struct author_list
 
 struct config
 {
+    struct unknown_field
+    {
+        static constexpr auto name = "unknown config field";
+    };
     struct duplicate_field
     {
         static constexpr auto name = "duplicate config field";
@@ -127,8 +131,8 @@ struct config
         auto authors_field
             = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p<author_list>);
 
-        auto combination
-            = dsl::combination(name_field, version_field, authors_field).error<duplicate_field>;
+        auto combination = dsl::combination(name_field, version_field, authors_field)
+                               .missing_error<unknown_field>.duplicate_error<duplicate_field>;
         return combination + dsl::whitespace(dsl::ascii::space) + dsl::eof;
     }();
 

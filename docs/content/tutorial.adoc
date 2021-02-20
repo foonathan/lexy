@@ -1358,13 +1358,18 @@ struct author
 <3> We specify that on token failure, we want a generic error with the given tag.
 
 Likewise, if we specify the same field twice we get the generic `combination duplicate` error message.
-This can be improved by specifying a custom tag in our `dsl::combination()` call.
+Additionally, if we add an unknown field we get the generic `exhausted_choice` error.
+Both issues can be improved by specifying custom tags in our `dsl::combination()` call.
 
 .`config` production with tagged `dsl::combination()`
 [source,cpp]
 ----
 struct config
 {
+    struct unknown_field <1>
+    {
+        static constexpr auto name = "unknown config field"; <2>
+    };
     struct duplicate_field <1>
     {
         static constexpr auto name = "duplicate config field"; <2>
@@ -1373,14 +1378,16 @@ struct config
     static constexpr auto rule = [] {
         …
 
-        return dsl::combination(name_field, version_field, authors_field).error<duplicate_field> <3>
-               + dsl::eof[dsl::ascii::space];
+        auto combination = dsl::combination(name_field, version_field, authors_field)
+                               .missing_error<unknown_field>.duplicate_error<duplicate_field>; <3>
+        return combination + dsl::whitespace(dsl::ascii::space) + dsl::eof;
     }();
 };
 ----
-<1> Define the tag.
-<2> Override the default message (`config::duplicate_field` would actually be ok).
+<1> Define the tags.
+<2> Override the default message, which is the type name.
 <3> Specify the error on failure.
+The missing error is the one triggered when no field condition matched, the duplicate one if we had a field twice.
 
 Now an invalid string character is reported as `invalid string character` and a duplicated config field as `duplicate config field`:
 

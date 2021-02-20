@@ -8,6 +8,7 @@
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/sequence.hpp>
@@ -51,16 +52,16 @@ struct _comb_it
     }
 };
 
-template <bool Partial, typename E, typename... R>
+template <typename DuplicateError, typename ElseRule, typename... R>
 struct _comb : rule_base
 {
     template <std::size_t... Idx>
     static auto _comb_choice_(lexy::_detail::index_sequence<Idx...>)
     {
-        if constexpr (Partial)
-            return (id<Idx>(R{}) | ... | break_);
-        else
+        if constexpr (std::is_void_v<ElseRule>)
             return (id<Idx>(R{}) | ...);
+        else
+            return (id<Idx>(R{}) | ... | ElseRule{});
     }
     using _comb_choice = decltype(_comb_choice_(lexy::_detail::index_sequence_for<R...>{}));
 
@@ -92,9 +93,9 @@ struct _comb : rule_base
 
                 if (handled[state.idx])
                 {
-                    using tag
-                        = std::conditional_t<std::is_void_v<E>, lexy::combination_duplicate, E>;
-                    auto err = lexy::make_error<Reader, tag>(begin, reader.cur());
+                    using tag = std::conditional_t<std::is_void_v<DuplicateError>,
+                                                   lexy::combination_duplicate, DuplicateError>;
+                    auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
                     return LEXY_MOV(context).error(err);
                 }
                 else
@@ -117,8 +118,12 @@ struct _comb : rule_base
         }
     };
 
+    //=== dsl ===//
     template <typename Tag>
-    static constexpr _comb<Partial, Tag, R...> error = {};
+    static constexpr _comb<Tag, ElseRule, R...> duplicate_error = {};
+
+    template <typename Tag>
+    static constexpr _comb<DuplicateError, _err<Tag, void>, R...> missing_error = {};
 };
 
 /// Matches each of the rules in an arbitrary order.
@@ -127,7 +132,7 @@ template <typename... R>
 LEXY_CONSTEVAL auto combination(R...)
 {
     static_assert((lexy::is_branch<R> && ...), "combination() requires a branch rule");
-    return _comb<false, void, R...>{};
+    return _comb<void, void, R...>{};
 }
 
 /// Matches some of the rules in an arbitrary order.
@@ -136,21 +141,23 @@ template <typename... R>
 LEXY_CONSTEVAL auto partial_combination(R...)
 {
     static_assert((lexy::is_branch<R> && ...), "partial_combination() requires a branch rule");
-    return _comb<true, void, R...>{};
+    // If the choice no longer matches, we just break.
+    return _comb<void, decltype(break_), R...>{};
 }
 
 template <typename Tag, typename... R>
-LEXY_DEPRECATED_ERROR("replace `combination<Tag>(r...)` by `combination(r...).error<Tag>`")
+LEXY_DEPRECATED_ERROR(
+    "replace `combination<Tag>(r...)` by `combination(r...).duplicate_error<Tag>`")
 LEXY_CONSTEVAL auto combination(R... r)
 {
-    return combination(r...).template error<Tag>;
+    return combination(r...).template duplicate_error<Tag>;
 }
 template <typename Tag, typename... R>
 LEXY_DEPRECATED_ERROR(
-    "replace `partial_combination<Tag>(r...)` by `partial_combination(r...).error<Tag>`")
+    "replace `partial_combination<Tag>(r...)` by `partial_combination(r...).duplicate_error<Tag>`")
 LEXY_CONSTEVAL auto partial_combination(R... r)
 {
-    return partial_combination(r...).template error<Tag>;
+    return partial_combination(r...).template duplicate_error<Tag>;
 }
 } // namespace lexyd
 

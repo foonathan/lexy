@@ -8,8 +8,9 @@ Until the first release is done, breaking changes -- but not new features -- are
 Unified error interface:
 
 * `.error<Tag>()` has become `.error<Tag>` (e.g. for tokens, `dsl::switch()`).
-* `f<Tag>(...)` has become `f(...).error<Tag>` (e.g. for `dsl::require()`, `dsl::partial_combination()`).
+* `f<Tag>(...)` has become `f(...).error<Tag>` (e.g. for `dsl::require()`).
 * `ctx.require<Tag>()` has become `ctx.require().error<Tag>`.
+* `dsl::[partial_]combination()` now have `.missing_error<Tag>` and `.duplicate_error<Tag>` members.
 
 == 2021-02-20
 
