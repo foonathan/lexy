@@ -18,11 +18,11 @@ namespace lexy::_detail
 template <std::size_t N, typename CharT>
 struct string_literal
 {
-    CharT string[N == 0 ? 1 : N];
+    CharT string[N + 1];
 
     using char_type = CharT;
 
-    LEXY_CONSTEVAL string_literal(CharT c) : string{c} {}
+    LEXY_CONSTEVAL string_literal(CharT c) : string{c, CharT()} {}
     LEXY_CONSTEVAL string_literal(const CharT* str) : string{}
     {
         for (auto i = 0u; i != N; ++i)
@@ -49,19 +49,14 @@ struct type_string
     template <typename CharT, std::size_t... I>
     struct _lazy<CharT, index_sequence<I...>>
     {
-        static inline constexpr CharT str[] = {CharT(Str.string[I])...};
+        static inline constexpr CharT str[] = {CharT(Str.string[I])..., CharT()};
     };
 
     template <typename CharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        if constexpr (Str.size() == 0)
-            return basic_string_view<CharT>();
-        else
-        {
-            using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
-            return basic_string_view<CharT>(lazy::str, Str.size());
-        }
+        using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
+        return basic_string_view<CharT>(lazy::str, Str.size());
     }
 };
 
@@ -83,24 +78,13 @@ struct type_string
     template <typename OtherCharT>
     struct _lazy
     {
-        static inline constexpr OtherCharT str[] = {OtherCharT(Cs)...};
+        static inline constexpr OtherCharT str[] = {OtherCharT(Cs)..., OtherCharT()};
     };
 
     template <typename OtherCharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
         return basic_string_view<OtherCharT>(_lazy<OtherCharT>::str, sizeof...(Cs));
-    }
-};
-template <typename CharT>
-struct type_string<CharT>
-{
-    using char_type = CharT;
-
-    template <typename OtherCharT = char_type>
-    static LEXY_CONSTEVAL auto get()
-    {
-        return basic_string_view<OtherCharT>();
     }
 };
 
