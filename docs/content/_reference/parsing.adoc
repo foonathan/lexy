@@ -642,7 +642,7 @@ public:
     constexpr iterator begin() const noexcept;
     constexpr iterator end() const noexcept;
 
-    constexpr /* see below */ message() const noexcept;
+    constexpr const char* message() const noexcept;
 };
 ----
 
@@ -653,7 +653,6 @@ or a range of the input, then `position() == begin() <= end()`.
 The `message()` is determined using the `Tag`.
 By default, it returns the type name of `Tag` after removing the top-level namespace name.
 This can be overridden by defining either `Tag::name()` or `Tag::name`.
-The result is an unspecified type similar to `std::string_view`.
 
 ===== Expected literal error
 

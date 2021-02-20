@@ -51,7 +51,7 @@ void _print_message(const lexy::error_location<Reader>& location, const lexy::er
         }
     }
 
-    std::fprintf(stderr, " %.*s", int(e.message().size()), e.message().data());
+    std::fprintf(stderr, " %s", e.message());
 }
 
 // Print an expected_literal error.

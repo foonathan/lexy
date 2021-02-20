@@ -68,7 +68,7 @@ TEST_CASE("dsl::delimited()")
             {
                 LEXY_VERIFY_CHECK(e.begin() == str + 1);
                 LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
+                LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("missing delimiter"));
                 return -2;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
@@ -151,7 +151,7 @@ TEST_CASE("dsl::delimited()")
             {
                 LEXY_VERIFY_CHECK(e.begin() == str + 1);
                 LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
+                LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("missing delimiter"));
                 return -2;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
@@ -249,7 +249,7 @@ TEST_CASE("dsl::delimited with escape")
         {
             LEXY_VERIFY_CHECK(e.begin() == str + 1);
             LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-            LEXY_VERIFY_CHECK(e.message() == "missing delimiter");
+            LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("missing delimiter"));
             return -2;
         }
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
@@ -259,7 +259,7 @@ TEST_CASE("dsl::delimited with escape")
         }
         LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
         {
-            LEXY_VERIFY_CHECK(e.message() == "invalid escape sequence");
+            LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("invalid escape sequence"));
             return -4;
         }
     };

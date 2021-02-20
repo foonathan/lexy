@@ -29,7 +29,7 @@ public:
         return _pos;
     }
 
-    constexpr _detail::string_view message() const noexcept
+    constexpr const char* message() const noexcept
     {
         return _detail::type_name<Tag>();
     }

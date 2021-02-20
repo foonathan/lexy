@@ -92,7 +92,7 @@ TEST_CASE("dsl::integer")
 
             LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
             {
-                LEXY_VERIFY_CHECK(e.message() == "integer overflow");
+                LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("integer overflow"));
                 LEXY_VERIFY_CHECK(e.begin() == str);
                 LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
                 return -1;
@@ -277,7 +277,7 @@ TEST_CASE("dsl::code_point_id")
 
         LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
         {
-            LEXY_VERIFY_CHECK(e.message() == "integer overflow");
+            LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("integer overflow"));
             LEXY_VERIFY_CHECK(e.begin() == str);
             LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
             return -1;
