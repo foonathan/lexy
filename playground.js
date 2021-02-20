@@ -91,6 +91,7 @@ int main()
     }
     std::puts("}");
 }
+
 `;
 
         return macros + '\n' + prefix + source + '\n' + main;
@@ -122,6 +123,7 @@ int main()
 
     lexy_ext::dump_parse_tree(stdout, tree);
 }
+
 `;
 
         return macros + '\n' + prefix + source + '\n' + main;
