@@ -14,6 +14,12 @@
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
+#ifdef LEXY_IGNORE_DEPRECATED_ERROR
+#    define LEXY_DEPRECATED_ERROR(msg)
+#else
+#    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
+#endif
+
 //=== rule ===//
 #if 0
 struct Rule : rule_base
@@ -114,6 +120,8 @@ using whitespace_parser = rule_parser<lexy::dsl::_wsr<_ws_rule<Context>>, NextPa
 //=== token ===//
 namespace lexyd
 {
+template <typename Tag, typename Token>
+struct _toke;
 template <auto Kind, typename Token>
 struct _tokk;
 
@@ -182,7 +190,7 @@ struct token_base : _token_base
 
     //=== dsl ===//
     template <typename Tag>
-    LEXY_CONSTEVAL auto error() const;
+    static constexpr _toke<Tag, Derived> error = _toke<Tag, Derived>{};
 
     template <auto Kind>
     static constexpr _tokk<Kind, Derived> kind = _tokk<Kind, Derived>{};

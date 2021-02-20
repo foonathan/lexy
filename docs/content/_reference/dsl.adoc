@@ -614,13 +614,13 @@ TIP: Use `position` when creating an AST whose nodes are annotated with their or
 The following rules are used to customize/improve error messages.
 
 [discrete]
-==== `.error<Tag>()`
+==== `.error<Tag>`
 
 ----
-token.error<Tag>() : Token
+token.error<Tag> : Token
 ----
 
-The `error()` function on tokens changes the error that is raised when a token failed.
+The `error` member on tokens changes the error that is raised when a token failed.
 
 Matches::
   Matches and consumes what `token` matches.
@@ -658,8 +658,8 @@ TIP: Use it as the final branch of a choice rule to customize the `lexy::exhaust
 
 .`lexy/dsl/error.hpp`
 ----
-require<Tag>(rule) : Rule
-prevent<Tag>(rule) : Rule
+require(rule).error<Tag> : Rule
+prevent(rule).error<Tag> : Rule
 ----
 
 The `require` and `prevent` rules can be used to lookahead and fail if the input matches or does not match the token.
@@ -917,7 +917,7 @@ switch_(rule) : Rule
 
 switch_(rule).case_(branch)  : Rule
 switch_(rule).default_(rule) : Rule = switch_(rule).case_(else_ >> rule)
-switch_(rule).error<Tag>()   : Rule = switch_(rule).case_(error<Tag>(any))
+switch_(rule).error<Tag>     : Rule = switch_(rule).case_(error<Tag>(any))
 ----
 
 The `switch_` rule matches a rule and then switches over the input the rule has consumed.
@@ -1223,7 +1223,7 @@ Errors::
 .`lexy/dsl/combination.hpp`
 ----
 combination(branch1, branch2, ...) : Rule
-combination<Tag>(branch1, branch2, ...) : Rule
+combination(branch1, branch2, ...).error<Tag> : Rule
 ----
 
 The `combination` rule matches each of the sub-rules exactly once but in any order.
@@ -1264,7 +1264,7 @@ WARNING: The branches are tried in order. If an earlier branch always takes prec
 .`lexy/dsl/combination.hpp`
 ----
 partial_combination(branch1, branch2, ...) : Rule
-partial_combination<Tag>(branch1, branch2, ...) : Rule
+partial_combination(branch1, branch2, ...).error<Tag> : Rule
 ----
 
 The `partial_combination` rule matches each of the sub-rules at most once but in any order.
@@ -2099,14 +2099,14 @@ Errors::
   All errors raised by parsing the selected rule.
 
 ----
-context_flag<Id>.require<ErrorTag>()        : Rule
-context_flag<Id>.require<Value, ErrorTag>() : Rule
+context_flag<Id>.require().error<Tag>        : Rule
+context_flag<Id>.require<Value>().error<Tag> : Rule
 ----
 
 The `.require()` rule does not interact with the input at all.
 When it is parsed, it checks that the value of the flag with the given `Id` is the given `Value` (defaults to `true`).
 If that is the case, parsing continues.
-Otherwise, the rule fails, producing an error with the given `ErrorTag`.
+Otherwise, the rule fails, producing an error with the given `Tag`.
 
 [discrete]
 ==== `lexy::dsl::context_counter`
@@ -2168,14 +2168,14 @@ Errors::
   All errors raised by parsing the selected rule.
 
 ----
-context_counter<Id>.require<ErrorTag>()        : Rule
-context_counter<Id>.require<Value, ErrorTag>() : Rule
+context_counter<Id>.require().error<Tag>        : Rule
+context_counter<Id>.require<Value>().error<Tag> : Rule
 ----
 
 The `.require()` rule does not interact with the input at all.
 When it is parsed, it checks that the value of the counter with the given `Id` is the given `Value` (defaults to `0`).
 If that is the case, parsing continues.
-Otherwise, the rule fails, producing an error with the given `ErrorTag`.
+Otherwise, the rule fails, producing an error with the given `Tag`.
 
 [discrete]
 ==== `lexy::dsl::context_lexeme`
@@ -2211,13 +2211,13 @@ Errors::
   All errors raised by parsing `rule`.
 
 ----
-context_lexeme<Id>.require<ErrorTag>(rule) : Rule
+context_lexeme<Id>.require(rule).error<Tag> : Rule
 ----
 
 The `.require()` rule parses the given `rule`, capturing it in a temporary lexeme.
 The temporary lexeme is then compared with the lexeme given by the `Id`.
 If the two lexemes are equal, parsing continues.
-Otherwise, the rule fails, producing an error with the given `ErrorTag`.
+Otherwise, the rule fails, producing an error with the given `Tag`.
 
 Matches::
   Matches and  consumes `rule.`
@@ -2225,6 +2225,7 @@ Values::
   Discards values produced by `rule`.
 Errors::
   All errors raised by parsing `rule`.
+  A generic error with the given `Tag` if the rule did not match.
 
 === Raw input
 
@@ -2266,9 +2267,9 @@ For example, `lexy::read_file()` already handles and deals with BOMs for you by 
 ==== `lexy::dsl::encode`
 
 .`lexy/dsl/encode.hpp`
----
+----
 encode<Encoding, Endianness>(rule) : Rule
----
+----
 
 The `encode` rule temporarily changes the encoding of the input.
 The specified `rule` will be matched using a `Reader` whose encoding is `Encoding` converted from the raw bytes using the specified endianness.

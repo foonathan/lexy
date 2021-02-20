@@ -6,10 +6,10 @@
 
 #include "verify.hpp"
 
-TEST_CASE(".error()")
+TEST_CASE(".error")
 {
     struct error;
-    static constexpr auto rule = LEXY_LIT("abc").error<error>();
+    static constexpr auto rule = LEXY_LIT("abc").error<error>;
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 
@@ -99,7 +99,7 @@ TEST_CASE("dsl::error")
 TEST_CASE("dsl::require")
 {
     struct tag;
-    static constexpr auto rule = lexy::dsl::require<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
+    static constexpr auto rule = lexy::dsl::require(LEXY_LIT("ab") + LEXY_LIT("c")).error<tag>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -129,7 +129,7 @@ TEST_CASE("dsl::require")
 TEST_CASE("dsl::prevent")
 {
     struct tag;
-    static constexpr auto rule = lexy::dsl::prevent<tag>(LEXY_LIT("ab") + LEXY_LIT("c"));
+    static constexpr auto rule = lexy::dsl::prevent(LEXY_LIT("ab") + LEXY_LIT("c")).error<tag>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback

@@ -126,7 +126,7 @@ TEST_CASE("dsl::switch_()")
         static constexpr auto rule = switch_(while_(LEXY_LIT("a")))
                                          .case_(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
                                          .case_(LEXY_LIT("aa") >> lexy::dsl::value_c<2>)
-                                         .error<struct tag>();
+                                         .error<struct tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback

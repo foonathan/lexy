@@ -95,6 +95,13 @@ struct _ctx_lrequire : branch_base
 
 namespace lexyd
 {
+template <typename Id, typename Rule>
+struct _ctx_lexeme_require
+{
+    template <typename Tag>
+    static constexpr _ctx_lrequire<Id, Tag, Rule> error = {};
+};
+
 template <typename Id>
 struct _ctx_lexeme
 {
@@ -112,10 +119,18 @@ struct _ctx_lexeme
         return _ctx_lcapture<id, Rule>{};
     }
 
-    template <typename ErrorTag, typename Rule>
+    template <typename Rule>
     LEXY_CONSTEVAL auto require(Rule) const
     {
-        return _ctx_lrequire<id, ErrorTag, Rule>{};
+        return _ctx_lexeme_require<id, Rule>{};
+    }
+
+    template <typename Tag, typename Rule>
+    LEXY_DEPRECATED_ERROR(
+        "replace `lexeme.require<tag>(rule)` by `lexeme.require(rule).error<tag>`")
+    LEXY_CONSTEVAL auto require(Rule rule) const
+    {
+        return require(rule).template error<Tag>;
     }
 };
 

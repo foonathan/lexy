@@ -100,6 +100,13 @@ struct _ctx_frequire : rule_base
 
 namespace lexyd
 {
+template <typename Id, bool Value>
+struct _ctx_flag_require
+{
+    template <typename Tag>
+    static constexpr _ctx_frequire<Id, Tag, Value> error = {};
+};
+
 template <typename Id>
 struct _ctx_flag
 {
@@ -132,15 +139,24 @@ struct _ctx_flag
         return _ctx_fselect<id, R, S>{};
     }
 
-    template <typename ErrorTag>
+    template <bool Value = true>
     LEXY_CONSTEVAL auto require() const
     {
-        return _ctx_frequire<id, ErrorTag, true>{};
+        return _ctx_flag_require<id, Value>{};
     }
-    template <bool Value, typename ErrorTag>
+
+    template <typename Tag>
+    LEXY_DEPRECATED_ERROR("replace `flag.require<Tag>()` by `flag.require().error<Tag>`")
     LEXY_CONSTEVAL auto require() const
     {
-        return _ctx_frequire<id, ErrorTag, Value>{};
+        return require().template error<Tag>;
+    }
+    template <bool Value, typename Tag>
+    LEXY_DEPRECATED_ERROR(
+        "replace `flag.require<false, Tag>()` by `flag.require<false>().error<Tag>`")
+    LEXY_CONSTEVAL auto require() const
+    {
+        return require<Value>().template error<Tag>;
     }
 };
 

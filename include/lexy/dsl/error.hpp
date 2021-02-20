@@ -28,14 +28,13 @@ struct _toke : token_base<_toke<Tag, Token>>
     {
         return Token::token_kind();
     }
-};
 
-template <typename Derived>
-template <typename Tag>
-LEXY_CONSTEVAL auto token_base<Derived>::error() const
-{
-    return _toke<Tag, Derived>{};
-}
+    LEXY_DEPRECATED_ERROR("replace `token.error<Tag>()` by `token.error<Tag>`")
+    constexpr auto operator()() const
+    {
+        return *this;
+    }
+};
 } // namespace lexyd
 
 namespace lexyd
@@ -120,20 +119,40 @@ struct _require : rule_base
     };
 };
 
+template <bool Expected, typename Token>
+struct _require_dsl
+{
+    template <typename Tag>
+    static constexpr _require<Expected, Token, Tag> error = _require<Expected, Token, Tag>{};
+};
+
 /// Requires that lookahead will match a rule at a location.
-template <typename Tag, typename Rule>
+template <typename Rule>
 LEXY_CONSTEVAL auto require(Rule rule)
 {
     auto t = token(rule);
-    return _require<true, decltype(t), Tag>{};
+    return _require_dsl<true, decltype(t)>{};
 }
 
 /// Requires that lookahead does not match a rule at a location.
-template <typename Tag, typename Rule>
+template <typename Rule>
 LEXY_CONSTEVAL auto prevent(Rule rule)
 {
     auto t = token(rule);
-    return _require<false, decltype(t), Tag>{};
+    return _require_dsl<false, decltype(t)>{};
+}
+
+template <typename Tag, typename Rule>
+LEXY_DEPRECATED_ERROR("replace `require<Tag>(rule)` by `require(rule).error<Tag>`")
+LEXY_CONSTEVAL auto require(Rule rule)
+{
+    return require(rule).template error<Tag>;
+}
+template <typename Tag, typename Rule>
+LEXY_DEPRECATED_ERROR("replace `prevent<Tag>(rule)` by `prevent(rule).error<Tag>`")
+LEXY_CONSTEVAL auto prevent(Rule rule)
+{
+    return prevent(rule).template error<Tag>;
 }
 } // namespace lexyd
 

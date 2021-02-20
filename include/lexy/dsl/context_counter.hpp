@@ -119,6 +119,13 @@ struct _ctx_crequire : rule_base
 
 namespace lexyd
 {
+template <typename Id, int Value>
+struct _ctx_counter_require
+{
+    template <typename Tag>
+    static constexpr _ctx_crequire<Id, Tag, Value> error = {};
+};
+
 template <typename Id>
 struct _ctx_counter
 {
@@ -157,15 +164,24 @@ struct _ctx_counter
         return _ctx_ccompare<id, Value, R, S, T>{};
     }
 
-    template <typename ErrorTag>
+    template <int Value = 0>
     LEXY_CONSTEVAL auto require() const
     {
-        return _ctx_crequire<id, ErrorTag, 0>{};
+        return _ctx_counter_require<id, Value>{};
     }
-    template <int Value, typename ErrorTag>
+
+    template <typename Tag>
+    LEXY_DEPRECATED_ERROR("replace `counter.require<Tag>()` by `counter.require().error<Tag>`")
     LEXY_CONSTEVAL auto require() const
     {
-        return _ctx_crequire<id, ErrorTag, Value>{};
+        return require().template error<Tag>;
+    }
+    template <int Value, typename Tag>
+    LEXY_DEPRECATED_ERROR(
+        "replace `counter.require<Value, Tag>()` by `counter.require<Value>().error<Tag>`")
+    LEXY_CONSTEVAL auto require() const
+    {
+        return require<Value>().template error<Tag>;
     }
 };
 

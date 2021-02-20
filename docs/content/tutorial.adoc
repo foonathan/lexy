@@ -1331,7 +1331,7 @@ error: while parsing author_list
 
 However, some generic errors are a bit confusing if you haven't written the grammar.
 For example, if you write a string literal that contains a control character, you get the generic `minus failure` error message.
-Luckily, the minus rule is actually a token and every token has a `.error()` member function.
+Luckily, the minus rule is actually a token and every token has a `.error` member.
 This allows specifying the error that will be reported if the token didn't match.
 
 .`author` production with `dsl::try_`
@@ -1345,7 +1345,7 @@ struct author
     };
 
     static constexpr auto rule = [] {
-        auto cp = (dsl::code_point - dsl::ascii::control).error<invalid_character>(); <3>
+        auto cp = (dsl::code_point - dsl::ascii::control).error<invalid_character>; <3>
 
         …
     }();
@@ -1373,7 +1373,7 @@ struct config
     static constexpr auto rule = [] {
         …
 
-        return dsl::combination<duplicate_field>(name_field, version_field, authors_field) <3>
+        return dsl::combination(name_field, version_field, authors_field).error<duplicate_field> <3>
                + dsl::eof[dsl::ascii::space];
     }();
 };
@@ -1425,7 +1425,7 @@ struct name
         …
 
         return dsl::capture(lead_char + dsl::while_(trailing_char))
-               + dsl::require<invalid_character>(dsl::ascii::space); <3>
+               + dsl::require(dsl::ascii::space).error<invalid_character>; <3>
     }();
 };
 ----
@@ -1460,7 +1460,7 @@ struct version
         …
 
         return number + dot + number + dot + number
-               + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>); <3>
+               + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
     }();
 };
 ----

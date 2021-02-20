@@ -143,8 +143,7 @@ struct comment
 struct text
 {
     static constexpr auto rule = [] {
-        auto char_
-            = (dsl::code_point - dsl::lit_c<'<'> - dsl::lit_c<'&'>).error<invalid_character>();
+        auto char_ = (dsl::code_point - dsl::lit_c<'<'> - dsl::lit_c<'&'>).error<invalid_character>;
         return dsl::capture(dsl::while_one(char_));
     }();
     static constexpr auto value
@@ -172,7 +171,7 @@ struct reference
                              .case_(LEXY_LIT("apos;") >> dsl::value_c<'\''>)
                              .case_(LEXY_LIT("lt;") >> dsl::value_c<'<'>)
                              .case_(LEXY_LIT("gt;") >> dsl::value_c<'>'>)
-                             .error<unknown_entity>(); // The error when nothing matches.
+                             .error<unknown_entity>; // The error when nothing matches.
 
         return dsl::lit_c<'&'> >> reference;
     }();
@@ -201,7 +200,7 @@ struct name
         auto head_char = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
         auto tail_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
 
-        return dsl::capture(head_char.error<invalid_character>() + while_(tail_char));
+        return dsl::capture(head_char.error<invalid_character> + while_(tail_char));
     }();
 
     static constexpr auto value = lexy::as_string<std::string>;
@@ -236,7 +235,7 @@ struct element
 
         // The closing tag matches the name again and requires that it matches the one we've stored
         // earlier.
-        auto close_tag = close_tagged(name_var.require<tag_mismatch>(dsl::p<name>) + ws);
+        auto close_tag = close_tagged(name_var.require(dsl::p<name>).error<tag_mismatch> + ws);
 
         // The content of the element.
         auto content = dsl::p<comment> | dsl::p<cdata>                     //

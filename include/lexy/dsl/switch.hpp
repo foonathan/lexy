@@ -116,10 +116,13 @@ struct _switch : rule_base
     }
 
     /// Adds an error on the default case.
-    template <typename Error>
-    LEXY_CONSTEVAL auto error()
+    template <typename Tag>
+    static constexpr _switch<Rule, Cases..., _err<Tag, _any>> error = {};
+
+    LEXY_DEPRECATED_ERROR("replace `switch.error<Tag>()` by `switch.error<Tag>`")
+    constexpr _switch operator()() const
     {
-        return default_(lexyd::error<Error>(any));
+        return *this;
     }
 };
 

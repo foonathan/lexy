@@ -45,7 +45,7 @@ struct name : lexy::token_production
         auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
 
         return dsl::capture(lead_char + dsl::while_(trailing_char))
-               + dsl::require<invalid_character>(dsl::ascii::space);
+               + dsl::require(dsl::ascii::space).error<invalid_character>;
     }();
 
     // The final value of this production is a std::string we've created from the lexeme.
@@ -64,7 +64,7 @@ struct version : lexy::token_production
         auto number      = dsl::integer<int>(dsl::digits<>);
         auto dot         = dsl::period;
         auto dot_version = number + dot + number + dot + number
-                           + dsl::prevent<forbidden_build_string>(dsl::lit_c<'-'>);
+                           + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 
         auto unreleased
             = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>;
@@ -86,7 +86,7 @@ struct author
     // Match zero or more non-control code points ("characters") surrounded by quotation marks.
     // We allow `\"`, as well as `\u` and `\U` as escape sequences.
     static constexpr auto rule = [] {
-        auto cp     = (dsl::code_point - dsl::ascii::control).error<invalid_character>();
+        auto cp     = (dsl::code_point - dsl::ascii::control).error<invalid_character>;
         auto escape = dsl::backslash_escape                                //
                           .lit_c<'"'>()                                    //
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  //
@@ -127,8 +127,9 @@ struct config
         auto authors_field
             = make_field(LEXY_LIT("authors"), LEXY_MEM(authors) = dsl::p<author_list>);
 
-        return dsl::combination<duplicate_field>(name_field, version_field, authors_field)
-               + dsl::whitespace(dsl::ascii::space) + dsl::eof;
+        auto combination
+            = dsl::combination(name_field, version_field, authors_field).error<duplicate_field>;
+        return combination + dsl::whitespace(dsl::ascii::space) + dsl::eof;
     }();
 
     static constexpr auto value = lexy::as_aggregate<PackageConfig>;

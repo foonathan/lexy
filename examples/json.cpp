@@ -190,7 +190,7 @@ struct string
     };
 
     static constexpr auto rule = [] {
-        auto code_point = (dsl::code_point - dsl::ascii::control).error<invalid_char>();
+        auto code_point = (dsl::code_point - dsl::ascii::control).error<invalid_char>;
         auto escape     = dsl::backslash_escape //
                           .lit_c<'"'>()
                           .lit_c<'\\'>()

@@ -40,14 +40,14 @@ TEST_CASE("dsl::context_counter")
 
     SUBCASE("create - 0")
     {
-        static constexpr auto rule = counter.create() + counter.require<0, error>();
+        static constexpr auto rule = counter.create() + counter.require<0>().error<error>;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
     }
     SUBCASE("create - 42")
     {
-        static constexpr auto rule = counter.create<42>() + counter.require<42, error>();
+        static constexpr auto rule = counter.create<42>() + counter.require<42>().error<error>;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
@@ -56,7 +56,7 @@ TEST_CASE("dsl::context_counter")
     SUBCASE("inc")
     {
         static constexpr auto rule
-            = counter.create() + counter.inc() + counter.inc() + counter.require<2, error>();
+            = counter.create() + counter.inc() + counter.inc() + counter.require<2>().error<error>;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
@@ -64,7 +64,7 @@ TEST_CASE("dsl::context_counter")
     SUBCASE("dec")
     {
         static constexpr auto rule
-            = counter.create() + counter.dec() + counter.dec() + counter.require<-2, error>();
+            = counter.create() + counter.dec() + counter.dec() + counter.require<-2>().error<error>;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
@@ -73,7 +73,7 @@ TEST_CASE("dsl::context_counter")
     SUBCASE("push")
     {
         static constexpr auto rule
-            = counter.create() + counter.push(LEXY_LIT("abc")) + counter.require<3, error>();
+            = counter.create() + counter.push(LEXY_LIT("abc")) + counter.require<3>().error<error>;
 
         auto result = LEXY_VERIFY("abc");
         CHECK(result == 0);
@@ -81,7 +81,7 @@ TEST_CASE("dsl::context_counter")
     SUBCASE("pop")
     {
         static constexpr auto rule
-            = counter.create() + counter.pop(LEXY_LIT("abc")) + counter.require<-3, error>();
+            = counter.create() + counter.pop(LEXY_LIT("abc")) + counter.require<-3>().error<error>;
 
         auto result = LEXY_VERIFY("abc");
         CHECK(result == 0);
@@ -113,7 +113,7 @@ TEST_CASE("dsl::context_counter")
 
     SUBCASE("require failed")
     {
-        static constexpr auto rule = counter.create() + counter.require<1, error>();
+        static constexpr auto rule = counter.create() + counter.require<1>().error<error>;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == -2);

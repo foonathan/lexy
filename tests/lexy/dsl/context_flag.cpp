@@ -80,14 +80,14 @@ TEST_CASE("dsl::context_flag")
 
     SUBCASE("require - failed")
     {
-        static constexpr auto rule = flag.create() + flag.require<error>() + get;
+        static constexpr auto rule = flag.create() + flag.require().error<error> + get;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == -1);
     }
     SUBCASE("require - pass")
     {
-        static constexpr auto rule = flag.create() + flag.require<false, error>() + get;
+        static constexpr auto rule = flag.create() + flag.require<false>().error<error> + get;
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
