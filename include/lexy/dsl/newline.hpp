@@ -74,3 +74,4 @@ constexpr auto eol = _eol{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
+

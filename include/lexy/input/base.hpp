@@ -146,3 +146,4 @@ constexpr auto partial_reader(Reader reader, typename Reader::iterator end)
 } // namespace lexy
 
 #endif // LEXY_INPUT_BASE_HPP_INCLUDED
+

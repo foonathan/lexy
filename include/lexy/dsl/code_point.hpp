@@ -79,3 +79,4 @@ constexpr auto code_point = _cp{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
+

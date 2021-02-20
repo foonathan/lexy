@@ -2,6 +2,9 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#ifndef LEXY_EXT_PARSE_TREE_DUMP_HPP_INCLUDED
+#define LEXY_EXT_PARSE_TREE_DUMP_HPP_INCLUDED
+
 #include <cctype>
 #include <cstdio>
 #include <lexy/parse_tree.hpp>
@@ -86,4 +89,6 @@ void dump_parse_tree(std::FILE*                                                 
     }
 }
 } // namespace lexy_ext
+
+#endif // LEXY_EXT_PARSE_TREE_DUMP_HPP_INCLUDED
 

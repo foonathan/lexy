@@ -113,3 +113,4 @@ using string_error_context = error_context<Production, string_input<Encoding>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_STRING_INPUT_HPP_INCLUDED
+

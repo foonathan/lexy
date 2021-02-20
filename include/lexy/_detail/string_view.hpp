@@ -202,3 +202,4 @@ constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED
+

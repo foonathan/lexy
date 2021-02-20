@@ -34,3 +34,4 @@ constexpr auto eof = _eof{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_EOF_HPP_INCLUDED
+

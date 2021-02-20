@@ -215,3 +215,4 @@ inline constexpr auto character = _char{};
 } // namespace lexyd::ascii
 
 #endif // LEXY_DSL_ASCII_HPP_INCLUDED
+

@@ -53,3 +53,4 @@ range_input(Iterator begin, Sentinel end)
 } // namespace lexy
 
 #endif // LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
+

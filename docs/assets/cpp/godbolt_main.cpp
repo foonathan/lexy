@@ -16,3 +16,4 @@ int main()
 
     lexy_ext::dump_parse_tree(stdout, tree);
 }
+

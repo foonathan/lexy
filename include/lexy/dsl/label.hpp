@@ -101,3 +101,4 @@ constexpr auto id = _lab<std::integral_constant<int, Id>>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LABEL_HPP_INCLUDED
+

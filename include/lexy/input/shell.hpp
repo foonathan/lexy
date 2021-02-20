@@ -39,7 +39,7 @@ class Prompt
         /// Returns the number of characters read.
         /// If the number of characters read is less than the size,
         /// the entire line has been read or a read error occurs.
-        std::size_t operator()(char_type* buffer, std::size_t size); 
+        std::size_t operator()(char_type* buffer, std::size_t size);
 
         /// Called after the shell has finished reading.
         void done() &&;

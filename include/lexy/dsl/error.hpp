@@ -138,3 +138,4 @@ LEXY_CONSTEVAL auto prevent(Rule rule)
 } // namespace lexyd
 
 #endif // LEXY_DSL_ERROR_HPP_INCLUDED
+

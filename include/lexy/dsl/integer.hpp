@@ -361,3 +361,4 @@ constexpr auto code_point_id = integer<lexy::code_point>(n_digits<N, Base>);
 } // namespace lexyd
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
+

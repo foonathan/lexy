@@ -20,3 +20,4 @@ constexpr auto any = _any{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_ANY_HPP_INCLUDED
+

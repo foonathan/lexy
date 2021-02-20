@@ -108,3 +108,4 @@ struct _optt : rule_base
 } // namespace lexyd
 
 #endif // LEXY_DSL_OPTION_HPP_INCLUDED
+

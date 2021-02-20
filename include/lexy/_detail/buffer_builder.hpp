@@ -148,3 +148,4 @@ private:
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
+
