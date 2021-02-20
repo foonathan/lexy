@@ -31,7 +31,7 @@ constexpr auto _full_type_name()
     function.remove_suffix(suffix.length());
     return function;
 
-#elif defined(__GNUC__) && __GNUC__ > 7
+#elif defined(__GNUC__) && __GNUC__ > 8
 #    define LEXY_HAS_AUTOMATIC_TYPE_NAME 1
 
     constexpr auto prefix
