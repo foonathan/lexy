@@ -899,7 +899,7 @@ public:
     bool is_token() const noexcept;
     bool is_production() const noexcept;
 
-    auto name() const noexcept;
+    const char* name() const noexcept;
 
     friend bool operator==(node_kind lhs, node_kind rhs);
     friend bool operator!=(node_kind lhs, node_kind rhs);

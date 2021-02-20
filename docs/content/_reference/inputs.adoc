@@ -805,7 +805,7 @@ namespace lexy
 
         constexpr explicit operator bool() const noexcept;
 
-        constexpr /* see below */ name() const noexcept;
+        constexpr const char* name() const noexcept;
 
         constexpr TokenKind get() const noexcept;
 
@@ -850,20 +850,19 @@ The token kind of a rule is computed as follows:
 ----
 constexpr explicit operator bool() const noexcept; // <1>
 
-constexpr /* see below */ name() const noexcept; // <2>
+constexpr const char* name() const noexcept; // <2>
 
 constexpr TokenKind get() const noexcept; // <3>
 ----
 <1> Returns `true` if the token kind is not unknown, `false` otherwise.
-<2> Returns the name of the token kind, the return type is some unspecified type like `std::string_view`.
+<2> Returns the name of the token kind.
 <3> Returns the underlying value of the token kind.
 
 The name of a token kind is determined as follows:
 
 * If the `TokenKind` is `void`, the name is `"token"` for all token kinds.
 * Otherwise, if the `TokenKind` is unknown, the name is `"token"`.
-* Otherwise, if ADL finds an overload `string-like token_kind_name(TokenKind kind)`,
-  where `string-like` is either `const char*` or a class with `.data()` and `.size()`,
+* Otherwise, if ADL finds an overload `const char* token_kind_name(TokenKind kind)`,
   returns that as the name.
 * Otherwise, the name is `"token"` for all tokens.
 

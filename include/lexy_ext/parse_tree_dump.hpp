@@ -56,7 +56,7 @@ void dump_parse_tree(std::FILE*                                                 
         case lexy::traverse_event::enter:
             print_prefix(last_child);
             prefix_info.push_back(last_child);
-            std::fprintf(out, "%.*s:\n", int(node.kind().name().size()), node.kind().name().data());
+            std::fprintf(out, "%s:\n", node.kind().name());
             break;
 
         case lexy::traverse_event::exit:
@@ -66,8 +66,7 @@ void dump_parse_tree(std::FILE*                                                 
         case lexy::traverse_event::leaf:
             print_prefix(last_child);
 
-            std::fprintf(out, "%.*s: \"", int(node.kind().name().size()),
-                         node.kind().name().data());
+            std::fprintf(out, "%s: \"", node.kind().name());
             for (auto c : node.lexeme())
             {
                 if (c == '"')

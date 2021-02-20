@@ -34,8 +34,7 @@ public:
     {
         prefix();
 
-        auto name = kind.name();
-        _tree += doctest::String(name.data(), unsigned(name.size()));
+        _tree += doctest::String(kind.name());
 
         _tree += ": \"";
         for (auto iter = begin; iter != end; ++iter)
@@ -154,11 +153,9 @@ struct StringMaker<lexy::parse_tree<Reader, TokenKind, MemoryResource>>
         for (auto [event, node] : tree.traverse())
             switch (event)
             {
-            case lexy::traverse_event::enter: {
-                doctest::String str(node.kind().name().data(), unsigned(node.kind().name().size()));
-                builder.production(str.c_str());
+            case lexy::traverse_event::enter:
+                builder.production(node.kind().name());
                 break;
-            }
             case lexy::traverse_event::exit:
                 builder.finish();
                 break;

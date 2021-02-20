@@ -246,7 +246,7 @@ void check_kind(NodeKind kind, const char* name, bool root = false)
     CHECK(kind.is_production());
     CHECK(!kind.is_token());
 
-    CHECK(kind.name() == name);
+    CHECK(kind.name() == lexy::_detail::string_view(name));
 
     CHECK(kind == kind);
     CHECK_FALSE(kind != kind);

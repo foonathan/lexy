@@ -557,16 +557,16 @@ public:
         return _ptr.production() != nullptr;
     }
 
-    auto name() const noexcept
+    const char* name() const noexcept
     {
         if (auto prod = _ptr.production())
-            return _detail::string_view(prod->name);
+            return prod->name;
         else if (auto token = _ptr.token())
             return token_kind<TokenKind>::from_raw(token->kind).name();
         else
         {
             LEXY_ASSERT(false, "unreachable");
-            return _detail::string_view();
+            return nullptr;
         }
     }
 

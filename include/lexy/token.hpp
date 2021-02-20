@@ -109,27 +109,16 @@ public:
         return _value != UINT_LEAST16_MAX;
     }
 
-    constexpr auto name() const noexcept
+    constexpr const char* name() const noexcept
     {
         if (!*this)
-        {
             // Override unknown token name.
-            return lexy::_detail::string_view("token");
-        }
+            return "token";
         else if constexpr (lexy::_detail::is_detected<_detect_token_kind_name, TokenKind>)
-        {
-            auto result = token_kind_name(get());
-            // Return our string view type.
-            if constexpr (std::is_same_v<decltype(result), const char*>)
-                return lexy::_detail::string_view(result);
-            else
-                return lexy::_detail::string_view(result.data(), result.size());
-        }
+            return token_kind_name(get());
         else
-        {
             // We only have a generic name.
-            return lexy::_detail::string_view("token");
-        }
+            return "token";
     }
 
     constexpr TokenKind get() const noexcept
@@ -192,10 +181,10 @@ public:
         return _value != UINT_LEAST16_MAX;
     }
 
-    constexpr auto name() const noexcept
+    constexpr const char* name() const noexcept
     {
         // We only have a generic name.
-        return lexy::_detail::string_view("token");
+        return "token";
     }
 
     constexpr int get() const noexcept

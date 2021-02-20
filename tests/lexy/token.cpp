@@ -45,32 +45,32 @@ TEST_CASE("token_kind")
         lexy::token_kind<> def;
         CHECK(!def);
         CHECK(def.get() == -1);
-        CHECK(def.name() == "token");
+        CHECK(def.name() == lexy::_detail::string_view("token"));
         CHECK(def == lexy::unknown_token_kind());
 
         lexy::token_kind unknown(lexy::unknown_token_kind{});
         CHECK(!unknown);
         CHECK(unknown.get() == -1);
-        CHECK(unknown.name() == "token");
+        CHECK(unknown.name() == lexy::_detail::string_view("token"));
         CHECK(unknown == lexy::unknown_token_kind());
 
         lexy::token_kind value(0);
         CHECK(value);
         CHECK(value.get() == 0);
-        CHECK(value.name() == "token");
+        CHECK(value.name() == lexy::_detail::string_view("token"));
         CHECK(value == 0);
 
         lexy::token_kind period(lexy::dsl::period);
         CHECK(!period);
         CHECK(period.get() == -1);
-        CHECK(period.name() == "token");
+        CHECK(period.name() == lexy::_detail::string_view("token"));
         CHECK(period == lexy::unknown_token_kind());
         CHECK(period == lexy::dsl::period);
 
         lexy::token_kind manual(lexy::dsl::period.kind<42>);
         CHECK(manual);
         CHECK(manual.get() == 42);
-        CHECK(manual.name() == "token");
+        CHECK(manual.name() == lexy::_detail::string_view("token"));
         CHECK(manual == 42);
         CHECK(manual == lexy::dsl::period.kind<42>);
     }
@@ -78,31 +78,31 @@ TEST_CASE("token_kind")
     {
         lexy::token_kind<token_kind> def;
         CHECK(!def);
-        CHECK(def.name() == "token");
+        CHECK(def.name() == lexy::_detail::string_view("token"));
         CHECK(def == lexy::unknown_token_kind());
 
         lexy::token_kind<token_kind> unknown(lexy::unknown_token_kind{});
         CHECK(!unknown);
-        CHECK(unknown.name() == "token");
+        CHECK(unknown.name() == lexy::_detail::string_view("token"));
         CHECK(unknown == lexy::unknown_token_kind());
 
         lexy::token_kind value(token_kind::a);
         CHECK(value);
         CHECK(value.get() == token_kind::a);
-        CHECK(value.name() == "a");
+        CHECK(value.name() == lexy::_detail::string_view("a"));
         CHECK(value == token_kind::a);
 
         lexy::token_kind<token_kind> period(lexy::dsl::period);
         CHECK(period);
         CHECK(period.get() == token_kind::c);
-        CHECK(period.name() == "c");
+        CHECK(period.name() == lexy::_detail::string_view("c"));
         CHECK(period == token_kind::c);
         CHECK(period == lexy::dsl::period);
 
         lexy::token_kind manual(lexy::dsl::period.kind<token_kind::b>);
         CHECK(manual);
         CHECK(manual.get() == token_kind::b);
-        CHECK(manual.name() == "b");
+        CHECK(manual.name() == lexy::_detail::string_view("b"));
         CHECK(manual == token_kind::b);
         CHECK(manual == lexy::dsl::period.kind<token_kind::b>);
     }
@@ -127,21 +127,21 @@ TEST_CASE("token")
     {
         lexy::token zero(0, lexeme);
         CHECK(zero.kind() == 0);
-        CHECK(zero.name() == "token");
+        CHECK(zero.name() == lexy::_detail::string_view("token"));
         CHECK(zero.position() == input.begin());
         CHECK(zero.lexeme().begin() == input.begin());
         CHECK(zero.lexeme().size() == 3);
 
         lexy::token_for<decltype(input)> unknown(lexy::unknown_token_kind(), lexeme);
         CHECK(unknown.kind() == lexy::unknown_token_kind());
-        CHECK(unknown.name() == "token");
+        CHECK(unknown.name() == lexy::_detail::string_view("token"));
         CHECK(unknown.position() == input.begin());
         CHECK(unknown.lexeme().begin() == input.begin());
         CHECK(unknown.lexeme().size() == 3);
 
         lexy::token_for<decltype(input)> period(lexy::dsl::period, lexeme);
         CHECK(period.kind() == lexy::unknown_token_kind());
-        CHECK(period.name() == "token");
+        CHECK(period.name() == lexy::_detail::string_view("token"));
         CHECK(period.position() == input.begin());
         CHECK(period.lexeme().begin() == input.begin());
         CHECK(period.lexeme().size() == 3);
@@ -150,21 +150,21 @@ TEST_CASE("token")
     {
         lexy::token b(token_kind::b, lexeme);
         CHECK(b.kind() == token_kind::b);
-        CHECK(b.name() == "b");
+        CHECK(b.name() == lexy::_detail::string_view("b"));
         CHECK(b.position() == input.begin());
         CHECK(b.lexeme().begin() == input.begin());
         CHECK(b.lexeme().size() == 3);
 
         lexy::token_for<decltype(input), token_kind> unknown(lexy::unknown_token_kind(), lexeme);
         CHECK(unknown.kind() == lexy::unknown_token_kind());
-        CHECK(unknown.name() == "token");
+        CHECK(unknown.name() == lexy::_detail::string_view("token"));
         CHECK(unknown.position() == input.begin());
         CHECK(unknown.lexeme().begin() == input.begin());
         CHECK(unknown.lexeme().size() == 3);
 
         lexy::token_for<decltype(input), token_kind> period(lexy::dsl::period, lexeme);
         CHECK(period.kind() == token_kind::c);
-        CHECK(period.name() == "c");
+        CHECK(period.name() == lexy::_detail::string_view("c"));
         CHECK(period.position() == input.begin());
         CHECK(period.lexeme().begin() == input.begin());
         CHECK(period.lexeme().size() == 3);
