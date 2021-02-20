@@ -750,45 +750,6 @@ This can be overridden by defining `Production::name()` or `Production::name`.
 
 The `position()` of the error context is the input position where the production started parsing.
 
-==== Error location
-
-.`lexy/error_location.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-    template <typename Reader>
-    struct error_location
-    {
-        std::size_t line, column;
-        lexeme<Reader> context;
-    };
-
-    template <typename Input>
-    using error_location_for = error_location<input_reader<Input>>;
-
-    template <typename Input, typename TokenCP, typename TokenNL>
-    constexpr auto make_error_location(const Input& input,
-                                       typename input_reader<Input>::iterator pos,
-                                       TokenCP code_point_token,
-                                       TokenNL newline_token)
-        -> error_location_for<Input>;
-}
-----
-
-The header `lexy/error_location.hpp` provides a utility function `lexy::make_error_location()` to convert an error position,
-which is always given via an iterator, into the traditional line/column format.
-
-The function takes the position into the input, as well as two tokens.
-It then determines the line and column by repeatedly parsing the two tokens until the error position is reached.
-Every time the `code_point_token` matches, the column is increased by one.
-Every time the `newline_token` matches, the column is reset to one and the line increased by one.
-If neither token matches, column is increased by one and the next code unit skipped.
-The final line and column number are returned, together with the `context` which is a lexeme containing the entire line where the error occurred.
-
-For ASCII encoded texts, the `code_point_token` is `lexy::dsl::ascii::character` and the `newline_token` is `lexy::dsl::newline`.
-For Unicode encoded texts, the `code_point_token` is `lexy::dsl::code_point` and the `newline_token` is `lexy::dsl::newline`.
-
 === Parse Tree
 
 .`lexy/parse_tree.hpp`

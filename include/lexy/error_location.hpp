@@ -9,6 +9,10 @@
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
+#ifndef LEXY_IGNORE_DEPRECATED_ERROR_LOCATION
+#    warning "lexy::make_error_location() has been replaced by lexy_ext::find_input_location()"
+#endif
+
 namespace lexy
 {
 template <typename Reader>

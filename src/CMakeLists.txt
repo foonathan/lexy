@@ -92,7 +92,6 @@ set(header_files
         ${include_dir}/dsl.hpp
         ${include_dir}/encoding.hpp
         ${include_dir}/error.hpp
-        ${include_dir}/error_location.hpp
         ${include_dir}/lexeme.hpp
         ${include_dir}/match.hpp
         ${include_dir}/parse.hpp

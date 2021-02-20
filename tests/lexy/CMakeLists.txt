@@ -86,7 +86,6 @@ set(tests
         callback.cpp
         encoding.cpp
         error.cpp
-        error_location.cpp
         lexeme.cpp
         match.cpp
         parse.cpp

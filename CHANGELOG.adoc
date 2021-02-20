@@ -5,8 +5,9 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-02-20
 
-Replaced use of `lexy::_detail::string_view` by `const char*` in all user facing functions.
-As a consequence, automatic type name now requires GCC > 8.
+* Replaced use of `lexy::_detail::string_view` by `const char*` in all user facing functions.
+  As a consequence, automatic type name now requires GCC > 8.
+* Removed `lexy::make_error_location()`. It has been replaced by `lexy_ext::find_input_location()`.
 
 == 2021-02-17
 
