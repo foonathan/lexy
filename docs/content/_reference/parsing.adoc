@@ -666,7 +666,6 @@ template <typename Reader>
 class error<Reader, expected_literal>
 {
     using iterator    = typename Reader::iterator;
-    using string_view = /* see below */;
 
 public:
     constexpr explicit error(iterator position,
@@ -674,8 +673,8 @@ public:
 
     constexpr iterator position() const noexcept;
 
-    constexpr string_view string() const noexcept;
-    constexpr string_view::char_type character() const noexcept;
+    constexpr auto string() const noexcept -> const typename Reader::char_type*;
+    constexpr auto character() const noexcept -> typename Reader::char_type;
 
     constexpr std::size_t index() const noexcept;
 };
@@ -688,9 +687,6 @@ It is mainly raised by the `lexy::dsl::lit` rule.
 The error happens at a given `position()` and with a given `string()`.
 The `index()` is the index into the string where matching failed; e.g. `0` if the input starts with a different character, `2` if the first two characters matched, etc.
 The `character()` is the string character at that index.
-
-The unspecified `string_view` type is like `std::string_view`.
-Its character type must match the encoding of the `Reader`.
 
 ===== Character class error
 
@@ -862,7 +858,7 @@ Traversing the tree and concatenating the lexemes of all tokens will result in t
 
 ==== Manual Tree Building
 
-[source,cpp] 
+[source,cpp]
 ----
 template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::builder

@@ -24,7 +24,7 @@ TEST_CASE("dsl::operator>>")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "a");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("a"));
             return -1;
         }
     };

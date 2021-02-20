@@ -28,11 +28,11 @@ TEST_CASE("dsl::operator+")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            if (e.string() == "a")
+            if (e.character() == 'a')
                 return -1;
-            else if (e.string() == "b")
+            else if (e.character() == 'b')
                 return -2;
-            else if (e.string() == "c")
+            else if (e.character() == 'c')
                 return -3;
             else
                 return -4;

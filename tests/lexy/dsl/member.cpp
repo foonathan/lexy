@@ -31,7 +31,7 @@ struct member_macro_callback
 
     LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
     {
-        LEXY_VERIFY_CHECK(e.string() == "abc");
+        LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
         return -1;
     }
 };

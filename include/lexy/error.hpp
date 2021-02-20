@@ -57,9 +57,8 @@ class error<Reader, expected_literal>
     static_assert(is_canonical_reader<Reader>);
 
 public:
-    constexpr explicit error(typename Reader::iterator                              pos,
-                             _detail::basic_string_view<typename Reader::char_type> str,
-                             std::size_t                                            index) noexcept
+    constexpr explicit error(typename Reader::iterator pos, const typename Reader::char_type* str,
+                             std::size_t index) noexcept
     : _pos(pos), _str(str), _idx(index)
     {}
 
@@ -68,7 +67,7 @@ public:
         return _pos;
     }
 
-    constexpr auto string() const noexcept
+    constexpr auto string() const noexcept -> const typename Reader::char_type*
     {
         return _str;
     }
@@ -84,9 +83,9 @@ public:
     }
 
 private:
-    typename Reader::iterator                              _pos;
-    _detail::basic_string_view<typename Reader::char_type> _str;
-    std::size_t                                            _idx;
+    typename Reader::iterator         _pos;
+    const typename Reader::char_type* _str;
+    std::size_t                       _idx;
 };
 
 /// Expected a character of the specified character class.

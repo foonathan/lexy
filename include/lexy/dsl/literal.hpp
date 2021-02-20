@@ -29,7 +29,7 @@ struct _lit : token_base<_lit<String>>
         constexpr auto string  = String::template get<reader_char_type>();
 
         auto err
-            = lexy::make_error<Reader, lexy::expected_literal>(pos, string,
+            = lexy::make_error<Reader, lexy::expected_literal>(pos, string.c_str(),
                                                                token_engine::index_from_error(ec));
         return LEXY_MOV(context).error(err);
     }

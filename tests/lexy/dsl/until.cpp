@@ -25,7 +25,7 @@ TEST_CASE("dsl::until()")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
             LEXY_VERIFY_CHECK(e.position() == lexy::_detail::string_view(str).end());
-            LEXY_VERIFY_CHECK(e.string() == "!");
+            LEXY_VERIFY_CHECK(e.character() == '!');
             return -1;
         }
     };

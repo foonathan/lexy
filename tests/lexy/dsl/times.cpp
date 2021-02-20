@@ -28,7 +28,7 @@ TEST_CASE("times")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                LEXY_VERIFY_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
                 return -1;
             }
         };
@@ -61,9 +61,9 @@ TEST_CASE("times")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                if (e.string() == "abc")
+                if (e.string() == lexy::_detail::string_view("abc"))
                     return -1;
-                else if (e.string() == ",")
+                else if (e.character() == ',')
                     return -2;
                 else
                     LEXY_VERIFY_CHECK(false);
@@ -111,9 +111,9 @@ TEST_CASE("times")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                if (e.string() == "abc")
+                if (e.string() == lexy::_detail::string_view("abc"))
                     return -1;
-                else if (e.string() == ",")
+                else if (e.character() == ',')
                     return -2;
                 else
                     LEXY_VERIFY_CHECK(false);

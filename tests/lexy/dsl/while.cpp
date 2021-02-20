@@ -54,7 +54,7 @@ TEST_CASE("dsl::while_()")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                LEXY_VERIFY_CHECK(e.string() == "bc");
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("bc"));
                 return -1;
             }
         };
@@ -94,7 +94,7 @@ TEST_CASE("dsl::while_one()")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "abc");
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
                 return -1;
             }
         };

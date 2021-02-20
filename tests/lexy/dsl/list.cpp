@@ -50,12 +50,12 @@ TEST_CASE("dsl::list()")
         {
             if (e.position() == str)
             {
-                LEXY_VERIFY_CHECK(e.string() == "ab");
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("ab"));
                 return -1;
             }
             else
             {
-                LEXY_VERIFY_CHECK(e.string() == "c");
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("c"));
                 return -2;
             }
         }
@@ -120,7 +120,7 @@ TEST_CASE("dsl::list() sep")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
     };
@@ -188,7 +188,7 @@ TEST_CASE("dsl::list() sep capture")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
     };
@@ -255,7 +255,7 @@ TEST_CASE("dsl::list() trailing_sep")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
     };
@@ -324,7 +324,7 @@ TEST_CASE("dsl::list() trailing_sep capture")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
     };
@@ -439,7 +439,7 @@ TEST_CASE("dsl::opt_list() sep")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             return -1;
         }
     };

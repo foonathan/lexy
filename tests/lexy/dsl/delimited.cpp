@@ -60,7 +60,7 @@ TEST_CASE("dsl::delimited()")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                LEXY_VERIFY_CHECK(e.string() == "(");
+                LEXY_VERIFY_CHECK(e.character() == '(');
                 LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
@@ -143,7 +143,7 @@ TEST_CASE("dsl::delimited()")
 
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
-                LEXY_VERIFY_CHECK(e.string() == "(");
+                LEXY_VERIFY_CHECK(e.character() == '(');
                 LEXY_VERIFY_CHECK(e.position() == str);
                 return -1;
             }
@@ -241,7 +241,7 @@ TEST_CASE("dsl::delimited with escape")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "(");
+            LEXY_VERIFY_CHECK(e.character() == '(');
             LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
@@ -309,7 +309,7 @@ TEST_CASE("dsl::escape")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
@@ -347,7 +347,7 @@ TEST_CASE("dsl::escape")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
         };
@@ -381,7 +381,7 @@ TEST_CASE("dsl::escape")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
@@ -422,7 +422,7 @@ TEST_CASE("dsl::escape")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
@@ -460,7 +460,7 @@ TEST_CASE("dsl::escape")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == "$");
+                LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)

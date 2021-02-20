@@ -29,7 +29,7 @@ TEST_CASE("dsl::lit")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == "abc");
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
             LEXY_VERIFY_CHECK(e.string()[e.index()] == e.character());
             return -int(e.index()) - 1;
         }

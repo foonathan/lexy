@@ -44,7 +44,7 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == "prod_a");
                 CHECK(*error.position() == ')');
-                CHECK(error.string() == "abc");
+                CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
 
             auto result
@@ -56,7 +56,7 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == "prod_a");
                 CHECK(*error.position() == 'a');
-                CHECK(error.string() == "abc");
+                CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
 
             auto result
@@ -68,7 +68,7 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == "prod_b");
                 CHECK(*error.position() == ']');
-                CHECK(error.string() == ")");
+                CHECK(error.character() == ')');
             };
 
             auto result
@@ -80,15 +80,15 @@ TEST_CASE("validate")
     {
         constexpr auto prod_a_error = [](lexy::string_error_context<prod_a>,
                                          lexy::string_error<lexy::expected_literal> error) {
-            if (error.string() != "abc")
+            if (error.string() != lexy::_detail::string_view("abc"))
                 throw 0;
             return -1;
         };
         constexpr auto prod_b_error = [](lexy::string_error_context<prod_b>,
                                          lexy::string_error<lexy::expected_literal> error) {
-            if (error.string() == "(")
+            if (error.character() == '(')
                 return -2;
-            else if (error.string() == ")")
+            else if (error.character() == ')')
                 return -3;
             else
                 return -4;

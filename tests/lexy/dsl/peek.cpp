@@ -52,7 +52,7 @@ TEST_CASE("dsl::peek_not()")
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            LEXY_VERIFY_CHECK(e.string() == "a");
+            LEXY_VERIFY_CHECK(e.character() == 'a');
             LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
