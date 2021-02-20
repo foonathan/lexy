@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/detect.hpp>
+#include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/_detail/string_view.hpp>
 
 namespace lexy::_detail
@@ -17,11 +18,12 @@ template <typename T>
 using _detect_name_v = decltype(T::name);
 
 template <typename T>
-constexpr auto _type_name_impl()
+constexpr auto _full_type_name()
 {
 #if defined(__clang__)
+#    define LEXY_HAS_AUTOMATIC_TYPE_NAME 1
 
-    constexpr auto prefix = string_view("auto lexy::_detail::_type_name_impl() [T = ");
+    constexpr auto prefix = string_view("auto lexy::_detail::_full_type_name() [T = ");
     constexpr auto suffix = string_view("]");
 
     auto function = string_view(__PRETTY_FUNCTION__);
@@ -29,10 +31,11 @@ constexpr auto _type_name_impl()
     function.remove_suffix(suffix.length());
     return function;
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && __GNUC__ > 7
+#    define LEXY_HAS_AUTOMATIC_TYPE_NAME 1
 
     constexpr auto prefix
-        = string_view("constexpr auto lexy::_detail::_type_name_impl() [with T = ");
+        = string_view("constexpr auto lexy::_detail::_full_type_name() [with T = ");
     constexpr auto suffix = string_view("]");
 
     auto function = string_view(__PRETTY_FUNCTION__);
@@ -41,8 +44,9 @@ constexpr auto _type_name_impl()
     return function;
 
 #elif defined(_MSC_VER)
+#    define LEXY_HAS_AUTOMATIC_TYPE_NAME 1
 
-    constexpr auto prefix = string_view("auto __cdecl lexy::_detail::_type_name_impl<");
+    constexpr auto prefix = string_view("auto __cdecl lexy::_detail::_full_type_name<");
     constexpr auto suffix = string_view(">(void)");
 
     auto function = string_view(__FUNCSIG__);
@@ -57,36 +61,39 @@ constexpr auto _type_name_impl()
     return function;
 
 #else
+#    define LEXY_HAS_AUTOMATIC_TYPE_NAME 0
 
-    static_assert(_detail::error<T>,
-                  "require T::name() or T::name on this compiler to get the name of a type");
-    return "";
+    return string_view("unknown-type");
 
 #endif
 }
 
-template <typename T>
-LEXY_CONSTEVAL string_view type_name(int namespace_count = 1)
+template <typename T, int NsCount>
+LEXY_CONSTEVAL string_view _type_name()
+{
+    auto name = _full_type_name<T>();
+    LEXY_ASSERT(name.find('<') == string_view::npos || NsCount == 0,
+                "cannot strip namespaces from template instantiations");
+
+    for (auto namespace_count = NsCount; namespace_count > 0; --namespace_count)
+    {
+        auto pos = name.find("::");
+        if (pos == string_view::npos)
+            break;
+        name.remove_prefix(pos + 2);
+    }
+    return name;
+}
+
+template <typename T, int NsCount = 1>
+LEXY_CONSTEVAL const char* type_name()
 {
     if constexpr (_detail::is_detected<_detect_name_f, T>)
-        return string_view(T::name());
+        return T::name();
     else if constexpr (_detail::is_detected<_detect_name_v, T>)
-        return string_view(T::name);
+        return T::name;
     else
-    {
-        auto name = _type_name_impl<T>();
-        LEXY_ASSERT(name.find('<') == string_view::npos || namespace_count == 0,
-                    "cannot strip namespaces from template instantiations");
-
-        for (; namespace_count > 0; --namespace_count)
-        {
-            auto pos = name.find("::");
-            if (pos == string_view::npos)
-                break;
-            name.remove_prefix(pos + 2);
-        }
-        return name;
-    }
+        return make_cstr<_type_name<T, NsCount>>;
 }
 } // namespace lexy::_detail
 

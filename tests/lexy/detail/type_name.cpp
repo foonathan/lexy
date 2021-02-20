@@ -39,27 +39,37 @@ TEST_CASE("_detail::type_name")
                 return "some type";
             }
         };
-        CHECK(lexy::_detail::type_name<type>() == "some type");
+        CHECK(lexy::_detail::type_name<type>() == lexy::_detail::string_view("some type"));
     }
     SUBCASE("variable")
     {
-        CHECK(lexy::_detail::type_name<test_type>() == "some type");
+        CHECK(lexy::_detail::type_name<test_type>() == lexy::_detail::string_view("some type"));
     }
-    SUBCASE("default")
+#if LEXY_HAS_AUTOMATIC_TYPE_NAME
+    SUBCASE("automatic")
     {
-        CHECK(lexy::_detail::type_name<int>(0) == "int");
+        CHECK(lexy::_detail::type_name<int, 0>() == lexy::_detail::string_view("int"));
 
-        CHECK(lexy::_detail::type_name<ns::test_type>(0) == "ns::test_type");
-        CHECK(lexy::_detail::type_name<ns::test_class>(0) == "ns::test_class");
-        CHECK(lexy::_detail::type_name<ns::inner::test_type>(0) == "ns::inner::test_type");
+        CHECK(lexy::_detail::type_name<ns::test_type, 0>()
+              == lexy::_detail::string_view("ns::test_type"));
+        CHECK(lexy::_detail::type_name<ns::test_class, 0>()
+              == lexy::_detail::string_view("ns::test_class"));
+        CHECK(lexy::_detail::type_name<ns::inner::test_type, 0>()
+              == lexy::_detail::string_view("ns::inner::test_type"));
 
-        CHECK(lexy::_detail::type_name<ns::test_type>() == "test_type");
-        CHECK(lexy::_detail::type_name<ns::test_class>() == "test_class");
-        CHECK(lexy::_detail::type_name<ns::inner::test_type>() == "inner::test_type");
+        CHECK(lexy::_detail::type_name<ns::test_type>() == lexy::_detail::string_view("test_type"));
+        CHECK(lexy::_detail::type_name<ns::test_class>()
+              == lexy::_detail::string_view("test_class"));
+        CHECK(lexy::_detail::type_name<ns::inner::test_type>()
+              == lexy::_detail::string_view("inner::test_type"));
 
-        CHECK(lexy::_detail::type_name<ns::test_type>(2) == "test_type");
-        CHECK(lexy::_detail::type_name<ns::test_class>(2) == "test_class");
-        CHECK(lexy::_detail::type_name<ns::inner::test_type>(2) == "test_type");
+        CHECK(lexy::_detail::type_name<ns::test_type, 2>()
+              == lexy::_detail::string_view("test_type"));
+        CHECK(lexy::_detail::type_name<ns::test_class, 2>()
+              == lexy::_detail::string_view("test_class"));
+        CHECK(lexy::_detail::type_name<ns::inner::test_type, 2>()
+              == lexy::_detail::string_view("test_type"));
     }
+#endif
 }
 

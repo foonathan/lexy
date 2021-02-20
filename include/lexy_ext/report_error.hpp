@@ -84,7 +84,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
     // Print the main error headline.
     auto prod_name = context.production();
     std::fflush(stdout);
-    std::fprintf(stderr, "error: while parsing %.*s\n", int(prod_name.size()), prod_name.data());
+    std::fprintf(stderr, "error: while parsing %s\n", prod_name);
 
     if (location.line != context_location.line)
     {

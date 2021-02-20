@@ -149,7 +149,7 @@ public:
     }
 
     // The name of the production where the error occurred.
-    static LEXY_CONSTEVAL auto production()
+    static LEXY_CONSTEVAL const char* production()
     {
         return production_name<Production>();
     }

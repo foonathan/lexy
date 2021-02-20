@@ -21,11 +21,11 @@ public:
         _tree += "\n";
     }
 
-    parse_tree_desc(lexy::_detail::string_view root_name) : parse_tree_desc()
+    parse_tree_desc(const char* root_name) : parse_tree_desc()
     {
         production(root_name);
     }
-    template <typename RootProduction>
+    template <typename RootProduction, typename = lexy::production_rule<RootProduction>>
     parse_tree_desc(RootProduction) : parse_tree_desc(lexy::production_name<RootProduction>())
     {}
 
@@ -76,17 +76,17 @@ public:
         return token(lexy::unknown_token_kind{}, spelling);
     }
 
-    parse_tree_desc& production(lexy::_detail::string_view name)
+    parse_tree_desc& production(const char* name)
     {
         prefix();
-        _tree += doctest::String(name.data(), unsigned(name.size()));
+        _tree += doctest::String(name);
         _tree += ":\n";
 
         ++_level;
 
         return *this;
     }
-    template <typename Production>
+    template <typename Production, typename = lexy::production_rule<Production>>
     parse_tree_desc& production(Production)
     {
         return production(lexy::production_name<Production>());
@@ -154,9 +154,11 @@ struct StringMaker<lexy::parse_tree<Reader, TokenKind, MemoryResource>>
         for (auto [event, node] : tree.traverse())
             switch (event)
             {
-            case lexy::traverse_event::enter:
-                builder.production(node.kind().name());
+            case lexy::traverse_event::enter: {
+                doctest::String str(node.kind().name().data(), unsigned(node.kind().name().size()));
+                builder.production(str.c_str());
                 break;
+            }
             case lexy::traverse_event::exit:
                 builder.finish();
                 break;

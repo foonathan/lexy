@@ -16,10 +16,12 @@ namespace
 {
 struct prod_a
 {
+    static constexpr auto name = "prod_a";
     static constexpr auto rule = list(LEXY_LIT("abc"));
 };
 struct prod_b
 {
+    static constexpr auto name = "prod_b";
     static constexpr auto rule = LEXY_LIT("(") + capture(lexy::dsl::p<prod_a>) + LEXY_LIT(")");
 };
 } // namespace
@@ -42,7 +44,7 @@ TEST_CASE("validate")
         SUBCASE("missing abc")
         {
             constexpr auto callback = [](auto ctx, auto error) {
-                CHECK(ctx.production() == "prod_a");
+                CHECK(ctx.production() == lexy::_detail::string_view("prod_a"));
                 CHECK(*error.position() == ')');
                 CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
@@ -54,7 +56,7 @@ TEST_CASE("validate")
         SUBCASE("invalid abc")
         {
             constexpr auto callback = [](auto ctx, auto error) {
-                CHECK(ctx.production() == "prod_a");
+                CHECK(ctx.production() == lexy::_detail::string_view("prod_a"));
                 CHECK(*error.position() == 'a');
                 CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
@@ -66,7 +68,7 @@ TEST_CASE("validate")
         SUBCASE("missing )")
         {
             constexpr auto callback = [](auto ctx, auto error) {
-                CHECK(ctx.production() == "prod_b");
+                CHECK(ctx.production() == lexy::_detail::string_view("prod_b"));
                 CHECK(*error.position() == ']');
                 CHECK(error.character() == ')');
             };

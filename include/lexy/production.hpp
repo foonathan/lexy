@@ -45,7 +45,7 @@ constexpr bool is_transparent_production = std::is_base_of_v<transparent_product
 namespace lexy
 {
 template <typename Production>
-LEXY_CONSTEVAL auto production_name()
+LEXY_CONSTEVAL const char* production_name()
 {
     return _detail::type_name<Production>();
 }

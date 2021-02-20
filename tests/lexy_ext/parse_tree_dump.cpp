@@ -34,9 +34,13 @@ const char* token_kind_name(token_kind k)
 }
 
 struct child_p
-{};
+{
+    static constexpr auto name = "child_p";
+};
 struct root_p
-{};
+{
+    static constexpr auto name = "root_p";
+};
 
 constexpr auto test_file_name = "lexy-dump_parse_tree.test.delete-me";
 } // namespace

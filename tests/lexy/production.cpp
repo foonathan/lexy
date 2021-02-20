@@ -15,6 +15,7 @@ namespace
 {
 struct prod
 {
+    static constexpr auto name  = "prod";
     static constexpr auto rule  = lexy::dsl::any;
     static constexpr auto value = lexy::noop;
 };
@@ -22,7 +23,7 @@ struct prod
 
 TEST_CASE("production traits simple")
 {
-    CHECK(lexy::production_name<prod>() == "prod");
+    CHECK(lexy::production_name<prod>() == lexy::_detail::string_view("prod"));
 
     CHECK(std::is_same_v<const lexy::production_rule<prod>, decltype(lexy::dsl::any)>);
     CHECK(std::is_same_v<const lexy::production_value<prod>::type, decltype(lexy::noop)>);

@@ -29,3 +29,18 @@ TEST_CASE("string_view")
     REQUIRE(!str.starts_with("abcdef"));
 }
 
+namespace
+{
+constexpr auto fn()
+{
+    lexy::_detail::string_view str = "abc";
+    return str.substr(0, 2);
+}
+} // namespace
+
+TEST_CASE("make_cstr")
+{
+    constexpr auto str = lexy::_detail::make_cstr<+fn>;
+    REQUIRE(str == lexy::_detail::string_view("ab"));
+}
+

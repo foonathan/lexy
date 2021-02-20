@@ -160,12 +160,9 @@ struct pt_node_token : pt_node<Reader>
 template <typename Reader>
 struct pt_node_production : pt_node<Reader>
 {
-    static constexpr std::size_t name_length_bits = 8;
-    static constexpr std::size_t child_count_bits
-        = sizeof(std::size_t) * CHAR_BIT - name_length_bits - 2;
+    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 2;
 
     const char* name;
-    std::size_t name_length : name_length_bits;
     std::size_t child_count : child_count_bits;
     std::size_t first_child_adjacent : 1;
     std::size_t first_child_type : 1;
@@ -176,11 +173,7 @@ struct pt_node_production : pt_node<Reader>
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
 
-        auto p_name = lexy::production_name<Production>();
-        LEXY_ASSERT(p_name.length() < (1 << name_length_bits), "production name too long");
-
-        name        = p_name.data();
-        name_length = static_cast<unsigned char>(p_name.size());
+        name = lexy::production_name<Production>();
     }
 
     pt_node_ptr<Reader> first_child()
@@ -567,7 +560,7 @@ public:
     auto name() const noexcept
     {
         if (auto prod = _ptr.production())
-            return _detail::string_view(prod->name, prod->name_length);
+            return _detail::string_view(prod->name);
         else if (auto token = _ptr.token())
             return token_kind<TokenKind>::from_raw(token->kind).name();
         else
@@ -621,7 +614,7 @@ public:
         // This only fails if we have different productions with the same name and the compiler does
         // string interning. But as the production name corresponds to the qualified C++ name (by
         // default), this is only possible if the user does something weird.
-        return nk.is_production() && nk._ptr.production()->name == name.data();
+        return nk.is_production() && nk._ptr.production()->name == name;
     }
     template <typename Production, typename = lexy::production_rule<Production>>
     friend bool operator==(Production p, node_kind nk)

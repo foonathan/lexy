@@ -43,12 +43,14 @@ const char* token_kind_name(token_kind k)
 
 struct child_p
 {
+    static constexpr auto name = "child_p";
     static constexpr auto rule = lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>)
                                  | lexy::dsl::quoted(lexy::dsl::ascii::character);
 };
 
 struct root_p
 {
+    static constexpr auto name       = "root_p";
     static constexpr auto whitespace = lexy::dsl::ascii::space;
 
     static constexpr auto rule = [] {

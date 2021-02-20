@@ -734,7 +734,7 @@ namespace lexy
 
         constexpr const Input& input() const noexcept;
 
-        static consteval /* see below */ production();
+        static consteval const char* production();
 
         constexpr iterator position() const noexcept;
     };
@@ -748,7 +748,6 @@ The entire input containing the error is returned by `input()`.
 The `Production` whose rule has raised the error is specified as template parameter and its name returned by `production()`.
 Like `lexy::error<Reader, Tag>::message()`, it returns the name of the type without the top level namespace name.
 This can be overridden by defining `Production::name()` or `Production::name`.
-The result is an unspecified type similar to `std::string_view`.
 
 The `position()` of the error context is the input position where the production started parsing.
 

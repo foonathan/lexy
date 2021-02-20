@@ -10,12 +10,17 @@
 TEST_CASE("error_context")
 {
     struct production
-    {};
+    {
+        static LEXY_CONSTEVAL auto name()
+        {
+            return "production";
+        }
+    };
 
     auto input   = lexy::zstring_input("abc");
     auto context = lexy::error_context(production{}, input, input.begin());
     CHECK(&context.input() == &input);
-    CHECK(context.production() == "production");
+    CHECK(context.production() == lexy::_detail::string_view("production"));
     CHECK(context.position() == input.begin());
 }
 

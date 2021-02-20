@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/integer_sequence.hpp>
 
 namespace lexy::_detail
 {
@@ -182,6 +183,22 @@ private:
     bool         _null_terminated;
 };
 using string_view = basic_string_view<char>;
+} // namespace lexy::_detail
+
+namespace lexy::_detail
+{
+template <auto FnPtr, typename Indices = make_index_sequence<FnPtr().size()>>
+struct _string_view_holder;
+template <auto FnPtr, std::size_t... Indices>
+struct _string_view_holder<FnPtr, index_sequence<Indices...>>
+{
+    static constexpr auto view = FnPtr();
+
+    static constexpr typename decltype(view)::char_type value[] = {view[Indices]..., {}};
+};
+
+template <auto FnPtr>
+constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED
