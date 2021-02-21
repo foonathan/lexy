@@ -674,7 +674,7 @@ Some error messages are given.</p></div><div class=listingblock><div class=title
  3:12| authors = [Jonathan Müller]
      |            ^ expected &#39;&#34;&#39;</pre></div></div></div><div class=sect2><h3 id=_specifying_custom_error_tags>Specifying custom error tags</h3><div class=paragraph><p>However, some generic errors are a bit confusing if you haven’t written the grammar.
 For example, if you write a string literal that contains a control character, you get the generic <code>minus failure</code> error message.
-Luckily, the minus rule is actually a token and every token has a <code>.error()</code> member function.
+Luckily, the minus rule is actually a token and every token has a <code>.error</code> member.
 This allows specifying the error that will be reported if the token didn’t match.</p></div><div class=listingblock><div class=title><code>author</code> production with <code>dsl::try_</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
 <span class=p>{</span>
     <span class=k>struct</span> <span class=nc>invalid_character</span> <b class=conum>(1)</b>
@@ -683,15 +683,20 @@ This allows specifying the error that will be reported if the token didn’t mat
     <span class=p>};</span>
 
     <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
-        <span class=k>auto</span> <span class=n>cp</span> <span class=o>=</span> <span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>).</span><span class=n>error</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>();</span> <b class=conum>(3)</b>
+        <span class=k>auto</span> <span class=n>cp</span> <span class=o>=</span> <span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>).</span><span class=n>error</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(3)</b>
 
         <span class=err>…</span>
     <span class=p>}();</span>
 
     <span class=err>…</span>
 <span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>The tag that will be associated with the error.</p></li><li><p>We override the default message (which would be <code>author::invalid_character</code>) to the more friendly <code>invalid string character</code>.</p></li><li><p>We specify that on token failure, we want a generic error with the given tag.</p></li></ol></div><div class=paragraph><p>Likewise, if we specify the same field twice we get the generic <code>combination duplicate</code> error message.
-This can be improved by specifying a custom tag in our <code>dsl::combination()</code> call.</p></div><div class=listingblock><div class=title><code>config</code> production with tagged <code>dsl::combination()</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
+Additionally, if we add an unknown field we get the generic <code>exhausted_choice</code> error.
+Both issues can be improved by specifying custom tags in our <code>dsl::combination()</code> call.</p></div><div class=listingblock><div class=title><code>config</code> production with tagged <code>dsl::combination()</code></div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>config</span>
 <span class=p>{</span>
+    <span class=k>struct</span> <span class=nc>unknown_field</span> <b class=conum>(1)</b>
+    <span class=p>{</span>
+        <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;unknown config field&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
+    <span class=p>};</span>
     <span class=k>struct</span> <span class=nc>duplicate_field</span> <b class=conum>(1)</b>
     <span class=p>{</span>
         <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>name</span> <span class=o>=</span> <span class=s>&#34;duplicate config field&#34;</span><span class=p>;</span> <b class=conum>(2)</b>
@@ -700,10 +705,12 @@ This can be improved by specifying a custom tag in our <code>dsl::combination()<
     <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
         <span class=err>…</span>
 
-        <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=o>&lt;</span><span class=n>duplicate_field</span><span class=o>&gt;</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>)</span> <b class=conum>(3)</b>
-               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>eof</span><span class=p>[</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>];</span>
+        <span class=k>auto</span> <span class=n>combination</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>combination</span><span class=p>(</span><span class=n>name_field</span><span class=p>,</span> <span class=n>version_field</span><span class=p>,</span> <span class=n>authors_field</span><span class=p>)</span>
+                               <span class=p>.</span><span class=n>missing_error</span><span class=o>&lt;</span><span class=n>unknown_field</span><span class=o>&gt;</span><span class=p>.</span><span class=n>duplicate_error</span><span class=o>&lt;</span><span class=n>duplicate_field</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(3)</b>
+        <span class=k>return</span> <span class=n>combination</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespace</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>)</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>eof</span><span class=p>;</span>
     <span class=p>}();</span>
-<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define the tag.</p></li><li><p>Override the default message (<code>config::duplicate_field</code> would actually be ok).</p></li><li><p>Specify the error on failure.</p></li></ol></div><div class=paragraph><p>Now an invalid string character is reported as <code>invalid string character</code> and a duplicated config field as <code>duplicate config field</code>:</p></div><div class=listingblock><div class=title>Missing closing string delimiter</div><div class=content><pre>error: while parsing author
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define the tags.</p></li><li><p>Override the default message, which is the type name.</p></li><li><p>Specify the error on failure.
+The missing error is the one triggered when no field condition matched, the duplicate one if we had a field twice.</p></li></ol></div><div class=paragraph><p>Now an invalid string character is reported as <code>invalid string character</code> and a duplicated config field as <code>duplicate config field</code>:</p></div><div class=listingblock><div class=title>Missing closing string delimiter</div><div class=content><pre>error: while parsing author
      |
  3:28| authors = [&#34;Jonathan Müller]
      |              ~~~~~~~~~~~~~~~^ invalid string character</pre></div></div><div class=listingblock><div class=title>Duplicate config field error</div><div class=content><pre>error: while parsing config
@@ -727,7 +734,7 @@ but it doesn’t actually consume anything.</p></div><div class=listingblock><di
         <span class=err>…</span>
 
         <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>capture</span><span class=p>(</span><span class=n>lead_char</span> <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>while_</span><span class=p>(</span><span class=n>trailing_char</span><span class=p>))</span>
-               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>require</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>);</span> <b class=conum>(3)</b>
+               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>require</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>space</span><span class=p>).</span><span class=n>error</span><span class=o>&lt;</span><span class=n>invalid_character</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(3)</b>
     <span class=p>}();</span>
 <span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define a tag.</p></li><li><p>Give it a custom message.</p></li><li><p>Issue the error unless the name is followed by the required space character (either trailing whitespace or the newline).</p></li></ol></div><div class=paragraph><p>Now the error message looks like this instead.</p></div><div class=listingblock><div class=title>Invalid name character error</div><div class=content><pre>error: while parsing name
      |
@@ -743,7 +750,7 @@ but it doesn’t actually consume anything.</p></div><div class=listingblock><di
         <span class=err>…</span>
 
         <span class=k>return</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span> <span class=o>+</span> <span class=n>dot</span> <span class=o>+</span> <span class=n>number</span>
-               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>prevent</span><span class=o>&lt;</span><span class=n>forbidden_build_string</span><span class=o>&gt;</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;-&#39;</span><span class=o>&gt;</span><span class=p>);</span> <b class=conum>(3)</b>
+               <span class=o>+</span> <span class=n>dsl</span><span class=o>::</span><span class=n>prevent</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;-&#39;</span><span class=o>&gt;</span><span class=p>).</span><span class=n>error</span><span class=o>&lt;</span><span class=n>forbidden_build_string</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(3)</b>
     <span class=p>}();</span>
 <span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Define a tag.</p></li><li><p>Give it a custom message.</p></li><li><p>Raise the error when the beginning of a build string is encountered.</p></li></ol></div><div class=listingblock><div class=title>Forbidden build string</div><div class=content><pre>error: while parsing version
      |
