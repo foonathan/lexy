@@ -8,8 +8,8 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/engine/base.hpp>
-#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
+#include <lexy/production.hpp>
 #include <lexy/result.hpp>
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
@@ -43,10 +43,7 @@ struct Rule : rule_base
 #endif
 
 namespace lexy
-{
-struct unknown_token_kind
-{};
-} // namespace lexy
+{} // namespace lexy
 
 namespace lexyd
 {

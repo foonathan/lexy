@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/error.hpp>
 
 #ifdef LEXY_IGNORE_DEPRECATED_CONTEXT
 #    define LEXY_DEPRECATED_CONTEXT

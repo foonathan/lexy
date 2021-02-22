@@ -6,6 +6,7 @@
 #define LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/error.hpp>
 
 namespace lexyd
 {

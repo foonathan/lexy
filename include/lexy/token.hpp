@@ -16,6 +16,12 @@
 
 namespace lexy
 {
+struct unknown_token_kind
+{};
+} // namespace lexy
+
+namespace lexy
+{
 template <typename Token, auto Kind, typename Next>
 struct _tk_map
 {

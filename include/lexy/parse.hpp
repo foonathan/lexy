@@ -8,7 +8,7 @@
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/production.hpp>
+#include <lexy/error.hpp>
 #include <lexy/result.hpp>
 
 namespace lexy
