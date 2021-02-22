@@ -166,7 +166,7 @@ struct _token : token_base<_token<Rule>>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            auto                handler = lexy::_match_handler{};
+            auto                handler = lexy::match_handler{};
             lexy::parse_context context(_token_dummy_production{}, handler, reader.cur());
 
             return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader)

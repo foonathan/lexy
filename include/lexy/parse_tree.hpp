@@ -11,11 +11,11 @@
 #include <lexy/_detail/memory_resource.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/production.hpp>
 #include <lexy/result.hpp>
 #include <lexy/token.hpp>
+#include <lexy/validate.hpp>
 
 //=== internal: pt_node ===//
 namespace lexy::_detail
@@ -988,8 +988,7 @@ class _pt_handler
 {
 public:
     explicit _pt_handler(Tree& tree, const Input& input, Callback&& cb)
-    : _root(), _tree(&tree), _depth(0), _error(lexy::result_empty), _input(&input),
-      _callback(LEXY_MOV(cb))
+    : _root(), _tree(&tree), _depth(0), _validate(input, LEXY_MOV(cb))
     {}
 
     ~_pt_handler() noexcept
@@ -1053,9 +1052,7 @@ public:
         // Clear the tree to prevent an incomplete one from showing up.
         _tree->clear();
 
-        lexy::error_context err_ctx(p, *_input, state.pos);
-        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
-                                                          LEXY_FWD(error));
+        _validate.error(p, state.pos, LEXY_FWD(error));
     }
 
 private:
@@ -1068,9 +1065,7 @@ private:
     Tree* _tree;
     int   _depth; // To check whether the builder is initialized.
 
-    lexy::result<void, typename Callback::return_type> _error;
-    const Input*                                       _input;
-    LEXY_EMPTY_MEMBER Callback                         _callback;
+    lexy::validate_handler<Input, Callback> _validate;
 };
 
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,

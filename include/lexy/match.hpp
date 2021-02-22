@@ -11,8 +11,9 @@
 
 namespace lexy
 {
-struct _match_handler
+class match_handler
 {
+public:
     template <typename Production>
     using return_type_for = void;
 
@@ -47,7 +48,7 @@ struct _match_handler
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto                handler = _match_handler{};
+    auto                handler = match_handler{};
     auto                reader  = input.reader();
     lexy::parse_context context(Production{}, handler, reader.cur());
 

@@ -8,8 +8,8 @@
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/error.hpp>
 #include <lexy/result.hpp>
+#include <lexy/validate.hpp>
 
 namespace lexy
 {
@@ -21,14 +21,25 @@ constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
 constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
-template <typename Input, typename State, typename Callback>
-struct _parse_handler
+template <typename State, typename Input, typename Callback>
+class _parse_handler
 {
-    lexy::result<void, typename Callback::return_type> _error;
-    const Input*                                       _input;
-    State&                                             _state;
-    LEXY_EMPTY_MEMBER Callback                         _callback;
+public:
+    constexpr explicit _parse_handler(State& state, const Input& input, Callback&& callback)
+    : _validate(input, LEXY_MOV(callback)), _state(state)
+    {}
 
+    constexpr State& get_state()
+    {
+        return _state;
+    }
+
+    constexpr auto get_error() &&
+    {
+        return LEXY_MOV(_validate).get_error();
+    }
+
+    //=== handler functions ===//
     template <typename Production>
     static auto _value_cb()
     {
@@ -38,7 +49,6 @@ struct _parse_handler
         else
             return LEXY_DECLVAL(lexy::sink_callback<typename value::type>);
     }
-
     template <typename Production>
     using return_type_for = typename decltype(_value_cb<Production>())::return_type;
 
@@ -87,10 +97,12 @@ struct _parse_handler
     template <typename Production, typename Iterator, typename Error>
     constexpr void error(Production p, Iterator pos, Error&& error)
     {
-        lexy::error_context err_ctx(p, *_input, pos);
-        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
-                                                          LEXY_FWD(error));
+        _validate.error(p, pos, LEXY_FWD(error));
     }
+
+private:
+    lexy::validate_handler<Input, Callback> _validate;
+    State&                                  _state;
 };
 
 template <typename T>
@@ -102,19 +114,18 @@ constexpr bool _is_parse_handler<_parse_handler<Input, State, Callback>> = true;
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    using handler_t   = _parse_handler<Input, std::decay_t<State>, Callback>;
-    using result_type = lexy::result<typename handler_t::template return_type_for<Production>,
-                                     typename Callback::return_type>;
-
-    auto                handler = handler_t{lexy::result_empty, &input, state, LEXY_MOV(callback)};
+    auto                handler = lexy::_parse_handler(state, input, LEXY_MOV(callback));
     auto                reader  = input.reader();
     lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
+    using result_type
+        = lexy::result<typename decltype(handler)::template return_type_for<Production>,
+                       typename Callback::return_type>;
     if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
         return result_type(lexy::result_value, LEXY_MOV(context).finish());
     else
-        return result_type(lexy::result_error, LEXY_MOV(handler)._error.error());
+        return result_type(lexy::result_error, LEXY_MOV(handler).get_error());
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -140,15 +151,16 @@ struct _state : rule_base
 
             if constexpr (lexy::_is_parse_handler<handler_t>)
             {
-                using state_type = decltype(handler._state);
+                using state_type = std::decay_t<decltype(handler.get_state())>;
                 static_assert(!std::is_same_v<state_type, lexy::_no_parse_state>,
                               "lexy::dsl::state requires passing a state to lexy::parse()");
 
                 if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)..., handler._state);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                             handler.get_state());
                 else
                     return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                             lexy::_detail::invoke(Fn, handler._state));
+                                             lexy::_detail::invoke(Fn, handler.get_state()));
             }
             else
             {

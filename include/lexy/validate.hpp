@@ -14,12 +14,19 @@
 namespace lexy
 {
 template <typename Input, typename Callback>
-struct _validate_handler
+class validate_handler
 {
-    lexy::result<void, typename Callback::return_type> _error;
-    const Input*                                       _input;
-    LEXY_EMPTY_MEMBER Callback                         _callback;
+public:
+    constexpr explicit validate_handler(const Input& input, Callback&& callback)
+    : _error(lexy::result_empty), _input(&input), _callback(LEXY_MOV(callback))
+    {}
 
+    constexpr auto get_error() &&
+    {
+        return LEXY_MOV(_error).error();
+    }
+
+    //=== handler functions ===//
     template <typename Production>
     using return_type_for = void;
 
@@ -50,22 +57,26 @@ struct _validate_handler
         _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
                                                           LEXY_FWD(error));
     }
+
+private:
+    lexy::result<void, typename Callback::return_type> _error;
+    const Input*                                       _input;
+    LEXY_EMPTY_MEMBER Callback                         _callback;
 };
 
 template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
     -> lexy::result<void, typename Callback::return_type>
 {
-    auto handler
-        = _validate_handler<Input, Callback>{lexy::result_empty, &input, LEXY_MOV(callback)};
-    auto                reader = input.reader();
+    auto                handler = validate_handler(input, LEXY_MOV(callback));
+    auto                reader  = input.reader();
     lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
     if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
         return lexy::result_value;
     else
-        return LEXY_MOV(handler._error);
+        return {lexy::result_error, LEXY_MOV(handler).get_error()};
 }
 } // namespace lexy
 
