@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/detect.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/engine/trie.hpp>
 
 namespace lexy

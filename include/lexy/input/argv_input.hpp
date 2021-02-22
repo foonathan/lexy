@@ -8,6 +8,7 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 

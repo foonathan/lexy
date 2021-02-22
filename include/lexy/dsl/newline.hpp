@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/engine/trie.hpp>
 
 namespace lexyd

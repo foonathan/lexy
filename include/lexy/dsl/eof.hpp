@@ -6,6 +6,7 @@
 #define LEXY_DSL_EOF_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/engine/eof.hpp>
 
 namespace lexyd

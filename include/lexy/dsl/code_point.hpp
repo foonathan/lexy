@@ -6,6 +6,7 @@
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/engine/code_point.hpp>
 
 namespace lexyd

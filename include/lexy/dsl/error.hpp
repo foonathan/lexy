@@ -11,35 +11,6 @@
 namespace lexyd
 {
 template <typename Tag, typename Token>
-struct _toke : token_base<_toke<Tag, Token>>
-{
-    using token_engine = typename Token::token_engine;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
-        context.error(err);
-    }
-
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return Token::token_kind();
-    }
-
-    LEXY_DEPRECATED_ERROR("replace `token.error<Tag>()` by `token.error<Tag>`")
-    constexpr auto operator()() const
-    {
-        return *this;
-    }
-};
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Tag, typename Token>
 struct _err : rule_base
 {
     static constexpr auto is_branch = true;

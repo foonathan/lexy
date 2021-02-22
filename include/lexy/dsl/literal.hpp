@@ -8,6 +8,7 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/token.hpp>
 #include <lexy/engine/literal.hpp>
 
 namespace lexyd
