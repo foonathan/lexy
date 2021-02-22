@@ -47,12 +47,12 @@ struct _token : token_base<_token<Rule>>
     };
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Whitespace>

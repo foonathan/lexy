@@ -17,8 +17,7 @@ struct _ctx_lcreate : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Add the lexeme to the context.
             auto lex_ctx = context.insert(Id{}, lexy::lexeme<Reader>());
@@ -36,9 +35,8 @@ struct _ctx_lcapture : rule_base
         struct _cont
         {
             template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader,
-                                     typename Reader::iterator begin, Args&&... args) ->
-                typename Context::result_type
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader,
+                                     typename Reader::iterator begin, Args&&... args)
             {
                 context.get(Id{}) = lexy::lexeme(reader, begin);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -46,8 +44,7 @@ struct _ctx_lcapture : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, _cont>::parse(context, reader, reader.cur(),
                                                          LEXY_FWD(args)...);
@@ -65,9 +62,8 @@ struct _ctx_lrequire : branch_base
         struct _cont
         {
             template <typename Context, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader,
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader,
                                      typename Reader::iterator begin, Args&&... args, RuleArgs&&...)
-                -> typename Context::result_type
             {
                 auto lhs = context.get(Id{});
                 auto rhs = lexy::lexeme(reader, begin);
@@ -77,14 +73,14 @@ struct _ctx_lrequire : branch_base
                 else
                 {
                     auto err = lexy::make_error<Reader, Tag>(rhs.begin(), rhs.end());
-                    return LEXY_MOV(context).error(err);
+                    context.error(err);
+                    return false;
                 }
             }
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, _cont<Args...>>::parse(context, reader, reader.cur(),
                                                                   LEXY_FWD(args)...);

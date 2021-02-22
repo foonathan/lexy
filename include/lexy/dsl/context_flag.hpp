@@ -16,8 +16,7 @@ struct _ctx_fcreate : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Add the flag to the context.
             auto flag_ctx = context.insert(Id{}, InitialValue);
@@ -33,8 +32,7 @@ struct _ctx_fset : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.get(Id{}) = Value;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -49,8 +47,7 @@ struct _ctx_ftoggle : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.get(Id{}) = !context.get(Id{});
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -65,8 +62,7 @@ struct _ctx_fselect : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (context.get(Id{}))
                 return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
@@ -83,15 +79,15 @@ struct _ctx_frequire : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (context.get(Id{}) == Value)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
             {
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                return LEXY_MOV(context).error(err);
+                context.error(err);
+                return false;
             }
         }
     };

@@ -162,8 +162,7 @@ struct _encode_begin : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             using old_encoding = typename Reader::encoding;
             static_assert((std::is_same_v<old_encoding, lexy::default_encoding>)
@@ -183,9 +182,9 @@ struct _encode_end : rule_base
     {
         template <typename Context, typename Reader, typename Encoding,
                   lexy::encoding_endianness Endianness, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context&                                       context,
+        LEXY_DSL_FUNC bool parse(Context&                                       context,
                                  _encoded_reader<Reader, Encoding, Endianness>& reader,
-                                 Args&&... args) -> typename Context::result_type
+                                 Args&&... args)
         {
             return NextParser::parse(context, reader._reader, LEXY_FWD(args)...);
         }

@@ -75,8 +75,8 @@ struct _ctx_drop : rule_base
         struct _continuation
         {
             template <typename Context, typename Reader, typename Head, typename... Tail>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args, Head&& head,
-                                     Tail&&... tail) -> typename Context::result_type
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args, Head&& head,
+                                     Tail&&... tail)
             {
                 using context_t                = _context<typename Reader::canonical_reader>;
                 constexpr auto head_is_context = context_t::template is<Head>;
@@ -99,8 +99,7 @@ struct _ctx_drop : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Initially no argument is kept.
             return _continuation<>::parse(context, reader, LEXY_FWD(args)...);
@@ -159,9 +158,9 @@ struct _ctx_top
             // We're ignoring any values created by the rule.
             //
             template <typename Context, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args,
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args,
                                      const _context<typename Reader::canonical_reader>& popped,
-                                     RuleArgs&&...) -> typename Context::result_type
+                                     RuleArgs&&...)
             {
                 auto pushed = _context<typename Reader::canonical_reader>::get(LEXY_FWD(args)...);
                 if (Eq{}(pushed.lexeme, popped.lexeme))
@@ -169,16 +168,16 @@ struct _ctx_top
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
                 {
-                    auto e = lexy::make_error<Reader, Error>(popped.lexeme.begin(),
-                                                             popped.lexeme.end());
-                    return LEXY_MOV(context).error(e);
+                    auto err = lexy::make_error<Reader, Error>(popped.lexeme.begin(),
+                                                               popped.lexeme.end());
+                    context.error(err);
+                    return false;
                 }
             }
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // We capture the rule and pass it to the continuation to process.
             return _cap_parser<_context, Rule, _continuation<Args...>>::parse(context, reader,

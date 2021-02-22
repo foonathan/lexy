@@ -28,13 +28,15 @@ struct Rule : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args)
-            -> typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (/* match reader */)
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
             else
-                return LEXY_MOV(context).error(/* error */);
+            {
+                context.error(/* error */);
+                return false;
+            }
         }
     };
 };
@@ -163,8 +165,7 @@ struct token_base : _token_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             using token_engine = typename Derived::token_engine;
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -174,7 +175,10 @@ struct token_base : _token_base
             {
                 if (auto ec = token_engine::match(reader);
                     ec != typename token_engine::error_code())
-                    return Derived::token_error(context, reader, ec, position);
+                {
+                    Derived::token_error(context, reader, ec, position);
+                    return false;
+                }
 
                 context.token(Derived::token_kind(), position, reader.cur());
                 return continuation::parse(context, reader, LEXY_FWD(args)...);
@@ -202,11 +206,11 @@ struct _tokk : token_base<_tokk<Kind, Token>>
     using token_engine = typename Token::token_engine;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader& reader,
+    static constexpr void token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
-        return Token::token_error(context, reader, ec, pos);
+        Token::token_error(context, reader, ec, pos);
     }
 
     static LEXY_CONSTEVAL auto token_kind()
@@ -236,7 +240,7 @@ class parse_context
 public:
     template <typename Iterator>
     constexpr explicit parse_context(Production p, Handler& handler, Iterator begin)
-    : _handler(&handler), _state(_handler->start_production(p, begin))
+    : _value(lexy::result_empty), _handler(&handler), _state(_handler->start_production(p, begin))
     {}
 
     constexpr Handler& handler() const noexcept
@@ -269,9 +273,8 @@ public:
         return 0;
     }
 
-    using production  = Production;
-    using root        = Root;
-    using result_type = typename Handler::template result_type_for<Production>;
+    using production = Production;
+    using root       = Root;
 
     constexpr auto sink() const
     {
@@ -291,15 +294,30 @@ public:
     }
 
     template <typename... Args>
-    constexpr result_type value(Args&&... args) &&
+    constexpr void value(Args&&... args)
     {
-        return _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
+        if constexpr (std::is_void_v<typename Handler::template return_type_for<Production>>)
+        {
+            _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
+            _value = value_storage_type(lexy::result_value);
+        }
+        else
+        {
+            auto value
+                = _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
+            _value = value_storage_type(lexy::result_value, LEXY_MOV(value));
+        }
     }
 
     template <typename Error>
-    constexpr result_type error(Error&& error) &&
+    constexpr void error(Error&& error)
     {
-        return _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
+        _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
+    }
+
+    constexpr auto finish() &&
+    {
+        return LEXY_MOV(_value).value();
     }
 
 private:
@@ -350,9 +368,8 @@ private:
                 return _parent->get(id);
         }
 
-        using production  = Production;
-        using root        = Root;
-        using result_type = typename Handler::template result_type_for<Production>;
+        using production = Production;
+        using root       = Root;
 
         constexpr auto sink() const
         {
@@ -372,15 +389,20 @@ private:
         }
 
         template <typename... Args>
-        constexpr result_type value(Args&&... args) &&
+        constexpr void value(Args&&... args)
         {
-            return LEXY_MOV(*_parent).value(LEXY_FWD(args)...);
+            _parent->value(LEXY_FWD(args)...);
         }
 
         template <typename Error>
-        constexpr result_type error(Error&& error) &&
+        constexpr void error(Error&& error)
         {
-            return LEXY_MOV(*_parent).error(LEXY_FWD(error));
+            _parent->error(LEXY_FWD(error));
+        }
+
+        constexpr auto finish() &&
+        {
+            return LEXY_MOV(*_parent).finish();
         }
 
     private:
@@ -388,6 +410,10 @@ private:
         LEXY_EMPTY_MEMBER State _state;
     };
 
+    using value_storage_type
+        = lexy::result<typename Handler::template return_type_for<Production>, void>;
+
+    value_storage_type             _value;
     Handler*                       _handler;
     LEXY_EMPTY_MEMBER HandlerState _state;
 };
@@ -400,10 +426,10 @@ parse_context(Production p, Handler& handler, Iterator position)
 struct context_value_parser
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader&, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, Args&&... args)
     {
-        return LEXY_MOV(context).value(LEXY_FWD(args)...);
+        context.value(LEXY_FWD(args)...);
+        return true;
     }
 };
 
@@ -412,12 +438,12 @@ template <typename Context>
 struct context_discard_parser
 {
     template <typename NewContext, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(NewContext&, Reader&, Args&&...)
+    LEXY_DSL_FUNC bool parse(NewContext&, Reader&, Args&&...)
     {
         static_assert(sizeof...(Args) == 0, "looped rule must not produce any values");
         static_assert(std::is_same_v<Context, NewContext>,
                       "looped rule cannot add state to the context");
-        return typename Context::result_type(lexy::result_empty);
+        return true;
     }
 };
 } // namespace lexy

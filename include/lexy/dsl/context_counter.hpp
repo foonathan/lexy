@@ -16,8 +16,7 @@ struct _ctx_ccreate : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Add the counter to the context.
             auto counter_ctx = context.insert(Id{}, InitialValue);
@@ -33,8 +32,7 @@ struct _ctx_cadd : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Add the flag to the context.
             context.get(Id{}) += Delta;
@@ -52,9 +50,8 @@ struct _ctx_cpush : rule_base
         struct _cont
         {
             template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader,
-                                     typename Reader::iterator begin, Args&&... args) ->
-                typename Context::result_type
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader,
+                                     typename Reader::iterator begin, Args&&... args)
             {
                 auto end    = reader.cur();
                 auto length = lexy::_detail::range_size(begin, end);
@@ -66,8 +63,7 @@ struct _ctx_cpush : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, _cont>::parse(context, reader, reader.cur(),
                                                          LEXY_FWD(args)...);
@@ -82,8 +78,7 @@ struct _ctx_ccompare : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (context.get(Id{}) < Value)
                 return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
@@ -102,15 +97,15 @@ struct _ctx_crequire : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (context.get(Id{}) == Value)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
             {
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                return LEXY_MOV(context).error(err);
+                context.error(err);
+                return false;
             }
         }
     };

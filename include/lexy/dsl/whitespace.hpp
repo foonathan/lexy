@@ -27,8 +27,7 @@ struct _wsr : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (lexy::is_token<Rule>)
             {
@@ -51,9 +50,8 @@ struct _wsr : rule_base
                 using loop_parser
                     = lexy::rule_parser<decltype(loop(Rule{} | break_)),
                                         lexy::context_discard_parser<decltype(ws_context)>>;
-                auto result = loop_parser::parse(ws_context, reader);
-                if (result.has_error())
-                    return result;
+                if (!loop_parser::parse(ws_context, reader))
+                    return false;
 
                 // And continue with normal parsing.
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -90,8 +88,7 @@ struct _ws : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
@@ -147,8 +144,7 @@ struct _wsn : rule_base
         struct _cont
         {
             template <typename WsContext, typename Reader, typename Context, typename... Args>
-            LEXY_DSL_FUNC auto parse(WsContext&, Reader& reader, Context& context, Args&&... args)
-                -> typename Context::result_type
+            LEXY_DSL_FUNC bool parse(WsContext&, Reader& reader, Context& context, Args&&... args)
             {
                 // Continue with the normal context, after skipping whitespace.
                 return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
@@ -157,8 +153,7 @@ struct _wsn : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Parse the rule using the context that doesn't allow inner whitespace.
             auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
@@ -201,7 +196,7 @@ struct _wsd : decltype(loop(token(Whitespace{}) | break_) + Rule{})
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
         }

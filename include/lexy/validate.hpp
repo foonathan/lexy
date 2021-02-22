@@ -15,11 +15,12 @@ namespace lexy
 template <typename Input, typename Callback>
 struct _validate_handler
 {
-    const Input*               _input;
-    LEXY_EMPTY_MEMBER Callback _callback;
+    lexy::result<void, typename Callback::return_type> _error;
+    const Input*                                       _input;
+    LEXY_EMPTY_MEMBER Callback                         _callback;
 
     template <typename Production>
-    using result_type_for = lexy::result<void, typename Callback::return_type>;
+    using return_type_for = void;
 
     template <typename Production>
     constexpr auto get_sink(Production)
@@ -38,29 +39,32 @@ struct _validate_handler
     {}
 
     template <typename Production, typename Iterator, typename... Args>
-    constexpr auto finish_production(Production, Iterator, Args&&...)
-    {
-        return result_type_for<Production>(lexy::result_value);
-    }
+    constexpr void finish_production(Production, Iterator, Args&&...)
+    {}
 
     template <typename Production, typename Iterator, typename Error>
-    constexpr auto error(Production p, Iterator pos, Error&& error)
+    constexpr void error(Production p, Iterator pos, Error&& error)
     {
         lexy::error_context err_ctx(p, *_input, pos);
-        return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
-                                                                   err_ctx, LEXY_FWD(error));
+        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
+                                                          LEXY_FWD(error));
     }
 };
 
 template <typename Production, typename Input, typename Callback>
 constexpr auto validate(const Input& input, Callback callback)
+    -> lexy::result<void, typename Callback::return_type>
 {
-    auto                handler = _validate_handler<Input, Callback>{&input, LEXY_MOV(callback)};
-    auto                reader  = input.reader();
+    auto handler
+        = _validate_handler<Input, Callback>{lexy::result_empty, &input, LEXY_MOV(callback)};
+    auto                reader = input.reader();
     lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
+    if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
+        return lexy::result_value;
+    else
+        return LEXY_MOV(handler._error);
 }
 } // namespace lexy
 

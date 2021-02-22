@@ -280,8 +280,7 @@ struct _int_p : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename Iterator, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Iterator begin, Args&&... args)
-            -> typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Iterator begin, Args&&... args)
         {
             using tag        = std::conditional_t<std::is_void_v<Tag>, lexy::integer_overflow, Tag>;
             using error_type = lexy::error<typename Reader::canonical_reader, tag>;
@@ -290,7 +289,10 @@ struct _int_p : rule_base
             if (integer_parser::parse(result, begin, reader.cur()))
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             else
-                return LEXY_MOV(context).error(error_type(begin, reader.cur()));
+            {
+                context.error(error_type(begin, reader.cur()));
+                return false;
+            }
         }
     };
 };
@@ -304,8 +306,7 @@ struct _int_c : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, NextParser>::parse(context, reader, reader.cur(),
                                                               LEXY_FWD(args)...);

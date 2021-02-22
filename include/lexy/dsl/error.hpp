@@ -16,12 +16,12 @@ struct _toke : token_base<_toke<Tag, Token>>
     using token_engine = typename Token::token_engine;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader& reader,
+    static constexpr void token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     static LEXY_CONSTEVAL auto token_kind()
@@ -55,7 +55,7 @@ struct _err : rule_base
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
@@ -65,8 +65,7 @@ struct _err : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&...)
         {
             auto begin = reader.cur();
             auto end   = reader.cur();
@@ -78,7 +77,8 @@ struct _err : rule_base
             }
 
             auto err = lexy::make_error<Reader, Tag>(begin, end);
-            return LEXY_MOV(context).error(err);
+            context.error(err);
+            return false;
         }
     };
 
@@ -105,15 +105,15 @@ struct _require : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if (lexy::engine_peek<typename Token::token_engine>(reader) == Expected)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else
             {
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                return LEXY_MOV(context).error(err);
+                context.error(err);
+                return false;
             }
         }
     };

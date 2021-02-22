@@ -31,8 +31,7 @@ struct _cp_cap : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto save = reader;
 
@@ -49,7 +48,8 @@ struct _cp_cap : rule_base
 
                 auto name = _cp_name<typename Reader::encoding>();
                 auto e    = lexy::make_error<Reader, lexy::expected_char_class>(reader.cur(), name);
-                return LEXY_MOV(context).error(e);
+                context.error(e);
+                return false;
             }
         }
     };
@@ -60,12 +60,12 @@ struct _cp : token_base<_cp>
     using token_engine = lexy::engine_cp_auto;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto name = _cp_name<typename Reader::encoding>();
         auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     LEXY_CONSTEVAL auto capture() const

@@ -22,8 +22,7 @@ struct _valc : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_same_v<Context, lexy::_match_context>)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -47,8 +46,7 @@ struct _valf : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_same_v<Context, lexy::_match_context>)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -72,8 +70,7 @@ struct _valt : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_same_v<Context, lexy::_match_context>)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -97,8 +94,7 @@ struct _vals : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_same_v<Context, lexy::_match_context>)
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);

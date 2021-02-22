@@ -15,11 +15,11 @@ struct _eof : token_base<_eof>
     using token_engine = lexy::engine_eof;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Whitespace>

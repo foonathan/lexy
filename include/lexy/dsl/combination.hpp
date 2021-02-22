@@ -41,14 +41,13 @@ struct _comb_state
 struct _comb_it
 {
     template <typename Context, typename Reader, int Idx, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader&, lexy::id<Idx>, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::id<Idx>, Args&&... args)
     {
         auto& state = context.get(_break{});
         state.idx   = Idx;
         if constexpr (sizeof...(Args) > 0)
             state.sink(LEXY_FWD(args)...);
-        return typename Context::result_type(lexy::result_empty);
+        return true;
     }
 };
 
@@ -69,8 +68,7 @@ struct _comb : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             constexpr auto N = sizeof...(R);
 
@@ -85,9 +83,8 @@ struct _comb : rule_base
                 auto begin = reader.cur();
 
                 using parser = lexy::rule_parser<_comb_choice, _comb_it>;
-                auto result  = parser::parse(comb_context, reader);
-                if (result.has_error())
-                    return result;
+                if (!parser::parse(comb_context, reader))
+                    return false;
                 else if (state.loop_break)
                     break; // Partial combination and we're done.
 
@@ -96,7 +93,8 @@ struct _comb : rule_base
                     using tag = std::conditional_t<std::is_void_v<DuplicateError>,
                                                    lexy::combination_duplicate, DuplicateError>;
                     auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
-                    return LEXY_MOV(context).error(err);
+                    context.error(err);
+                    return false;
                 }
                 else
                 {

@@ -22,14 +22,14 @@ struct _until : token_base<_until<Condition>>
     using token_engine = lexy::engine_until<typename Condition::token_engine>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader& reader,
+    static constexpr void token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator)
     {
         // We don't pass the passed position, as this would be the beginning of until.
         // Instead we always use the current reader position (i.e. EOF) as that's where the
         // condition is missing.
-        return Condition::token_error(context, reader, ec, reader.cur());
+        Condition::token_error(context, reader, ec, reader.cur());
     }
 
     /// Also accepts EOF as the closing condition.

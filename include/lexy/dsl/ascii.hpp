@@ -16,11 +16,11 @@ template <typename Derived>
 struct _ascii : token_base<Derived>
 {
     template <typename Context, typename Reader, typename ErrorCode>
-    static constexpr auto token_error(Context&                  context, const Reader&, ErrorCode,
+    static constexpr void token_error(Context&                  context, const Reader&, ErrorCode,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Derived::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 

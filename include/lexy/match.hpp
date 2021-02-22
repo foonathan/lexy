@@ -6,15 +6,15 @@
 #define LEXY_MATCH_HPP_INCLUDED
 
 #include <lexy/callback.hpp>
+#include <lexy/dsl/base.hpp>
 #include <lexy/production.hpp>
-#include <lexy/result.hpp>
 
 namespace lexy
 {
 struct _match_handler
 {
     template <typename Production>
-    using result_type_for = lexy::result<void, void>;
+    using return_type_for = void;
 
     template <typename Production>
     constexpr auto get_sink(Production)
@@ -36,16 +36,12 @@ struct _match_handler
     {}
 
     template <typename Production, typename... Args>
-    constexpr auto finish_production(Production, state, Args&&...)
-    {
-        return result_type_for<Production>(lexy::result_value);
-    }
+    constexpr void finish_production(Production, state, Args&&...)
+    {}
 
     template <typename Production, typename Error>
-    constexpr auto error(Production, state, Error&&)
-    {
-        return result_type_for<Production>(lexy::result_error);
-    }
+    constexpr void error(Production, state, Error&&)
+    {}
 };
 
 template <typename Production, typename Input>
@@ -56,7 +52,7 @@ constexpr bool match(const Input& input)
     lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader).has_value();
+    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
 }
 } // namespace lexy
 

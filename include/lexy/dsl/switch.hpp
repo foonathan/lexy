@@ -28,8 +28,7 @@ template <typename NextParser>
 struct _switch_continue
 {
     template <typename Context, typename PartialReader, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, PartialReader&, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, PartialReader&, Reader& reader, Args&&... args)
     {
         // We now continue with the regular reader again.
         return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -43,21 +42,20 @@ template <typename NextParser>
 struct _switch_select<NextParser>
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Reader save, Args&&...) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&...)
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
         auto err = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
+        return false;
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _switch_select<NextParser, H, T...>
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Reader save, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&... args)
     {
         using cont = _switch_continue<NextParser>;
 
@@ -88,8 +86,7 @@ struct _switch : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // We parse the rule using our special continuation.
             // To recover the old reader position, we create a copy.

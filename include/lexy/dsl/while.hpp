@@ -17,8 +17,7 @@ struct _whl : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             while (true)
             {
@@ -26,10 +25,8 @@ struct _whl : rule_base
                 if (!branch.match(reader))
                     break;
 
-                auto result
-                    = branch.template parse<lexy::context_discard_parser<Context>>(context, reader);
-                if (result.has_error())
-                    return LEXY_MOV(result);
+                if (!branch.template parse<lexy::context_discard_parser<Context>>(context, reader))
+                    return false;
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -79,16 +76,14 @@ struct _whlt : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             lexy::branch_matcher<Terminator, Reader> term{};
             while (!term.match(reader))
             {
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
-                auto result  = parser::parse(context, reader);
-                if (result.has_error())
-                    return LEXY_MOV(result);
+                if (!parser::parse(context, reader))
+                    return false;
             }
 
             return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...);

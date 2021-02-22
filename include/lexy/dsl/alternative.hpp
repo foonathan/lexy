@@ -63,12 +63,12 @@ struct _alt : token_base<_alt<Tokens...>>
     };
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 
@@ -131,3 +131,4 @@ LEXY_CONSTEVAL auto operator/(_alt<R...>, _alt<S...>)
 } // namespace lexyd
 
 #endif // LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
+

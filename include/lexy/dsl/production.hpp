@@ -12,7 +12,7 @@ namespace lexyd
 {
 // Not inline: one function per production.
 template <typename Rule, typename Context, typename Reader>
-constexpr auto _parse(Context& context, Reader& reader) -> typename Context::result_type
+constexpr bool _parse(Context& context, Reader& reader)
 {
     return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader);
 }
@@ -21,8 +21,7 @@ template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
         // If we're about to parse a token production, we need to continue with the parent's (i.e.
         // our current context) whitespace.
@@ -31,16 +30,16 @@ struct _prd_parser
                                  lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
         auto prod_ctx = context.production_context(Production{}, reader.cur());
-        if (auto result = _parse<Rule>(prod_ctx, reader))
+        if (_parse<Rule>(prod_ctx, reader))
         {
-            if constexpr (result.has_void_value())
+            auto result = LEXY_MOV(prod_ctx).finish();
+            if constexpr (std::is_same_v<decltype(result), lexy::result_value_t>)
                 return continuation::parse(context, reader, LEXY_FWD(args)...);
             else
-                return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                           LEXY_MOV(result).value());
+                return continuation::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(result));
         }
         else
-            return typename Context::result_type(LEXY_MOV(result));
+            return false;
     }
 };
 
@@ -67,7 +66,7 @@ struct _prd : rule_base
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // If we're about to parse a token production, we need to continue with the parent's
             // (i.e. our current context) whitespace.
@@ -76,16 +75,17 @@ struct _prd : rule_base
                                      lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
             auto prod_ctx = context.production_context(Production{}, _begin);
-            if (auto result = _impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
+            if (_impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
             {
-                if constexpr (result.has_void_value())
+                auto result = LEXY_MOV(prod_ctx).finish();
+                if constexpr (std::is_same_v<decltype(result), lexy::result_value_t>)
                     return continuation::parse(context, reader, LEXY_FWD(args)...);
                 else
                     return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                               LEXY_MOV(result).value());
+                                               LEXY_MOV(result));
             }
             else
-                return typename Context::result_type(LEXY_MOV(result));
+                return false;
         }
     };
 

@@ -987,7 +987,8 @@ class _pt_handler
 {
 public:
     explicit _pt_handler(Tree& tree, const Input& input, Callback&& cb)
-    : _root(), _tree(&tree), _depth(0), _input(&input), _callback(LEXY_MOV(cb))
+    : _root(), _tree(&tree), _depth(0), _error(lexy::result_empty), _input(&input),
+      _callback(LEXY_MOV(cb))
     {}
 
     ~_pt_handler() noexcept
@@ -1000,7 +1001,7 @@ public:
     _pt_handler& operator=(const _pt_handler&) = delete;
 
     template <typename Production>
-    using result_type_for = lexy::result<void, typename Callback::return_type>;
+    using return_type_for = void;
 
     template <typename Production>
     constexpr auto get_sink(Production)
@@ -1036,26 +1037,24 @@ public:
     }
 
     template <typename Production, typename... Args>
-    constexpr auto finish_production(Production, _state_t&& state, Args&&...)
+    constexpr void finish_production(Production, _state_t&& state, Args&&...)
     {
         if (--_depth == 0)
             // Finish tree instead of production.
             *_tree = LEXY_MOV(_builder).finish();
         else
             _builder.finish_production(LEXY_MOV(state.builder_state));
-
-        return result_type_for<Production>(lexy::result_value);
     }
 
     template <typename Production, typename Error>
-    constexpr auto error(Production p, _state_t&& state, Error&& error)
+    constexpr void error(Production p, _state_t&& state, Error&& error)
     {
         // Clear the tree to prevent an incomplete one from showing up.
         _tree->clear();
 
         lexy::error_context err_ctx(p, *_input, state.pos);
-        return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
-                                                                   err_ctx, LEXY_FWD(error));
+        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
+                                                          LEXY_FWD(error));
     }
 
 private:
@@ -1068,8 +1067,9 @@ private:
     Tree* _tree;
     int   _depth; // To check whether the builder is initialized.
 
-    const Input*               _input;
-    LEXY_EMPTY_MEMBER Callback _callback;
+    lexy::result<void, typename Callback::return_type> _error;
+    const Input*                                       _input;
+    LEXY_EMPTY_MEMBER Callback                         _callback;
 };
 
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,

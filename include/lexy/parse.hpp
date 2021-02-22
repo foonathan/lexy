@@ -24,9 +24,10 @@ constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 template <typename Input, typename State, typename Callback>
 struct _parse_handler
 {
-    const Input*               _input;
-    State&                     _state;
-    LEXY_EMPTY_MEMBER Callback _callback;
+    lexy::result<void, typename Callback::return_type> _error;
+    const Input*                                       _input;
+    State&                                             _state;
+    LEXY_EMPTY_MEMBER Callback                         _callback;
 
     template <typename Production>
     static auto _value_cb()
@@ -39,8 +40,7 @@ struct _parse_handler
     }
 
     template <typename Production>
-    using result_type_for = lexy::result<typename decltype(_value_cb<Production>())::return_type,
-                                         typename Callback::return_type>;
+    using return_type_for = typename decltype(_value_cb<Production>())::return_type;
 
     template <typename Production>
     constexpr auto get_sink(Production)
@@ -61,38 +61,35 @@ struct _parse_handler
     template <typename Production, typename Iterator, typename... Args>
     constexpr auto finish_production(Production, Iterator, Args&&... args)
     {
-        using result_type = result_type_for<Production>;
-        using value       = typename lexy::production_value<Production>;
+        using value = typename lexy::production_value<Production>;
 
         if constexpr (lexy::is_callback_for<typename value::type, Args&&...>)
         {
             // We have a callback for those arguments; invoke it.
-            return lexy::invoke_as_result<result_type>(lexy::result_value, value::get,
-                                                       LEXY_FWD(args)...);
+            return value::get(LEXY_FWD(args)...);
         }
         else if constexpr (lexy::is_sink<typename value::type> //
-                           && _is_convertible<typename result_type::value_type, Args&&...>)
+                           && _is_convertible<return_type_for<Production>, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has the
             // correct type already. Assume it came from the list sink and
             // construct the result without invoking a callback.
-            return result_type(lexy::result_value, LEXY_FWD(args)...);
+            return return_type_for<Production>(LEXY_FWD(args)...);
         }
         else
         {
             // We're missing a callback overload.
             static_assert(_detail::error<Production, Args...>,
                           "missing callback overload for production");
-            return result_type();
         }
     }
 
     template <typename Production, typename Iterator, typename Error>
-    constexpr auto error(Production p, Iterator pos, Error&& error)
+    constexpr void error(Production p, Iterator pos, Error&& error)
     {
         lexy::error_context err_ctx(p, *_input, pos);
-        return lexy::invoke_as_result<result_type_for<Production>>(lexy::result_error, _callback,
-                                                                   err_ctx, LEXY_FWD(error));
+        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
+                                                          LEXY_FWD(error));
     }
 };
 
@@ -105,14 +102,19 @@ constexpr bool _is_parse_handler<_parse_handler<Input, State, Callback>> = true;
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    using handler_t = _parse_handler<Input, std::decay_t<State>, Callback>;
+    using handler_t   = _parse_handler<Input, std::decay_t<State>, Callback>;
+    using result_type = lexy::result<typename handler_t::template return_type_for<Production>,
+                                     typename Callback::return_type>;
 
-    auto                handler = handler_t{&input, state, LEXY_MOV(callback)};
+    auto                handler = handler_t{lexy::result_empty, &input, state, LEXY_MOV(callback)};
     auto                reader  = input.reader();
     lexy::parse_context context(Production{}, handler, reader.cur());
 
     using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
+    if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
+        return result_type(lexy::result_value, LEXY_MOV(context).finish());
+    else
+        return result_type(lexy::result_error, LEXY_MOV(handler)._error.error());
 }
 
 template <typename Production, typename Input, typename Callback>
@@ -131,8 +133,7 @@ struct _state : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto& handler   = context.handler();
             using handler_t = std::remove_reference_t<decltype(handler)>;

@@ -39,8 +39,7 @@ struct _lab : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::label<Label>{});
         }
@@ -71,7 +70,7 @@ struct _labr : rule_base
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
                                                     lexy::label<Label>{});
@@ -82,8 +81,7 @@ struct _labr : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
                                                               lexy::label<Label>{});

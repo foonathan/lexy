@@ -21,7 +21,7 @@ struct _lit : token_base<_lit<String>>
     using token_engine          = lexy::engine_literal<_trie>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context&                          context, const Reader&,
+    static constexpr void token_error(Context&                          context, const Reader&,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
@@ -31,7 +31,7 @@ struct _lit : token_base<_lit<String>>
         auto err
             = lexy::make_error<Reader, lexy::expected_literal>(pos, string.c_str(),
                                                                token_engine::index_from_error(ec));
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     //=== dsl ===//

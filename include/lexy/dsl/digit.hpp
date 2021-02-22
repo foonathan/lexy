@@ -154,12 +154,12 @@ struct _zero : token_base<_zero>
     using token_engine          = lexy::engine_literal<_trie>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "digit.zero");
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 
@@ -172,12 +172,12 @@ struct _digit : token_base<_digit<Base>>
     using token_engine = typename Base::digit_set;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 
@@ -208,19 +208,19 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
                                           typename Sep::token_engine>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader& reader,
+    static constexpr void token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
         if (ec == token_engine::error_code::leading_zero)
         {
             auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
-            return LEXY_MOV(context).error(err);
+            context.error(err);
         }
         else
         {
             auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-            return LEXY_MOV(context).error(err);
+            context.error(err);
         }
     }
 };
@@ -232,12 +232,12 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
         = lexy::engine_digits_sep<typename Base::digit_set, typename Sep::token_engine>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     LEXY_CONSTEVAL auto no_leading_zero() const
@@ -252,19 +252,19 @@ struct _digits_t : token_base<_digits_t<Base>>
     using token_engine = lexy::engine_digits_trimmed<typename Base::digit_set, _zero::token_engine>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader& reader,
+    static constexpr void token_error(Context& context, const Reader& reader,
                                       typename token_engine::error_code ec,
                                       typename Reader::iterator         pos)
     {
         if (ec == token_engine::error_code::leading_zero)
         {
             auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
-            return LEXY_MOV(context).error(err);
+            context.error(err);
         }
         else
         {
             auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-            return LEXY_MOV(context).error(err);
+            context.error(err);
         }
     }
 
@@ -282,12 +282,12 @@ struct _digits : token_base<_digits<Base>>
     using token_engine = lexy::engine_digits<typename Base::digit_set>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Token>
@@ -321,12 +321,12 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
         = lexy::engine_ndigits_sep<N, typename Base::digit_set, typename Sep::token_engine>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 
@@ -338,12 +338,12 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     using token_engine = lexy::engine_ndigits<N, typename Base::digit_set>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Token>

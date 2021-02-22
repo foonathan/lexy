@@ -36,8 +36,7 @@ struct _del : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto sink          = context.sink();
             auto del_begin     = reader.cur();
@@ -54,7 +53,8 @@ struct _del : rule_base
                     // If we've reached EOF, it means we're missing the closing delimiter.
                     auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
                                                                                  reader.cur());
-                    return LEXY_MOV(context).error(err);
+                    context.error(err);
+                    return false;
                 }
                 else if (escape.match(reader))
                 {
@@ -62,9 +62,8 @@ struct _del : rule_base
                     context.token(Char::token_kind(), content_begin, content_end);
                     sink(lexy::lexeme<Reader>(content_begin, content_end));
 
-                    auto result = escape.template parse<_list_sink>(context, reader, sink);
-                    if (result.has_error())
-                        return result;
+                    if (!escape.template parse<_list_sink>(context, reader, sink))
+                        return false;
 
                     // We begin again after the escape sequence has been parsed.
                     content_begin = reader.cur();
@@ -74,7 +73,10 @@ struct _del : rule_base
                 {
                     auto position = reader.cur();
                     if (auto ec = engine::match(reader); ec != typename engine::error_code())
-                        return Char::token_error(context, reader, ec, position);
+                    {
+                        Char::token_error(context, reader, ec, position);
+                        return false;
+                    }
                 }
                 else
                 {
@@ -100,8 +102,7 @@ struct _del<Close, Char, void>
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto sink          = context.sink();
             auto del_begin     = reader.cur();
@@ -117,13 +118,17 @@ struct _del<Close, Char, void>
                     // If we've reached EOF, it means we're missing the closing delimiter.
                     auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
                                                                                  reader.cur());
-                    return LEXY_MOV(context).error(err);
+                    context.error(err);
+                    return false;
                 }
                 else if constexpr (lexy::engine_can_fail<engine, Reader>)
                 {
                     auto position = reader.cur();
                     if (auto ec = engine::match(reader); ec != typename engine::error_code())
-                        return Char::token_error(context, reader, ec, position);
+                    {
+                        Char::token_error(context, reader, ec, position);
+                        return false;
+                    }
                 }
                 else
                 {
@@ -247,7 +252,7 @@ struct _escape_cap : branch_base
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...,
                                      lexy::lexeme(reader, _begin));

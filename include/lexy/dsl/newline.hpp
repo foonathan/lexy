@@ -18,11 +18,11 @@ struct _nl : token_base<_nl>
     using token_engine = lexy::engine_trie<_trie>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Whitespace>
@@ -55,11 +55,11 @@ struct _eol : token_base<_eol>
     };
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&, token_engine::error_code,
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 
     template <typename Whitespace>

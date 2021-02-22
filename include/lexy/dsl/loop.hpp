@@ -24,7 +24,7 @@ struct _break : rule_base
         }
 
         template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
+        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
@@ -34,14 +34,13 @@ struct _break : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader&, Args&&...)
+        LEXY_DSL_FUNC bool parse(Context& context, Reader&, Args&&...)
         {
             static_assert(sizeof...(Args) == 0, "looped rule must not add any values");
 
             // We set loop break on the member with the specified id.
             context.get(_break{}).loop_break = true;
-
-            return typename Context::result_type(lexy::result_empty);
+            return true;
         }
     };
 };
@@ -59,8 +58,7 @@ struct _loop : rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             struct flag
             {
@@ -72,9 +70,8 @@ struct _loop : rule_base
             {
                 using parser
                     = lexy::rule_parser<Rule, lexy::context_discard_parser<decltype(loop_context)>>;
-                auto result = parser::parse(loop_context, reader);
-                if (result.has_error())
-                    return LEXY_MOV(result);
+                if (!parser::parse(loop_context, reader))
+                    return false;
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);

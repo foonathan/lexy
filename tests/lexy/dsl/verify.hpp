@@ -53,12 +53,13 @@ struct test_production
 template <typename Callback, typename CharT, typename Root>
 struct test_handler
 {
+    int          code;
     const CharT* str;
 
-    constexpr test_handler(const CharT* str) : str(str) {}
+    constexpr test_handler(const CharT* str) : code(0), str(str) {}
 
     template <typename Production>
-    using result_type_for = lexy::result<int, int>;
+    using return_type_for = int;
 
     template <typename Production>
     LEXY_VERIFY_FN auto get_sink(Production)
@@ -77,33 +78,21 @@ struct test_handler
     {}
 
     template <typename Production, typename... Args>
-    LEXY_VERIFY_FN result_type_for<Production> finish_production(Production, int, Args&&... args)
+    LEXY_VERIFY_FN int finish_production(Production, int, Args&&... args)
     {
         if constexpr (std::is_same_v<Production, Root>)
-        {
-            auto code = Callback{str}.success(LEXY_FWD(args)...);
-            return result_type_for<Production>(lexy::result_value, code);
-        }
+            return Callback{str}.success(LEXY_FWD(args)...);
         else
-        {
-            auto code = Callback{str}.success(Production{}, LEXY_FWD(args)...);
-            return result_type_for<Production>(lexy::result_value, code);
-        }
+            return Callback{str}.success(Production{}, LEXY_FWD(args)...);
     }
 
     template <typename Production, typename Error>
-    LEXY_VERIFY_FN auto error(Production, int, Error&& error)
+    LEXY_VERIFY_FN void error(Production, int, Error&& error)
     {
         if constexpr (std::is_same_v<Production, Root>)
-        {
-            auto code = Callback{str}.error(LEXY_FWD(error));
-            return result_type_for<Production>(lexy::result_error, code);
-        }
+            code = Callback{str}.error(LEXY_FWD(error));
         else
-        {
-            auto code = Callback{str}.error(Production{}, LEXY_FWD(error));
-            return result_type_for<Production>(lexy::result_error, code);
-        }
+            code = Callback{str}.error(Production{}, LEXY_FWD(error));
     }
 };
 
@@ -113,8 +102,7 @@ struct test_final_rule : lexy::dsl::rule_base
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // We sneak in the final input position.
             return NextParser::parse(context, reader, reader.cur(), LEXY_FWD(args)...);
@@ -138,9 +126,9 @@ LEXY_VERIFY_FN int verify(Rule _rule, const CharT* str, std::size_t size = std::
     using rule  = decltype(_rule + test_final_rule{});
     auto result = lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
     if (result)
-        return result.value();
+        return LEXY_MOV(context).finish();
     else
-        return result.error();
+        return handler.code;
 }
 
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED

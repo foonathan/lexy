@@ -27,19 +27,18 @@ template <typename NextParser>
 struct _chc_parser<NextParser>
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&...) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&...)
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_choice>(reader.cur());
-        return LEXY_MOV(context).error(err);
+        context.error(err);
+        return false;
     }
 };
 template <typename NextParser, typename H, typename... T>
 struct _chc_parser<NextParser, H, T...>
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
         using branch_matcher = lexy::branch_matcher<H, Reader>;
 

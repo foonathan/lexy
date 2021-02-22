@@ -14,9 +14,8 @@ template <template <typename Reader> typename Lexeme, typename NextParser, typen
 struct _cap_cont
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, PrevArgs&&... prev_args,
-                             typename Reader::iterator begin, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, PrevArgs&&... prev_args,
+                             typename Reader::iterator begin, Args&&... args)
     {
         auto end = reader.cur();
         return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
@@ -29,8 +28,7 @@ template <template <typename Reader> typename Lexeme, typename Rule, typename Ne
 struct _cap_parser
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-        typename Context::result_type
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
         using continuation = _cap_cont<Lexeme, NextParser, Args...>;
         return lexy::rule_parser<Rule, continuation>::parse(context, reader, LEXY_FWD(args)...,

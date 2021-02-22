@@ -93,8 +93,8 @@ struct _times : rule_base
         struct _continuation
         {
             template <typename Context, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args,
-                                     RuleArgs&&... rule_args) -> typename Context::result_type
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args,
+                                     RuleArgs&&... rule_args)
             {
                 // Create an array containing the rule arguments.
                 static_assert(N == sizeof...(RuleArgs), "rule must create exactly one value");
@@ -105,8 +105,7 @@ struct _times : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto parse(Context& context, Reader& reader, Args&&... args) ->
-            typename Context::result_type
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Parse the rule with the special continuation that converts the value into an array
             // afterwards.
