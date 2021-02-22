@@ -8,6 +8,7 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/iterator.hpp>
+#include <lexy/_detail/lazy_init.hpp>
 #include <lexy/_detail/memory_resource.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
@@ -988,17 +989,8 @@ class _pt_handler
 {
 public:
     explicit _pt_handler(Tree& tree, const Input& input, Callback&& cb)
-    : _root(), _tree(&tree), _depth(0), _validate(input, LEXY_MOV(cb))
+    : _tree(&tree), _depth(0), _validate(input, LEXY_MOV(cb))
     {}
-
-    ~_pt_handler() noexcept
-    {
-        if (_depth > 0)
-            _builder.~builder();
-    }
-
-    _pt_handler(const _pt_handler&) = delete;
-    _pt_handler& operator=(const _pt_handler&) = delete;
 
     template <typename Production>
     using return_type_for = void;
@@ -1020,20 +1012,17 @@ public:
     {
         if (_depth++ == 0)
         {
-            ::new (&_builder) typename Tree::builder(LEXY_MOV(*_tree), prod);
+            _builder.emplace(LEXY_MOV(*_tree), prod);
             return {{}, pos};
         }
         else
-        {
-            return {_builder.start_production(prod), pos};
-        }
+            return {_builder->start_production(prod), pos};
     }
 
     template <typename Kind, typename Iterator>
     constexpr void token(Kind kind, Iterator begin, Iterator end)
     {
-        LEXY_PRECONDITION(_depth > 0);
-        _builder.token(kind, begin, end);
+        _builder->token(kind, begin, end);
     }
 
     template <typename Production, typename... Args>
@@ -1041,9 +1030,9 @@ public:
     {
         if (--_depth == 0)
             // Finish tree instead of production.
-            *_tree = LEXY_MOV(_builder).finish();
+            *_tree = LEXY_MOV(*_builder).finish();
         else
-            _builder.finish_production(LEXY_MOV(state.builder_state));
+            _builder->finish_production(LEXY_MOV(state.builder_state));
     }
 
     template <typename Production, typename Error>
@@ -1056,14 +1045,9 @@ public:
     }
 
 private:
-    // We need to lazily construct a builder.
-    union
-    {
-        typename Tree::builder _builder;
-        char                   _root;
-    };
-    Tree* _tree;
-    int   _depth; // To check whether the builder is initialized.
+    lexy::_detail::lazy_init<typename Tree::builder> _builder;
+    Tree*                                            _tree;
+    int                                              _depth;
 
     lexy::validate_handler<Input, Callback> _validate;
 };

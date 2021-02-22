@@ -5,6 +5,7 @@
 #ifndef LEXY_VALIDATE_HPP_INCLUDED
 #define LEXY_VALIDATE_HPP_INCLUDED
 
+#include <lexy/_detail/lazy_init.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/error.hpp>
@@ -18,12 +19,12 @@ class validate_handler
 {
 public:
     constexpr explicit validate_handler(const Input& input, Callback&& callback)
-    : _error(lexy::result_empty), _input(&input), _callback(LEXY_MOV(callback))
+    : _input(&input), _callback(LEXY_MOV(callback))
     {}
 
     constexpr auto get_error() &&
     {
-        return LEXY_MOV(_error).error();
+        return LEXY_MOV(*_error);
     }
 
     //=== handler functions ===//
@@ -54,14 +55,21 @@ public:
     constexpr void error(Production p, Iterator pos, Error&& error)
     {
         lexy::error_context err_ctx(p, *_input, pos);
-        _error = lexy::invoke_as_result<decltype(_error)>(lexy::result_error, _callback, err_ctx,
-                                                          LEXY_FWD(error));
+        if constexpr (std::is_void_v<typename Callback::return_type>)
+        {
+            _callback(err_ctx, LEXY_FWD(error));
+            _error.emplace();
+        }
+        else
+        {
+            _error.emplace(_callback(err_ctx, LEXY_FWD(error)));
+        }
     }
 
 private:
-    lexy::result<void, typename Callback::return_type> _error;
-    const Input*                                       _input;
-    LEXY_EMPTY_MEMBER Callback                         _callback;
+    lexy::_detail::lazy_init<typename Callback::return_type> _error;
+    const Input*                                             _input;
+    LEXY_EMPTY_MEMBER Callback                               _callback;
 };
 
 template <typename Production, typename Input, typename Callback>
@@ -75,6 +83,8 @@ constexpr auto validate(const Input& input, Callback callback)
     using rule = lexy::production_rule<Production>;
     if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
         return lexy::result_value;
+    else if constexpr (std::is_void_v<typename Callback::return_type>)
+        return lexy::result_error;
     else
         return {lexy::result_error, LEXY_MOV(handler).get_error()};
 }

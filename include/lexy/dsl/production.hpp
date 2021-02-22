@@ -30,16 +30,19 @@ struct _prd_parser
                                  lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
         auto prod_ctx = context.production_context(Production{}, reader.cur());
-        if (_parse<Rule>(prod_ctx, reader))
+        if (!_parse<Rule>(prod_ctx, reader))
+            return false;
+
+        if constexpr (std::is_void_v<typename decltype(prod_ctx)::return_type>)
         {
-            auto result = LEXY_MOV(prod_ctx).finish();
-            if constexpr (std::is_same_v<decltype(result), lexy::result_value_t>)
-                return continuation::parse(context, reader, LEXY_FWD(args)...);
-            else
-                return continuation::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(result));
+            LEXY_MOV(prod_ctx).finish();
+            return continuation::parse(context, reader, LEXY_FWD(args)...);
         }
         else
-            return false;
+        {
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       LEXY_MOV(prod_ctx).finish());
+        }
     }
 };
 
@@ -75,17 +78,19 @@ struct _prd : rule_base
                                      lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
             auto prod_ctx = context.production_context(Production{}, _begin);
-            if (_impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
+            if (!_impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
+                return false;
+
+            if constexpr (std::is_void_v<typename decltype(prod_ctx)::return_type>)
             {
-                auto result = LEXY_MOV(prod_ctx).finish();
-                if constexpr (std::is_same_v<decltype(result), lexy::result_value_t>)
-                    return continuation::parse(context, reader, LEXY_FWD(args)...);
-                else
-                    return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                               LEXY_MOV(result));
+                LEXY_MOV(prod_ctx).finish();
+                return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
             else
-                return false;
+            {
+                return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                           LEXY_MOV(prod_ctx).finish());
+            }
         }
     };
 

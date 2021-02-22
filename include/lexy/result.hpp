@@ -13,21 +13,9 @@ namespace lexy
 {
 enum class _result_state : unsigned char
 {
-    empty,
     value,
     error,
 };
-
-struct result_empty_t
-{
-    LEXY_CONSTEVAL operator _result_state() const
-    {
-        return _result_state::empty;
-    }
-};
-
-/// Tag value to indicate an empty result.
-constexpr auto result_empty = result_empty_t{};
 
 struct result_value_t
 {
@@ -63,12 +51,9 @@ struct _result_storage_trivial
     _result_state _state;
     union
     {
-        char _empty;
-        T    _value;
-        E    _error;
+        T _value;
+        E _error;
     };
-
-    constexpr _result_storage_trivial(result_empty_t tag) : _state(tag), _empty() {}
 
     template <typename... Args>
     constexpr _result_storage_trivial(result_value_t tag, Args&&... args)
@@ -94,8 +79,6 @@ struct _result_storage_non_trivial
         T    _value;
         E    _error;
     };
-
-    constexpr _result_storage_non_trivial(result_empty_t tag) : _state(tag), _empty() {}
 
     template <typename... Args>
     _result_storage_non_trivial(result_value_t tag, Args&&... args)
@@ -177,8 +160,6 @@ public:
     using error_type = typename _result_storage<T, E>::error_type;
 
     //=== constructor ===//
-    constexpr result(result_empty_t) : _result_storage<T, E>(result_empty) {}
-
     template <typename... Args>
     constexpr result(result_value_t, Args&&... args)
     : _result_storage<T, E>(result_value, LEXY_FWD(args)...)
@@ -207,10 +188,6 @@ public:
     constexpr explicit operator bool() const noexcept
     {
         return this->_state == _result_state::value;
-    }
-    constexpr bool is_empty() const noexcept
-    {
-        return this->_state == _result_state::empty;
     }
     constexpr bool has_value() const noexcept
     {
@@ -272,24 +249,6 @@ public:
         return LEXY_MOV(this->_error);
     }
 };
-
-/// Invokes a callback into a result.
-template <typename Result, typename ErrorOrValue, typename Callback, typename... Args>
-constexpr Result invoke_as_result(ErrorOrValue tag, Callback&& callback, Args&&... args)
-{
-    using callback_t  = std::decay_t<Callback>;
-    using return_type = typename callback_t::return_type;
-
-    if constexpr (std::is_same_v<return_type, void>)
-    {
-        LEXY_FWD(callback)(LEXY_FWD(args)...);
-        return Result(tag);
-    }
-    else
-    {
-        return Result(tag, LEXY_FWD(callback)(LEXY_FWD(args)...));
-    }
-}
 } // namespace lexy
 
 #endif // LEXY_RESULT_HPP_INCLUDED

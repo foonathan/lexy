@@ -7,10 +7,10 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/lazy_init.hpp>
 #include <lexy/engine/base.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/production.hpp>
-#include <lexy/result.hpp>
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
@@ -136,7 +136,7 @@ class parse_context
 public:
     template <typename Iterator>
     constexpr explicit parse_context(Production p, Handler& handler, Iterator begin)
-    : _value(lexy::result_empty), _handler(&handler), _state(_handler->start_production(p, begin))
+    : _handler(&handler), _state(_handler->start_production(p, begin))
     {}
 
     constexpr Handler& handler() const noexcept
@@ -169,8 +169,9 @@ public:
         return 0;
     }
 
-    using production = Production;
-    using root       = Root;
+    using production  = Production;
+    using root        = Root;
+    using return_type = typename Handler::template return_type_for<Production>;
 
     constexpr auto sink() const
     {
@@ -192,16 +193,16 @@ public:
     template <typename... Args>
     constexpr void value(Args&&... args)
     {
-        if constexpr (std::is_void_v<typename Handler::template return_type_for<Production>>)
+        if constexpr (std::is_void_v<return_type>)
         {
             _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
-            _value = value_storage_type(lexy::result_value);
+            _value.emplace();
         }
         else
         {
             auto value
                 = _handler->finish_production(Production{}, LEXY_MOV(_state), LEXY_FWD(args)...);
-            _value = value_storage_type(lexy::result_value, LEXY_MOV(value));
+            _value.emplace(LEXY_MOV(value));
         }
     }
 
@@ -213,7 +214,8 @@ public:
 
     constexpr auto finish() &&
     {
-        return LEXY_MOV(_value).value();
+        if constexpr (!std::is_void_v<return_type>)
+            return LEXY_MOV(*_value);
     }
 
 private:
@@ -264,8 +266,9 @@ private:
                 return _parent->get(id);
         }
 
-        using production = Production;
-        using root       = Root;
+        using production  = Production;
+        using root        = Root;
+        using return_type = typename Handler::template return_type_for<Production>;
 
         constexpr auto sink() const
         {
@@ -306,12 +309,9 @@ private:
         LEXY_EMPTY_MEMBER State _state;
     };
 
-    using value_storage_type
-        = lexy::result<typename Handler::template return_type_for<Production>, void>;
-
-    value_storage_type             _value;
-    Handler*                       _handler;
-    LEXY_EMPTY_MEMBER HandlerState _state;
+    lexy::_detail::lazy_init<return_type> _value;
+    Handler*                              _handler;
+    LEXY_EMPTY_MEMBER HandlerState        _state;
 };
 
 template <typename Production, typename Handler, typename Iterator>

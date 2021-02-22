@@ -124,6 +124,8 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
                        typename Callback::return_type>;
     if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
         return result_type(lexy::result_value, LEXY_MOV(context).finish());
+    else if constexpr (std::is_void_v<typename Callback::return_type>)
+        return result_type(lexy::result_error);
     else
         return result_type(lexy::result_error, LEXY_MOV(handler).get_error());
 }
