@@ -41,11 +41,17 @@ const char* token_kind_name(token_kind k)
     return "";
 }
 
+struct string_p : lexy::token_production
+{
+    static constexpr auto name = "string_p";
+    static constexpr auto rule = lexy::dsl::quoted(lexy::dsl::ascii::character);
+};
+
 struct child_p
 {
     static constexpr auto name = "child_p";
-    static constexpr auto rule = lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>)
-                                 | lexy::dsl::quoted(lexy::dsl::ascii::character);
+    static constexpr auto rule
+        = lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>) | lexy::dsl::p<string_p>;
 };
 
 struct root_p
@@ -707,9 +713,11 @@ TEST_CASE("parse_as_tree")
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
             .token(token_kind::a, "123")
             .production(child_p{})
-                .token(token_kind::b, "\"")
-                .token(token_kind::c, "abc")
-                .token(token_kind::b, "\"")
+                .production(string_p{})
+                    .token(token_kind::b, "\"")
+                    .token(token_kind::c, "abc")
+                    .token(token_kind::b, "\"")
+                    .finish()
                 .finish()
             .token(token_kind::a, "321");
         // clang-format on

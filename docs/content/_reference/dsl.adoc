@@ -1860,7 +1860,6 @@ Matching::
 Values::
   Values produced by the opening delimiter, the finished sink (which might be empty), and values produced by the closing delimiter.
   Everything captured by matching the `token` is forwarded to the sink.
-  The captured lexeme spans over multiple tokens; there isn't a separate one for each occurrence.
 Errors::
   All errors raised when matching the opening delimiter and the token.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.
@@ -1903,7 +1902,6 @@ Matching::
 Values::
   Values produced by the opening delimiter, the finished sink (which might be empty), and values produced by the closing delimiter.
   Everything captured by matching the `token` is forwarded to the sink, as well as all values produced by `escape`.
-  The captured lexeme spans over multiple tokens; there isn't a separate one for each occurrence.
 Errors::
   All errors raised when matching the opening delimiter, `escape` and the token.
   If EOF is reached without a closing delimiter, a generic error with tag `lexy::missing_delimiter` is raised.

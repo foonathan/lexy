@@ -134,6 +134,19 @@ struct pt_node_token : pt_node<Reader>
                            typename Reader::iterator end) noexcept
     : begin(begin), kind(kind)
     {
+        update_end(end);
+    }
+
+    typename Reader::iterator end() const noexcept
+    {
+        if constexpr (_optimize_end)
+            return begin + end_impl;
+        else
+            return end_impl;
+    }
+
+    void update_end(typename Reader::iterator end) noexcept
+    {
         if constexpr (_optimize_end)
         {
             static_assert(sizeof(pt_node_token) == 3 * sizeof(void*));
@@ -148,14 +161,6 @@ struct pt_node_token : pt_node<Reader>
 
             end_impl = end;
         }
-    }
-
-    typename Reader::iterator end() const noexcept
-    {
-        if constexpr (_optimize_end)
-            return begin + end_impl;
-        else
-            return end_impl;
     }
 };
 
@@ -400,7 +405,7 @@ public:
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur = state(_result._root);
+        _cur = state(_result._root, lexy::is_token_production<Production>);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
@@ -425,7 +430,7 @@ public:
 
         // Subsequent insertions are to the new node, so update state and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = state(node);
+        _cur     = state(node, lexy::is_token_production<Production>);
         return old;
     }
 
@@ -438,11 +443,21 @@ public:
 
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
-        // Allocate and append.
-        _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
-        auto node
-            = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin, end);
-        _cur.append(node);
+        if (auto token = _cur.last_child.token();
+            _cur.is_token_production && token && token->kind == kind)
+        {
+            // We're having the same token again, merge with the previous one.
+            token->update_end(end);
+        }
+        else
+        {
+            // Allocate and append.
+            _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
+            auto node
+                = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin,
+                                                                                    end);
+            _cur.append(node);
+        }
     }
 
     void finish_production(state&& s)
@@ -470,45 +485,35 @@ private:
     {
         // The current production all tokens are appended to.
         _detail::pt_node_production<Reader>* prod;
+        bool                                 is_token_production;
+
         // The first child of the current production.
         _detail::pt_node_ptr<Reader> first_child;
-        // This pointer is updated on insert.
-        // It initially points to first_child.
-        _detail::pt_node_ptr<Reader>* last_child_ptr;
+        // The last child of the current production.
+        _detail::pt_node_ptr<Reader> last_child;
 
         state() = default;
 
-        explicit state(_detail::pt_node_production<Reader>* prod)
-        : prod(prod), last_child_ptr(&first_child)
+        explicit state(_detail::pt_node_production<Reader>* prod, bool is_token_production)
+        : prod(prod), is_token_production(is_token_production)
         {}
-
-        state(state&& other) noexcept
-        {
-            *this = LEXY_MOV(other);
-        }
-
-        ~state() noexcept = default;
-
-        state& operator=(state&& other) noexcept
-        {
-            prod        = other.prod;
-            first_child = other.first_child;
-
-            if (other.last_child_ptr == &other.first_child)
-                last_child_ptr = &first_child;
-            else
-                last_child_ptr = other.last_child_ptr;
-            return *this;
-        }
 
         template <typename T>
         void append(T* child)
         {
             ++prod->child_count;
 
-            // Add a sibling to the last child.
-            last_child_ptr->set_sibling(child);
-            last_child_ptr = &child->ptr;
+            if (last_child.base())
+            {
+                // Add a sibling to the last child.
+                last_child.base()->ptr.set_sibling(child);
+                last_child.set_sibling(child);
+            }
+            else
+            {
+                first_child.set_sibling(child);
+                last_child.set_sibling(child);
+            }
         }
 
         void finish()
@@ -517,7 +522,7 @@ private:
                 return;
 
             // The pointer of the last child needs to point back to prod.
-            last_child_ptr->set_parent(prod);
+            last_child.base()->ptr.set_parent(prod);
 
             // Now we need to store the first child pointer value in the node.
             if (first_child.base() == prod + 1)

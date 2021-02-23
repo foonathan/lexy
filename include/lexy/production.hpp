@@ -26,6 +26,8 @@ constexpr bool is_production = _detail::is_detected<production_rule, Production>
 
 /// Base class to indicate that this production is conceptually a token.
 /// This inhibits whitespace skipping inside the production.
+///
+/// When generating a parse tree, it will also merge tokens of the same kind into the same node.
 struct token_production
 {};
 

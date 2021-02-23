@@ -798,6 +798,10 @@ The resulting parse tree will contain a parent node for each production, and lea
 If a token is empty, it will not be added to the parse tree.
 If a production inherits from `lexy::transparent_production`, no separate node will be created;
 instead all child nodes will be added to its parent.
+If a production inherits from `lexy::token_production`, tokens are merged when possible:
+if there are two or more tokens with the same kind directly after each other, only a single node spanning all of them will be added,
+as opposed to multiple nodes for each individual token.
+
 Traversing the tree and concatenating the lexemes of all tokens will result in the original input.
 
 ==== Manual Tree Building

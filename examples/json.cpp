@@ -179,7 +179,7 @@ struct number : lexy::token_production
 };
 
 // A json value that is a string.
-struct string
+struct string : lexy::token_production
 {
     struct invalid_char
     {

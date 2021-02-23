@@ -38,10 +38,8 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink          = context.sink();
-            auto del_begin     = reader.cur();
-            auto content_begin = del_begin;
-            auto content_end   = del_begin;
+            auto sink      = context.sink();
+            auto del_begin = reader.cur();
 
             using engine = typename Char::token_engine;
             lexy::branch_matcher<Close, Reader>  close{};
@@ -58,38 +56,35 @@ struct _del : rule_base
                 }
                 else if (escape.match(reader))
                 {
-                    // Before we add the escape character to the sink, we need to add the content.
-                    context.token(Char::token_kind(), content_begin, content_end);
-                    sink(lexy::lexeme<Reader>(content_begin, content_end));
-
                     if (!escape.template parse<_list_sink>(context, reader, sink))
                         return false;
-
-                    // We begin again after the escape sequence has been parsed.
-                    content_begin = reader.cur();
                 }
                 // Parse the next character.
                 else if constexpr (lexy::engine_can_fail<engine, Reader>)
                 {
-                    auto position = reader.cur();
+                    auto content_begin = reader.cur();
                     if (auto ec = engine::match(reader); ec != typename engine::error_code())
                     {
-                        Char::token_error(context, reader, ec, position);
+                        Char::token_error(context, reader, ec, content_begin);
                         return false;
                     }
+                    auto content_end = reader.cur();
+
+                    context.token(Char::token_kind(), content_begin, content_end);
+                    sink(lexy::lexeme<Reader>(content_begin, content_end));
                 }
                 else
                 {
+                    auto content_begin = reader.cur();
                     engine::match(reader);
-                }
+                    auto content_end = reader.cur();
 
-                // Extend the content by what we've just parsed.
-                content_end = reader.cur();
+                    context.token(Char::token_kind(), content_begin, content_end);
+                    sink(lexy::lexeme<Reader>(content_begin, content_end));
+                }
             }
 
             // Finish up the list.
-            context.token(Char::token_kind(), content_begin, content_end);
-            sink(lexy::lexeme<Reader>(content_begin, content_end));
             return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
                                                                    LEXY_FWD(args)..., sink);
         }
@@ -104,10 +99,8 @@ struct _del<Close, Char, void>
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink          = context.sink();
-            auto del_begin     = reader.cur();
-            auto content_begin = del_begin;
-            auto content_end   = del_begin;
+            auto sink      = context.sink();
+            auto del_begin = reader.cur();
 
             using engine = typename Char::token_engine;
             lexy::branch_matcher<Close, Reader> close{};
@@ -123,25 +116,29 @@ struct _del<Close, Char, void>
                 }
                 else if constexpr (lexy::engine_can_fail<engine, Reader>)
                 {
-                    auto position = reader.cur();
+                    auto content_begin = reader.cur();
                     if (auto ec = engine::match(reader); ec != typename engine::error_code())
                     {
-                        Char::token_error(context, reader, ec, position);
+                        Char::token_error(context, reader, ec, content_begin);
                         return false;
                     }
+                    auto content_end = reader.cur();
+
+                    context.token(Char::token_kind(), content_begin, content_end);
+                    sink(lexy::lexeme<Reader>(content_begin, content_end));
                 }
                 else
                 {
+                    auto content_begin = reader.cur();
                     engine::match(reader);
-                }
+                    auto content_end = reader.cur();
 
-                // Extend the content by what we've just parsed.
-                content_end = reader.cur();
+                    context.token(Char::token_kind(), content_begin, content_end);
+                    sink(lexy::lexeme<Reader>(content_begin, content_end));
+                }
             }
 
             // Finish up the list.
-            context.token(Char::token_kind(), content_begin, content_end);
-            sink(lexy::lexeme<Reader>(content_begin, content_end));
             return _list_finish<NextParser, Args...>::parse_branch(close, context, reader,
                                                                    LEXY_FWD(args)..., sink);
         }
