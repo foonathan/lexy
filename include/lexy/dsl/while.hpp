@@ -21,11 +21,13 @@ struct _whl : rule_base
         {
             while (true)
             {
-                lexy::branch_matcher<Branch, Reader> branch{};
-                if (!branch.match(reader))
-                    break;
+                using branch_parser
+                    = lexy::rule_parser<Branch, lexy::context_discard_parser<Context>>;
 
-                if (!branch.template parse<lexy::context_discard_parser<Context>>(context, reader))
+                auto result = branch_parser::try_parse(context, reader);
+                if (result == lexy::rule_try_parse_result::backtracked)
+                    break;
+                else if (result == lexy::rule_try_parse_result::canceled)
                     return false;
             }
 
@@ -69,7 +71,7 @@ LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
 
 namespace lexyd
 {
-template <typename Terminator, typename Rule>
+template <typename Term, typename Rule>
 struct _whlt : rule_base
 {
     template <typename NextParser>
@@ -78,15 +80,22 @@ struct _whlt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_matcher<Terminator, Reader> term{};
-            while (!term.match(reader))
+            while (true)
             {
+                using term_parser = lexy::rule_parser<Term, NextParser>;
+                if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)...);
+                    result != lexy::rule_try_parse_result::backtracked)
+                {
+                    // We had the terminator, and thus are done.
+                    return static_cast<bool>(result);
+                }
+
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
                 if (!parser::parse(context, reader))
                     return false;
             }
 
-            return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
+            return false; // unreachable
         }
     };
 };

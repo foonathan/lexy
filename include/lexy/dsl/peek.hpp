@@ -11,22 +11,22 @@
 namespace lexyd
 {
 template <typename Engine, bool Expected>
-struct _peek : branch_base
+struct _peek : rule_base
 {
-    template <typename Reader>
-    struct branch_matcher
+    static constexpr auto is_branch = true;
+
+    template <typename NextParser>
+    struct parser : NextParser // propagate parse
     {
-        static constexpr auto is_unconditional = false;
-
-        constexpr bool match(Reader& reader)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
         {
-            return lexy::engine_peek<Engine>(reader) == Expected;
-        }
+            if (lexy::engine_peek<Engine>(reader) != Expected)
+                return lexy::rule_try_parse_result::backtracked;
 
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            return static_cast<lexy::rule_try_parse_result>(
+                NextParser::parse(context, reader, LEXY_FWD(args)...));
         }
     };
 

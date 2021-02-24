@@ -85,6 +85,9 @@ struct test_handler
         else
             return Callback{str}.success(Production{}, LEXY_FWD(args)...);
     }
+    template <typename Production>
+    constexpr void backtrack_production(Production, int)
+    {}
 
     template <typename Production, typename Error>
     LEXY_VERIFY_FN void error(Production, int, Error&& error)

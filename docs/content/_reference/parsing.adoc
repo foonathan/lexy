@@ -821,12 +821,14 @@ public:
 
     template <typename Production>
     production_state start_production(Production production); // <3>
-    void finish_production(production_state&& s); // <4>
 
     void token(token_kind<TokenKind> kind,
-               typename Reader::iterator begin, typename Reader::iterator end); // <5>
+               typename Reader::iterator begin, typename Reader::iterator end); // <4>
 
-    parse_tree finish() &&; // <6>
+    void finish_production(production_state&& s); // <5>
+    void backtrack_production(production_state&& s); // <6>
+
+    parse_tree finish() &&; // <7>
 };
 ----
 <1> Create a builder that will re-use the memory of the existing `tree`.
@@ -834,9 +836,11 @@ public:
 <2> Same as above, but does not re-use memory.
 <3> Adds a production child node as last child of the current node and activates it.
     Returns a handle that remembers the previous current node.
-<4> Finishes with a child production and activates its parent.
-<5> Adds a token node to the current node.
-<6> Returns the finished tree.
+<4> Adds a token node to the current node.
+<5> Finishes with a child production and activates its parent.
+<6> Cancels the currently activated node, by deallocating it and all children.
+    Activates its parent node again.
+<7> Returns the finished tree.
 
 ==== Tree Node
 
@@ -846,10 +850,11 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
 {
 public:
-    bool is_root() const noexcept;
-
     bool is_token() const noexcept;
     bool is_production() const noexcept;
+
+    bool is_root() const noexcept;
+    bool is_token_production() const noexcept;
 
     const char* name() const noexcept;
 

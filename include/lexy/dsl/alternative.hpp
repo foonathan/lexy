@@ -34,12 +34,12 @@ struct _trie : token_base<_trie<Strings...>>
     using token_engine          = lexy::engine_trie<_impl>;
 
     template <typename Context, typename Reader>
-    static constexpr auto token_error(Context& context, const Reader&,
+    static constexpr void token_error(Context& context, const Reader&,
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
-        return LEXY_MOV(context).error(err);
+        context.error(err);
     }
 };
 

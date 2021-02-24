@@ -54,7 +54,7 @@ struct _ctx_lcapture : rule_base
 };
 
 template <typename Id, typename Tag, typename Rule>
-struct _ctx_lrequire : branch_base
+struct _ctx_lrequire : rule_base
 {
     template <typename NextParser>
     struct parser

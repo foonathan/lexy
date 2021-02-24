@@ -11,23 +11,23 @@
 namespace lexyd
 {
 template <typename Needle, typename End>
-struct _look : branch_base
+struct _look : rule_base
 {
-    template <typename Reader>
-    struct branch_matcher
-    {
-        static constexpr auto is_unconditional = false;
+    static constexpr auto is_branch = true;
 
-        constexpr bool match(Reader& reader)
+    template <typename NextParser>
+    struct parser : NextParser // delegate parse
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
         {
             using engine = lexy::engine_lookahead<Needle, End>;
-            return engine::match(reader) == typename engine::error_code();
-        }
+            if (engine::match(reader) != typename engine::error_code())
+                return lexy::rule_try_parse_result::backtracked;
 
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            return static_cast<lexy::rule_try_parse_result>(
+                NextParser::parse(context, reader, LEXY_FWD(args)...));
         }
     };
 

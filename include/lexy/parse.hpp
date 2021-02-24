@@ -93,6 +93,9 @@ public:
                           "missing callback overload for production");
         }
     }
+    template <typename Production, typename Iterator>
+    constexpr void backtrack_production(Production, Iterator)
+    {}
 
     template <typename Production, typename Iterator, typename Error>
     constexpr void error(Production p, Iterator pos, Error&& error)

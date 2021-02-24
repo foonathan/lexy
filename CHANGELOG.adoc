@@ -3,11 +3,12 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-02-22
+== 2021-02-25
 
 * Removed empty state from `lexy::result`. It was only added because it was useful internally, but this is no longer the case.
 * Reverted optimization that merged multiple lexemes in the sink/tokens of `dsl::delimited()`.
   Tokens are instead now automatically merged by the parse tree builder if direct children of a `lexy::token_production`.
+* `dsl::switch_(rule).case_()` now requires a branch of the form `token >> rule`, previously it could take an arbitrary branch.
 
 == 2021-02-21
 

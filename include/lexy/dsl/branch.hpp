@@ -15,30 +15,14 @@ struct _br : rule_base
 {
     static_assert(sizeof...(R) >= 0);
 
-    static constexpr bool is_branch = true;
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = Condition::is_unconditional_branch;
 
-    template <typename Reader>
-    struct branch_matcher
-    {
-        lexy::branch_matcher<Condition, Reader> _condition;
-
-        static constexpr auto is_unconditional = decltype(_condition)::is_unconditional;
-
-        constexpr bool match(Reader& reader)
-        {
-            return _condition.match(reader);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using continuation = typename _seq_parser<NextParser, R...>::type;
-            return _condition.template parse<continuation>(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
+    // We simple connect Condition with R... and then NextParser.
+    // Condition has a try_parse() that will try to match Condition and then continue on with the
+    // continuation.
     template <typename NextParser>
-    using parser = typename _seq_parser<NextParser, Condition, R...>::type;
+    using parser = lexy::rule_parser<Condition, typename _seq_parser<NextParser, R...>::type>;
 };
 
 //=== operator>> ===//
@@ -118,24 +102,13 @@ LEXY_CONSTEVAL auto operator+(_br<C1, R...>, _br<C2, S...>)
 
 namespace lexyd
 {
-struct _else : branch_base
+struct _else : rule_base
 {
-    template <typename Reader>
-    struct branch_matcher
-    {
-        static constexpr auto is_unconditional = true;
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = true;
 
-        constexpr bool match(Reader&)
-        {
-            return true;
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
+    template <typename NextParser>
+    using parser = NextParser;
 };
 
 /// Takes the branch unconditionally.

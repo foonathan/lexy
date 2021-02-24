@@ -8,7 +8,6 @@
 #include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/error.hpp>
 
 namespace lexy
 {
@@ -23,30 +22,51 @@ struct exhausted_switch
 
 namespace lexyd
 {
-// Continues with the rest of the input after we've handled the switch.
-template <typename NextParser>
-struct _switch_continue
+template <typename Token, typename Value>
+struct _switch_case : rule_base
 {
-    template <typename Context, typename PartialReader, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, PartialReader&, Reader& reader, Args&&... args)
+    static constexpr auto is_branch = true;
+
+    template <typename NextParser>
+    struct parser
     {
-        // We now continue with the regular reader again.
-        return NextParser::parse(context, reader, LEXY_FWD(args)...);
-    }
+        template <typename Context, typename PartialReader, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, PartialReader& partial, Reader& reader,
+                                     Args&&... args) -> lexy::rule_try_parse_result
+        {
+            if (lexy::engine_try_match<typename Token::token_engine>(partial) && partial.eof())
+                return static_cast<lexy::rule_try_parse_result>(
+                    lexy::rule_parser<Value, NextParser>::parse(context, reader,
+                                                                LEXY_FWD(args)...));
+            else
+                return lexy::rule_try_parse_result::backtracked;
+        }
+    };
+};
+
+template <typename Value>
+struct _switch_case<void, Value> : rule_base
+{
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = true;
+
+    template <typename NextParser>
+    using parser = lexy::rule_parser<Value, NextParser>;
 };
 
 // Selects the appropriate case after the switch rule has been matched.
 template <typename NextParser, typename... Cases>
 struct _switch_select;
-template <typename NextParser>
-struct _switch_select<NextParser>
+template <typename NextParser, typename Tag>
+struct _switch_select<NextParser, Tag>
 {
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&...)
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
-        auto err = lexy::make_error<Reader, lexy::exhausted_switch>(save.cur(), reader.cur());
+        using tag = std::conditional_t<std::is_void_v<Tag>, lexy::exhausted_switch, Tag>;
+        auto err  = lexy::make_error<Reader, tag>(save.cur(), reader.cur());
         context.error(err);
         return false;
     }
@@ -57,29 +77,29 @@ struct _switch_select<NextParser, H, T...>
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&... args)
     {
-        using cont = _switch_continue<NextParser>;
-
-        // We only want to read what the value has matched.
-        auto partial         = lexy::partial_reader(save, reader.cur());
-        using branch_matcher = lexy::branch_matcher<H, decltype(partial)>;
-
-        if constexpr (branch_matcher::is_unconditional)
+        if constexpr (H::is_unconditional_branch)
         {
-            return lexy::rule_parser<H, cont>::parse(context, partial, reader, LEXY_FWD(args)...);
+            (void)save;
+            return lexy::rule_parser<H, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
         else
         {
-            branch_matcher branch{};
-            if (branch.match(partial) && partial.eof())
-                return branch.template parse<cont>(context, partial, reader, LEXY_FWD(args)...);
-            else
+            // We only want to read what the value has matched.
+            auto partial = lexy::partial_reader(save, reader.cur());
+
+            auto result = lexy::rule_parser<H, NextParser>::try_parse(context, partial, reader,
+                                                                      LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+                // Try the next branch.
                 return _switch_select<NextParser, T...>::parse(context, reader, save,
                                                                LEXY_FWD(args)...);
+            else
+                return static_cast<bool>(result);
         }
     }
 };
 
-template <typename Rule, typename... Cases>
+template <typename Rule, typename Error, typename... Cases>
 struct _switch : rule_base
 {
     template <typename NextParser>
@@ -90,7 +110,7 @@ struct _switch : rule_base
         {
             // We parse the rule using our special continuation.
             // To recover the old reader position, we create a copy.
-            using cont = _switch_select<NextParser, Cases...>;
+            using cont = _switch_select<NextParser, Cases..., Error>;
             return lexy::rule_parser<Rule, cont>::parse(context, reader, Reader(reader),
                                                         LEXY_FWD(args)...);
         }
@@ -98,23 +118,23 @@ struct _switch : rule_base
 
     //=== dsl ===//
     /// Adds a case to the switch.
-    template <typename Branch>
-    LEXY_CONSTEVAL auto case_(Branch) const
+    template <typename Token, typename Value>
+    LEXY_CONSTEVAL auto case_(_br<Token, Value>) const
     {
-        static_assert(lexy::is_branch<Branch>, "switch case must be a branch");
-        return _switch<Rule, Cases..., Branch>{};
+        static_assert(lexy::is_token<Token>, "case condition must be a token");
+        return _switch<Rule, Error, Cases..., _switch_case<Token, Value>>{};
     }
 
     /// Adds a default value to the switch.
     template <typename Default>
-    LEXY_CONSTEVAL auto default_(Default def) const
+    LEXY_CONSTEVAL auto default_(Default) const
     {
-        return case_(else_ >> def);
+        return _switch<Rule, Error, Cases..., _switch_case<void, Default>>{};
     }
 
     /// Adds an error on the default case.
     template <typename Tag>
-    static constexpr _switch<Rule, Cases..., _err<Tag, _any>> error = {};
+    static constexpr _switch<Rule, Tag, Cases...> error = {};
 
     LEXY_DEPRECATED_ERROR("replace `switch.error<Tag>()` by `switch.error<Tag>`")
     constexpr _switch operator()() const
@@ -128,7 +148,7 @@ struct _switch : rule_base
 template <typename Rule>
 LEXY_CONSTEVAL auto switch_(Rule)
 {
-    return _switch<Rule>{};
+    return _switch<Rule, void>{};
 }
 } // namespace lexyd
 

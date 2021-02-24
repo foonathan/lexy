@@ -6,8 +6,8 @@
 #define LEXY_DSL_CONTEXT_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/capture.hpp>
 #include <lexy/error.hpp>
+#include <lexy/lexeme.hpp>
 
 #ifdef LEXY_IGNORE_DEPRECATED_CONTEXT
 #    define LEXY_DEPRECATED_CONTEXT
@@ -18,6 +18,32 @@
 
 namespace lexyd
 {
+template <template <typename Reader> typename Lexeme, typename NextParser, typename... PrevArgs>
+struct _cap_cont
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, PrevArgs&&... prev_args,
+                             typename Reader::iterator begin, Args&&... args)
+    {
+        auto end = reader.cur();
+        return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
+                                 Lexeme<typename Reader::canonical_reader>(begin, end),
+                                 LEXY_FWD(args)...);
+    }
+};
+
+template <template <typename Reader> typename Lexeme, typename Rule, typename NextParser>
+struct _cap_parser
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    {
+        using continuation = _cap_cont<Lexeme, NextParser, Args...>;
+        return lexy::rule_parser<Rule, continuation>::parse(context, reader, LEXY_FWD(args)...,
+                                                            reader.cur());
+    }
+};
+
 template <typename Reader>
 struct _context
 {

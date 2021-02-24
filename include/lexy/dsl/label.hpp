@@ -55,31 +55,20 @@ struct _lab : rule_base
 template <typename Label, typename Rule>
 struct _labr : rule_base
 {
-    static constexpr auto is_branch = lexy::is_branch<Rule>;
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        lexy::branch_matcher<Rule, Reader> _impl;
-
-        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
-
-        constexpr bool match(Reader& reader)
-        {
-            return _impl.match(reader);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
-                                                    lexy::label<Label>{});
-        }
-    };
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
 
     template <typename NextParser>
     struct parser
     {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
+                                                                  LEXY_FWD(args)...,
+                                                                  lexy::label<Label>{});
+        }
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {

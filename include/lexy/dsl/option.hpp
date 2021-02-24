@@ -61,11 +61,15 @@ struct _opt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_matcher<Branch, Reader> branch{};
-            if (branch.match(reader))
-                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
-            else
+            using branch_parser = lexy::rule_parser<Branch, NextParser>;
+
+            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+                // Branch wasn't taken, continue anyway with nullopt.
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+            else
+                // Return true/false depending on result.
+                return static_cast<bool>(result);
         }
     };
 };
@@ -82,7 +86,7 @@ LEXY_CONSTEVAL auto opt(Rule)
 
 namespace lexyd
 {
-template <typename Terminator, typename R>
+template <typename Term, typename R>
 struct _optt : rule_base
 {
     template <typename NextParser>
@@ -91,14 +95,20 @@ struct _optt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_matcher<Terminator, Reader> term{};
-            if (term.match(reader))
-                return term.template parse<NextParser>(context, reader, LEXY_FWD(args)...,
-                                                       lexy::nullopt{});
+            using term_parser = lexy::rule_parser<Term, NextParser>;
+            if (auto result
+                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+                result != lexy::rule_try_parse_result::backtracked)
+            {
+                // We had the terminator, and thus created the empty optional.
+                return static_cast<bool>(result);
+            }
             else
-                // Note: we don't add the terminator.
+            {
+                // Note: we don't parse the terminator after the rule.
                 // This has to be done by the parent rule, if necessary.
                 return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            }
         }
     };
 };

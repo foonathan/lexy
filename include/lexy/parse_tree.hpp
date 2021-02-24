@@ -167,16 +167,18 @@ struct pt_node_token : pt_node<Reader>
 template <typename Reader>
 struct pt_node_production : pt_node<Reader>
 {
-    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 2;
+    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 3;
 
     const char* name;
     std::size_t child_count : child_count_bits;
+    std::size_t token_production : 1;
     std::size_t first_child_adjacent : 1;
     std::size_t first_child_type : 1;
 
     template <typename Production>
     explicit pt_node_production(Production) noexcept
-    : child_count(0), first_child_adjacent(true), first_child_type(pt_node_ptr<Reader>::type_token)
+    : child_count(0), token_production(lexy::is_token_production<Production>),
+      first_child_adjacent(true), first_child_type(pt_node_ptr<Reader>::type_token)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
 
@@ -315,6 +317,24 @@ public:
         return ::new (static_cast<void*>(memory)) T(LEXY_FWD(args)...);
     }
 
+    void unwind(void* marker) noexcept
+    {
+        auto pos = static_cast<unsigned char*>(marker);
+
+        // Note: this is not guaranteed to work by the standard;
+        // We'd have to go through std::less instead.
+        // However, on all implementations I care about, std::less just does < anyway.
+        if (_cur_block->memory <= pos && pos < _cur_block->end())
+            // We're still in the same block, just reset position.
+            _cur_pos = pos;
+        else
+            // Reset to the beginning of the current block only.
+            // This can waste memory, but this is not a problem here:
+            // unwind() is only used to backtrack a production, which happens after a couple of
+            // tokens only; the memory waste is directly proportional to the lookahead length.
+            _cur_pos = _cur_block->memory;
+    }
+
 private:
     std::size_t remaining_capacity() const noexcept
     {
@@ -405,7 +425,7 @@ public:
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur = state(_result._root, lexy::is_token_production<Production>);
+        _cur = state(_result._root);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
@@ -426,11 +446,11 @@ public:
                                 + sizeof(_detail::pt_node_ptr<Reader>));
         auto node
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur.append(node);
+        // Note: don't append the node yet, we might still backtrack.
 
         // Subsequent insertions are to the new node, so update state and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = state(node, lexy::is_token_production<Production>);
+        _cur     = state(node);
         return old;
     }
 
@@ -444,7 +464,7 @@ public:
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
         if (auto token = _cur.last_child.token();
-            _cur.is_token_production && token && token->kind == kind)
+            _cur.prod->token_production && token && token->kind == kind)
         {
             // We're having the same token again, merge with the previous one.
             token->update_end(end);
@@ -468,7 +488,21 @@ public:
 
         // We're done with the current production.
         _cur.finish();
+        // Append to previous production.
+        s.append(_cur.prod);
         // Continue with the previous production.
+        _cur = LEXY_MOV(s);
+    }
+
+    void backtrack_production(state&& s)
+    {
+        if (!s.prod)
+            // We're backtracking a transparent production, do nothing.
+            return;
+
+        // Deallocate everything from the backtracked production.
+        _result._buffer.unwind(_cur.prod);
+        // Continue with previous production.
         _cur = LEXY_MOV(s);
     }
 
@@ -485,62 +519,54 @@ private:
     {
         // The current production all tokens are appended to.
         _detail::pt_node_production<Reader>* prod;
-        bool                                 is_token_production;
-
-        // The first child of the current production.
-        _detail::pt_node_ptr<Reader> first_child;
         // The last child of the current production.
         _detail::pt_node_ptr<Reader> last_child;
 
         state() = default;
 
-        explicit state(_detail::pt_node_production<Reader>* prod, bool is_token_production)
-        : prod(prod), is_token_production(is_token_production)
-        {}
+        explicit state(_detail::pt_node_production<Reader>* prod) : prod(prod) {}
 
         template <typename T>
         void append(T* child)
         {
             ++prod->child_count;
 
-            if (last_child.base())
+            if (last_child)
             {
                 // Add a sibling to the last child.
                 last_child.base()->ptr.set_sibling(child);
+                // child is now the last child.
                 last_child.set_sibling(child);
             }
             else
             {
-                first_child.set_sibling(child);
+                // We're adding the first child of a node, which is also the last child.
                 last_child.set_sibling(child);
+
+                if (last_child.base() == prod + 1)
+                {
+                    // The first child is stored adjacent.
+                    prod->first_child_adjacent = true;
+                    prod->first_child_type     = last_child.type() & 0b1;
+                }
+                else
+                {
+                    // The child is not stored immediately afterwards.
+                    // This only happens when a new block had to be started.
+                    // In that case, we've saved enough space after the production to add a pointer.
+                    auto memory = static_cast<void*>(prod + 1);
+                    ::new (memory) _detail::pt_node_ptr<Reader>(last_child);
+
+                    prod->first_child_adjacent = false;
+                }
             }
         }
 
         void finish()
         {
-            if (prod->child_count == 0)
-                return;
-
-            // The pointer of the last child needs to point back to prod.
-            last_child.base()->ptr.set_parent(prod);
-
-            // Now we need to store the first child pointer value in the node.
-            if (first_child.base() == prod + 1)
-            {
-                // The first child is stored adjacent.
-                prod->first_child_adjacent = true;
-                prod->first_child_type     = first_child.type() & 0b1;
-            }
-            else
-            {
-                // The child is not stored immediately afterwards.
-                // This only happens when a new block had to be started.
-                // In that case, we've saved enough space after the production to add a pointer.
-                auto memory = static_cast<void*>(prod + 1);
-                ::new (memory) _detail::pt_node_ptr<Reader>(first_child);
-
-                prod->first_child_adjacent = false;
-            }
+            if (last_child)
+                // The pointer of the last child needs to point back to prod.
+                last_child.base()->ptr.set_parent(prod);
         }
     } _cur;
 };
@@ -549,12 +575,6 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
 {
 public:
-    bool is_root() const noexcept
-    {
-        // Root node has no next pointer.
-        return !_ptr.base()->ptr;
-    }
-
     bool is_token() const noexcept
     {
         return _ptr.token() != nullptr;
@@ -562,6 +582,16 @@ public:
     bool is_production() const noexcept
     {
         return _ptr.production() != nullptr;
+    }
+
+    bool is_root() const noexcept
+    {
+        // Root node has no next pointer.
+        return !_ptr.base()->ptr;
+    }
+    bool is_token_production() const noexcept
+    {
+        return is_production() && _ptr.production()->token_production;
     }
 
     const char* name() const noexcept
@@ -1039,13 +1069,17 @@ public:
         else
             _builder->finish_production(LEXY_MOV(state.builder_state));
     }
+    template <typename Production>
+    constexpr void backtrack_production(Production, _state_t&& state)
+    {
+        --_depth;
+        _builder->backtrack_production(LEXY_MOV(state.builder_state));
+    }
 
     template <typename Production, typename Error>
     constexpr void error(Production p, _state_t&& state, Error&& error)
     {
-        // Clear the tree to prevent an incomplete one from showing up.
         _tree->clear();
-
         _validate.error(p, state.pos, LEXY_FWD(error));
     }
 
@@ -1059,7 +1093,7 @@ private:
 
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename Callback>
-auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+bool parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
                    const Input& input, Callback callback)
 {
     auto                handler = _pt_handler(tree, input, LEXY_MOV(callback));

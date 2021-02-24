@@ -112,31 +112,8 @@ namespace lexyd
 template <typename Rule>
 struct _wsn : rule_base
 {
-    static constexpr auto is_branch = lexy::is_branch<Rule>;
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        lexy::branch_matcher<Rule, Reader> _impl;
-
-        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
-
-        constexpr bool match(Reader& reader)
-        {
-            return _impl.match(reader);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            // Parse the remainder of the branch using the context that doesn't allow inner
-            // whitespace.
-            auto ws_context    = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
-            using continuation = typename parser<NextParser>::_cont;
-            return _impl.template parse<continuation>(ws_context, reader, context,
-                                                      LEXY_FWD(args)...);
-        }
-    };
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
 
     template <typename NextParser>
     struct parser
@@ -151,6 +128,16 @@ struct _wsn : rule_base
                                                                            LEXY_FWD(args)...);
             }
         };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            // Parse the rule using the context that doesn't allow inner whitespace.
+            auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+            return lexy::rule_parser<Rule, _cont>::try_parse(ws_context, reader, context,
+                                                             LEXY_FWD(args)...);
+        }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
@@ -177,28 +164,30 @@ LEXY_CONSTEVAL auto no_whitespace(Rule)
 namespace lexyd
 {
 template <typename Rule, typename Whitespace>
-struct _wsd : decltype(loop(token(Whitespace{}) | break_) + Rule{})
+struct _wsd : rule_base
 {
-    static constexpr bool is_branch = lexy::is_branch<Rule>;
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
 
-    template <typename Reader>
-    struct branch_matcher
+    template <typename NextParser>
+    struct parser
     {
-        lexy::branch_matcher<Rule, Reader> _impl;
-
-        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
-
-        constexpr bool match(Reader& reader)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
         {
             using ws = decltype(token(loop(Whitespace{} | break_)));
             lexy::engine_try_match<typename ws::token_engine>(reader);
-            return _impl.match(reader);
+
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
+                                                                  LEXY_FWD(args)...);
         }
 
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return _impl.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
+            using rule = decltype(loop(token(Whitespace{}) | break_) + Rule{});
+            return lexy::rule_parser<rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 

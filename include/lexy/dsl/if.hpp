@@ -19,11 +19,15 @@ struct _if : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_matcher<Branch, Reader> branch{};
-            if (branch.match(reader))
-                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
-            else
+            using branch_parser = lexy::rule_parser<Branch, NextParser>;
+
+            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+                // Branch wasn't taken, continue anyway.
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else
+                // Return true/false depending on result.
+                return static_cast<bool>(result);
         }
     };
 };

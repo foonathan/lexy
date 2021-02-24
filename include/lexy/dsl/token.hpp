@@ -38,38 +38,33 @@ struct token_base : _token_base
         return Derived{};
     }
 
-    static constexpr auto is_branch = true;
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        typename Reader::iterator _begin = {};
-
-        static constexpr auto is_unconditional = false;
-
-        constexpr bool match(Reader& reader)
-        {
-            _begin = reader.cur();
-            return lexy::engine_try_match<typename Derived::token_engine>(reader);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr auto parse(Context& context, Reader& reader, Args&&... args)
-        {
-            context.token(Derived::token_kind(), _begin, reader.cur());
-            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
-                                                                       LEXY_FWD(args)...);
-        }
-    };
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = false;
 
     template <typename NextParser>
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            using token_engine = typename Derived::token_engine;
+
+            auto begin = reader.cur();
+            if (!lexy::engine_try_match<token_engine>(reader))
+                return lexy::rule_try_parse_result::backtracked;
+            auto end = reader.cur();
+            context.token(Derived::token_kind(), begin, end);
+
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return static_cast<lexy::rule_try_parse_result>(
+                continuation::parse(context, reader, LEXY_FWD(args)...));
+        }
+
+        template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             using token_engine = typename Derived::token_engine;
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
 
             auto position = reader.cur();
             if constexpr (lexy::engine_can_fail<token_engine, Reader>)
@@ -80,16 +75,15 @@ struct token_base : _token_base
                     Derived::token_error(context, reader, ec, position);
                     return false;
                 }
-
-                context.token(Derived::token_kind(), position, reader.cur());
-                return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
                 token_engine::match(reader);
-                context.token(Derived::token_kind(), position, reader.cur());
-                return continuation::parse(context, reader, LEXY_FWD(args)...);
             }
+            context.token(Derived::token_kind(), position, reader.cur());
+
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 

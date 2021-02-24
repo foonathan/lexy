@@ -51,7 +51,7 @@ struct child_p
 {
     static constexpr auto name = "child_p";
     static constexpr auto rule
-        = lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>) | lexy::dsl::p<string_p>;
+        = lexy::dsl::p<string_p> | lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>);
 };
 
 struct root_p
@@ -747,6 +747,9 @@ TEST_CASE("parse_as_tree")
     }
     SUBCASE("failure")
     {
+        tree = parse_tree::builder(root_p{}).finish();
+        CHECK(!tree.empty());
+
         auto input  = lexy::zstring_input("123(abc");
         auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
         CHECK(!result);

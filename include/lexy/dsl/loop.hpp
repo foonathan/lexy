@@ -11,24 +11,8 @@ namespace lexyd
 {
 struct _break : rule_base
 {
-    static constexpr auto is_branch = true;
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        static constexpr auto is_unconditional = true;
-
-        constexpr bool match(Reader&)
-        {
-            return true;
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return parser<NextParser>::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = true;
 
     template <typename NextParser>
     struct parser

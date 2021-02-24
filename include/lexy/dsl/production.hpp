@@ -16,33 +16,72 @@ constexpr bool _parse(Context& context, Reader& reader)
 {
     return lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader);
 }
+template <typename Rule, typename Context, typename Reader>
+constexpr auto _try_parse(Context& context, Reader& reader)
+{
+    return lexy::rule_parser<Rule, lexy::context_value_parser>::try_parse(context, reader);
+}
 
 template <typename Production, typename Rule, typename NextParser>
 struct _prd_parser
 {
+    struct _continuation
+    {
+        template <typename Context, typename Reader, typename ProdContext, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, ProdContext& prod_context,
+                                 Args&&... args)
+        {
+            // If we're about to parse a token production, we need to continue with the parent's
+            // (i.e. our current context) whitespace.
+            using ws_next
+                = std::conditional_t<lexy::is_token_production<Production>,
+                                     lexy::whitespace_parser<Context, NextParser>, NextParser>;
+
+            if constexpr (std::is_void_v<typename ProdContext::return_type>)
+            {
+                LEXY_MOV(prod_context).finish();
+                return ws_next::parse(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return ws_next::parse(context, reader, LEXY_FWD(args)...,
+                                      LEXY_MOV(prod_context).finish());
+            }
+        }
+    };
+
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+        -> lexy::rule_try_parse_result
+    {
+        auto prod_context = context.production_context(Production{}, reader.cur());
+
+        if (auto result = _try_parse<Rule>(prod_context, reader);
+            result == lexy::rule_try_parse_result::ok)
+        {
+            return static_cast<lexy::rule_try_parse_result>(
+                _continuation::parse(context, reader, prod_context, LEXY_FWD(args)...));
+        }
+        else if (result == lexy::rule_try_parse_result::canceled)
+        {
+            return lexy::rule_try_parse_result::canceled;
+        }
+        else // backtracked
+        {
+            LEXY_MOV(prod_context).backtrack();
+            return lexy::rule_try_parse_result::backtracked;
+        }
+    }
+
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        // If we're about to parse a token production, we need to continue with the parent's (i.e.
-        // our current context) whitespace.
-        using continuation
-            = std::conditional_t<lexy::is_token_production<Production>,
-                                 lexy::whitespace_parser<Context, NextParser>, NextParser>;
+        auto prod_context = context.production_context(Production{}, reader.cur());
 
-        auto prod_ctx = context.production_context(Production{}, reader.cur());
-        if (!_parse<Rule>(prod_ctx, reader))
+        if (!_parse<Rule>(prod_context, reader))
             return false;
 
-        if constexpr (std::is_void_v<typename decltype(prod_ctx)::return_type>)
-        {
-            LEXY_MOV(prod_ctx).finish();
-            return continuation::parse(context, reader, LEXY_FWD(args)...);
-        }
-        else
-        {
-            return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       LEXY_MOV(prod_ctx).finish());
-        }
+        return _continuation::parse(context, reader, prod_context, LEXY_FWD(args)...);
     }
 };
 
@@ -51,48 +90,8 @@ struct _prd : rule_base
 {
     using _rule = lexy::production_rule<Production>;
 
-    static constexpr bool is_branch = lexy::is_branch<_rule>;
-
-    template <typename Reader>
-    struct branch_matcher
-    {
-        lexy::branch_matcher<_rule, Reader> _impl;
-        typename Reader::iterator           _begin = {};
-
-        static constexpr auto is_unconditional = decltype(_impl)::is_unconditional;
-
-        constexpr bool match(Reader& reader)
-        {
-            // The production really begins here, not when we start parsing the branch.
-            _begin = reader.cur();
-            return _impl.match(reader);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        constexpr bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            // If we're about to parse a token production, we need to continue with the parent's
-            // (i.e. our current context) whitespace.
-            using continuation
-                = std::conditional_t<lexy::is_token_production<Production>,
-                                     lexy::whitespace_parser<Context, NextParser>, NextParser>;
-
-            auto prod_ctx = context.production_context(Production{}, _begin);
-            if (!_impl.template parse<lexy::context_value_parser>(prod_ctx, reader))
-                return false;
-
-            if constexpr (std::is_void_v<typename decltype(prod_ctx)::return_type>)
-            {
-                LEXY_MOV(prod_ctx).finish();
-                return continuation::parse(context, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                           LEXY_MOV(prod_ctx).finish());
-            }
-        }
-    };
+    static constexpr auto is_branch               = _rule::is_branch;
+    static constexpr auto is_unconditional_branch = _rule::is_unconditional_branch;
 
     template <typename NextParser>
     using parser = _prd_parser<Production, _rule, NextParser>;

@@ -41,19 +41,20 @@ struct _chc_parser<NextParser, H, T...>
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        using branch_matcher = lexy::branch_matcher<H, Reader>;
-
-        if constexpr (branch_matcher::is_unconditional)
+        if constexpr (H::is_unconditional_branch)
         {
             return lexy::rule_parser<H, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
         else
         {
-            branch_matcher branch{};
-            if (branch.match(reader))
-                return branch.template parse<NextParser>(context, reader, LEXY_FWD(args)...);
-            else
+            auto result
+                = lexy::rule_parser<H, NextParser>::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+                // Try the next branch.
                 return _chc_parser<NextParser, T...>::parse(context, reader, LEXY_FWD(args)...);
+            else
+                // Return true/false depending on result.
+                return static_cast<bool>(result);
         }
     }
 };

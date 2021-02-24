@@ -39,6 +39,9 @@ public:
     template <typename Production, typename... Args>
     constexpr void finish_production(Production, state, Args&&...)
     {}
+    template <typename Production>
+    constexpr void backtrack_production(Production, state)
+    {}
 
     template <typename Production, typename Error>
     constexpr void error(Production, state, Error&&)
