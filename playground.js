@@ -26,22 +26,13 @@ export function preprocess_source(target, source, production)
         const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`
         const prefix = String.raw`#include <lexy/dsl.hpp>
 namespace dsl = lexy::dsl;
-#line 0 "grammar.cpp"
+#line 1 "grammar.cpp"
 `;
         const main = String.raw`#line 1 "playground.cpp"
 #include <cctype>
 #include <lexy/parse_tree.hpp>
 #include <lexy_ext/cfile.hpp>
 #include <lexy_ext/report_error.hpp>
-
-template <typename Reader>
-void* get_node_id(const lexy::parse_tree<Reader>&         tree,
-                  typename lexy::parse_tree<Reader>::node node)
-{
-    using ptr_t = lexy::_detail::pt_node_ptr<Reader>;
-    // It's okay to reinterpret standard layout type to first member.
-    return reinterpret_cast<ptr_t*>(&node)->base();
-}
 
 int main()
 {
@@ -59,19 +50,17 @@ int main()
         switch (event)
         {
         case lexy::traverse_event::enter:
-            std::printf("\"node-%p\" [label=\"%.*s\"];\n", get_node_id(tree, node),
-                        int(node.kind().name().size()), node.kind().name().data());
+            std::printf("\"node-%p\" [label=\"%s\"];\n", node.address(), node.kind().name());
             break;
 
         case lexy::traverse_event::exit:
             // Now we can add all the connections.
             for (auto child : node.children())
-                std::printf("\"node-%p\" -- \"node-%p\";\n", get_node_id(tree, node),
-                            get_node_id(tree, child));
+                std::printf("\"node-%p\" -- \"node-%p\";\n", node.address(), child.address());
             break;
 
         case lexy::traverse_event::leaf:
-            std::printf("\"node-%p\" [label=\"", get_node_id(tree, node));
+            std::printf("\"node-%p\" [label=\"", node.address());
             for (auto c : node.lexeme())
             {
                 if (c == '"')
