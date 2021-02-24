@@ -24,6 +24,7 @@ endif()
 add_subdirectory(lexy)
 add_subdirectory(lexy_ext)
 add_subdirectory(examples)
+add_subdirectory(playground)
 
 add_test(NAME lexy_test COMMAND lexy_test)
 add_test(NAME lexy_ext_test COMMAND lexy_ext_test)
