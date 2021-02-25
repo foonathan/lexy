@@ -748,11 +748,15 @@ CAUTION: Long lookahead can slow down parsing speed due to backtracking.
 
 .`lexy/dsl/sequence.hpp`
 ----
-rule + rule : Rule
+rule + rule   : Rule
+token + token : Branch
 ----
 
 A sequence rule matches multiple rules one after the other.
+It is a branch if it is a sequence of tokens.
 
+Branch Condition::
+  Branch is only taken if all tokens match in order.
 Matches::
   Matches and consume the first rule, then matches and consumes the second rule, and so on.
   Only succeeds if all of them succeed.

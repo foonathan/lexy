@@ -22,7 +22,7 @@ struct _br : rule_base
     // Condition has a try_parse() that will try to match Condition and then continue on with the
     // continuation.
     template <typename NextParser>
-    using parser = lexy::rule_parser<Condition, typename _seq_parser<NextParser, R...>::type>;
+    using parser = lexy::rule_parser<Condition, lexy::rule_parser<_seq_impl<R...>, NextParser>>;
 };
 
 //=== operator>> ===//
