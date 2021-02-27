@@ -83,8 +83,8 @@ struct _lazy_init_storage_non_trivial
 
 template <typename T>
 using _lazy_init_storage
-    = std::conditional_t<std::is_trivially_copyable_v<T>, _lazy_init_storage_trivial<T>,
-                         _lazy_init_storage_non_trivial<T>>;
+    = std::conditional_t<std::is_trivially_copyable_v<T> && std::is_trivially_copy_assignable_v<T>,
+                         _lazy_init_storage_trivial<T>, _lazy_init_storage_non_trivial<T>>;
 
 template <typename T>
 class lazy_init : _lazy_init_storage<T>
@@ -170,4 +170,3 @@ private:
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
-
