@@ -131,10 +131,12 @@ struct _result_storage_non_trivial
     }
 };
 
+// https://github.com/foonathan/lexy/pull/17
 template <typename T, typename E>
-using _result_storage_impl
-    = std::conditional_t<std::is_trivially_copyable_v<T> && std::is_trivially_copyable_v<E>,
-                         _result_storage_trivial<T, E>, _result_storage_non_trivial<T, E>>;
+using _result_storage_impl = std::conditional_t<
+    std::is_trivially_move_constructible_v<
+        T> && std::is_trivially_move_constructible_v<E> && std::is_trivially_destructible_v<T> && std::is_trivially_destructible_v<E> && std::is_trivially_move_assignable_v<T> && std::is_trivially_move_assignable_v<E>,
+    _result_storage_trivial<T, E>, _result_storage_non_trivial<T, E>>;
 template <typename T, typename E>
 using _result_storage
     = _result_storage_impl<std::conditional_t<std::is_void_v<T>, result_value_t, T>,
@@ -252,4 +254,3 @@ public:
 } // namespace lexy
 
 #endif // LEXY_RESULT_HPP_INCLUDED
-
