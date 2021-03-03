@@ -302,8 +302,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto& input = file.value();
-    auto  json  = lexy::parse<grammar::json>(input, lexy_ext::report_error);
+    auto json = lexy::parse<grammar::json>(file, lexy_ext::report_error);
     if (!json)
         return 2;
 

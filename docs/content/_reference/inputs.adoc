@@ -431,18 +431,37 @@ namespace lexy
         permission_denied,
     };
 
+    template <typename Encoding       = default_encoding,
+              typename MemoryResource = /* default resource */>
+    class read_file_result
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+
+        explicit operator bool() const noexcept;
+
+        file_error error() const noexcept;
+
+        const char_type* data() const noexcept;
+        std::size_t size() const noexcept;
+
+        Reader reader() const& noexcept;
+    };
+
     template <typename Encoding          = default_encoding,
               encoding_endianness Endian = encoding_endianness::bom,
               typename MemoryResource>
     auto read_file(const char*     path,
                    MemoryResource* resource = /* default resource */)
-        -> result<buffer<Encoding, MemoryResource>, file_error>;
+        -> read_file_result<Encoding, MemoryResource>;
 }
 ----
 
 The function `lexy::read_file()` reads the file at the specified path using the specified encoding and endianness.
-On success, it returns a `lexy::result` containing a `lexy::buffer` with the file contents.
-On failure, it returns a `lexy::result` containing the error code.
+It returns a `lexy::read_file_result`.
+If reading failed, the `operator bool` will return `false` and `.error()` will return the error code.
+If reading was successful, the `operator bool` will return `true` and you can call `.data()`/`.size()` to get the file contents or treat it as an `Input`.
 
 .Example
 [%collapsible]
@@ -455,10 +474,10 @@ auto result = lexy::read_file<lexy::utf16_encoding>("input.txt");
 if (!result)
     throw my_file_read_error_exception(result.error()); // <1>
 
-auto input = std::move(result).value(); // <2>
+… <2>
 ----
 <1> Throw an exception giving it the `lexy::file_error`.
-<2> Move the buffer out of the result and use it as input.
+<2> Now you can use `result` as an `Input` or access the file contents.
 ====
 
 ==== Shell Input

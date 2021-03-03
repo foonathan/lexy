@@ -76,7 +76,7 @@ TEST_CASE("dump_parse_tree()")
         lexy_ext::dump_parse_tree(file, tree);
         std::fclose(file);
 
-        auto result = lexy::read_file(test_file_name).value();
+        auto result = lexy::read_file(test_file_name);
         REQUIRE(doctest::String(result.data(), unsigned(result.size())) == R"*(root_p:
 ├──a: "123"
 ├──child_p:
@@ -92,7 +92,7 @@ TEST_CASE("dump_parse_tree()")
         lexy_ext::dump_parse_tree(file, tree, lexy_ext::simple_parse_tree_dump);
         std::fclose(file);
 
-        auto result = lexy::read_file(test_file_name).value();
+        auto result = lexy::read_file(test_file_name);
         REQUIRE(doctest::String(result.data(), unsigned(result.size())) == R"*(root_p:
 - a: "123"
 - child_p:

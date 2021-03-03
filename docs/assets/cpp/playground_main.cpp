@@ -6,7 +6,7 @@
 
 int main()
 {
-    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).value();
+    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin);
 
     lexy::parse_tree_for<decltype(input)> tree;
     auto                                  result

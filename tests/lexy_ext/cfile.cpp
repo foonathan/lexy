@@ -32,19 +32,19 @@ TEST_CASE("read_file")
     SUBCASE("non-existing file")
     {
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy_ext::read_file(file);
-        CHECK(!buffer);
-        CHECK(buffer.error() == lexy::file_error::file_not_found);
+        auto result = lexy_ext::read_file(file);
+        CHECK(!result);
+        CHECK(result.error() == lexy::file_error::file_not_found);
     }
     SUBCASE("empty file")
     {
         write_test_data("");
 
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy_ext::read_file(file);
-        REQUIRE(buffer);
+        auto result = lexy_ext::read_file(file);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
 
@@ -55,10 +55,10 @@ TEST_CASE("read_file")
         write_test_data("abc");
 
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy_ext::read_file(file);
-        REQUIRE(buffer);
+        auto result = lexy_ext::read_file(file);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -88,10 +88,10 @@ TEST_CASE("read_file")
         }
 
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -117,11 +117,11 @@ TEST_CASE("read_file")
         write_test_data("abc");
 
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy::read_file<lexy::ascii_encoding>(test_file_name,
+        auto result = lexy::read_file<lexy::ascii_encoding>(test_file_name,
                                                             std::pmr::new_delete_resource());
-        REQUIRE(buffer);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -146,10 +146,10 @@ TEST_CASE("read_file")
         write_test_data(reinterpret_cast<const char*>(data));
 
         auto file   = std::fopen(test_file_name, "rb");
-        auto buffer = lexy::read_file<lexy::utf16_encoding>(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file<lexy::utf16_encoding>(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 0x2211);
         CHECK(!reader.eof());
 

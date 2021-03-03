@@ -32,18 +32,18 @@ TEST_CASE("read_file")
 
     SUBCASE("non-existing file")
     {
-        auto buffer = lexy::read_file(test_file_name);
-        CHECK(!buffer);
-        CHECK(buffer.error() == lexy::file_error::file_not_found);
+        auto result = lexy::read_file(test_file_name);
+        CHECK(!result);
+        CHECK(result.error() == lexy::file_error::file_not_found);
     }
     SUBCASE("empty file")
     {
         write_test_data("");
 
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
     }
@@ -51,10 +51,10 @@ TEST_CASE("read_file")
     {
         write_test_data("abc");
 
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -81,10 +81,10 @@ TEST_CASE("read_file")
             std::fclose(file);
         }
 
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -113,10 +113,10 @@ TEST_CASE("read_file")
             std::fclose(file);
         }
 
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         for (auto i = 0; i != 10 * 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -145,10 +145,10 @@ TEST_CASE("read_file")
             std::fclose(file);
         }
 
-        auto buffer = lexy::read_file(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         for (auto i = 0; i != 200 * 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -171,11 +171,11 @@ TEST_CASE("read_file")
     {
         write_test_data("abc");
 
-        auto buffer = lexy::read_file<lexy::ascii_encoding>(test_file_name,
+        auto result = lexy::read_file<lexy::ascii_encoding>(test_file_name,
                                                             std::pmr::new_delete_resource());
-        REQUIRE(buffer);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -197,10 +197,10 @@ TEST_CASE("read_file")
         const unsigned char data[] = {0xFF, 0xFE, 0x11, 0x22, 0x33, 0x44, 0x00};
         write_test_data(reinterpret_cast<const char*>(data));
 
-        auto buffer = lexy::read_file<lexy::utf16_encoding>(test_file_name);
-        REQUIRE(buffer);
+        auto result = lexy::read_file<lexy::utf16_encoding>(test_file_name);
+        REQUIRE(result);
 
-        auto reader = buffer.value().reader();
+        auto reader = result.reader();
         CHECK(reader.peek() == 0x2211);
         CHECK(!reader.eof());
 

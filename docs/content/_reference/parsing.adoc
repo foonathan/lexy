@@ -164,7 +164,7 @@ TIP: `lexy::result<T, void>` is like `std::optional<T>` and `lexy::result<void, 
 Once a result is created containing a value or error, it can never change that state.
 
 NOTE: `lexy::result` was created for use by the library only.
-While it can be used as a general purpose result monad (which we leverage for `lexy::read_file()`), it is better to us a designated library for it.
+While it can be used as a general purpose result monad, it is better to us a designated library for it.
 
 [discrete]
 ===== Creation

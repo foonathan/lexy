@@ -116,8 +116,7 @@ int main()
     if (!file)
     { … }
 
-    auto& input = file.value();
-    auto result = lexy::parse<grammar::config>(input, report_error_callback); <4>
+    auto result = lexy::parse<grammar::config>(file, report_error_callback); <4>
     if (!result)
     { … }
 

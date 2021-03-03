@@ -5,10 +5,10 @@
 #ifndef LEXY_INPUT_FILE_HPP_INCLUDED
 #define LEXY_INPUT_FILE_HPP_INCLUDED
 
+#include <lexy/_detail/lazy_init.hpp>
 #include <lexy/_detail/std.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/input/buffer.hpp>
-#include <lexy/result.hpp>
 
 namespace lexy
 {
@@ -39,21 +39,74 @@ file_error read_file(const char* path, file_callback cb, void* user_data);
 
 namespace lexy
 {
+template <typename Encoding       = default_encoding,
+          typename MemoryResource = _detail::default_memory_resource>
+class read_file_result
+{
+public:
+    using encoding  = Encoding;
+    using char_type = typename encoding::char_type;
+
+    explicit operator bool() const noexcept
+    {
+        return _ec == file_error::_success;
+    }
+
+    file_error error() const noexcept
+    {
+        LEXY_PRECONDITION(!*this);
+        return _ec;
+    }
+
+    const char_type* data() const noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return _buffer.data();
+    }
+    std::size_t size() const noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return _buffer.size();
+    }
+
+    auto reader() const& noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return _buffer.reader();
+    }
+
+public:
+    // Pretend these two don't exist.
+    explicit read_file_result(file_error                               ec,
+                              lexy::buffer<Encoding, MemoryResource>&& buffer) noexcept
+    : _buffer(LEXY_MOV(buffer)), _ec(ec)
+    {}
+    explicit read_file_result(file_error ec, MemoryResource* resource) noexcept
+    : _buffer(resource), _ec(ec)
+    {
+        LEXY_PRECONDITION(!*this);
+    }
+
+private:
+    lexy::buffer<Encoding, MemoryResource> _buffer;
+    file_error                             _ec;
+};
+
 /// Reads the file at the specified path into a buffer.
 template <typename Encoding          = default_encoding,
           encoding_endianness Endian = encoding_endianness::bom,
           typename MemoryResource    = _detail::default_memory_resource>
 auto read_file(const char*     path,
                MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
-    -> result<buffer<Encoding, MemoryResource>, file_error>
+    -> read_file_result<Encoding, MemoryResource>
 {
-    using buffer_type = buffer<Encoding, MemoryResource>;
-
     struct user_data_t
     {
-        buffer_type     buffer;
-        MemoryResource* resource;
-    } user_data{buffer_type(resource), resource};
+        lexy::buffer<Encoding, MemoryResource> buffer;
+        MemoryResource*                        resource;
+
+        user_data_t(MemoryResource* resource) : buffer(resource), resource(resource) {}
+    } user_data(resource);
 
     auto error = _detail::read_file(
         path,
@@ -65,10 +118,7 @@ auto read_file(const char*     path,
         },
         &user_data);
 
-    if (error == file_error::_success)
-        return {lexy::result_value, LEXY_MOV(user_data.buffer)};
-    else
-        return {lexy::result_error, error};
+    return read_file_result(error, LEXY_MOV(user_data.buffer));
 }
 } // namespace lexy
 

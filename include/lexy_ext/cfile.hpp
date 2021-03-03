@@ -17,15 +17,17 @@ template <typename Encoding                = lexy::default_encoding,
           typename MemoryResource          = lexy::_detail::default_memory_resource>
 auto read_file(std::FILE*      file,
                MemoryResource* resource = lexy::_detail::get_memory_resource<MemoryResource>())
-    -> lexy::result<lexy::buffer<Encoding, MemoryResource>, lexy::file_error>
+    -> lexy::read_file_result<Encoding, MemoryResource>
 {
-    if (!file)
-        return {lexy::result_error, lexy::file_error::file_not_found};
-    else if (std::ferror(file))
-        return {lexy::result_error, lexy::file_error::os_error};
+    using result_type = lexy::read_file_result<Encoding, MemoryResource>;
 
-    // We can't use ftell() to get file size, as the file might not be open in binary mode.
-    // So instead use a conservative loop.
+    if (!file)
+        return result_type(lexy::file_error::file_not_found, resource);
+    else if (std::ferror(file))
+        return result_type(lexy::file_error::os_error, resource);
+
+    // We can't use ftell() to get file size, as the file might not be open in binary mode or is
+    // stdin. So instead use a conservative loop.
     lexy::_detail::buffer_builder<char> builder;
     while (true)
     {
@@ -42,7 +44,7 @@ auto read_file(std::FILE*      file,
         {
             if (std::ferror(file))
                 // We have a read error.
-                return {lexy::result_error, lexy::file_error::os_error};
+                return result_type(lexy::file_error::os_error, resource);
 
             // We should have reached the end of the file.
             LEXY_ASSERT(std::feof(file), "why did fread() not read enough?");
@@ -57,7 +59,7 @@ auto read_file(std::FILE*      file,
 
     auto buffer = lexy::make_buffer_from_raw<Encoding, Endian>(builder.read_data(),
                                                                builder.read_size(), resource);
-    return {lexy::result_value, LEXY_MOV(buffer)};
+    return result_type(lexy::file_error::_success, LEXY_MOV(buffer));
 }
 } // namespace lexy_ext
 

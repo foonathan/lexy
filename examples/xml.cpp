@@ -282,8 +282,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto& input    = file.value();
-    auto  document = lexy::parse<grammar::document>(input, lexy_ext::report_error);
+    auto document = lexy::parse<grammar::document>(file, lexy_ext::report_error);
     if (!document)
         return 2;
 
