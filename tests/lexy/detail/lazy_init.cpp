@@ -11,30 +11,144 @@ TEST_CASE("_detail::lazy_init")
 {
     SUBCASE("trivial")
     {
-        lexy::_detail::lazy_init<int> lazy;
-        CHECK(!lazy);
+        using lazy_init = lexy::_detail::lazy_init<int>;
 
-        lazy.emplace(42);
-        CHECK(lazy);
-        CHECK(*lazy == 42);
+        constexpr auto empty = lazy_init();
+        CHECK(!empty);
+
+        constexpr auto emplaced = [] {
+            lazy_init result;
+            result.emplace(42);
+            return result;
+        }();
+        CHECK(emplaced);
+        CHECK(*emplaced == 42);
     }
     SUBCASE("non-trivial")
     {
-        lexy::_detail::lazy_init<std::string> lazy;
-        CHECK(!lazy);
+        using lazy_init = lexy::_detail::lazy_init<std::string>;
 
-        lazy.emplace(5u, 'a');
-        CHECK(lazy);
-        CHECK(*lazy == "aaaaa");
-        CHECK(lazy->size() == 5);
+        auto empty = lazy_init();
+        CHECK(!empty);
+
+        auto emplaced = [] {
+            lazy_init result;
+            result.emplace(5u, 'a');
+            return result;
+        }();
+        CHECK(emplaced);
+        CHECK(*emplaced == "aaaaa");
+        CHECK(emplaced->size() == 5);
+
+        SUBCASE("copy constructor from empty")
+        {
+            auto copy = empty;
+            CHECK(!copy);
+        }
+        SUBCASE("copy constructor from emplaced")
+        {
+            auto copy = emplaced;
+            CHECK(copy);
+            CHECK(*copy == "aaaaa");
+            CHECK(copy->size() == 5);
+        }
+
+        SUBCASE("move constructor from empty")
+        {
+            auto copy = LEXY_MOV(empty);
+            CHECK(!copy);
+        }
+        SUBCASE("move constructor from emplaced")
+        {
+            auto copy = LEXY_MOV(emplaced);
+            CHECK(copy);
+            CHECK(*copy == "aaaaa");
+            CHECK(copy->size() == 5);
+        }
+
+        SUBCASE("copy assignment from empty to empty")
+        {
+            lazy_init assigned;
+
+            assigned = empty;
+            CHECK(!assigned);
+        }
+        SUBCASE("copy assignment from emplaced to empty")
+        {
+            lazy_init assigned;
+
+            assigned = emplaced;
+            CHECK(assigned);
+            CHECK(*assigned == "aaaaa");
+            CHECK(assigned->size() == 5);
+        }
+        SUBCASE("copy assignment from empty to emplaced")
+        {
+            lazy_init assigned;
+            assigned.emplace(3u, 'b');
+
+            assigned = empty;
+            CHECK(!assigned);
+        }
+        SUBCASE("copy assignment from emplaced to emplaced")
+        {
+            lazy_init assigned;
+            assigned.emplace(3u, 'b');
+
+            assigned = emplaced;
+            CHECK(assigned);
+            CHECK(*assigned == "aaaaa");
+            CHECK(assigned->size() == 5);
+        }
+
+        SUBCASE("move assignment from empty to empty")
+        {
+            lazy_init assigned;
+
+            assigned = LEXY_MOV(empty);
+            CHECK(!assigned);
+        }
+        SUBCASE("move assignment from emplaced to empty")
+        {
+            lazy_init assigned;
+
+            assigned = LEXY_MOV(emplaced);
+            CHECK(assigned);
+            CHECK(*assigned == "aaaaa");
+            CHECK(assigned->size() == 5);
+        }
+        SUBCASE("move assignment from empty to emplaced")
+        {
+            lazy_init assigned;
+            assigned.emplace(3u, 'b');
+
+            assigned = LEXY_MOV(empty);
+            CHECK(!assigned);
+        }
+        SUBCASE("move assignment from emplaced to emplaced")
+        {
+            lazy_init assigned;
+            assigned.emplace(3u, 'b');
+
+            assigned = LEXY_MOV(emplaced);
+            CHECK(assigned);
+            CHECK(*assigned == "aaaaa");
+            CHECK(assigned->size() == 5);
+        }
     }
     SUBCASE("void")
     {
-        lexy::_detail::lazy_init<void> lazy;
-        CHECK(!lazy);
+        using lazy_init = lexy::_detail::lazy_init<void>;
 
-        lazy.emplace();
-        CHECK(lazy);
+        constexpr auto empty = lazy_init();
+        CHECK(!empty);
+
+        constexpr auto emplaced = [] {
+            lazy_init result;
+            result.emplace();
+            return result;
+        }();
+        CHECK(emplaced);
     }
 }
 

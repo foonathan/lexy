@@ -51,6 +51,12 @@ struct _lazy_init_storage_non_trivial
             _value.~T();
     }
 
+    _lazy_init_storage_non_trivial(const _lazy_init_storage_non_trivial& other) noexcept
+    : _init(other._init), _empty()
+    {
+        if (_init)
+            ::new (static_cast<void*>(&_value)) T(other._value);
+    }
     _lazy_init_storage_non_trivial(_lazy_init_storage_non_trivial&& other) noexcept
     : _init(other._init), _empty()
     {
@@ -58,6 +64,27 @@ struct _lazy_init_storage_non_trivial
             ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
     }
 
+    _lazy_init_storage_non_trivial& operator=(const _lazy_init_storage_non_trivial& other) noexcept
+    {
+        if (_init && other._init)
+            _value = other._value;
+        else if (_init && !other._init)
+        {
+            _value.~T();
+            _init = false;
+        }
+        else if (!_init && other._init)
+        {
+            ::new (static_cast<void*>(&_value)) T(other._value);
+            _init = true;
+        }
+        else
+        {
+            // Both not initialized, nothing to do.
+        }
+
+        return *this;
+    }
     _lazy_init_storage_non_trivial& operator=(_lazy_init_storage_non_trivial&& other) noexcept
     {
         if (_init && other._init)
@@ -83,10 +110,14 @@ struct _lazy_init_storage_non_trivial
 
 // https://github.com/foonathan/lexy/pull/17
 template <typename T>
-using _lazy_init_storage = std::conditional_t<
-    std::is_trivially_destructible_v<
-        T> && std::is_trivially_move_constructible_v<T> && std::is_trivially_move_assignable_v<T>,
-    _lazy_init_storage_trivial<T>, _lazy_init_storage_non_trivial<T>>;
+constexpr auto _lazy_init_trivial = [] {
+    return std::is_trivially_destructible_v<T>                                                    //
+           && std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T> //
+           && std::is_trivially_move_constructible_v<T> && std::is_trivially_move_assignable_v<T>;
+}();
+template <typename T>
+using _lazy_init_storage = std::conditional_t<_lazy_init_trivial<T>, _lazy_init_storage_trivial<T>,
+                                              _lazy_init_storage_non_trivial<T>>;
 
 template <typename T>
 class lazy_init : _lazy_init_storage<T>
