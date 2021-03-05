@@ -93,7 +93,6 @@ set(tests
         parse.cpp
         parse_tree.cpp
         production.cpp
-        result.cpp
         token.cpp
         validate.cpp
     )

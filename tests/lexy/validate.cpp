@@ -11,6 +11,7 @@
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/input/string_input.hpp>
+#include <vector>
 
 namespace
 {
@@ -30,6 +31,14 @@ TEST_CASE("validate")
 {
     SUBCASE("void callback")
     {
+        constexpr auto check_error = [](const auto& result) {
+            CHECK(!result);
+            CHECK(!result.is_success());
+            CHECK(!result.is_recovered_error());
+            CHECK(result.is_fatal_error());
+            CHECK(result.error_count() == 1);
+        };
+
         SUBCASE("success")
         {
             constexpr auto callback = [](auto, auto) { FAIL_CHECK("should not be called"); };
@@ -37,6 +46,12 @@ TEST_CASE("validate")
             auto one
                 = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), lexy::callback(callback));
             CHECK(one);
+            CHECK(one.is_success());
+            CHECK(!one.is_error());
+            CHECK(!one.is_recovered_error());
+            CHECK(!one.is_fatal_error());
+            CHECK(one.error_count() == 0);
+
             auto two
                 = lexy::validate<prod_b>(lexy::zstring_input("(abcabc)"), lexy::callback(callback));
             CHECK(two);
@@ -51,7 +66,7 @@ TEST_CASE("validate")
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("()"), lexy::callback(callback));
-            CHECK(!result);
+            check_error(result);
         }
         SUBCASE("invalid abc")
         {
@@ -63,7 +78,7 @@ TEST_CASE("validate")
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("(adc)"), lexy::callback(callback));
-            CHECK(!result);
+            check_error(result);
         }
         SUBCASE("missing )")
         {
@@ -75,7 +90,7 @@ TEST_CASE("validate")
 
             auto result
                 = lexy::validate<prod_b>(lexy::zstring_input("(abc]"), lexy::callback(callback));
-            CHECK(!result);
+            check_error(result);
         }
     }
     SUBCASE("non-void callback")
@@ -95,26 +110,26 @@ TEST_CASE("validate")
             else
                 return -4;
         };
-        constexpr auto callback = lexy::callback<int>(prod_a_error, prod_b_error);
+        constexpr auto callback
+            = lexy::collect<std::vector<int>>(lexy::callback<int>(prod_a_error, prod_b_error));
 
-        constexpr auto success = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), callback);
+        auto success = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), callback);
         CHECK(success);
 
-        constexpr auto missing_abc = lexy::validate<prod_b>(lexy::zstring_input("()"), callback);
+        auto missing_abc = lexy::validate<prod_b>(lexy::zstring_input("()"), callback);
         CHECK(!missing_abc);
-        CHECK(missing_abc.error() == -1);
+        CHECK(missing_abc.errors() == std::vector{-1});
 
-        constexpr auto empty = lexy::validate<prod_b>(lexy::zstring_input(""), callback);
+        auto empty = lexy::validate<prod_b>(lexy::zstring_input(""), callback);
         CHECK(!empty);
-        CHECK(empty.error() == -2);
-        constexpr auto bad_paren = lexy::validate<prod_b>(lexy::zstring_input("[abc]"), callback);
+        CHECK(empty.errors() == std::vector{-2});
+        auto bad_paren = lexy::validate<prod_b>(lexy::zstring_input("[abc]"), callback);
         CHECK(!bad_paren);
-        CHECK(bad_paren.error() == -2);
+        CHECK(bad_paren.errors() == std::vector{-2});
 
-        constexpr auto missing_paren
-            = lexy::validate<prod_b>(lexy::zstring_input("(abc"), callback);
+        auto missing_paren = lexy::validate<prod_b>(lexy::zstring_input("(abc"), callback);
         CHECK(!missing_paren);
-        CHECK(missing_paren.error() == -3);
+        CHECK(missing_paren.errors() == std::vector{-3});
     }
 }
 

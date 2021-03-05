@@ -23,29 +23,29 @@ TEST_CASE("dsl::lookahead()")
         LEXY_VERIFY_FN int success(const char* cur)
         {
             LEXY_VERIFY_CHECK(cur == str);
-            return -1;
+            return 0;
         }
 
         LEXY_VERIFY_FN int error(test_error<error> e)
         {
             LEXY_VERIFY_CHECK(e.position() == str);
-            return 0;
+            return -1;
         }
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty == 0);
 
     auto nothing = LEXY_VERIFY("abc");
-    CHECK(nothing == -1);
+    CHECK(nothing == 0);
 
     auto nothing_newline = LEXY_VERIFY("abc\n");
-    CHECK(nothing_newline == -1);
+    CHECK(nothing_newline == 0);
 
     auto something = LEXY_VERIFY("abc!def\n");
-    CHECK(something == 0);
+    CHECK(something == -1);
 
     auto something_after = LEXY_VERIFY("abc\n!def\n");
-    CHECK(something_after == -1);
+    CHECK(something_after == 0);
 }
 

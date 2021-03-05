@@ -236,6 +236,7 @@ public:
         _handler->error(Production{}, LEXY_MOV(_state), LEXY_FWD(error));
     }
 
+    // Precondition: Either finish() or backtrack() must be called on every created context.
     constexpr auto finish() &&
     {
         if constexpr (!std::is_void_v<return_type>)
@@ -375,6 +376,38 @@ struct context_discard_parser
     }
 };
 } // namespace lexy
+
+namespace lexy::_detail
+{
+template <typename Production, typename Rule = lexy::production_rule<Production>, typename Handler,
+          typename Reader>
+constexpr auto parse_impl(Handler& handler, Reader& reader)
+{
+    lexy::parse_context context(Production{}, handler, reader.cur());
+
+    using return_type = typename decltype(context)::return_type;
+    lexy::_detail::lazy_init<return_type> result;
+
+    if (lexy::rule_parser<Rule, lexy::context_value_parser>::parse(context, reader))
+    {
+        if constexpr (std::is_void_v<return_type>)
+        {
+            LEXY_MOV(context).finish();
+            result.emplace();
+        }
+        else
+        {
+            result.emplace(LEXY_MOV(context).finish());
+        }
+    }
+    else
+    {
+        LEXY_MOV(context).backtrack();
+    }
+
+    return result;
+}
+} // namespace lexy::_detail
 
 #endif // LEXY_DSL_BASE_HPP_INCLUDED
 

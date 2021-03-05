@@ -59,17 +59,16 @@ struct _prd_parser
         if (auto result = _try_parse<Rule>(prod_context, reader);
             result == lexy::rule_try_parse_result::ok)
         {
+            // We succesfully parsed the production.
+            // The continuation will call `.finish()` for us.
             return static_cast<lexy::rule_try_parse_result>(
                 _continuation::parse(context, reader, prod_context, LEXY_FWD(args)...));
         }
-        else if (result == lexy::rule_try_parse_result::canceled)
+        else // backtracked or canceled
         {
-            return lexy::rule_try_parse_result::canceled;
-        }
-        else // backtracked
-        {
+            // Need to backtrack the partial production in either case.
             LEXY_MOV(prod_context).backtrack();
-            return lexy::rule_try_parse_result::backtracked;
+            return result;
         }
     }
 
@@ -79,8 +78,13 @@ struct _prd_parser
         auto prod_context = context.production_context(Production{}, reader.cur());
 
         if (!_parse<Rule>(prod_context, reader))
+        {
+            // We failed to parse, need to backtrack.
+            LEXY_MOV(prod_context).backtrack();
             return false;
+        }
 
+        // The continuation will call `.finish()` for us.
         return _continuation::parse(context, reader, prod_context, LEXY_FWD(args)...);
     }
 };

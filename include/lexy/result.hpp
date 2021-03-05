@@ -9,6 +9,12 @@
 #include <lexy/_detail/config.hpp>
 #include <new>
 
+#ifdef LEXY_IGNORE_DEPRECATED_RESULT
+#    define LEXY_DEPRECATED_RESULT
+#else
+#    define LEXY_DEPRECATED_RESULT [[deprecated("lexy::result has been deprecated")]]
+#endif
+
 namespace lexy
 {
 enum class _result_state : unsigned char
@@ -148,7 +154,7 @@ namespace lexy
 /// Stores a T or an E (or nothing).
 /// Supports `void` for either one of them meaning "none".
 template <typename T, typename E>
-class result : _result_storage<T, E>
+class LEXY_DEPRECATED_RESULT result : _result_storage<T, E>
 {
     static constexpr auto optional_tag = [] {
         if constexpr (std::is_void_v<T>)

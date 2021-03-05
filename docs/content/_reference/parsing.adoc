@@ -47,15 +47,41 @@ Add `lexy::dsl::eof` to the end if the production should consume the entire inpu
 ----
 namespace lexy
 {
-    template <typename Production, typename Input, typename Callback>
-    constexpr auto validate(const Input& input, Callback callback)
-        -> result</* see below */>;
+    template <typename ErrorCallback>
+    class validate_result
+    {
+    public:
+        using error_callback = ErrorCallback;
+        using error_type     = /* return type of the sink */;
+
+        constexpr explicit operator bool() const noexcept
+        {
+            return is_success();
+        }
+
+        constexpr bool is_success() const noexcept; // <1>
+        constexpr bool is_error() const noexcept; // <2>
+        constexpr bool is_recovered_error() const noexcept; // <3>
+        constexpr bool is_fatal_error() const noexcept; // <4>
+
+        constexpr std::size_t error_count() const noexcept;
+
+        constexpr const error_type& errors() const& noexcept;
+        constexpr error_type&& errors() && noexcept;
+    };
+
+    template <typename Production, typename Input, typename ErrorCallback>
+    constexpr auto validate(const Input& input, ErrorCallback error_callback)
+        -> validate_result<ErrorCallback>;
 }
 ----
+<1> Returns `true` if no error occurred during validation.
+<2> Returns `true` if at least one error occurred during validation.
+<3> Returns `true` if at least one error occurred during validation, but parsing could recover after all of them.
+<4> Returns `true` if at least one error occurred during validation and parsing had to cancel.
 
 The function `lexy::validate()` validates that the `Production` matches on the given `input`.
-The return value is an `lexy::result<void, E>`, where `E` is the return type of `callback`.
-If the production accepts the input, returns an empty optional, otherwise, invokes the callback with the error information (see <<Error handling>>) and returns its result.
+If a parse error occurs, it will invoke the error callback (see <<Error handling>>); all errors are then returned.
 It will discard any values produced.
 
 NOTE: A production does not necessarily need to consume the entire input for it to match.
@@ -69,21 +95,57 @@ Add `lexy::dsl::eof` to the end if the production should consume the entire inpu
 ----
 namespace lexy
 {
-    template <typename Production, typename Input, typename Callback>
-    constexpr auto parse(const Input& input, Callback callback)
-        -> result</* see below */>;
+    template <typename T, typename ErrorCallback>
+    class parse_result
+    {
+    public:
+        using value_type     = T;
+        using error_callback = ErrorCallback;
+        using error_type     = /* return type of the sink */;
 
-    template <typename Production, typename Input, typename State, typename Callback>
-    constexpr auto parse(const Input& input, State&& state, Callback callback)
-        -> result</* see below */>;
+        //=== status ===//
+        constexpr explicit operator bool() const noexcept
+        {
+            return is_success();
+        }
+
+        constexpr bool is_success() const noexcept; // <1>
+        constexpr bool is_error() const noexcept; // <2>
+        constexpr bool is_recovered_error() const noexcept; // <3>
+        constexpr bool is_fatal_error() const noexcept; // <4>
+
+        //=== value ===//
+        constexpr bool has_value() const noexcept; // <5>
+
+        constexpr const T& value() const& noexcept;
+        constexpr T&& value() && noexcept;
+
+        //=== error ===//
+        constexpr std::size_t error_count() const noexcept;
+
+        constexpr const error_type& errors() const& noexcept;
+        constexpr error_type&& errors() && noexcept;
+    };
+
+    template <typename Production, typename Input, typename ErrorCallback>
+    constexpr auto parse(const Input& input, ErrorCallback error_callback)
+        -> parse_result</* see below */, ErrorCallback>;
+
+    template <typename Production, typename Input, typename State, typename ErrorCallback>
+    constexpr auto parse(const Input& input, State&& state, ErrorCallback error_callback)
+        -> parse_result</* see below */, ErrorCallback>;
 }
 ----
+<1> Returns `true` if no error occurred during parsing.
+<2> Returns `true` if at least one error occurred during parsing.
+<3> Returns `true` if at least one error occurred during parsing, but parsing could recover after all of them.
+<4> Returns `true` if at least one error occurred during parsing and parsing had to cancel.
+<5> Returns `true` if parsing could produce a value. This can only happen if there was no fatal error.
 
 The function `lexy::parse()` parses the `Production` on the given `input`.
-The return value is a `lexy::result<T, E>`, where `T` is the return type of the `Production::value` or `Production::list` callback,
-and `E` is the return type of the `callback`.
-If the production accepts the input, invokes `Production::value` (see below) with the produced values and returns their result.
-Otherwise, invokes `callback` with the error information (see <<Error handling>>) and returns its result.
+The return value is a `lexy::parse_result<T, ErrorCallback>`, where `T` is the return type of the `Production::value` or `Production::list` callback.
+If the production accepts the input or there are only recoverable errors, invokes `Production::value` (see below) with the produced values and returns their result.
+Invokes the error callback for each parse error (see <<Error handling>>) and collects the errors.
 
 The return value on success is determined using `Production::value` depending on three cases:
 
@@ -102,135 +164,6 @@ NOTE: The callback `operator>>` is useful for case 3 to create a combined callba
 
 The second overload of `lexy::parse()` allows passing an arbitrary state argument.
 This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::parse_state_member` rules which can forward it to the `Production::value` callback.
-
-=== Result
-
-.`lexy/result.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-    struct result_value_t {};
-    constexpr auto result_value = result_value_t{};
-
-    struct result_error_t {};
-    constexpr auto result_error = result_error_t{};
-
-    template <typename T, typename E>
-    class result
-    {
-    public:
-        using value_type = /* see below */;
-        using error_type = /* see below */;
-
-        template <typename... Args>
-        constexpr result(result_value_t, Args&&... args);
-        template <typename... Args>
-        constexpr result(result_error_t, Args&&... args);
-
-        template <typename U>
-        constexpr explicit result(const result<U, E>& other);
-        template <typename U>
-        constexpr explicit result(result<U, E>&& other);
-
-        template <typename Arg>
-        constexpr explicit result(Arg&& arg);
-
-        constexpr explicit operator bool() const noexcept;
-        constexpr bool has_value() const noexcept;
-        constexpr bool has_error() const noexcept;
-
-        static constexpr bool has_void_value() noexcept;
-        static constexpr bool has_void_error() noexcept;
-
-        constexpr value_type& value() & noexcept;
-        constexpr const value_type& value() const& noexcept;
-        constexpr value_type&& value() && noexcept;
-        constexpr const value_type&& value() const&& noexcept;
-
-        constexpr error_type& error() & noexcept;
-        constexpr const error_type& error() const& noexcept;
-        constexpr error_type&& error() && noexcept;
-        constexpr const error_type&& error() const&& noexcept;
-    };
-}
-----
-
-The class `lexy::result<T, E>` stores either a value `T` or an error `E` and is used to return the result of parsing.
-`T` and `E` can be `void`; in that case it is internally translated to the tag types `result_value_t` or `result_error_t`, respectively, which is reflected in the `value_type` and `error_type` typedefs as well.
-
-TIP: `lexy::result<T, void>` is like `std::optional<T>` and `lexy::result<void, void>` is like `bool`.
-
-Once a result is created containing a value or error, it can never change that state.
-
-NOTE: `lexy::result` was created for use by the library only.
-While it can be used as a general purpose result monad, it is better to us a designated library for it.
-
-[discrete]
-===== Creation
-
-[source,cpp]
-----
-template <typename... Args>
-constexpr result(result_value_t, Args&&... args); // <1>
-template <typename... Args>
-constexpr result(result_error_t, Args&&... args); // <2>
-----
-<1> Creates a result containing the value constructed by forwarding the arguments.
-<2> Creates a result containing the error constructed by forwarding the arguments.
-
-[discrete]
-===== Conversion
-
-[source,cpp]
-----
-template <typename U>
-constexpr explicit result(const result<U, E>& other); // <1>
-template <typename U>
-constexpr explicit result(result<U, E>&& other); // <2>
-
-template <typename Arg>
-constexpr explicit result(Arg&& arg); // <3>
-----
-<1> Converts an errored `result<U, E>` to a `result<T, E>` by copying the error.
-<2> Converts an errored `result<U, E>` to a `result<T, E>` by moving the error.
-<3> Only available for `result<T, void>` or `result<void, E>`. Constructs the value/error by forwarding the argument.
-
-[discrete]
-===== State
-
-[source,cpp]
-----
-constexpr explicit operator bool() const noexcept; // <1>
-constexpr bool has_value() const noexcept; // <2>
-constexpr bool has_error() const noexcept; // <3>
-
-static constexpr bool has_void_value() noexcept; // <4>
-static constexpr bool has_void_error() noexcept; // <5>
-----
-<1> Returns `true` if it contains a value, `false` otherwise.
-<2> Returns `true` if it contains a value, `false` otherwise.
-<3> Returns `true` if it contains an error, `false` otherwise.
-<4> Returns `true` if `T == void`, `false` otherwise.
-<5> Returns `true` if `E == void`, `false` otherwise.
-
-[discrete]
-===== Access
-
-[source,cpp]
-----
-constexpr value_type& value() & noexcept;
-constexpr const value_type& value() const& noexcept;
-constexpr value_type&& value() && noexcept;
-constexpr const value_type&& value() const&& noexcept;
-
-constexpr error_type& error() & noexcept;
-constexpr const error_type& error() const& noexcept;
-constexpr error_type&& error() && noexcept;
-constexpr const error_type&& error() const&& noexcept;
-----
-
-Returns the stored value or error, respectively.
 
 === Callbacks
 
@@ -587,23 +520,55 @@ The second overload is meant to be used together with `lexy::dsl::sign` and rela
 === Error handling
 
 Parsing errors are reported by constructing a `lexy::error` object and passing it to the error callback of `lexy::parse` and `lexy::validate` together with the `lexy::error_context`.
+The error callback must either be a sink, in which case it can return an arbitrary type that represents a collection of all the errors,
+or is a non-sink callback that returns `void`, in which case it will be passed to `lexy::collect()` to turn it into a sink.
 
-As such, an error callback looks like this:
+The `error_type` of `lexy::validate_result` and `lexy::parse_result` will be the return type of the sink.
+For a `void` returning non-sink callback it will be `std::size_t`, which is the result of `lexy::collect()`.
 
+.Example
+[%collapsible]
+=====
+
+.A `void`-returning error callback that is not a sink.
 [source, cpp]
 ----
-class ErrorCallback
+class ErrorCallbackVoid
 {
 public:
-    using return_type = /* … */;
+    using return_type = void;
 
     template <typename Production, typename Input, typename Tag>
-    return_type operator()(const lexy::error_context<Production, Input>& context,
+    void operator()(const lexy::error_context<Production, Input>& context,
                            const lexy::error<lexy::input_reader<Input>, Tag>& error) const;
 };
 ----
 
+.A non-`void`-returning error callback that is a sink.
+[source, cpp]
+----
+class ErrorCallbackSink
+{
+public:
+    class Sink
+    {
+    public:
+        using return_type = /* ... */;
+
+        template <typename Production, typename Input, typename Tag>
+        void operator()(const lexy::error_context<Production, Input>& context,
+                               const lexy::error<lexy::input_reader<Input>, Tag>& error) const;
+
+        return_type finish() &&;
+    };
+
+    Sink sink();
+};
+----
+
 Of course, overloading can be used to differentiate between various error types and contexts.
+
+=====
 
 ==== Error types
 
@@ -806,18 +771,18 @@ namespace lexy
     using parse_tree_for = lexy::parse_tree<input_reader<Input>, TokenKind, MemoryResource>;
 
     template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
-              typename Callback>
+              typename ErrorCallback>
     auto parse_as_tree(parse_tree<input_reader<Input>, TokenKind, MemoryResource>& tree,
-                       const Input& input, Callback callback)
-      -> result<void, typename Callback::return_type>;
+                       const Input& input, ErrorCallback error_callback)
+      -> lexy::validate_result<ErrorCallback>;
 }
 ----
 
 The class `lexy::parse_tree` represents a lossless untyped syntax tree.
 
 The function `lexy::parse_as_tree()` parses a `Production` on the given `input` and constructs a lossless parse tree from the result.
-The return value is an `lexy::result<void, E>`, where `E` is the return type of `callback`.
-If the production accepts the input, returns an empty optional and updates `tree` to the parse tree, otherwise, cleares the `tree` and invokes the callback with the error information (see <<Error handling>>) and returns its result.
+All parse errors are passed to the error callback (see <<Error handling>>) and later returned.
+If a non-recoverable parse error happens, the tree will be cleared, otherwise it contains the (partial) parse tree of the input.
 It will discard any values produced by parsing the rules.
 
 The resulting parse tree will contain a parent node for each production, and leaf node for every token.

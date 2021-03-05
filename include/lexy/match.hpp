@@ -14,6 +14,14 @@ namespace lexy
 class match_handler
 {
 public:
+    constexpr match_handler() : _failed(false) {}
+
+    constexpr explicit operator bool() const noexcept
+    {
+        return !_failed;
+    }
+
+    //=== handler functions ===//
     template <typename Production>
     using return_type_for = void;
 
@@ -45,18 +53,24 @@ public:
 
     template <typename Production, typename Error>
     constexpr void error(Production, state, Error&&)
-    {}
+    {
+        _failed = true;
+    }
+
+private:
+    bool _failed;
 };
 
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto                handler = match_handler{};
-    auto                reader  = input.reader();
-    lexy::parse_context context(Production{}, handler, reader.cur());
+    auto handler = match_handler{};
+    auto reader  = input.reader();
 
-    using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
+    lexy::_detail::parse_impl<Production>(handler, reader);
+
+    // We only match the production if no error was logged.
+    return static_cast<bool>(handler);
 }
 } // namespace lexy
 

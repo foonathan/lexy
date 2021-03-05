@@ -29,11 +29,11 @@ TEST_CASE("dsl::plus_sign")
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == +1);
+    CHECK(empty.success(+1));
     auto plus = LEXY_VERIFY("+");
-    CHECK(plus == +1);
+    CHECK(plus.success(+1));
     auto minus = LEXY_VERIFY("-");
-    CHECK(minus == 0);
+    CHECK(minus.fatal(0));
 }
 
 TEST_CASE("dsl::minus_sign")
@@ -58,11 +58,11 @@ TEST_CASE("dsl::minus_sign")
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == +1);
+    CHECK(empty.success(+1));
     auto plus = LEXY_VERIFY("+");
-    CHECK(plus == 0);
+    CHECK(plus.fatal(0));
     auto minus = LEXY_VERIFY("-");
-    CHECK(minus == -1);
+    CHECK(minus.success(-1));
 }
 
 TEST_CASE("dsl::sign")
@@ -88,10 +88,10 @@ TEST_CASE("dsl::sign")
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == +1);
+    CHECK(empty.success(+1));
     auto plus = LEXY_VERIFY("+");
-    CHECK(plus == +1);
+    CHECK(plus.success(+1));
     auto minus = LEXY_VERIFY("-");
-    CHECK(minus == -1);
+    CHECK(minus.success(-1));
 }
 

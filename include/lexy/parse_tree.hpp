@@ -14,7 +14,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/production.hpp>
-#include <lexy/result.hpp>
 #include <lexy/token.hpp>
 #include <lexy/validate.hpp>
 
@@ -518,7 +517,7 @@ private:
     struct state
     {
         // The current production all tokens are appended to.
-        _detail::pt_node_production<Reader>* prod;
+        _detail::pt_node_production<Reader>* prod = nullptr;
         // The last child of the current production.
         _detail::pt_node_ptr<Reader> last_child;
 
@@ -1023,10 +1022,16 @@ template <typename Tree, typename Input, typename Callback>
 class _pt_handler
 {
 public:
-    explicit _pt_handler(Tree& tree, const Input& input, Callback&& cb)
-    : _tree(&tree), _depth(0), _validate(input, LEXY_MOV(cb))
+    explicit _pt_handler(Tree& tree, const Input& input, const Callback& cb)
+    : _tree(&tree), _depth(0), _validate(input, cb)
     {}
 
+    constexpr auto get_result(bool did_recover) &&
+    {
+        return LEXY_MOV(_validate).get_result(did_recover);
+    }
+
+    //=== handler functions ===//
     template <typename Production>
     using return_type_for = void;
 
@@ -1072,14 +1077,16 @@ public:
     template <typename Production>
     constexpr void backtrack_production(Production, _state_t&& state)
     {
-        --_depth;
-        _builder->backtrack_production(LEXY_MOV(state.builder_state));
+        if (--_depth == 0)
+            // Clear tree instead of finishing production.
+            _tree->clear();
+        else
+            _builder->backtrack_production(LEXY_MOV(state.builder_state));
     }
 
     template <typename Production, typename Error>
     constexpr void error(Production p, _state_t&& state, Error&& error)
     {
-        _tree->clear();
         _validate.error(p, state.pos, LEXY_FWD(error));
     }
 
@@ -1092,16 +1099,16 @@ private:
 };
 
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
-          typename Callback>
-bool parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, Callback callback)
+          typename ErrorCallback>
+auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+                   const Input& input, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
 {
-    auto                handler = _pt_handler(tree, input, LEXY_MOV(callback));
-    auto                reader  = input.reader();
-    lexy::parse_context context(Production{}, handler, reader.cur());
+    auto handler = _pt_handler(tree, input, LEXY_MOV(callback));
+    auto reader  = input.reader();
 
-    using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader);
+    auto did_recover = lexy::_detail::parse_impl<Production>(handler, reader);
+    return LEXY_MOV(handler).get_result(static_cast<bool>(did_recover));
 }
 } // namespace lexy
 

@@ -79,7 +79,7 @@ TEST_CASE("lexyd::_digit_count")
 
 TEST_CASE("dsl::integer")
 {
-    auto parse = [](auto rule, const char* str) -> int {
+    auto parse = [](auto rule, const char* str) -> test_result {
         CHECK(lexy::is_rule<decltype(rule)>);
         struct callback
         {

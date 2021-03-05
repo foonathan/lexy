@@ -8,8 +8,87 @@
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/result.hpp>
 #include <lexy/validate.hpp>
+
+namespace lexy
+{
+template <typename T, typename ErrorCallback>
+class parse_result
+{
+    using _impl_t = lexy::validate_result<ErrorCallback>;
+
+public:
+    using value_type     = T;
+    using error_callback = ErrorCallback;
+    using error_type     = typename _impl_t::error_type;
+
+    //=== status ===//
+    constexpr explicit operator bool() const noexcept
+    {
+        return _impl.is_success();
+    }
+
+    constexpr bool is_success() const noexcept
+    {
+        return _impl.is_success();
+    }
+    constexpr bool is_error() const noexcept
+    {
+        return _impl.is_error();
+    }
+    constexpr bool is_recovered_error() const noexcept
+    {
+        return _impl.is_recovered_error();
+    }
+    constexpr bool is_fatal_error() const noexcept
+    {
+        return _impl.is_fatal_error();
+    }
+
+    //=== value ===//
+    constexpr bool has_value() const noexcept
+    {
+        return static_cast<bool>(_value);
+    }
+
+    constexpr const auto& value() const& noexcept
+    {
+        return *_value;
+    }
+    constexpr auto&& value() && noexcept
+    {
+        return LEXY_MOV(*_value);
+    }
+
+    //=== error ===//
+    constexpr std::size_t error_count() const noexcept
+    {
+        return _impl.error_count();
+    }
+
+    constexpr const auto& errors() const& noexcept
+    {
+        return _impl.errors();
+    }
+    constexpr auto&& errors() && noexcept
+    {
+        return LEXY_MOV(_impl).errors();
+    }
+
+private:
+    constexpr explicit parse_result(_impl_t&& impl, lexy::_detail::lazy_init<T>&& v) noexcept
+    : _impl(LEXY_MOV(impl)), _value(LEXY_MOV(v))
+    {}
+
+    // In principle we could do a space optimization, as we can reconstruct the impl's status from
+    // the state of _value and error. Feel free to implement it.
+    _impl_t                     _impl;
+    lexy::_detail::lazy_init<T> _value;
+
+    template <typename State, typename Input, typename Callback>
+    friend class _parse_handler;
+};
+} // namespace lexy
 
 namespace lexy
 {
@@ -21,12 +100,13 @@ constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
 constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
-template <typename State, typename Input, typename Callback>
+template <typename State, typename Input, typename ErrorCallback>
 class _parse_handler
 {
 public:
-    constexpr explicit _parse_handler(State& state, const Input& input, Callback&& callback)
-    : _validate(input, LEXY_MOV(callback)), _state(state)
+    constexpr explicit _parse_handler(State& state, const Input& input,
+                                      const ErrorCallback& callback)
+    : _validate(input, callback), _state(state)
     {}
 
     constexpr State& get_state()
@@ -34,9 +114,12 @@ public:
         return _state;
     }
 
-    constexpr auto get_error() &&
+    template <typename T>
+    constexpr auto get_result(lexy::_detail::lazy_init<T>&& value) &&
     {
-        return LEXY_MOV(_validate).get_error();
+        auto did_recover = static_cast<bool>(value);
+        return parse_result<T, ErrorCallback>(LEXY_MOV(_validate).get_result(did_recover),
+                                              LEXY_MOV(value));
     }
 
     //=== handler functions ===//
@@ -104,8 +187,8 @@ public:
     }
 
 private:
-    lexy::validate_handler<Input, Callback> _validate;
-    State&                                  _state;
+    lexy::validate_handler<Input, ErrorCallback> _validate;
+    State&                                       _state;
 };
 
 template <typename T>
@@ -117,20 +200,11 @@ constexpr bool _is_parse_handler<_parse_handler<Input, State, Callback>> = true;
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
-    auto                handler = lexy::_parse_handler(state, input, LEXY_MOV(callback));
-    auto                reader  = input.reader();
-    lexy::parse_context context(Production{}, handler, reader.cur());
+    auto handler = lexy::_parse_handler(state, input, LEXY_MOV(callback));
+    auto reader  = input.reader();
 
-    using rule = lexy::production_rule<Production>;
-    using result_type
-        = lexy::result<typename decltype(handler)::template return_type_for<Production>,
-                       typename Callback::return_type>;
-    if (lexy::rule_parser<rule, lexy::context_value_parser>::parse(context, reader))
-        return result_type(lexy::result_value, LEXY_MOV(context).finish());
-    else if constexpr (std::is_void_v<typename Callback::return_type>)
-        return result_type(lexy::result_error);
-    else
-        return result_type(lexy::result_error, LEXY_MOV(handler).get_error());
+    auto value = lexy::_detail::parse_impl<Production>(handler, reader);
+    return LEXY_MOV(handler).get_result(LEXY_MOV(value));
 }
 
 template <typename Production, typename Input, typename Callback>

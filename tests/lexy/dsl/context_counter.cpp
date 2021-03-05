@@ -94,7 +94,7 @@ TEST_CASE("dsl::context_counter")
         static constexpr auto rule = counter.create<-1>() + compare;
 
         auto result = LEXY_VERIFY("abc");
-        CHECK(result == -1);
+        CHECK(result.success(-1));
     }
     SUBCASE("compare - equal")
     {
