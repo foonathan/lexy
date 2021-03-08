@@ -317,6 +317,32 @@ assert(result == 1 + 2 + 3);
 <2> Use it.
 ====
 
+.`lexy/callback.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+template <typename Callback>
+constexpr Sink collect(Callback&& callback);
+
+template <typename Container, typename Callback>
+constexpr Sink collect(Callback&& callback);
+}
+----
+
+Turns a callback into a sink by invoking it multiple times and collecting all the results in a container.
+
+The first version requires that the callback returns `void`;
+its sink callback forwards all arguments and increases a count.
+The final count as a `std::size_t` is then returned by `finish()`.
+
+The second version requires that the callback returns non-`void`.
+Its sink callback creates a default constructed `Container`.
+It then invokes the callback multiple times and adds the result to the container using `.push_back()`.
+The final container is then returned.
+
+NOTE: `collect()` is useful for the error callback to handle multiple errors.
+
 ==== Callback composition
 
 .`lexy/callback.hpp`
@@ -334,7 +360,7 @@ namespace lexy
 ----
 <1> The result of `first | second`, where `first` and `second` are both callbacks, is another callback that first invokes `first` and then passes the result to `second`.
     The result cannot be used as sink.
-<2> The  result of `sink | callback`, is a sink and a callback.
+<2> The  result of `sink >> callback`, is both a sink and a callback.
     As a sink, it behaves just like `sink`.
     As a callback, it takes the result of the `sink` as well as any other arguments and forwards them to `callback`.
 

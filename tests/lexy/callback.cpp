@@ -86,6 +86,45 @@ TEST_CASE("sink")
     CHECK(result == 4 + 'a');
 }
 
+TEST_CASE("collect")
+{
+    SUBCASE("void")
+    {
+        auto sum      = 0;
+        auto callback = lexy::callback([&sum](int i) mutable { sum += i; });
+
+        auto collect = lexy::collect(callback);
+        CHECK(lexy::is_sink<decltype(collect)>);
+
+        auto cb = collect.sink();
+        cb(1);
+        cb(2);
+        cb(3);
+
+        std::size_t count = LEXY_MOV(cb).finish();
+        CHECK(count == 3);
+        CHECK(sum == 6);
+    }
+    SUBCASE("non-void")
+    {
+        constexpr auto callback = lexy::callback<int>([](int i) { return 2 * i; });
+
+        constexpr auto collect = lexy::collect<std::vector<int>>(callback);
+        CHECK(lexy::is_sink<decltype(collect)>);
+
+        auto cb = collect.sink();
+        cb(1);
+        cb(2);
+        cb(3);
+
+        std::vector<int> result = LEXY_MOV(cb).finish();
+        REQUIRE(result.size() == 3);
+        CHECK(result[0] == 2);
+        CHECK(result[1] == 4);
+        CHECK(result[2] == 6);
+    }
+}
+
 TEST_CASE("callback compose")
 {
     SUBCASE("callbacks")
