@@ -64,9 +64,13 @@ struct _del : rule_base
                 else if (auto result = escape::try_parse(context, reader, sink);
                          result != lexy::rule_try_parse_result::backtracked)
                 {
-                    // We definitely had one, check whether we need to cancel.
-                    if (result == lexy::rule_try_parse_result::canceled)
-                        return false;
+                    // If we just parsed an escape sequence, we just continue with the next
+                    // character.
+                    //
+                    // If we had an invalid escape sequence, we also just continue as if
+                    // nothing happened.
+                    // The leading escape character will be skipped, as well as any valid prefixes.
+                    // We could try and add them to the list, but it should be fine as-is.
                 }
                 // Parse the next character.
                 else

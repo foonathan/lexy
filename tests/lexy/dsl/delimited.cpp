@@ -207,9 +207,8 @@ TEST_CASE("dsl::delimited with escape")
     SUBCASE("token")
     {
         static constexpr auto rule
-            = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp,
-                                                      lexy::dsl::escape(LEXY_LIT("$"))
-                                                          .capture(lexy::dsl::ascii::character));
+            = delimited(LEXY_LIT("("), LEXY_LIT(")"))(cp, lexy::dsl::escape(LEXY_LIT("$"))
+                                                              .capture(lexy::dsl::ascii::print));
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
@@ -288,9 +287,10 @@ TEST_CASE("dsl::delimited with escape")
         CHECK(invalid_ascii == -3);
 
         auto escape = LEXY_VERIFY("(a$bc$))");
-        CHECK(escape == 4);
-        auto invalid_escape = LEXY_VERIFY("(a$\xF0)");
-        CHECK(invalid_escape == -4);
+        CHECK(escape == 4); // abc)
+        auto invalid_escape = LEXY_VERIFY("(a$\n)");
+        CHECK(invalid_escape.value == 2); // a\n
+        CHECK(invalid_escape.errors(-4));
     }
     SUBCASE("branch")
     {
@@ -300,7 +300,7 @@ TEST_CASE("dsl::delimited with escape")
         {};
 
         static constexpr auto escape_rule
-            = lexy::dsl::escape(LEXY_LIT("$")).capture(lexy::dsl::ascii::character);
+            = lexy::dsl::escape(LEXY_LIT("$")).capture(lexy::dsl::ascii::print);
         static constexpr auto rule
             = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
                         LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp, escape_rule);
@@ -383,9 +383,10 @@ TEST_CASE("dsl::delimited with escape")
         CHECK(invalid_ascii == -3);
 
         auto escape = LEXY_VERIFY("(a$bc$))");
-        CHECK(escape == 4);
-        auto invalid_escape = LEXY_VERIFY("(a$\xF0)");
-        CHECK(invalid_escape == -4);
+        CHECK(escape == 4); // abc)
+        auto invalid_escape = LEXY_VERIFY("(a$\n)");
+        CHECK(invalid_escape.value == 2); // a\n
+        CHECK(invalid_escape.errors(-4));
     }
 }
 
