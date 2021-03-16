@@ -197,7 +197,8 @@ TEST_CASE("dsl::terminator")
             auto two = LEXY_VERIFY("abc,abc;");
             CHECK(two == 8);
             auto trailing = LEXY_VERIFY("abc,abc,;");
-            CHECK(trailing == -2);
+            CHECK(trailing.value == 9);
+            CHECK(trailing.errors(-2));
         }
         SUBCASE("opt_list - no sep")
         {
@@ -249,7 +250,8 @@ TEST_CASE("dsl::terminator")
             auto two = LEXY_VERIFY("abc,abc;");
             CHECK(two == 8);
             auto trailing = LEXY_VERIFY("abc,abc,;");
-            CHECK(trailing == -2);
+            CHECK(trailing.value == 9);
+            CHECK(trailing.errors(-2));
         }
     }
     SUBCASE("branch")
@@ -409,7 +411,8 @@ TEST_CASE("dsl::terminator")
             auto two = LEXY_VERIFY("abc,abc;");
             CHECK(two == 8);
             auto trailing = LEXY_VERIFY("abc,abc,;");
-            CHECK(trailing == -2);
+            CHECK(trailing.value == 9);
+            CHECK(trailing.errors(-2));
         }
         SUBCASE("opt_list - no sep")
         {
@@ -461,7 +464,8 @@ TEST_CASE("dsl::terminator")
             auto two = LEXY_VERIFY("abc,abc;");
             CHECK(two == 8);
             auto trailing = LEXY_VERIFY("abc,abc,;");
-            CHECK(trailing == -2);
+            CHECK(trailing.value == 9);
+            CHECK(trailing.errors(-2));
         }
     }
 }

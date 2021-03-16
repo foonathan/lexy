@@ -153,7 +153,8 @@ struct _list_loop<Item, _ntsep<Sep, Tag>, NextParser, PrevArgs...>
                 // We had a trailing separator, which is not allowed.
                 auto err = lexy::make_error<Reader, Tag>(sep_begin, sep_end);
                 context.error(err);
-                return false;
+                // However, we can trivially continue.
+                break;
             }
             else if (result == lexy::rule_try_parse_result::canceled)
                 return false;
@@ -295,7 +296,8 @@ struct _list_loop_term<Term, Item, _ntsep<Sep, Tag>, NextParser, PrevArgs...>
                 // We had a trailing separator, which is not allowed.
                 auto err = lexy::make_error<Reader, Tag>(sep_begin, sep_end);
                 context.error(err);
-                return false;
+                // However, we can trivially recover.
+                return static_cast<bool>(result);
             }
 
             // Parse the next item.

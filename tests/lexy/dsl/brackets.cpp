@@ -223,7 +223,8 @@ TEST_CASE("dsl::bracketed")
         auto two = LEXY_VERIFY("(abc,abc)");
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing == -2);
+        CHECK(trailing.value == 10);
+        CHECK(trailing.errors(-2));
     }
     SUBCASE("opt_list - no sep")
     {
@@ -276,7 +277,8 @@ TEST_CASE("dsl::bracketed")
         auto two = LEXY_VERIFY("(abc,abc)");
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing == -2);
+        CHECK(trailing.value == 10);
+        CHECK(trailing.errors(-2));
     }
 }
 

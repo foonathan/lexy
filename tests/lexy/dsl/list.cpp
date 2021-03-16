@@ -283,7 +283,8 @@ TEST_CASE("dsl::list() no_trailing_sep")
     CHECK(no_sep == 1);
 
     auto trailing = LEXY_VERIFY("abc,");
-    CHECK(trailing == -2);
+    CHECK(trailing.value == 1);
+    CHECK(trailing.errors(-2));
 }
 
 TEST_CASE("dsl::opt_list())")
@@ -528,6 +529,7 @@ TEST_CASE("dsl::opt_list() no_trailing_sep")
     CHECK(no_sep == 1);
 
     auto trailing = LEXY_VERIFY("abc,");
-    CHECK(trailing == -1);
+    CHECK(trailing.value == 1);
+    CHECK(trailing.errors(-1));
 }
 
