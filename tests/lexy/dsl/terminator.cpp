@@ -105,6 +105,13 @@ TEST_CASE("dsl::terminator")
             CHECK(one == 4);
             auto two = LEXY_VERIFY("abcabc;");
             CHECK(two == 7);
+
+            auto partial = LEXY_VERIFY("abcab;");
+            CHECK(partial.value == 6);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abcabdef;");
+            CHECK(invalid.value == 9);
+            CHECK(invalid.errors(-1));
         }
         SUBCASE("while_one")
         {
@@ -116,6 +123,13 @@ TEST_CASE("dsl::terminator")
             CHECK(one == 4);
             auto two = LEXY_VERIFY("abcabc;");
             CHECK(two == 7);
+
+            auto partial = LEXY_VERIFY("abcab;");
+            CHECK(partial.value == 6);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abcabdef;");
+            CHECK(invalid.value == 9);
+            CHECK(invalid.errors(-1));
         }
         SUBCASE("opt")
         {
@@ -310,6 +324,13 @@ TEST_CASE("dsl::terminator")
             CHECK(one == 4);
             auto two = LEXY_VERIFY("abcabc;");
             CHECK(two == 7);
+
+            auto partial = LEXY_VERIFY("abcab;");
+            CHECK(partial.value == 6);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abcabdef;");
+            CHECK(invalid.value == 9);
+            CHECK(invalid.errors(-1));
         }
         SUBCASE("while_one")
         {
@@ -321,6 +342,13 @@ TEST_CASE("dsl::terminator")
             CHECK(one == 4);
             auto two = LEXY_VERIFY("abcabc;");
             CHECK(two == 7);
+
+            auto partial = LEXY_VERIFY("abcab;");
+            CHECK(partial.value == 6);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abcabdef;");
+            CHECK(invalid.value == 9);
+            CHECK(invalid.errors(-1));
         }
         SUBCASE("opt")
         {

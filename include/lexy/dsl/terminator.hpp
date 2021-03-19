@@ -16,7 +16,7 @@ namespace lexyd
 {
 template <typename Terminator, typename R, typename Recover>
 struct _optt;
-template <typename Terminator, typename R>
+template <typename Terminator, typename R, typename Recover>
 struct _whlt;
 template <typename Terminator, typename R, typename Sep>
 struct _lstt;
@@ -54,7 +54,7 @@ struct _term
     template <typename Rule>
     LEXY_CONSTEVAL auto while_(Rule) const
     {
-        return _whlt<Terminator, Rule>{};
+        return _whlt<Terminator, Rule, decltype(recovery_rule())>{};
     }
     /// Matches rule as long as terminator isn't matched, but at least once.
     template <typename Rule>

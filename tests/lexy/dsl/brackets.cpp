@@ -130,6 +130,13 @@ TEST_CASE("dsl::bracketed")
         CHECK(one == 5);
         auto two = LEXY_VERIFY("(abcabc)");
         CHECK(two == 8);
+
+        auto partial = LEXY_VERIFY("(abcab)");
+        CHECK(partial.value == 7);
+        CHECK(partial.errors(-1));
+        auto invalid = LEXY_VERIFY("(abcabdef)");
+        CHECK(invalid.value == 10);
+        CHECK(invalid.errors(-1));
     }
     SUBCASE("while_one")
     {
@@ -141,6 +148,13 @@ TEST_CASE("dsl::bracketed")
         CHECK(one == 5);
         auto two = LEXY_VERIFY("(abcabc)");
         CHECK(two == 8);
+
+        auto partial = LEXY_VERIFY("(abcab)");
+        CHECK(partial.value == 7);
+        CHECK(partial.errors(-1));
+        auto invalid = LEXY_VERIFY("(abcabdef)");
+        CHECK(invalid.value == 10);
+        CHECK(invalid.errors(-1));
     }
     SUBCASE("opt")
     {

@@ -6,7 +6,6 @@
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/branch.hpp>
 
 namespace lexyd
 {
@@ -71,7 +70,7 @@ LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
 
 namespace lexyd
 {
-template <typename Term, typename Rule>
+template <typename Term, typename Rule, typename Recover>
 struct _whlt : rule_base
 {
     template <typename NextParser>
@@ -92,7 +91,10 @@ struct _whlt : rule_base
 
                 using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
                 if (!parser::parse(context, reader))
-                    return false;
+                {
+                    using recovery = lexy::rule_parser<Recover, NextParser>;
+                    return recovery::parse(context, reader, LEXY_FWD(args)...);
+                }
             }
 
             return false; // unreachable
