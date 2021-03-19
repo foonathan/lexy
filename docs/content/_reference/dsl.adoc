@@ -611,7 +611,7 @@ TIP: Use `position` when creating an AST whose nodes are annotated with their or
 
 === Errors
 
-The following rules are used to customize/improve error messages.
+The following rules are used to customize/improve error messages or recover from errors.
 
 [discrete]
 ==== `.error<Tag>`
@@ -683,6 +683,60 @@ dsl::zero >> dsl::prevent<forbidden_leading_zero>(dsl::digits<>)
 ====
 
 TIP: Use `prevent` together with `times` to prevent the rule from matching more than the specified number of times.
+
+[discrete]
+==== `lexy::dsl::try_`
+
+.`lexy/dsl/recover.hpp`
+----
+try_(rule) : Rule
+try_(rule, recovery_rule) : Rule
+----
+
+The `try_` rule matches and consumes `rule`.
+If that fails, it recovers from the error and continues as if it didn't fail.
+The first overload recovers by doing nothing, the second recovers by parsing the recovery rule.
+
+Matches::
+  Matches and consumes `rule`.
+  If that fails, matches and consumes `recovery_rule`.
+Values::
+  All values produced by `rule` if `rule` was parsed successfully.
+  All values produced by `recovery_rule` otherwise.
+Error::
+  All errors raised by `rule` or `recovery_rule`.
+
+[discrete]
+==== `lexy::dsl::find`
+
+.`lexy/dsl/recover.hpp`
+----
+find(token_1, ..., token_n) : Rule
+find(token_1, ..., token_n).limit(token_1, ..., token_n) : Rule
+----
+
+The `find` rule is designed to be used as a recovery rule.
+It matches and consumes everything until it finds one of the tokens.
+The tokens are not consumed.
+
+If a limit is specified, recovery fails if the limiting tokens are found first.
+The limiting tokens are not consumed either.
+
+[discrete]
+==== `lexy::dsl::recover`
+
+.`lexy/dsl/recover.hpp`
+----
+recover(branch_1, ..., branch_n) : Rule
+recover(branch_1, ..., branch_n).limit(branch_1, ..., branch_n) : Rule
+----
+
+The `recover` rule is designed to be used as a recovery rule.
+It matches and consumes everything until one of the recovery branches match.
+It then matches and consumes the branch.
+
+If a limit is specified, recovery fails if the limiting tokens are found first.
+The limiting tokens are not consumed.
 
 === Branch conditions
 

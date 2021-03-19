@@ -50,6 +50,7 @@ set(tests
         dsl/position.cpp
         dsl/production.cpp
         dsl/punctuator.cpp
+        dsl/recover.cpp
         dsl/return.cpp
         dsl/separator.cpp
         dsl/sequence.cpp
