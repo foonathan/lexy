@@ -80,7 +80,11 @@ template <typename Rule>
 LEXY_CONSTEVAL auto opt(Rule)
 {
     static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
-    return _opt<Rule>{};
+    if constexpr (Rule::is_unconditional_branch)
+        // Branch is always taken, so don't wrap in opt().
+        return Rule{};
+    else
+        return _opt<Rule>{};
 }
 } // namespace lexyd
 

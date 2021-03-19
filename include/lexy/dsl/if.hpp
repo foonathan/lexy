@@ -37,7 +37,11 @@ template <typename Branch>
 LEXY_CONSTEVAL auto if_(Branch)
 {
     static_assert(lexy::is_branch<Branch>, "if_() requires a branch condition");
-    return _if<Branch>{};
+    if constexpr (Branch::is_unconditional_branch)
+        // Branch is always taken, so don't wrap in if_().
+        return Branch{};
+    else
+        return _if<Branch>{};
 }
 } // namespace lexyd
 

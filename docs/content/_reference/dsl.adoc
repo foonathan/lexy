@@ -856,10 +856,11 @@ dsl::opt(dsl::list(dsl::ascii::alpha >> dsl::id<0>))
 
 .`lexy/dsl/choice.hpp`
 ----
-branch  | branch  : Rule
+branch  | branch  : Branch
 ----
 
 A choice rule matches the first branch in order whose condition was matched.
+It is always a branch, that is taken if any of its branches is taken.
 
 Matches::
   Tries to match the condition of each branch in the order they were specified.
