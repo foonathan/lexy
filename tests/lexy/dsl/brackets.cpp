@@ -150,6 +150,13 @@ TEST_CASE("dsl::bracketed")
         CHECK(zero == 2);
         auto one = LEXY_VERIFY("(abc)");
         CHECK(one == 5);
+
+        auto partial = LEXY_VERIFY("(ab)");
+        CHECK(partial.value == 4);
+        CHECK(partial.errors(-1));
+        auto invalid = LEXY_VERIFY("(abdef)");
+        CHECK(invalid.value == 7);
+        CHECK(invalid.errors(-1));
     }
     SUBCASE("list - no sep")
     {

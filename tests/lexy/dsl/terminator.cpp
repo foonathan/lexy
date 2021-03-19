@@ -125,6 +125,13 @@ TEST_CASE("dsl::terminator")
             CHECK(zero == 1);
             auto one = LEXY_VERIFY("abc;");
             CHECK(one == 4);
+
+            auto partial = LEXY_VERIFY("ab;");
+            CHECK(partial.value == 3);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abdef;");
+            CHECK(invalid.value == 6);
+            CHECK(invalid.errors(-1));
         }
         SUBCASE("list - no sep")
         {

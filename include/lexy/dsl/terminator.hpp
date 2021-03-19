@@ -14,7 +14,7 @@
 
 namespace lexyd
 {
-template <typename Terminator, typename R>
+template <typename Terminator, typename R, typename Recover>
 struct _optt;
 template <typename Terminator, typename R>
 struct _whlt;
@@ -69,9 +69,9 @@ struct _term
     /// Matches opt(rule) followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
-    LEXY_CONSTEVAL auto opt(R r) const
+    LEXY_CONSTEVAL auto opt(R) const
     {
-        return _optt<Terminator, decltype(r + terminator())>{};
+        return _optt<Terminator, R, decltype(recovery_rule())>{};
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.

@@ -90,7 +90,7 @@ LEXY_CONSTEVAL auto opt(Rule)
 
 namespace lexyd
 {
-template <typename Term, typename R>
+template <typename Term, typename R, typename Recover>
 struct _optt : rule_base
 {
     template <typename NextParser>
@@ -99,6 +99,7 @@ struct _optt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            // Try to parse the terminator.
             using term_parser = lexy::rule_parser<Term, NextParser>;
             if (auto result
                 = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
@@ -107,12 +108,16 @@ struct _optt : rule_base
                 // We had the terminator, and thus created the empty optional.
                 return static_cast<bool>(result);
             }
-            else
+
+            // Parse the rule followed by the terminator.
+            using parser = lexy::rule_parser<R, term_parser>;
+            if (!parser::parse(context, reader, LEXY_FWD(args)...))
             {
-                // Note: we don't parse the terminator after the rule.
-                // This has to be done by the parent rule, if necessary.
-                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+                using recovery = lexy::rule_parser<Recover, NextParser>;
+                return recovery::parse(context, reader, LEXY_FWD(args)...);
             }
+
+            return true;
         }
     };
 };
