@@ -7,6 +7,8 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/error.hpp>
+#include <lexy/dsl/recover.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
@@ -21,17 +23,19 @@ struct _lstt;
 template <typename Terminator, typename R, typename Sep>
 struct _olstt;
 
-template <typename Branch>
+template <typename Terminator, typename... RecoveryLimit>
 struct _term
 {
-    /// Sets the whitespace that will be skipped before the terminator.
-    template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    /// Adds the tokens to the recovery limit.
+    template <typename... Tokens>
+    LEXY_CONSTEVAL auto limit(Tokens...) const
     {
-        auto branch = whitespaced(Branch{}, ws);
-        return _term<decltype(branch)>{};
+        static_assert(sizeof...(Tokens) > 0);
+        static_assert((lexy::is_token<Tokens> && ...));
+        return _term<Terminator, RecoveryLimit..., Tokens...>{};
     }
 
+    //=== rules ===//
     /// Matches rule followed by the terminator.
     template <typename Rule>
     LEXY_CONSTEVAL auto operator()(Rule rule) const
@@ -39,11 +43,18 @@ struct _term
         return rule + terminator();
     }
 
+    /// Matches rule followed by the terminator, recovering on error.
+    template <typename Rule>
+    LEXY_CONSTEVAL auto try_(Rule rule) const
+    {
+        return lexyd::try_(rule + terminator(), recovery_rule());
+    }
+
     /// Matches rule as long as terminator isn't matched.
     template <typename Rule>
     LEXY_CONSTEVAL auto while_(Rule) const
     {
-        return _whlt<Branch, Rule>{};
+        return _whlt<Terminator, Rule>{};
     }
     /// Matches rule as long as terminator isn't matched, but at least once.
     template <typename Rule>
@@ -60,7 +71,7 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto opt(R r) const
     {
-        return _optt<Branch, decltype(r + terminator())>{};
+        return _optt<Terminator, decltype(r + terminator())>{};
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -68,12 +79,12 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto list(R) const
     {
-        return _lstt<Branch, R, void>{};
+        return _lstt<Terminator, R, void>{};
     }
     template <typename R, typename Sep>
     LEXY_CONSTEVAL auto list(R, Sep) const
     {
-        return _lstt<Branch, R, Sep>{};
+        return _lstt<Terminator, R, Sep>{};
     }
 
     /// Matches `opt_list(r, sep)` surrounded by brackets.
@@ -81,18 +92,37 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R) const
     {
-        return _olstt<Branch, R, void>{};
+        return _olstt<Terminator, R, void>{};
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R, S) const
     {
-        return _olstt<Branch, R, S>{};
+        return _olstt<Terminator, R, S>{};
     }
 
+    //=== access ===//
     /// Matches the terminator alone.
     LEXY_CONSTEVAL auto terminator() const
     {
-        return Branch{};
+        return Terminator{};
+    }
+
+    /// Matches the recovery rule alone.
+    LEXY_CONSTEVAL auto recovery_rule() const
+    {
+        if constexpr (sizeof...(RecoveryLimit) == 0)
+            return recover(terminator());
+        else
+            return recover(terminator()).limit(RecoveryLimit{}...);
+    }
+
+    //=== deprecated ===//
+    /// Sets the whitespace that will be skipped before the terminator.
+    template <typename Ws>
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    {
+        auto branch = whitespaced(Terminator{}, ws);
+        return _term<decltype(branch)>{};
     }
 };
 

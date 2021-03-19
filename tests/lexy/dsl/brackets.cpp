@@ -95,6 +95,31 @@ TEST_CASE("dsl::bracketed")
         CHECK(result == 5);
     }
 
+    SUBCASE(".limit()")
+    {
+        constexpr auto rule = lexy::dsl::parenthesized.limit(LEXY_LIT("a")).recovery_rule();
+        constexpr auto equivalent
+            = lexy::dsl::recover(lexy::dsl::parenthesized.close()).limit(LEXY_LIT("a"));
+        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
+    }
+
+    SUBCASE("try_")
+    {
+        static constexpr auto rule = lexy::dsl::parenthesized.try_(inner);
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero.value == 2);
+        CHECK(zero.errors(-1));
+        auto one = LEXY_VERIFY("(abc)");
+        CHECK(one == 5);
+
+        auto partial = LEXY_VERIFY("(ab)");
+        CHECK(partial.value == 4);
+        CHECK(partial.errors(-1));
+        auto invalid = LEXY_VERIFY("(abdef)");
+        CHECK(invalid.value == 7);
+        CHECK(invalid.errors(-1));
+    }
     SUBCASE("while")
     {
         static constexpr auto rule = lexy::dsl::parenthesized.while_(inner);

@@ -1460,11 +1460,15 @@ CAUTION: When using `return_` together with the context sensitive parsing facili
 ----
 terminator(branch)
 terminator(branch).terminator() : Branch = branch
+terminator(branch).limit(token_1, ..., token_n)
 ----
 
 A terminator can be specified using `terminator()`.
 The result is not a rule, but a DSL for specifying that a rule is followed by the terminator.
 The terminator is defined using a branch; it is returned by calling `.terminator()`.
+
+The terminator rules do automatic error recovery by matching and consuming input until the terminator is found.
+The error recovery can be limited by calling `.limit()`, which behaves like the limit of `dsl::recover()` or `dsl::find()`.
 
 .`lexy/dsl/terminator.hpp`
 ----
@@ -1472,6 +1476,14 @@ t(rule) : Rule = rule + t.terminator()
 ----
 
 Calling `t(rule)`, where `t` is the result of a `terminator()` call, results in a rule that parses the given `rule` followed by the terminator.
+
+.`lexy/dsl/terminator.hpp`
+----
+t.try_(rule) : Rule
+----
+
+Calling `t.try_(rule)`, where `t` is the result of a `terminator()` call, results in a rule that tries to parse the given `rule` followed by the terminator.
+If an error occurs while parsing `rule`, recovers by discarding input until the terminator (or the recovery limit) is found.
 
 .`lexy/dsl/terminator.hpp`
 ----
@@ -1499,11 +1511,15 @@ The `rule` does not need to be a branch, as the terminator is used as the branch
 brackets(open_branch, close_branch)
 brackets(open_branch, close_branch).open()  : Branch = open_branch
 brackets(open_branch, close_branch).close() : Branch = close_branch
+brackets(open_branch, close_branch).limit(token_1, ..., token_n)
 ----
 
 A set of open and close brackets can be specified using `brackets()`.
 The result is not a rule, but a DSL for specifying that a rule is surrounded by brackets.
 The open and close brackets are defined using branches; they are returned by calling `.open()` and `.close()`.
+
+The bracket rules do automatic error recovery by matching and consuming input until the closing bracket is found.
+The error recovery can be limited by calling `.limit()`, which behaves like the limit of `dsl::recover()` or `dsl::find()`.
 
 .`lexy/dsl/brackets.hpp`
 ----
@@ -1512,6 +1528,14 @@ b(rule) : Branch = b.open() >> rule + b.close()
 
 Calling `b(rule)`, where `b` is the result of a `brackets()` call, results in a rule that parses the given `rule` surrounded by brackets.
 The rule is a branch that uses the opening bracket as a branch condition.
+
+.`lexy/dsl/terminator.hpp`
+----
+b.try_(rule) : Rule
+----
+
+Calling `b.try_(rule)`, where `t` is the result of a `brackets()` call, results in a rule that tries to parse the given `rule` surrounded by brackets.
+If an error occurs while parsing `rule`, recovers by discarding input until the closing bracket (or the recovery limit) is found.
 
 .`lexy/dsl/brackets.hpp`
 ----

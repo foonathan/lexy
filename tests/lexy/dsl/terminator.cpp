@@ -61,6 +61,14 @@ TEST_CASE("dsl::terminator")
             }
         };
 
+        SUBCASE(".limit()")
+        {
+            constexpr auto rule = terminator.limit(LEXY_LIT("a")).recovery_rule();
+            constexpr auto equivalent
+                = lexy::dsl::recover(terminator.terminator()).limit(LEXY_LIT("a"));
+            CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
+        }
+
         SUBCASE("basic")
         {
             static constexpr auto rule       = terminator(inner);
@@ -70,7 +78,23 @@ TEST_CASE("dsl::terminator")
             auto result = LEXY_VERIFY("abc;");
             CHECK(result == 4);
         }
+        SUBCASE("try_")
+        {
+            static constexpr auto rule = terminator.try_(inner);
 
+            auto zero = LEXY_VERIFY(";");
+            CHECK(zero.value == 1);
+            CHECK(zero.errors(-1));
+            auto one = LEXY_VERIFY("abc;");
+            CHECK(one == 4);
+
+            auto partial = LEXY_VERIFY("ab;");
+            CHECK(partial.value == 3);
+            CHECK(partial.errors(-1));
+            auto invalid = LEXY_VERIFY("abdef;");
+            CHECK(invalid.value == 6);
+            CHECK(invalid.errors(-1));
+        }
         SUBCASE("while")
         {
             static constexpr auto rule = terminator.while_(inner);

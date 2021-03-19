@@ -11,36 +11,44 @@
 
 namespace lexyd
 {
-template <typename Open, typename Close>
+template <typename Open, typename Close, typename... RecoveryLimit>
 struct _brackets
 {
-    /// Sets the whitespace.
-    template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    /// Adds the tokens to the recovery limit.
+    template <typename... Tokens>
+    LEXY_CONSTEVAL auto limit(Tokens...) const
     {
-        auto open  = whitespaced(Open{}, ws);
-        auto close = whitespaced(Close{}, ws);
-        return _brackets<decltype(open), decltype(close)>{};
+        static_assert(sizeof...(Tokens) > 0);
+        static_assert((lexy::is_token<Tokens> && ...));
+        return _brackets<Open, Close, RecoveryLimit..., Tokens...>{};
     }
 
+    //=== rules ===//
     /// Matches the rule surrounded by brackets.
     template <typename R>
     LEXY_CONSTEVAL auto operator()(R r) const
     {
-        return open() >> terminator(close())(r);
+        return open() >> as_terminator()(r);
+    }
+
+    /// Matches the rule surrounded by brackets, recovering on error.
+    template <typename R>
+    LEXY_CONSTEVAL auto try_(R r) const
+    {
+        return open() >> as_terminator().try_(r);
     }
 
     /// Matches rule as often as possible, surrounded by brackets.
     template <typename R>
     LEXY_CONSTEVAL auto while_(R r) const
     {
-        return open() >> terminator(close()).while_(r);
+        return open() >> as_terminator().while_(r);
     }
     /// Matches rule as often as possible but at least once, surrounded by brackets.
     template <typename R>
     LEXY_CONSTEVAL auto while_one(R r) const
     {
-        return open() >> r + terminator(close()).while_(r);
+        return open() >> r + as_terminator().while_(r);
     }
 
     /// Matches `opt(r)` surrounded by brackets.
@@ -48,7 +56,7 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt(R r) const
     {
-        return open() >> terminator(close()).opt(r);
+        return open() >> as_terminator().opt(r);
     }
 
     /// Matches `list(r, sep)` surrounded by brackets.
@@ -56,12 +64,12 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto list(R r) const
     {
-        return open() >> terminator(close()).list(r);
+        return open() >> as_terminator().list(r);
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto list(R r, S sep) const
     {
-        return open() >> terminator(close()).list(r, sep);
+        return open() >> as_terminator().list(r, sep);
     }
 
     /// Matches `opt_list(r, sep)` surrounded by brackets.
@@ -69,14 +77,15 @@ struct _brackets
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R r) const
     {
-        return open() >> terminator(close()).opt_list(r);
+        return open() >> as_terminator().opt_list(r);
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R r, S sep) const
     {
-        return open() >> terminator(close()).opt_list(r, sep);
+        return open() >> as_terminator().opt_list(r, sep);
     }
 
+    //=== access ===//
     /// Matches the open bracket.
     LEXY_CONSTEVAL auto open() const
     {
@@ -86,6 +95,27 @@ struct _brackets
     LEXY_CONSTEVAL auto close() const
     {
         return Close{};
+    }
+
+    /// Returns an equivalent terminator.
+    LEXY_CONSTEVAL auto as_terminator() const
+    {
+        return _term<Close, RecoveryLimit...>{};
+    }
+
+    LEXY_CONSTEVAL auto recovery_rule() const
+    {
+        return as_terminator().recovery_rule();
+    }
+
+    //=== deprecated ===//
+    /// Sets the whitespace.
+    template <typename Ws>
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    {
+        auto open  = whitespaced(Open{}, ws);
+        auto close = whitespaced(Close{}, ws);
+        return _brackets<decltype(open), decltype(close)>{};
     }
 };
 
