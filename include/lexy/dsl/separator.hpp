@@ -6,6 +6,9 @@
 #define LEXY_DSL_SEPARATOR_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/error.hpp>
+#include <lexy/dsl/if.hpp>
+#include <lexy/error.hpp>
 
 #ifdef LEXY_IGNORE_DEPRECATED_SEP
 #    define LEXY_DEPRECATED_SEP
@@ -30,6 +33,18 @@ namespace lexyd
 template <typename Branch, typename Tag>
 struct _sep
 {
+    using rule          = Branch;
+    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::error<Tag>));
+
+    template <typename Context, typename Reader>
+    LEXY_DSL_FUNC void report_trailing_error(Context&                  context, Reader&,
+                                             typename Reader::iterator sep_pos)
+    {
+        auto err = lexy::make_error<Reader, Tag>(sep_pos);
+        context.error(err);
+    }
+
+    //=== dsl ===//
     template <typename NewTag>
     static constexpr _sep<Branch, NewTag> trailing_error = {};
 };
@@ -44,7 +59,14 @@ LEXY_CONSTEVAL auto sep(Branch)
 
 template <typename Branch>
 struct _tsep
-{};
+{
+    using rule          = Branch;
+    using trailing_rule = decltype(lexyd::if_(Branch{}));
+
+    template <typename Context, typename Reader>
+    LEXY_DSL_FUNC void report_trailing_error(Context&, Reader&, typename Reader::iterator)
+    {}
+};
 
 /// Defines a separator for a list that can be trailing.
 template <typename Branch>
