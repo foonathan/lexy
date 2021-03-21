@@ -69,6 +69,10 @@ TEST_CASE("times")
                     LEXY_VERIFY_CHECK(false);
                 return -1;
             }
+            LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
+            {
+                return -3;
+            }
         };
 
         auto zero = LEXY_VERIFY("");
@@ -83,7 +87,7 @@ TEST_CASE("times")
         CHECK(no_sep == -2);
 
         auto trailing_sep = LEXY_VERIFY("abc,abc,");
-        CHECK(trailing_sep == 0);
+        CHECK(trailing_sep == -3);
     }
     SUBCASE("trailing_sep")
     {
@@ -134,60 +138,6 @@ TEST_CASE("times")
 
         auto trailing_sep = LEXY_VERIFY("abc,abc,");
         CHECK(trailing_sep == 1);
-    }
-    SUBCASE("no_trailing_sep")
-    {
-        static constexpr auto rule
-            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, no_trailing_sep(LEXY_LIT(",")));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
-            {
-                LEXY_VERIFY_CHECK(value[0] == 1);
-                LEXY_VERIFY_CHECK(value[1] == 1);
-
-                if (cur - str == 7)
-                    return 0;
-                else if (cur - str == 8)
-                    return 1; // trailing sep
-                else
-                    LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                if (e.string() == lexy::_detail::string_view("abc"))
-                    return -1;
-                else if (e.character() == ',')
-                    return -2;
-                else
-                    LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
-            {
-                return -3;
-            }
-        };
-
-        auto zero = LEXY_VERIFY("");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == -2);
-
-        auto two = LEXY_VERIFY("abc,abc");
-        CHECK(two == 0);
-
-        auto no_sep = LEXY_VERIFY("abcabc");
-        CHECK(no_sep == -2);
-
-        auto trailing_sep = LEXY_VERIFY("abc,abc,");
-        CHECK(trailing_sep == -3);
     }
 }
 

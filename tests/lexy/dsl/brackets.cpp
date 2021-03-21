@@ -195,7 +195,8 @@ TEST_CASE("dsl::bracketed")
         auto two = LEXY_VERIFY("(abc,abc)");
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing == -1);
+        CHECK(trailing.value == 10);
+        CHECK(trailing.errors(-2));
     }
     SUBCASE("list - trailing sep")
     {
@@ -210,21 +211,6 @@ TEST_CASE("dsl::bracketed")
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
         CHECK(trailing == 10);
-    }
-    SUBCASE("list - no trailing sep")
-    {
-        static constexpr auto rule
-            = lexy::dsl::parenthesized.list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
-
-        auto zero = LEXY_VERIFY("()");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("(abc)");
-        CHECK(one == 5);
-        auto two = LEXY_VERIFY("(abc,abc)");
-        CHECK(two == 9);
-        auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing.value == 10);
-        CHECK(trailing.errors(-2));
     }
     SUBCASE("opt_list - no sep")
     {
@@ -249,7 +235,8 @@ TEST_CASE("dsl::bracketed")
         auto two = LEXY_VERIFY("(abc,abc)");
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing == -1);
+        CHECK(trailing.value == 10);
+        CHECK(trailing.errors(-2));
     }
     SUBCASE("opt_list - trailing sep")
     {
@@ -264,21 +251,6 @@ TEST_CASE("dsl::bracketed")
         CHECK(two == 9);
         auto trailing = LEXY_VERIFY("(abc,abc,)");
         CHECK(trailing == 10);
-    }
-    SUBCASE("opt_list - no trailing sep")
-    {
-        static constexpr auto rule
-            = lexy::dsl::parenthesized.opt_list(inner, lexy::dsl::no_trailing_sep(LEXY_LIT(",")));
-
-        auto zero = LEXY_VERIFY("()");
-        CHECK(zero == 2);
-        auto one = LEXY_VERIFY("(abc)");
-        CHECK(one == 5);
-        auto two = LEXY_VERIFY("(abc,abc)");
-        CHECK(two == 9);
-        auto trailing = LEXY_VERIFY("(abc,abc,)");
-        CHECK(trailing.value == 10);
-        CHECK(trailing.errors(-2));
     }
 }
 

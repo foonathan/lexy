@@ -7,6 +7,13 @@
 
 #include <lexy/dsl/base.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_SEP
+#    define LEXY_DEPRECATED_SEP
+#else
+#    define LEXY_DEPRECATED_SEP                                                                    \
+        [[deprecated("no_trailing_sep() has been deprecated; use sep() instead")]]
+#endif
+
 namespace lexy
 {
 struct unexpected_trailing_separator
@@ -20,16 +27,19 @@ struct unexpected_trailing_separator
 
 namespace lexyd
 {
-template <typename Branch>
+template <typename Branch, typename Tag>
 struct _sep
-{};
+{
+    template <typename NewTag>
+    static constexpr _sep<Branch, NewTag> trailing_error = {};
+};
 
 /// Defines a separator for a list.
 template <typename Branch>
 LEXY_CONSTEVAL auto sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
-    return _sep<Branch>{};
+    return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 
 template <typename Branch>
@@ -44,20 +54,11 @@ LEXY_CONSTEVAL auto trailing_sep(Branch)
     return _tsep<Branch>{};
 }
 
-template <typename Branch, typename Tag = lexy::unexpected_trailing_separator>
-struct _ntsep
-{
-    template <typename NewTag>
-    static constexpr _ntsep<Branch, NewTag> error = {};
-};
-
-/// Defines a separator for a list that cannot be trailing.
-/// Explicitly checks for a trailing separator and raises an error.
 template <typename Branch>
-LEXY_CONSTEVAL auto no_trailing_sep(Branch)
+LEXY_DEPRECATED_SEP LEXY_CONSTEVAL auto no_trailing_sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
-    return _ntsep<Branch>{};
+    return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 } // namespace lexyd
 

@@ -222,9 +222,9 @@ struct array
     static constexpr auto rule
         = dsl::square_bracketed
               .opt_list(dsl::recurse<json_value>,
-                        // We're explicitly preventing a trailing separator.
+                        // Trailing seperators are not allowed.
                         // Use `dsl::trailing_sep()` if you want to allow it.
-                        dsl::no_trailing_sep(dsl::comma).error<unexpected_trailing_comma>);
+                        dsl::sep(dsl::comma).trailing_error<unexpected_trailing_comma>);
 
     static constexpr auto value = lexy::as_list<ast::json_array>;
 };
@@ -235,9 +235,9 @@ struct object
     static constexpr auto rule = [] {
         auto item = dsl::p<string> + dsl::colon + dsl::recurse<json_value>;
 
-        // We're explicitly preventing a trailing separator.
+        // Trailing seperators are not allowed.
         // Use `dsl::trailing_sep()` if you want to allow it.
-        auto sep = dsl::no_trailing_sep(dsl::comma).error<unexpected_trailing_comma>;
+        auto sep = dsl::sep(dsl::comma).trailing_error<unexpected_trailing_comma>;
 
         // A (potentially empty) list of items, seperated by comma and surrounded by curly brackets.
         return dsl::curly_bracketed.opt_list(item, sep);

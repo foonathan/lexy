@@ -10,6 +10,7 @@ Until the first release is done, breaking changes -- but not new features -- are
 * Changed the return type of `lexy::parse()` to a new `lexy::parse_result` type.
 * Removed `lexy::result`.
 * An error callback that returns a non-void type must now be a sink. Use `lexy::collect<Container>(error_callback)` to create a sink that stores all results in the container. If the error callback returns void, no change is required.
+* Removed `dsl::no_trailing_sep()`; `dsl::sep()` now has that behavior as well.
 * `dsl::require()` and `dsl::prevent()` now recover from errors, which might lead to worse error messages in certain situations.
   If they're used as intended -- to create a better error message if something didn't work out -- this shouldn't happen.
 
