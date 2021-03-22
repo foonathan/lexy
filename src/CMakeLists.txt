@@ -74,8 +74,8 @@ set(header_files
         ${include_dir}/engine/digits.hpp
         ${include_dir}/engine/eof.hpp
         ${include_dir}/engine/failure.hpp
+        ${include_dir}/engine/find.hpp
         ${include_dir}/engine/literal.hpp
-        ${include_dir}/engine/lookahead.hpp
         ${include_dir}/engine/minus.hpp
         ${include_dir}/engine/trie.hpp
         ${include_dir}/engine/until.hpp

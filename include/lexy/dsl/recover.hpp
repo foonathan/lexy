@@ -9,6 +9,84 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/eof.hpp>
+#include <lexy/engine/find.hpp>
+
+namespace lexyd
+{
+template <typename Token, typename Limit>
+struct _find : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using engine = lexy::engine_find_before<typename Token::token_engine,
+                                                    typename Limit::token_engine>;
+            if (engine::match(reader) != typename engine::error_code())
+                return false;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    //=== dsl ===//
+    /// Fail error recovery if limiting token is found first.
+    template <typename... Tokens>
+    LEXY_CONSTEVAL auto limit(Tokens... tokens) const
+    {
+        static_assert(sizeof...(Tokens) > 0);
+        static_assert((lexy::is_token<Tokens> && ...));
+
+        auto l = (Limit{} / ... / tokens);
+        return _find<Token, decltype(l)>{};
+    }
+
+    LEXY_CONSTEVAL auto get_limit() const
+    {
+        return Limit{};
+    }
+};
+template <typename Token>
+struct _find<Token, void> : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using engine = lexy::engine_find<typename Token::token_engine>;
+            if (engine::match(reader) != typename engine::error_code())
+                return false;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    //=== dsl ===//
+    /// Fail error recovery if limiting token is found first.
+    template <typename... Tokens>
+    LEXY_CONSTEVAL auto limit(Tokens... tokens) const
+    {
+        static_assert(sizeof...(Tokens) > 0);
+        static_assert((lexy::is_token<Tokens> && ...));
+
+        auto l = (tokens / ...);
+        return _find<Token, decltype(l)>{};
+    }
+};
+
+/// Recovers once it finds one of the given tokens (without consuming them).
+template <typename... Tokens>
+LEXY_CONSTEVAL auto find(Tokens... tokens)
+{
+    static_assert(sizeof...(Tokens) > 0);
+    static_assert((lexy::is_token<Tokens> && ...));
+    return _find<decltype((tokens / ...)), void>{};
+}
+} // namespace lexyd
 
 namespace lexyd
 {
@@ -64,6 +142,7 @@ struct _reco : rule_base
 template <typename... Branches>
 LEXY_CONSTEVAL auto recover(Branches...)
 {
+    static_assert(sizeof...(Branches) > 0);
     static_assert((lexy::is_branch<Branches> && ...));
     return _reco<lexyd::_eof, Branches...>{};
 }

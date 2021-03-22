@@ -70,8 +70,8 @@ set(tests
         engine/digits.cpp
         engine/eof.cpp
         engine/failure.cpp
+        engine/find.cpp
         engine/literal.cpp
-        engine/lookahead.cpp
         engine/minus.cpp
         engine/trie.cpp
         engine/until.cpp

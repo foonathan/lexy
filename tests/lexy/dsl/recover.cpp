@@ -7,6 +7,89 @@
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
 
+TEST_CASE("dsl::find")
+{
+    SUBCASE("no limit")
+    {
+        static constexpr auto rule = lexy::dsl::find(lexy::dsl::ascii::space, LEXY_LIT("!"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                return int(cur - str);
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(!empty.recovered);
+
+        auto space0 = LEXY_VERIFY(" ");
+        CHECK(space0 == 0);
+        auto space1 = LEXY_VERIFY("- ");
+        CHECK(space1 == 1);
+        auto space2 = LEXY_VERIFY("-- ");
+        CHECK(space2 == 2);
+
+        auto excl0 = LEXY_VERIFY("!");
+        CHECK(excl0 == 0);
+        auto excl1 = LEXY_VERIFY("-!");
+        CHECK(excl1 == 1);
+        auto excl2 = LEXY_VERIFY("--!");
+        CHECK(excl2 == 2);
+
+        auto space_then_excl = LEXY_VERIFY("- !");
+        CHECK(space_then_excl == 1);
+
+        auto missing = LEXY_VERIFY("abc");
+        CHECK(!missing.recovered);
+    }
+    SUBCASE("limit")
+    {
+        static constexpr auto rule
+            = lexy::dsl::find(lexy::dsl::ascii::space, LEXY_LIT("!")).limit(LEXY_LIT("$"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                return int(cur - str);
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(!empty.recovered);
+
+        auto space0 = LEXY_VERIFY(" ");
+        CHECK(space0 == 0);
+        auto space1 = LEXY_VERIFY("- ");
+        CHECK(space1 == 1);
+        auto space2 = LEXY_VERIFY("-- ");
+        CHECK(space2 == 2);
+
+        auto excl0 = LEXY_VERIFY("!");
+        CHECK(excl0 == 0);
+        auto excl1 = LEXY_VERIFY("-!");
+        CHECK(excl1 == 1);
+        auto excl2 = LEXY_VERIFY("--!");
+        CHECK(excl2 == 2);
+
+        auto space_then_excl = LEXY_VERIFY("- !");
+        CHECK(space_then_excl == 1);
+
+        auto missing = LEXY_VERIFY("abc");
+        CHECK(!missing.recovered);
+        auto limited = LEXY_VERIFY("--$!");
+        CHECK(!limited.recovered);
+    }
+}
+
 TEST_CASE("dsl::recover_")
 {
     SUBCASE("no limit")

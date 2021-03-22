@@ -6,7 +6,7 @@
 #define LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/engine/lookahead.hpp>
+#include <lexy/engine/find.hpp>
 
 namespace lexyd
 {
@@ -22,8 +22,8 @@ struct _look : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            using engine = lexy::engine_lookahead<Needle, End>;
-            if (engine::match(reader) != typename engine::error_code())
+            using engine = lexy::engine_find_before<Needle, End>;
+            if (!lexy::engine_peek<engine>(reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return static_cast<lexy::rule_try_parse_result>(
