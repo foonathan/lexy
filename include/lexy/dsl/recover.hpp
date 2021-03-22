@@ -76,6 +76,11 @@ struct _find<Token, void> : rule_base
         auto l = (tokens / ...);
         return _find<Token, decltype(l)>{};
     }
+
+    LEXY_CONSTEVAL auto get_limit() const
+    {
+        return eof;
+    }
 };
 
 /// Recovers once it finds one of the given tokens (without consuming them).

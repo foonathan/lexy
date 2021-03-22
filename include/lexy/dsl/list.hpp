@@ -117,48 +117,151 @@ struct _list_loop<Item, void, NextParser, PrevArgs...>
 };
 
 // Loop to parse all list items when we have a terminator.
-template <typename Term, typename Item, typename Sep, typename NextParser, typename... PrevArgs>
+template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
+          typename... PrevArgs>
 struct _list_loop_term
 {
     template <typename Context, typename Reader, typename Sink>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, PrevArgs&&... args, Sink& sink)
     {
+        // We're using an enum together with a switch to compensate a lack of goto in constexpr.
+        // The simple state machine goes as follows on well-formed input:
+        // terminator -> separator -> separator_trailing_check -> item -> terminator
+        //
+        // The interesting case is error recovery.
+        // There we skip over characters until we either found the terminator, separator or item.
+        // We then set the enum to jump to the appropriate state of the state machine.
+        enum class state
+        {
+            terminator,
+            separator,
+            separator_trailing_check,
+            item,
+            recovery,
+        } state
+            = state::terminator;
+
+        auto sep_pos = reader.cur();
         while (true)
         {
-            // Try parsing the terminator.
-            using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
-            if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
-                result != lexy::rule_try_parse_result::backtracked)
+            switch (state)
             {
-                // We had the terminator, return that result.
-                return static_cast<bool>(result);
-            }
-
-            // Parse the separator (if we have one).
-            if constexpr (!std::is_void_v<Sep>)
-            {
-                auto sep_pos     = reader.cur();
-                using sep_parser = typename lexy::rule_parser<typename Sep::rule, _list_sink>;
-                if (!sep_parser::parse(context, reader, sink))
-                    return false;
-
-                // Try parsing the terminator again, to determine whether we have a trailing
-                // separator.
+            case state::terminator:
+                using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
                 if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
                     result != lexy::rule_try_parse_result::backtracked)
                 {
-                    // If trailing seperators are allowed, this does nothing.
-                    // Otherwise, we report the error but can trivially recover.
-                    Sep::report_trailing_error(context, reader, sep_pos);
-                    // However, we can trivially recover.
+                    // We had the terminator, so the list is done.
                     return static_cast<bool>(result);
                 }
-            }
+                // Parse the following list separator next.
+                state = state::separator;
+                break;
 
-            // Parse the next item.
-            using item_parser = typename lexy::rule_parser<Item, _list_sink>;
-            if (!item_parser::parse(context, reader, sink))
-                return false;
+            case state::separator:
+                if constexpr (!std::is_void_v<Sep>)
+                {
+                    sep_pos = reader.cur();
+
+                    using sep_parser = typename lexy::rule_parser<typename Sep::rule, _list_sink>;
+                    if (!sep_parser::parse(context, reader, sink))
+                        return false;
+
+                    // Check for a trailing separator next.
+                    state = state::separator_trailing_check;
+                }
+                else
+                {
+                    // No separator, immediately parse item next.
+                    (void)sep_pos;
+                    state = state::item;
+                }
+                break;
+            case state::separator_trailing_check:
+                if constexpr (!std::is_void_v<Sep>)
+                {
+                    if (auto result
+                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                        result != lexy::rule_try_parse_result::backtracked)
+                    {
+                        // If trailing seperators are allowed, this does nothing.
+                        // Otherwise, we report the error but can trivially recover.
+                        Sep::report_trailing_error(context, reader, sep_pos);
+                        // We had the terminator, so the list is done.
+                        return static_cast<bool>(result);
+                    }
+
+                    // Now parse the item next.
+                    state = state::item;
+                }
+                break;
+
+            case state::item:
+                using item_parser = typename lexy::rule_parser<Item, _list_sink>;
+                if (item_parser::parse(context, reader, sink))
+                    // Loop back and try again for the next item.
+                    state = state::terminator;
+                else
+                    // Recover the error.
+                    state = state::recovery;
+                break;
+
+            case state::recovery:
+                while (true)
+                {
+                    // Recovery succeeds when we reach the next separator.
+                    if constexpr (!std::is_void_v<Sep>)
+                    {
+                        sep_pos = reader.cur();
+
+                        using sep_parser =
+                            typename lexy::rule_parser<typename Sep::rule, _list_sink>;
+                        if (auto result = sep_parser::try_parse(context, reader, sink);
+                            result == lexy::rule_try_parse_result::ok)
+                        {
+                            // Continue the list with the trailing separator check.
+                            state = state::separator_trailing_check;
+                            break;
+                        }
+
+                        // Here we either try something else or start recovering from a failed
+                        // separator.
+                    }
+                    // When we don't have a separator, but the item is a branch, we also succeed
+                    // when we reach the next item.
+                    else if constexpr (Item::is_branch)
+                    {
+                        if (auto result = item_parser::try_parse(context, reader, sink);
+                            result == lexy::rule_try_parse_result::ok)
+                        {
+                            // Continue the list with the next terminator check.
+                            state = state::terminator;
+                            break;
+                        }
+
+                        // Here we either try something else or start recovering from yet another
+                        // failed item.
+                    }
+
+                    // Recovery succeeds when we reach the terminator.
+                    if (auto result
+                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                        result != lexy::rule_try_parse_result::backtracked)
+                    {
+                        // We're now done with the entire list.
+                        return static_cast<bool>(result);
+                    }
+
+                    // Recovery fails when we reach the limit.
+                    using limit = typename decltype(RecoveryLimit{}.get_limit())::token_engine;
+                    if (lexy::engine_peek<limit>(reader))
+                        return false;
+
+                    // Consume one character and try again.
+                    reader.bump();
+                }
+                break;
+            }
         }
 
         return false; // unreachable
@@ -287,7 +390,7 @@ LEXY_CONSTEVAL auto opt_list(Item, Sep)
 
 namespace lexyd
 {
-template <typename Term, typename Item, typename Sep>
+template <typename Term, typename Item, typename Sep, typename Recover>
 struct _lstt : rule_base
 {
     template <typename NextParser>
@@ -304,13 +407,13 @@ struct _lstt : rule_base
                 return false;
 
             // Parse the remaining items.
-            using continuation = _list_loop_term<Term, Item, Sep, NextParser, Args...>;
+            using continuation = _list_loop_term<Term, Item, Sep, Recover, NextParser, Args...>;
             return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
         }
     };
 };
 
-template <typename Term, typename Item, typename Sep>
+template <typename Term, typename Item, typename Sep, typename Recover>
 struct _olstt : rule_base
 {
     template <typename NextParser>
@@ -337,7 +440,7 @@ struct _olstt : rule_base
                     return false;
 
                 // Parse the remaining items.
-                using continuation = _list_loop_term<Term, Item, Sep, NextParser, Args...>;
+                using continuation = _list_loop_term<Term, Item, Sep, Recover, NextParser, Args...>;
                 return continuation::parse(context, reader, LEXY_FWD(args)..., sink);
             }
         }

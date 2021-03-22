@@ -18,9 +18,9 @@ template <typename Terminator, typename R, typename Recover>
 struct _optt;
 template <typename Terminator, typename R, typename Recover>
 struct _whlt;
-template <typename Terminator, typename R, typename Sep>
+template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _lstt;
-template <typename Terminator, typename R, typename Sep>
+template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _olstt;
 
 template <typename Terminator, typename... RecoveryLimit>
@@ -79,12 +79,12 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto list(R) const
     {
-        return _lstt<Terminator, R, void>{};
+        return _lstt<Terminator, R, void, decltype(recovery_rule())>{};
     }
     template <typename R, typename Sep>
     LEXY_CONSTEVAL auto list(R, Sep) const
     {
-        return _lstt<Terminator, R, Sep>{};
+        return _lstt<Terminator, R, Sep, decltype(recovery_rule())>{};
     }
 
     /// Matches `opt_list(r, sep)` surrounded by brackets.
@@ -92,12 +92,12 @@ struct _term
     template <typename R>
     LEXY_CONSTEVAL auto opt_list(R) const
     {
-        return _olstt<Terminator, R, void>{};
+        return _olstt<Terminator, R, void, decltype(recovery_rule())>{};
     }
     template <typename R, typename S>
     LEXY_CONSTEVAL auto opt_list(R, S) const
     {
-        return _olstt<Terminator, R, S>{};
+        return _olstt<Terminator, R, S, decltype(recovery_rule())>{};
     }
 
     //=== access ===//
