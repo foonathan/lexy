@@ -8,7 +8,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/separator.hpp>
-#include <lexy/lexeme.hpp>
 
 namespace lexyd
 {
@@ -47,7 +46,7 @@ struct _list_sink
     }
 };
 
-// Loop to parse all items.
+// Loop to parse all remaining items (after the initial one).
 template <typename Item, typename Sep, typename NextParser, typename... PrevArgs>
 struct _list_loop
 {
@@ -116,7 +115,15 @@ struct _list_loop<Item, void, NextParser, PrevArgs...>
     }
 };
 
-// Loop to parse all list items when we have a terminator.
+// Workaround for MSVC, which can't handle typedefs inside if constexpr.
+template <typename Sep>
+struct _sep_parser : lexy::rule_parser<typename Sep::rule, _list_sink>
+{};
+template <>
+struct _sep_parser<void> : _list_sink
+{};
+
+// Loop to parse all remaining list items when we have a terminator.
 template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
           typename... PrevArgs>
 struct _list_loop_term
@@ -141,13 +148,15 @@ struct _list_loop_term
         } state
             = state::terminator;
 
-        auto sep_pos = reader.cur();
+        auto sep_pos      = reader.cur();
+        using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
+        using item_parser = lexy::rule_parser<Item, _list_sink>;
+        using sep_parser  = _sep_parser<Sep>;
         while (true)
         {
             switch (state)
             {
             case state::terminator:
-                using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
                 if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
                     result != lexy::rule_try_parse_result::backtracked)
                 {
@@ -163,18 +172,61 @@ struct _list_loop_term
                 {
                     sep_pos = reader.cur();
 
-                    using sep_parser = typename lexy::rule_parser<typename Sep::rule, _list_sink>;
-                    if (!sep_parser::parse(context, reader, sink))
-                        return false;
-
-                    // Check for a trailing separator next.
-                    state = state::separator_trailing_check;
+                    if (sep_parser::parse(context, reader, sink))
+                    {
+                        // Check for a trailing separator next.
+                        state = state::separator_trailing_check;
+                        break;
+                    }
+                    else if (reader.cur() == sep_pos)
+                    {
+                        // We didn't have a separator at all.
+                        // Check whether we have an item instead (if that's possible).
+                        if constexpr (Item::is_branch)
+                        {
+                            if (auto result = item_parser::try_parse(context, reader, sink);
+                                result == lexy::rule_try_parse_result::ok)
+                            {
+                                // It was just a missing separator, continue with the normal
+                                // terminator check after parsing an item.
+                                state = state::terminator;
+                                break;
+                            }
+                            else
+                            {
+                                // It is a mistyped separator, not just a missing one.
+                                // Enter generic recovery.
+                                state = state::recovery;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // We can't check whether we have an item.
+                            // This means we can't distinguish between "missing separator" and
+                            // "mistyped separator". So let's just pretend the separator is missing
+                            // and parse an item.
+                            state = state::item;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // We did have something that looked like a separator initially, but wasn't
+                        // one on closer inspection. Enter generic recovery as we've already
+                        // consumed input. (If we ignore the case where the item and separator share
+                        // a common prefix, we know it wasn't the start of an item so can't just
+                        // pretend that there is one).
+                        state = state::recovery;
+                        break;
+                    }
                 }
                 else
                 {
                     // No separator, immediately parse item next.
                     (void)sep_pos;
                     state = state::item;
+                    break;
                 }
                 break;
             case state::separator_trailing_check:
@@ -197,7 +249,6 @@ struct _list_loop_term
                 break;
 
             case state::item:
-                using item_parser = typename lexy::rule_parser<Item, _list_sink>;
                 if (item_parser::parse(context, reader, sink))
                     // Loop back and try again for the next item.
                     state = state::terminator;
@@ -214,8 +265,6 @@ struct _list_loop_term
                     {
                         sep_pos = reader.cur();
 
-                        using sep_parser =
-                            typename lexy::rule_parser<typename Sep::rule, _list_sink>;
                         if (auto result = sep_parser::try_parse(context, reader, sink);
                             result == lexy::rule_try_parse_result::ok)
                         {
@@ -229,6 +278,10 @@ struct _list_loop_term
                     }
                     // When we don't have a separator, but the item is a branch, we also succeed
                     // when we reach the next item.
+                    //
+                    // Note that we're doing this check only if we don't have a separator.
+                    // If we do have one, the heuristic "end of the invalid item" is better than
+                    // "beginning of the next one".
                     else if constexpr (Item::is_branch)
                     {
                         if (auto result = item_parser::try_parse(context, reader, sink);

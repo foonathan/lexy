@@ -39,9 +39,15 @@ TEST_CASE("dsl::bracketed")
             return int(cur - str);
         }
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            return -1;
+            if (e.string() == lexy::_detail::string_view("abc"))
+                return -1;
+            else if (e.string() == lexy::_detail::string_view(","))
+                return -3;
+            else
+                LEXY_VERIFY_CHECK(false);
+            return -42;
         }
         LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
         {
@@ -212,6 +218,13 @@ TEST_CASE("dsl::bracketed")
         auto recover_separator = LEXY_VERIFY("(abc,ab-,abc)");
         CHECK(recover_separator.value == 13);
         CHECK(recover_separator.errors(-1));
+
+        auto missing_sep = LEXY_VERIFY("(abcabc)");
+        CHECK(missing_sep.value == 8);
+        CHECK(missing_sep.errors(-3));
+        auto invalid_sep = LEXY_VERIFY("(abc'abc)");
+        CHECK(invalid_sep.value == 9);
+        CHECK(invalid_sep.errors(-3));
     }
     SUBCASE("list - trailing sep")
     {
@@ -234,6 +247,13 @@ TEST_CASE("dsl::bracketed")
         auto recover_separator = LEXY_VERIFY("(abc,ab-,abc)");
         CHECK(recover_separator.value == 13);
         CHECK(recover_separator.errors(-1));
+
+        auto missing_sep = LEXY_VERIFY("(abcabc)");
+        CHECK(missing_sep.value == 8);
+        CHECK(missing_sep.errors(-3));
+        auto invalid_sep = LEXY_VERIFY("(abc'abc)");
+        CHECK(invalid_sep.value == 9);
+        CHECK(invalid_sep.errors(-3));
     }
     SUBCASE("opt_list - no sep")
     {
@@ -275,6 +295,13 @@ TEST_CASE("dsl::bracketed")
         auto recover_separator = LEXY_VERIFY("(abc,ab-,abc)");
         CHECK(recover_separator.value == 13);
         CHECK(recover_separator.errors(-1));
+
+        auto missing_sep = LEXY_VERIFY("(abcabc)");
+        CHECK(missing_sep.value == 8);
+        CHECK(missing_sep.errors(-3));
+        auto invalid_sep = LEXY_VERIFY("(abc'abc)");
+        CHECK(invalid_sep.value == 9);
+        CHECK(invalid_sep.errors(-3));
     }
     SUBCASE("opt_list - trailing sep")
     {
@@ -297,6 +324,13 @@ TEST_CASE("dsl::bracketed")
         auto recover_separator = LEXY_VERIFY("(abc,ab-,abc)");
         CHECK(recover_separator.value == 13);
         CHECK(recover_separator.errors(-1));
+
+        auto missing_sep = LEXY_VERIFY("(abcabc)");
+        CHECK(missing_sep.value == 8);
+        CHECK(missing_sep.errors(-3));
+        auto invalid_sep = LEXY_VERIFY("(abc'abc)");
+        CHECK(invalid_sep.value == 9);
+        CHECK(invalid_sep.errors(-3));
     }
 }
 
