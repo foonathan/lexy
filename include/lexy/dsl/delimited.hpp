@@ -29,6 +29,40 @@ struct missing_delimiter
 
 namespace lexyd
 {
+template <typename Char, typename Context, typename Reader, typename Sink>
+constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
+{
+    using engine = typename Char::token_engine;
+    if constexpr (lexy::engine_can_fail<engine, Reader>)
+    {
+        auto content_begin = reader.cur();
+        if (auto ec = engine::match(reader); ec != typename engine::error_code())
+        {
+            Char::token_error(context, reader, ec, content_begin);
+            if (!engine::recover(reader, ec))
+                return false;
+            else
+                // We've recovered, repeat loop.
+                return true;
+        }
+        auto content_end = reader.cur();
+
+        context.token(Char::token_kind(), content_begin, content_end);
+        sink(lexy::lexeme<Reader>(content_begin, content_end));
+    }
+    else
+    {
+        auto content_begin = reader.cur();
+        engine::match(reader);
+        auto content_end = reader.cur();
+
+        context.token(Char::token_kind(), content_begin, content_end);
+        sink(lexy::lexeme<Reader>(content_begin, content_end));
+    }
+
+    return true;
+}
+
 template <typename Close, typename Char, typename Escape>
 struct _del : rule_base
 {
@@ -75,29 +109,8 @@ struct _del : rule_base
                 // Parse the next character.
                 else
                 {
-                    using engine = typename Char::token_engine;
-                    if constexpr (lexy::engine_can_fail<engine, Reader>)
-                    {
-                        auto content_begin = reader.cur();
-                        if (auto ec = engine::match(reader); ec != typename engine::error_code())
-                        {
-                            Char::token_error(context, reader, ec, content_begin);
-                            return false;
-                        }
-                        auto content_end = reader.cur();
-
-                        context.token(Char::token_kind(), content_begin, content_end);
-                        sink(lexy::lexeme<Reader>(content_begin, content_end));
-                    }
-                    else
-                    {
-                        auto content_begin = reader.cur();
-                        engine::match(reader);
-                        auto content_end = reader.cur();
-
-                        context.token(Char::token_kind(), content_begin, content_end);
-                        sink(lexy::lexeme<Reader>(content_begin, content_end));
-                    }
+                    if (!_del_parse_char<Char>(context, reader, sink))
+                        return false;
                 }
             }
 
@@ -138,29 +151,8 @@ struct _del<Close, Char, void>
                 // Parse the next character.
                 else
                 {
-                    using engine = typename Char::token_engine;
-                    if constexpr (lexy::engine_can_fail<engine, Reader>)
-                    {
-                        auto content_begin = reader.cur();
-                        if (auto ec = engine::match(reader); ec != typename engine::error_code())
-                        {
-                            Char::token_error(context, reader, ec, content_begin);
-                            return false;
-                        }
-                        auto content_end = reader.cur();
-
-                        context.token(Char::token_kind(), content_begin, content_end);
-                        sink(lexy::lexeme<Reader>(content_begin, content_end));
-                    }
-                    else
-                    {
-                        auto content_begin = reader.cur();
-                        engine::match(reader);
-                        auto content_end = reader.cur();
-
-                        context.token(Char::token_kind(), content_begin, content_end);
-                        sink(lexy::lexeme<Reader>(content_begin, content_end));
-                    }
+                    if (!_del_parse_char<Char>(context, reader, sink))
+                        return false;
                 }
             }
 

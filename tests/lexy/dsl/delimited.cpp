@@ -54,7 +54,7 @@ TEST_CASE("dsl::delimited()")
             }
             LEXY_VERIFY_FN int success(const char* cur, int count)
             {
-                LEXY_VERIFY_CHECK(cur - str == count + 2);
+                LEXY_VERIFY_CHECK(cur - str >= count + 2);
                 return count;
             }
 
@@ -93,8 +93,10 @@ TEST_CASE("dsl::delimited()")
         auto unterminated = LEXY_VERIFY("(abc");
         CHECK(unterminated == -2);
 
-        auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
-        CHECK(invalid_ascii == -3);
+        auto invalid_ascii = LEXY_VERIFY("(ab\xF0"
+                                         "c)");
+        CHECK(invalid_ascii.value == 3);
+        CHECK(invalid_ascii.errors(-3));
 
         auto inner_whitespace = LEXY_VERIFY_PRODUCTION(ws_production, "(  abc)");
         CHECK(inner_whitespace == 5);
@@ -137,7 +139,7 @@ TEST_CASE("dsl::delimited()")
             }
             LEXY_VERIFY_FN int success(const char* cur, open, int count, close)
             {
-                LEXY_VERIFY_CHECK(cur - str == count + 2);
+                LEXY_VERIFY_CHECK(cur - str >= count + 2);
                 return count;
             }
 
@@ -176,8 +178,10 @@ TEST_CASE("dsl::delimited()")
         auto unterminated = LEXY_VERIFY("(abc");
         CHECK(unterminated == -2);
 
-        auto invalid_ascii = LEXY_VERIFY("(ab\xFF");
-        CHECK(invalid_ascii == -3);
+        auto invalid_ascii = LEXY_VERIFY("(ab\xFF"
+                                         "c)");
+        CHECK(invalid_ascii.value == 3);
+        CHECK(invalid_ascii.errors(-3));
     }
 }
 
@@ -284,7 +288,8 @@ TEST_CASE("dsl::delimited with escape")
         CHECK(unterminated == -2);
 
         auto invalid_ascii = LEXY_VERIFY("(ab\xF0)");
-        CHECK(invalid_ascii == -3);
+        CHECK(invalid_ascii.value == 2);
+        CHECK(invalid_ascii.errors(-3));
 
         auto escape = LEXY_VERIFY("(a$bc$))");
         CHECK(escape == 4); // abc)
@@ -380,7 +385,8 @@ TEST_CASE("dsl::delimited with escape")
         CHECK(unterminated == -2);
 
         auto invalid_ascii = LEXY_VERIFY("(ab\xF0)");
-        CHECK(invalid_ascii == -3);
+        CHECK(invalid_ascii.value == 2);
+        CHECK(invalid_ascii.errors(-3));
 
         auto escape = LEXY_VERIFY("(a$bc$))");
         CHECK(escape == 4); // abc)
