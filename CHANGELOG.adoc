@@ -3,13 +3,15 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-03-21
+== 2021-03-23
 
 * Changed the return type of `lexy::read_file()` (and `lexy_ext::read_file()`) to use a new `lexy::read_file_result` over `lexy::result`.
 * Changed the return type of `lexy::validate()` and `lexy::parse_as_tree()` to a new `lexy::validate_result` type.
 * Changed the return type of `lexy::parse()` to a new `lexy::parse_result` type.
 * Removed `lexy::result`.
 * An error callback that returns a non-void type must now be a sink. Use `lexy::collect<Container>(error_callback)` to create a sink that stores all results in the container. If the error callback returns void, no change is required.
+* `dsl::require()` and `dsl::prevent()` now recover from errors, which might lead to worse error messages in certain situations.
+  If they're used as intended -- to create a better error message if something didn't work out -- this shouldn't happen.
 
 == 2021-02-25
 

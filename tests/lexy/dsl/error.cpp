@@ -120,7 +120,8 @@ TEST_CASE("dsl::require")
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.value == 0);
+    CHECK(empty.errors(-1));
 
     auto abc = LEXY_VERIFY("abc");
     CHECK(abc == 0);
@@ -138,8 +139,7 @@ TEST_CASE("dsl::prevent")
 
         LEXY_VERIFY_FN int success(const char* cur)
         {
-            LEXY_VERIFY_CHECK(cur == str);
-            return 0;
+            return int(cur - str);
         }
 
         LEXY_VERIFY_FN int error(test_error<tag> e)
@@ -153,6 +153,7 @@ TEST_CASE("dsl::prevent")
     CHECK(empty == 0);
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc == -1);
+    CHECK(abc.value == 3);
+    CHECK(abc.errors(-1));
 }
 

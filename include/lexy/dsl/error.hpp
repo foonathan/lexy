@@ -53,7 +53,7 @@ constexpr auto error = _err<Tag, void>{};
 
 namespace lexyd
 {
-template <bool Expected, typename Token, typename Tag>
+template <typename Token, typename Tag>
 struct _require : rule_base
 {
     template <typename NextParser>
@@ -62,23 +62,61 @@ struct _require : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (lexy::engine_peek<typename Token::token_engine>(reader) == Expected)
+            if (lexy::engine_peek<typename Token::token_engine>(reader))
+            {
+                // Token did match as we want, so continue normally.
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
             else
             {
+                // Token did not match, report the correct error, but continue normally.
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
                 context.error(err);
-                return false;
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         }
     };
 };
 
-template <bool Expected, typename Token>
+template <typename Token, typename Tag>
+struct _prevent : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.cur();
+            if (lexy::engine_try_match<typename Token::token_engine>(reader))
+            {
+                // Token did match what we don't want, and we've consumed it.
+                // Report an error, but continue parsing.
+                auto err = lexy::make_error<Reader, Tag>(begin, reader.cur());
+                context.error(err);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                // Token did not match, so we didn't consume it.
+                // Continue normally.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        }
+    };
+};
+
+template <typename Token>
 struct _require_dsl
 {
     template <typename Tag>
-    static constexpr _require<Expected, Token, Tag> error = _require<Expected, Token, Tag>{};
+    static constexpr _require<Token, Tag> error = _require<Token, Tag>{};
+};
+template <typename Token>
+struct _prevent_dsl
+{
+    template <typename Tag>
+    static constexpr _prevent<Token, Tag> error = _prevent<Token, Tag>{};
 };
 
 /// Requires that lookahead will match a rule at a location.
@@ -86,7 +124,7 @@ template <typename Rule>
 LEXY_CONSTEVAL auto require(Rule rule)
 {
     auto t = token(rule);
-    return _require_dsl<true, decltype(t)>{};
+    return _require_dsl<decltype(t)>{};
 }
 
 /// Requires that lookahead does not match a rule at a location.
@@ -94,7 +132,7 @@ template <typename Rule>
 LEXY_CONSTEVAL auto prevent(Rule rule)
 {
     auto t = token(rule);
-    return _require_dsl<false, decltype(t)>{};
+    return _prevent_dsl<decltype(t)>{};
 }
 
 template <typename Tag, typename Rule>
