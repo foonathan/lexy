@@ -1886,11 +1886,17 @@ TIP: The callback `lexy::as_integer` takes the value produced by the sign rules 
 delimited(open_branch, close_branch)
 delimited(open_branch, close_branch).open()  : Branch = open_branch
 delimited(open_branch, close_branch).close() : Branch = close_branch
+delimited(open_branch, close_branch).limit(token_1, ..., token_n)
 ----
 
 A set of open and close delimiters can be specified using `delimited()`.
 The result is not a rule, but a DSL for specifying a sequence of code points to be matched between the delimiters.
 The open and close delimiters are defined using branches; they are returned by calling `.open()` and `.close()`.
+
+An optional limit can be specified by calling `.limit()`.
+If one of the tokens specified there is found in the input before the closing delimiter has been found,
+it assumes that there is a missing closing delimiter and raises the appropriate error earlier.
+This can be used to help error recovery by exiting early instead of consuming the entire input.
 
 .`lexy/dsl/delimited.hpp`
 ----

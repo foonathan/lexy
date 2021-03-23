@@ -5,8 +5,10 @@
 #ifndef LEXY_DSL_DELIMITED_HPP_INCLUDED
 #define LEXY_DSL_DELIMITED_HPP_INCLUDED
 
+#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/error.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
@@ -63,7 +65,7 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
     return true;
 }
 
-template <typename Close, typename Char, typename Escape>
+template <typename Close, typename Char, typename Escape, typename Limit>
 struct _del : rule_base
 {
     template <typename NextParser>
@@ -87,7 +89,7 @@ struct _del : rule_base
                     return static_cast<bool>(result);
                 }
                 // Check for missing closing delimiter.
-                else if (reader.eof())
+                else if (lexy::engine_peek<typename Limit::token_engine>(reader))
                 {
                     auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
                                                                                  reader.cur());
@@ -118,8 +120,8 @@ struct _del : rule_base
         }
     };
 };
-template <typename Close, typename Char>
-struct _del<Close, Char, void>
+template <typename Close, typename Char, typename Limit>
+struct _del<Close, Char, void, Limit>
 {
     template <typename NextParser>
     struct parser
@@ -141,7 +143,7 @@ struct _del<Close, Char, void>
                     return static_cast<bool>(result);
                 }
                 // Check for missing closing delimiter.
-                else if (reader.eof())
+                else if (lexy::engine_peek<typename Limit::token_engine>(reader))
                 {
                     auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
                                                                                  reader.cur());
@@ -161,32 +163,35 @@ struct _del<Close, Char, void>
     };
 };
 
-template <typename Open, typename Close>
+template <typename Open, typename Close, typename Limit>
 struct _delim_dsl
 {
-    /// Sets the whitespace.
-    template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    /// Add tokens that will limit the delimited to detect a missing terminator.
+    template <typename... Tokens>
+    LEXY_CONSTEVAL auto limit(Tokens...) const
     {
-        auto open = whitespaced(Open{}, ws);
-        return _delim_dsl<decltype(open), Close>{};
+        static_assert(sizeof...(Tokens) > 0);
+        static_assert((lexy::is_token<Tokens> && ...));
+        return _delim_dsl<Open, Close, decltype((Limit{} / ... / Tokens{}))>{};
     }
 
+    //=== rules ===//
     /// Sets the content.
     template <typename Char>
     LEXY_CONSTEVAL auto operator()(Char) const
     {
         static_assert(lexy::is_token<Char>);
-        return no_whitespace(open() >> _del<Close, Char, void>{});
+        return no_whitespace(open() >> _del<Close, Char, void, Limit>{});
     }
     template <typename Char, typename Escape>
     LEXY_CONSTEVAL auto operator()(Char, Escape) const
     {
         static_assert(lexy::is_token<Char>);
         static_assert(lexy::is_branch<Escape>);
-        return no_whitespace(open() >> _del<Close, Char, Escape>{});
+        return no_whitespace(open() >> _del<Close, Char, Escape, Limit>{});
     }
 
+    //=== access ===//
     /// Matches the open delimiter.
     LEXY_CONSTEVAL auto open() const
     {
@@ -198,6 +203,15 @@ struct _delim_dsl
         // Close never has any whitespace.
         return Close{};
     }
+
+    //=== deprecated ===//
+    /// Sets the whitespace.
+    template <typename Ws>
+    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    {
+        auto open = whitespaced(Open{}, ws);
+        return _delim_dsl<decltype(open), Close, Limit>{};
+    }
 };
 
 /// Parses everything between the two delimiters and captures it.
@@ -205,7 +219,7 @@ template <typename Open, typename Close>
 LEXY_CONSTEVAL auto delimited(Open, Close)
 {
     static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
-    return _delim_dsl<Open, Close>{};
+    return _delim_dsl<Open, Close, lexyd::_eof>{};
 }
 
 /// Parses everything between a paired delimiter.
@@ -213,7 +227,7 @@ template <typename Delim>
 LEXY_CONSTEVAL auto delimited(Delim)
 {
     static_assert(lexy::is_branch<Delim>);
-    return _delim_dsl<Delim, Delim>{};
+    return _delim_dsl<Delim, Delim, lexyd::_eof>{};
 }
 
 constexpr auto quoted        = delimited(LEXY_LIT("\""));
