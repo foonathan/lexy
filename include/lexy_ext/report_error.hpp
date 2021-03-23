@@ -101,7 +101,7 @@ constexpr auto report_error = lexy::callback([](const auto& context, const auto&
     }
 
     _print_message(location, error);
-    std::putc('\n', stderr);
+    std::fputs("\n------\n", stderr);
 });
 } // namespace lexy_ext
 
