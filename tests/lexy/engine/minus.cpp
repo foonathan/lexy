@@ -32,6 +32,7 @@ TEST_CASE("engine_minus")
     CHECK(!empty);
     CHECK(empty.count == 0);
     CHECK(empty.ec == engine::error_from_matcher(condition::index_to_error(0)));
+    CHECK(empty.recovered == -1);
 
     auto zero = engine_matches<engine>("!");
     CHECK(zero);
@@ -44,10 +45,12 @@ TEST_CASE("engine_minus")
     CHECK(!a);
     CHECK(a.count == 2);
     CHECK(a.ec == engine::error_code::minus_failure);
+    CHECK(a.recovered == 0);
     auto bc = engine_matches<engine>("bc!");
     CHECK(!bc);
     CHECK(bc.count == 3);
     CHECK(bc.ec == engine::error_code::minus_failure);
+    CHECK(bc.recovered == 0);
 
     auto abc = engine_matches<engine>("abc!");
     CHECK(abc);

@@ -19,6 +19,7 @@ TEST_CASE("engine_cp_ascii")
 
         CHECK(match_result.ec == parse_result.ec);
         CHECK(match_result.count == parse_result.count);
+        CHECK(match_result.recovered == parse_result.recovered);
 
         return parse_result;
     };
@@ -29,6 +30,7 @@ TEST_CASE("engine_cp_ascii")
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::error_code::eof);
+        CHECK(empty.recovered < 0);
 
         auto a = parse("a");
         CHECK(a);
@@ -39,6 +41,7 @@ TEST_CASE("engine_cp_ascii")
         CHECK(!out_of_range);
         CHECK(out_of_range.count == 1);
         CHECK(out_of_range.ec == engine::error_code::out_of_range);
+        CHECK(out_of_range.recovered == 0);
     }
     SUBCASE("ASCII")
     {
@@ -64,6 +67,7 @@ TEST_CASE("engine_cp_ascii")
             CHECK(!result);
             CHECK(result.count == 1);
             CHECK(result.ec == engine::error_code::out_of_range);
+            CHECK(result.recovered == 0);
         }
     }
 }
@@ -80,6 +84,7 @@ TEST_CASE("engine_cp_utf8")
 
         CHECK(match_result.ec == parse_result.ec);
         CHECK(match_result.count == parse_result.count);
+        CHECK(match_result.recovered == parse_result.recovered);
 
         return parse_result;
     };
@@ -90,6 +95,7 @@ TEST_CASE("engine_cp_utf8")
 
         CHECK(match_result.ec == parse_result.ec);
         CHECK(match_result.count == parse_result.count);
+        CHECK(match_result.recovered == parse_result.recovered);
 
         return parse_result;
     };
@@ -100,6 +106,7 @@ TEST_CASE("engine_cp_utf8")
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::error_code::eof);
+        CHECK(empty.recovered < 0);
 
         auto a = parse(LEXY_CHAR8_STR("a"));
         CHECK(a);
@@ -122,82 +129,101 @@ TEST_CASE("engine_cp_utf8")
         CHECK(!leads_with_trailing);
         CHECK(leads_with_trailing.count == 0);
         CHECK(leads_with_trailing.ec == engine::error_code::leads_with_trailing);
+        CHECK(leads_with_trailing.recovered == 1);
 
         auto missing_first1 = parse_seq(0b1101'0000);
         CHECK(!missing_first1);
         CHECK(missing_first1.count == 1);
         CHECK(missing_first1.ec == engine::error_code::missing_trailing);
+        CHECK(missing_first1.recovered == 0);
         auto missing_first2 = parse_seq(0b1110'1000);
         CHECK(!missing_first2);
         CHECK(missing_first2.count == 1);
         CHECK(missing_first2.ec == engine::error_code::missing_trailing);
+        CHECK(missing_first2.recovered == 0);
         auto missing_first3 = parse_seq(0b1111'0100);
         CHECK(!missing_first3);
         CHECK(missing_first3.count == 1);
         CHECK(missing_first3.ec == engine::error_code::missing_trailing);
+        CHECK(missing_first3.recovered == 0);
         auto missing_second2 = parse_seq(0b1110'1000, 0b1000'0001);
         CHECK(!missing_second2);
         CHECK(missing_second2.count == 2);
         CHECK(missing_second2.ec == engine::error_code::missing_trailing);
+        CHECK(missing_second2.recovered == 0);
         auto missing_second3 = parse_seq(0b1111'0100, 0b1000'0001);
         CHECK(!missing_second3);
         CHECK(missing_second3.count == 2);
         CHECK(missing_second3.ec == engine::error_code::missing_trailing);
+        CHECK(missing_second3.recovered == 0);
         auto missing_third3 = parse_seq(0b1111'0100, 0b1000'0001, 0b1000'0001);
         CHECK(!missing_third3);
         CHECK(missing_third3.count == 3);
         CHECK(missing_third3.ec == engine::error_code::missing_trailing);
+        CHECK(missing_third3.recovered == 0);
 
         auto invalid_first1 = parse_seq(0b1101'0000, 0b1111);
         CHECK(!invalid_first1);
         CHECK(invalid_first1.count == 1);
         CHECK(invalid_first1.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_first1.recovered == 0);
         auto invalid_first2 = parse_seq(0b1110'1000, 0b1111);
         CHECK(!invalid_first2);
         CHECK(invalid_first2.count == 1);
         CHECK(invalid_first2.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_first2.recovered == 0);
         auto invalid_first3 = parse_seq(0b1111'0100, 0b1111);
         CHECK(!invalid_first3);
         CHECK(invalid_first3.count == 1);
         CHECK(invalid_first3.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_first3.recovered == 0);
         auto invalid_second2 = parse_seq(0b1110'1000, 0b1000'0001, 0b1111);
         CHECK(!invalid_second2);
         CHECK(invalid_second2.count == 2);
         CHECK(invalid_second2.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_second2.recovered == 0);
         auto invalid_second3 = parse_seq(0b1111'0100, 0b1000'0001, 0b1111);
         CHECK(!invalid_second3);
         CHECK(invalid_second3.count == 2);
         CHECK(invalid_second3.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_second3.recovered == 0);
         auto invalid_third3 = parse_seq(0b1111'0100, 0b1000'0001, 0b1000'0001, 0b1111);
         CHECK(!invalid_third3);
         CHECK(invalid_third3.count == 3);
         CHECK(invalid_third3.ec == engine::error_code::missing_trailing);
+        CHECK(invalid_third3.recovered == 0);
 
         auto surrogate = parse_seq(0b1110'1101, 0b1011'1111, 0b1011'1111);
         CHECK(!surrogate);
         CHECK(surrogate.count == 3);
         CHECK(surrogate.ec == engine::error_code::surrogate);
+        CHECK(surrogate.recovered == 0);
         auto out_of_range = parse_seq(0b1111'0111, 0b1011'1111, 0b1011'1111, 0b1011'1111);
         CHECK(!out_of_range);
         CHECK(out_of_range.count == 4);
         CHECK(out_of_range.ec == engine::error_code::out_of_range);
+        CHECK(out_of_range.recovered == 0);
 
         auto overlong_two1 = parse_seq(0xC0, 0x84);
         CHECK(!overlong_two1);
-        CHECK(overlong_two1.count == 0);
+        CHECK(overlong_two1.count == 2);
         CHECK(overlong_two1.ec == engine::error_code::overlong_sequence);
+        CHECK(overlong_two1.recovered == 0);
         auto overlong_two2 = parse_seq(0xC1, 0x84);
         CHECK(!overlong_two2);
-        CHECK(overlong_two2.count == 0);
+        CHECK(overlong_two2.count == 2);
         CHECK(overlong_two2.ec == engine::error_code::overlong_sequence);
+        CHECK(overlong_two2.recovered == 0);
         auto overlong_three = parse_seq(0xE0, 0x80, 0x80);
         CHECK(!overlong_three);
-        CHECK(overlong_three.count == 1);
+        CHECK(overlong_three.count == 3);
         CHECK(overlong_three.ec == engine::error_code::overlong_sequence);
+        CHECK(overlong_three.recovered == 0);
         auto overlong_four = parse_seq(0xF0, 0x80, 0x80, 0x80);
         CHECK(!overlong_four);
-        CHECK(overlong_four.count == 1);
+        CHECK(overlong_four.count == 4);
         CHECK(overlong_four.ec == engine::error_code::overlong_sequence);
+        CHECK(overlong_four.recovered == 0);
     }
     SUBCASE("ASCII")
     {
@@ -226,6 +252,7 @@ TEST_CASE("engine_cp_utf16")
 
         CHECK(match_result.ec == parse_result.ec);
         CHECK(match_result.count == parse_result.count);
+        CHECK(match_result.recovered == parse_result.recovered);
 
         return parse_result;
     };
@@ -236,6 +263,7 @@ TEST_CASE("engine_cp_utf16")
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::error_code::eof);
+        CHECK(empty.recovered < 0);
 
         auto a = parse(u"a");
         CHECK(a);
@@ -259,12 +287,14 @@ TEST_CASE("engine_cp_utf16")
         CHECK(!leads_with_trailing);
         CHECK(leads_with_trailing.count == 0);
         CHECK(leads_with_trailing.ec == engine::error_code::leads_with_trailing);
+        CHECK(leads_with_trailing.recovered == 1);
 
         constexpr char16_t missing_trailing_str[] = {0xDA44, 0x0};
         auto               missing_trailing       = parse(missing_trailing_str);
         CHECK(!missing_trailing);
         CHECK(missing_trailing.count == 1);
         CHECK(missing_trailing.ec == engine::error_code::missing_trailing);
+        CHECK(missing_trailing.recovered == 0);
     }
     SUBCASE("ASCII")
     {
@@ -295,11 +325,13 @@ TEST_CASE("engine_cp_utf16")
                 {
                     CHECK(result.count == 1);
                     CHECK(result.ec == engine::error_code::missing_trailing);
+                    CHECK(result.recovered == 0);
                 }
                 else
                 {
                     CHECK(result.count == 0);
                     CHECK(result.ec == engine::error_code::leads_with_trailing);
+                    CHECK(result.recovered == 1);
                 }
             }
             else
@@ -324,6 +356,7 @@ TEST_CASE("engine_cp_utf32")
 
         CHECK(match_result.ec == parse_result.ec);
         CHECK(match_result.count == parse_result.count);
+        CHECK(match_result.recovered == parse_result.recovered);
 
         return parse_result;
     };
@@ -334,6 +367,7 @@ TEST_CASE("engine_cp_utf32")
         CHECK(!empty);
         CHECK(empty.count == 0);
         CHECK(empty.ec == engine::error_code::eof);
+        CHECK(empty.recovered < 0);
 
         auto a = parse(U"a");
         CHECK(a);
@@ -357,12 +391,14 @@ TEST_CASE("engine_cp_utf32")
         CHECK(!surrogate);
         CHECK(surrogate.count == 1);
         CHECK(surrogate.ec == engine::error_code::surrogate);
+        CHECK(surrogate.recovered == 0);
 
         constexpr char32_t out_of_range_str[] = {0xFF1234, 0x0};
         auto               out_of_range       = parse(out_of_range_str);
         CHECK(!out_of_range);
         CHECK(out_of_range.count == 1);
         CHECK(out_of_range.ec == engine::error_code::out_of_range);
+        CHECK(out_of_range.recovered == 0);
     }
     SUBCASE("ASCII")
     {
@@ -391,6 +427,7 @@ TEST_CASE("engine_cp_utf32")
                 CHECK(!result);
                 CHECK(result.count == 1);
                 CHECK(result.ec == engine::error_code::surrogate);
+                CHECK(result.recovered == 0);
             }
             else
             {

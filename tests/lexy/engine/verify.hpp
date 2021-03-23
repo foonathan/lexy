@@ -15,6 +15,7 @@ struct engine_match_result
 {
     typename Matcher::error_code ec;
     std::size_t                  count;
+    int recovered; // < 0 if unable to recover, >= 0 count that was recovered
 
     explicit operator bool() const
     {
@@ -23,21 +24,27 @@ struct engine_match_result
 };
 
 template <typename Matcher, typename Encoding, typename CharT>
-auto engine_matches(const CharT* str)
+auto engine_matches(const CharT* str, std::size_t size = std::size_t(-1))
 {
-    auto input  = lexy::zstring_input<Encoding>(str);
+    auto input  = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
+                                          : lexy::string_input<Encoding>(str, size);
     auto reader = input.reader();
 
     auto begin  = reader.cur();
     auto result = Matcher::match(reader);
     auto end    = reader.cur();
+    if (result == typename Matcher::error_code())
+        return engine_match_result<Matcher>{result, std::size_t(end - begin), -1};
 
-    return engine_match_result<Matcher>{result, std::size_t(end - begin)};
+    auto recovered     = Matcher::recover(reader, result);
+    auto recovered_end = reader.cur();
+    return engine_match_result<Matcher>{result, std::size_t(end - begin),
+                                        recovered ? int(recovered_end - end) : -1};
 }
 template <typename Matcher, typename CharT>
-auto engine_matches(const CharT* str)
+auto engine_matches(const CharT* str, std::size_t size = std::size_t(-1))
 {
-    return engine_matches<Matcher, lexy::deduce_encoding<CharT>>(str);
+    return engine_matches<Matcher, lexy::deduce_encoding<CharT>>(str, size);
 }
 
 //=== engine_parses ===//
@@ -47,6 +54,7 @@ struct engine_parse_result
     T                           value;
     typename Parser::error_code ec;
     std::size_t                 count;
+    int recovered; // < 0 if unable to recover, >= 0 count that was recovered
 
     explicit operator bool() const
     {
@@ -64,8 +72,14 @@ auto engine_parses(const CharT* str)
     auto                        begin  = reader.cur();
     auto                        result = Parser::parse(ec, reader);
     auto                        end    = reader.cur();
+    if (ec == typename Parser::error_code())
+        return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin),
+                                                             -1};
 
-    return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin)};
+    auto recovered     = Parser::recover(reader, ec);
+    auto recovered_end = reader.cur();
+    return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin),
+                                                         recovered ? int(recovered_end - end) : -1};
 }
 template <typename Parser, typename CharT>
 auto engine_parses(const CharT* str)

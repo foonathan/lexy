@@ -22,6 +22,12 @@ struct Matcher : engine_matcher_base
     /// Otherwise, leaves the reader at the position of the error and returns some other error_code.
     template <typename Reader>
     static error_code match(Reader& reader);
+
+    /// Tries to recover after an error (optional).
+    /// If possible, advances the input to the recovered position and returns true.
+    /// If not possible, keeps input at the error position and returns false.
+    template <typename Reader>
+    static bool recover(Reader& reader, error_code ec);
 };
 
 /// Parses something, i.e. consumes and input and returns a result or error.
@@ -36,15 +42,31 @@ struct Parser : engine_parser_base
     /// Otherwise, leaves the reader at the position of the error, sets the error and returns some partial result.
     template <typename Reader>
     static auto parse(error_code& ec, Reader& reader);
+
+    /// Same as for Matcher.
+    template <typename Reader>
+    static bool recover(Reader& reader, error_code ec);
 };
 #endif
 
 namespace lexy
 {
 struct engine_matcher_base
-{};
+{
+    template <typename Reader, typename EC>
+    static bool recover(Reader&, EC)
+    {
+        return false;
+    }
+};
 struct engine_parser_base
-{};
+{
+    template <typename Reader, typename EC>
+    static bool recover(Reader&, EC)
+    {
+        return false;
+    }
+};
 
 /// Whether or not the engine is a matcher.
 template <typename Engine>

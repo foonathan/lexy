@@ -49,6 +49,16 @@ struct engine_minus : lexy::engine_matcher_base
 
         return error_code();
     }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code ec)
+    {
+        if (ec == error_code::minus_failure)
+            // We've already consumed the input.
+            return true;
+        else
+            return Matcher::recover(reader, error_to_matcher(ec));
+    }
 };
 } // namespace lexy
 

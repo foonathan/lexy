@@ -34,6 +34,15 @@ struct engine_char_range : engine_matcher_base
         else
             return error_code::error;
     }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code)
+    {
+        // Consume bad character.
+        if (!reader.eof())
+            reader.bump();
+        return true;
+    }
 };
 } // namespace lexy
 
@@ -102,6 +111,15 @@ struct engine_char_set : engine_matcher_base
     static constexpr error_code match(Reader& reader)
     {
         return _transition(reader, STrie.transition_sequence());
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code)
+    {
+        // Consume bad character.
+        if (!reader.eof())
+            reader.bump();
+        return true;
     }
 };
 
@@ -197,6 +215,15 @@ struct engine_ascii_table : engine_matcher_base
         {
             return error_code::error;
         }
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code)
+    {
+        // Consume bad character.
+        if (!reader.eof())
+            reader.bump();
+        return true;
     }
 };
 } // namespace lexy

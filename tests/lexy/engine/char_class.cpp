@@ -15,6 +15,7 @@ TEST_CASE("engine_char_range")
     auto empty = engine_matches<engine>("");
     CHECK(!empty);
     CHECK(empty.count == 0);
+    CHECK(empty.recovered == 0);
 
     for (auto digit = '0'; digit <= '9'; ++digit)
     {
@@ -28,12 +29,14 @@ TEST_CASE("engine_char_range")
 
     for (auto non_digit : "abcdefgh")
     {
-        INFO(non_digit);
+        if (non_digit == '\0')
+            continue;
         const char str[] = {non_digit, non_digit, non_digit, '\0'};
 
         auto result = engine_matches<engine>(str);
         CHECK(!result);
         CHECK(result.count == 0);
+        CHECK(result.recovered == 1);
     }
 }
 
@@ -54,6 +57,7 @@ TEST_CASE("engine_char_set")
         auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         auto a = engine_matches<engine>("aaa");
         CHECK(a);
@@ -62,10 +66,12 @@ TEST_CASE("engine_char_set")
         auto b = engine_matches<engine>("bbb");
         CHECK(!b);
         CHECK(b.count == 0);
+        CHECK(b.recovered == 1);
 
         auto c = engine_matches<engine>("ccc");
         CHECK(!c);
         CHECK(c.count == 0);
+        CHECK(c.recovered == 1);
 
         auto d = engine_matches<engine>("ddd");
         CHECK(!d);
@@ -79,6 +85,7 @@ TEST_CASE("engine_char_set")
         auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         auto a = engine_matches<engine>("aaa");
         CHECK(a);
@@ -95,6 +102,7 @@ TEST_CASE("engine_char_set")
         auto d = engine_matches<engine>("ddd");
         CHECK(!d);
         CHECK(d.count == 0);
+        CHECK(d.recovered == 1);
     }
 
     SUBCASE("{'a', 'b', 'c'} in UTF-16")
@@ -105,6 +113,7 @@ TEST_CASE("engine_char_set")
         auto empty = engine_matches<engine>(u"");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         auto a = engine_matches<engine>(u"aaa");
         CHECK(a);
@@ -121,6 +130,7 @@ TEST_CASE("engine_char_set")
         auto d = engine_matches<engine>(u"ddd");
         CHECK(!d);
         CHECK(d.count == 0);
+        CHECK(d.recovered == 1);
     }
 }
 
@@ -185,32 +195,35 @@ TEST_CASE("engine_ascii_table")
         auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         for (auto c = 0x00; c < 0x20; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
 
         for (auto c = 0x20; c < 0x40; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(result);
             CHECK(result.count == 1);
         }
 
         for (auto c = 0x40; c < 0xFF; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
     }
     SUBCASE("category 1 or 2")
@@ -221,32 +234,35 @@ TEST_CASE("engine_ascii_table")
         auto empty = engine_matches<engine>("");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         for (auto c = 0x00; c < 0x20; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
 
         for (auto c = 0x20; c < 0x60; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(result);
             CHECK(result.count == 1);
         }
 
         for (auto c = 0x60; c < 0xFF; ++c)
         {
-            const char str[] = {char(c), char(c), char(c), '\0'};
+            const char str[] = {char(c), char(c), char(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
     }
 
@@ -258,32 +274,35 @@ TEST_CASE("engine_ascii_table")
         auto empty = engine_matches<engine>(u"");
         CHECK(!empty);
         CHECK(empty.count == 0);
+        CHECK(empty.recovered == 0);
 
         for (auto c = 0x00; c < 0x20; ++c)
         {
-            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
 
         for (auto c = 0x20; c < 0x40; ++c)
         {
-            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(result);
             CHECK(result.count == 1);
         }
 
         for (auto c = 0x40; c < 0xFFFF; ++c)
         {
-            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c), '\0'};
+            const char16_t str[] = {char16_t(c), char16_t(c), char16_t(c)};
 
-            auto result = engine_matches<engine>(str);
+            auto result = engine_matches<engine>(str, 3);
             CHECK(!result);
             CHECK(result.count == 0);
+            CHECK(result.recovered == 1);
         }
     }
 }
