@@ -203,7 +203,8 @@ struct string : lexy::token_production
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>);
 
         // String of code_point with specified escape sequences, surrounded by ".
-        return dsl::quoted(code_point, escape);
+        // We abort string parsing if we see a newline to handle missing closing ".
+        return dsl::quoted.limit(dsl::ascii::newline)(code_point, escape);
     }();
 
     static constexpr auto value = lexy::as_string<ast::json_string, lexy::utf8_encoding>;
@@ -233,7 +234,9 @@ struct array
 struct object
 {
     static constexpr auto rule = [] {
-        auto item = dsl::p<string> + dsl::colon + dsl::recurse<json_value>;
+        // We try parsing the colon.  This means that a missing colon is just ignored and parsing
+        // continues as if nothing happens.
+        auto item = dsl::p<string> + dsl::try_(dsl::colon) + dsl::recurse<json_value>;
 
         // Trailing seperators are not allowed.
         // Use `dsl::trailing_sep()` if you want to allow it.
@@ -303,10 +306,11 @@ int main(int argc, char** argv)
     }
 
     auto json = lexy::parse<grammar::json>(file, lexy_ext::report_error);
+    if (json.has_value())
+        json.value().print();
+
     if (!json)
         return 2;
-
-    json.value().print();
 }
 #endif
 
