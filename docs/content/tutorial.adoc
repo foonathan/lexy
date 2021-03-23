@@ -117,11 +117,14 @@ int main()
     { … }
 
     auto result = lexy::parse<grammar::config>(file, report_error_callback); <4>
-    if (!result)
+    if (!result) <5>
     { … }
 
-    PackageConfig config = result.value(); <5>
-    …
+    if (result.has_value()) <6>
+    {
+        PackageConfig config = result.value();
+        …
+    }
 }
 ----
 <1> The user code that defines the C++ data structures.
@@ -133,8 +136,10 @@ int main()
     Reading a file can fail, so we need to handle that (not shown here).
 <4> Then we can parse our entry production using `lexy::parse`.
     We give it our file input and a callback to invoke on errors (not shown here).
-    Parsing can fail, so we need to handle that (not shown here).
-<5> If everything succeeded, we can access our parsed config object and work with it.
+<5> If parsing produced any errors, handle them somehow.
+<6> If parsing was able to give as a value (i.e. the input was either well-formed or lexy could recover from all errors that happened),
+    use that value.
+    If you don't care about error recovery, you just need the `!result` check.
 
 The rest of the tutorial will only focus on the rules and productions, as that is the interesting part of the library.
 Refer to the documentation for further details on the surrounding infrastructure.
@@ -1198,9 +1203,11 @@ The `lexy::as_aggregate<T>` sink then constructs a `T` object and processes all 
 ----
 struct config
 {
+    static constexpr auto whitespace = dsl::ascii::blank;
+
     static constexpr auto rule = [] {
         auto make_field = [](auto name, auto rule) {
-            return name >> dsl::lit_c<'='>[ws] + dsl::whitespaced(rule, ws) + dsl::newline[ws]; <1>
+            return name >> dsl::lit_c<'='> + rule + dsl::newline; <1>
         };
 
         auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>); <2>
@@ -1482,7 +1489,54 @@ error: while parsing version
      |           ~~~~~^ build string not supported
 ----
 
-Many more things can be done, once common errors are known.
+=== Error Recovery
+
+lexy can also recover from an error and continue parsing.
+In the easy cases, this error recovery is done automatically for us, for example when parsing an author field of `["author 1" "author 2"]`.
+Even though the comma is missing (and we'll get the appropriate error), parsing continues and we're getting a config object with the two authors.
+
+However, sometimes we need to do error recovery ourselves.
+This can be done with the `dsl::try_()` rule.
+It parses a given rule, and will do something to recover from it if parsing fails.
+
+Consider the code that parses one config field:
+
+[source,cpp]
+----
+auto make_field = [](auto name, auto rule) {
+    return name >> dsl::lit_c<'='> + rule + dsl::newline;
+};
+----
+
+Note that the `=` sign between the name and the value is not required to be able to parse it; something like `version 1.0.0` is not ambiguous.
+So instead of specifying `dsl::lit_c<'='>`, we can use `dsl::try_(dsl::lit_c<'='>)`:
+this tries to parse an `=` sign and issues an error if there isn't one, but then it just continues as if nothing happens.
+So `version 1.0.0` will lead to an error message complaining about the missing `=`, but still give you the appropriate config object.
+Note that this is unlike `dsl::if_(dsl::lit_c<'='>)` which would not raise an error if there is no `=`, as there the `=` is optional.
+
+Similar, we can help recover if there isn't a newline after the rule.
+Input like `name = my-package` will raise the invalid name character error as demonstrated above.
+This is not a fatal error by design of `dsl::require()`, so parsing continues and tries to parse `dsl::newline`.
+The latter will fail though and abort parsing.
+
+Instead of `dsl::newline` we can use `dsl::try_(dsl::newline, dsl::until(dsl::newline))`.
+This then tries to parse a newline, but if we didn't have one, it will consume all input until it finds one.
+Then `name = my-package` will set the name to `my`, raise an invalid name character, raise a missing newline but then continues with the next field entry.
+
+We can also leverage `dsl::try_()` to recover from input like `version = 1.0` (instead of `1.0.0`).
+Simply make every dot and number "optional" as shown here:
+
+[source,cpp]
+----
+auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::value_c<0>); <1>
+auto dot         = dsl::try_(dsl::period); <2>
+auto dot_version = number + dot + number + dot + number
+                   + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
+----
+<1> If we didn't have an integer, produce a 0.
+<2> If we didn't have a dot, just ignore it.
+
+Many more things can be done, once common errors are known, but this is enough for the tutorial.
 
 '''
 

@@ -61,8 +61,8 @@ struct version : lexy::token_production
 
     // Match three integers separated by dots, or the special tag "unreleased".
     static constexpr auto rule = [] {
-        auto number      = dsl::integer<int>(dsl::digits<>);
-        auto dot         = dsl::period;
+        auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::value_c<0>);
+        auto dot         = dsl::try_(dsl::period);
         auto dot_version = number + dot + number + dot + number
                            + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 
@@ -123,8 +123,10 @@ struct config
     static constexpr auto whitespace = dsl::ascii::blank;
 
     static constexpr auto rule = [] {
-        auto make_field
-            = [](auto name, auto rule) { return name >> dsl::lit_c<'='> + rule + dsl::newline; };
+        auto make_field = [](auto name, auto rule) {
+            auto end = dsl::try_(dsl::newline, dsl::until(dsl::newline));
+            return name >> dsl::try_(dsl::lit_c<'='>) + rule + end;
+        };
 
         auto name_field    = make_field(LEXY_LIT("name"), LEXY_MEM(name) = dsl::p<name>);
         auto version_field = make_field(LEXY_LIT("version"), LEXY_MEM(version) = dsl::p<version>);
@@ -157,15 +159,20 @@ int main(int argc, char** argv)
     }
 
     auto result = lexy::parse<grammar::config>(file, lexy_ext::report_error);
+
+    if (result.has_value())
+    {
+        auto& config = result.value();
+
+        std::printf("Package %s (%d.%d.%d)\n", config.name.c_str(), config.version.major,
+                    config.version.minor, config.version.patch);
+
+        std::puts("Created by:");
+        for (auto& author : config.authors)
+            std::printf("- \"%s\"", author.c_str());
+    }
+
     if (!result)
         return 2;
-    auto& config = result.value();
-
-    std::printf("Package %s (%d.%d.%d)\n", config.name.c_str(), config.version.major,
-                config.version.minor, config.version.patch);
-
-    std::puts("Created by:");
-    for (auto& author : config.authors)
-        std::puts(author.c_str());
 }
 
