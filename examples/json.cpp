@@ -234,8 +234,9 @@ struct array
 struct object
 {
     static constexpr auto rule = [] {
-        // We try parsing the colon.  This means that a missing colon is just ignored and parsing
-        // continues as if nothing happens.
+        // We try parsing the colon. This means that a missing colon raises an error, which is then
+        // caught and parsing continues as if nothing happens. Without the try, parsing the current
+        // item would be canceled immediately.
         auto item = dsl::p<string> + dsl::try_(dsl::colon) + dsl::recurse<json_value>;
 
         // Trailing seperators are not allowed.
