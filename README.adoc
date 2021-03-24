@@ -72,6 +72,9 @@ Good error reporting::
   Custom error messages can be injected using the special `dsl::error`, `dsl::require` and `dsl::prevent` error.
   Write parse rules that detect common mistakes and issue appropriate diagnostics!
 
+Error recovery (experimental)::
+  Log an error, recover, and continue parsing!
+
 Unicode support::
   You can parse UTF-8, UTF-16, or UTF-32.
   `lexy` takes care of code point encoding and decoding as necessary, as well as endianness and byte-order marks.
@@ -101,9 +104,6 @@ Operator parsing::
 Keyword parsing::
   Reserve a set of keywords that won't be matched as regular identifiers.
 
-Error recovery::
-  Log an error, recover, and continue parsing!
-
 NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
 All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
 
@@ -113,7 +113,8 @@ Why should I use `lexy` over XYZ?::
   `lexy` is closest to other PEG parsers.
   However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
   This is not the case for `lexy`, where backtracking is controlled using branch conditions.
- 
+  `lexy` also gives you a lot of control over error reporting and supports error recovery.
+
   http://boost-spirit.com/home/[Boost.Spirit]:::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
