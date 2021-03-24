@@ -11,9 +11,10 @@ int main()
     lexy::parse_tree_for<decltype(input)> tree;
     auto                                  result
         = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
-    if (!result)
-        return 1;
 
     lexy_ext::dump_parse_tree(stdout, tree);
+
+    if (!result)
+        return 1;
 }
 

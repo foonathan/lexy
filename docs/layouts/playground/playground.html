@@ -34,11 +34,10 @@
 </section>
 
 <section id="output">
-<div class="output-container" id="output-graph"></div>
-<textarea class="output-container" id="output-text"
-    cols="80" rows="10"
-    autocomplete=off readonly=true>
-</textarea>
+    <div class="output-container" id="output-graph"></div>
+    <textarea class="output-container" id="output-text"
+        autocomplete=off readonly=true>
+    </textarea>
 </section>
 
 <section>
@@ -167,13 +166,20 @@ async function run()
     const result = await playground.compile_and_run(source, input);
     if (result.success)
     {
-        if (result.code == 0)
+        if (result.code == 0) // no error
         {
             d3.select(output_graph).graphviz().renderDot(result.stdout);
             output_text.style.display = "none";
             output_graph.style.display = "block";
         }
-        else
+        else if (result.code == 1) // recovered error
+        {
+            d3.select(output_graph).graphviz().renderDot(result.stdout);
+            output_text.value = result.stderr;
+            output_text.style.display = "block";
+            output_graph.style.display = "block";
+        }
+        else  // fatal error
         {
             output_text.value = result.stderr;
             output_text.style.display = "block";
@@ -187,6 +193,7 @@ async function run()
         output_graph.style.display = "none";
     }
 
+    output_text.style.minHeight = output_text.scrollHeight + 'px';
     toolbar_run.disabled = false;
 }
 

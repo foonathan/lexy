@@ -31,8 +31,7 @@
     margin-bottom: 5px;
 
     .editor-container {
-        flex-grow: 1;
-
+        flex: 1;
         min-width: 30em;
         height: 30em;
 
@@ -48,15 +47,21 @@
 
 #output {
     display: flex;
-    margin: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
 
     .output-container {
-        flex-grow: 1;
+        flex: 1;
+        min-width: 30em;
+        min-height: 10em;
+
         border: 1px solid $gray-highlight-color;
+        margin: 5px;
     }
     #output-text {
         resize: none;
     }
+
     #output-graph {
         display: none;
 

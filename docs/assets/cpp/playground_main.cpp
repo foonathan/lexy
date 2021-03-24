@@ -11,8 +11,6 @@ int main()
     lexy::parse_tree_for<decltype(input)> tree;
     auto                                  result
         = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
-    if (!result)
-        return 1;
 
     std::puts("graph \"Parse Tree\" {");
     for (auto [event, node] : tree.traverse())
@@ -49,5 +47,12 @@ int main()
         }
     }
     std::puts("}");
+
+    if (result.is_success())
+        return 0;
+    else if (result.is_recovered_error())
+        return 1;
+    else if (result.is_fatal_error())
+        return 2;
 }
 
