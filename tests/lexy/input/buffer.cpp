@@ -96,27 +96,27 @@ TEST_CASE("buffer")
         };
 
         const lexy::buffer ptr_size(ustr, 3);
-        CHECK(std::is_same_v<decltype(ptr_size)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(ptr_size)::encoding, lexy::byte_encoding>);
         verify(ptr_size);
 
         const lexy::buffer ptr_ptr(ustr, ustr + 3);
-        CHECK(std::is_same_v<decltype(ptr_ptr)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(ptr_ptr)::encoding, lexy::byte_encoding>);
         verify(ptr_ptr);
 
         const lexy::buffer view(uview_type{});
-        CHECK(std::is_same_v<decltype(view)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(view)::encoding, lexy::byte_encoding>);
         verify(view);
 
-        const lexy::buffer<lexy::raw_encoding> ptr_size_conv(str, 3);
+        const lexy::buffer<lexy::byte_encoding> ptr_size_conv(str, 3);
         verify(ptr_size_conv);
 
-        const lexy::buffer<lexy::raw_encoding> ptr_ptr_conv(str, str + 3);
+        const lexy::buffer<lexy::byte_encoding> ptr_ptr_conv(str, str + 3);
         verify(ptr_ptr);
 
-        const lexy::buffer<lexy::raw_encoding> view_conv(view_type{});
+        const lexy::buffer<lexy::byte_encoding> view_conv(view_type{});
         verify(view_conv);
 
-        lexy::buffer<lexy::raw_encoding>::builder builder(3);
+        lexy::buffer<lexy::byte_encoding>::builder builder(3);
         std::memcpy(builder.data(), str, builder.size());
         verify(LEXY_MOV(builder).finish());
     }
@@ -138,18 +138,18 @@ TEST_CASE("buffer")
         };
 
         const lexy::buffer ptr_size(ustr, 3, std::pmr::new_delete_resource());
-        CHECK(std::is_same_v<decltype(ptr_size)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(ptr_size)::encoding, lexy::byte_encoding>);
         verify(ptr_size);
 
         const lexy::buffer ptr_ptr(ustr, ustr + 3, std::pmr::new_delete_resource());
-        CHECK(std::is_same_v<decltype(ptr_ptr)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(ptr_ptr)::encoding, lexy::byte_encoding>);
         verify(ptr_ptr);
 
         const lexy::buffer view(uview_type{}, std::pmr::new_delete_resource());
-        CHECK(std::is_same_v<decltype(view)::encoding, lexy::raw_encoding>);
+        CHECK(std::is_same_v<decltype(view)::encoding, lexy::byte_encoding>);
         verify(view);
 
-        using buffer_type = lexy::buffer<lexy::raw_encoding, std::pmr::memory_resource>;
+        using buffer_type = lexy::buffer<lexy::byte_encoding, std::pmr::memory_resource>;
         const buffer_type ptr_size_conv(str, 3, std::pmr::new_delete_resource());
         verify(ptr_size_conv);
 

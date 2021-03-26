@@ -340,7 +340,7 @@ TEST_CASE("as_string")
         return lexy::lexeme(reader, begin);
     }();
     auto uchar_lexeme = [] {
-        auto input  = lexy::zstring_input<lexy::raw_encoding>("abc");
+        auto input  = lexy::zstring_input<lexy::byte_encoding>("abc");
         auto reader = input.reader();
 
         auto begin = reader.cur();

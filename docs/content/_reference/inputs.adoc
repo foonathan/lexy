@@ -16,7 +16,7 @@ namespace lexy
     struct utf8_encoding;
     struct utf16_encoding;
     struct utf32_encoding;
-    struct raw_encoding;
+    struct byte_encoding;
 
     template <typename CharT>
     using deduce_encoding = /* see below */;
@@ -36,7 +36,7 @@ For some encodings, the integer type can be the same as the character type as no
 This allows optimizations.
 
 Certain rules can require a certain encodings.
-For example, `lexy::dsl::code_point` does not work with the `lexy::default_encoding`, and `lexy::dsl::encode` requires `lexy::raw_encoding`.
+For example, `lexy::dsl::code_point` does not work with the `lexy::default_encoding`, and `lexy::dsl::encode` requires `lexy::byte_encoding`.
 
 ==== The supported encodings
 
@@ -57,7 +57,7 @@ For example, `lexy::dsl::code_point` does not work with the `lexy::default_encod
 `lexy::utf32_encoding`::
     Assumes the input is valid UTF-32. Its character type is `char32_t`, but it also accepts `wchar_t` on Linux.
 
-`lexy::raw_encoding`::
+`lexy::byte_encoding`::
     Does not assume the input is text. Its character type is `unsigned char`, but it also accepts `char` and `std::byte`.
     Use this encoding if you're not parsing text or if you're parsing text consisting of multiple encodings.
 

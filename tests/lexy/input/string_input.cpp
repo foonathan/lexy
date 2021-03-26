@@ -72,23 +72,23 @@ TEST_CASE("string_input")
     }
     SUBCASE("converting ctor")
     {
-        lexy::string_input<lexy::raw_encoding> input;
+        lexy::string_input<lexy::byte_encoding> input;
 
         SUBCASE("range ctor")
         {
-            input = lexy::string_input<lexy::raw_encoding>(str, str + 3);
+            input = lexy::string_input<lexy::byte_encoding>(str, str + 3);
         }
         SUBCASE("ptr + size ctor")
         {
-            input = lexy::string_input<lexy::raw_encoding>(str, 3);
+            input = lexy::string_input<lexy::byte_encoding>(str, 3);
         }
         SUBCASE("view")
         {
-            input = lexy::string_input<lexy::raw_encoding>(view());
+            input = lexy::string_input<lexy::byte_encoding>(view());
         }
         SUBCASE("zstring")
         {
-            input = lexy::zstring_input<lexy::raw_encoding>(str);
+            input = lexy::zstring_input<lexy::byte_encoding>(str);
         }
 
         CHECK(input.begin() == reinterpret_cast<const unsigned char*>(str));

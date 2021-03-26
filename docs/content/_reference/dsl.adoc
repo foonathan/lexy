@@ -2319,7 +2319,7 @@ Errors::
 
 === Raw input
 
-The following facilities are meant for parsing input that uses the `lexy::raw_encoding`, that is input consisting of bytes, not text.
+The following facilities are meant for parsing input that uses the `lexy::byte_encoding`, that is input consisting of bytes, not text.
 
 [discrete]
 ==== `lexy::dsl::bom`
@@ -2367,7 +2367,7 @@ If no `Endianness` is specified, the default is `lexy::encoding_endianness::bom`
 If no BOM is present, big endian is assumed.
 
 Requires::
-  The input's encoding is a single-byte encoding (usually `lexy::raw_encoding`).
+  The input's encoding is a single-byte encoding (usually `lexy::byte_encoding`).
 Matches::
   If the endianness is `lexy::encoding_endianness::bom`, matches and consumes an optional BOM to determine endianness.
   Matches and consumes `rule`.

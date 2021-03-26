@@ -25,11 +25,11 @@ TEST_CASE("encoding deduction")
 
     constexpr unsigned char uchar_str[] = {0};
     auto                    uchar_input = lexy::zstring_input(uchar_str);
-    CHECK(std::is_same_v<decltype(uchar_input)::encoding, lexy::raw_encoding>);
+    CHECK(std::is_same_v<decltype(uchar_input)::encoding, lexy::byte_encoding>);
 
     constexpr std::byte byte_str[] = {std::byte(0)};
     auto                byte_input = lexy::zstring_input(byte_str);
-    CHECK(std::is_same_v<decltype(byte_input)::encoding, lexy::raw_encoding>);
+    CHECK(std::is_same_v<decltype(byte_input)::encoding, lexy::byte_encoding>);
 }
 
 TEST_CASE("wchar_t encoding")

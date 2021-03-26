@@ -166,7 +166,7 @@ struct _encode_begin : rule_base
         {
             using old_encoding = typename Reader::encoding;
             static_assert((std::is_same_v<old_encoding, lexy::default_encoding>)
-                              || (std::is_same_v<old_encoding, lexy::raw_encoding>),
+                              || (std::is_same_v<old_encoding, lexy::byte_encoding>),
                           "cannot re-encode input");
 
             auto encoded_reader = _encoded_reader<Reader, Encoding, Endianness>{reader};

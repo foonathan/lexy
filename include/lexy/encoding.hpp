@@ -305,7 +305,7 @@ constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
                                                                  == sizeof(char32_t);
 
 /// An encoding where the input is just raw bytes, not characters.
-struct raw_encoding
+struct byte_encoding
 {
     using char_type = unsigned char;
     using int_type  = int;
@@ -328,9 +328,9 @@ struct raw_encoding
         = delete;
 };
 template <>
-constexpr bool raw_encoding::is_secondary_char_type<char> = true;
+constexpr bool byte_encoding::is_secondary_char_type<char> = true;
 template <>
-constexpr bool raw_encoding::is_secondary_char_type<std::byte> = true;
+constexpr bool byte_encoding::is_secondary_char_type<std::byte> = true;
 } // namespace lexy
 
 //=== deduce_encoding ===//
@@ -376,12 +376,12 @@ struct _deduce_encoding<char32_t>
 template <>
 struct _deduce_encoding<unsigned char>
 {
-    using type = raw_encoding;
+    using type = byte_encoding;
 };
 template <>
 struct _deduce_encoding<std::byte>
 {
-    using type = raw_encoding;
+    using type = byte_encoding;
 };
 } // namespace lexy
 

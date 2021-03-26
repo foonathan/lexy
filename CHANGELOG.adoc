@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-03-26
+
+Renamed `lexy::raw_encoding` to `lexy::byte_encoding`.
+
 == 2021-03-23
 
 * Changed the return type of `lexy::read_file()` (and `lexy_ext::read_file()`) to use a new `lexy::read_file_result` over `lexy::result`.

@@ -41,9 +41,9 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = lexy::dsl::encode<lexy::ascii_encoding>(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto abc = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 3);
+        auto abc = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 3);
         CHECK(abc == 3);
     }
     SUBCASE("UTF-8")
@@ -52,11 +52,11 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = lexy::dsl::encode<lexy::utf8_encoding>(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input + 3, 3);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input + 3, 3);
         CHECK(no_bom == 3);
-        auto bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 6);
+        auto bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 6);
         CHECK(bom == 6);
     }
     SUBCASE("UTF-16, little")
@@ -68,9 +68,9 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 2);
         CHECK(no_bom == 2);
     }
     SUBCASE("UTF-16, big")
@@ -82,9 +82,9 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 2);
         CHECK(no_bom == 2);
     }
     SUBCASE("UTF-16, bom")
@@ -98,14 +98,14 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(u"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 2);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 2);
         CHECK(no_bom == 2);
 
-        auto bom_little = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_little, 4);
+        auto bom_little = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input_little, 4);
         CHECK(bom_little == 4);
-        auto bom_big = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_big, 4);
+        auto bom_big = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input_big, 4);
         CHECK(bom_big == 4);
     }
     SUBCASE("UTF-32, little")
@@ -117,9 +117,9 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 4);
         CHECK(no_bom == 4);
     }
     SUBCASE("UTF-32, big")
@@ -131,9 +131,9 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 4);
         CHECK(no_bom == 4);
     }
     SUBCASE("UTF-32, bom")
@@ -149,14 +149,14 @@ TEST_CASE("dsl::encoded")
         static constexpr auto rule = encode(LEXY_LIT(U"\uAABB"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 0);
+        auto empty = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 0);
         CHECK(empty == -1);
-        auto no_bom = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input, 4);
+        auto no_bom = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input, 4);
         CHECK(no_bom == 4);
 
-        auto bom_little = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_little, 8);
+        auto bom_little = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input_little, 8);
         CHECK(bom_little == 8);
-        auto bom_big = LEXY_VERIFY_ENCODING(lexy::raw_encoding, input_big, 8);
+        auto bom_big = LEXY_VERIFY_ENCODING(lexy::byte_encoding, input_big, 8);
         CHECK(bom_big == 8);
     }
 }
