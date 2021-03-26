@@ -90,7 +90,7 @@ template <typename Encoding, typename CharT>
 constexpr string_input<Encoding> zstring_input(const CharT* str) noexcept
 {
     auto end = str;
-    while (*end)
+    while (*end != CharT())
         ++end;
 
     return string_input<Encoding>(str, end);

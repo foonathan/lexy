@@ -58,7 +58,7 @@ For example, `lexy::dsl::code_point` does not work with the `lexy::default_encod
     Assumes the input is valid UTF-32. Its character type is `char32_t`, but it also accepts `wchar_t` on Linux.
 
 `lexy::raw_encoding`::
-    Does not assume the input is text. Its character type is `unsigned char`, but it also accepts `char`.
+    Does not assume the input is text. Its character type is `unsigned char`, but it also accepts `char` and `std::byte`.
     Use this encoding if you're not parsing text or if you're parsing text consisting of multiple encodings.
 
 NOTE: If you specify an encoding that does not match the inputs actual encoding, e.g. you say it is UTF-8 but in reality it is some Windows code page, the library will handle it by generating parse errors.

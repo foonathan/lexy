@@ -329,6 +329,8 @@ struct raw_encoding
 };
 template <>
 constexpr bool raw_encoding::is_secondary_char_type<char> = true;
+template <>
+constexpr bool raw_encoding::is_secondary_char_type<std::byte> = true;
 } // namespace lexy
 
 //=== deduce_encoding ===//
@@ -373,6 +375,11 @@ struct _deduce_encoding<char32_t>
 
 template <>
 struct _deduce_encoding<unsigned char>
+{
+    using type = raw_encoding;
+};
+template <>
+struct _deduce_encoding<std::byte>
 {
     using type = raw_encoding;
 };
