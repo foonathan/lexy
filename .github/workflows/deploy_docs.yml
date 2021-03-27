@@ -18,9 +18,12 @@ jobs:
         hugo-version: 'latest'
         extended: true
 
+    - name: Configure
+      working-directory: build/
+      run: cmake $GITHUB_WORKSPACE -DLEXY_BUILD_DOCS=ON -DLEXY_BUILD_EXAMPLES=OFF -DLEXY_BUILD_TESTS=OFF
     - name: Build
-      working-directory: docs/
-      run: hugo --minify
+      working-directory: build/
+      run: cmake --build . --target lexy_docs
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
