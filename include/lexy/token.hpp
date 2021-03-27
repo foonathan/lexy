@@ -10,14 +10,30 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/detect.hpp>
-#include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy
 {
-struct unknown_token_kind
-{};
+enum predefined_token_kind : std::uint_least16_t
+{
+    unknown_token_kind              = UINT_LEAST16_MAX,
+    eof_token_kind                  = UINT_LEAST16_MAX - 1,
+    _smallest_predefined_token_kind = eof_token_kind,
+};
+
+constexpr const char* _kind_name(predefined_token_kind kind) noexcept
+{
+    switch (kind)
+    {
+    case unknown_token_kind:
+        return "token";
+    case eof_token_kind:
+        return "eof";
+    }
+
+    return ""; // unreachable
+}
 } // namespace lexy
 
 namespace lexy
@@ -48,7 +64,7 @@ struct _tk_map_empty
     template <typename T>
     static LEXY_CONSTEVAL auto lookup(T)
     {
-        return unknown_token_kind{};
+        return unknown_token_kind;
     }
 
     template <auto TokenKind, typename T>
@@ -80,14 +96,16 @@ class token_kind
 public:
     //=== constructors ===//
     /// Creates an unknown token kind.
-    constexpr token_kind() noexcept : _value(UINT_LEAST16_MAX) {}
-    constexpr token_kind(lexy::unknown_token_kind) noexcept : token_kind() {}
+    constexpr token_kind() noexcept : token_kind(unknown_token_kind) {}
+
+    /// Creates a predefined token kind.
+    constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
 
     /// Creates the token kind with the specified value.
     constexpr token_kind(TokenKind value) noexcept : _value(static_cast<std::uint_least16_t>(value))
     {
         auto as_int = std::underlying_type_t<TokenKind>(value);
-        LEXY_PRECONDITION(0 <= as_int && as_int < UINT_LEAST16_MAX);
+        LEXY_PRECONDITION(0 <= as_int && as_int < _smallest_predefined_token_kind);
     }
 
     /// Creates the token kind of a token rule.
@@ -103,23 +121,25 @@ public:
         {
             // Look for an external mapping.
             auto result = token_kind_map_for<TokenKind>.lookup(TokenRule{});
-            if constexpr (!std::is_same_v<decltype(result), lexy::unknown_token_kind>)
-                // We have an external mapping.
-                *this = token_kind(result);
+            *this       = token_kind(result);
         }
     }
 
     //=== access ===//
     constexpr explicit operator bool() const noexcept
     {
-        return _value != UINT_LEAST16_MAX;
+        return _value != unknown_token_kind;
+    }
+
+    constexpr bool is_predefined() const noexcept
+    {
+        return _value >= _smallest_predefined_token_kind;
     }
 
     constexpr const char* name() const noexcept
     {
-        if (!*this)
-            // Override unknown token name.
-            return "token";
+        if (is_predefined())
+            return _kind_name(static_cast<predefined_token_kind>(_value));
         else if constexpr (lexy::_detail::is_detected<_detect_token_kind_name, TokenKind>)
             return token_kind_name(get());
         else
@@ -162,13 +182,14 @@ class token_kind<void>
 {
 public:
     /// Creates an unknown token kind.
-    constexpr token_kind() noexcept : _value(UINT_LEAST16_MAX) {}
-    constexpr token_kind(lexy::unknown_token_kind) noexcept : token_kind() {}
+    constexpr token_kind() noexcept : token_kind(unknown_token_kind) {}
+
+    constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
 
     /// Creates the token kind with the specified value.
     constexpr token_kind(int value) noexcept : _value(static_cast<std::uint_least16_t>(value))
     {
-        LEXY_PRECONDITION(0 <= value && value < UINT_LEAST16_MAX);
+        LEXY_PRECONDITION(0 <= value && value < _smallest_predefined_token_kind);
     }
 
     /// Creates the token kind of a token rule.
@@ -184,18 +205,29 @@ public:
     //=== access ===//
     constexpr explicit operator bool() const noexcept
     {
-        return _value != UINT_LEAST16_MAX;
+        return _value != unknown_token_kind;
+    }
+
+    constexpr bool is_predefined() const noexcept
+    {
+        return _value >= _smallest_predefined_token_kind;
     }
 
     constexpr const char* name() const noexcept
     {
-        // We only have a generic name.
-        return "token";
+        if (is_predefined())
+            return _kind_name(static_cast<predefined_token_kind>(_value));
+        else
+            // We only have a generic name.
+            return "token";
     }
 
     constexpr int get() const noexcept
     {
-        return *this ? _value : -1;
+        if (is_predefined())
+            return -1 - (UINT_LEAST16_MAX - _value);
+        else
+            return _value;
     }
 
     //=== comparision ===//

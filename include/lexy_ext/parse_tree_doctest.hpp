@@ -72,7 +72,12 @@ public:
     template <typename CharT>
     parse_tree_desc& token(const CharT* spelling)
     {
-        return token(lexy::unknown_token_kind{}, spelling);
+        return token(lexy::unknown_token_kind, spelling);
+    }
+
+    parse_tree_desc& eof()
+    {
+        return token(lexy::eof_token_kind, "");
     }
 
     parse_tree_desc& production(const char* name)
