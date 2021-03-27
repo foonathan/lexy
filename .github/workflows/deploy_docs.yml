@@ -12,12 +12,14 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install asciidoctor
       run: sudo gem install asciidoctor rouge
-    - name: Setup Hugo
+    - name: Install hugo
       uses: peaceiris/actions-hugo@v2
       with:
         hugo-version: 'latest'
         extended: true
 
+    - name: Create Build Environment
+      run: cmake -E make_directory build
     - name: Configure
       working-directory: build/
       run: cmake $GITHUB_WORKSPACE -DLEXY_BUILD_DOCS=ON -DLEXY_BUILD_EXAMPLES=OFF -DLEXY_BUILD_TESTS=OFF
