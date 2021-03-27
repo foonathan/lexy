@@ -29,20 +29,28 @@ int main()
 
         case lexy::traverse_event::leaf:
             std::printf("\"node-%p\" [label=\"", node.address());
-            for (auto c : node.lexeme())
+            if (node.lexeme().empty())
             {
-                if (c == '"')
-                    std::fputs(R"(\")", stdout);
-                else if (c == ' ')
-                    std::fputs("␣", stdout);
-                else if (c == '\n')
-                    std::fputs("⏎", stdout);
-                else if (std::iscntrl(c))
-                    std::printf("0x%02X", unsigned(c) & 0xFF);
-                else
-                    std::putchar(c);
+                std::printf("%s", node.kind().name());
+                std::puts("\", shape=diamond];");
             }
-            std::puts("\", shape=box];");
+            else
+            {
+                for (auto c : node.lexeme())
+                {
+                    if (c == '"')
+                        std::fputs(R"(\")", stdout);
+                    else if (c == ' ')
+                        std::fputs("␣", stdout);
+                    else if (c == '\n')
+                        std::fputs("⏎", stdout);
+                    else if (std::iscntrl(c))
+                        std::printf("0x%02X", unsigned(c) & 0xFF);
+                    else
+                        std::putchar(c);
+                }
+                std::puts("\", shape=box];");
+            }
             break;
         }
     }

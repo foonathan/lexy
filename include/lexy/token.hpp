@@ -29,7 +29,7 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     case unknown_token_kind:
         return "token";
     case eof_token_kind:
-        return "eof";
+        return "EOF";
     }
 
     return ""; // unreachable
