@@ -47,7 +47,7 @@
 {{ $style := resources.Get "css/playground.scss" | resources.ToCSS | resources.Minify }}
 <style>{{ $style.Content | safeCSS }}</style>
 
-{{ $playground := resources.Get "js/playground.js" | resources.ExecuteAsTemplate "playground.js" . }}
+{{ $playground := resources.Get "js/playground.js" | resources.ExecuteAsTemplate "playground.js" .  | resources.Minify }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
@@ -160,7 +160,7 @@ async function run()
 {
     toolbar_run.disabled = true;
 
-    const source = playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
+    const source = await playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
 
     const result = await playground.compile_and_run(source, input);
