@@ -786,7 +786,7 @@ If a non-recoverable parse error happens, the tree will be cleared, otherwise it
 It will discard any values produced by parsing the rules.
 
 The resulting parse tree will contain a parent node for each production, and leaf node for every token.
-If a token is empty, it will not be added to the parse tree.
+If a token is empty and has an unknown token kind, it will not be added to the parse tree.
 If a production inherits from `lexy::transparent_production`, no separate node will be created;
 instead all child nodes will be added to its parent.
 If a production inherits from `lexy::token_production`, tokens are merged when possible:

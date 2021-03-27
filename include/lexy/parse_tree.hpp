@@ -456,8 +456,8 @@ public:
     void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
                typename Reader::iterator end)
     {
-        if (begin == end)
-            // Don't add empty tokens to the tree.
+        if (!_kind && begin == end)
+            // Don't add empty, unknown tokens.
             return;
 
         auto kind = token_kind<TokenKind>::to_raw(_kind);

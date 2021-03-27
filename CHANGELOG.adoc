@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-03-27
+
+* Support empty token nodes in the parse tree if they don't have an unknown kind.
+
 == 2021-03-26
 
 Renamed `lexy::raw_encoding` to `lexy::byte_encoding`.
