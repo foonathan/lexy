@@ -7,6 +7,16 @@ if(NOT HUGO_BINARY)
     message(WARNING "hugo not found, won't be able to generate documentation")
 endif()
 
+set(resolver "${CMAKE_CURRENT_SOURCE_DIR}/../support/resolve-lexy-headers.py")
+add_custom_command(OUTPUT assets/cpp/playground_prefix.dev.cpp
+        COMMAND ${resolver} assets/cpp/playground_prefix.cpp assets/cpp/playground_prefix.dev.cpp
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS foonathan::lexy)
+add_custom_command(OUTPUT assets/cpp/playground_main.dev.cpp
+        COMMAND ${resolver} assets/cpp/playground_main.cpp assets/cpp/playground_main.dev.cpp
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS foonathan::lexy)
+
 add_custom_target(lexy_docs
         COMMAND ${HUGO_BINARY} --minify
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -14,5 +24,6 @@ add_custom_target(lexy_docs
 add_custom_target(lexy_docs_serve
         COMMAND ${HUGO_BINARY} serve
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        USES_TERMINAL)
+        USES_TERMINAL
+        DEPENDS assets/cpp/playground_prefix.dev.cpp assets/cpp/playground_main.dev.cpp)
 

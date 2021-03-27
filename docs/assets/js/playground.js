@@ -16,10 +16,14 @@ export function list_of_productions(source)
 
 export async function preprocess_source(target, source, production)
 {
-    {{ $playground_prefix := resources.Get "cpp/playground_prefix.cpp" }}
-    {{ $playground_main   := resources.Get "cpp/playground_main.cpp" }}
-    {{ $godbolt_prefix := resources.Get "cpp/godbolt_prefix.cpp" }}
-    {{ $godbolt_main   := resources.Get "cpp/godbolt_main.cpp" }}
+    {{ $playground_prefix := resources.Get "cpp/playground_prefix.dev.cpp" }}
+    {{ $playground_main   := resources.Get "cpp/playground_main.dev.cpp" }}
+    {{ if hugo.IsProduction }}
+        {{ $playground_prefix = resources.Get "cpp/playground_prefix.cpp" }}
+        {{ $playground_main   = resources.Get "cpp/playground_main.cpp" }}
+    {{ end }}
+    {{ $godbolt_prefix        := resources.Get "cpp/godbolt_prefix.cpp" }}
+    {{ $godbolt_main          := resources.Get "cpp/godbolt_main.cpp" }}
 
     if (target == 'playground')
     {
@@ -27,7 +31,7 @@ export async function preprocess_source(target, source, production)
         const prefix = await (await fetch('{{ $playground_prefix.Permalink }}')).text();
         const main = await (await fetch('{{ $playground_main.Permalink }}')).text();
 
-        return macros + '\n' + prefix + source + '\n' + main;
+        return macros + '\n' + prefix + '\n' + source + '\n' + main;
     }
     else
     {
@@ -35,7 +39,7 @@ export async function preprocess_source(target, source, production)
         const prefix = await (await fetch('{{ $godbolt_prefix.Permalink }}')).text();
         const main = await (await fetch('{{ $godbolt_main.Permalink }}')).text();
 
-        return macros + '\n' + prefix + source + '\n' + main;
+        return macros + '\n' + prefix + '\n' + source + '\n' + main;
     }
 }
 
