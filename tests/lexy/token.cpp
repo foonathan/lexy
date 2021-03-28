@@ -63,6 +63,13 @@ TEST_CASE("token_kind")
         CHECK(eof.name() == lexy::_detail::string_view("EOF"));
         CHECK(eof == lexy::eof_token_kind);
 
+        lexy::token_kind position(lexy::position_token_kind);
+        CHECK(position);
+        CHECK(position.is_predefined());
+        CHECK(position.get() == -3);
+        CHECK(position.name() == lexy::_detail::string_view("position"));
+        CHECK(position == lexy::position_token_kind);
+
         lexy::token_kind value(0);
         CHECK(value);
         CHECK(!value.is_predefined());
@@ -105,6 +112,12 @@ TEST_CASE("token_kind")
         CHECK(eof.is_predefined());
         CHECK(eof.name() == lexy::_detail::string_view("EOF"));
         CHECK(eof == lexy::eof_token_kind);
+
+        lexy::token_kind position(lexy::position_token_kind);
+        CHECK(position);
+        CHECK(position.is_predefined());
+        CHECK(position.name() == lexy::_detail::string_view("position"));
+        CHECK(position == lexy::position_token_kind);
 
         lexy::token_kind value(token_kind::a);
         CHECK(value);

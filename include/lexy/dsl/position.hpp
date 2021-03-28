@@ -6,6 +6,7 @@
 #define LEXY_DSL_POSITION_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/token.hpp>
 
 namespace lexyd
 {
@@ -17,7 +18,9 @@ struct _pos : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., reader.cur());
+            auto pos = reader.cur();
+            context.token(lexy::position_token_kind, pos, pos);
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., pos);
         }
     };
 };
