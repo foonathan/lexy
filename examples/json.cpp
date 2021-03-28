@@ -145,6 +145,31 @@ namespace dsl = lexy::dsl;
 
 struct json_value;
 
+// The json value null.
+struct null : lexy::token_production
+{
+    static constexpr auto rule  = LEXY_LIT("null");
+    static constexpr auto value = lexy::construct<ast::json_null>;
+};
+
+// A json value that is a boolean.
+struct boolean : lexy::token_production
+{
+    struct true_ : lexy::transparent_production
+    {
+        static constexpr auto rule  = LEXY_LIT("true");
+        static constexpr auto value = lexy::constant(true);
+    };
+    struct false_ : lexy::transparent_production
+    {
+        static constexpr auto rule  = LEXY_LIT("false");
+        static constexpr auto value = lexy::constant(false);
+    };
+
+    static constexpr auto rule  = dsl::p<true_> | dsl::p<false_>;
+    static constexpr auto value = lexy::forward<ast::json_bool>;
+};
+
 // A json value that is a number.
 struct number : lexy::token_production
 {
@@ -273,11 +298,7 @@ struct json_value : lexy::transparent_production
     };
 
     static constexpr auto rule = [] {
-        auto null   = LEXY_LIT("null") >> dsl::value_t<ast::json_null>;
-        auto true_  = LEXY_LIT("true") >> dsl::value_c<true>;
-        auto false_ = LEXY_LIT("false") >> dsl::value_c<false>;
-
-        auto primitive = null | true_ | false_ | dsl::p<number> | dsl::p<string>;
+        auto primitive = dsl::p<null> | dsl::p<boolean> | dsl::p<number> | dsl::p<string>;
         auto complex   = dsl::p<object> | dsl::p<array>;
 
         return primitive | complex | dsl::error<expected_json_value>;

@@ -309,7 +309,11 @@ TEST_CASE("roundtrip01")
 {
     auto tree = parse_tree(R"(null)");
 
-    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("null").eof();
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::null{})
+                        .token("null")
+                        .finish()
+                        .eof();
     CHECK(tree == expected);
 }
 
@@ -317,7 +321,11 @@ TEST_CASE("roundtrip02")
 {
     auto tree = parse_tree(R"(true)");
 
-    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("true").eof();
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::boolean{})
+                        .token("true")
+                        .finish()
+                        .eof();
     CHECK(tree == expected);
 }
 
@@ -325,7 +333,11 @@ TEST_CASE("roundtrip03")
 {
     auto tree = parse_tree(R"(false)");
 
-    auto expected = lexy_ext::parse_tree_desc(grammar::json{}).token("false").eof();
+    auto expected = lexy_ext::parse_tree_desc(grammar::json{})
+                        .production(grammar::boolean{})
+                        .token("false")
+                        .finish()
+                        .eof();
     CHECK(tree == expected);
 }
 
@@ -487,7 +499,9 @@ TEST_CASE("roundtrip10")
             .token("\"a\"")
             .finish()
         .token(":")
-        .token("null")
+        .production(grammar::null{})
+            .token("null")
+            .finish()
         .token(",")
         .production(grammar::string{})
             .token("\"foo\"")
