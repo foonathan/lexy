@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
 #include <lexy/input/shell.hpp>
 #include <lexy/parse.hpp>

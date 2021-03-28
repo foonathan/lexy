@@ -5,7 +5,7 @@
 #ifndef LEXY_MATCH_HPP_INCLUDED
 #define LEXY_MATCH_HPP_INCLUDED
 
-#include <lexy/callback.hpp>
+#include <lexy/callback/noop.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/production.hpp>
 

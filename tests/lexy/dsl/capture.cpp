@@ -5,7 +5,7 @@
 #include <lexy/dsl/capture.hpp>
 
 #include "verify.hpp"
-#include <lexy/callback.hpp>
+#include <lexy/callback/string.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>

@@ -10,7 +10,6 @@
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/_detail/lazy_init.hpp>
 #include <lexy/_detail/memory_resource.hpp>
-#include <lexy/callback.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/production.hpp>

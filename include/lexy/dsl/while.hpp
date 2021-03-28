@@ -6,6 +6,7 @@
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/branch.hpp>
 
 namespace lexyd
 {

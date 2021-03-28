@@ -5,6 +5,7 @@
 #include <lexy/parse.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback.hpp>
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/brackets.hpp>
 #include <lexy/dsl/capture.hpp>

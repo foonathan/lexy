@@ -8,7 +8,7 @@
 #include <lexy/production.hpp>
 
 #include <doctest/doctest.h>
-#include <lexy/callback.hpp>
+#include <lexy/callback/noop.hpp>
 #include <lexy/dsl/any.hpp>
 
 namespace

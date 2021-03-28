@@ -202,7 +202,7 @@ They can either be written manually implementing to the above concepts or compos
 
 ==== Callback adapters
 
-.`lexy/callback.hpp`
+.`lexy/callback/base.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -216,7 +216,7 @@ Creates a callback with the given `ReturnType` from multiple functions.
 When calling the resulting callback, it will use overload resolution to determine the correct function to call.
 It supports function pointers, lambdas, and member function or data pointers.
 
-.`lexy/callback.hpp`
+.`lexy/callback/base.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -250,35 +250,9 @@ assert(result == 1 + 2 + 3);
 <2> Use it.
 ====
 
-.`lexy/callback.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-template <typename Callback>
-constexpr Sink collect(Callback&& callback);
-
-template <typename Container, typename Callback>
-constexpr Sink collect(Callback&& callback);
-}
-----
-
-Turns a callback into a sink by invoking it multiple times and collecting all the results in a container.
-
-The first version requires that the callback returns `void`;
-its sink callback forwards all arguments and increases a count.
-The final count as a `std::size_t` is then returned by `finish()`.
-
-The second version requires that the callback returns non-`void`.
-Its sink callback creates a default constructed `Container`.
-It then invokes the callback multiple times and adds the result to the container using `.push_back()`.
-The final container is then returned.
-
-NOTE: `collect()` is useful for the error callback to handle multiple errors.
-
 ==== Callback composition
 
-.`lexy/callback.hpp`
+.`lexy/callback/base.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -320,7 +294,7 @@ The list will be constructed using the `sink` and then everything will be passed
 
 ==== The no-op callback
 
-.`lexy/callback.hpp`
+.`lexy/callback/noop.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -349,16 +323,25 @@ auto value = result.value(); // <3>
 <3> Do something with the parsed value.
 ====
 
+==== Forwarding result
+
+.`lexy/callback/forward.hpp`
+[source,cpp]
+----
+template <typename T>
+constexpr auto forward = /* unspecified */;
+----
+
+The callback `lexy::forward<T>` can accept either a `const T&` or a `T&&` and forwards it.
+It does not have a sink.
+
 ==== Constructing objects
 
-.`lexy/callback.hpp`
+.`lexy/callback/object.hpp`
 [source,cpp]
 ----
 namespace lexy
 {
-    template <typename T>
-    constexpr auto forward = /* unspecified */;
-
     template <typename T>
     constexpr auto construct = /* unspecified */;
 
@@ -366,10 +349,6 @@ namespace lexy
     constexpr auto new_ = /* unspecified */;
 }
 ----
-
-The callback `lexy::forward<T>` can accept either a `const T&` or a `T&&` and forwards it.
-It does not have a sink.
-
 The callback `lexy::construct<T>` constructs a `T` by forwarding all arguments to a suitable constructor.
 If the type does not have a constructor, it forwards all arguments using brace initialization.
 It does not have a sink.
@@ -393,9 +372,9 @@ constexpr auto make_unique_str2 = lexy::new_<std::string> | lexy::construct<std:
 <2> Equivalent version that uses composition and `lexy::construct` instead.
 ====
 
-==== Constructing lists
+==== Constructing containers
 
-.`lexy/callback.hpp`
+.`lexy/callback/container.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -426,9 +405,36 @@ constexpr auto as_int_set = lexy::as_collection<std::set<int>>;
 ----
 ====
 
+.`lexy/callback/container.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+template <typename Callback>
+constexpr Sink collect(Callback&& callback);
+
+template <typename Container, typename Callback>
+constexpr Sink collect(Callback&& callback);
+}
+----
+
+Turns a callback into a sink by invoking it multiple times and collecting all the results in a container.
+
+The first version requires that the callback returns `void`;
+its sink callback forwards all arguments and increases a count.
+The final count as a `std::size_t` is then returned by `finish()`.
+
+The second version requires that the callback returns non-`void`.
+Its sink callback creates a default constructed `Container`.
+It then invokes the callback multiple times and adds the result to the container using `.push_back()`.
+The final container is then returned.
+
+NOTE: `collect()` is useful for the error callback to handle multiple errors.
+
+
 ==== Constructing strings
 
-.`lexy/callback.hpp`
+.`lexy/callback/string.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -487,20 +493,27 @@ constexpr auto as_utf8_string  = lexy::as_string<std::string, lexy::utf8_encodin
 
 ==== Rule-specific callbacks
 
-.`lexy/callback.hpp`
+.`lexy/callback/aggregate.hpp`
 [source,cpp]
 ----
 namespace lexy
 {
     template <typename T>
     constexpr auto as_aggregate = /* unspecified */;
-
-    template <typename T>
-    constexpr auto as_integer = /* unspecified */;
 }
 ----
 
 The callback and sink `lexy::as_aggregate<T>` is only used together with the `lexy::dsl::member` rule and documented there.
+
+.`lexy/callback/integer.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr auto as_integer = /* unspecified */;
+}
+----
 
 The callback `lexy::as_integer<T>` constructs an integer type `T` and has two overloads:
 

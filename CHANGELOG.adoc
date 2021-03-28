@@ -12,6 +12,10 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-03-29
 
+* Restructure callback header files; an `#include <lexy/callback.hpp>` might be necessary now.
+
+== 2021-03-29
+
 * Support empty token nodes in the parse tree if they don't have an unknown kind.
   In particular, the parse tree will now contain an EOF node at the end.
 * Turn `lexy::unknown_token_kind` into a value (as opposed to the type it was before).

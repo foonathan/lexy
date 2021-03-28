@@ -6,7 +6,7 @@
 #define LEXY_PARSE_HPP_INCLUDED
 
 #include <lexy/_detail/invoke.hpp>
-#include <lexy/callback.hpp>
+#include <lexy/callback/base.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/validate.hpp>
 

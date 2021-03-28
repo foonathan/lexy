@@ -5,6 +5,7 @@
 #include <lexy/parse.hpp>
 
 #include "verify.hpp"
+#include <lexy/callback/object.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/sequence.hpp>
 

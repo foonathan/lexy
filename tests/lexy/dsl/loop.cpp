@@ -5,6 +5,7 @@
 #include <lexy/dsl/loop.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
 
 TEST_CASE("dsl::loop()")

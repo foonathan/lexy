@@ -13,6 +13,15 @@ set(tests
         detail/string_view.cpp
         detail/type_name.cpp
 
+        callback/aggregate.cpp
+        callback/base.cpp
+        callback/container.cpp
+        callback/forward.cpp
+        callback/integer.cpp
+        callback/noop.cpp
+        callback/object.cpp
+        callback/string.cpp
+
         dsl/alternative.cpp
         dsl/any.cpp
         dsl/argv_input.cpp

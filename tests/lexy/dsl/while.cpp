@@ -5,6 +5,7 @@
 #include <lexy/dsl/while.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 
 TEST_CASE("dsl::while_()")
 {

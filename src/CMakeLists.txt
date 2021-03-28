@@ -20,6 +20,15 @@ set(header_files
         ${include_dir}/_detail/string_view.hpp
         ${include_dir}/_detail/type_name.hpp
 
+        ${include_dir}/callback/aggregate.hpp
+        ${include_dir}/callback/base.hpp
+        ${include_dir}/callback/container.hpp
+        ${include_dir}/callback/forward.hpp
+        ${include_dir}/callback/integer.hpp
+        ${include_dir}/callback/noop.hpp
+        ${include_dir}/callback/object.hpp
+        ${include_dir}/callback/string.hpp
+
         ${include_dir}/dsl/alternative.hpp
         ${include_dir}/dsl/any.hpp
         ${include_dir}/dsl/ascii.hpp

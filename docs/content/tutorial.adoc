@@ -97,7 +97,8 @@ struct PackageVersion { … };
 struct PackageConfig { … };
 
 //=== grammar ===//
-#include <lexy/dsl.hpp> // lexy::dsl::*
+#include <lexy/callback.hpp> // value callbacks
+#include <lexy/dsl.hpp>      // lexy::dsl::*
 
 namespace grammar <2>
 {

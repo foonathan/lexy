@@ -11,6 +11,7 @@
 #include <variant>
 #include <vector>
 
+#include <lexy/callback.hpp>   // value callbacks
 #include <lexy/dsl.hpp>        // lexy::dsl::*
 #include <lexy/input/file.hpp> // lexy::read_file
 #include <lexy/parse.hpp>      // lexy::parse

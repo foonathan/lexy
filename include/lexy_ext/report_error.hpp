@@ -6,7 +6,7 @@
 #define LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 
 #include <cstdio>
-#include <lexy/callback.hpp>
+#include <lexy/callback/base.hpp>
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/newline.hpp>
 #include <lexy/error.hpp>
