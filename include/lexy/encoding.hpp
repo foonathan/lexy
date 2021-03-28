@@ -102,10 +102,6 @@ struct default_encoding
             return static_cast<int_type>(value);
         }
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-        = delete;
 };
 
 // An encoding where the input is assumed to be valid ASCII.
@@ -129,16 +125,6 @@ struct ascii_encoding
     {
         return int_type(c);
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_ascii());
-        LEXY_PRECONDITION(size >= 1);
-
-        *buffer = char_type(cp.value());
-        return 1;
-    }
 };
 
 /// An encoding where the input is assumed to be valid UTF-8.
@@ -159,60 +145,6 @@ struct utf8_encoding
     static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
-    }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-
-        // Taken from http://www.herongyang.com/Unicode/UTF-8-UTF-8-Encoding-Algorithm.html.
-        if (cp.is_ascii())
-        {
-            LEXY_PRECONDITION(size >= 1);
-
-            buffer[0] = char_type(cp.value());
-            return 1;
-        }
-        else if (cp.value() <= 0x07'FF)
-        {
-            LEXY_PRECONDITION(size >= 2);
-
-            auto first  = (cp.value() >> 6) & 0x1F;
-            auto second = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xC0 | first);
-            buffer[1] = char_type(0x80 | second);
-            return 2;
-        }
-        else if (cp.value() <= 0xFF'FF)
-        {
-            LEXY_PRECONDITION(size >= 3);
-
-            auto first  = (cp.value() >> 12) & 0x0F;
-            auto second = (cp.value() >> 6) & 0x3F;
-            auto third  = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xE0 | first);
-            buffer[1] = char_type(0x80 | second);
-            buffer[2] = char_type(0x80 | third);
-            return 3;
-        }
-        else
-        {
-            LEXY_PRECONDITION(size >= 4);
-
-            auto first  = (cp.value() >> 18) & 0x07;
-            auto second = (cp.value() >> 12) & 0x3F;
-            auto third  = (cp.value() >> 6) & 0x3F;
-            auto fourth = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xF0 | first);
-            buffer[1] = char_type(0x80 | second);
-            buffer[2] = char_type(0x80 | third);
-            buffer[3] = char_type(0x80 | fourth);
-            return 4;
-        }
     }
 };
 template <>
@@ -236,34 +168,6 @@ struct utf16_encoding
     static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
-    }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-
-        if (cp.is_bmp())
-        {
-            LEXY_PRECONDITION(size >= 1);
-
-            buffer[0] = char_type(cp.value());
-            return 1;
-        }
-        else
-        {
-            // Algorithm implemented from
-            // https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF.
-            LEXY_PRECONDITION(size >= 2);
-
-            auto u_prime       = cp.value() - 0x1'0000;
-            auto high_ten_bits = u_prime >> 10;
-            auto low_ten_bits  = u_prime & 0b0000'0011'1111'1111;
-
-            buffer[0] = char_type(0xD800 + high_ten_bits);
-            buffer[1] = char_type(0xDC00 + low_ten_bits);
-            return 2;
-        }
     }
 };
 template <>
@@ -289,16 +193,6 @@ struct utf32_encoding
     {
         return c;
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-        LEXY_PRECONDITION(size >= 1);
-
-        *buffer = char_type(cp.value());
-        return 1;
-    }
 };
 template <>
 constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
@@ -322,10 +216,6 @@ struct byte_encoding
     {
         return int_type(c);
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-        = delete;
 };
 template <>
 constexpr bool byte_encoding::is_secondary_char_type<char> = true;
