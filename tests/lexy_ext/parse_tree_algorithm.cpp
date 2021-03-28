@@ -94,63 +94,6 @@ TEST_CASE("tokens()")
     }
 }
 
-TEST_CASE("node_position()")
-{
-    using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
-    auto input       = lexy::zstring_input("123(abc)321");
-
-    auto tree = [&] {
-        parse_tree::builder builder(root_p{});
-        builder.token(token_kind::a, input.begin(), input.begin() + 3);
-
-        auto child = builder.start_production(child_p{});
-
-        auto child2 = builder.start_production(child_p{});
-        builder.finish_production(LEXY_MOV(child2));
-
-        child2 = builder.start_production(child_p{});
-        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-        builder.token(token_kind::c, input.begin() + 4, input.begin() + 7);
-        builder.token(token_kind::b, input.begin() + 7, input.begin() + 8);
-        builder.finish_production(LEXY_MOV(child2));
-
-        builder.finish_production(LEXY_MOV(child));
-
-        builder.token(token_kind::a, input.begin() + 8, input.end());
-
-        child  = builder.start_production(child_p{});
-        child2 = builder.start_production(child_p{});
-        builder.finish_production(LEXY_MOV(child2));
-        builder.finish_production(LEXY_MOV(child));
-
-        return LEXY_MOV(builder).finish();
-    }();
-    CHECK(!tree.empty());
-
-    auto prod_count = 0;
-    for (auto [event, node] : tree.traverse())
-        if (event == lexy::traverse_event::enter)
-        {
-            if (prod_count == 0)
-                CHECK(lexy_ext::node_position(tree, node) == input.begin());
-            else if (prod_count == 1)
-                CHECK(lexy_ext::node_position(tree, node) == input.begin() + 3);
-            else if (prod_count == 2)
-                CHECK(lexy_ext::node_position(tree, node)
-                      == lexy::input_reader<lexy::string_input<>>::iterator());
-            else if (prod_count == 3)
-                CHECK(lexy_ext::node_position(tree, node) == input.begin() + 3);
-            else if (prod_count <= 5)
-                CHECK(lexy_ext::node_position(tree, node)
-                      == lexy::input_reader<lexy::string_input<>>::iterator());
-
-            ++prod_count;
-        }
-        else if (event == lexy::traverse_event::leaf)
-            CHECK(lexy_ext::node_position(tree, node) == node.lexeme().begin());
-    REQUIRE(prod_count == 6);
-}
-
 TEST_CASE("find_covering_node()")
 {
     using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
@@ -295,5 +238,62 @@ TEST_CASE("child()")
 
     auto empty = lexy_ext::child(tree, *child_p, token_kind::a);
     CHECK(!empty);
+}
+
+TEST_CASE("node_position()")
+{
+    using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
+    auto input       = lexy::zstring_input("123(abc)321");
+
+    auto tree = [&] {
+        parse_tree::builder builder(root_p{});
+        builder.token(token_kind::a, input.begin(), input.begin() + 3);
+
+        auto child = builder.start_production(child_p{});
+
+        auto child2 = builder.start_production(child_p{});
+        builder.token(lexy::position_token_kind, input.begin() + 2, input.begin() + 2);
+        builder.finish_production(LEXY_MOV(child2));
+
+        child2 = builder.start_production(child_p{});
+        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
+        builder.token(token_kind::c, input.begin() + 4, input.begin() + 7);
+        builder.token(token_kind::b, input.begin() + 7, input.begin() + 8);
+        builder.finish_production(LEXY_MOV(child2));
+
+        builder.finish_production(LEXY_MOV(child));
+
+        builder.token(token_kind::a, input.begin() + 8, input.end());
+
+        child  = builder.start_production(child_p{});
+        child2 = builder.start_production(child_p{});
+        builder.finish_production(LEXY_MOV(child2));
+        builder.finish_production(LEXY_MOV(child));
+
+        return LEXY_MOV(builder).finish();
+    }();
+    CHECK(!tree.empty());
+
+    auto prod_count = 0;
+    for (auto [event, node] : tree.traverse())
+        if (event == lexy::traverse_event::enter)
+        {
+            if (prod_count == 0)
+                CHECK(lexy_ext::node_position(tree, node) == input.begin());
+            else if (prod_count == 1)
+                CHECK(lexy_ext::node_position(tree, node) == input.begin() + 2);
+            else if (prod_count == 2)
+                CHECK(lexy_ext::node_position(tree, node) == input.begin() + 2);
+            else if (prod_count == 3)
+                CHECK(lexy_ext::node_position(tree, node) == input.begin() + 3);
+            else if (prod_count <= 5)
+                CHECK(lexy_ext::node_position(tree, node)
+                      == lexy::input_reader<lexy::string_input<>>::iterator());
+
+            ++prod_count;
+        }
+        else if (event == lexy::traverse_event::leaf)
+            CHECK(lexy_ext::node_position(tree, node) == node.lexeme().begin());
+    REQUIRE(prod_count == 6);
 }
 

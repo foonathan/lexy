@@ -122,27 +122,6 @@ auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>& tree)
 
 namespace lexy_ext
 {
-/// Returns the position of a node.
-///
-/// For a token node, this is the beginning of its lexeme.
-/// For a production node, this is the position of its first non-empty child.
-/// If a production node is empty, it returns a default constructed iterator.
-template <typename Reader, typename TokenKind, typename MemoryResource>
-auto node_position(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&         tree,
-                   typename lexy::parse_tree<Reader, TokenKind, MemoryResource>::node node) ->
-    typename Reader::iterator
-{
-    auto tokens = lexy_ext::tokens(tree, node);
-    if (tokens.empty())
-        // The nodes does not have a tokens as descendant.
-        return {};
-    else
-        return tokens.begin()->lexeme().begin();
-}
-} // namespace lexy_ext
-
-namespace lexy_ext
-{
 /// Returns the node of the tree that covers the position.
 /// It is always a token.
 template <typename Reader, typename TokenKind, typename MemoryResource>
@@ -286,6 +265,29 @@ auto child(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&         tr
         return std::nullopt;
     else
         return *range.begin();
+}
+} // namespace lexy_ext
+
+namespace lexy_ext
+{
+/// Returns the position of a node.
+///
+/// For a token node, this is the beginning of its lexeme.
+/// For a production node, this is the position designated by a `dsl::position` rule, or otherwise
+/// the position of its first non-empty child. If a production node is empty, it returns a default
+/// constructed iterator.
+template <typename Reader, typename TokenKind, typename MemoryResource>
+auto node_position(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&         tree,
+                   typename lexy::parse_tree<Reader, TokenKind, MemoryResource>::node node) ->
+    typename Reader::iterator
+{
+    if (auto pos_node = child(tree, node, lexy::position_token_kind))
+        return pos_node->lexeme().begin();
+    else if (auto tokens = lexy_ext::tokens(tree, node); tokens.empty())
+        // The node does not have a token as descendant.
+        return {};
+    else
+        return tokens.begin()->lexeme().begin();
 }
 } // namespace lexy_ext
 
