@@ -18,7 +18,8 @@ int main()
         switch (event)
         {
         case lexy::traverse_event::enter:
-            std::printf("\"node-%p\" [label=\"%s\"];\n", node.address(), node.kind().name());
+            std::printf("\"node-%p\" [label=\"%s\", shape=ellipse, style=bold];\n", node.address(),
+                        node.kind().name());
             break;
 
         case lexy::traverse_event::exit:
@@ -32,7 +33,7 @@ int main()
             if (node.lexeme().empty())
             {
                 std::printf("%s", node.kind().name());
-                std::puts("\", shape=diamond];");
+                std::puts("\", shape=box];");
             }
             else
             {
@@ -49,7 +50,7 @@ int main()
                     else
                         std::putchar(c);
                 }
-                std::puts("\", shape=box];");
+                std::puts("\", shape=box, style=filled];");
             }
             break;
         }
