@@ -69,21 +69,26 @@ void dump_parse_tree(std::FILE*                                                 
         case lexy::traverse_event::leaf:
             print_prefix(last_child);
 
-            std::fprintf(out, "%s: \"", node.kind().name());
-            for (auto c : node.lexeme())
+            std::fprintf(out, "%s", node.kind().name());
+            if (!node.lexeme().empty())
             {
-                if (c == '"')
-                    std::fputs(R"(\")", out);
-                else if (c == '\n')
-                    std::fputs("\\n", out);
-                else if (c == '\r')
-                    std::fputs("\\r", out);
-                else if (std::isprint(c))
-                    std::fputc(c, out);
-                else
-                    std::fprintf(out, "\\x%02X", unsigned(c) & 0xFF);
+                std::fputs(": \"", out);
+                for (auto c : node.lexeme())
+                {
+                    if (c == '"')
+                        std::fputs(R"(\")", out);
+                    else if (c == '\n')
+                        std::fputs("\\n", out);
+                    else if (c == '\r')
+                        std::fputs("\\r", out);
+                    else if (std::isprint(c))
+                        std::fputc(c, out);
+                    else
+                        std::fprintf(out, "\\x%02X", unsigned(c) & 0xFF);
+                }
+                std::fputs("\"", out);
             }
-            std::fputs("\"\n", out);
+            std::fputs("\n", out);
             break;
         }
     }

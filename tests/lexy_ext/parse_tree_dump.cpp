@@ -63,6 +63,7 @@ TEST_CASE("dump_parse_tree()")
         builder.finish_production(LEXY_MOV(child));
 
         builder.token(token_kind::a, input.begin() + 11, input.end());
+        builder.token(lexy::eof_token_kind, input.end(), input.end());
 
         return LEXY_MOV(builder).finish();
     }();
@@ -84,7 +85,8 @@ TEST_CASE("dump_parse_tree()")
 │     ├──b: "("
 │     ├──c: "abc\"\n\x84"
 │     └──b: ")"
-└──a: "321"
+├──a: "321"
+└──EOF
 )*");
     }
     SUBCASE("simple")
@@ -101,6 +103,7 @@ TEST_CASE("dump_parse_tree()")
     - c: "abc\"\n\x84"
     - b: ")"
 - a: "321"
+- EOF
 )*");
     }
 
