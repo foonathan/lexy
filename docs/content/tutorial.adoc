@@ -672,14 +672,13 @@ Let's consider the values produced by the choice rule.
 If our input is a version number like `1.2.3`, we're producing three ints, just as before.
 But if our input is `unreleased` we're not producing any values.
 
-There are three things we can do.
+This is fine, however:
+as the `PackageVersion` is an aggregate, we can construct it without any values.
+`lexy::construct<PackageVersion>` just does `PackageVersion{args...}` which works for zero values as well creating a `PackageVersion` corresponding to `0.0.0`.
 
-The first solution is two simply add a default constructor to `PackageVersion`.
-If we parse `unreleased`, the `lexy::construct<PackageVersion>` callback will be invoked with zero arguments which will itself invoke the default constructor of `PackageVersion`.
-
-The second solution is to write a callback that has two overloads.
-The first one takes three ints and forwards them to the `PackageVersion`.
-The second one takes no arguments and creates a `0.0.0` `PackageVersion` manually.
+We can, of course, also explicitly write an overloaded callback that handles both versions.
+The first overload takes three ints and forwards them to the `PackageVersion`.
+The second overload takes no arguments and creates a `0.0.0` `PackageVersion` manually.
 
 .Overloaded callback for the `version` production (https://godbolt.org/z/TzxT7d[godbolt])
 [source,cpp]
@@ -712,35 +711,7 @@ struct version
 <1> This callback will be invoked when we parse `dot_version`.
 <2> This callback will be invoked when we parse `unreleased`.
 
-The third solution is to produce three ints even if we take the `unreleased` branch.
-This can be done with the `dsl::value_c<Constant>` production.
-It will accept any input without consuming anything, but it will always produce a value -- the specified `Constant`.
-So we extend the `unreleased` branch to produce three zeroes once we take the branch:
-
-.Using `dsl::value_c` for the version production (https://godbolt.org/z/1nWvEn[godbolt])
-[source,cpp]
-----
-struct version
-{
-    static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
-        auto dot    = dsl::lit_c<'.'>;
-        auto dot_version = number + dot + number + dot + number;
-
-        auto unreleased
-          = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>; <1>
-
-        return unreleased | dsl::else_ >> dot_version;
-    }();
-
-    static constexpr auto value = lexy::construct<PackageVersion>; <2>
-};
-----
-<1> Produce the three zeroes.
-<2> This callback will always be invoked with three integers.
-
-To illustrate the most rules, I've decided to just stick with this solution.
-Your preference may vary, of course.
+But as `lexy::construct<PackageVersion>` just works correctly, I'll be sticking with that.
 
 == Parsing one package author
 
@@ -1523,13 +1494,33 @@ Simply make every dot and number "optional" as shown here:
 
 [source,cpp]
 ----
-auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::value_c<0>); <1>
-auto dot         = dsl::try_(dsl::period); <2>
+auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt); <1>
+auto dot         = dsl::try_(dsl::period);                                    <2>
 auto dot_version = number + dot + number + dot + number
                    + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 ----
-<1> If we didn't have an integer, produce a 0.
-<2> If we didn't have a dot, just ignore it.
+<1> If we don't have an integer, produce `lexy::nullopt` instead.
+<2> If we don't have a dot, just continue without doing anything else.
+
+Now if we try to parse something like `1..`, we will create two errors for the missing minor and patch version, but parsing recovers.
+The rule will then produce three values: the major version `1` and two `lexy::nullopt` objects for minor and patch version.
+If our `PackageVersion` consisted of `std::optional<int>` instead of `int`, this would be fine.
+
+But as we require three ints, this will not work.
+We need to change the callback to produce fallback values if the integers are missing (i.e. `lexy::nullopt` instead).
+This can be done with `lexy::bind`:
+
+[source,cpp]
+----
+static constexpr auto value
+    = lexy::bind(lexy::construct<PackageVersion>, lexy::_1 or 0, lexy::_2 or 0, lexy::_3 or 0);
+----
+
+`lexy::bind()` is similar to `std::bind()`, just with callbacks: it allows partial application of function calls.
+The placeholders `lexy::_N` stand for the `N`th value produced by the rule, we want to forward it to `lexy::construct`,
+unless it is `lexy::nullopt`, then we want `0` instead.
+This can be done with the `or 0` (which invokes an overloaded `operator||`).
+That way, any `lexy::nullopt` objects produced by `dsl::try_()` will be turned into zeroes.
 
 Many more things can be done, once common errors are known, but this is enough for the tutorial.
 

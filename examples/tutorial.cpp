@@ -62,19 +62,19 @@ struct version : lexy::token_production
 
     // Match three integers separated by dots, or the special tag "unreleased".
     static constexpr auto rule = [] {
-        auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::value_c<0>);
+        auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt);
         auto dot         = dsl::try_(dsl::period);
         auto dot_version = number + dot + number + dot + number
                            + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 
-        auto unreleased
-            = LEXY_LIT("unreleased") >> dsl::value_c<0> + dsl::value_c<0> + dsl::value_c<0>;
+        auto unreleased = LEXY_LIT("unreleased");
 
         return unreleased | dsl::else_ >> dot_version;
     }();
 
     // Construct a PackageVersion as the result of the production.
-    static constexpr auto value = lexy::construct<PackageVersion>;
+    static constexpr auto value
+        = lexy::bind(lexy::construct<PackageVersion>, lexy::_1 or 0, lexy::_2 or 0, lexy::_3 or 0);
 };
 
 struct author
