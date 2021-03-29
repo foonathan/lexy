@@ -45,6 +45,8 @@ int main()
                         std::fputs("␣", stdout);
                     else if (c == '\n')
                         std::fputs("⏎", stdout);
+                    else if (c == '\\')
+                        std::fputs("\\\\", stdout);
                     else if (std::iscntrl(c))
                         std::printf("0x%02X", unsigned(c) & 0xFF);
                     else
