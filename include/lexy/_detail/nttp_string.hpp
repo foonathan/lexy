@@ -42,7 +42,8 @@ string_literal(CharT) -> string_literal<1, CharT>;
 template <auto Str>
 struct type_string
 {
-    using char_type = typename decltype(Str)::char_type;
+    using char_type            = typename decltype(Str)::char_type;
+    static constexpr auto size = Str.size();
 
     template <typename CharT, typename Seq>
     struct _lazy;
@@ -73,7 +74,8 @@ namespace lexy::_detail
 template <typename CharT, CharT... Cs>
 struct type_string
 {
-    using char_type = CharT;
+    using char_type            = CharT;
+    static constexpr auto size = sizeof...(Cs);
 
     template <typename OtherCharT>
     struct _lazy

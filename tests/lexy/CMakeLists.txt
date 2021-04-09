@@ -34,6 +34,7 @@ set(tests
         dsl/encode.cpp
         dsl/eof.cpp
         dsl/error.cpp
+        dsl/identifier.cpp
         dsl/if.cpp
         dsl/integer.cpp
         dsl/label.cpp

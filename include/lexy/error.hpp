@@ -88,6 +88,46 @@ private:
     std::size_t                       _idx;
 };
 
+/// Expected the given keyword.
+/// Unlike expected_literal, this one looks at the following characters as well.
+struct expected_keyword
+{};
+template <typename Reader>
+class error<Reader, expected_keyword>
+{
+    static_assert(is_canonical_reader<Reader>);
+
+public:
+    constexpr explicit error(typename Reader::iterator begin, typename Reader::iterator end,
+                             const typename Reader::char_type* str)
+    : _begin(begin), _end(end), _str(str)
+    {}
+
+    constexpr auto position() const noexcept
+    {
+        return _begin;
+    }
+
+    constexpr auto begin() const noexcept
+    {
+        return _begin;
+    }
+    constexpr auto end() const noexcept
+    {
+        return _end;
+    }
+
+    constexpr auto string() const noexcept -> const typename Reader::char_type*
+    {
+        return _str;
+    }
+
+private:
+    typename Reader::iterator         _begin;
+    typename Reader::iterator         _end;
+    const typename Reader::char_type* _str;
+};
+
 /// Expected a character of the specified character class.
 struct expected_char_class
 {};

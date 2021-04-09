@@ -20,7 +20,8 @@ enum predefined_token_kind : std::uint_least16_t
     unknown_token_kind              = UINT_LEAST16_MAX,
     eof_token_kind                  = UINT_LEAST16_MAX - 1,
     position_token_kind             = UINT_LEAST16_MAX - 2,
-    _smallest_predefined_token_kind = position_token_kind,
+    identifier_token_kind           = UINT_LEAST16_MAX - 3,
+    _smallest_predefined_token_kind = identifier_token_kind,
 };
 
 constexpr const char* _kind_name(predefined_token_kind kind) noexcept
@@ -33,6 +34,8 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
         return "EOF";
     case position_token_kind:
         return "position";
+    case identifier_token_kind:
+        return "identifier";
     }
 
     return ""; // unreachable

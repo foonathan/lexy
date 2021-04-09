@@ -40,6 +40,7 @@ set(header_files
         ${include_dir}/dsl/eof.hpp
         ${include_dir}/dsl/encode.hpp
         ${include_dir}/dsl/error.hpp
+        ${include_dir}/dsl/identifier.hpp
         ${include_dir}/dsl/if.hpp
         ${include_dir}/dsl/integer.hpp
         ${include_dir}/dsl/label.hpp

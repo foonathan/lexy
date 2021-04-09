@@ -813,6 +813,9 @@ namespace lexy
     enum predefined_token_kind
     {
         unknown_token_kind,
+        eof_token_kind,
+        position_token_kind,
+        identifier_token_kind,
     };
 
     template <typename TokenKind = void>

@@ -63,6 +63,21 @@ void _print_message(Location, const lexy::error<Reader, lexy::expected_literal>&
     std::fprintf(stderr, "^ expected '%s'", reinterpret_cast<const char*>(e.string()));
 }
 
+// Print an expected_keyword error.
+template <typename Location, typename Reader>
+void _print_message(Location, const lexy::error<Reader, lexy::expected_keyword>& e)
+{
+    if (e.begin() == e.end())
+        std::fputc('^', stderr);
+    else
+    {
+        for (auto cur = e.begin(); cur != e.end(); ++cur)
+            std::fputc('^', stderr);
+    }
+
+    std::fprintf(stderr, " expected keyword '%s'", reinterpret_cast<const char*>(e.string()));
+}
+
 // Print an expected_char_class error.
 template <typename Location, typename Reader>
 void _print_message(Location, const lexy::error<Reader, lexy::expected_char_class>& e)

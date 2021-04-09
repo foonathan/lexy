@@ -221,6 +221,9 @@ Matches::
 Error::
   `lexy::expected_literal` giving it the string and the index where the match failure occurred.
 
+WARNING: Don't use a literal token to parse a keyword; use `dsl::keyword()` instead.
+Something like `LEXY_LIT("int")` would consume the prefix of `integer`, whereas `dsl::keyword()` does not.
+
 NOTE: `lit<Str>` requires C++20 support for extended NTTPs.
 Use the `LEXY_LIT(Str)` macro if your compiler does not support them.
 
@@ -1882,6 +1885,82 @@ dsl::minus_sign + dsl::integer<int>(dsl::digits<>)
 ====
 
 TIP: The callback `lexy::as_integer` takes the value produced by the sign rules together with an integer produced by the `integer` rule and negates it if necessary.
+
+=== Keywords and Identifiers
+
+[discrete]
+===== `lexy::dsl::identifier()`
+
+.`lexy/dsl/identifier.hpp`
+----
+identifier(token) : Rule = identifier(token, token)
+identifier(leading_token, trailing_token) : Rule
+----
+
+The `dsl::identifier()` rule matches an identifier, which is the leading token followed by zero or more occurrences of the trailing token.
+If the identifier is reserved (see below), an error is raised.
+
+Requires::
+  `leading_token` and `trailing_token` are tokens.
+Matches::
+  Matches and consumes the same as `dsl::token(leading_token + dsl::while_(trailing_token))`.
+Errors::
+  All errors raised by matching the `leading_token`.
+  If the resulting identifier is reserved (see below), raises a generic error with tag `lexy::reserved_identifier`.
+Values::
+  Captures everything it consumes to produce a `lexy::lexeme`, as-if done by `dsl::capture()`.
+
+.`lexy/dsl/identifier.hpp`
+----
+id.reserve(rule)             : Rule <1>
+id.reserve_prefix(rule)      : Rule <2>
+id.reserve_containing(rule)  : Rule <3>
+----
+<1> Reserves an identifier if it matches `rule` exactly.
+<2> Reserves an identifier if it starts with `rule`.
+<3> Reserves an identifier if a substring matches `rule`.
+
+The reserved identifiers (e.g. keywords) can be specified using these function overloads.
+After matching an identifier, the lexeme is checked against the rules specified here.
+All variants are variadic to specify multiple rules at once, and they can be chained where `id.reserve(a).reserve(b).reserve(c)` is equivalent to `id.reserve(a, b, c)`.
+
+NOTE: This design allows to use a different set of reserved identifiers in different places in the grammar to handle contextual keywords.
+
+.`lexy/dsl/identifier.hpp`
+----
+id.leading()  : Token <1>
+id.trailing() : Token <2>
+id.pattern()  : Token <3>
+----
+<1> Returns the leading token of the identifier.
+<2> Returns the trailing token of the identifier.
+<3> Returns a token that matches and consumes `dsl::token(id.leading() + dsl::while_(id.trailing()))`.
+    It ignores all rules for reserved identifiers and does not produce a value.
+
+[discrete]
+==== `lexy::dsl::keyword()`
+
+.`lexy/dsl/identifier.hpp`
+----
+keyword<Str>(id) : Token
+
+LEXY_KEYWORD(Str, id) : Token
+----
+
+The `dsl::keyword()` token matches a keyword, i.e. a specific identifier.
+
+Requires::
+  `Str` is a string and `id` is an identifier rule.
+Matches::
+  Matches and consumes `id.pattern()` (i.e. the identifier but without handling reserved identifiers or producing a value).
+  If it consumed the specified string exactly, parsing succeeds; otherwise, it fails.
+Error::
+  A `lexy::expected_keyword` error if it could not match the keyword.
+
+CAUTION: Just because a `dsl::keyword()` rule was used somewhere, doesn't mean that the keyword is reserved.
+For that, it has to be passed to `.reserve()`; it doesn't matter if it is given a keyword or a plain literal rule in that context.
+
+NOTE: `keyword<Str>(id)` requires C++20 support for extended NTTPs. Use the `LEXY_KEYWORD(Str, id)` macro if your compiler does not support them.
 
 === Delimited and quoted
 
