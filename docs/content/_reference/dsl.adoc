@@ -306,16 +306,19 @@ namespace ascii
     other_space : Token // '\f' or '\v'
     space       : Token // `blank` or `newline` or `other_space`
 
-    lower : Token // a-z
-    upper : Token // A-Z
-    alpha : Token // `lower` or `upper`
-
     digit : Token // 0-9
-    alnum : Token // `digit` or `alpha`
+
+    lower                  : Token // a-z
+    upper                  : Token // A-Z
+    alpha                  : Token // `lower` or `upper`
+    alpha_underscore       : Token // `lower` or `upper` or '_'
+    alnum                  : Token // `alpha` or `digit`
+    alpha_digit            : Token // `alpha` or `digit` (same as above)
+    alpha_digit_underscore : Token // `alpha` or `digit` or '_'
 
     punct : Token // One of: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
 
-    graph : Token // `alnum` or `punct`
+    graph : Token // `alpha_digit` or `punct`
     print : Token // `graph` or ' ' (space characters)
 
     character : Token // 0x00-0x7F

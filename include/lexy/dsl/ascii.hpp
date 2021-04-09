@@ -122,6 +122,18 @@ struct _alpha : _ascii<_alpha>
 };
 inline constexpr auto alpha = _alpha{};
 
+struct _alphau : _ascii<_alphau>
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "ASCII.alpha-underscore";
+    }
+
+    using token_engine = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                                  lexy::_detail::ascii_table_alpha_underscore>;
+};
+inline constexpr auto alpha_underscore = _alphau{};
+
 //=== digit ===//
 struct _digit : _ascii<_digit>
 {
@@ -139,14 +151,28 @@ struct _alnum : _ascii<_alnum>
 {
     static LEXY_CONSTEVAL auto name()
     {
-        return "ASCII.alnum";
+        return "ASCII.alpha-digit";
     }
 
     using token_engine
         = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table, lexy::_detail::ascii_table_alpha,
                                    lexy::_detail::ascii_table_digit>;
 };
-inline constexpr auto alnum = _alnum{};
+inline constexpr auto alnum       = _alnum{};
+inline constexpr auto alpha_digit = _alnum{};
+
+struct _alnumu : _ascii<_alnumu>
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "ASCII.alpha-digit-underscore";
+    }
+
+    using token_engine = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
+                                                  lexy::_detail::ascii_table_alpha_underscore,
+                                                  lexy::_detail::ascii_table_digit>;
+};
+inline constexpr auto alpha_digit_underscore = _alnumu{};
 
 //=== punct ===//
 struct _punct : _ascii<_punct>

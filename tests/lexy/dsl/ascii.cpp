@@ -284,6 +284,41 @@ TEST_CASE("dsl::ascii::*")
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
+    SUBCASE("alpha_underscore")
+    {
+        static constexpr auto rule = lexy::dsl::ascii::alpha_underscore;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                LEXY_VERIFY_CHECK(cur == str + 1);
+                return 0;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.alpha-underscore"));
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        for (auto c = 0; c <= 127; ++c)
+        {
+            const char str[]  = {char(c), char(c)};
+            auto       result = std::isalpha(c) || c == '_' ? 0 : -1;
+            CHECK(verify<callback>(rule, str, 2) == result);
+        }
+    }
     SUBCASE("digit")
     {
         static constexpr auto rule = lexy::dsl::ascii::digit;
@@ -318,9 +353,10 @@ TEST_CASE("dsl::ascii::*")
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
-    SUBCASE("alnum")
+    SUBCASE("alpha_digit")
     {
-        static constexpr auto rule = lexy::dsl::ascii::alnum;
+        static constexpr auto rule = lexy::dsl::ascii::alpha_digit;
+        CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::ascii::alnum)>);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_token<decltype(rule)>);
 
@@ -337,7 +373,8 @@ TEST_CASE("dsl::ascii::*")
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
                 LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alnum"));
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.alpha-digit"));
                 return -1;
             }
         };
@@ -349,6 +386,41 @@ TEST_CASE("dsl::ascii::*")
         {
             const char str[]  = {char(c), char(c)};
             auto       result = std::isalnum(c) ? 0 : -1;
+            CHECK(verify<callback>(rule, str, 2) == result);
+        }
+    }
+    SUBCASE("alpha_digit_underscore")
+    {
+        static constexpr auto rule = lexy::dsl::ascii::alpha_digit_underscore;
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                LEXY_VERIFY_CHECK(cur == str + 1);
+                return 0;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class()
+                                  == lexy::_detail::string_view("ASCII.alpha-digit-underscore"));
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        for (auto c = 0; c <= 127; ++c)
+        {
+            const char str[]  = {char(c), char(c)};
+            auto       result = std::isalnum(c) || c == '_' ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }

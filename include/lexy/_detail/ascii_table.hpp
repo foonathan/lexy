@@ -15,6 +15,7 @@ enum ascii_table_categories
     ascii_table_control,
     ascii_table_space,
     ascii_table_alpha,
+    ascii_table_alpha_underscore,
     ascii_table_digit, // 0-9 only
     ascii_table_hex_lower,
     ascii_table_hex_upper,
@@ -40,9 +41,16 @@ constexpr auto dsl_ascii_table = [] {
     result.insert('\v', ascii_table_space);
 
     for (auto c = 'A'; c <= 'Z'; ++c)
+    {
         result.insert(c, ascii_table_alpha);
+        result.insert(c, ascii_table_alpha_underscore);
+    }
     for (auto c = 'a'; c <= 'z'; ++c)
+    {
         result.insert(c, ascii_table_alpha);
+        result.insert(c, ascii_table_alpha_underscore);
+    }
+    result.insert('_', ascii_table_alpha_underscore);
 
     for (auto c = '0'; c <= '9'; ++c)
     {
