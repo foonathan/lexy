@@ -54,7 +54,7 @@ namespace lexy
 struct engine_matcher_base
 {
     template <typename Reader, typename EC>
-    static bool recover(Reader&, EC)
+    static constexpr bool recover(Reader&, EC)
     {
         return false;
     }
@@ -62,7 +62,7 @@ struct engine_matcher_base
 struct engine_parser_base
 {
     template <typename Reader, typename EC>
-    static bool recover(Reader&, EC)
+    static constexpr bool recover(Reader&, EC)
     {
         return false;
     }

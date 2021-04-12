@@ -13,9 +13,11 @@ namespace lexy
 template <typename CharT, std::size_t NodeCount, std::size_t TransitionCount>
 struct _trie
 {
-    LEXY_CONSTEVAL bool node_accept(std::size_t node) const
+    static constexpr auto invalid_value = std::size_t(-1);
+
+    LEXY_CONSTEVAL std::size_t node_value(std::size_t node) const
     {
-        return _node_accept[node];
+        return _node_value[node];
     }
 
     LEXY_CONSTEVAL auto transition_count(std::size_t node) const
@@ -39,7 +41,7 @@ struct _trie
     // Arrays indexed by nodes.
     // The node has the transitions in the range [_node_transition_idx[node] - 1,
     // _node_transition_idx[node]].
-    bool        _node_accept[NodeCount];
+    std::size_t _node_value[NodeCount];
     std::size_t _node_transition_idx[NodeCount];
 
     // Shared array for all transitions.
@@ -47,8 +49,8 @@ struct _trie
     std::size_t _transition_node[TransitionCount == 0 ? 1 : TransitionCount];
 };
 
-template <typename CharT, typename... Strings>
-LEXY_CONSTEVAL auto _make_trie()
+template <typename CharT, typename... Strings, std::size_t... Idxs>
+LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 {
     // We can estimate the number of nodes in the trie by adding all strings together.
     // This is the worst case where the strings don't share any nodes.
@@ -62,10 +64,10 @@ LEXY_CONSTEVAL auto _make_trie()
         std::size_t node_count       = 1;
         std::size_t transition_count = 0;
 
-        bool  node_accept[node_count_upper_bound]                             = {};
-        CharT node_transition[node_count_upper_bound][node_count_upper_bound] = {};
+        std::size_t node_value[node_count_upper_bound] = {std::size_t(-1)};
+        CharT       node_transition[node_count_upper_bound][node_count_upper_bound] = {};
 
-        constexpr void insert(const CharT* str, std::size_t size)
+        constexpr void insert(std::size_t value, const CharT* str, std::size_t size)
         {
             auto cur_node = std::size_t(0);
             for (auto ptr = str; ptr != str + size; ++ptr)
@@ -90,19 +92,23 @@ LEXY_CONSTEVAL auto _make_trie()
                 {
                     // We haven't found the transition, need to create a new node.
                     auto next_node                       = node_count++;
+                    node_value[next_node]                = std::size_t(-1);
                     node_transition[cur_node][next_node] = c;
                     transition_count++;
 
                     cur_node = next_node;
                 }
             }
-            node_accept[cur_node] = true;
+
+            LEXY_PRECONDITION(node_value[cur_node]
+                              == std::size_t(-1)); // duplicate string in alternative
+            node_value[cur_node] = value;
         }
     };
     // We build the trie by inserting all strings.
     constexpr auto builder = [] {
         builder_t builder;
-        (builder.insert(Strings::get().data(), Strings::get().size()), ...);
+        (builder.insert(Idxs, Strings::get().data(), Strings::get().size()), ...);
         return builder;
     }();
 
@@ -113,7 +119,7 @@ LEXY_CONSTEVAL auto _make_trie()
     auto transition_idx = 0u;
     for (auto node = 0u; node != builder.node_count; ++node)
     {
-        result._node_accept[node] = builder.node_accept[node];
+        result._node_value[node] = builder.node_value[node];
 
         for (auto next_node = node + 1; next_node != builder.node_count; ++next_node)
             if (auto c = builder.node_transition[node][next_node])
@@ -133,11 +139,12 @@ LEXY_CONSTEVAL auto _make_trie()
 
 /// A trie containing `Strings::get()` for every string.
 template <typename CharT, typename... Strings>
-constexpr auto trie = _make_trie<CharT, Strings...>();
+constexpr auto trie
+    = _make_trie<CharT, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
 
 /// Matches one of the strings contained in the trie.
 template <const auto& Trie>
-struct engine_trie : engine_matcher_base
+struct engine_trie : engine_matcher_base, engine_parser_base
 {
     enum class error_code
     {
@@ -158,32 +165,33 @@ struct engine_trie : engine_matcher_base
         using transition = _node<Trie.transition_next(Node, Transition), void>;
 
         template <typename Reader>
-        static constexpr auto match(Reader& reader)
+        static constexpr auto parse(Reader& reader)
         {
             using encoding = typename Reader::encoding;
             auto save      = reader;
             auto cur       = reader.peek();
 
-            auto result = error_code::error;
+            auto result = Trie.invalid_value;
             // Check the character of each transition.
             // If it matches, we advance by one and go to that node.
             // As soon as we do that, we return true to short circuit the search.
             (void)((cur == _char_to_int_type<encoding>(Trie.transition_char(Node, Transitions))
-                        ? (reader.bump(), result = transition<Transitions>::match(reader), true)
+                        ? (reader.bump(), result = transition<Transitions>::parse(reader), true)
                         : false)
                    || ...);
             (void)cur;
 
-            if constexpr (Trie.node_accept(Node))
+            if constexpr (Trie.node_value(Node) != Trie.invalid_value)
             {
+                // The current node accepts.
                 // Check if we have a longer match.
-                if (result == error_code())
+                if (result != Trie.invalid_value)
                     return result;
 
-                // We were unable to find a longer match, but the current node accepts.
+                // We were unable to find a longer match, but the current node accepts anyway.
                 // Return that match.
                 reader = LEXY_MOV(save);
-                return error_code();
+                return Trie.node_value(Node);
             }
             else
             {
@@ -198,7 +206,25 @@ struct engine_trie : engine_matcher_base
     static constexpr error_code match(Reader& reader)
     {
         // We begin in the root node of the trie.
-        return _node<0, void>::match(reader);
+        return _node<0, void>::parse(reader) == Trie.invalid_value ? error_code::error
+                                                                   : error_code();
+    }
+
+    template <typename Reader>
+    static constexpr std::size_t parse(error_code& ec, Reader& reader)
+    {
+        auto result = _node<0, void>::parse(reader);
+        if (result == Trie.invalid_value)
+            ec = error_code::error;
+        else
+            ec = error_code();
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader&, error_code)
+    {
+        return false;
     }
 };
 } // namespace lexy
