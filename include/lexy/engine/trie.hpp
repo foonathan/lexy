@@ -15,6 +15,15 @@ struct _trie
 {
     static constexpr auto invalid_value = std::size_t(-1);
 
+    LEXY_CONSTEVAL bool empty() const
+    {
+        return NodeCount == 1 && _node_value[0] == invalid_value;
+    }
+    LEXY_CONSTEVAL bool accepts_empty() const
+    {
+        return _node_value[0] != invalid_value;
+    }
+
     LEXY_CONSTEVAL std::size_t node_value(std::size_t node) const
     {
         return _node_value[node];
@@ -227,6 +236,11 @@ struct engine_trie : engine_matcher_base, engine_parser_base
         return false;
     }
 };
+
+template <const auto& Trie, typename Reader>
+inline constexpr bool engine_can_fail<engine_trie<Trie>, Reader> = !Trie.accepts_empty();
+template <const auto& Trie, typename Reader>
+inline constexpr bool engine_can_succeed<engine_trie<Trie>, Reader> = !Trie.empty();
 } // namespace lexy
 
 #endif // LEXY_ENGINE_TRIE_HPP_INCLUDED

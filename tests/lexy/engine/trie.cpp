@@ -37,6 +37,8 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_empty>;
         CHECK(lexy::engine_is_matcher<engine>);
         CHECK(lexy::engine_is_parser<engine>);
+        CHECK(lexy::engine_can_fail<engine, lexy::string_input<>>);
+        CHECK(!lexy::engine_can_succeed<engine, lexy::string_input<>>);
 
         auto empty = parse(engine{}, "");
         CHECK(!empty);
@@ -53,6 +55,8 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_empty_string>;
         CHECK(lexy::engine_is_matcher<engine>);
         CHECK(lexy::engine_is_parser<engine>);
+        CHECK(!lexy::engine_can_fail<engine, lexy::string_input<>>);
+        CHECK(lexy::engine_can_succeed<engine, lexy::string_input<>>);
 
         auto empty = parse(engine{}, "");
         CHECK(empty);
@@ -69,6 +73,8 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_basic>;
         CHECK(lexy::engine_is_matcher<engine>);
         CHECK(lexy::engine_is_parser<engine>);
+        CHECK(lexy::engine_can_fail<engine, lexy::string_input<>>);
+        CHECK(lexy::engine_can_succeed<engine, lexy::string_input<>>);
 
         auto empty = parse(engine{}, "");
         CHECK(!empty);
@@ -119,6 +125,8 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_linear>;
         CHECK(lexy::engine_is_matcher<engine>);
         CHECK(lexy::engine_is_parser<engine>);
+        CHECK(!lexy::engine_can_fail<engine, lexy::string_input<>>);
+        CHECK(lexy::engine_can_succeed<engine, lexy::string_input<>>);
 
         auto empty = parse(engine{}, "");
         CHECK(empty);
@@ -152,6 +160,8 @@ TEST_CASE("engine_trie")
         using engine = lexy::engine_trie<trie_disjoint>;
         CHECK(lexy::engine_is_matcher<engine>);
         CHECK(lexy::engine_is_parser<engine>);
+        CHECK(lexy::engine_can_fail<engine, lexy::string_input<>>);
+        CHECK(lexy::engine_can_succeed<engine, lexy::string_input<>>);
 
         auto empty = parse(engine{}, "");
         CHECK(!empty);
