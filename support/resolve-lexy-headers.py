@@ -10,7 +10,7 @@ import os
 prefix_path = os.path.join(os.path.dirname(__file__), '..', 'include')
 
 # Matches lexy/ and lexy_ext/ includes, group 1 is the file path.
-include_pattern = re.compile(r'#include <(lexy/.*\.hpp|lexy_ext/.*\.hpp)>')
+include_pattern = re.compile(r'#\s*include <(lexy/.*\.hpp|lexy_ext/.*\.hpp)>')
 
 already_resolved = []
 
