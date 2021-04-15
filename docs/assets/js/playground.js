@@ -16,22 +16,24 @@ export function list_of_productions(source)
 
 export async function preprocess_source(target, source, production)
 {
-    {{ $playground_prefix := resources.Get "cpp/playground_prefix.dev.cpp" }}
-    {{ $playground_main   := resources.Get "cpp/playground_main.dev.cpp" }}
-    {{ if hugo.IsProduction }}
-        {{ $playground_prefix = resources.Get "cpp/playground_prefix.cpp" }}
-        {{ $playground_main   = resources.Get "cpp/playground_main.cpp" }}
-    {{ end }}
-    {{ $godbolt_prefix        := resources.Get "cpp/godbolt_prefix.cpp" }}
-    {{ $godbolt_main          := resources.Get "cpp/godbolt_main.cpp" }}
+    {{ $playground_headers := resources.Get "cpp/playground_headers.single.hpp" }}
+    {{ $playground_prefix  := resources.Get "cpp/playground_prefix.cpp" }}
+    {{ $playground_main    := resources.Get "cpp/playground_main.cpp" }}
+    {{ $godbolt_prefix     := resources.Get "cpp/godbolt_prefix.cpp" }}
+    {{ $godbolt_main       := resources.Get "cpp/godbolt_main.cpp" }}
 
     if (target == 'playground')
     {
+        {{ if hugo.IsProduction }}
+            const header = `#include <{{ $playground_headers.Permalink }}>`;
+        {{ else }}
+            const header = await (await fetch('{{ $playground_headers.Permalink }}')).text();
+        {{ end }}
         const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`;
         const prefix = await (await fetch('{{ $playground_prefix.Permalink }}')).text();
         const main = await (await fetch('{{ $playground_main.Permalink }}')).text();
 
-        return macros + '\n' + prefix + '\n' + source + '\n' + main;
+        return header + '\n' + macros + '\n' + prefix + '\n' + source + '\n' + main;
     }
     else
     {

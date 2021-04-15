@@ -2,6 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#include "../../docs/assets/cpp/playground_headers.hpp"
+
 #define LEXY_PLAYGROUND_PRODUCTION production
 #include "../../docs/assets/cpp/playground_prefix.cpp"
 
