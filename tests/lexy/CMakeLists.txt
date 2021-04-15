@@ -57,6 +57,7 @@ set(tests
         dsl/sequence.cpp
         dsl/sign.cpp
         dsl/switch.cpp
+        dsl/symbol.cpp
         dsl/terminator.cpp
         dsl/times.cpp
         dsl/token.cpp

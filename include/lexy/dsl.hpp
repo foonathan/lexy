@@ -46,6 +46,7 @@
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>
 #include <lexy/dsl/switch.hpp>
+#include <lexy/dsl/symbol.hpp>
 #include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/times.hpp>
 #include <lexy/dsl/token.hpp>

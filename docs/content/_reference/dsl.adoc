@@ -1962,6 +1962,104 @@ For that, it has to be passed to `.reserve()`; it doesn't matter if it is given 
 
 NOTE: `keyword<Str>(id)` requires C++20 support for extended NTTPs. Use the `LEXY_KEYWORD(Str, id)` macro if your compiler does not support them.
 
+[discrete]
+==== `lexy::dsl::symbol()`
+
+.`lexy/dsl/symbol.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T, typename... Strings>
+    class symbol-table
+    {
+    public:
+        using char_type   = /* ... */;
+        using key_type    = char_type;
+        using mapped_type = T;
+
+        struct value_type
+        {
+            const char_type*   symbol;
+            const mapped_type& value;
+        };
+
+        //=== modifiers ===//
+        template <auto SymbolString, typename... Args>
+        consteval symbol-table map(Args&&... args) const;
+
+        template <auto C, typename... Args>
+        consteval symbol-table map(Args&&... args) const;
+
+        //=== access ===//
+        static constexpr bool empty() noexcept;
+
+        static constexpr std::size_t size() noexcept;
+
+        class iterator;
+
+        constexpr iterator begin() const noexcept;
+        constexpr iterator end() const noexcept;
+
+        class key_index
+        {
+        public:
+            constexpr key_index() noexcept;
+            constexpr explicit key_index(std::size_t idx) noexcept;
+
+            constexpr explicit operator bool() const noexcept;
+
+            friend constexpr bool operator==(key_index lhs, key_index rhs) noexcept;
+            friend constexpr bool operator!=(key_index lhs, key_index rhs) noexcept;
+        };
+
+        template <typename Reader>
+        constexpr key_index try_parse(Reader& reader) const;
+
+        constexpr const T& operator[](key_index idx) const noexcept;
+    };
+
+    template <typename T>
+    constexpr auto symbol_table = symbol-table<T>();
+}
+----
+
+A symbol table is a fixed mapping of strings to some values of a type `T`.
+It is created by calling `.map()` repeatedly on `lexy::symbol_table<T>`.
+The table is then used by the `dsl::symbol()` rule.
+
+[%collapsible]
+.Example
+====
+[source,cpp]
+----
+// If C++20 NTTPs are supported:
+constexpr auto table = lexy::symbol_table<int>.map<"abc">(0).map<'?'>(42);
+// If they are not:
+constexpr auto table = lexy::symbol_table<int>.map<LEXY_SYMBOl("abc")>(0).map<'?'>(42);
+----
+====
+
+.`lexy/dsl/symbol.hpp`
+----
+symbol<table>(token) : Branch
+symbol<table>(id)    : Branch = symbol<table>(id.pattern())
+----
+
+The `dsl::symbol()` rule matches `token` against one of the symbols given in the `table` and produces the corresponding value.
+
+Branch Condition::
+  Branch is only taken if `token` matches and the resulting lexeme is one of the symbols.
+Matches::
+  Matches and consumes `token`.
+  Checks the resulting lexeme against all the symbols in the table, succeeds if that matches.
+Errors::
+  All errors raised by matching `token`.
+  A generic error of tag `lexy::unknown_symbol` if the lexeme is not found in the symbol table.
+  The tag can be overridden by calling `.error<Tag>`.
+Value::
+  Produces a single value, which is the value that corresponds to the lexeme according to the symbol table.
+
 === Delimited and quoted
 
 .`lexy/dsl/delimited.hpp`
