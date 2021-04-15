@@ -4499,7 +4499,7 @@ constexpr auto dsl_ascii_table = [] {
 
 #if LEXY_HAS_NTTP // string NTTP implementation
 
-#    include <lexy/_detail/integer_sequence.hpp>
+
 
 namespace lexy::_detail
 {
