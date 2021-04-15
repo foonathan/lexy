@@ -25,7 +25,7 @@ export async function preprocess_source(target, source, production)
     if (target == 'playground')
     {
         {{ if hugo.IsProduction }}
-            const header = `#include <{{ $playground_headers.Permalink }}>`;
+            const header = `#include "{{ $playground_headers.Permalink }}"`;
         {{ else }}
             const header = await (await fetch('{{ $playground_headers.Permalink }}')).text();
         {{ end }}
