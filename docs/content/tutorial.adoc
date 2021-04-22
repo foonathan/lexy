@@ -262,10 +262,7 @@ Back to our problem at hand: we're almost there now!
 All we need is to allow the underscore as well as an alphanumeric character in the while loop.
 
 For that, we can use the alternative rule, which matches one of the given token.
-It does that by trying to match each token in order.
-If that works, great.
-Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
-Remember, for tokens this is efficient.
+It does that by trying them, and backtracking if necessary -- but this is efficient, as they're tokens.
 As the alternative rule matches only exactly one token, it is also considered to be a token itself
 (although it's strictly speaking another combination of tokens).
 

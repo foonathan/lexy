@@ -8,6 +8,7 @@
 #include <lexy/_detail/detect.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
+#include <lexy/engine/failure.hpp>
 #include <lexy/engine/trie.hpp>
 
 namespace lexy
@@ -23,30 +24,29 @@ struct exhausted_alternatives
 
 namespace lexyd
 {
-// TODO: _trie does not really require the same order; unlike _alt.
-// This means that using _trie over _alt is a behavior change, as it might accept more input.
-// However, all cases are probably bugs?
-template <typename... Strings>
-struct _trie : token_base<_trie<Strings...>>
-{
-    using _char_type            = std::common_type_t<typename Strings::char_type...>;
-    static constexpr auto _impl = lexy::trie<_char_type, Strings...>;
-    using token_engine          = lexy::engine_trie<_impl>;
+template <typename Token>
+using _detect_string = typename Token::string;
+template <typename Token>
+constexpr bool _can_use_trie = lexy::_detail::is_detected<_detect_string, Token>;
 
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
-        context.error(err);
-    }
-};
+// Just a type_list type.
+template <typename... Tokens>
+struct _alt_impl
+{};
 
 template <typename... Tokens>
-struct _alt : token_base<_alt<Tokens...>>
+struct _alt_trie
 {
-    struct token_engine : lexy::engine_matcher_base
+    using _char_type           = std::common_type_t<typename Tokens::string::char_type...>;
+    static constexpr auto trie = lexy::trie<_char_type, typename Tokens::string...>;
+};
+
+template <typename Trie, typename Manual, typename... Tokens>
+struct _alt_engine;
+template <typename... Lits, typename... Tokens>
+struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>>
+{
+    struct engine : lexy::engine_matcher_base
     {
         enum class error_code
         {
@@ -56,12 +56,62 @@ struct _alt : token_base<_alt<Tokens...>>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            if ((lexy::engine_try_match<typename Tokens::token_engine>(reader) || ...))
-                return error_code();
-            else
+            auto success        = false;
+            auto longest_reader = reader;
+            auto longest_match  = std::size_t(0);
+            auto try_engine     = [&](auto engine) {
+                // Match each engine on a fresh reader and determine the length of the match.
+                auto copy = reader;
+                if (!lexy::engine_try_match<decltype(engine)>(copy))
+                    return;
+                auto length = lexy::_detail::range_size(reader.cur(), copy.cur());
+
+                // Update previous maximum.
+                if (length > longest_match)
+                {
+                    longest_match  = length;
+                    longest_reader = LEXY_MOV(copy);
+                }
+                // We've succeeded in either case.
+                success = true;
+            };
+
+            // Match each rule in some order.
+            // We trie the trie first as it is more optimized and gives a longer initial maximum.
+            if constexpr (sizeof...(Lits) > 0)
+                try_engine(lexy::engine_trie<_alt_trie<Lits...>::trie>{});
+            if constexpr (sizeof...(Tokens) > 0)
+                (try_engine(typename Tokens::token_engine{}), ...);
+
+            if (!success)
                 return error_code::error;
+
+            reader = LEXY_MOV(longest_reader);
+            return error_code();
         }
     };
+};
+template <typename... Lits, typename... Tokens, typename H, typename... T>
+struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>, H, T...>
+{
+    static auto _engine()
+    {
+        // Insert H into either the trie or the manual version.
+        if constexpr (_can_use_trie<H>)
+            return
+                typename _alt_engine<_alt_impl<Lits..., H>, _alt_impl<Tokens...>, T...>::engine{};
+        else
+            return
+                typename _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens..., H>, T...>::engine{};
+    }
+    using engine = decltype(_engine());
+};
+
+template <typename... Tokens>
+struct _alt : token_base<_alt<Tokens...>>
+{
+    struct token_engine : _alt_engine<_alt_impl<>, _alt_impl<>, Tokens...>::engine
+    {};
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&,
@@ -73,43 +123,11 @@ struct _alt : token_base<_alt<Tokens...>>
     }
 };
 
-template <typename Token>
-using _detect_string = typename Token::string;
-template <typename Token>
-constexpr bool _can_use_trie = lexy::_detail::is_detected<_detect_string, Token>;
-
 template <typename R, typename S>
 LEXY_CONSTEVAL auto operator/(R, S)
 {
     static_assert(lexy::is_token<R> && lexy::is_token<S>);
-    if constexpr (_can_use_trie<R> && _can_use_trie<S>)
-        return _trie<typename R::string, typename S::string>{};
-    else
-        return _alt<R, S>{};
-}
-
-template <typename... R, typename S>
-LEXY_CONSTEVAL auto operator/(_trie<R...>, S)
-{
-    static_assert(lexy::is_token<S>);
-    if constexpr (_can_use_trie<S>)
-        return _trie<R..., typename S::string>{};
-    else
-        return _alt<_trie<R...>, S>{};
-}
-template <typename R, typename... S>
-LEXY_CONSTEVAL auto operator/(R, _trie<S...>)
-{
-    static_assert(lexy::is_token<R>);
-    if constexpr (_can_use_trie<R>)
-        return _trie<typename R::string, S...>{};
-    else
-        return _alt<R, _trie<S...>>{};
-}
-template <typename... R, typename... S>
-LEXY_CONSTEVAL auto operator/(_trie<R...>, _trie<S...>)
-{
-    return _trie<R..., S...>{};
+    return _alt<R, S>{};
 }
 
 template <typename... R, typename S>

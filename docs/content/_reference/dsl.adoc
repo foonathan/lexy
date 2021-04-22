@@ -954,16 +954,17 @@ TIP: Use `… | error<Tag>` to raise a custom error instead of `lexy::exhausted_
 token / token : Token
 ----
 
-An alternative rule tries to match each token in order, backtracking if necessary.
+An alternative rule tries to match one of the tokens, backtracking if necessary.
 
 Matches::
-  Tries to match each token in the order they were specified.
-  As soon as one token matches, consumes it and succeeds.
+  Tries to match each token in some order.
+  If one token matched, matches and consumes it.
+  If multiple tokens matched, matches and consumes the longest one.
   If no token matched, fails without consuming anything.
 Errors::
   A generic error with tag `lexy::exhausted_alternatives` if no token matched.
 
-NOTE: If an alternative consists of only literals, a trie is used to efficiently match them without backtracking.
+NOTE: Literals in the alternative are efficiently matched using a trie without doing backtracking.
 
 CAUTION: Use a choice rule with a suitable condition to avoid potentially long backtracking.
 
