@@ -974,57 +974,6 @@ NOTE: Literals in the alternative are efficiently matched using a trie without d
 
 CAUTION: Use a choice rule with a suitable condition to avoid potentially long backtracking.
 
-[discrete]
-==== `lexy::dsl::switch_`
-
-.`lexy/dsl/switch.hpp`
-----
-switch_(rule) : Rule
-
-switch_(rule).case_(branch)  : Rule
-switch_(rule).default_(rule) : Rule = switch_(rule).case_(else_ >> rule)
-switch_(rule).error<Tag>     : Rule = switch_(rule).case_(error<Tag>(any))
-----
-
-The `switch_` rule matches a rule and then switches over the input the rule has consumed.
-Switch cases can be added by calling `.case_()`; they are tried in order.
-A default case is added using `.default_()`; it is taken unconditionally.
-Alternatively, an error case can be added using `.error<Tag>()`; it produces an error if no previous case has matched.
-
-Matches::
-  First matches and consumes the switched rule.
-  What the rule has consumed is then taken as the entire input for matching the switch cases.
-  Then it tries to match the branch conditions of each case in order.
-  When a branch condition matches, that case is taken and its then is matched.
-  If no case has matched, it fails.
-Values::
-  Any values produced by the switched rule followed by any values produced by the selected case.
-Errors::
-  If the switched rule fails to match, any errors raised by it.
-  If the branch condition of a case has matched, any errors raised by the then.
-  If the switch had an error case, a generic error with the specified `Tag` is raised whose range is everything consumed by the switched rule.
-  Otherwise, a generic error with tag `lexy::exhausted_switch` is raised.
-
-[%collapsible]
-.Example
-====
-[source,cpp,id=G87Mqf]
-----
-// Parse identifiers (one or more alpha numeric characters) but detect the three reserved keywords.
-// We use `+ dsl::eof` in the case condition to ensure that `boolean` is not matched as `bool`.
-dsl::switch_(dsl::while_one(dsl::ascii::alnum))
-    .case_(LEXY_LIT("true")  + dsl::eof >> dsl::id<1>)
-    .case_(LEXY_LIT("false") + dsl::eof >> dsl::id<2>)
-    .case_(LEXY_LIT("bool")  + dsl::eof >> dsl::id<3>)
-    .default_(dsl::id<0>) // It wasn't a reserved keyword but a normal identifier.
-
-// Note: a more efficient and convenient method for handling keywords is planned.
-----
-====
-
-NOTE: It does not matter if the then of a case does not consume everything the original rule has consumed.
-As soon as the then has matched everything parsing continues from the reader position after the switched rule has been matched.
-
 === Loops
 
 [discrete]

@@ -9,6 +9,13 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_SWITCH
+#    define LEXY_DEPRECATED_SWITCH
+#else
+#    define LEXY_DEPRECATED_SWITCH                                                                 \
+        [[deprecated("`dsl::switch()` has been replaced by `dsl::symbol()`")]]
+#endif
+
 namespace lexy
 {
 struct exhausted_switch
@@ -146,7 +153,7 @@ struct _switch : rule_base
 /// Switches on the lexeme matched by the rule.
 /// The first case that will match the entire pattern will be taken.
 template <typename Rule>
-LEXY_CONSTEVAL auto switch_(Rule)
+LEXY_DEPRECATED_SWITCH LEXY_CONSTEVAL auto switch_(Rule)
 {
     return _switch<Rule, void>{};
 }

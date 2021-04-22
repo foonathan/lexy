@@ -5,8 +5,9 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-04-22
 
-The alternative rule `/` now tries to find the longest match instead of the first one.
-If it was well-specified before, this doesn't change anything.
+* The alternative rule `/` now tries to find the longest match instead of the first one.
+  If it was well-specified before, this doesn't change anything.
+* Removed `dsl::switch_()`; use the new `dsl::symbol()` instead which is more efficient as well.
 
 == 2021-03-29
 
