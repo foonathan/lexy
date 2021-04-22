@@ -9,11 +9,11 @@
 
 namespace lexy
 {
-/// Matches `Matcher` but only if none of the `Excepts` match the same input.
-template <typename Matcher, typename... Excepts>
+/// Matches `Matcher` but only if `Except` does not match.
+template <typename Matcher, typename Except>
 struct engine_minus : lexy::engine_matcher_base
 {
-    static_assert((lexy::engine_is_matcher<Matcher> && ... && lexy::engine_is_matcher<Excepts>));
+    static_assert(lexy::engine_is_matcher<Matcher> && lexy::engine_is_matcher<Except>);
 
     enum class error_code
     {
@@ -40,10 +40,9 @@ struct engine_minus : lexy::engine_matcher_base
         if (auto ec = Matcher::match(reader); ec != typename Matcher::error_code())
             return error_from_matcher(ec);
 
-        // Then check whether any of the Excepts match on the same input.
-        auto partial      = lexy::partial_reader(save, reader.cur());
-        auto except_match = ((lexy::engine_try_match<Excepts>(partial) && partial.eof()) || ...);
-        if (except_match)
+        // Then check whether Except matches on the same input.
+        if (auto partial = lexy::partial_reader(save, reader.cur());
+            lexy::engine_try_match<Except>(partial) && partial.eof())
             // They did, so we don't match.
             return error_code::minus_failure;
 

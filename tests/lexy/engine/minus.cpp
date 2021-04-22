@@ -14,7 +14,6 @@ namespace
 {
 constexpr auto condition_trie = lexy::linear_trie<LEXY_NTTP_STRING("!")>;
 constexpr auto trie_a         = lexy::linear_trie<LEXY_NTTP_STRING("a!")>;
-constexpr auto trie_bc        = lexy::linear_trie<LEXY_NTTP_STRING("bc!")>;
 } // namespace
 
 TEST_CASE("engine_minus")
@@ -22,10 +21,9 @@ TEST_CASE("engine_minus")
     using condition = lexy::engine_literal<condition_trie>;
     using until     = lexy::engine_until<condition>;
 
-    using except_a  = lexy::engine_literal<trie_a>;
-    using except_bc = lexy::engine_literal<trie_bc>;
+    using except_a = lexy::engine_literal<trie_a>;
 
-    using engine = lexy::engine_minus<until, except_a, except_bc>;
+    using engine = lexy::engine_minus<until, except_a>;
     CHECK(lexy::engine_is_matcher<engine>);
 
     auto empty = engine_matches<engine>("");
@@ -46,17 +44,9 @@ TEST_CASE("engine_minus")
     CHECK(a.count == 2);
     CHECK(a.ec == engine::error_code::minus_failure);
     CHECK(a.recovered == 0);
-    auto bc = engine_matches<engine>("bc!");
-    CHECK(!bc);
-    CHECK(bc.count == 3);
-    CHECK(bc.ec == engine::error_code::minus_failure);
-    CHECK(bc.recovered == 0);
 
     auto abc = engine_matches<engine>("abc!");
     CHECK(abc);
     CHECK(abc.count == 4);
-    auto bcd = engine_matches<engine>("bcd!");
-    CHECK(bcd);
-    CHECK(bcd.count == 4);
 }
 

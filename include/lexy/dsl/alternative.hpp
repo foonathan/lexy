@@ -63,7 +63,7 @@ struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>>
                 // Match each engine on a fresh reader and determine the length of the match.
                 auto copy = reader;
                 if (!lexy::engine_try_match<decltype(engine)>(copy))
-                    return;
+                    return false;
                 auto length = lexy::_detail::range_size(reader.cur(), copy.cur());
 
                 // Update previous maximum.
@@ -74,14 +74,18 @@ struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>>
                 }
                 // We've succeeded in either case.
                 success = true;
+
+                // We can exit early if we've reached EOF -- there can't be a longer match.
+                return copy.eof();
             };
 
             // Match each rule in some order.
             // We trie the trie first as it is more optimized and gives a longer initial maximum.
+            [[maybe_unused]] auto done = false;
             if constexpr (sizeof...(Lits) > 0)
-                try_engine(lexy::engine_trie<_alt_trie<Lits...>::trie>{});
+                done = try_engine(lexy::engine_trie<_alt_trie<Lits...>::trie>{});
             if constexpr (sizeof...(Tokens) > 0)
-                (try_engine(typename Tokens::token_engine{}), ...);
+                (done || ... || try_engine(typename Tokens::token_engine{}));
 
             if (!success)
                 return error_code::error;

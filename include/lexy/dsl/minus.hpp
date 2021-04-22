@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_MINUS_HPP_INCLUDED
 #define LEXY_DSL_MINUS_HPP_INCLUDED
 
+#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/minus.hpp>
@@ -23,11 +24,11 @@ struct minus_failure
 
 namespace lexyd
 {
-template <typename Token, typename... Excepts>
-struct _minus : token_base<_minus<Token, Excepts...>>
+template <typename Token, typename Except>
+struct _minus : token_base<_minus<Token, Except>>
 {
     using token_engine
-        = lexy::engine_minus<typename Token::token_engine, typename Excepts::token_engine...>;
+        = lexy::engine_minus<typename Token::token_engine, typename Except::token_engine>;
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader& reader,
@@ -54,11 +55,11 @@ LEXY_CONSTEVAL auto operator-(Token, Except)
     static_assert(lexy::is_token<Except>);
     return _minus<Token, Except>{};
 }
-template <typename Token, typename... E, typename Except>
-LEXY_CONSTEVAL auto operator-(_minus<Token, E...>, Except)
+template <typename Token, typename E, typename Except>
+LEXY_CONSTEVAL auto operator-(_minus<Token, E>, Except except)
 {
     static_assert(lexy::is_token<Except>);
-    return _minus<Token, E..., Except>{};
+    return _minus<Token, decltype(E{} / except)>{};
 }
 } // namespace lexyd
 
