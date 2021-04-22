@@ -150,6 +150,15 @@ struct text
         = lexy::as_string<std::string> | lexy::new_<ast::xml_text, ast::xml_node_ptr>;
 };
 
+// The name of a tag or entity.
+constexpr auto name = [] {
+    // We only support ASCII here, as I'm too lazy to type all the code point ranges out.
+    auto head_char     = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
+    auto trailing_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
+
+    return dsl::identifier(head_char.error<invalid_character>, trailing_char);
+}();
+
 // A pre-defined entity reference.
 struct reference
 {
@@ -161,19 +170,19 @@ struct reference
         }
     };
 
-    static constexpr auto rule = [] {
-        // The name of the reference is everything until (and including) ;.
-        auto name = dsl::until(dsl::lit_c<';'>);
-        // We then switch over the parsed name and create the appropriate character.
-        auto reference = dsl::switch_(name)
-                             .case_(LEXY_LIT("quot;") >> dsl::value_c<'"'>)
-                             .case_(LEXY_LIT("amp;") >> dsl::value_c<'&'>)
-                             .case_(LEXY_LIT("apos;") >> dsl::value_c<'\''>)
-                             .case_(LEXY_LIT("lt;") >> dsl::value_c<'<'>)
-                             .case_(LEXY_LIT("gt;") >> dsl::value_c<'>'>)
-                             .error<unknown_entity>; // The error when nothing matches.
+    // The predefined XML entities and their replacement values.
+    static constexpr auto entities = lexy::symbol_table<char>
+                                         .map<LEXY_SYMBOL("quot")>('"')
+                                         .map<LEXY_SYMBOL("amp")>('&')
+                                         .map<LEXY_SYMBOL("apos")>('\'')
+                                         .map<LEXY_SYMBOL("lt")>('<')
+                                         .map<LEXY_SYMBOL("gt")>('>');
 
-        return dsl::lit_c<'&'> >> reference;
+    static constexpr auto rule = [] {
+        // The actual reference parses a name and performs a lookup to produce the replacement
+        // values.
+        auto reference = dsl::symbol<entities>(name).error<unknown_entity>;
+        return dsl::lit_c<'&'> >> reference + dsl::lit_c<';'>;
     }();
     static constexpr auto value = lexy::new_<ast::xml_reference, ast::xml_node_ptr>;
 };
@@ -190,20 +199,6 @@ struct cdata
     // We build a string; then we construct a node from it.
     static constexpr auto value
         = lexy::as_string<std::string> >> lexy::new_<ast::xml_cdata, ast::xml_node_ptr>;
-};
-
-// The name of a tag.
-struct name
-{
-    static constexpr auto rule = [] {
-        // We only support ASCII here, as I'm too lazy to type all the code point ranges out.
-        auto head_char = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
-        auto tail_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
-
-        return dsl::capture(head_char.error<invalid_character> + while_(tail_char));
-    }();
-
-    static constexpr auto value = lexy::as_string<std::string>;
 };
 
 // A tagged XML element.
@@ -225,17 +220,17 @@ struct element
         // To check that the name is equal for the opening and closing tag,
         // we use a variable that has the type lexeme.
         // Note: this only declares the variable, we still need to create it below.
-        auto name_var = dsl::context_lexeme<struct name>;
+        auto name_var = dsl::context_lexeme<struct name_var_tag>;
 
         // The open tag parses a name and captures it in the variable.
         // It also checks for an empty tag (<name/>), in which case we're done and immediately
         // return.
         auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::return_);
-        auto open_tag = open_tagged(name_var.capture(dsl::p<name>) + ws + empty);
+        auto open_tag = open_tagged(name_var.capture(name) + ws + empty);
 
         // The closing tag matches the name again and requires that it matches the one we've stored
         // earlier.
-        auto close_tag = close_tagged(name_var.require(dsl::p<name>).error<tag_mismatch> + ws);
+        auto close_tag = close_tagged(name_var.require(name).error<tag_mismatch> + ws);
 
         // The content of the element.
         auto content = dsl::p<comment> | dsl::p<cdata>                     //
@@ -249,8 +244,14 @@ struct element
 
     // We collect the children as vector; then we construct a node from it.
     static constexpr auto value
-        = lexy::as_list<std::vector<ast::xml_node_ptr>> >> lexy::new_<ast::xml_element,
-                                                                      ast::xml_node_ptr>;
+        = lexy::as_list<std::vector<ast::xml_node_ptr>> >> lexy::callback<ast::xml_node_ptr>(
+              [](auto name) {
+                  return std::make_unique<ast::xml_element>(lexy::as_string<std::string>(name));
+              },
+              [](auto name, auto&& children) {
+                  return std::make_unique<ast::xml_element>(lexy::as_string<std::string>(name),
+                                                            LEXY_MOV(children));
+              });
 };
 
 // An XML document.
