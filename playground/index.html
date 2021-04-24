@@ -182,7 +182,7 @@ window.addEventListener('load', async() => {
     editor_input.getSession().on('change', debounce(run, 1000));
 
     toolbar_permalink.addEventListener("click", async() => {
-        const source = playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
+        const source = await playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
         const input  = editor_input.getValue();
 
         const url = await playground.get_godbolt_url(source, input);
@@ -193,7 +193,7 @@ window.addEventListener('load', async() => {
     toolbar_wrap.addEventListener("click", toggle_wrap);
     toolbar_run.addEventListener("click", run);
     toolbar_godbolt.addEventListener("click", async() => {
-        const source = playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
+        const source = await playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
         const input  = editor_input.getValue();
         window.location.href = await playground.get_godbolt_url(source, input);
     });

@@ -120,10 +120,7 @@ ababa
 ----^ done, next character on input is `a`</pre></div></div><div class=sidebarblock><div class=content><div class=paragraph><p>Don’t worry about backtracking.
 The library will only do it when you’ve explicitly requested it, or when it is efficient like here.</p></div></div></div><div class=paragraph><p>Back to our problem at hand: we’re almost there now!
 All we need is to allow the underscore as well as an alphanumeric character in the while loop.</p></div><div class=paragraph><p>For that, we can use the alternative rule, which matches one of the given token.
-It does that by trying to match each token in order.
-If that works, great.
-Otherwise, it rewinds the input (backtracking) and tries the second rule, and so on.
-Remember, for tokens this is efficient.
+It does that by trying them, and backtracking if necessary — but this is efficient, as they’re tokens.
 As the alternative rule matches only exactly one token, it is also considered to be a token itself
 (although it’s strictly speaking another combination of tokens).</p></div><div class=paragraph><p>In the DSL, the alternative rule is implemented using <code>operator/</code> (read "or").
 With all that, we can finally write our first production:</p></div><div class=listingblock><div class=title>The <code>name</code> production (<a href=https://godbolt.org/z/bdn39v>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>name</span>
@@ -462,31 +459,29 @@ With that, we can "subtract" certain character classes from our token.</p></div>
     <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>;</span>
 <span class=p>};</span></code></pre></div></div><div class=paragraph><p>Here, we’ve prevented all control characters from occurring inside the string.</p></div><div class=paragraph><p>But what if we want to include a control character in the author’s name (however, unlikely)?
 Or more importantly, how do we get a <code>"</code> in our string?
-<code>dsl::quoted()</code> will end once it reaches the final <code>"</code>.</p></div><div class=paragraph><p>For that, we need escape sequences.
+For that, we need escape sequences.
 They can be very conveniently defined using another rule and added to the string as the second argument.</p></div><div class=listingblock><div class=title>String parsing, final attempt (<a href=https://godbolt.org/z/hMs4xn>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>author</span>
 <span class=p>{</span>
     <span class=c1>// Match zero or more non-control code points (&#34;characters&#34;) surrounded by quotation marks.</span>
-    <span class=c1>// We allow `\&#34;`, as well as `\u` and `\U` as escape sequences.</span>
+    <span class=c1>// We allow `\u` and `\U` as escape sequences.</span>
     <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>rule</span> <span class=o>=</span> <span class=p>[]</span> <span class=p>{</span>
         <span class=k>auto</span> <span class=n>cp</span>     <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point</span> <span class=o>-</span> <span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>control</span><span class=p>;</span>
         <span class=k>auto</span> <span class=n>escape</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>backslash_escape</span>                                <b class=conum>(1)</b>
-                          <span class=p>.</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;&#34;&#39;</span><span class=o>&gt;</span><span class=p>()</span>                                    <b class=conum>(2)</b>
-                          <span class=p>.</span><span class=n>rule</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;u&#39;</span><span class=o>&gt;</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point_id</span><span class=o>&lt;</span><span class=mi>4</span><span class=o>&gt;</span><span class=p>)</span>  <b class=conum>(3)</b>
+                          <span class=p>.</span><span class=n>rule</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;u&#39;</span><span class=o>&gt;</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point_id</span><span class=o>&lt;</span><span class=mi>4</span><span class=o>&gt;</span><span class=p>)</span>  <b class=conum>(2)</b>
                           <span class=p>.</span><span class=n>rule</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>lit_c</span><span class=o>&lt;</span><span class=sc>&#39;U&#39;</span><span class=o>&gt;</span> <span class=o>&gt;&gt;</span> <span class=n>dsl</span><span class=o>::</span><span class=n>code_point_id</span><span class=o>&lt;</span><span class=mi>8</span><span class=o>&gt;</span><span class=p>);</span>
 
         <span class=k>return</span> <span class=n>dsl</span><span class=o>::</span><span class=n>quoted</span><span class=p>(</span><span class=n>cp</span><span class=p>,</span> <span class=n>escape</span><span class=p>);</span>
     <span class=p>}();</span>
 
     <span class=c1>// Construct a UTF-8 string from the quoted content.</span>
-    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=p>,</span> <span class=n>lexy</span><span class=o>::</span><span class=n>utf8_encoding</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(4)</b>
+    <span class=k>static</span> <span class=k>constexpr</span> <span class=k>auto</span> <span class=n>value</span> <span class=o>=</span> <span class=n>lexy</span><span class=o>::</span><span class=n>as_string</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=p>,</span> <span class=n>lexy</span><span class=o>::</span><span class=n>utf8_encoding</span><span class=o>&gt;</span><span class=p>;</span> <b class=conum>(3)</b>
 <span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>We use <code>\</code> as the escape character using <code>dsl::backslash_escape</code>.
-Alternatively, we could have used <code>dsl::escape(dsl::lit_c&lt;'\\'>)</code>.</p></li><li><p>We want <code>\"</code> to mean <code>"</code>.
-Using <code>.lit_c&lt;'"'>()</code> is equivalent to <code>.rule(dsl::lit_c&lt;'"'> >> dsl::value_c&lt;'"'>)</code>.
-Whenever we encounter a <code>"</code> after the <code>\</code>, we produce the literal constant value <code>"</code>,
-which will be added to our sink.</p></li><li><p>These two lines define <code>\uXXXX</code> and <code>\uXXXXXXXX</code> to specify character codes.
+Alternatively, we could have used <code>dsl::escape(dsl::lit_c&lt;'\\'>)</code>.</p></li><li><p>These two lines define <code>\uXXXX</code> and <code>\uXXXXXXXX</code> to specify character codes.
 <code>dsl::code_point_id&lt;N></code> is just a convenience for a <code>dsl::integer</code> rule that parses a code point using <code>N</code> hex digits.</p></li><li><p>The <code>\u</code> and <code>\U</code> rules all produce a <code>lexy::code_point</code>.
 <code>lexy::as_string</code> can only convert it back into a string, if we tell it the encoding we want.
-So we add <code>lexy::utf8_encoding</code> as the second optional argument to enable that.</p></li></ol></div></div></div><div class=sect1><h2 id=_parsing_the_package_authors>Parsing the package authors</h2><div class=sectionbody><div class=paragraph><p>Now we know how to parse one author, but the field can take a list of authors surrounded by square brackets.</p></div><div class=listingblock><div class=title>Package author</div><div class=content><pre>authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>Before you try writing something with <code>dsl::while_()</code>, this won’t actually work.
+So we add <code>lexy::utf8_encoding</code> as the second optional argument to enable that.</p></li></ol></div><div class=quoteblock><blockquote><div class=paragraph><p>By creating a <code>lexy::symbol_table</code> that defines a mapping of other escape characters to their replacement values,
+we can also add the more convenient <code>\"</code>, <code>\n</code> etc.
+See the JSON example for more.</p></div></blockquote></div></div></div><div class=sect1><h2 id=_parsing_the_package_authors>Parsing the package authors</h2><div class=sectionbody><div class=paragraph><p>Now we know how to parse one author, but the field can take a list of authors surrounded by square brackets.</p></div><div class=listingblock><div class=title>Package author</div><div class=content><pre>authors = [&#34;Jonathan Müller&#34;]</pre></div></div><div class=paragraph><p>Before you try writing something with <code>dsl::while_()</code>, this won’t actually work.
 The reason for that is that <code>dsl::while_()</code> does not work with rules that produce values, as <code>dsl::while_()</code> does not use a sink.
 Instead we need to use <code>dsl::list(rule, sep)</code>.
 This matches a (non-empty) list of <code>rule</code> separated by <code>sep</code>.</p></div><div class=listingblock><div class=title>The list rule (<a href=https://godbolt.org/z/GK7McT>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>integer_list</span>
