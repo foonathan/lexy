@@ -20,7 +20,12 @@ TEST_CASE("dsl::find")
 
             LEXY_VERIFY_FN int success(const char* cur)
             {
-                return int(cur - str);
+                // This used to be `int(cur - str)`, but for GCC 7 in Release mode, this was
+                // negative, even though `cur >= str`. Changing this line fixes that miscompilation.
+                // I could just be hiding some UB, but given that this is executed at compile-time,
+                // where UB is (should be) a compile error, and there is no issue with any other
+                // compiler, let's assume this is not the case and be proven wrong later.
+                return int(lexy::_detail::string_view(str, cur).size());
             }
         };
 
@@ -142,7 +147,9 @@ TEST_CASE("dsl::recover_")
 
             LEXY_VERIFY_FN int success(const char* cur)
             {
-                return int(cur - str);
+                // Same deal as with the `dsl::find - no limit`, but this time to workaround GCC 7
+                // in Debug mode.
+                return int(lexy::_detail::string_view(str, cur).size());
             }
         };
 
