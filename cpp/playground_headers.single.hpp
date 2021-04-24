@@ -9348,7 +9348,7 @@ public:
         return map<lexy::_detail::type_string<SymbolString>>(LEXY_FWD(args)...);
     }
 #else
-#    if (defined(__clang__) && __clang_major__ <= 6)                                               \
+#    if (defined(__clang__) && __clang_major__ <= 7)                                               \
         || (defined(__clang__) && defined(__apple_build_version__) && __clang_major__ <= 10)
     template <char C, typename... Args> // Sorry, compiler bug.
 #    else
