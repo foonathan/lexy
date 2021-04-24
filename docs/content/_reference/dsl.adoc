@@ -2239,6 +2239,21 @@ If no rule is specified, it defaults to producing the literal itself.
 
 .`lexy/dsl/delimited.hpp`
 ----
+e.symbol<Table>(rule) : Rule
+  = escape_token >> (... | symbol<Table>(rule)
+                     | else_ >> error<lexy::invalid_escape_sequence>)
+e.symbol<Table>() : Rule
+  = escape_token >> (... | symbol<Table>(single-code-unit)
+                     | else_ >> error<lexy::invalid_escape_sequence>)
+----
+
+Calling `e.symbol<Table>(rule)`, where `e` is an escape rule, adds an escape sequence that matches one of the symbols in the `Table` to the end of the choice.
+The overload that does not take a `rule`, matches a single code unit that is then looked up in the table.
+
+NOTE: Use this overload to specify common escape sequences such as `\n`, `\"` etc. by creating a symbol table that matches the escape sequence character (e.g. `n`) to the character it stands for (e.g. `\n`).
+
+.`lexy/dsl/delimited.hpp`
+----
 backslash_escape = escape(lit_c<'\\'>)
 dollar_escape    = escape(lit_c<'$'>)
 ----

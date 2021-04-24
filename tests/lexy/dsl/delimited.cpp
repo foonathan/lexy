@@ -569,6 +569,11 @@ TEST_CASE("predefined dsl::delimited")
                          decltype(triple_backticked_equivalent)>);
 }
 
+namespace
+{
+constexpr auto symbols = lexy::symbol_table<char>.map<'a'>('a');
+}
+
 TEST_CASE("dsl::escape")
 {
     constexpr auto escape = lexy::dsl::escape(LEXY_LIT("$"));
@@ -683,6 +688,44 @@ TEST_CASE("dsl::escape")
         auto invalid = LEXY_VERIFY("$\xFF");
         CHECK(invalid == -2);
     }
+    SUBCASE(".symbol()")
+    {
+        static constexpr auto rule = escape.symbol<symbols>();
+        CHECK(lexy::is_branch<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, char c)
+            {
+                LEXY_VERIFY_CHECK(cur == str + 2);
+                return c;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character() == '$');
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str + 1);
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        auto a = LEXY_VERIFY("$a");
+        CHECK(a == 'a');
+
+        auto invalid = LEXY_VERIFY("$b");
+        CHECK(invalid == -2);
+    }
+
 #if LEXY_HAS_NTTP
     SUBCASE(".lit()")
     {

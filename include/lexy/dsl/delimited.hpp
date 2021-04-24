@@ -13,6 +13,7 @@
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/loop.hpp>
+#include <lexy/dsl/symbol.hpp>
 #include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
@@ -285,6 +286,28 @@ struct _escape_cap : rule_base
     };
 };
 
+struct _escape_char : token_base<_escape_char>
+{
+    struct token_engine : lexy::engine_matcher_base
+    {
+        enum class error_code
+        {
+            error = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (reader.eof())
+                return error_code::error;
+            reader.bump();
+            return error_code();
+        }
+    };
+
+    // Don't need error, it won't be called.
+};
+
 template <typename Escape, typename... Branches>
 struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 {
@@ -301,7 +324,20 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
     LEXY_CONSTEVAL auto capture(Token) const
     {
         static_assert(lexy::is_token<Token>);
-        return rule(_escape_cap<typename Token::token_engine>{});
+        return this->rule(_escape_cap<typename Token::token_engine>{});
+    }
+
+    /// Adds an escape rule that parses the symbol.
+    template <const auto& Table, typename Rule>
+    LEXY_CONSTEVAL auto symbol(Rule rule) const
+    {
+        return this->rule(lexyd::symbol<Table>(rule));
+    }
+    /// Adds an escape rule that parses the symbol from the next code unit.
+    template <const auto& Table>
+    LEXY_CONSTEVAL auto symbol() const
+    {
+        return this->symbol<Table>(_escape_char{});
     }
 
 #if LEXY_HAS_NTTP
