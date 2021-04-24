@@ -37,7 +37,7 @@ export async function preprocess_source(target, source, production)
         const prefix = await (await fetch('{{ $godbolt_prefix.Permalink }}')).text();
         const main = await (await fetch('{{ $godbolt_main.Permalink }}')).text();
 
-        return macros + '\n' + prefix + '\n' + source + '\n' + main;
+        return macros + '\n' + prefix + source + '\n' + main;
     }
 }
 
@@ -89,6 +89,8 @@ export async function get_godbolt_url(source, input)
     compiler.libs = [ lexy_id ];
     compiler.options = "-std=c++20";
     session.executors = [{ compiler: compiler, stdin: input }];
+
+    console.log(JSON.stringify({ sessions: [session] }))
 
     const response = await fetch(api + "shortener", {
         method: "POST",
