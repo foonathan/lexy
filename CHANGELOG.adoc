@@ -3,11 +3,12 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-04-22
+== 2021-04-24
 
 * The alternative rule `/` now tries to find the longest match instead of the first one.
   If it was well-specified before, this doesn't change anything.
 * Removed `dsl::switch_()`; use the new `dsl::symbol()` instead which is more efficient as well.
+* Removed `.lit[_c]()` from `dsl::escape()`; use the new `.symbol()` instead.
 
 == 2021-03-29
 

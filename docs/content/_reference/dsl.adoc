@@ -2170,24 +2170,6 @@ Calling `e.capture(token)`, where `e` is an escape rule, adds an escape sequence
 
 .`lexy/dsl/delimited.hpp`
 ----
-e.lit<Str>(rule) : Rule
-  = escape_token >> (... | lit<Str> >> rule
-                      | else_ >> error<lexy::invalid_escape_sequence>)
-e.lit<Str>() : Rule
-  = e.lit<Str>(value_str<Str>)
-
-e.lit_c<C>(rule) : Rule
-  = escape_token >> (... | lit_c<C> >> rule
-                      | else_ >> error<lexy::invalid_escape_sequence>)
-e.lit_c<C>() : Rule
-  = e.lit_c<C>(value_c<C>)
-----
-
-Calling `e.lit()` or `e.lit_c()`, where `e` is an escape rule, adds an escape sequences that matches the literal and produces the values of the rule to the end of the choice.
-If no rule is specified, it defaults to producing the literal itself.
-
-.`lexy/dsl/delimited.hpp`
-----
 e.symbol<Table>(rule) : Rule
   = escape_token >> (... | symbol<Table>(rule)
                      | else_ >> error<lexy::invalid_escape_sequence>)

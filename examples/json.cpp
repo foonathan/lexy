@@ -189,17 +189,25 @@ struct string : lexy::token_production
         }
     };
 
+    // A mapping of the simple escape sequences to their replacement values.
+    static constexpr auto escaped_symbols = lexy::symbol_table<char> //
+                                                .map<'"'>('"')
+                                                .map<'\\'>('\\')
+                                                .map<'/'>('/')
+                                                .map<'b'>('\b')
+                                                .map<'f'>('\f')
+                                                .map<'n'>('\n')
+                                                .map<'r'>('\r')
+                                                .map<'t'>('\t');
+
     static constexpr auto rule = [] {
+        // Everything is allowed inside a string except for control characters.
         auto code_point = (dsl::code_point - dsl::ascii::control).error<invalid_char>;
-        auto escape     = dsl::backslash_escape //
-                          .lit_c<'"'>()
-                          .lit_c<'\\'>()
-                          .lit_c<'/'>()
-                          .lit_c<'b'>(dsl::value_c<'\b'>)
-                          .lit_c<'f'>(dsl::value_c<'\f'>)
-                          .lit_c<'n'>(dsl::value_c<'\n'>)
-                          .lit_c<'r'>(dsl::value_c<'\r'>)
-                          .lit_c<'t'>(dsl::value_c<'\t'>)
+
+        // Escape sequences start with a backlash and either map one of the symbols,
+        // or a Unicode code point of the form uXXXX.
+        auto escape = dsl::backslash_escape //
+                          .symbol<escaped_symbols>()
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>);
 
         // String of code_point with specified escape sequences, surrounded by ".

@@ -135,16 +135,19 @@ struct arg_quoted
         static constexpr auto value = lexy::callback<std::string>(&shell::interpreter::lookup_var);
     };
 
+    static constexpr auto escaped_symbols = lexy::symbol_table<char> //
+                                                .map<'"'>('"')
+                                                .map<'\\'>('\\')
+                                                .map<'/'>('/')
+                                                .map<'b'>('\b')
+                                                .map<'f'>('\f')
+                                                .map<'n'>('\n')
+                                                .map<'r'>('\r')
+                                                .map<'t'>('\t');
+
     static constexpr auto rule = [] {
         auto escape = dsl::backslash_escape //
-                          .lit_c<'"'>()
-                          .lit_c<'\\'>()
-                          .lit_c<'/'>()
-                          .lit_c<'b'>(dsl::value_c<'\b'>)
-                          .lit_c<'f'>(dsl::value_c<'\f'>)
-                          .lit_c<'n'>(dsl::value_c<'\n'>)
-                          .lit_c<'r'>(dsl::value_c<'\r'>)
-                          .lit_c<'t'>(dsl::value_c<'\t'>)
+                          .symbol<escaped_symbols>()
                           .rule(dsl::p<interpolation>);
 
         return dsl::quoted(str_char, escape);

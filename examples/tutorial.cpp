@@ -84,11 +84,10 @@ struct author
     };
 
     // Match zero or more non-control code points ("characters") surrounded by quotation marks.
-    // We allow `\"`, as well as `\u` and `\U` as escape sequences.
+    // We allow `\u` and `\U` as escape sequences.
     static constexpr auto rule = [] {
         auto cp     = (dsl::code_point - dsl::ascii::control).error<invalid_character>;
         auto escape = dsl::backslash_escape                                //
-                          .lit_c<'"'>()                                    //
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  //
                           .rule(dsl::lit_c<'U'> >> dsl::code_point_id<8>); //
 

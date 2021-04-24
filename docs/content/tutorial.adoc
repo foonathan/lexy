@@ -891,8 +891,6 @@ Here, we've prevented all control characters from occurring inside the string.
 
 But what if we want to include a control character in the author's name (however, unlikely)?
 Or more importantly, how do we get a `"` in our string?
-`dsl::quoted()` will end once it reaches the final `"`.
-
 For that, we need escape sequences.
 They can be very conveniently defined using another rule and added to the string as the second argument.
 
@@ -902,32 +900,31 @@ They can be very conveniently defined using another rule and added to the string
 struct author
 {
     // Match zero or more non-control code points ("characters") surrounded by quotation marks.
-    // We allow `\"`, as well as `\u` and `\U` as escape sequences.
+    // We allow `\u` and `\U` as escape sequences.
     static constexpr auto rule = [] {
         auto cp     = dsl::code_point - dsl::ascii::control;
         auto escape = dsl::backslash_escape                                <1>
-                          .lit_c<'"'>()                                    <2>
-                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  <3>
+                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  <2>
                           .rule(dsl::lit_c<'U'> >> dsl::code_point_id<8>);
 
         return dsl::quoted(cp, escape);
     }();
 
     // Construct a UTF-8 string from the quoted content.
-    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>; <4>
+    static constexpr auto value = lexy::as_string<std::string, lexy::utf8_encoding>; <3>
 };
 ----
 <1> We use `\` as the escape character using `dsl::backslash_escape`.
     Alternatively, we could have used `dsl::escape(dsl::lit_c<'\\'>)`.
-<2> We want `\"` to mean `"`.
-    Using `.lit_c<'"'>()` is equivalent to `.rule(dsl::lit_c<'"'> >> dsl::value_c<'"'>)`.
-    Whenever we encounter a `"` after the `\`, we produce the literal constant value `"`,
-    which will be added to our sink.
-<3> These two lines define `\uXXXX` and `\uXXXXXXXX` to specify character codes.
+<2> These two lines define `\uXXXX` and `\uXXXXXXXX` to specify character codes.
     `dsl::code_point_id<N>` is just a convenience for a `dsl::integer` rule that parses a code point using `N` hex digits.
-<4> The `\u` and `\U` rules all produce a `lexy::code_point`.
+<3> The `\u` and `\U` rules all produce a `lexy::code_point`.
     `lexy::as_string` can only convert it back into a string, if we tell it the encoding we want.
     So we add `lexy::utf8_encoding` as the second optional argument to enable that.
+
+> By creating a `lexy::symbol_table` that defines a mapping of other escape characters to their replacement values,
+> we can also add the more convenient `\"`, `\n` etc.
+> See the JSON example for more.
 
 == Parsing the package authors
 
