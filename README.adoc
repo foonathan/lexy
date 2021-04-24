@@ -81,6 +81,9 @@ Unicode support::
   Want to match a string literal containing arbitrary Unicode code points or `\u21D4` and store the result in a `std::string`?
   You can do so out of the box.
 
+Keyword and identifier parsing::
+  Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss)[Try it online].
+
 Fully `constexpr` parsing::
   You want to parse a string literal at compile-time? You can do so.
 
@@ -100,9 +103,6 @@ Debug facility::
 
 Operator parsing::
   Parse operators with different precedences using Pratt parsing.
-
-Keyword parsing::
-  Reserve a set of keywords that won't be matched as regular identifiers.
 
 NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
 All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
