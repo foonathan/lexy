@@ -82,7 +82,7 @@ Unicode support::
   You can do so out of the box.
 
 Keyword and identifier parsing::
-  Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss)[Try it online].
+  Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss[Try it online].
 
 Fully `constexpr` parsing::
   You want to parse a string literal at compile-time? You can do so.
