@@ -14,6 +14,13 @@
 
 #include "../test_encoding.hpp"
 
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ == 7
+// GCC 7 doesn't liker pointer subtraction in constexpr code between constexpr strings.
+// This creates bogus test failures. At runtime everything is ok, so just disable constexpr tests
+// for GCC 7.
+#    define LEXY_DISABLE_CONSTEXPR_TESTS
+#endif
+
 #ifdef LEXY_DISABLE_CONSTEXPR_TESTS
 #    define LEXY_VERIFY_CALL(...) __VA_ARGS__
 #    define LEXY_VERIFY_FN
