@@ -6174,7 +6174,9 @@ LEXY_CONSTEVAL auto find(Tokens... tokens)
 {
     static_assert(sizeof...(Tokens) > 0);
     static_assert((lexy::is_token<Tokens> && ...));
-    return _find<decltype((tokens / ...)), void>{};
+
+    auto needle = (tokens / ...);
+    return _find<decltype(needle), void>{};
 }
 } // namespace lexyd
 
