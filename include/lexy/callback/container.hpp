@@ -43,8 +43,7 @@ struct _list
 };
 
 /// A callback with sink that creates a list of things (e.g. a `std::vector`, `std::list`, etc.).
-/// As a callback, it forwards the arguments to the initializer list constructor.
-/// As a sink, it repeatedly calls `push_back()` and `emplace_back()`.
+/// It repeatedly calls `push_back()` and `emplace_back()`.
 template <typename T>
 constexpr auto as_list = _list<T>{};
 
@@ -82,8 +81,7 @@ struct _collection
 };
 
 /// A callback with sink that creates an unordered collection of things (e.g. a `std::set`,
-/// `std::unordered_map`, etc.). As a callback, it forwards the arguments to the initializer list
-/// constructor. As a sink, it repeatedly calls `insert()` and `emplace()`.
+/// `std::unordered_map`, etc.). It repeatedly calls `insert()` and `emplace()`.
 template <typename T>
 constexpr auto as_collection = _collection<T>{};
 } // namespace lexy

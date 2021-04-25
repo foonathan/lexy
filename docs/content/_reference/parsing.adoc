@@ -379,19 +379,18 @@ constexpr auto make_unique_str2 = lexy::new_<std::string> | lexy::construct<std:
 ----
 namespace lexy
 {
-    template <typename T>
+    template <typename Container>
     constexpr auto as_list = /* unspecified */;
 
-    template <typename T>
+    template <typename Container>
     constexpr auto as_collection = /* unspecified */;
 }
 ----
 
-`lexy::as_list<T>` is both a callback and a sink.
-As a callback, it forwards all arguments to the `std::initializer_list` constructor of `T` and returns the result.
-As a sink, it first default constructs a `T` and then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
+`lexy::as_list<Container>` is a sink.
+It first default constructs a `Container` and then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
 
-`lexy::as_collection<T>` is like `lexy::as_list<T>`, but instead of calling `push_back()` and `emplace_back()`, it calls `insert()` and `emplace()`.
+`lexy::as_collection<Container>` is like `lexy::as_list<Container>`, but instead of calling `push_back()` and `emplace_back()`, it calls `insert()` and `emplace()`.
 
 .Example
 [%collapsible]
