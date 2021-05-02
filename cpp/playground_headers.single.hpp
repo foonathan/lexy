@@ -4002,16 +4002,13 @@ struct engine_trie : engine_matcher_base, engine_parser_base
     template <std::size_t Node>
     using _transition_sequence = lexy::_detail::make_index_sequence<Trie.transition_count(Node)>;
 
-    template <std::size_t Node, typename Transitions>
+    template <std::size_t Node, typename Transitions = void>
     struct _node                              // Base case if we pass void as transitions.
     : _node<Node, _transition_sequence<Node>> // Compute transition and forward.
     {};
     template <std::size_t Node, std::size_t... Transitions>
     struct _node<Node, lexy::_detail::index_sequence<Transitions...>>
     {
-        template <std::size_t Transition>
-        using transition = _node<Trie.transition_next(Node, Transition), void>;
-
         template <typename Reader>
         static constexpr auto parse(Reader& reader)
         {
@@ -4024,7 +4021,9 @@ struct engine_trie : engine_matcher_base, engine_parser_base
             // If it matches, we advance by one and go to that node.
             // As soon as we do that, we return true to short circuit the search.
             (void)((cur == _char_to_int_type<encoding>(Trie.transition_char(Node, Transitions))
-                        ? (reader.bump(), result = transition<Transitions>::parse(reader), true)
+                        ? (reader.bump(),
+                           result = _node<Trie.transition_next(Node, Transitions)>::parse(reader),
+                           true)
                         : false)
                    || ...);
             (void)cur;
@@ -4054,14 +4053,13 @@ struct engine_trie : engine_matcher_base, engine_parser_base
     static constexpr error_code match(Reader& reader)
     {
         // We begin in the root node of the trie.
-        return _node<0, void>::parse(reader) == Trie.invalid_value ? error_code::error
-                                                                   : error_code();
+        return _node<0>::parse(reader) == Trie.invalid_value ? error_code::error : error_code();
     }
 
     template <typename Reader>
     static constexpr std::size_t parse(error_code& ec, Reader& reader)
     {
-        auto result = _node<0, void>::parse(reader);
+        auto result = _node<0>::parse(reader);
         if (result == Trie.invalid_value)
             ec = error_code::error;
         else
