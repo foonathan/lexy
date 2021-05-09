@@ -344,23 +344,33 @@ NOTE: Every ASCII character except for the space character is in exactly one of 
 ----
 code_point : Token
 
-code_point.capture() : Rule
+code_point.if<Predicate>() : Token
+
+code_point.capture()                 : Rule
+code_point.capture().if<Predicate>() : Rule
 ----
 
 The `code_point` token will match and consume a well-formed Unicode code point according to the encoding of the input.
+If `code_point.if<Predicate>()` is used, it will only match the code points for which the predicate returns `true`.
 If `code_point.capture()` is used, the consumed code point will be produced as value.
 
 Requires::
   The encoding of the input is `lexy::ascii_encoding`, `lexy::utf8_encoding`, `lexy::utf16_encoding`, or `lexy::utf32_encoding`.
+  `Predicate` must be a default-constructible type with an `operator()` overload that takes a `lexy::code_point` and returns `bool`.
 Matches::
+
   Matches and consumes all code units of the next code point.
   For ASCII and UTF-32 this is only one, but for UTF-8 and UTF-16 it can be multiple code units.
   If the code point is too big or a UTF-16 surrogate, it fails.
   For UTF-8, it also fails for overlong sequences.
+  +
+If a predicate was specified, it then passes the matched code point to the predicate and fails if the predicate returns `false`.
+
 Value::
   If `.capture()` was called, it will produce the matched code point as a `lexy::code_point`.
 Errors::
-  If it could not match a valid code point, it fails with a `lexy::expected_char_class` error with name `<encoding>.code_point`.
+  If it could not match a valid code point, it fails with a `lexy::expected_char_class` error with the name `<encoding>.code_point`.
+  If the predicate failed to match, it fails with a `lexy::expected_char_class` error with the name of the `Predicate` type.
 
 [%collapsible]
 .Example

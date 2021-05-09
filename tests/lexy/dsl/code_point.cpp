@@ -124,6 +124,50 @@ TEST_CASE("dsl::code_point")
         auto cp = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"ä");
         CHECK(cp == 1);
     }
+
+    SUBCASE(".if_()")
+    {
+        struct predicate
+        {
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_ascii();
+            }
+        };
+
+        static constexpr auto rule = lexy::dsl::code_point.if_<predicate>();
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_token<decltype(rule)>);
+
+        struct callback
+        {
+            const char16_t* str;
+
+            LEXY_VERIFY_FN int success(const char16_t*)
+            {
+                return 0;
+            }
+
+            LEXY_VERIFY_FN int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                if (e.character_class() == lexy::_detail::string_view("UTF-16.code_point"))
+                    return -1;
+                else
+                    return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
+        CHECK(empty == -1);
+
+        auto ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"a");
+        CHECK(ascii == 0);
+
+        auto non_ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
+        CHECK(non_ascii == -2);
+    }
 }
 
 TEST_CASE("dsl::code_point.capture()")
@@ -240,6 +284,49 @@ TEST_CASE("dsl::code_point.capture()")
 
         auto cp = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"ä");
         CHECK(cp == 0xE4);
+    }
+
+    SUBCASE(".if_()")
+    {
+        struct predicate
+        {
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_ascii();
+            }
+        };
+
+        static constexpr auto rule = lexy::dsl::code_point.capture().if_<predicate>();
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char16_t* str;
+
+            LEXY_VERIFY_FN int success(const char16_t*, lexy::code_point cp)
+            {
+                return int(cp.value());
+            }
+
+            LEXY_VERIFY_FN int error(
+                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                if (e.character_class() == lexy::_detail::string_view("UTF-16.code_point"))
+                    return -1;
+                else
+                    return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
+        CHECK(empty == -1);
+
+        auto ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"a");
+        CHECK(ascii == 0x61);
+
+        auto non_ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
+        CHECK(non_ascii == -2);
     }
 }
 
