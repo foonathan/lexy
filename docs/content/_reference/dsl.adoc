@@ -720,7 +720,7 @@ Values::
   All values produced by `rule` if `rule` was parsed successfully.
   All values produced by `recovery_rule` otherwise.
 Error::
-  All errors raised by `rule` or `recovery_rule`.
+  All errors raised by `rule` and `recovery_rule`.
 
 [discrete]
 ==== `lexy::dsl::find`
