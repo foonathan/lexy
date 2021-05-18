@@ -711,7 +711,7 @@ struct version
 <1> This callback will be invoked when we parse `dot_version`.
 <2> This callback will be invoked when we parse `unreleased`.
 
-The third solution is two produce three ints even if we take the `unreleased` branch.
+The third solution is to produce three ints even if we take the `unreleased` branch.
 This can be done with the `dsl::value_c<Constant>` production.
 It will accept any input without consuming anything, but it will always produce a value -- the specified `Constant`.
 So we extend the `unreleased` branch to produce three zeroes once we take the branch:
@@ -1091,7 +1091,7 @@ We then insert it wherever we need to skip whitespace.
 [source,cpp]
 ----
 // Define whitespace globally for convenience.
-constexpr auto ws = dsl::whitespace(dsl::ascii:::blank).
+constexpr auto ws = dsl::whitespace(dsl::ascii::blank).
 
 struct config
 {
