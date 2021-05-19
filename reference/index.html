@@ -1308,7 +1308,7 @@ try_(rule, recovery_rule) : Rule</pre></div></div><div class=paragraph><p>The <c
 If that fails, it recovers from the error and continues as if it didn’t fail.
 The first overload recovers by doing nothing, the second recovers by parsing the recovery rule.</p></div><div class=dlist><dl><dt class=hdlist1>Matches</dt><dd><p>Matches and consumes <code>rule</code>.
 If that fails, matches and consumes <code>recovery_rule</code>.</p></dd><dt class=hdlist1>Values</dt><dd><p>All values produced by <code>rule</code> if <code>rule</code> was parsed successfully.
-All values produced by <code>recovery_rule</code> otherwise.</p></dd><dt class=hdlist1>Error</dt><dd><p>All errors raised by <code>rule</code> or <code>recovery_rule</code>.</p></dd></dl></div><h4 id=_lexydslfind class=discrete><code>lexy::dsl::find</code></h4><div class=listingblock><div class=title><code>lexy/dsl/recover.hpp</code></div><div class=content><pre>find(token_1, ..., token_n) : Rule
+All values produced by <code>recovery_rule</code> otherwise.</p></dd><dt class=hdlist1>Error</dt><dd><p>All errors raised by <code>rule</code> and <code>recovery_rule</code>.</p></dd></dl></div><h4 id=_lexydslfind class=discrete><code>lexy::dsl::find</code></h4><div class=listingblock><div class=title><code>lexy/dsl/recover.hpp</code></div><div class=content><pre>find(token_1, ..., token_n) : Rule
 find(token_1, ..., token_n).limit(token_1, ..., token_n) : Rule</pre></div></div><div class=paragraph><p>The <code>find</code> rule is designed to be used as a recovery rule.
 It matches and consumes everything until it finds one of the tokens.
 The tokens are not consumed.</p></div><div class=paragraph><p>If a limit is specified, recovery fails if the limiting tokens are found first.

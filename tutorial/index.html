@@ -370,7 +370,7 @@ The second one takes no arguments and creates a <code>0.0.0</code> <code>Package
                 <span class=k>return</span> <span class=n>PackageVersion</span><span class=p>{</span><span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>};</span>
             <span class=p>}</span>
         <span class=p>);</span>
-<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>This callback will be invoked when we parse <code>dot_version</code>.</p></li><li><p>This callback will be invoked when we parse <code>unreleased</code>.</p></li></ol></div><div class=paragraph><p>The third solution is two produce three ints even if we take the <code>unreleased</code> branch.
+<span class=p>};</span></code></pre></div></div><div class="colist arabic"><ol><li><p>This callback will be invoked when we parse <code>dot_version</code>.</p></li><li><p>This callback will be invoked when we parse <code>unreleased</code>.</p></li></ol></div><div class=paragraph><p>The third solution is to produce three ints even if we take the <code>unreleased</code> branch.
 This can be done with the <code>dsl::value_c&lt;Constant></code> production.
 It will accept any input without consuming anything, but it will always produce a value — the specified <code>Constant</code>.
 So we extend the <code>unreleased</code> branch to produce three zeroes once we take the branch:</p></div><div class=listingblock><div class=title>Using <code>dsl::value_c</code> for the version production (<a href=https://godbolt.org/z/1nWvEn>godbolt</a>)</div><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=k>struct</span> <span class=nc>version</span>
@@ -557,7 +557,7 @@ We want to support ASCII blank characters (space and tab) surrounding the equal 
 This can be done either manually or automatically.</p></div><div class=sect2><h3 id=_manual_whitespace_skipping>Manual whitespace skipping</h3><div class=paragraph><p>To do this manually, we can use <code>dsl::whitespace(dsl::ascii::blank)</code>.
 This rule, like <code>dsl::while_()</code>, matches zero or more occurrences of the given rule (but internally it is treated as whitespace, not actual text).
 We then insert it wherever we need to skip whitespace.</p></div><div class=listingblock><div class=content><pre class="rouge highlight"><code data-lang=cpp><span class=c1>// Define whitespace globally for convenience.</span>
-<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>ws</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespace</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>:::</span><span class=n>blank</span><span class=p>).</span>
+<span class=k>constexpr</span> <span class=k>auto</span> <span class=n>ws</span> <span class=o>=</span> <span class=n>dsl</span><span class=o>::</span><span class=n>whitespace</span><span class=p>(</span><span class=n>dsl</span><span class=o>::</span><span class=n>ascii</span><span class=o>::</span><span class=n>blank</span><span class=p>).</span>
 
 <span class=k>struct</span> <span class=nc>config</span>
 <span class=p>{</span>
