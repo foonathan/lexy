@@ -18,10 +18,12 @@ set(header_files
         ${include_dir}/_detail/stateless_lambda.hpp
         ${include_dir}/_detail/std.hpp
         ${include_dir}/_detail/string_view.hpp
+        ${include_dir}/_detail/tuple.hpp
         ${include_dir}/_detail/type_name.hpp
 
         ${include_dir}/callback/aggregate.hpp
         ${include_dir}/callback/base.hpp
+        ${include_dir}/callback/bind.hpp
         ${include_dir}/callback/constant.hpp
         ${include_dir}/callback/container.hpp
         ${include_dir}/callback/forward.hpp

@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/invoke.hpp>
 #include <lexy/callback/base.hpp>
+#include <lexy/callback/bind.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/validate.hpp>
 
@@ -92,9 +93,6 @@ private:
 
 namespace lexy
 {
-struct _no_parse_state
-{};
-
 template <typename To, typename... Args>
 constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
@@ -163,7 +161,10 @@ public:
         if constexpr (lexy::is_callback_for<typename value::type, Args&&...>)
         {
             // We have a callback for those arguments; invoke it.
-            return value::get(LEXY_FWD(args)...);
+            if constexpr (lexy::is_callback_context<typename value::type, State>)
+                return value::get[_state](LEXY_FWD(args)...);
+            else
+                return value::get(LEXY_FWD(args)...);
         }
         else if constexpr (lexy::is_sink<typename value::type> //
                            && _is_convertible<return_type_for<Production>, Args&&...>)
@@ -214,7 +215,7 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
 template <typename Production, typename Input, typename Callback>
 constexpr auto parse(const Input& input, Callback callback)
 {
-    return parse<Production>(input, _no_parse_state{}, callback);
+    return parse<Production>(input, _detail::no_bind_context{}, callback);
 }
 } // namespace lexy
 
@@ -235,7 +236,7 @@ struct _state : rule_base
             if constexpr (lexy::_is_parse_handler<handler_t>)
             {
                 using state_type = std::decay_t<decltype(handler.get_state())>;
-                static_assert(!std::is_same_v<state_type, lexy::_no_parse_state>,
+                static_assert(!std::is_same_v<state_type, lexy::_detail::no_bind_context>,
                               "lexy::dsl::state requires passing a state to lexy::parse()");
 
                 if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)

@@ -11,10 +11,12 @@ set(tests
         detail/stateless_lambda.cpp
         detail/std.cpp
         detail/string_view.cpp
+        detail/tuple.cpp
         detail/type_name.cpp
 
         callback/aggregate.cpp
         callback/base.cpp
+        callback/bind.cpp
         callback/constant.cpp
         callback/container.cpp
         callback/forward.cpp

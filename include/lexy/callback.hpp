@@ -7,6 +7,7 @@
 
 #include <lexy/callback/aggregate.hpp>
 #include <lexy/callback/base.hpp>
+#include <lexy/callback/bind.hpp>
 #include <lexy/callback/constant.hpp>
 #include <lexy/callback/container.hpp>
 #include <lexy/callback/forward.hpp>

@@ -170,3 +170,53 @@ TEST_CASE("parse")
     }
 }
 
+namespace parse_value_state
+{
+namespace dsl = lexy::dsl;
+
+struct string_pair
+{
+    int                        state;
+    lexy::_detail::string_view a;
+    lexy::_detail::string_view b;
+};
+
+using parse_value::string_p;
+
+struct string_pair_p
+{
+    static constexpr auto rule
+        = dsl::parenthesized(dsl::p<string_p> + dsl::comma + dsl::p<string_p>);
+
+    static constexpr auto value
+        = lexy::bind(lexy::construct<string_pair>, lexy::parse_state, lexy::values);
+};
+
+using prod = string_pair_p;
+} // namespace parse_value_state
+
+TEST_CASE("parse with state")
+{
+    SUBCASE("value")
+    {
+        using namespace parse_value_state;
+
+        constexpr auto empty = lexy::parse<prod>(lexy::zstring_input(""), 42, lexy::noop);
+        CHECK(!empty);
+
+        constexpr auto abc_abc
+            = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), 42, lexy::noop);
+        CHECK(abc_abc);
+        CHECK(abc_abc.value().state == 42);
+        CHECK(abc_abc.value().a == "abc");
+        CHECK(abc_abc.value().b == "abc");
+
+        constexpr auto abc_123
+            = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), 42, lexy::noop);
+        CHECK(abc_123);
+        CHECK(abc_abc.value().state == 42);
+        CHECK(abc_123.value().a == "abc");
+        CHECK(abc_123.value().b == "123");
+    }
+}
+

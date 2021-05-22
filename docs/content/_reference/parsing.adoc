@@ -132,7 +132,7 @@ namespace lexy
         -> parse_result</* see below */, ErrorCallback>;
 
     template <typename Production, typename Input, typename State, typename ErrorCallback>
-    constexpr auto parse(const Input& input, State&& state, ErrorCallback error_callback)
+    constexpr auto parse(const Input& input, const State& state, ErrorCallback error_callback)
         -> parse_result</* see below */, ErrorCallback>;
 }
 ----
@@ -162,9 +162,8 @@ The return value on success is determined using `Production::value` depending on
 NOTE: The callback `operator>>` is useful for case 3 to create a combined callback and sink with the desired behavior.
 
 The second overload of `lexy::parse()` allows passing an arbitrary state argument.
-This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::parse_state_member` rules which can forward it to the `Production::value` callback.
-If the `.sink()` function of `Production::value` accepts the state as argument, it will be passed to it.
-Otherwise, it will be called without arguments.
+This state will be made available to `lexy::parse_state` (see <<Binding arguments>>) and passed to the `.sink()` of `Production::value`, if it accepts it.
+That way, you can access other information (e.g. allocators for your containers) in the callbacks.
 
 === Callbacks
 
@@ -200,6 +199,9 @@ The callback can be invoked multiple times and the final value is return by call
 
 Callbacks are used by `lexy` to compute the parse result and handle error values.
 They can either be written manually implementing to the above concepts or composed from the pre-defined concepts.
+
+NOTE: When a `Sink` is used as `Production::value`, the `.sink()` member function must either have zero parameters or a single one that matches the state passed to the `lexy::parse()` overload.
+The latter is the case if `lexy::bind_sink()` is used.
 
 ==== Callback adapters
 
@@ -504,6 +506,157 @@ constexpr auto as_utf8_string  = lexy::as_string<std::string, lexy::utf8_encodin
 <1> Constructs a `std::u16string`, deducing the encoding as UTF-16.
 <2> Constructs a `std::string`, specifying the encoding as UTF-8.
 ====
+
+==== Binding arguments
+
+.`lexy/callback/bind.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Callback, typename ... Args>
+    constexpr auto bind(Callback&& callback, Args&&... args);
+}
+----
+
+`lexy::bind()` allows binding some parameters of `callback` to given values or re-ordering arguments before invoking the callback, similar to `std::bind()`.
+
+It can accept either a `Callback` or a `Sink`.
+For a `Callback`, binds the invocation of its `operator()`.
+For a `Sink`, binds the invocation of the `operator()` of the sink's callback that will be invoked for every item.
+
+The arguments to `lexy::bind()` can either be arbitrary expressions or bind placeholders (see below).
+If the Nth argument is an expression, the value of the expression will be passed as the Nth argument to `callback`.
+If the Nth argument is a bind placeholder, the value produced by the placeholder will be passed as the Nth argument to `callback`.
+
+.Example
+[%collapsible]
+====
+[source, cpp]
+----
+constexpr auto make_stars = lexy::bind(lexy::construct<std::string>, lexy::_1 or 0, '*'); // <1>
+std::string a = make_stars(3); // <2>
+std::string b = make_stars(); // <3>
+----
+<1> Bind the `(std::size_t, char)` constructor of `std::string`: the first argument will be forwarded, but the second is fixed to `'*'`.
+<2> `a` will be `"\***"`
+<3> `b` will be `""` as the default value for the first argument is `0`.
+====
+
+.`lexy/callback/bind.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename Sink, typename ... Args>
+    constexpr auto bind_sink(Sink&& callback, Args&&... args);
+}
+----
+
+`lexy::bind_sink()` behaves similar to `lexy::bind()`, but it binds the `.sink()` function of a `Sink` instead.
+
+.Example
+[%collapsible]
+====
+[source, cpp]
+----
+constexpr auto list = lexy::bind_sink(lexy::as_list<std::vector<int>>, lexy::parse_state.map(&MyState::allocator);
+----
+Constructs a list using an allocator by forwarding the `.allocator` member of `MyState` to the `.sink()`.
+This requires that you call `lexy::parse()` passing it a `MyState` object.
+====
+
+NOTE: It does not make sense to use `lexy::nth_value` or `lexy::values` as bind placeholders:
+`.sink()` does not accept any arguments in normal parsing code, it only takes the state accessible via `lexy::parse_state`.
+
+===== `lexy::nth_value`
+
+.`lexy/callback/bind.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <std::size_t N>
+    class nth-value-impl
+    {
+    public:
+        template <typename Arg>
+        constexpr nth-value-impl or_(Arg&& fallback) const;
+        template <typename Arg>
+        constexpr nth-value-impl operator||(Arg&& fallback) const;
+
+        template <typename Fn>
+        constexpr nth-value-impl map(Fn&& fn) const;
+    };
+
+    template <std::size_t N>
+    constexpr auto nth_value = nth-value-impl<N>{};
+
+    inline namespace placeholders
+    {
+        constexpr auto _1 = nth_value<1>;
+        …
+        constexpr auto _8 = nth_value<8>;
+    }
+}
+----
+
+The bind placeholder `lexy::nth_value<N>` expands to the `N`th argument passed to the bound callback, i.e. the `N`th argument produced by a rule.
+Arguments are indexed beginning with 1.
+For convenience, placeholders 1 through 8 are pre-defined.
+
+The member function `.map()` takes a function `fn` and returns a placeholder that will expand to `fn(value)`, where `value` is the `N`th argument.
+It supports member pointers.
+
+The member function `.or_()` (or alternatively spelled `||`/`or`) provides a `fallback` value.
+If there are fewer than `N` arguments, it expands to `fallback`.
+Without a fallback, this would be a compile-time error.
+If the `N`th argument is of type `lexy::nullopt` (e.g. as produced by a `dsl::opt()` rule), it expands to `fallback`.
+Without a fallback, it would expand to the `lexy::nullopt` value unchanged.
+
+If both a mapping and a fallback is specified, the fallback is not passed to `fn` but kept as-is.
+
+===== `lexy::values`
+
+.`lexy/callback/bind.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    constexpr auto values = values-impl{};
+}
+----
+
+The bind placeholder `lexy::values` expands to all arguments passed to the bound callback, unchanged and in the same order.
+If the bound callback is invoked with `N` arguments, it is equivalent to passing `lexy::_1, ..., lexy::nth_value<N>`.
+
+NOTE: If you use `lexy::nth_value<N>` and `lexy::values`, the `N`th argument will be duplicated.
+
+===== `lexy::parse_state`
+
+.`lexy/callback/bind.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    class parse-state-impl
+    {
+    public:
+        template <typename Fn>
+        constexpr parse-state-impl map(Fn&& fn) const;
+    };
+
+    constexpr auto parse_state = parse-state-impl{};
+}
+----
+
+The bind placeholder `lexy::parse_state` expands to the state passed in the second overload of `lexy::parse()`.
+If there is no parse state, e.g. because the first overload was used or the callback is invoked in a different context, the program is ill-formed.
+
+The member function `.map()` takes a function `fn` and returns a placeholder that will expand to `fn(state)`, where `state` is the parse state.
+It supports member pointers.
+
+TIP: Use `lexy::parse_state` to pass allocators to your containers.
 
 ==== Rule-specific callbacks
 
