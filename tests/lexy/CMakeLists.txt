@@ -15,6 +15,7 @@ set(tests
 
         callback/aggregate.cpp
         callback/base.cpp
+        callback/constant.cpp
         callback/container.cpp
         callback/forward.cpp
         callback/integer.cpp

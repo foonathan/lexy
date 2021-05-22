@@ -323,7 +323,18 @@ auto value = result.value(); // <3>
 <3> Do something with the parsed value.
 ====
 
-==== Forwarding result
+==== The constant callback
+
+.`lexy/callback/constant.hpp`
+[source,cpp]
+----
+template <typename Arg>
+consteval auto constant(Arg&& arg);
+----
+
+The `lexy::constant()` callback does not take any arguments and always produces the given value.
+
+==== Forwarding a result
 
 .`lexy/callback/forward.hpp`
 [source,cpp]

@@ -22,6 +22,7 @@ set(header_files
 
         ${include_dir}/callback/aggregate.hpp
         ${include_dir}/callback/base.hpp
+        ${include_dir}/callback/constant.hpp
         ${include_dir}/callback/container.hpp
         ${include_dir}/callback/forward.hpp
         ${include_dir}/callback/integer.hpp
