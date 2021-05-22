@@ -6,6 +6,19 @@
 #define LEXY_CALLBACK_OBJECT_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/detect.hpp>
+
+namespace lexy::_detail
+{
+template <typename T, typename... Args>
+using _detect_brace_construct = decltype(T{LEXY_DECLVAL(Args)...});
+template <typename T, typename... Args>
+constexpr auto is_brace_constructible = _detail::is_detected<_detect_brace_construct, T, Args...>;
+
+template <typename T, typename... Args>
+constexpr auto is_constructible
+    = std::is_constructible_v<T, Args...> || is_brace_constructible<T, Args...>;
+} // namespace lexy::_detail
 
 namespace lexy
 {
@@ -24,7 +37,8 @@ struct _construct
     }
 
     template <typename... Args>
-    constexpr T operator()(Args&&... args) const
+    constexpr auto operator()(Args&&... args) const
+        -> std::enable_if_t<_detail::is_constructible<T, Args&&...>, T>
     {
         if constexpr (std::is_constructible_v<T, Args&&...>)
             return T(LEXY_FWD(args)...);
@@ -54,7 +68,8 @@ struct _new
     }
 
     template <typename... Args>
-    constexpr PtrT operator()(Args&&... args) const
+    constexpr auto operator()(Args&&... args) const
+        -> std::enable_if_t<_detail::is_constructible<T, Args&&...>, PtrT>
     {
         if constexpr (std::is_constructible_v<T, Args&&...>)
         {
