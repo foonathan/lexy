@@ -141,5 +141,19 @@ TEST_CASE("as_string")
         std::string result = LEXY_MOV(sink).finish();
         CHECK(result == "abcabcabchia\u00E4");
     }
+    SUBCASE("sink with allocator")
+    {
+        auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink(std::allocator<int>());
+        sink('a');
+        sink("bcd", 2);
+        sink(char_lexeme);
+        sink(uchar_lexeme);
+        sink(std::string("hi"));
+        sink(lexy::code_point('a'));
+        sink(lexy::code_point(0x00E4));
+
+        std::string result = LEXY_MOV(sink).finish();
+        CHECK(result == "abcabcabchia\u00E4");
+    }
 }
 

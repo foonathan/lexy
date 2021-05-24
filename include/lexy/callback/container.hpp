@@ -9,14 +9,14 @@
 
 namespace lexy
 {
-template <typename T>
+template <typename Container>
 struct _list
 {
     struct _sink
     {
-        T _result{};
+        Container _result;
 
-        using return_type = T;
+        using return_type = Container;
 
         template <typename U>
         auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
@@ -30,7 +30,7 @@ struct _list
             _result.emplace_back(LEXY_FWD(args)...);
         }
 
-        T&& finish() &&
+        Container&& finish() &&
         {
             return LEXY_MOV(_result);
         }
@@ -38,23 +38,28 @@ struct _list
 
     constexpr auto sink() const
     {
-        return _sink{};
+        return _sink{Container()};
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _sink{Container(allocator)};
     }
 };
 
 /// A callback with sink that creates a list of things (e.g. a `std::vector`, `std::list`, etc.).
 /// It repeatedly calls `push_back()` and `emplace_back()`.
-template <typename T>
-constexpr auto as_list = _list<T>{};
+template <typename Container>
+constexpr auto as_list = _list<Container>{};
 
-template <typename T>
+template <typename Container>
 struct _collection
 {
     struct _sink
     {
-        T _result{};
+        Container _result;
 
-        using return_type = T;
+        using return_type = Container;
 
         template <typename U>
         auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
@@ -68,7 +73,7 @@ struct _collection
             _result.emplace(LEXY_FWD(args)...);
         }
 
-        T&& finish() &&
+        Container&& finish() &&
         {
             return LEXY_MOV(_result);
         }
@@ -76,7 +81,12 @@ struct _collection
 
     constexpr auto sink() const
     {
-        return _sink{};
+        return _sink{Container()};
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _sink{Container(allocator)};
     }
 };
 
@@ -93,6 +103,10 @@ class _collect_sink
 {
 public:
     constexpr explicit _collect_sink(Callback callback) : _callback(LEXY_MOV(callback)) {}
+    template <typename C = Container>
+    constexpr explicit _collect_sink(Callback callback, const typename C::allocator_type& allocator)
+    : _result(allocator), _callback(LEXY_MOV(callback))
+    {}
 
     using return_type = Container;
 
@@ -148,6 +162,11 @@ public:
     constexpr auto sink() const
     {
         return _collect_sink<Container, Callback>(_callback);
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _collect_sink<Container, Callback>(_callback, allocator);
     }
 
 private:

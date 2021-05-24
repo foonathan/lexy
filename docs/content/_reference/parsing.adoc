@@ -150,7 +150,6 @@ Invokes the error callback for each parse error (see <<Error handling>>) and col
 The return value on success is determined using `Production::value` depending on three cases:
 
 * `Production::rule` does not contain a list. Then all arguments will be forwarded to `Production::value` as a callback whose result is returned.
-  The `Production::value` callback must be present.
 * `Production::rule` contains a list and no other rule produces a value. Then `Production::value` will be used as sink for the list values.
   If `Production::value` is also a callback that accepts the result of the sink as argument,
   it will be invoked with the sink result and the processed result returned.
@@ -164,6 +163,8 @@ NOTE: The callback `operator>>` is useful for case 3 to create a combined callba
 
 The second overload of `lexy::parse()` allows passing an arbitrary state argument.
 This will be made available to the `lexy::dsl::parse_state` and `lexy::dsl::parse_state_member` rules which can forward it to the `Production::value` callback.
+If the `.sink()` function of `Production::value` accepts the state as argument, it will be passed to it.
+Otherwise, it will be called without arguments.
 
 === Callbacks
 
@@ -189,12 +190,12 @@ struct Sink
         return_type&& finish() &&;
     };
 
-    _sink sink() const;
+    _sink sink(Args&&... args) const;
 };
 ----
 
 A `Callback` is a function object whose return type is specified by a member typedef.
-A `Sink` is a type with a `sink()` member function that returns a callback.
+A `Sink` is a type with a `sink()` member function, which can take arbitrary arguments (e.g. allocators) and returns a callback.
 The callback can be invoked multiple times and the final value is return by calling `.finish()`.
 
 Callbacks are used by `lexy` to compute the parse result and handle error values.
@@ -229,6 +230,7 @@ namespace lexy
 Creates a sink constructing the given `T` using the given functions.
 The sink will value-construct the `T` and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
 It supports function pointers, lambdas, and member function or data pointers.
+The sink function does not accept any arguments.
 
 .Example
 [%collapsible]
@@ -399,7 +401,9 @@ namespace lexy
 ----
 
 `lexy::as_list<Container>` is a sink.
-It first default constructs a `Container` and then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
+If `.sink()` is called with no arguments, it default constructs a `Container`.
+If `.sink()` is called with a single argument of type `Container::allocator_type`, it constructs an empty `Container` using that allocator.
+It then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
 
 `lexy::as_collection<Container>` is like `lexy::as_list<Container>`, but instead of calling `push_back()` and `emplace_back()`, it calls `insert()` and `emplace()`.
 
@@ -435,7 +439,7 @@ its sink callback forwards all arguments and increases a count.
 The final count as a `std::size_t` is then returned by `finish()`.
 
 The second version requires that the callback returns non-`void`.
-Its sink callback creates a default constructed `Container`.
+Its sink callback creates a default constructed `Container`, optionally using a passed `Container::allocator_type`.
 It then invokes the callback multiple times and adds the result to the container using `.push_back()`.
 The final container is then returned.
 
@@ -454,7 +458,7 @@ namespace lexy
 }
 ----
 
-`lexy::as_string<String, Encoding>` is both a callback and a sink.
+`lexy::as_string<String, Encoding>` is both a callback and a sink, which accepts no arguments.
 It constructs a `String` object in the given `Encoding`.
 If no encoding is specified, it deduces one from the character type of the string.
 
@@ -472,7 +476,7 @@ Then it accepts:
 * A `lexy::code_point`. It is encoded into a local character array according to the specified `Encoding`.
   Then the string is constructed using a two-argument `(const CharT*, std::size_t)` constructor.
 
-As a sink, it first default constructs the string.
+As a sink, it first default constructs the string, optionally using a passed `String::allocator_type`.
 Then it will repeatedly append the following arguments:
 
 * A single `CharT`, which is convertible to the strings character type.

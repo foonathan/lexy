@@ -189,7 +189,7 @@ struct _as_string
 
     struct _sink
     {
-        String _result{};
+        String _result;
 
         using return_type = String;
 
@@ -245,9 +245,15 @@ struct _as_string
             return LEXY_MOV(_result);
         }
     };
+
     constexpr auto sink() const
     {
-        return _sink{};
+        return _sink{String()};
+    }
+    template <typename S = String>
+    constexpr auto sink(const typename S::allocator_type& allocator) const
+    {
+        return _sink{String(allocator)};
     }
 };
 

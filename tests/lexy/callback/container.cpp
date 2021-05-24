@@ -10,24 +10,75 @@
 #include <string>
 #include <vector>
 
+namespace
+{
+template <typename T>
+struct my_allocator : std::allocator<T>
+{
+    template <typename U>
+    using rebind = my_allocator<U>;
+
+    my_allocator(int i)
+    {
+        CHECK(i == 42);
+    }
+    template <typename U>
+    my_allocator(my_allocator<U>)
+    {}
+};
+} // namespace
+
 TEST_CASE("as_list")
 {
-    auto sink = lexy::as_list<std::vector<std::string>>.sink();
-    sink("a");
-    sink(std::string("b"));
-    sink(1, 'c');
-    std::vector<std::string> result = LEXY_MOV(sink).finish();
-    CHECK(result == std::vector<std::string>{"a", "b", "c"});
+    SUBCASE("default")
+    {
+        constexpr auto sink = lexy::as_list<std::vector<std::string>>;
+        auto           cb   = sink.sink();
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        std::vector<std::string> result = LEXY_MOV(cb).finish();
+        CHECK(result == std::vector<std::string>{"a", "b", "c"});
+    }
+    SUBCASE("allocator")
+    {
+        constexpr auto sink = lexy::as_list<std::vector<std::string, my_allocator<std::string>>>;
+        auto           cb   = sink.sink(42);
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        auto result = LEXY_MOV(cb).finish();
+        CHECK(result == decltype(result)({"a", "b", "c"}, 42));
+    }
 }
 
 TEST_CASE("as_collection")
 {
-    auto sink = lexy::as_collection<std::set<std::string>>.sink();
-    sink("a");
-    sink(std::string("b"));
-    sink(1, 'c');
-    std::set<std::string> result = LEXY_MOV(sink).finish();
-    CHECK(result == std::set<std::string>{"a", "b", "c"});
+    SUBCASE("default")
+    {
+        constexpr auto sink = lexy::as_collection<std::set<std::string>>;
+        auto           cb   = sink.sink();
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        std::set<std::string> result = LEXY_MOV(cb).finish();
+        CHECK(result == std::set<std::string>{"a", "b", "c"});
+    }
+    SUBCASE("allocator")
+    {
+        constexpr auto sink
+            = lexy::as_collection<std::set<std::string, std::less<>, my_allocator<std::string>>>;
+        auto cb = sink.sink(42);
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        auto result = LEXY_MOV(cb).finish();
+        CHECK(result == decltype(result)({"a", "b", "c"}, 42));
+    }
 }
 
 TEST_CASE("collect")
@@ -62,10 +113,21 @@ TEST_CASE("collect")
         cb(3);
 
         std::vector<int> result = LEXY_MOV(cb).finish();
-        REQUIRE(result.size() == 3);
-        CHECK(result[0] == 2);
-        CHECK(result[1] == 4);
-        CHECK(result[2] == 6);
+        CHECK(result == std::vector<int>{2, 4, 6});
+    }
+    SUBCASE("non-void with allocator")
+    {
+        constexpr auto callback = lexy::callback<int>([](int i) { return 2 * i; });
+
+        constexpr auto collect = lexy::collect<std::vector<int, my_allocator<int>>>(callback);
+
+        auto cb = collect.sink(42);
+        cb(1);
+        cb(2);
+        cb(3);
+
+        auto result = LEXY_MOV(cb).finish();
+        CHECK(result == decltype(result)({2, 4, 6}, 42));
     }
 }
 

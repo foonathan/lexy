@@ -138,7 +138,11 @@ public:
     template <typename Production>
     constexpr auto get_sink(Production)
     {
-        return lexy::production_value<Production>::get.sink();
+        using value = lexy::production_value<Production>;
+        if constexpr (lexy::is_sink<typename value::type, const State&>)
+            return value::get.sink(_state);
+        else
+            return value::get.sink();
     }
 
     template <typename Production, typename Iterator>

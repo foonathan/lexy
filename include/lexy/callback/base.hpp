@@ -46,13 +46,13 @@ constexpr bool is_callback_for
     = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 
 /// Returns the type of the `.sink()` function.
-template <typename Sink>
-using sink_callback = decltype(LEXY_DECLVAL(Sink).sink());
+template <typename Sink, typename... Args>
+using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
 
-template <typename T>
-using _detect_sink = decltype(LEXY_DECLVAL(T).sink().finish());
-template <typename T>
-constexpr bool is_sink = _detail::is_detected<_detect_sink, T>;
+template <typename T, typename... Args>
+using _detect_sink = decltype(LEXY_DECLVAL(T).sink(LEXY_DECLVAL(Args)...).finish());
+template <typename T, typename... Args>
+constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy
 
 //=== adapters ===//
@@ -150,9 +150,10 @@ struct _compose_s
 
     using return_type = typename Callback::return_type;
 
-    constexpr auto sink() const
+    template <typename... Args>
+    constexpr auto sink(Args&&... args) const -> decltype(_sink.sink(LEXY_FWD(args)...))
     {
-        return _sink.sink();
+        return _sink.sink(LEXY_FWD(args)...);
     }
 
     template <typename... Args>
@@ -177,8 +178,7 @@ constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
 }
 
 /// Composes a sink with a callback.
-template <typename Sink, typename Callback, typename = _detect_sink<Sink>,
-          typename = _detect_callback<Callback>>
+template <typename Sink, typename Callback, typename = _detect_callback<Callback>>
 constexpr auto operator>>(Sink sink, Callback cb)
 {
     return _compose_s<Sink, Callback>{LEXY_MOV(sink), LEXY_MOV(cb)};
