@@ -131,9 +131,10 @@ struct arg_quoted
 {
     struct interpolation
     {
-        static constexpr auto rule
-            = dsl::curly_bracketed(dsl::parse_state + dsl::recurse<argument>);
-        static constexpr auto value = lexy::callback<std::string>(&shell::interpreter::lookup_var);
+        static constexpr auto rule = dsl::curly_bracketed(dsl::recurse<argument>);
+        static constexpr auto value
+            = lexy::bind(lexy::callback<std::string>(&shell::interpreter::lookup_var),
+                         lexy::parse_state, lexy::values);
     };
 
     static constexpr auto escaped_symbols = lexy::symbol_table<char> //
@@ -164,9 +165,11 @@ struct arg_var
         auto bracketed = dsl::curly_bracketed(dsl::recurse<argument>);
         auto name      = bracketed | dsl::else_ >> bare;
 
-        return dsl::dollar_sign >> dsl::parse_state + name;
+        return dsl::dollar_sign >> name;
     }();
-    static constexpr auto value = lexy::callback<std::string>(&shell::interpreter::lookup_var);
+    static constexpr auto value
+        = lexy::bind(lexy::callback<std::string>(&shell::interpreter::lookup_var),
+                     lexy::parse_state, lexy::values);
 };
 
 // An argument to a command.

@@ -102,15 +102,10 @@ template <typename State, typename Input, typename ErrorCallback>
 class _parse_handler
 {
 public:
-    constexpr explicit _parse_handler(State& state, const Input& input,
+    constexpr explicit _parse_handler(const State& state, const Input& input,
                                       const ErrorCallback& callback)
     : _validate(input, callback), _state(state)
     {}
-
-    constexpr State& get_state()
-    {
-        return _state;
-    }
 
     template <typename T>
     constexpr auto get_result(lexy::_detail::lazy_init<T>&& value) &&
@@ -193,13 +188,8 @@ public:
 
 private:
     lexy::validate_handler<Input, ErrorCallback> _validate;
-    State&                                       _state;
+    const State&                                 _state;
 };
-
-template <typename T>
-constexpr bool _is_parse_handler = false;
-template <typename Input, typename State, typename Callback>
-constexpr bool _is_parse_handler<_parse_handler<Input, State, Callback>> = true;
 
 /// Parses the production into a value, invoking the callback on error.
 template <typename Production, typename Input, typename State, typename Callback>
@@ -218,50 +208,6 @@ constexpr auto parse(const Input& input, Callback callback)
     return parse<Production>(input, _detail::no_bind_context{}, callback);
 }
 } // namespace lexy
-
-namespace lexyd
-{
-template <auto Fn>
-struct _state : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            auto& handler   = context.handler();
-            using handler_t = std::remove_reference_t<decltype(handler)>;
-
-            if constexpr (lexy::_is_parse_handler<handler_t>)
-            {
-                using state_type = std::decay_t<decltype(handler.get_state())>;
-                static_assert(!std::is_same_v<state_type, lexy::_detail::no_bind_context>,
-                              "lexy::dsl::state requires passing a state to lexy::parse()");
-
-                if constexpr (std::is_same_v<decltype(Fn), decltype(nullptr)>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                             handler.get_state());
-                else
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                             lexy::_detail::invoke(Fn, handler.get_state()));
-            }
-            else
-            {
-                // Not used with parse, ignore.
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            }
-        }
-    };
-};
-
-/// Produces the parsing state passed to `parse()` as a value.
-constexpr auto parse_state = _state<nullptr>{};
-
-/// Produces a member of the parsing state as a value.
-template <auto Fn>
-constexpr auto parse_state_member = _state<Fn>{};
-} // namespace lexyd
 
 #endif // LEXY_PARSE_HPP_INCLUDED
 

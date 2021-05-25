@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-05-25
+
+Removed `dsl::parse_state` and `dsl::parse_state_member`; use `lexy::bind()` with `lexy::parse_state` instead.
+
 == 2021-04-24
 
 * The alternative rule `/` now tries to find the longest match instead of the first one.
