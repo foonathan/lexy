@@ -1810,6 +1810,18 @@ Errors::
 ==== `lexy::dsl::plus_sign`, `lexy::dsl::minus_sign`, and `lexy::dsl::sign`
 
 .`lexy/dsl/sign.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    struct plus_sign {};
+    struct minus_sign {};
+}
+----
+
+`lexy::plus_sign` and `lexy::minus_sign` are empty tag types that are implicitly convertible to `+1`/`-1`.
+
+.`lexy/dsl/sign.hpp`
 ----
 plus_sign  : Rule
 minus_sign : Rule
@@ -1827,9 +1839,9 @@ Matches::
   `sign`:::
     Matches and consumes a `+` or `-` character, if there is one.
 Values:::
-  If a `+` sign was consumed, the value is `+1`.
-  If a `-` sign was consumed, the value is `-1`.
-  If no sign was consumed, the value is `+1`.
+  If a `+` sign was consumed, the value is `lexy::plus_sign`.
+  If a `-` sign was consumed, the value is `lexy::minus_sign`.
+  If no sign was consumed, the value is `lexy::plus_sign`.
 Errors::
   n/a (they don't fail)
 

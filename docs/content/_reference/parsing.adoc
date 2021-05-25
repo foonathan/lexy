@@ -682,7 +682,7 @@ namespace lexy
 }
 ----
 
-The callback `lexy::as_integer<T>` constructs an integer type `T` and has two overloads:
+The callback `lexy::as_integer<T>` constructs an integer type `T` and has three overloads:
 
 [source,cpp]
 ----
@@ -690,7 +690,9 @@ template <typename Integer>
 T operator()(const Integer& value) const; // <1>
 
 template <typename Integer>
-T operator()(int sign, const Integer& value) const; // <2>
+T operator()(lexy::plus_sign sign, const Integer& value) const;  // <2>
+template <typename Integer>
+T operator()(lexy::minus_sign sign, const Integer& value) const; // <2>
 ----
 <1> Returns `T(value)`.
 <2> Returns `T(sign * value)`.

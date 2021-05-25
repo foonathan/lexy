@@ -5,7 +5,9 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-05-25
 
-Removed `dsl::parse_state` and `dsl::parse_state_member`; use `lexy::bind()` with `lexy::parse_state` instead.
+* Removed `dsl::parse_state` and `dsl::parse_state_member`; use `lexy::bind()` with `lexy::parse_state` instead.
+* Changed `dsl::[plus/minus_]sign` to produce `lexy::plus/minus_sign` instead of `+1`/`-1`.
+  Also changed callback `lexy::as_integer` to adapt.
 
 == 2021-04-24
 

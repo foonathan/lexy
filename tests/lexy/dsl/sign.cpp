@@ -16,9 +16,9 @@ TEST_CASE("dsl::plus_sign")
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char*, int i)
+        LEXY_VERIFY_FN int success(const char*, lexy::plus_sign sign)
         {
-            return i;
+            return sign;
         }
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
@@ -45,9 +45,13 @@ TEST_CASE("dsl::minus_sign")
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char*, int i)
+        LEXY_VERIFY_FN int success(const char*, lexy::plus_sign sign)
         {
-            return i;
+            return sign;
+        }
+        LEXY_VERIFY_FN int success(const char*, lexy::minus_sign sign)
+        {
+            return sign;
         }
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
@@ -74,10 +78,15 @@ TEST_CASE("dsl::sign")
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char* cur, int i)
+        LEXY_VERIFY_FN int success(const char* cur, lexy::plus_sign sign)
         {
             LEXY_VERIFY_CHECK(*cur == '\0');
-            return i;
+            return sign;
+        }
+        LEXY_VERIFY_FN int success(const char* cur, lexy::minus_sign sign)
+        {
+            LEXY_VERIFY_CHECK(*cur == '\0');
+            return sign;
         }
 
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
