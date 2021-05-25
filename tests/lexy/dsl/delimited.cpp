@@ -7,6 +7,7 @@
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
 
@@ -108,8 +109,8 @@ TEST_CASE("dsl::delimited()")
         struct close
         {};
 
-        static constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
-                                               LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp);
+        static constexpr auto rule = delimited(LEXY_LIT("(") >> lexy::dsl::label<open>,
+                                               LEXY_LIT(")") >> lexy::dsl::label<close>)(cp);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
@@ -137,7 +138,8 @@ TEST_CASE("dsl::delimited()")
                 };
                 return b{};
             }
-            LEXY_VERIFY_FN int success(const char* cur, open, int count, close)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::label<open>, int count,
+                                       lexy::label<close>)
             {
                 LEXY_VERIFY_CHECK(cur - str >= count + 2);
                 return count;
@@ -370,8 +372,8 @@ TEST_CASE("dsl::delimited with escape")
         static constexpr auto escape_rule
             = lexy::dsl::escape(LEXY_LIT("$")).capture(lexy::dsl::ascii::print);
         static constexpr auto rule
-            = delimited(LEXY_LIT("(") >> lexy::dsl::value_t<open>,
-                        LEXY_LIT(")") >> lexy::dsl::value_t<close>)(cp, escape_rule);
+            = delimited(LEXY_LIT("(") >> lexy::dsl::label<open>,
+                        LEXY_LIT(")") >> lexy::dsl::label<close>)(cp, escape_rule);
 
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(lexy::is_branch<decltype(rule)>);
@@ -400,7 +402,8 @@ TEST_CASE("dsl::delimited with escape")
                 };
                 return b{};
             }
-            LEXY_VERIFY_FN int success(const char* cur, open, int count, close)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::label<open>, int count,
+                                       lexy::label<close>)
             {
                 LEXY_VERIFY_CHECK(cur[-1] == ')');
                 return count;
@@ -579,7 +582,7 @@ TEST_CASE("dsl::escape")
     constexpr auto escape = lexy::dsl::escape(LEXY_LIT("$"));
     SUBCASE(".rule()")
     {
-        static constexpr auto rule = escape.rule(LEXY_LIT("abc") >> lexy::dsl::value_c<0>);
+        static constexpr auto rule = escape.rule(LEXY_LIT("abc") >> lexy::dsl::id<0>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback
@@ -616,9 +619,9 @@ TEST_CASE("dsl::escape")
     }
     SUBCASE("multiple rules")
     {
-        static constexpr auto rule = escape.rule(LEXY_LIT("a") >> lexy::dsl::value_c<1>)
-                                         .rule(LEXY_LIT("b") >> lexy::dsl::value_c<2>)
-                                         .rule(lexy::dsl::else_ >> lexy::dsl::value_c<0>);
+        static constexpr auto rule = escape.rule(LEXY_LIT("a") >> lexy::dsl::id<1>)
+                                         .rule(LEXY_LIT("b") >> lexy::dsl::id<2>)
+                                         .rule(lexy::dsl::else_ >> lexy::dsl::id<0>);
         CHECK(lexy::is_branch<decltype(rule)>);
 
         struct callback

@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_INTEGER_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/dsl/sign.hpp>
 
 namespace lexy
 {
@@ -20,9 +21,14 @@ struct _int
         return T(value);
     }
     template <typename Integer>
-    constexpr T operator()(int sign, const Integer& value) const
+    constexpr T operator()(lexy::plus_sign, const Integer& value) const
     {
-        return T(sign * value);
+        return T(value);
+    }
+    template <typename Integer>
+    constexpr T operator()(lexy::minus_sign, const Integer& value) const
+    {
+        return T(-value);
     }
 };
 

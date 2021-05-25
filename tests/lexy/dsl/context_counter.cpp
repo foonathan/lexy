@@ -6,7 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/value.hpp>
+#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::context_counter")
 {
@@ -88,7 +88,7 @@ TEST_CASE("dsl::context_counter")
     }
 
     static constexpr auto compare
-        = counter.compare<0>(lexy::dsl::value_c<-1>, lexy::dsl::value_c<0>, lexy::dsl::value_c<1>);
+        = counter.compare<0>(lexy::dsl::id<-1>, lexy::dsl::id<0>, lexy::dsl::id<1>);
     SUBCASE("compare - less")
     {
         static constexpr auto rule = counter.create<-1>() + compare;

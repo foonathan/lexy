@@ -37,7 +37,6 @@ set(tests
         dsl/choice.cpp
         dsl/code_point.cpp
         dsl/combination.cpp
-        dsl/context.cpp
         dsl/context_counter.cpp
         dsl/context_flag.cpp
         dsl/context_lexeme.cpp
@@ -72,7 +71,6 @@ set(tests
         dsl/times.cpp
         dsl/token.cpp
         dsl/until.cpp
-        dsl/value.cpp
         dsl/while.cpp
         dsl/whitespace.cpp
 

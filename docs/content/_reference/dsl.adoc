@@ -435,44 +435,6 @@ it still should only be used when required.
 The following rules are used to produce additional values without any additional matching.
 
 [discrete]
-==== `lexy::dsl::value_*`
-
-.`lexy/dsl/value.hpp`
-----
-value_c<Value> : Rule
-value_f<Fn>    : Rule
-value_t<T>     : Rule
-value_str<Str> : Rule
-
-LEXY_VALUE_STR(Str) : Rule
-----
-
-The `value_*` rules create a constant value without parsing anything.
-
-Requires::
-  * `Value` is any constant.
-  * `Fn` is a pointer to a function taking no arguments.
-  * `T` is a default-constructible type.
-  * `Str` is a string literal.
-Matches::
-  Any input, but does not consume anything.
-Value::
-  `value_c`::: The specified constant.
-  `value_f`::: The result of invoking the function.
-  `value_t`::: A default constructed object of the specified type.
-  `value_str`::: The string literal as a pointer, followed by its size.
-Error::
-  n/a (it does not fail)
-
-TIP: Use the `value_*` rules only to create symmetry between different branches.
-Everything they do, can also be achieved using callbacks, which is usually a better solution.
-
-WARNING: The function might not be called or the object might not be constructed in all situations. You cannot rely on their side effects.
-
-NOTE: `value_str<Str>` requires C++20 support for extended NTTPs.
-Use the `LEXY_VALUE_STR(Str)` macro if your compiler does not support them.
-
-[discrete]
 ==== `lexy::dsl::nullopt`
 
 .`lexy/dsl/option.hpp`

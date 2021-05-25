@@ -5,20 +5,20 @@
 #include <lexy/dsl/times.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/value.hpp>
+#include <lexy/dsl/label.hpp>
 
 TEST_CASE("times")
 {
     SUBCASE("no sep")
     {
-        static constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>);
+        static constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::id<1>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<lexy::id<1>> value)
             {
                 LEXY_VERIFY_CHECK(cur - str == 6);
                 LEXY_VERIFY_CHECK(value[0] == 1);
@@ -43,15 +43,14 @@ TEST_CASE("times")
     }
     SUBCASE("sep")
     {
-        static constexpr auto rule
-            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, sep(LEXY_LIT(",")));
+        static constexpr auto rule = twice(LEXY_LIT("abc") + lexy::dsl::id<1>, sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<lexy::id<1>> value)
             {
                 LEXY_VERIFY_CHECK(cur - str == 7);
                 LEXY_VERIFY_CHECK(value[0] == 1);
@@ -92,14 +91,14 @@ TEST_CASE("times")
     SUBCASE("trailing_sep")
     {
         static constexpr auto rule
-            = twice(LEXY_LIT("abc") + lexy::dsl::value_c<1>, trailing_sep(LEXY_LIT(",")));
+            = twice(LEXY_LIT("abc") + lexy::dsl::id<1>, trailing_sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<int> value)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<lexy::id<1>> value)
             {
                 LEXY_VERIFY_CHECK(value[0] == 1);
                 LEXY_VERIFY_CHECK(value[1] == 1);

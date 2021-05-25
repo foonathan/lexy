@@ -5,9 +5,9 @@
 #include <lexy/dsl/terminator.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
-#include <lexy/dsl/value.hpp>
 #include <lexy/dsl/while.hpp>
 
 TEST_CASE("dsl::terminator")
@@ -308,7 +308,7 @@ TEST_CASE("dsl::terminator")
     }
     SUBCASE("branch")
     {
-        constexpr auto terminator = lexy::dsl::terminator(LEXY_LIT(";") >> lexy::dsl::value_c<0>);
+        constexpr auto terminator = lexy::dsl::terminator(LEXY_LIT(";") >> lexy::dsl::id<0>);
         constexpr auto inner      = LEXY_LIT("abc");
 
         struct callback
@@ -367,7 +367,7 @@ TEST_CASE("dsl::terminator")
         SUBCASE("basic")
         {
             static constexpr auto rule       = terminator(inner);
-            constexpr auto        equivalent = inner + LEXY_LIT(";") + lexy::dsl::value_c<0>;
+            constexpr auto        equivalent = inner + LEXY_LIT(";") + lexy::dsl::id<0>;
             CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
 
             auto result = LEXY_VERIFY("abc;");

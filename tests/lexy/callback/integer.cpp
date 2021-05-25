@@ -11,7 +11,10 @@ TEST_CASE("as_integer")
     int no_sign = lexy::as_integer<int>(42);
     CHECK(no_sign == 42);
 
-    int sign = lexy::as_integer<int>(-1, 42);
-    CHECK(sign == -42);
+    int minus_sign = lexy::as_integer<int>(lexy::minus_sign{}, 42);
+    CHECK(minus_sign == -42);
+
+    int plus_sign = lexy::as_integer<int>(lexy::plus_sign{}, 42);
+    CHECK(plus_sign == 42);
 }
 

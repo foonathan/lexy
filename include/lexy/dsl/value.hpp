@@ -8,6 +8,13 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_VALUE
+#    define LEXY_DEPRECATED_VALUE
+#else
+#    define LEXY_DEPRECATED_VALUE                                                                  \
+        [[deprecated("`dsl::value_*()` has been replaced by `lexy::bind()`")]]
+#endif
+
 namespace lexy
 {
 struct _match_context;
@@ -34,7 +41,7 @@ struct _valc : rule_base
 
 /// Produces the specified value without parsing anything.
 template <auto Value>
-constexpr auto value_c = _valc<Value>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_c = _valc<Value>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -58,7 +65,7 @@ struct _valf : rule_base
 
 /// Produces the value returned by the function without parsing anything.
 template <auto F>
-constexpr auto value_f = _valf<F>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_f = _valf<F>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -82,7 +89,7 @@ struct _valt : rule_base
 
 /// Produces a default constructed value of the specified type without parsing anything.
 template <typename T>
-constexpr auto value_t = _valt<T>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_t = _valt<T>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -111,7 +118,7 @@ struct _vals : rule_base
 #if LEXY_HAS_NTTP
 /// Produces the string value.
 template <lexy::_detail::string_literal Str>
-constexpr auto value_str = _vals<lexy::_detail::type_string<Str>>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_str = _vals<lexy::_detail::type_string<Str>>{};
 #endif
 
 #define LEXY_VALUE_STR(Str)                                                                        \

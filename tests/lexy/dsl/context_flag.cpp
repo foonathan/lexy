@@ -6,7 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/value.hpp>
+#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::context_flag")
 {
@@ -14,7 +14,7 @@ TEST_CASE("dsl::context_flag")
 
     static constexpr auto flag = lexy::dsl::context_flag<struct id>;
     static constexpr auto get
-        = [] { return flag.select(lexy::dsl::value_c<true>, lexy::dsl::value_c<false>); }();
+        = [] { return flag.select(lexy::dsl::id<true>, lexy::dsl::id<false>); }();
 
     struct callback
     {
