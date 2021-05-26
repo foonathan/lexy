@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -169,7 +169,10 @@ struct _char8_str
 #ifndef LEXY_EMPTY_MEMBER
 
 #    if defined(__has_cpp_attribute)
-#        if __has_cpp_attribute(no_unique_address)
+#        if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 11
+//           GCC < 11 has buggy support, see e.g. https://godbolt.org/z/jhd9jPTYv
+#            define LEXY_HAS_EMPTY_MEMBER 0
+#        elif __has_cpp_attribute(no_unique_address)
 #            define LEXY_HAS_EMPTY_MEMBER 1
 #        endif
 #    endif
@@ -593,10 +596,6 @@ struct default_encoding
             return static_cast<int_type>(value);
         }
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-        = delete;
 };
 
 // An encoding where the input is assumed to be valid ASCII.
@@ -620,16 +619,6 @@ struct ascii_encoding
     {
         return int_type(c);
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_ascii());
-        LEXY_PRECONDITION(size >= 1);
-
-        *buffer = char_type(cp.value());
-        return 1;
-    }
 };
 
 /// An encoding where the input is assumed to be valid UTF-8.
@@ -650,60 +639,6 @@ struct utf8_encoding
     static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
-    }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-
-        // Taken from http://www.herongyang.com/Unicode/UTF-8-UTF-8-Encoding-Algorithm.html.
-        if (cp.is_ascii())
-        {
-            LEXY_PRECONDITION(size >= 1);
-
-            buffer[0] = char_type(cp.value());
-            return 1;
-        }
-        else if (cp.value() <= 0x07'FF)
-        {
-            LEXY_PRECONDITION(size >= 2);
-
-            auto first  = (cp.value() >> 6) & 0x1F;
-            auto second = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xC0 | first);
-            buffer[1] = char_type(0x80 | second);
-            return 2;
-        }
-        else if (cp.value() <= 0xFF'FF)
-        {
-            LEXY_PRECONDITION(size >= 3);
-
-            auto first  = (cp.value() >> 12) & 0x0F;
-            auto second = (cp.value() >> 6) & 0x3F;
-            auto third  = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xE0 | first);
-            buffer[1] = char_type(0x80 | second);
-            buffer[2] = char_type(0x80 | third);
-            return 3;
-        }
-        else
-        {
-            LEXY_PRECONDITION(size >= 4);
-
-            auto first  = (cp.value() >> 18) & 0x07;
-            auto second = (cp.value() >> 12) & 0x3F;
-            auto third  = (cp.value() >> 6) & 0x3F;
-            auto fourth = (cp.value() >> 0) & 0x3F;
-
-            buffer[0] = char_type(0xF0 | first);
-            buffer[1] = char_type(0x80 | second);
-            buffer[2] = char_type(0x80 | third);
-            buffer[3] = char_type(0x80 | fourth);
-            return 4;
-        }
     }
 };
 template <>
@@ -727,34 +662,6 @@ struct utf16_encoding
     static constexpr int_type to_int_type(char_type c)
     {
         return int_type(c);
-    }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-
-        if (cp.is_bmp())
-        {
-            LEXY_PRECONDITION(size >= 1);
-
-            buffer[0] = char_type(cp.value());
-            return 1;
-        }
-        else
-        {
-            // Algorithm implemented from
-            // https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF.
-            LEXY_PRECONDITION(size >= 2);
-
-            auto u_prime       = cp.value() - 0x1'0000;
-            auto high_ten_bits = u_prime >> 10;
-            auto low_ten_bits  = u_prime & 0b0000'0011'1111'1111;
-
-            buffer[0] = char_type(0xD800 + high_ten_bits);
-            buffer[1] = char_type(0xDC00 + low_ten_bits);
-            return 2;
-        }
     }
 };
 template <>
@@ -780,16 +687,6 @@ struct utf32_encoding
     {
         return c;
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-    {
-        LEXY_PRECONDITION(cp.is_valid());
-        LEXY_PRECONDITION(size >= 1);
-
-        *buffer = char_type(cp.value());
-        return 1;
-    }
 };
 template <>
 constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
@@ -813,10 +710,6 @@ struct byte_encoding
     {
         return int_type(c);
     }
-
-    static constexpr std::size_t encode_code_point(code_point cp, char_type* buffer,
-                                                   std::size_t size)
-        = delete;
 };
 template <>
 constexpr bool byte_encoding::is_secondary_char_type<char> = true;
@@ -1553,6 +1446,270 @@ LEXY_CONSTEVAL const char* type_name()
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
+#define LEXY_CALLBACK_BASE_HPP_INCLUDED
+
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
+#define LEXY_DETAIL_INVOKE_HPP_INCLUDED
+
+
+
+namespace lexy::_detail
+{
+template <typename MemberPtr, bool = std::is_member_object_pointer_v<MemberPtr>>
+struct _mem_invoker;
+template <typename R, typename ClassT>
+struct _mem_invoker<R ClassT::*, true>
+{
+    static constexpr decltype(auto) invoke(R ClassT::*f, ClassT& object)
+    {
+        return object.*f;
+    }
+    static constexpr decltype(auto) invoke(R ClassT::*f, const ClassT& object)
+    {
+        return object.*f;
+    }
+
+    template <typename Ptr>
+    static constexpr auto invoke(R ClassT::*f, Ptr&& ptr) -> decltype((*LEXY_FWD(ptr)).*f)
+    {
+        return (*LEXY_FWD(ptr)).*f;
+    }
+};
+template <typename F, typename ClassT>
+struct _mem_invoker<F ClassT::*, false>
+{
+    template <typename ObjectT, typename... Args>
+    static constexpr auto _invoke(int, F ClassT::*f, ObjectT&& object, Args&&... args)
+        -> decltype((LEXY_FWD(object).*f)(LEXY_FWD(args)...))
+    {
+        return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
+    }
+    template <typename PtrT, typename... Args>
+    static constexpr auto _invoke(short, F ClassT::*f, PtrT&& ptr, Args&&... args)
+        -> decltype(((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...))
+    {
+        return ((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...);
+    }
+
+    template <typename... Args>
+    static constexpr auto invoke(F ClassT::*f, Args&&... args)
+        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
+    {
+        return _invoke(0, f, LEXY_FWD(args)...);
+    }
+};
+
+template <typename ClassT, typename F, typename... Args>
+constexpr auto invoke(F ClassT::*f, Args&&... args)
+    -> decltype(_mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...))
+{
+    return _mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...);
+}
+
+template <typename F, typename... Args>
+constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(args)...))
+{
+    return LEXY_FWD(f)(LEXY_FWD(args)...);
+}
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
+
+
+//=== implementation ===//
+namespace lexy
+{
+template <typename Fn>
+struct _fn_holder
+{
+    Fn fn;
+
+    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    {
+        return _detail::invoke(fn, LEXY_FWD(args)...);
+    }
+};
+
+template <typename Fn>
+using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
+} // namespace lexy
+
+//=== traits ===//
+namespace lexy
+{
+template <typename T>
+using _detect_callback = typename T::return_type;
+template <typename T>
+constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
+
+template <typename T, typename... Args>
+using _detect_callback_for = decltype(LEXY_DECLVAL(T)(LEXY_DECLVAL(Args)...));
+template <typename T, typename... Args>
+constexpr bool is_callback_for
+    = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
+
+template <typename T, typename Context>
+using _detect_callback_context = decltype(LEXY_DECLVAL(T)[LEXY_DECLVAL(const Context&)]);
+template <typename T, typename Context>
+constexpr bool is_callback_context = _detail::is_detected<_detect_callback_context, T, Context>;
+
+/// Returns the type of the `.sink()` function.
+template <typename Sink, typename... Args>
+using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
+
+template <typename T, typename... Args>
+using _detect_sink = decltype(LEXY_DECLVAL(T).sink(LEXY_DECLVAL(Args)...).finish());
+template <typename T, typename... Args>
+constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
+} // namespace lexy
+
+//=== adapters ===//
+namespace lexy
+{
+template <typename ReturnType, typename... Fns>
+struct _callback : _fn_as_base<Fns>...
+{
+    using return_type = ReturnType;
+
+    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
+
+    using _fn_as_base<Fns>::operator()...;
+};
+
+/// Creates a callback.
+template <typename ReturnType = void, typename... Fns>
+constexpr auto callback(Fns&&... fns)
+{
+    return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+
+template <typename T, typename Callback>
+class _sink_cb
+{
+public:
+    using return_type = T;
+
+    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
+
+    template <typename... Args>
+    constexpr void operator()(Args&&... args)
+    {
+        // We pass the value and other arguments to the internal callback.
+        _cb(_value, LEXY_FWD(args)...);
+    }
+
+    constexpr T&& finish() &&
+    {
+        return LEXY_MOV(_value);
+    }
+
+private:
+    T                          _value;
+    LEXY_EMPTY_MEMBER Callback _cb;
+};
+
+template <typename T, typename... Fns>
+class _sink
+{
+public:
+    constexpr explicit _sink(Fns... fns) : _cb(fns...) {}
+
+    constexpr auto sink() const
+    {
+        return _sink_cb<T, _callback<void, Fns...>>(_cb);
+    }
+
+private:
+    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
+};
+
+/// Creates a sink callback.
+template <typename T, typename... Fns>
+constexpr auto sink(Fns&&... fns)
+{
+    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+} // namespace lexy
+
+//=== composition ===//
+namespace lexy
+{
+template <typename First, typename Second>
+struct _compose_cb
+{
+    LEXY_EMPTY_MEMBER First  _first;
+    LEXY_EMPTY_MEMBER Second _second;
+
+    using return_type = typename Second::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
+    {
+        return _second(_first(LEXY_FWD(args)...));
+    }
+};
+
+template <typename Sink, typename Callback>
+struct _compose_s
+{
+    LEXY_EMPTY_MEMBER Sink     _sink;
+    LEXY_EMPTY_MEMBER Callback _callback;
+
+    using return_type = typename Callback::return_type;
+
+    template <typename... Args>
+    constexpr auto sink(Args&&... args) const -> decltype(_sink.sink(LEXY_FWD(args)...))
+    {
+        return _sink.sink(LEXY_FWD(args)...);
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const -> decltype(_callback(LEXY_FWD(args)...))
+    {
+        return _callback(LEXY_FWD(args)...);
+    }
+};
+
+/// Composes two callbacks.
+template <typename First, typename Second, typename = _detect_callback<First>,
+          typename = _detect_callback<Second>>
+constexpr auto operator|(First first, Second second)
+{
+    return _compose_cb<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
+}
+template <typename S, typename Cb, typename Second>
+constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
+{
+    auto cb = LEXY_MOV(composed._callback) | LEXY_MOV(second);
+    return _compose_s<S, decltype(cb)>{LEXY_MOV(composed._sink), LEXY_MOV(cb)};
+}
+
+/// Composes a sink with a callback.
+template <typename Sink, typename Callback, typename = _detect_callback<Callback>>
+constexpr auto operator>>(Sink sink, Callback cb)
+{
+    return _compose_s<Sink, Callback>{LEXY_MOV(sink), LEXY_MOV(cb)};
+}
+} // namespace lexy
+
+#endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
 
 
 #ifdef LEXY_IGNORE_DEPRECATED_LIST
@@ -2301,836 +2458,19 @@ private:
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_CALLBACK_HPP_INCLUDED
-#define LEXY_CALLBACK_HPP_INCLUDED
+#ifndef LEXY_CALLBACK_NOOP_HPP_INCLUDED
+#define LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
 
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
-#define LEXY_DETAIL_INVOKE_HPP_INCLUDED
-
-
-
-namespace lexy::_detail
-{
-template <typename MemberPtr, bool = std::is_member_object_pointer_v<MemberPtr>>
-struct _mem_invoker;
-template <typename R, typename ClassT>
-struct _mem_invoker<R ClassT::*, true>
-{
-    static constexpr decltype(auto) invoke(R ClassT::*f, ClassT& object)
-    {
-        return object.*f;
-    }
-    static constexpr decltype(auto) invoke(R ClassT::*f, const ClassT& object)
-    {
-        return object.*f;
-    }
-
-    template <typename Ptr>
-    static constexpr auto invoke(R ClassT::*f, Ptr&& ptr) -> decltype((*LEXY_FWD(ptr)).*f)
-    {
-        return (*LEXY_FWD(ptr)).*f;
-    }
-};
-template <typename F, typename ClassT>
-struct _mem_invoker<F ClassT::*, false>
-{
-    template <typename ObjectT, typename... Args>
-    static constexpr auto _invoke(int, F ClassT::*f, ObjectT&& object, Args&&... args)
-        -> decltype((LEXY_FWD(object).*f)(LEXY_FWD(args)...))
-    {
-        return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
-    }
-    template <typename PtrT, typename... Args>
-    static constexpr auto _invoke(short, F ClassT::*f, PtrT&& ptr, Args&&... args)
-        -> decltype(((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...))
-    {
-        return ((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...);
-    }
-
-    template <typename... Args>
-    static constexpr auto invoke(F ClassT::*f, Args&&... args)
-        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
-    {
-        return _invoke(0, f, LEXY_FWD(args)...);
-    }
-};
-
-template <typename ClassT, typename F, typename... Args>
-constexpr auto invoke(F ClassT::*f, Args&&... args)
-    -> decltype(_mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...))
-{
-    return _mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...);
-}
-
-template <typename F, typename... Args>
-constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(args)...))
-{
-    return LEXY_FWD(f)(LEXY_FWD(args)...);
-}
-} // namespace lexy::_detail
-
-#endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_MEMBER_HPP_INCLUDED
-#define LEXY_DSL_MEMBER_HPP_INCLUDED
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-#define LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-
-
-
-namespace lexy::_detail
-{
-template <typename Lambda>
-struct stateless_lambda
-{
-    static_assert(std::is_class_v<Lambda>);
-    static_assert(std::is_empty_v<Lambda>);
-
-    static constexpr Lambda get()
-    {
-        if constexpr (std::is_default_constructible_v<Lambda>)
-        {
-            // We're using C++20, lambdas are default constructible.
-            return Lambda();
-        }
-        else
-        {
-            // We're not having C++20; use a sequence of weird workarounds to legally construct a
-            // Lambda object without invoking any constructors.
-            // This works and is well-defined, but sadly not constexpr.
-            // Taken from: https://www.youtube.com/watch?v=yTb6xz_FSkY
-
-            // We're defining two standard layout types that have a char as a common initial
-            // sequence (as the Lambda is empty, it doesn't add anymore members to B).
-            struct A
-            {
-                char member;
-            };
-            struct B : Lambda
-            {
-                char member;
-            };
-            static_assert(std::is_standard_layout_v<A> && std::is_standard_layout_v<B>);
-
-            // We put the two types in a union and initialize the a member, which we can do.
-            union storage_t
-            {
-                A a;
-                B b;
-            } storage{};
-
-            // We can now take the address of member via b, as it is in the common initial sequence.
-            auto char_ptr = &storage.b.member;
-            // char_ptr is a pointer to the first member of B, so we can reinterpret_cast it to a
-            // pointer to B.
-            auto b_ptr = reinterpret_cast<B*>(char_ptr);
-            // Now we're having a pointer to a B object, which can we can cast to the base class
-            // Lambda.
-            auto lambda_ptr = static_cast<Lambda*>(b_ptr);
-            // Dereference the pointer to get the lambda object.
-            return *lambda_ptr;
-        }
-    }
-
-    template <typename... Args>
-    constexpr decltype(auto) operator()(Args&&... args) const
-    {
-        return get()(LEXY_FWD(args)...);
-    }
-};
-} // namespace lexy::_detail
-
-#endif // LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
-#define LEXY_DSL_BRANCH_HPP_INCLUDED
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_SEQUENCE_HPP_INCLUDED
-#define LEXY_DSL_SEQUENCE_HPP_INCLUDED
-
-
-
-namespace lexyd
-{
-template <typename... R>
-struct _seq_impl;
-template <>
-struct _seq_impl<>
-{
-    template <typename NextParser>
-    struct parser : NextParser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto _try_parse(Context& context, Reader& reader, Reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            return static_cast<lexy::rule_try_parse_result>(
-                NextParser::parse(context, reader, LEXY_FWD(args)...));
-        }
-    };
-};
-template <typename H, typename... T>
-struct _seq_impl<H, T...>
-{
-    template <typename NextParser>
-    struct parser : lexy::rule_parser<H, lexy::rule_parser<_seq_impl<T...>, NextParser>>
-    {
-        // Called by another _seq_impl instantiation.
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto _try_parse(Context& context, Reader& reader, Reader save, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            // We can safely discard, token does not produce any values.
-            using token_parser = lexy::rule_parser<H, lexy::context_discard_parser<Context>>;
-            auto result        = token_parser::try_parse(context, reader, LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::ok)
-            {
-                // Continue trying the branch.
-                using continuation = lexy::rule_parser<_seq_impl<T...>, NextParser>;
-                return continuation::_try_parse(context, reader, save, LEXY_FWD(args)...);
-            }
-            else if (result == lexy::rule_try_parse_result::backtracked)
-            {
-                // Backtrack.
-                reader = LEXY_MOV(save);
-                return lexy::rule_try_parse_result::backtracked;
-            }
-            else
-            {
-                // Canceled.
-                return lexy::rule_try_parse_result::canceled;
-            }
-        }
-
-        // Only needed in the first instantiation.
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            auto save = reader;
-            return _try_parse(context, reader, save, LEXY_FWD(args)...);
-        }
-    };
-};
-
-template <typename... R>
-struct _seq : rule_base
-{
-    static_assert(sizeof...(R) > 1);
-
-    static constexpr auto is_branch               = (lexy::is_token<R> && ...);
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    using parser = lexy::rule_parser<_seq_impl<R...>, NextParser>;
-};
-
-template <typename R, typename S>
-LEXY_CONSTEVAL auto operator+(R, S)
-{
-    return _seq<R, S>{};
-}
-template <typename... R, typename S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
-{
-    return _seq<R..., S>{};
-}
-template <typename R, typename... S>
-LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
-{
-    return _seq<R, S...>{};
-}
-template <typename... R, typename... S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
-{
-    return _seq<R..., S...>{};
-}
-} // namespace lexyd
-
-#endif // LEXY_DSL_SEQUENCE_HPP_INCLUDED
-
-
-namespace lexyd
-{
-template <typename Condition, typename... R>
-struct _br : rule_base
-{
-    static_assert(sizeof...(R) >= 0);
-
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = Condition::is_unconditional_branch;
-
-    // We simple connect Condition with R... and then NextParser.
-    // Condition has a try_parse() that will try to match Condition and then continue on with the
-    // continuation.
-    template <typename NextParser>
-    using parser = lexy::rule_parser<Condition, lexy::rule_parser<_seq_impl<R...>, NextParser>>;
-};
-
-//=== operator>> ===//
-/// Parses `Then` only after `Condition` has matched.
-template <typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator>>(Condition, Then)
-{
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
-    return _br<Condition, Then>{};
-}
-template <typename Condition, typename... R>
-LEXY_CONSTEVAL auto operator>>(Condition, _seq<R...>)
-{
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
-    return _br<Condition, R...>{};
-}
-template <typename Condition, typename C, typename... R>
-LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
-{
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
-    return _br<Condition, C, R...>{};
-}
-
-// Prevent nested branches in `_br`'s condition.
-template <typename C, typename... R, typename Then>
-LEXY_CONSTEVAL auto operator>>(_br<C, R...>, Then)
-{
-    return C{} >> _seq<R..., Then>{};
-}
-template <typename C, typename... R, typename... S>
-LEXY_CONSTEVAL auto operator>>(_br<C, R...>, _seq<S...>)
-{
-    return C{} >> _seq<R..., S...>{};
-}
-
-// Disambiguation.
-template <typename C1, typename... R, typename C2, typename... S>
-LEXY_CONSTEVAL auto operator>>(_br<C1, R...>, _br<C2, S...>)
-{
-    return _br<C1, R..., C2, S...>{};
-}
-
-//=== operator+ ===//
-// If we add something on the left to a branch, we loose the branchy-ness.
-template <typename Rule, typename Condition, typename... R>
-LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, R...>)
-{
-    return rule + _seq<Condition, R...>{};
-}
-// Disambiguation.
-template <typename... R, typename Condition, typename... S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, S...>)
-{
-    return _seq<R...>{} + _seq<Condition, S...>{};
-}
-
-// If we add something on the right to a branch, we extend the then.
-template <typename Condition, typename... R, typename Rule>
-LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, Rule)
-{
-    return _br<Condition, R..., Rule>{};
-}
-// Disambiguation.
-template <typename Condition, typename... R, typename... S>
-LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, _seq<S...>)
-{
-    return _br<Condition, R..., S...>{};
-}
-
-// If we add two branches, we use the condition of the first one and treat the second as sequence.
-template <typename C1, typename... R, typename C2, typename... S>
-LEXY_CONSTEVAL auto operator+(_br<C1, R...>, _br<C2, S...>)
-{
-    return _br<C1, R..., C2, S...>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-struct _else : rule_base
-{
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = true;
-
-    template <typename NextParser>
-    using parser = NextParser;
-};
-
-/// Takes the branch unconditionally.
-inline constexpr auto else_ = _else{};
-} // namespace lexyd
-
-#endif // LEXY_DSL_BRANCH_HPP_INCLUDED
-
-
-namespace lexy
-{
-template <auto Ptr>
-struct _mem_ptr_fn
-{
-    template <typename Object, typename Value>
-    constexpr void operator()(Object& object, Value&& value) const
-    {
-        object.*Ptr = LEXY_FWD(value);
-    }
-};
-
-template <typename Fn>
-struct member
-{};
-
-template <auto Ptr>
-using make_member_ptr = member<_mem_ptr_fn<Ptr>>;
-} // namespace lexy
-
-namespace lexyd
-{
-template <typename Fn, typename Rule>
-struct _mem : rule_base
-{
-    static constexpr auto is_branch               = Rule::is_branch;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
-                                                                  LEXY_FWD(args)...,
-                                                                  lexy::member<Fn>{});
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
-                                                              lexy::member<Fn>{});
-        }
-    };
-};
-
-template <typename Fn>
-struct _mem_dsl
-{
-    LEXY_CONSTEVAL _mem_dsl(Fn = {}) {}
-
-    template <typename Rule>
-    LEXY_CONSTEVAL auto operator=(Rule) const
-    {
-        using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
-                                          lexy::_detail::stateless_lambda<Fn>>;
-        return _mem<lambda, Rule>{};
-    }
-};
-
-/// Specifies that the output of the associated rule should be stored in the member pointer. Used
-/// with `lexy::as_aggregate`.
-template <auto MemPtr>
-constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
-
-#define LEXY_MEM(Name)                                                                             \
-    ::lexyd::_mem_dsl([](auto& obj, auto&& value) { obj.Name = LEXY_FWD(value); })
-} // namespace lexyd
-
-#endif // LEXY_DSL_MEMBER_HPP_INCLUDED
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_LEXEME_HPP_INCLUDED
-#define LEXY_LEXEME_HPP_INCLUDED
-
-
-
-
-
-
-namespace lexy
-{
-template <typename Reader>
-class lexeme
-{
-    static_assert(is_canonical_reader<Reader>, "lexeme must take the canonical reader");
-
-public:
-    using encoding  = typename Reader::encoding;
-    using char_type = typename encoding::char_type;
-    using iterator  = typename Reader::iterator;
-
-    constexpr lexeme() noexcept : _begin(), _end() {}
-    constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
-
-    constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
-    : _begin(begin), _end(reader.cur())
-    {}
-
-    constexpr bool empty() const noexcept
-    {
-        return _begin == _end;
-    }
-
-    constexpr iterator begin() const noexcept
-    {
-        return _begin;
-    }
-    constexpr iterator end() const noexcept
-    {
-        return _end;
-    }
-
-    constexpr const char_type* data() const noexcept
-    {
-        static_assert(std::is_pointer_v<iterator>);
-        return _begin;
-    }
-
-    constexpr std::size_t size() const noexcept
-    {
-        return static_cast<std::size_t>(_end - _begin);
-    }
-
-    constexpr char_type operator[](std::size_t idx) const noexcept
-    {
-        LEXY_PRECONDITION(idx < size());
-        return _begin[idx];
-    }
-
-private:
-    iterator _begin, _end;
-};
-
-template <typename Reader>
-lexeme(const Reader&, typename Reader::iterator) -> lexeme<typename Reader::canonical_reader>;
-
-template <typename Input>
-using lexeme_for = lexeme<input_reader<Input>>;
-} // namespace lexy
-
-namespace lexy::_detail
-{
-template <typename Reader>
-constexpr bool equal_lexemes(lexeme<Reader> lhs, lexeme<Reader> rhs)
-{
-    if constexpr (std::is_pointer_v<typename Reader::iterator>)
-    {
-        if (lhs.size() != rhs.size())
-            return false;
-    }
-
-    auto lhs_cur = lhs.begin();
-    auto rhs_cur = rhs.begin();
-    while (lhs_cur != lhs.end() && rhs_cur != rhs.end())
-    {
-        if (*lhs_cur != *rhs_cur)
-            return false;
-        ++lhs_cur;
-        ++rhs_cur;
-    }
-    return lhs_cur == lhs.end() && rhs_cur == rhs.end();
-}
-} // namespace lexy::_detail
-
-#endif // LEXY_LEXEME_HPP_INCLUDED
-
-
-//=== implementation ===//
-namespace lexy
-{
-template <typename Fn>
-struct _fn_holder
-{
-    Fn fn;
-
-    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
-    {
-        return _detail::invoke(fn, LEXY_FWD(args)...);
-    }
-};
-
-template <typename Fn>
-using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
-} // namespace lexy
-
-//=== traits ===//
-namespace lexy
-{
-template <typename T>
-using _detect_callback = typename T::return_type;
-template <typename T>
-constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
-
-template <typename T, typename... Args>
-using _detect_callback_for = decltype(LEXY_DECLVAL(T)(LEXY_DECLVAL(Args)...));
-template <typename T, typename... Args>
-constexpr bool is_callback_for
-    = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
-
-/// Returns the type of the `.sink()` function.
-template <typename Sink>
-using sink_callback = decltype(LEXY_DECLVAL(Sink).sink());
-
-template <typename T>
-using _detect_sink = decltype(LEXY_DECLVAL(T).sink().finish());
-template <typename T>
-constexpr bool is_sink = _detail::is_detected<_detect_sink, T>;
-} // namespace lexy
-
-//=== adapters ===//
-namespace lexy
-{
-template <typename ReturnType, typename... Fns>
-struct _callback : _fn_as_base<Fns>...
-{
-    using return_type = ReturnType;
-
-    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
-
-    using _fn_as_base<Fns>::operator()...;
-};
-
-/// Creates a callback.
-template <typename ReturnType = void, typename... Fns>
-constexpr auto callback(Fns&&... fns)
-{
-    return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
-}
-
-template <typename T, typename Callback>
-class _sink_cb
-{
-public:
-    using return_type = T;
-
-    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
-
-    template <typename... Args>
-    constexpr void operator()(Args&&... args)
-    {
-        // We pass the value and other arguments to the internal callback.
-        _cb(_value, LEXY_FWD(args)...);
-    }
-
-    constexpr T&& finish() &&
-    {
-        return LEXY_MOV(_value);
-    }
-
-private:
-    T                          _value;
-    LEXY_EMPTY_MEMBER Callback _cb;
-};
-
-template <typename T, typename... Fns>
-class _sink
-{
-public:
-    constexpr explicit _sink(Fns... fns) : _cb(fns...) {}
-
-    constexpr auto sink() const
-    {
-        return _sink_cb<T, _callback<void, Fns...>>(_cb);
-    }
-
-private:
-    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
-};
-
-/// Creates a sink callback.
-template <typename T, typename... Fns>
-constexpr auto sink(Fns&&... fns)
-{
-    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
-}
-
-template <typename Container, typename Callback>
-class _collect_sink
-{
-public:
-    constexpr explicit _collect_sink(Callback callback) : _callback(LEXY_MOV(callback)) {}
-
-    using return_type = Container;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args)
-        -> decltype(void(LEXY_DECLVAL(Callback)(LEXY_FWD(args)...)))
-    {
-        _result.push_back(_callback(LEXY_FWD(args)...));
-    }
-
-    constexpr auto finish() &&
-    {
-        return LEXY_MOV(_result);
-    }
-
-private:
-    Container                  _result;
-    LEXY_EMPTY_MEMBER Callback _callback;
-};
-template <typename Callback>
-class _collect_sink<void, Callback>
-{
-public:
-    constexpr explicit _collect_sink(Callback callback) : _count(0), _callback(LEXY_MOV(callback))
-    {}
-
-    using return_type = std::size_t;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args)
-        -> decltype(void(LEXY_DECLVAL(Callback)(LEXY_FWD(args)...)))
-    {
-        _callback(LEXY_FWD(args)...);
-        ++_count;
-    }
-
-    constexpr auto finish() &&
-    {
-        return _count;
-    }
-
-private:
-    std::size_t                _count;
-    LEXY_EMPTY_MEMBER Callback _callback;
-};
-
-template <typename Container, typename Callback>
-class _collect
-{
-public:
-    constexpr explicit _collect(Callback callback) : _callback(LEXY_MOV(callback)) {}
-
-    constexpr auto sink() const
-    {
-        return _collect_sink<Container, Callback>(_callback);
-    }
-
-private:
-    LEXY_EMPTY_MEMBER Callback _callback;
-};
-
-/// Returns a sink that invokes the void-returning callback multiple times, resulting in the number
-/// of times it was invoked.
-template <typename Callback>
-constexpr auto collect(Callback&& callback)
-{
-    using callback_t = std::decay_t<Callback>;
-    static_assert(std::is_void_v<typename callback_t::return_type>,
-                  "need to specify a container to collect into for non-void callbacks");
-    return _collect<void, callback_t>(LEXY_FWD(callback));
-}
-
-/// Returns a sink that invokes the callback multiple times, storing each result in the container.
-template <typename Container, typename Callback>
-constexpr auto collect(Callback&& callback)
-{
-    using callback_t = std::decay_t<Callback>;
-    static_assert(!std::is_void_v<typename callback_t::return_type>,
-                  "cannot collect a void callback into a container");
-    return _collect<Container, callback_t>(LEXY_FWD(callback));
-}
-} // namespace lexy
-
-//=== composition ===//
-namespace lexy
-{
-template <typename First, typename Second>
-struct _compose_cb
-{
-    LEXY_EMPTY_MEMBER First  _first;
-    LEXY_EMPTY_MEMBER Second _second;
-
-    using return_type = typename Second::return_type;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
-    {
-        return _second(_first(LEXY_FWD(args)...));
-    }
-};
-
-template <typename Sink, typename Callback>
-struct _compose_s
-{
-    LEXY_EMPTY_MEMBER Sink     _sink;
-    LEXY_EMPTY_MEMBER Callback _callback;
-
-    using return_type = typename Callback::return_type;
-
-    constexpr auto sink() const
-    {
-        return _sink.sink();
-    }
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(_callback(LEXY_FWD(args)...))
-    {
-        return _callback(LEXY_FWD(args)...);
-    }
-};
-
-/// Composes two callbacks.
-template <typename First, typename Second, typename = _detect_callback<First>,
-          typename = _detect_callback<Second>>
-constexpr auto operator|(First first, Second second)
-{
-    return _compose_cb<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
-}
-template <typename S, typename Cb, typename Second>
-constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
-{
-    auto cb = LEXY_MOV(composed._callback) | LEXY_MOV(second);
-    return _compose_s<S, decltype(cb)>{LEXY_MOV(composed._sink), LEXY_MOV(cb)};
-}
-
-/// Composes a sink with a callback.
-template <typename Sink, typename Callback, typename = _detect_sink<Sink>,
-          typename = _detect_callback<Callback>>
-constexpr auto operator>>(Sink sink, Callback cb)
-{
-    return _compose_s<Sink, Callback>{LEXY_MOV(sink), LEXY_MOV(cb)};
-}
-} // namespace lexy
-
-//=== pre-defined callbacks ===//
 namespace lexy
 {
 struct _noop
 {
     using return_type = void;
 
-    constexpr auto sink() const
+    template <typename... Args>
+    constexpr auto sink(const Args&...) const
     {
         // We don't need a separate type, noop itself can have the required functions.
         return *this;
@@ -3147,406 +2487,7 @@ struct _noop
 inline constexpr auto noop = _noop{};
 } // namespace lexy
 
-namespace lexy
-{
-template <typename T>
-struct _fwd
-{
-    using return_type = T;
-
-    constexpr T operator()(T&& t) const
-    {
-        return LEXY_MOV(t);
-    }
-    constexpr T operator()(const T& t) const
-    {
-        return t;
-    }
-};
-
-/// A callback that just forwards an existing object.
-template <typename T>
-constexpr auto forward = _fwd<T>{};
-
-template <typename T>
-struct _construct
-{
-    using return_type = T;
-
-    constexpr T operator()(T&& t) const
-    {
-        return LEXY_MOV(t);
-    }
-    constexpr T operator()(const T& t) const
-    {
-        return t;
-    }
-
-    template <typename... Args>
-    constexpr T operator()(Args&&... args) const
-    {
-        if constexpr (std::is_constructible_v<T, Args&&...>)
-            return T(LEXY_FWD(args)...);
-        else
-            return T{LEXY_FWD(args)...};
-    }
-};
-
-/// A callback that constructs an object of type T by forwarding the arguments.
-template <typename T>
-constexpr auto construct = _construct<T>{};
-
-template <typename T, typename PtrT>
-struct _new
-{
-    using return_type = PtrT;
-
-    constexpr PtrT operator()(T&& t) const
-    {
-        auto ptr = new T(LEXY_MOV(t));
-        return PtrT(ptr);
-    }
-    constexpr PtrT operator()(const T& t) const
-    {
-        auto ptr = new T(t);
-        return PtrT(ptr);
-    }
-
-    template <typename... Args>
-    constexpr PtrT operator()(Args&&... args) const
-    {
-        if constexpr (std::is_constructible_v<T, Args&&...>)
-        {
-            auto ptr = new T(LEXY_FWD(args)...);
-            return PtrT(ptr);
-        }
-        else
-        {
-            auto ptr = new T{LEXY_FWD(args)...};
-            return PtrT(ptr);
-        }
-    }
-};
-
-/// A callback that constructs an object of type T on the heap by forwarding the arguments.
-template <typename T, typename PtrT = T*>
-constexpr auto new_ = _new<T, PtrT>{};
-} // namespace lexy
-
-namespace lexy
-{
-template <typename T>
-struct _list
-{
-    struct _sink
-    {
-        T _result{};
-
-        using return_type = T;
-
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
-        {
-            return _result.push_back(LEXY_FWD(obj));
-        }
-
-        template <typename... Args>
-        void operator()(Args&&... args)
-        {
-            _result.emplace_back(LEXY_FWD(args)...);
-        }
-
-        T&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
-    constexpr auto sink() const
-    {
-        return _sink{};
-    }
-};
-
-/// A callback with sink that creates a list of things (e.g. a `std::vector`, `std::list`, etc.).
-/// As a callback, it forwards the arguments to the initializer list constructor.
-/// As a sink, it repeatedly calls `push_back()` and `emplace_back()`.
-template <typename T>
-constexpr auto as_list = _list<T>{};
-
-template <typename T>
-struct _collection
-{
-    struct _sink
-    {
-        T _result{};
-
-        using return_type = T;
-
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
-        {
-            return _result.insert(LEXY_FWD(obj));
-        }
-
-        template <typename... Args>
-        void operator()(Args&&... args)
-        {
-            _result.emplace(LEXY_FWD(args)...);
-        }
-
-        T&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
-    constexpr auto sink() const
-    {
-        return _sink{};
-    }
-};
-
-/// A callback with sink that creates an unordered collection of things (e.g. a `std::set`,
-/// `std::unordered_map`, etc.). As a callback, it forwards the arguments to the initializer list
-/// constructor. As a sink, it repeatedly calls `insert()` and `emplace()`.
-template <typename T>
-constexpr auto as_collection = _collection<T>{};
-} // namespace lexy
-
-namespace lexy
-{
-template <typename MemPtr>
-struct _mem_ptr_type_impl;
-template <typename T, typename ClassT>
-struct _mem_ptr_type_impl<T ClassT::*>
-{
-    using class_type  = ClassT;
-    using member_type = T;
-};
-
-template <auto MemPtr>
-using _mem_ptr_class_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::class_type;
-template <auto MemPtr>
-using _mem_ptr_member_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::member_type;
-
-template <typename T>
-struct _as_aggregate
-{
-    using return_type = T;
-    static_assert(std::is_aggregate_v<return_type>);
-
-    template <typename Fn, typename H, typename... Tail>
-    constexpr void _set(T& result, lexy::member<Fn>, H&& value, Tail&&... tail) const
-    {
-        Fn()(result, LEXY_FWD(value));
-        if constexpr (sizeof...(Tail) > 0)
-            _set(result, LEXY_FWD(tail)...);
-    }
-
-    template <typename Fn, typename... Args>
-    constexpr auto operator()(lexy::member<Fn> member, Args&&... args) const
-    {
-        static_assert(sizeof...(Args) % 2 == 1, "missing dsl::member rules");
-
-        T result{};
-        _set(result, member, LEXY_FWD(args)...);
-        return result;
-    }
-    template <typename... Args>
-    constexpr auto operator()(return_type&& result, Args&&... args) const
-        -> std::enable_if_t<(sizeof...(Args) > 0), return_type>
-    {
-        static_assert(sizeof...(Args) % 2 == 0, "missing dsl::member rules");
-
-        _set(result, LEXY_FWD(args)...);
-        return LEXY_MOV(result);
-    }
-
-    struct _sink
-    {
-        T _result{};
-
-        using return_type = T;
-
-        template <typename Fn, typename Value>
-        constexpr void operator()(lexy::member<Fn>, Value&& value)
-        {
-            Fn()(_result, LEXY_FWD(value));
-        }
-
-        constexpr auto&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-    constexpr auto sink() const
-    {
-        return _sink{};
-    }
-};
-
-/// A callback with sink that creates an aggregate.
-template <typename T>
-constexpr auto as_aggregate = _as_aggregate<T>{};
-} // namespace lexy
-
-namespace lexy
-{
-template <typename String>
-using _string_char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
-
-template <typename String, typename Encoding>
-struct _as_string
-{
-    using return_type = String;
-    using _char_type  = _string_char_type<String>;
-
-    constexpr String operator()(String&& str) const
-    {
-        return LEXY_MOV(str);
-    }
-    constexpr String operator()(const String& str) const
-    {
-        return str;
-    }
-
-    template <typename CharT>
-    constexpr auto operator()(const CharT* str, std::size_t length) const
-        -> decltype(String(str, length))
-    {
-        return String(str, length);
-    }
-
-    template <typename Reader>
-    constexpr String operator()(lexeme<Reader> lex) const
-    {
-        using iterator = typename lexeme<Reader>::iterator;
-        if constexpr (std::is_pointer_v<iterator>)
-        {
-            static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
-                          "cannot convert lexeme to this string type");
-
-            if constexpr (std::is_same_v<_char_type, typename Reader::encoding::char_type>)
-                return String(lex.data(), lex.size());
-            else
-                return String(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
-        }
-        else
-        {
-            // We're assuming the string constructor can do any necessary conversion/transcoding.
-            return String(lex.begin(), lex.end());
-        }
-    }
-
-    constexpr String operator()(code_point cp) const
-    {
-        typename Encoding::char_type buffer[4] = {};
-        auto                         size      = Encoding::encode_code_point(cp, buffer, 4);
-
-        if constexpr (std::is_same_v<_char_type, typename Encoding::char_type>)
-            return (*this)(buffer, size);
-        else
-            return (*this)(reinterpret_cast<const _char_type*>(buffer), size);
-    }
-
-    struct _sink
-    {
-        String _result{};
-
-        using return_type = String;
-
-        template <typename CharT>
-        auto operator()(CharT c) -> decltype(_result.push_back(c))
-        {
-            return _result.push_back(c);
-        }
-
-        void operator()(const String& str)
-        {
-            _result.append(str);
-        }
-        void operator()(String&& str)
-        {
-            _result.append(LEXY_MOV(str));
-        }
-
-        template <typename CharT>
-        auto operator()(const CharT* str, std::size_t length)
-            -> decltype(_result.append(str, length))
-        {
-            return _result.append(str, length);
-        }
-
-        template <typename Reader>
-        void operator()(lexeme<Reader> lex)
-        {
-            using iterator = typename lexeme<Reader>::iterator;
-            if constexpr (std::is_pointer_v<iterator>)
-            {
-                static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
-                              "cannot convert lexeme to this string type");
-                _result.append(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
-            }
-            else
-            {
-                // We're assuming the string append function can do any necessary
-                // conversion/transcoding.
-                _result.append(lex.begin(), lex.end());
-            }
-        }
-
-        void operator()(code_point cp)
-        {
-            typename Encoding::char_type buffer[4] = {};
-            auto                         size      = Encoding::encode_code_point(cp, buffer, 4);
-            (*this)(reinterpret_cast<const _char_type*>(buffer), size);
-        }
-
-        String&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-    constexpr auto sink() const
-    {
-        return _sink{};
-    }
-};
-
-/// A callback with sink that creates a string (e.g. `std::string`).
-/// As a callback, it converts a lexeme into the string.
-/// As a sink, it repeatedly calls `.push_back()` for individual characters,
-/// or `.append()` for lexemes or other strings.
-template <typename String, typename Encoding = deduce_encoding<_string_char_type<String>>>
-constexpr auto as_string = _as_string<String, Encoding>{};
-} // namespace lexy
-
-namespace lexy
-{
-template <typename T>
-struct _int
-{
-    using return_type = T;
-
-    template <typename Integer>
-    constexpr T operator()(const Integer& value) const
-    {
-        return T(value);
-    }
-    template <typename Integer>
-    constexpr T operator()(int sign, const Integer& value) const
-    {
-        return T(sign * value);
-    }
-};
-
-// A callback that takes an optional sign and an integer and produces the signed integer.
-template <typename T>
-constexpr auto as_integer = _int<T>{};
-} // namespace lexy
-
-#endif // LEXY_CALLBACK_HPP_INCLUDED
+#endif // LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
 
 
@@ -5320,6 +4261,231 @@ constexpr auto lit = _lit<lexy::_detail::type_string<Str>>{};
 #define LEXY_DSL_TERMINATOR_HPP_INCLUDED
 
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
+#define LEXY_DSL_BRANCH_HPP_INCLUDED
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_SEQUENCE_HPP_INCLUDED
+#define LEXY_DSL_SEQUENCE_HPP_INCLUDED
+
+
+
+namespace lexyd
+{
+template <typename... R>
+struct _seq_impl;
+template <>
+struct _seq_impl<>
+{
+    template <typename NextParser>
+    struct parser : NextParser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto _try_parse(Context& context, Reader& reader, Reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            return static_cast<lexy::rule_try_parse_result>(
+                NextParser::parse(context, reader, LEXY_FWD(args)...));
+        }
+    };
+};
+template <typename H, typename... T>
+struct _seq_impl<H, T...>
+{
+    template <typename NextParser>
+    struct parser : lexy::rule_parser<H, lexy::rule_parser<_seq_impl<T...>, NextParser>>
+    {
+        // Called by another _seq_impl instantiation.
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto _try_parse(Context& context, Reader& reader, Reader save, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            // We can safely discard, token does not produce any values.
+            using token_parser = lexy::rule_parser<H, lexy::context_discard_parser<Context>>;
+            auto result        = token_parser::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::ok)
+            {
+                // Continue trying the branch.
+                using continuation = lexy::rule_parser<_seq_impl<T...>, NextParser>;
+                return continuation::_try_parse(context, reader, save, LEXY_FWD(args)...);
+            }
+            else if (result == lexy::rule_try_parse_result::backtracked)
+            {
+                // Backtrack.
+                reader = LEXY_MOV(save);
+                return lexy::rule_try_parse_result::backtracked;
+            }
+            else
+            {
+                // Canceled.
+                return lexy::rule_try_parse_result::canceled;
+            }
+        }
+
+        // Only needed in the first instantiation.
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto save = reader;
+            return _try_parse(context, reader, save, LEXY_FWD(args)...);
+        }
+    };
+};
+
+template <typename... R>
+struct _seq : rule_base
+{
+    static_assert(sizeof...(R) > 1);
+
+    static constexpr auto is_branch               = (lexy::is_token<R> && ...);
+    static constexpr auto is_unconditional_branch = false;
+
+    template <typename NextParser>
+    using parser = lexy::rule_parser<_seq_impl<R...>, NextParser>;
+};
+
+template <typename R, typename S>
+LEXY_CONSTEVAL auto operator+(R, S)
+{
+    return _seq<R, S>{};
+}
+template <typename... R, typename S>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
+{
+    return _seq<R..., S>{};
+}
+template <typename R, typename... S>
+LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
+{
+    return _seq<R, S...>{};
+}
+template <typename... R, typename... S>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
+{
+    return _seq<R..., S...>{};
+}
+} // namespace lexyd
+
+#endif // LEXY_DSL_SEQUENCE_HPP_INCLUDED
+
+
+namespace lexyd
+{
+template <typename Condition, typename... R>
+struct _br : rule_base
+{
+    static_assert(sizeof...(R) >= 0);
+
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = Condition::is_unconditional_branch;
+
+    // We simple connect Condition with R... and then NextParser.
+    // Condition has a try_parse() that will try to match Condition and then continue on with the
+    // continuation.
+    template <typename NextParser>
+    using parser = lexy::rule_parser<Condition, lexy::rule_parser<_seq_impl<R...>, NextParser>>;
+};
+
+//=== operator>> ===//
+/// Parses `Then` only after `Condition` has matched.
+template <typename Condition, typename Then>
+LEXY_CONSTEVAL auto operator>>(Condition, Then)
+{
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    return _br<Condition, Then>{};
+}
+template <typename Condition, typename... R>
+LEXY_CONSTEVAL auto operator>>(Condition, _seq<R...>)
+{
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    return _br<Condition, R...>{};
+}
+template <typename Condition, typename C, typename... R>
+LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
+{
+    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    return _br<Condition, C, R...>{};
+}
+
+// Prevent nested branches in `_br`'s condition.
+template <typename C, typename... R, typename Then>
+LEXY_CONSTEVAL auto operator>>(_br<C, R...>, Then)
+{
+    return C{} >> _seq<R..., Then>{};
+}
+template <typename C, typename... R, typename... S>
+LEXY_CONSTEVAL auto operator>>(_br<C, R...>, _seq<S...>)
+{
+    return C{} >> _seq<R..., S...>{};
+}
+
+// Disambiguation.
+template <typename C1, typename... R, typename C2, typename... S>
+LEXY_CONSTEVAL auto operator>>(_br<C1, R...>, _br<C2, S...>)
+{
+    return _br<C1, R..., C2, S...>{};
+}
+
+//=== operator+ ===//
+// If we add something on the left to a branch, we loose the branchy-ness.
+template <typename Rule, typename Condition, typename... R>
+LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, R...>)
+{
+    return rule + _seq<Condition, R...>{};
+}
+// Disambiguation.
+template <typename... R, typename Condition, typename... S>
+LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, S...>)
+{
+    return _seq<R...>{} + _seq<Condition, S...>{};
+}
+
+// If we add something on the right to a branch, we extend the then.
+template <typename Condition, typename... R, typename Rule>
+LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, Rule)
+{
+    return _br<Condition, R..., Rule>{};
+}
+// Disambiguation.
+template <typename Condition, typename... R, typename... S>
+LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, _seq<S...>)
+{
+    return _br<Condition, R..., S...>{};
+}
+
+// If we add two branches, we use the condition of the first one and treat the second as sequence.
+template <typename C1, typename... R, typename C2, typename... S>
+LEXY_CONSTEVAL auto operator+(_br<C1, R...>, _br<C2, S...>)
+{
+    return _br<C1, R..., C2, S...>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+struct _else : rule_base
+{
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = true;
+
+    template <typename NextParser>
+    using parser = NextParser;
+};
+
+/// Takes the branch unconditionally.
+inline constexpr auto else_ = _else{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_BRANCH_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -5667,6 +4833,104 @@ struct engine_eof : engine_matcher_base
 
 
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_LEXEME_HPP_INCLUDED
+#define LEXY_LEXEME_HPP_INCLUDED
+
+
+
+
+
+
+namespace lexy
+{
+template <typename Reader>
+class lexeme
+{
+    static_assert(is_canonical_reader<Reader>, "lexeme must take the canonical reader");
+
+public:
+    using encoding  = typename Reader::encoding;
+    using char_type = typename encoding::char_type;
+    using iterator  = typename Reader::iterator;
+
+    constexpr lexeme() noexcept : _begin(), _end() {}
+    constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
+
+    constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
+    : _begin(begin), _end(reader.cur())
+    {}
+
+    constexpr bool empty() const noexcept
+    {
+        return _begin == _end;
+    }
+
+    constexpr iterator begin() const noexcept
+    {
+        return _begin;
+    }
+    constexpr iterator end() const noexcept
+    {
+        return _end;
+    }
+
+    constexpr const char_type* data() const noexcept
+    {
+        static_assert(std::is_pointer_v<iterator>);
+        return _begin;
+    }
+
+    constexpr std::size_t size() const noexcept
+    {
+        return static_cast<std::size_t>(_end - _begin);
+    }
+
+    constexpr char_type operator[](std::size_t idx) const noexcept
+    {
+        LEXY_PRECONDITION(idx < size());
+        return _begin[idx];
+    }
+
+private:
+    iterator _begin, _end;
+};
+
+template <typename Reader>
+lexeme(const Reader&, typename Reader::iterator) -> lexeme<typename Reader::canonical_reader>;
+
+template <typename Input>
+using lexeme_for = lexeme<input_reader<Input>>;
+} // namespace lexy
+
+namespace lexy::_detail
+{
+template <typename Reader>
+constexpr bool equal_lexemes(lexeme<Reader> lhs, lexeme<Reader> rhs)
+{
+    if constexpr (std::is_pointer_v<typename Reader::iterator>)
+    {
+        if (lhs.size() != rhs.size())
+            return false;
+    }
+
+    auto lhs_cur = lhs.begin();
+    auto rhs_cur = rhs.begin();
+    while (lhs_cur != lhs.end() && rhs_cur != rhs.end())
+    {
+        if (*lhs_cur != *rhs_cur)
+            return false;
+        ++lhs_cur;
+        ++rhs_cur;
+    }
+    return lhs_cur == lhs.end() && rhs_cur == rhs.end();
+}
+} // namespace lexy::_detail
+
+#endif // LEXY_LEXEME_HPP_INCLUDED
 
 
 namespace lexy
@@ -7560,6 +6824,78 @@ constexpr auto code_point = _cp<void>{};
 #ifndef LEXY_DSL_LABEL_HPP_INCLUDED
 #define LEXY_DSL_LABEL_HPP_INCLUDED
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
+#define LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
+
+
+
+namespace lexy::_detail
+{
+template <typename Lambda>
+struct stateless_lambda
+{
+    static_assert(std::is_class_v<Lambda>);
+    static_assert(std::is_empty_v<Lambda>);
+
+    static constexpr Lambda get()
+    {
+        if constexpr (std::is_default_constructible_v<Lambda>)
+        {
+            // We're using C++20, lambdas are default constructible.
+            return Lambda();
+        }
+        else
+        {
+            // We're not having C++20; use a sequence of weird workarounds to legally construct a
+            // Lambda object without invoking any constructors.
+            // This works and is well-defined, but sadly not constexpr.
+            // Taken from: https://www.youtube.com/watch?v=yTb6xz_FSkY
+
+            // We're defining two standard layout types that have a char as a common initial
+            // sequence (as the Lambda is empty, it doesn't add anymore members to B).
+            struct A
+            {
+                char member;
+            };
+            struct B : Lambda
+            {
+                char member;
+            };
+            static_assert(std::is_standard_layout_v<A> && std::is_standard_layout_v<B>);
+
+            // We put the two types in a union and initialize the a member, which we can do.
+            union storage_t
+            {
+                A a;
+                B b;
+            } storage{};
+
+            // We can now take the address of member via b, as it is in the common initial sequence.
+            auto char_ptr = &storage.b.member;
+            // char_ptr is a pointer to the first member of B, so we can reinterpret_cast it to a
+            // pointer to B.
+            auto b_ptr = reinterpret_cast<B*>(char_ptr);
+            // Now we're having a pointer to a B object, which can we can cast to the base class
+            // Lambda.
+            auto lambda_ptr = static_cast<Lambda*>(b_ptr);
+            // Dereference the pointer to get the lambda object.
+            return *lambda_ptr;
+        }
+    }
+
+    template <typename... Args>
+    constexpr decltype(auto) operator()(Args&&... args) const
+    {
+        return get()(LEXY_FWD(args)...);
+    }
+};
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
 
 
 
@@ -9783,6 +9119,13 @@ LEXY_CONSTEVAL auto symbol(_id<L, T, R...> id)
 
 
 
+#ifdef LEXY_IGNORE_DEPRECATED_VALUE
+#    define LEXY_DEPRECATED_VALUE
+#else
+#    define LEXY_DEPRECATED_VALUE                                                                  \
+        [[deprecated("`dsl::value_*()` has been replaced by `lexy::bind()`")]]
+#endif
+
 namespace lexy
 {
 struct _match_context;
@@ -9809,7 +9152,7 @@ struct _valc : rule_base
 
 /// Produces the specified value without parsing anything.
 template <auto Value>
-constexpr auto value_c = _valc<Value>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_c = _valc<Value>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -9833,7 +9176,7 @@ struct _valf : rule_base
 
 /// Produces the value returned by the function without parsing anything.
 template <auto F>
-constexpr auto value_f = _valf<F>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_f = _valf<F>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -9857,7 +9200,7 @@ struct _valt : rule_base
 
 /// Produces a default constructed value of the specified type without parsing anything.
 template <typename T>
-constexpr auto value_t = _valt<T>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_t = _valt<T>{};
 } // namespace lexyd
 
 namespace lexyd
@@ -9886,7 +9229,7 @@ struct _vals : rule_base
 #if LEXY_HAS_NTTP
 /// Produces the string value.
 template <lexy::_detail::string_literal Str>
-constexpr auto value_str = _vals<lexy::_detail::type_string<Str>>{};
+LEXY_DEPRECATED_VALUE constexpr auto value_str = _vals<lexy::_detail::type_string<Str>>{};
 #endif
 
 #define LEXY_VALUE_STR(Str)                                                                        \
@@ -11868,6 +11211,90 @@ LEXY_CONSTEVAL auto lookahead(Needle, End)
 #endif // LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
 
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_MEMBER_HPP_INCLUDED
+#define LEXY_DSL_MEMBER_HPP_INCLUDED
+
+
+
+
+
+namespace lexy
+{
+template <auto Ptr>
+struct _mem_ptr_fn
+{
+    template <typename Object, typename Value>
+    constexpr void operator()(Object& object, Value&& value) const
+    {
+        object.*Ptr = LEXY_FWD(value);
+    }
+};
+
+template <typename Fn>
+struct member
+{};
+
+template <auto Ptr>
+using make_member_ptr = member<_mem_ptr_fn<Ptr>>;
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Fn, typename Rule>
+struct _mem : rule_base
+{
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
+                                                                  LEXY_FWD(args)...,
+                                                                  lexy::member<Fn>{});
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
+                                                              lexy::member<Fn>{});
+        }
+    };
+};
+
+template <typename Fn>
+struct _mem_dsl
+{
+    LEXY_CONSTEVAL _mem_dsl(Fn = {}) {}
+
+    template <typename Rule>
+    LEXY_CONSTEVAL auto operator=(Rule) const
+    {
+        using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
+                                          lexy::_detail::stateless_lambda<Fn>>;
+        return _mem<lambda, Rule>{};
+    }
+};
+
+/// Specifies that the output of the associated rule should be stored in the member pointer. Used
+/// with `lexy::as_aggregate`.
+template <auto MemPtr>
+constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
+
+#define LEXY_MEM(Name)                                                                             \
+    ::lexyd::_mem_dsl([](auto& obj, auto&& value) { obj.Name = LEXY_FWD(value); })
+} // namespace lexyd
+
+#endif // LEXY_DSL_MEMBER_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -12507,17 +11934,50 @@ constexpr auto return_ = _ret{};
 
 
 
+namespace lexy
+{
+template <int I>
+struct _sign
+{
+    constexpr operator int() const
+    {
+        return I;
+    }
+};
+
+struct plus_sign : _sign<+1>
+{};
+struct minus_sign : _sign<-1>
+{};
+} // namespace lexy
 
 namespace lexyd
 {
+template <typename Sign>
+struct _sign : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., Sign{});
+        }
+    };
+};
+
 /// Matches a plus sign or nothing, producing +1.
-constexpr auto plus_sign = LEXY_LIT("+") >> value_c<+1> | else_ >> value_c<+1>;
+constexpr auto plus_sign
+    = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
 /// Matches a minus sign or nothing, producing +1 or -1.
-constexpr auto minus_sign = LEXY_LIT("-") >> value_c<-1> | else_ >> value_c<+1>;
+constexpr auto minus_sign
+    = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
 
 /// Matches a plus or minus sign or nothing, producing +1 or -1.
-constexpr auto sign
-    = LEXY_LIT("+") >> value_c<+1> | LEXY_LIT("-") >> value_c<-1> | else_ >> value_c<+1>;
+constexpr auto sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{}
+                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{}
+                      | else_ >> _sign<lexy::plus_sign>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
@@ -12934,6 +12394,7 @@ LEXY_CONSTEVAL auto until(Condition)
 
 
 
+
 namespace lexyd
 {
 template <typename Branch>
@@ -13188,7 +12649,6 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
-
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
@@ -13196,6 +12656,206 @@ constexpr MemoryResource* get_memory_resource()
 #ifndef LEXY_VALIDATE_HPP_INCLUDED
 #define LEXY_VALIDATE_HPP_INCLUDED
 
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
+#define LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
+
+
+
+namespace lexy
+{
+template <typename Container>
+struct _list
+{
+    struct _sink
+    {
+        Container _result;
+
+        using return_type = Container;
+
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
+        {
+            return _result.push_back(LEXY_FWD(obj));
+        }
+
+        template <typename... Args>
+        void operator()(Args&&... args)
+        {
+            _result.emplace_back(LEXY_FWD(args)...);
+        }
+
+        Container&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+
+    constexpr auto sink() const
+    {
+        return _sink{Container()};
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _sink{Container(allocator)};
+    }
+};
+
+/// A callback with sink that creates a list of things (e.g. a `std::vector`, `std::list`, etc.).
+/// It repeatedly calls `push_back()` and `emplace_back()`.
+template <typename Container>
+constexpr auto as_list = _list<Container>{};
+
+template <typename Container>
+struct _collection
+{
+    struct _sink
+    {
+        Container _result;
+
+        using return_type = Container;
+
+        template <typename U>
+        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
+        {
+            return _result.insert(LEXY_FWD(obj));
+        }
+
+        template <typename... Args>
+        void operator()(Args&&... args)
+        {
+            _result.emplace(LEXY_FWD(args)...);
+        }
+
+        Container&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+
+    constexpr auto sink() const
+    {
+        return _sink{Container()};
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _sink{Container(allocator)};
+    }
+};
+
+/// A callback with sink that creates an unordered collection of things (e.g. a `std::set`,
+/// `std::unordered_map`, etc.). It repeatedly calls `insert()` and `emplace()`.
+template <typename T>
+constexpr auto as_collection = _collection<T>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Container, typename Callback>
+class _collect_sink
+{
+public:
+    constexpr explicit _collect_sink(Callback callback) : _callback(LEXY_MOV(callback)) {}
+    template <typename C = Container>
+    constexpr explicit _collect_sink(Callback callback, const typename C::allocator_type& allocator)
+    : _result(allocator), _callback(LEXY_MOV(callback))
+    {}
+
+    using return_type = Container;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args)
+        -> decltype(void(LEXY_DECLVAL(Callback)(LEXY_FWD(args)...)))
+    {
+        _result.push_back(_callback(LEXY_FWD(args)...));
+    }
+
+    constexpr auto finish() &&
+    {
+        return LEXY_MOV(_result);
+    }
+
+private:
+    Container                  _result;
+    LEXY_EMPTY_MEMBER Callback _callback;
+};
+template <typename Callback>
+class _collect_sink<void, Callback>
+{
+public:
+    constexpr explicit _collect_sink(Callback callback) : _count(0), _callback(LEXY_MOV(callback))
+    {}
+
+    using return_type = std::size_t;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args)
+        -> decltype(void(LEXY_DECLVAL(Callback)(LEXY_FWD(args)...)))
+    {
+        _callback(LEXY_FWD(args)...);
+        ++_count;
+    }
+
+    constexpr auto finish() &&
+    {
+        return _count;
+    }
+
+private:
+    std::size_t                _count;
+    LEXY_EMPTY_MEMBER Callback _callback;
+};
+
+template <typename Container, typename Callback>
+class _collect
+{
+public:
+    constexpr explicit _collect(Callback callback) : _callback(LEXY_MOV(callback)) {}
+
+    constexpr auto sink() const
+    {
+        return _collect_sink<Container, Callback>(_callback);
+    }
+    template <typename C = Container>
+    constexpr auto sink(const typename C::allocator_type& allocator) const
+    {
+        return _collect_sink<Container, Callback>(_callback, allocator);
+    }
+
+private:
+    LEXY_EMPTY_MEMBER Callback _callback;
+};
+
+/// Returns a sink that invokes the void-returning callback multiple times, resulting in the number
+/// of times it was invoked.
+template <typename Callback>
+constexpr auto collect(Callback&& callback)
+{
+    using callback_t = std::decay_t<Callback>;
+    static_assert(std::is_void_v<typename callback_t::return_type>,
+                  "need to specify a container to collect into for non-void callbacks");
+    return _collect<void, callback_t>(LEXY_FWD(callback));
+}
+
+/// Returns a sink that invokes the callback multiple times, storing each result in the container.
+template <typename Container, typename Callback>
+constexpr auto collect(Callback&& callback)
+{
+    using callback_t = std::decay_t<Callback>;
+    static_assert(!std::is_void_v<typename callback_t::return_type>,
+                  "cannot collect a void callback into a container");
+    return _collect<Container, callback_t>(LEXY_FWD(callback));
+}
+} // namespace lexy
+
+#endif // LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
 
 
 
