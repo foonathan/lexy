@@ -102,7 +102,7 @@ TEST_CASE("bind_sink")
     {
         auto sink(int i, float f) const
         {
-            return lexy::sink<int>([&](int& result, int arg) { result += i * arg + int(f); })
+            return lexy::sink<int>([i, f](int& result, int arg) { result += i * arg + int(f); })
                 .sink();
         }
     };
