@@ -35,17 +35,19 @@ template <std::size_t... Idx, typename... T>
 class _tuple<index_sequence<Idx...>, T...> : public _tuple_holder<Idx, T>...
 {
 public:
-    template <typename... Args,
-              typename = std::enable_if_t<((sizeof...(Args) == sizeof...(T)) && ...
-                                           && std::is_constructible_v<T, Args&&>)>>
-    constexpr _tuple(Args&&... args) : _tuple_holder<Idx, T>{LEXY_FWD(args)}...
+    template <typename... Args>
+    constexpr _tuple(int, Args&&... args) : _tuple_holder<Idx, T>{LEXY_FWD(args)}...
     {}
 };
 
 template <typename... T>
 struct tuple : _tuple<index_sequence_for<T...>, T...>
 {
-    using _tuple<index_sequence_for<T...>, T...>::_tuple;
+    template <typename... Args,
+              typename = std::enable_if_t<((sizeof...(Args) == sizeof...(T)) && ...
+                                           && std::is_constructible_v<T, Args&&>)>>
+    constexpr tuple(Args&&... args) : _tuple<index_sequence_for<T...>, T...>(0, LEXY_FWD(args)...)
+    {}
 
     template <std::size_t N>
     using element_type = typename _nth_type<N, T...>::type;
