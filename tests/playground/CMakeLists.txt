@@ -2,9 +2,26 @@
 #  This file is subject to the license terms in the LICENSE file
 #  found in the top-level directory of this distribution.
 
-# Compile-only tests.
+# Compile-only playground and godbolt infrastructure tests.
 add_executable(lexy_test_playground playground.cpp)
 target_link_libraries(lexy_test_playground PRIVATE lexy_test_base)
 add_executable(lexy_test_godbolt godbolt.cpp)
 target_link_libraries(lexy_test_godbolt PRIVATE lexy_test_base)
+
+# Compile-only playground example tests.
+add_executable(lexy_test_playground_examples)
+target_link_libraries(lexy_test_playground_examples PRIVATE lexy_test_base)
+
+file(GLOB examples CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/assets/playground/*.cpp)
+foreach(file ${examples})
+    get_filename_component(name ${file} NAME)
+
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${name}
+        COMMAND ${CMAKE_COMMAND} -E echo "#include <lexy/dsl.hpp>"    >  "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "namespace dsl = lexy::dsl;" >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "#line 1 \"${file}\""        >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E cat "${file}"                     >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        VERBATIM DEPENDS "${file}")
+    target_sources(lexy_test_playground_examples PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/${name})
+endforeach()
 

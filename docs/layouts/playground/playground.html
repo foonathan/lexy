@@ -4,6 +4,15 @@
 
 <section id="toolbar">
     <div class="toolbar-editor-options">
+        <select id="toolbar-examples">
+            <option selected disabled hidden>Load example</option>
+            {{ range (resources.Match "playground/*.cpp") }}
+                <option value="{{ .RelPermalink }}">
+                    {{ .Name | replaceRE "playground/(.*)\\.cpp" "$1" }}
+                </option>
+            {{ end }}
+        </select>
+
         <button id="toolbar-permalink" title="Create a permalink to this example.">Permalink</button>
 
         <input type="checkbox" id="toolbar-vim"/>
@@ -55,6 +64,7 @@
 <script type="module">
 import * as playground from "{{ $playground.Permalink }}";
 
+const toolbar_examples   = document.getElementById("toolbar-examples");
 const toolbar_permalink  = document.getElementById("toolbar-permalink");
 const toolbar_vim        = document.getElementById("toolbar-vim");
 const toolbar_wrap       = document.getElementById("toolbar-wrap");
@@ -63,25 +73,27 @@ const toolbar_run        = document.getElementById("toolbar-run");
 const toolbar_godbolt    = document.getElementById("toolbar-godbolt");
 
 const editor_grammar = ace.edit("editor-grammar");
-const editor_input = ace.edit("editor-input");
+const editor_input   = ace.edit("editor-input");
 
 const output_text  = document.getElementById("output-text");
 const output_graph = document.getElementById("output-graph");
 
-function update_toolbar_production()
+function update_toolbar_production(selected_production)
 {
     const source      = editor_grammar.getValue();
     const productions = playground.list_of_productions(source);
 
+    if (selected_production === undefined)
+        selected_production = toolbar_production.value;
+
     // Clear and re-populate selection.
-    const current_selection = toolbar_production.value;
     toolbar_production.innerHTML = '';
     for (var prod of productions)
     {
         var option = document.createElement("option");
         option.value = prod;
         option.innerHTML = `<code>${prod}</code>`;
-        option.selected = (prod == current_selection);
+        option.selected = (prod == selected_production);
 
         toolbar_production.appendChild(option);
     }
@@ -90,41 +102,42 @@ function update_toolbar_production()
 async function load()
 {
     const storage = window.sessionStorage;
-    const default_grammar = `struct name
-{
-    static constexpr auto rule = dsl::while_(dsl::ascii::alnum / dsl::lit_c<'_'> / dsl::lit_c<'-'>);
-};
-
-struct production
-{
-    static constexpr auto rule = []{
-        auto greeting = LEXY_LIT("Hello");
-        return greeting + dsl::ascii::space + dsl::p<name> + dsl::lit_c<'!'> + dsl::eof;
-    }();
-};
-`;
-    const default_input = "Hello World!";
-    const default_production = "production";
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    if (id !== null)
-    {
-        const godbolt = await playground.load_godbolt_url(id);
-        storage.setItem('editor-grammar',  godbolt.grammar);
-        storage.setItem('editor-input',  godbolt.input);
-        storage.setItem('toolbar-production',  godbolt.production);
 
-        console.log(godbolt);
+    var result = {};
+
+    const id      = params.get('id');
+    const example = params.get('example');
+    if (id !== null)
+        result = await playground.load_godbolt_url(id);
+    else if (example !== null)
+    {
+        for (var option of toolbar_examples.options)
+        {
+            if (option.text !== example)
+                continue;
+
+            option.selected = true;
+            result = await playground.load_example(option.value);
+            break;
+        }
+    }
+    else if (toolbar_examples.selectedIndex > 0)
+    {
+        result = await playground.load_example(toolbar_examples.value);
+    }
+    else
+    {
+        // Load session entry or default.
+        var def = await playground.load_example('default');
+        result.grammar    = storage.getItem('editor-grammar') || def.grammar;
+        result.input      = storage.getItem('editor-input') || def.input;
+        result.production = storage.getItem('toolbar-production') || def.production;
     }
 
-    // Load session entry or default.
-    editor_grammar.setValue(storage.getItem('editor-grammar') || default_grammar, 1);
-    editor_input.setValue(storage.getItem('editor-input') || default_input, 1);
-
-    // Refresh the toolbar.
-    update_toolbar_production();
-    toolbar_production.value = storage.getItem('toolbar-production') || default_production;
+    editor_grammar.setValue(result.grammar, 1);
+    editor_input.setValue(result.input, 1);
+    update_toolbar_production(result.production);
 }
 
 function save()
@@ -133,6 +146,7 @@ function save()
 
     // Remove any parameters that would indicate a shared example.
     window.history.replaceState({}, document.title, {{ .Permalink }});
+    toolbar_examples.selectedIndex = 0;
 
     // Remember the current settings.
     storage.setItem('editor-grammar', editor_grammar.getValue());
@@ -215,32 +229,40 @@ window.addEventListener('load', async() => {
     editor_input.session.setMode("ace/mode/text");
     editor_input.setShowPrintMargin(false);
 
-    await load();
+    // Auto save on changes to grammar, input, or selected production.
     editor_grammar.getSession().on('change', debounce(save, 1000));
     editor_input.getSession().on('change', debounce(save, 1000));
+    toolbar_production.addEventListener('change', save);
 
+    // Update the toolbar when the grammar changes.
     editor_grammar.getSession().on('change', debounce(update_toolbar_production, 1000));
 
+    // Run automatically when grammar, input, or production changes.
     editor_grammar.getSession().on('change', debounce(run, 1000));
     editor_input.getSession().on('change', debounce(run, 1000));
+    toolbar_production.addEventListener('change', run);
 
-    toolbar_permalink.addEventListener("click", async() => {
+    // Make the toolbar work.
+    toolbar_examples.addEventListener('change', load);
+    toolbar_permalink.addEventListener('click', async() => {
         const source = await playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
         const input  = editor_input.getValue();
 
-        const url = await playground.get_godbolt_url(source, input);
+        const url = await playground.get_godbolt_permalink(source, input);
         const id = url.substring(url.lastIndexOf('/') + 1);
         window.history.replaceState({}, document.title, "{{ .Permalink }}?id=" + id);
     });
-    toolbar_vim.addEventListener("click", toggle_vim);
-    toolbar_wrap.addEventListener("click", toggle_wrap);
-    toolbar_run.addEventListener("click", run);
-    toolbar_godbolt.addEventListener("click", async() => {
+    toolbar_vim.addEventListener('click', toggle_vim);
+    toolbar_wrap.addEventListener('click', toggle_wrap);
+    toolbar_run.addEventListener('click', run);
+    toolbar_godbolt.addEventListener('click', async() => {
         const source = await playground.preprocess_source('godbolt', editor_grammar.getValue(), toolbar_production.value);
         const input  = editor_input.getValue();
         window.location.href = await playground.get_godbolt_url(source, input);
     });
 
+    // Run.
+    await load();
     toggle_vim();
     toggle_wrap();
     run();

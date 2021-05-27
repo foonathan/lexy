@@ -76,7 +76,7 @@ export async function compile_and_run(source, input)
     }
 }
 
-export async function get_godbolt_url(source, input)
+function get_godbolt_clientstate(source, input)
 {
     var session = {};
     session.id = 1;
@@ -88,16 +88,38 @@ export async function get_godbolt_url(source, input)
     compiler.id = compiler_id;
     compiler.libs = [ lexy_id ];
     compiler.options = "-std=c++20";
-    session.executors = [{ compiler: compiler, stdin: input }];
+    session.executors = [{ compiler: compiler, stdin: input, stdinVisible: true }];
 
-    console.log(JSON.stringify({ sessions: [session] }))
+    return { sessions: [session] };
+}
 
+export async function get_godbolt_permalink(source, input)
+{
+    const state = get_godbolt_clientstate(source, input);
     const response = await fetch(api + "shortener", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ sessions: [session] })
+        body: JSON.stringify(state)
     });
     return (await response.json()).url;
+}
+
+export function get_godbolt_url(source, input)
+{
+    const state = get_godbolt_clientstate(source, input);
+    const state_str = JSON.stringify(state);
+    return "https://godbolt.org/clientstate/" + btoa(state_str);
+}
+
+export async function load_example(url)
+{
+    const source_regex = /\/\/ INPUT:(.*)\n/;
+    const source       = await (await fetch(url)).text();
+
+    const grammar = source.replace(source_regex, '');
+    const input   = (source_regex.exec(source)?.[1] ?? "").replace("\\n", "\n");
+
+    return { grammar: grammar.trim(), input: input, production: "production" };
 }
 
 export async function load_godbolt_url(id)

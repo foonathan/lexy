@@ -1,0 +1,14 @@
+{{ $id      := .Get 0 }}
+{{ $source  := ($id | printf "playground/%s.cpp"   | resources.Get).Content | replaceRE "^// INPUT:.*\n" "" | chomp }}
+
+.{{ .Get 1 }}
+====
+
+[.playground-example]
+.image:{{ (resources.Get "icons/play.svg").Permalink }}[link="/playground?example={{ $id }}", title="Try it online"]
+[source,cpp]
+----
+{{ $source | safeHTML }}
+----
+====
+

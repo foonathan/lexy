@@ -267,12 +267,6 @@ article {
         }
     }
 
-    // code block title
-    :not(td) > div.title {
-        font-style: italic;  
-        margin-bottom: -.9em;
-    }
-
     // inline code and code blocks
     code {
         font-family: $code-font;
