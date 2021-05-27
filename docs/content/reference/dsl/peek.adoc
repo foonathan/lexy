@@ -1,0 +1,75 @@
+---
+layout: header
+header: "lexy/dsl/peek.hpp"
+entities:
+  "lexy::dsl::peek": peek
+  "lexy::dsl::peek_not": peek_not
+---
+
+[.lead]
+The `peek` and `peek_not` branch rules.
+
+[#peek]
+== Branch rule `lexy::dsl::peek`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _branch-rule_ auto peek(_rule_ auto rule);
+}
+----
+
+[.lead]
+`peek` is a {{% branch-rule %}} that checks if `rule` matches without consuming anything.
+
+Parsing::
+  Always succeeds without consuming anything.
+Branch parsing::
+  Tries to match `rule` in a new context.
+  If that succeeds, the branch is taken without consuming anything.
+  Otherwise, it backtracks.
+Errors::
+  No errors are raised as the rule can only backtrack and never fails.
+Values::
+  None.
+
+{{% playground_example peek "Parse an optional number" %}}
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
+
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+
+CAUTION: This rule requires backtracking, which can slow down parsing.
+
+[#peek_not]
+== Branch rule `lexy::dsl::peek_not`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _branch-rule_ auto peek_not(_rule_ auto rule);
+}
+----
+
+[.lead]
+`peek_not` is a {{% branch-rule %}} that checks if `rule` does not match without consuming anything.
+
+Parsing::
+  Always succeeds without consuming anything.
+Branch parsing::
+  Tries to match `rule` in a new context.
+  If that does not succeed, the branch is taken without consuming anything.
+  Otherwise, it backtracks.
+Errors::
+  No errors are raised as the rule can only backtrack and never fails.
+Values::
+  None.
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
+
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+
+CAUTION: This rule requires backtracking, which can slow down parsing.
+

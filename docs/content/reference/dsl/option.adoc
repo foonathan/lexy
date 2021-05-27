@@ -1,0 +1,86 @@
+---
+layout: header
+header: "lexy/dsl/option.hpp"
+entities:
+  "lexy::dsl::nullopt": nullopt
+  "lexy::dsl::opt": opt
+---
+
+[.lead]
+The `nullopt` and `opt()` rules.
+
+[#nullopt]
+== Rule `lexy::dsl::nullopt`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename T>
+    concept _optional-like_
+      = std::is_default_constructible_v<T>
+        && requires(T t) {
+          *t;
+          !t;
+        };
+
+    struct nullopt
+    {
+        template <typename T>
+          requires _optional-like_<T>
+        constexpr operator T() const;
+    };
+}
+
+namespace lexy::dsl
+{
+    constexpr _rule_ auto nullopt;
+}
+----
+
+[.lead]
+`nullopt` is a rule that produces a value of type `lexy::nullopt` without consuming anything.
+
+Parsing::
+  Always succeeds without consuming anything.
+Errors::
+  None.
+Values::
+  A single object of the tag type `lexy::nullopt`.
+  This type is implicitly convertible to any type that is `_optional-like_` by constructing a default constructible instance of it.
+
+{{% godbolt_example try "Recover from missing version numbers" %}}
+
+NOTE: See {{< github_example tutorial >}} for a more complete version number parser.
+
+{{% godbolt_example lookahead "Create an empty optional if we're not having the key" %}}
+
+[#opt]
+== Rule `lexy::dsl::opt`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _rule_ auto opt(_branch-rule_ auto branch);
+}
+----
+
+[.lead]
+`opt` is a rule that tries to parse a {{% branch-rule %}}, producing a `lexy::nullopt` otherwise.
+
+Parsing::
+  Tries to parse `branch`.
+  If that backtracks, succeeds without consuming anything.
+Errors::
+  All errors raised by `branch` during branch parsing.
+  The rule then fails if `branch` has failed.
+Values::
+  If `branch` was parsed, all values produced by it.
+  Otherwise, a single object of the tag type `lexy::nullopt` (see above).
+
+{{% godbolt_example opt "Only parse a fraction if preceded by a dot " %}}
+
+NOTE: `opt(branch)` is functionally equivalent to the {{% docref choice %}} `branch | lexy::dsl::else_ >> lexy::dsl::nullopt`,
+and it parses the same as {{% docref "lexy::dsl::if_" %}}.
+

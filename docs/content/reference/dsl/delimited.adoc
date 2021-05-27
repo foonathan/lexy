@@ -1,0 +1,294 @@
+---
+layout: header
+header: "lexy/dsl/delimited.hpp"
+entities:
+  "lexy::dsl::delimited": delimited
+  "lexy::dsl::quoted": delimited-predefined
+  "lexy::dsl::triple_quoted": delimited-predefined
+  "lexy::dsl::single_quoted": delimited-predefined
+  "lexy::dsl::backticked": delimited-predefined
+  "lexy::dsl::double_backticked": delimited-predefined
+  "lexy::dsl::triple_backticked": delimited-predefined
+  "lexy::dsl::escape": escape
+  "lexy::dsl::backslash_escape": escape-predefined
+  "lexy::dsl::dollar_escape": escape-predefined
+---
+
+[.lead]
+Rules for parsing delimited/quoted strings with escape sequences.
+
+[#delimited]
+== Rule DSL `lexy::dsl::delimited`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct missing_delimiter {};
+}
+
+namespace lexy::dsl
+{
+    struct _delimited-dsl_ // note: not a rule itself
+    {
+        consteval _branch-rule_ auto open() const;
+        consteval _branch-rule_ auto close() const;
+
+        consteval _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+
+        //=== rules ===//
+        consteval _rule_ auto operator()(_token-rule_ c) const;
+        consteval _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+    };
+
+    consteval _delimited-dsl_ delimited(_branch-rule_ auto open,
+                                      _branch-rule_ auto close);
+
+    consteval _delimited-dsl_ delimited(_branch-rule_ auto delim)
+    {
+        return delimited(delim, delim)
+    }
+}
+----
+
+[.lead]
+`delimited` is not a rule, but a DSL for specifying rules that all parse zero or more "characters" surrounded by delimiters, with optional escape sequences.
+
+It can be created using two overloads.
+The first overload takes a {{% branch-rule %}} that matches the `open`(ing) delimiter and one that matches the `close`(ing) delimiter.
+The second overload takes just one rule that matches both opening and closing delimiter.
+
+Common delimiters, like quotation marks, are predefined (see below).
+
+NOTE: See {{% docref "lexy::dsl::brackets" %}} if you want to parse an arbitrary rule surrounded by brackets.
+This is one is designed for lists of characters.
+
+=== Branch rules `.open()` and `.close()`
+
+{{% interface %}}
+----
+consteval _branch-rule_ auto open() const;
+consteval _branch-rule_ auto close() const;
+----
+
+[.lead]
+`.open()`/`.close()` returns the branch rules that were passed to the top-level `lexy::dsl::delimited()`.
+
+=== `.limit()`
+
+{{% interface %}}
+----
+consteval _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+----
+
+[.lead]
+Provide a limit to detect a missing closing delimiter.
+
+`delimited` only stops parsing once it matches `close`;
+if `close` is missing in the input it will consume the entire input.
+By specifying a limit, which is a (or an alternative of) {{% token-rule %}}(s),
+it fails once it matches one of them before the closing delimiter.
+
+{{% playground_example "quoted_limit" "Detect missing closing delimiter" %}}
+
+CAUTION: The limit must be a character that must not be allowed inside the delimited.
+
+=== Rule `.operator()`
+
+{{% interface %}}
+----
+consteval _rule_ auto operator()(_token-rule_ c) const;
+consteval _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+----
+
+[.lead]
+`.operator()` returns a rule that parses zero or more occurrences of `c` inside the delimited,
+with optional `escape` sequences.
+
+Parsing::
+  Parses `open()`, then enters a loop where it repeatedly does the following in order:
+  1. Tries parsing `close()`. If that succeeds, finishes.
+  2. Tries match any of the token rules provided as a limit, if there are any,
+     and tries to match {{% docref "lexy::dsl::eof" %}}.
+     If any of them match, fails with a missing delimiter.
+  3. For the second overload, tries to parse `escape` (see below).
+  4. Parses `c`.
+  While parsing the delimited, automatic whitespace skipping is disabled;
+  whitespace is only skipped after `close()`.
+Branch parsing::
+  Tries parsing `open()` and backtracks if that did not succeed.
+  Otherwise, parses the same loop as described above.
+Errors::
+  * All errors raised by parsing `open()`.
+  * `lexy::missing_delimiter`: if the limits match.
+    Its range covers everything since the opening delimiter.
+    The rule then fails.
+  * All errors raised by parsing `escape`.
+    Recovers by simply continuing with the next iteration of the loop at the position where `escape` has left of.
+    Note that no value of `escape` is produced.
+  * All errors raised by parsing `c`.
+    It can sometimes recover for simple tokens by simply discarding the bad character and continuing after it.
+    Otherwise, it fails.
+Values::
+  It creates a sink of the current context.
+  The sink is invoked with a `lexy::lexeme` capturing everything consumed by `c`, separately.
+  It is also invoked with every value produced by `escape`.
+  The invocations happen separately in lexical order.
+  The rule then produces all values of `open()`, the final value of the sink, and all values of `close()`.
+Parse tree::
+  `delimited` does not have any special parse tree handling:
+  it will create the nodes for `open()`, then the nodes for each `c` and `escape`, and the nodes for `close()`.
+  If the current production inherits from `lexy::token_production`,
+  adjacent token nodes of the same kind (which includes the default kind) are merged.
+
+{{% playground_example "quoted" "Parse a quoted string" %}}
+
+{{% playground_example "quoted_error" "Parse a quoted string with custom error" %}}
+
+{{% playground_example "quoted_token" "Parse a quoted string with whitespace and token production" %}}
+
+[#delimited-predefined]
+== Predefined delimited
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _delimited-dsl_ quoted        = delimited(lit<"\"">);
+    constexpr _delimited-dsl_ triple_quoted = delimited(lit<"\"\"\"">);
+
+    constexpr _delimited-dsl_ single_quoted = delimited(lit<"'">);
+
+    constexpr _delimited-dsl_ backticked        = delimited(lit<"`">);
+    constexpr _delimited-dsl_ double_backticked = delimited(lit<"\``">);
+    constexpr _delimited-dsl_ triple_backticked = delimited(lit<"```">);
+}
+----
+
+[.lead]
+ASCII quotation marks are pre-defined.
+
+WARNING: The naming scheme for `triple_quoted` and `single_quoted` is not consistent,
+but the terminology is common else where.
+
+[#escape]
+== Rule DSL `lexy::dsl::escape`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct invalid_escape_sequence {};
+}
+
+namespace lexy::dsl
+{
+    struct _escape-dsl_ // note: not a rule itself
+    {
+        consteval _escape-dsl_ rule(_branch-rule_ auto r) const;
+
+        consteval _escape-dsl_ capture(_token-rule_ auto t) const;
+
+        template <const _symbol_table_& SymbolTable>
+        consteval _escape-dsl_ symbol(_token-rule_ auto t) const;
+        template <const _symbol_table_& SymbolTable>
+        consteval _escape-dsl_ symbol() const;
+    };
+
+    consteval _escape-dsl_ escape(_token-rule_ auto escape_char);
+}
+----
+
+[.lead]
+`escape` is not a rule but a DSL for specifying escape sequences.
+
+It is created by giving it the `escape_char`, a {{% token-rule %}} that matches the initial escape characters.
+Common escape characters are predefined.
+
+The various member functions all add potential rules that parse the part of an escape sequence after the initial escape character.
+The resulting DSL can then only be used with `delimited`, where it is treated like a branch rule and as such documented like one.
+
+Branch parsing::
+  Tries to match and consume `escape_char`, backtracks otherwise.
+  After `escape_char` has been consumed, tries to parse each escape sequence (see below) in order of the member function invocations,
+  like a {{% docref choice %}} would.
+Errors::
+  * All errors raised by each escape sequence.
+    `escape` then fails but `delimited` recovers (see above).
+  * `lexy::invalid_escape_sequence`: if none of the escape sequences match; at the position of the `escape_char`.
+    `escape` then fails but `delimited` recovers (see above).
+Values::
+  All values produced by the selected escape sequence.
+  `delimited` forwards them to the sink in one invocation.
+
+{{% godbolt_example "quoted_escape" "Parse a quoted string with escape sequences" %}}
+
+=== Escape sequence `.rule()`
+
+{{% interface %}}
+----
+consteval _escape-dsl_ rule(_branch-rule_ auto r) const;
+----
+
+[.lead]
+`.rule()` specifies an escape sequence that simply tries to parse the {{% branch-rule %}} `r`.
+
+=== Escape sequence `.capture()`
+
+{{% interface %}}
+----
+consteval _escape-dsl_ capture(_token-rule_ auto t) const
+{
+    return this->rule(lexy::dsl::capture(t));
+}
+----
+
+[.lead]
+`.capture()` specifies an escape sequence that tries to parse the {{% token-rule %}} `t` and produces a `lexy::lexeme`.
+
+It is equivalent to {{% docref "lexy::dsl::capture" %}}.
+
+=== Escape sequence `.symbol()`
+
+{{% interface %}}
+----
+template <const _symbol_table_& SymbolTable>
+consteval _escape-dsl_ symbol(_token-rule_ auto t) const
+{
+    return this->rule(lexy::dsl::symbol<SymbolTable>(t));
+}
+
+template <const _symbol_table_& SymbolTable>
+consteval _escape-dsl_ symbol() const
+{
+    return this->rule(lexy::dsl::symbol<SymbolTable>(_see-below_));
+}
+----
+
+[.lead]
+`.symbol()` specifies an escape sequence that parses a symbol.
+
+The first overload simply forwards to {{% docref "lexy::dsl::symbol" %}}:
+it matches `t` and looks it up in the `SymbolTable` and corresponding value produced.
+
+The second overload behaves similar, but instead of using a user-defined rule `t`,
+it uses a rule that only matches the next code unit.
+This is then looked up in the `SymbolTable` and the corresponding value produced.
+
+[#escape-predefined]
+== Predefined escapes
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _escape-dsl_ backslash_escape = escape(lit_c<'\\'>);
+    constexpr _escape-dsl_ dollar_escape    = escape(lit_c<'$'>);
+}
+----
+
+[.lead]
+Escape sequences beginning with common ASCII characters are pre-defined.
+
+NOTE: They don't actually define any escape sequences, just the initial character.
+

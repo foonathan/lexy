@@ -1,0 +1,14 @@
+{{- $name := .Get 0 -}}
+{{- $text := .Get 1 | default (printf "`%s`" $name) -}}
+{{- $found := false -}}
+{{- range where .Site.RegularPages "Section" "reference" -}}
+  {{- if isset .Params.entities $name -}}
+      {{- $url := printf "%s#%s" .RelPermalink (index .Params.entities $name) -}}
+      {{- $.Page.Scratch.SetInMap "see-also" $name (printf "<a href=%s><code>%s</code></a>" $url $name) -}}
+      link:{{ $url }}[{{ $text }}]
+      {{- $found = true -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $found -}}
+  {{- warnf "%q: Entity %s not found" .Page.Path $name -}}
+{{- end -}}

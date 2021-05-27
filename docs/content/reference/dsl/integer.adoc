@@ -1,0 +1,158 @@
+---
+header: "lexy/dsl/integer.hpp"
+entities:
+  "lexy::integer_traits": integer_traits
+  "lexy::dsl::integer": integer
+  "lexy::dsl::code_point_id": code_point_id
+---
+
+[.lead]
+The `integer` and `code_point_id` rules.
+
+[#integer_traits]
+== `lexy::integer_traits`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename T>
+    struct integer_traits;
+
+    template <typename Integer>
+        requires std::is_integral_v<Integer>
+    struct integer_traits<Integer> { … };
+
+    template <>
+    struct integer_traits<lexy::code_point> { … };
+
+    template <typename T>
+    struct unbounded {};
+
+    template <typename T>
+    struct integer_traits<unbounded<T>> { … };
+}
+----
+
+[.lead]
+The class template `integer_traits` gives information about integers that are used to parse them.
+
+Every specialization must have members that look the following with the indicated semantic meaning:
+
+{{% interface %}}
+----
+struct _integer-traits-specialization_
+{
+    // The actual integer type that is being parsed;
+    // it is usually the template parameter itself.
+    // `type(0)` must be a valid expression that creates the zero integer.
+    using type = _some-type_;
+
+    // If `true`, `type` has a maximal value it can store.
+    // If `false`, `type` is unbounded and range checks during parsing are disabled.
+    static constexpr bool is_bounded;
+
+    // Precondition: `digit < Radix`.
+    // Effects: `result = result * Radix + digit` or equivalent.
+    template <int Radix>
+    static constexpr void add_digit_unchecked(type& result, unsigned digit);
+};
+----
+
+If `is_bounded == true`, it must also have the following additional members:
+
+{{% interface %}}
+----
+struct _integer-traits-bounded-specialization_
+{
+    // The number of digits necessary to write the maximal value of `type` in the given `Radix`.
+    template <int Radix>
+    static constexpr std::size_t max_digit_count;
+
+    // Precondition: `digit < Radix`.
+    // Effects: `result = result * Radix + digit` or equivalent.
+    // Returns: `true` if the resulting value fits in `type`, `false` if an overflow occurred or would occurr.
+    template <int Radix>
+    static constexpr bool add_digit_checked(type& result, unsigned digit);
+};
+----
+
+The integer traits are specialized for the built-in types with the expected semantics,
+as well as `lexy::code_point`.
+The specialization for `lexy::unbounded<T>` behaves the same as the one for plain `T`,
+except that `is_bounded == false`.
+
+TIP: Use `lexy::unbounded<T>` when you know that overflow is impossible,
+e.g. because you're parsing two hexadecimal digits as an `unsigned char`.
+
+[#integer]
+== Rule `lexy::dsl::integer`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct integer_overflow {};
+}
+
+namespace lexy::dsl
+{
+    template <typename T, typename Base>
+    consteval _rule_ auto integer(_rule_ auto digits);
+
+    template <typename T>
+    consteval _rule_ auto integer(_digits-dsl_  digits);
+    template <typename T>
+    consteval _rule_ auto integer(_ndigits-dsl_ digits);
+}
+----
+
+[.lead]
+`integer` is a rule that parses a sequence of digits as an integer.
+
+Requires::
+  * `T` is a type with a specialization of <<integer_traits>>.
+  * `Base` is one of the supported {{% docref bases %}}.
+    If `digits` is some instantiation of {{% docref "lexy::dsl::digits" %}} or {{% docref "lexy::dsl::n_digits" %}},
+    `Base` is deduced and must not be specified.
+Parsing::
+  Parses `digits`.
+Errors::
+  * `lexy::integer_overflow`: if converting the consumed digits to an integer leads to overflow.
+    Its range covers everything consumed by `digits`.
+    The rule then fails.
+  * All errors raised by parsing `digits`.
+    The rule then fails if `digits` has failed.
+Values::
+  First produces all values from parsing `digits`.
+  Then produces the integer of type `T` by iterating over the code units consumed by `digits` and handling them as follows:
+  If a code unit is a valid digit of `Base`, its numerical value is determined and the resulting digit added to the result using <<integer_traits>>.
+  Otherwise, the code unit is ignored without any additional validation.
+
+{{% godbolt_example integer "Parse an `int`" %}}
+
+[#code_point_id]
+== Rule `lexy::dsl::code_point_id`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct invalid_code_point {};
+}
+
+namespace lexy::dsl
+{
+    template <std::size_t N, typename Base = hex>
+    constexpr _rule_ auto code_point_id;
+}
+----
+
+[.lead]
+`code_point_id` is a rule that parses a sequence of `N` digits as a `lexy::code_point`.
+
+`code_point_id<N, Base>` behaves almost exactly like `integer<lexy::code_point>(n_digits<N, Base>)`.
+The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_point` as opposed to `lexy::integer_overflow`.
+
+{{% godbolt_example code_point_id "Parse a code point value" %}}
+

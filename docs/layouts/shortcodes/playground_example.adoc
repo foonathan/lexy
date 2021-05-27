@@ -5,7 +5,7 @@
 ====
 
 [.playground-example]
-.image:{{ (resources.Get "icons/play.svg").Permalink }}[link="/playground?example={{ $id }}", title="Try it online"]
+.+++<a href="/playground?example={{ $id }}" title="Try it online">{{ (resources.Get "icons/play.svg").Content | safeHTML }}</a>+++
 [source,cpp]
 ----
 {{ $source | safeHTML }}

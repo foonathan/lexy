@@ -117,7 +117,7 @@ export async function load_example(url)
     const source       = await (await fetch(url)).text();
 
     const grammar = source.replace(source_regex, '');
-    const input   = (source_regex.exec(source)?.[1] ?? "").replace("\\n", "\n");
+    const input   = (source_regex.exec(source)?.[1] ?? "").replaceAll("\\n", "\n");
 
     return { grammar: grammar.trim(), input: input, production: "production" };
 }

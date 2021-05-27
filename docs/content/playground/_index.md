@@ -1,9 +1,9 @@
 ---
-title: "Playground - lexy"
+title: "Playground"
 menu:
   main:
     name: "Playground"
-    weight: 3
+    weight: 4
 ---
 
 Enter the grammar in the left editor (`lexy/dsl.hpp` and namespace alias `dsl` is pre-included) and the input in the right editor.

@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>
-        {{ .Title | default .Site.Title }}
+    {{- block "title"  . -}}
+        {{ if .IsHome }}
+            {{ .Site.Title }}
+        {{ else }}
+            {{ .Title }} — {{ .Site.Title }}
+        {{ end }}
+    {{- end -}}
     </title>
 
     {{ $style := resources.Get "css/style.scss" | resources.ToCSS | resources.Minify }}
@@ -20,17 +26,18 @@
             </li>
         </ul>
         <ul id="main">
-        {{ $currentPage := . }}
-        {{ with .Site.Menus.main }}
-        {{ range sort . }}
+        {{- $currentPage := . }}
+        {{- with .Site.Menus.main }}
+        {{- range sort . -}}
             <li>
                 <a class="{{ if ($currentPage.IsMenuCurrent "main" .) }}active{{ end }}" href="{{ .URL | relURL }}">{{ .Name }}</a>
             </li>
-        {{ end }}
-        {{ end }}
+        {{- end -}}
+        {{- end -}}
         </ul>
+        </div>
     </nav>
-    {{- block "main" . }}{{- end }}
+    {{- block "main" . -}}{{- end -}}
     <footer id="page-footer">
       <section class="copyright">
           &copy; {{ .Site.Copyright }}
@@ -39,7 +46,7 @@
           <a target="_blank" href="https://jonathanmueller.dev/support-me/">Support me!</a>.
       </section>
       <section class="poweredby">
-          Made with <a target="_blank" href="https://gohugo.io">Hugo</a>.
+          Made with <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://fontawesome.com/license">Font Awesome</a>.
       </section>
     </footer>
 </body>

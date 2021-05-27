@@ -1,0 +1,66 @@
+---
+layout: header
+header: "lexy/dsl/loop.hpp"
+entities:
+  "lexy::dsl::loop": loop
+  "lexy::dsl::break_": break_
+---
+
+[.lead]
+The `loop` and `break_` rules.
+
+[#loop]
+== Rule `lexy::dsl::loop`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _rule_ auto loop(_rule_ auto rule);
+}
+----
+
+[.lead]
+`loop` is a rule that matches `rule` repeatedly.
+
+Requires::
+  `rule` does not produce any values or creates context variables that persist between loop iterations.
+Parsing::
+  Parses `rule` repeatedly until it either fails or `break_` is parsed.
+Errors::
+  All errors raised by `rule`.
+  It then fails if `rule` has failed.
+Values::
+  None.
+
+{{% playground_example loop "Repeatedly match a choice" %}}
+
+TIP: Use {{% docref "lexy::dsl::while_" %}} if there is a simple exit condition,
+{{% docref "lexy::dsl::list" %}} if the rule should produce values.
+
+WARNING: You must not use {{% docref "lexy::dsl::return_" %}} to exit from a loop.
+
+[#break_]
+== Branch rule `lexy::dsl::break_`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _branch-rule_ auto break_;
+}
+----
+
+[.lead]
+`break_` is a rule that exits from a `loop`.
+
+Requires::
+  It is used inside a `loop` rule.
+(Branch) Parsing::
+  Matches everything without consuming anything.
+  Exits the loop.
+Errors::
+  None.
+Values::
+  None.
+

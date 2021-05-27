@@ -14,6 +14,11 @@ source-highlighter = "pygments"
 [menu]
     [[menu.main]]
     name = "GitHub"
-    weight = 4
+    weight = 5
     url = "https://github.com/foonathan/lexy"
+
+[params]
+github = "https://github.com/foonathan/lexy"
+github_src_prefix = "https://github.com/foonathan/lexy/blob/main"
+github_edit_prefix = "https://github.com/foonathan/lexy/edit/main"
 

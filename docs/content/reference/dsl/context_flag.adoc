@@ -1,0 +1,145 @@
+---
+layout: header
+header: "lexy/dsl/context_flag.hpp"
+entities:
+  "lexy::dsl::context_flag": context_flag
+---
+
+[#context_flag]
+== Rule DSL `lexy::dsl::context_flag`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    struct _context_flag-dsl_ // note: not a rule itself
+    {
+        template <bool InitialValue = false>
+        consteval _rule_ auto create() const;
+
+        consteval _rule_ auto set() const;
+        consteval _rule_ auto reset() const;
+        consteval _rule_ auto toggle() const;
+
+        consteval _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+
+        template <bool Value = true>
+        consteval _see-below_ require() const;
+    };
+
+    template <typename Id>
+    constexpr _context_flag-dsl_ context_flag;
+}
+----
+
+[.lead]
+`context_flag` is not a rule, but a DSL for specifying rules that manipulate a boolean variable of the current context.
+
+The "name" of the boolean variable is given by `Id`, which is an arbitrary type.
+Two `context_flag` objects manipulate the same boolean variable if they are instantiated by the same type.
+The "namespace" is unique per type, if a different context variable ({{% docref "lexy::dsl::context_counter" %}}, {{% docref "lexy::dsl::context_lexeme" %}}) uses `Id`, it refers to a different variable.
+
+The variable is created inside the current context:
+it is not accessible outside the current production, including in child production.
+Once the current production finishes parsing, all context variables of it are destroyed;
+it is impossible to create on that persists between different productions including multiple invocations of the same production.
+
+{{% playground_example context_flag "Parse `(a|b|c)*` where the first b must occur after the first a" %}}
+
+=== Rule `.create()`
+
+{{% interface %}}
+----
+template <bool InitialValue = false>
+consteval _rule_ auto create() const;
+----
+
+[.lead]
+`.create()` returns a rule that creates the boolean.
+
+Parsing::
+  Matches everything, without consuming anything.
+  As a side effect, it creates a boolean with name `Id` inside the current context.
+  This boolean is initialized to `InitialValue`.
+Errors::
+  None.
+Values::
+  None.
+
+=== Rules `.set()`, `.reset()`, `.toggle()`
+
+{{% interface %}}
+----
+consteval _rule_ auto set() const;
+consteval _rule_ auto reset() const;
+consteval _rule_ auto toggle() const;
+----
+
+[.lead]
+`.set()`, `.reset()`, `.toggle()` return rules that change the value of the boolean variable.
+
+Requires::
+  A boolean with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Matches everything, without consuming anything.
+  As a side effect, it modifies the boolean with name `Id` of the current context:
+  * `.set()` sets it to `true`.
+  * `.reset()` sets it to `false`.
+  * `.toggle()` changes its value from `true` to `false` or from `false` to `true`.
+Errors::
+  None.
+Values::
+  None.
+
+=== Rule `.select()`
+
+{{% interface %}}
+----
+consteval _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+----
+
+[.lead]
+`.select()` returns a rule that branches on the value of the boolean.
+
+Requires::
+  A boolean with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Reads the value of the boolean with the name `Id` of the current context.
+  If it is `true`, parses `if_true`.
+  Otherwise, parses `if_false`.
+Errors::
+  All errors raised by the selected rule.
+  This rule then fails if the selected rule has failed.
+Values::
+  All values produced by the selected rule.
+
+=== Rule `.require()`
+
+{{% interface %}}
+----
+struct _require-dsl_
+{
+    template <typename Tag>
+    static constexpr _rule_ auto error;
+};
+
+template <bool Value = true>
+consteval _require-dsl_ require() const;
+----
+
+[.lead]
+`.require()` returns a rule that errors if the boolean does not have a certain value.
+
+Requires::
+  A boolean with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Matches everything, without consuming anything.
+Errors::
+  A generic error with the specified `Tag` if the boolean with the name `Id` of the current context does not have the value `Value`.
+  It is raised at the current position of the reader and the rule then fails.
+Values::
+  None.
+

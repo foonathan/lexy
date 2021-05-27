@@ -1,0 +1,33 @@
+---
+layout: header
+header: "lexy/dsl/capture.hpp"
+entities:
+  "lexy::dsl::capture": capture
+---
+
+[#capture]
+== Rule `lexy::dsl::capture`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _rule_        auto capture(_rule_        auto rule);
+    consteval _branch-rule_ auto capture(_branch-rule_ auto rule);
+}
+----
+
+[.lead]
+`capture` is a rule that parses `rule` capturing everything it has consumed as a value.
+
+(Branch) Parsing::
+  Parses `rule` unchanged.
+Errors::
+  All errors raised by `rule`.
+  The rule then fails if `rule` has failed.
+Values::
+  A `lexy::lexeme` whose range covers everything consumed by `rule`,
+  followed by all values produced by `rule`.
+
+{{% godbolt_example capture "Parse a name" %}}
+

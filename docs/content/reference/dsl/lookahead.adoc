@@ -1,0 +1,38 @@
+---
+layout: header
+header: "lexy/dsl/lookahead.hpp"
+entities:
+  "lexy::dsl::lookahead": lookahead
+---
+
+[#lookahead]
+== Branch rule `lexy::dsl::lookahead`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _branch-rule_ auto lookahead(_token-rule_ auto needle,
+                                         _token-rule_ auto end);
+}
+----
+
+[.lead]
+`lookahead` is a {{% branch-rule %}} that checks if `needle` is found before `end`.
+
+Parsing::
+  Always succeeds without consuming anything.
+Branch parsing::
+  If it can match `needle` before `end` is matched or before EOF is reached, the branch is taken without having consumed any input.
+  Otherwise, it backtracks.
+Errors::
+  No errors are raised as the rule can only backtrack and never fails.
+Values::
+  None.
+
+{{% godbolt_example lookahead "Look for an `=` sign before deciding on a branch" %}}
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `needle` or `end`.
+
+CAUTION: This rule requires backtracking, which can slow down parsing.
+

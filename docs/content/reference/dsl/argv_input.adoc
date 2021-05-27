@@ -1,0 +1,32 @@
+---
+layout: header
+header: "lexy/input/argv_input.hpp"
+entities:
+  "lexy::dsl::argv_separator": argv_separator
+---
+
+NOTE: This header is _not_ included by `lexy/dsl.hpp`.
+
+[#argv_separator]
+== Token rule `lexy::dsl::argv_separator`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _token-rule_ auto argv_separator;
+}
+----
+
+[.lead]
+`argv_separator` is a {{% token-rule %}} that matches the separator between two command-line arguments.
+
+Matching::
+  Matches and consumes the separator between two command-line arguments.
+Errors::
+  `lexy::expected_char_class` (`"argv-separator"`): at the unchanged reader position.
+  The rule then fails.
+
+The rule can only succeed on a `lexy::argv_input`.
+There is no argument separator before the first command-line argument, or after the last one.
+

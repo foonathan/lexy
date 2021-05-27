@@ -1,9 +1,11 @@
 ---
-title: "Reference - lexy"
+title: "Reference"
 menu:
   main:
     name: "Reference"
     weight: 2
+layout: legacy
+outputs: [html, json]
 ---
 :toc: left
 :toclevels: 3

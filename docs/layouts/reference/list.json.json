@@ -1,0 +1,9 @@
+{
+{{- range (where .Site.RegularPages "Section" "reference") -}}
+    {{- $url := .RelPermalink -}}
+    {{- range $name, $id := .Params.entities -}}
+        "{{ $name }}": "{{ $url }}#{{ $id }}",
+    {{- end -}}
+{{- end -}}
+"": ""
+}

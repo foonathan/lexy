@@ -1,0 +1,62 @@
+---
+layout: header
+header: "lexy/dsl/sequence.hpp"
+entities:
+  "lexy::dsl::operator+": sequence
+  "sequence": sequence
+---
+
+[#sequence]
+== Rule `lexy::dsl::operator+`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    consteval _rule_ auto operator+(_rule_ auto lhs, _rule_ auto rhs);
+}
+----
+
+[.lead]
+`operator+` (sequence) is a rule that parses multiple rules one after the other.
+
+Parsing::
+  Parses `lhs`, then parses `rhs`.
+Errors::
+  All errors raised by `lhs` and/or `rhs`.
+  The rule fails if either of them has failed.
+Values::
+  All values produced from `rhs` followed by all values produced by `rhs`.
+
+{{% playground_example default "Sequence rule is used practically all the time" %}}
+
+[#sequence-token]
+== Branch rule `lexy::dsl::operator+` (tokens only)
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    struct _token-seq_ {}; // models _branch-rule_
+
+    consteval _token-seq_ operator+(_token-rule_ auto lhs, _token-rule_ auto rhs);
+    consteval _token-seq_ operator+(_token-seq_ lhs, _token-rule_ auto rhs);
+    consteval _token-seq_ operator+(_token-rule_ auto lhs, _token-seq_ rhs);
+}
+----
+
+[.lead]
+A sequence rule that consists only of {{% token-rule %}}s is a {{% branch-rule %}}.
+
+Parsing::
+  Matches and consumes `lhs`, then matches and consumes `rhs`.
+Branch Parsing::
+  Tries to match and consume `lhs`, then tries to match and consume `rhs`.
+  If either of them fail to match, backtracks.
+  Otherwise, the branch is token.
+Errors::
+  All errors raised by the implicit whitespace skipping after the tokens.
+  The rule then fails without backtracking.
+Values::
+  None (tokens only).
+

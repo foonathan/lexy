@@ -1,0 +1,181 @@
+---
+layout: header
+header: "lexy/dsl/identifier.hpp"
+entities:
+  "lexy::dsl::identifier": identifier
+  "lexy::dsl::keyword": keyword
+  "LEXY_KEYWORD": keyword
+---
+
+[.lead]
+The `identifier` and `keyword` rules.
+
+[#identifier]
+== Rule `lexy::dsl::identifier`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct reserved_identifier {};
+}
+
+namespace lexy::dsl
+{
+    struct _identifier-dsl_ // models _rule_
+    {
+        //=== modifiers ===//
+        consteval _identifier-dsl_ reserve(_rule_ auto ... rules) const;
+        consteval _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const;
+        consteval _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const;
+
+        //=== sub-rules ===//
+        consteval _token-rule_ auto pattern() const;
+
+        consteval _token-rule_ auto leading_pattern() const;
+        consteval _token-rule_ auto trailing_pattern() const;
+    };
+
+    consteval _identifier-dsl_ identifier(_token-rule_ auto leading,
+                                        _token-rule_ auto trailing);
+
+    consteval _identifier-dsl_ identifier(_token-rule_ auto pattern)
+    {
+        return identifier(pattern, pattern);
+    }
+
+}
+----
+
+[.lead]
+`identifier` is a rule that parses an identifier.
+
+It can be created using two overloads.
+The first overload takes a {{% token-rule %}} that matches the `leading` character of the identifier,
+and one that matches all `trailing` characters after the first.
+The second overload takes just one {{% token-rule %}} and uses it both as `leading` and `trailing` characters.
+
+Parsing::
+  Matches and consumes the token `.pattern()` (see below).
+  Then verifies that the lexeme formed from `.pattern()` (excluding any trailing whitespace), is not reserved (see below).
+Errors::
+  * All errors raised by `.pattern()`. The rule then fails.
+  * `lexy::reserved_identifier`: if the identifier is reserved; its range covers the identifier.
+    The rule then recovers.
+Values::
+  A single `lexy::lexeme` that is the parsed identifier (excluding any trailing whitespace).
+Parse tree::
+  The single token node created by `.pattern()` (see below).
+  Its kind cannot be overridden.
+
+{{% playground_example identifier "Parse a C like identifier" %}}
+
+TIP: Use the character classes from {{% docref "lexy::dsl::ascii" %}} for simple identifier matching as seen in the example.
+
+=== Reserving identifiers
+
+{{% interface %}}
+----
+consteval _identifier-dsl_ reserve(_rule_ auto ... rules) const; <1>
+consteval _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const; <2>
+consteval _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const; <3>
+----
+
+[.lead]
+Reserves an identifier.
+
+Initially, no identifier is reserved.
+Identifiers are reserved by calling `.reserve()` or its variants.
+If this has happened, parsing the `identifier` rule creates a partial input from the lexeme and matches it against the specified rules as follows:
+
+* (1) `.reserve()`: All rules specified here are matched against the partial input.
+  If they match the entire partial input, the identifier is reserved.
+  This is comparable to {{% docref "lexy::dsl::operator-" %}}.
+* (2) `.reserve_prefix()`: All rules specified here are matched against the partial input.
+  If they match a prefix of the partial input, the identifier is reserved.
+  This is comparable to {{% docref "lexy::dsl::operator-" %}} with {{% docref "lexy::dsl::any" %}}.
+* (3) `.reserve_containing()`: All rules specified here are matched against the partial input.
+  If they match somewhere in the partial input, the identifier is reserved.
+  This is comparable to {{% docref "lexy::dsl::find" %}}.
+
+{{% playground_example identifier_reserved "Parse a C like identifier that is not reserved" %}}
+
+CAUTION: The `identifier` rule doesn't magically learn about the keywords you have created.
+They are only reserved if you actually pass them to `.reserve()`.
+This design allows you to use a different set of reserved identifiers in different places in the grammar.
+
+NOTE: The common case of passing keywords or literals to `.reserve()` is optimized using a https://en.wikipedia.org/wiki/Trie[trie].
+
+=== Token rule `.pattern()`
+
+{{% interface %}}
+----
+consteval _token-rule_ auto pattern() const;
+----
+
+[.lead]
+`.pattern()` is a {{% token-rule %}} that matches the basic form of the identifier without checking for reserved identifiers.
+
+Matching::
+  Matches and consumes `leading`,
+  then matches and consumes {{% docref "lexy::dsl::while_" %}}`(trailing)`,
+  where `leading` and `trailing` are the arguments passed to `identifier()`.
+  Whitespace skipping is disabled inside the `pattern()`,
+  but it will be skipped after `pattern()`.
+Errors::
+  All errors raised by matching `leading`.
+  The rule then fails.
+Parse tree::
+  A single token node whose range covers everything consumed.
+  Its token kind is `lexy::identifier_token_kind`.
+
+=== Token rules `.leading_pattern()`, `.trailing_pattern()`
+
+{{% interface %}}
+----
+consteval _token-rule_ auto leading_pattern() const;
+consteval _token-rule_ auto trailing_pattern() const;
+----
+
+[.lead]
+They simply return `leading`/`trailing` from the arguments passed to `identifier()`.
+
+[#keyword]
+== Token rule `lexy::dsl::keyword`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <auto Str>
+    consteval _token-rule_ auto keyword(_identifier-dsl_ identifier);
+}
+
+#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword<Str>(identifier)
+----
+
+[.lead]
+`keyword` is a {{% token-rule %}} that matches a keyword.
+
+Matching::
+  Tries to match and consume `identifier.pattern()`,
+  i.e. the basic pattern of an identifier ignoring any reserved identifiers.
+  Then creates a partial input that covers everything just consumed (without the trailing whitespace)
+  and matches {{% docref "lexy::dsl::lit" %}}`<Str>` on that input.
+  Succeeds only if that consumes the entire partial input.
+Errors::
+  `lexy::expected_keyword`: if either `identifier.pattern()` or the `lit` rule failed.
+  Its range covers the everything consumed by `identifier.pattern()` and its `.string()` is `Str`.
+
+The macro `LEXY_KEYWORD(Str, Identifier)` is equivalent to `keyword<Str>(Identifier)`,
+except that it also works on older compilers that do not support C++20's extended NTTPs.
+Use this instead of `keyword<Str>(identifier)` if you need to support them.
+
+{{% playground_example keyword "Parse a keyword" %}}
+
+NOTE: While {{% docref "lexy::dsl::lit" %}}`<"int">` would happily consume a prefix of `"integer"`, `keyword<"int">(id)`, for a matching `id`, would not.
+
+NOTE: A keyword does not necessarily need to be a reserved identifier or vice-versa.
+
+NOTE: The same encoding caveats of {[% docref "lexy::dsl::lit" %}} apply here as well.
+

@@ -1,0 +1,131 @@
+---
+layout: header
+header: "lexy/dsl/error.hpp"
+entities:
+  "lexy::dsl::error": error
+  "lexy::dsl::require": require
+  "lexy::dsl::prevent": prevent
+---
+
+[.lead]
+Rules that generate errors.
+
+[#error]
+== Rule `lexy::dsl::error`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <typename Tag>
+    constexpr _branch-rule_ auto error;
+
+    template <typename Tag>
+    consteval _branch-rule_ auto error(_rule_ auto rule);
+}
+----
+
+[.lead]
+`error` is a rule that always fails and reports an error.
+
+Parsing::
+  The first overload fails immediately without consuming anything.
+  The second overload first tries to match `rule` in a new context.
+  The rule then still fails unconditionally without consuming anything.
+Branch parsing::
+  In a branch, `error` fails in the same way, but the branch has been considered taken and no backtracking occurs.
+Errors::
+  A generic error with the specified `Tag`.
+  For the first overload, it is raised at the unchanged reader position.
+  For the second overload, its range covers everything matched by `rule`.
+  The rule then fails.
+Values::
+  None.
+
+{{% playground_example choice_error "Generate a custom error for an unknown greeting" %}}
+
+{{% playground_example choice_error_range "Generate a custom error for an unknown greeting with range" %}}
+
+TIP: Use `error` in error production: if a certain ill-formed input is common, create a separate rule for it.
+If it is parsed, a custom error is always raised.
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
+
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+
+[#require]
+== Rule `lexy::dsl::require`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    class _require-dsl_ // note: not a _rule_ itself
+    {
+    public:
+        template <typename Tag>
+        static constexpr _rule_ auto error;
+    };
+
+    consteval _require-dsl_ require(_rule_ auto rule);
+}
+----
+
+[.lead]
+`require` is a rule that verifies that a rule matches without actually consuming it.
+
+Parsing::
+  Tries to match `rule` in a new context.
+  Succeeds if `rule` matches without consuming anything.
+Errors::
+  A generic error with the specified `Tag` at the position where it started to match rule.
+  It then recovers without consuming additional input.
+Values::
+  None.
+
+{{% playground_example require "Ensure that a `while_one()` rule goes as far as expected" %}}
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
+
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+
+TIP: Use {{% docref "lexy::dsl::peek" %}} to branch on the result of `require`.
+
+[#prevent]
+== Rule `lexy::dsl::prevent`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    class _prevent-dsl_ // note: not a _rule_ itself
+    {
+    public:
+        template <typename Tag>
+        static constexpr _rule_ auto error;
+    };
+
+    consteval _prevent-dsl_ prevent(_rule_ auto rule);
+}
+----
+
+[.lead]
+`prevent` is a rule that ensures that a rule does not match.
+
+Parsing::
+  Tries to match `rule` in a new context.
+  Succeeds if `rule` did not match without consuming anything.
+Errors::
+  A generic error with the specified `Tag` covering everything `rule` would have consumed.
+  It then recovers without having consumed any input.
+Values::
+  None.
+
+{{% playground_example prevent "Explicitly prohibit trailing spaces" %}}
+
+NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
+
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+
+NOTE: Use {{% docref "lexy::dsl::peek_not" %}} to branch on the result of `prevent`.
+

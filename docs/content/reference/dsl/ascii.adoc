@@ -1,0 +1,110 @@
+---
+layout: header
+header: "lexy/dsl/ascii.hpp"
+entities:
+  "lexy::dsl::ascii": doc
+  "lexy::dsl::ascii::control": doc
+  "lexy::dsl::ascii::blank": doc
+  "lexy::dsl::ascii::newline": doc
+  "lexy::dsl::ascii::other_space": doc
+  "lexy::dsl::ascii::space": doc
+  "lexy::dsl::ascii::digit": doc
+  "lexy::dsl::ascii::lower": doc
+  "lexy::dsl::ascii::upper": doc
+  "lexy::dsl::ascii::alpha": doc
+  "lexy::dsl::ascii::alpha_underscore": doc
+  "lexy::dsl::ascii::alpha_digit": doc
+  "lexy::dsl::ascii::alpha_digit_underscore": doc
+  "lexy::dsl::ascii::alnum": doc
+  "lexy::dsl::ascii::punct": doc
+  "lexy::dsl::ascii::graph": doc
+  "lexy::dsl::ascii::print": doc
+  "lexy::dsl::ascii::character": doc
+---
+
+[.lead]
+Token rules for matching the ASCII character classes.
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    namespace ascii
+    {
+        constexpr _token-rule_ auto control;
+
+        constexpr _token-rule_ auto blank;
+        constexpr _token-rule_ auto newline;
+        constexpr _token-rule_ auto other_space;
+        constexpr _token-rule_ auto space;
+
+        constexpr _token-rule_ auto digit;
+
+        constexpr _token-rule_ auto lower;
+        constexpr _token-rule_ auto upper;
+        constexpr _token-rule_ auto alpha;
+        constexpr _token-rule_ auto alpha_underscore;
+
+        constexpr _token-rule_ auto alpha_digit;
+        constexpr _token-rule_ auto alpha_digit_underscore;
+        constexpr _token-rule_ auto alnum = alpha_digit;
+
+        constexpr _token-rule_ auto punct;
+
+        constexpr _token-rule_ auto graph;
+        constexpr _token-rule_ auto print;
+
+        constexpr _token-rule_ auto character;
+
+    }
+}
+----
+
+[.lead]
+Every {{% token-rule %}} in the namespace `lexy::dsl::ascii` matches one ASCII character from a character class.
+
+Matching::
+  Matches and consumes one character from the character class given in the table below.
+  Any transcoding from ASCII to the input encoding for the comparison is done by a simple `static_cast`.
+Errors::
+  `lexy::expected_char_class` (`"ASCII.<name>"`): at the unchanged reader position. The rule then fails.
+
+[%collapsible]
+.The character classes
+====
+|===
+| Token Rule                | Character Class                   | `<cctype>` function (C locale)
+
+| `control`                 | `0x00-0x1F`, `\x7F`               | `std::iscntrl()`
+| `blank`                   | `' '` (space) or `'\t'`           | `std::isblank()`
+| `newline`                 | `'\n'` or `'\r'`                  | n/a
+| `other_space`             | `'\f'` or `'\v\`                  | n/a
+| `space`                   | `blank`, `newline`, `other_space` | `std::isspace()`
+| `digit`                   | `0123456789`                      | `std::isdigit()`
+| `lower`                   | `abcdefghijklmnopqrstuvwxyz`      | `std::islower()`
+| `upper`                   | `ABCDEFGHIJKLMNOPQRSTUVWXYZ`      | `std::isupper()`
+| `alpha`                   | `lower`, `upper`                  | `std::isalpha()`
+| `alpha_underscore`        | `lower`, `upper`, `'_'`           | n/a
+| `alpha_digit`, `alnum`    | `lower`, `upper`, `digit`         | `std::isalnum()`
+| `alpha_digit_underscore`  | `lower`, `upper`, `digit`, `'_'`  | n/a
+| `punct`                   | ``!"#$%&'()*+,-./:;\<\=>?@[\]^_`{\|}~`` | `std::ispunct()`
+| `graph`                   | `alpha_digit`, `punct`            | `std::isgraph()`
+| `print`                   | `alpha_digit`, `punct`, `' '` (space) | `std::ispunct()`
+| `character`               | any ASCII character               | n/a
+|===
+====
+
+{{% playground_example identifier "A C-like identifier" %}}
+
+{{% playground_example whitespace "Allow ASCII whitespace between tokens" %}}
+
+NOTE: The only difference between `lexy::dsl::ascii::digit` and {{% docref "lexy::dsl::digit" "`lexy::dsl::digit<lexy::dsl::decimal>`" %}} is the name of the character class in the error.
+
+CAUTION: Differentiate between `lexy::dsl::ascii::newline`, which matches `\r` or `\n`, and {{% docref "lexy::dsl::newline" %}}, which matches `\r\n` or `\n`!
+
+CAUTION: As token rules, they match {{% docref whitespace whitespace %}} immediately following the character.
+As such, the rule is best used in contexts where automatic whitespace skipping is disabled.
+They can safely be used as part of the whitespace definition.
+
+TIP: The equivalent of `std::isxdigit()` is {{% docref "lexy::dsl::digit" "`lexy::dsl::digit<lexy::dsl::hex>`" %}}.
+

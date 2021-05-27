@@ -1,0 +1,52 @@
+---
+layout: header
+header: "lexy/dsl/minus.hpp"
+entities:
+  "lexy::dsl::operator-": minus
+  "minus": minus
+---
+
+[#minus]
+== Token rule `lexy::dsl::operator-`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct minus_failure {};
+}
+
+namespace lexy::dsl
+{
+    consteval _token-rule_ auto operator-(_token-rule_ auto token,
+                                        _token-rule_ auto except);
+}
+----
+
+[.lead]
+`operator-` (minus) is a {{% token-rule %}} matches `token` unless `except` matches as well.
+
+Matching::
+  Matches and consumes `token`.
+  Then tries to match `except` on a partial input that consists of everything just consumed by `token` (ignoring the trailing whitespace).
+  Succeeds only if that fails to match the entire partial input.
+Errors::
+  * `lexy::minus_failure`: if `except` matches the entire partial input.
+    Its range covers the partial input.
+    The rule then fails.
+  * All errors raised by matching `token`.
+    The rule fails if `token` has failed.
+Parse tree::
+  Only a token node for `token` whose kind is determined by the minus rule; nothing for `except`.
+
+{{% playground_example minus_any "Match words that don't start with `'no'`" %}}
+
+{{% playground_example quoted "Match a string literal that doesn't contain control characters" %}}
+
+CAUTION: When using `.error<Tag>` to override the generic `lexy::minus_failure` tag,
+keep in mind that this also overrides all errors `token` might raise.
+
+TIP: Use {{% docref "lexy::dsl::any" %}} to prevent the requirement that `except` must match the entire input as seen in the example.
+
+NOTE: `token - a - b` is entirely equivalent to the {{% docref alternative %}} `token - (a / b)` and also optimized in the same way.
+

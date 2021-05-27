@@ -55,14 +55,14 @@ h6 {
     font-size: 1.1em;
 }
 
-a {
+a, a svg, button svg {
     color: $link-color;
     transition: color ease 0.3s;
 }
-a:hover {
+a:hover, a svg:hover, button svg:hover {
     color: $highlight-color;
 }
-a:focus {
+a:focus, a svg:focus, button svg:focus {
     outline: none;
 }
 
@@ -189,7 +189,7 @@ aside.toc {
     display: none;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
     aside.toc {
         display: initial;
 
@@ -221,6 +221,55 @@ aside.toc {
 
 //=== body ===//
 article {
+    header {
+        margin-top: 1em;
+        margin-bottom: 1em;
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+
+            a {
+                text-decoration: none;
+                padding-right: 7px;
+                svg {
+                    height: 1em;
+                    position: relative;
+                    top: 2px;
+                }
+            }
+
+            form.search {
+                @media(min-width: 700px) {  
+                    margin-left: auto;
+                }
+
+                input[type=search] {
+                    padding: 2px;
+                    width: 250px;
+                }
+                input[type=search]:focus {
+                    border-color: $highlight-color;
+                    outline: solid $highlight-color 1px;
+                }
+                button[type=submit] {
+                    margin-left: -25px;
+                    border: none;
+                    background: initial;
+
+                    svg {
+                        height: 1em;
+                    }
+                }
+            }
+        }
+    }
+
+    .lead p {
+        font-weight: 500;
+        font-size: 1.1em;
+    }
+
     .admonitionblock {
         margin-bottom: 1em;
 
@@ -233,6 +282,12 @@ article {
 
         td.content {
             padding-left: .5em;
+            div:first-child p {
+                margin-top: 0;
+            }
+            div:last-child p {
+                margin-bottom: 0;
+            }
         }
     }
 
@@ -245,6 +300,15 @@ article {
         }
     }
 
+    a.github-example {
+        text-decoration: none;
+        svg {
+            height: .8em;
+            position: relative;
+            top: 2px;
+        }
+    }
+
     // the try it online link
     .playground-example .title, .godbolt-example .title {
         position: relative;
@@ -253,7 +317,7 @@ article {
             top: 7px;
             right: 7px;
 
-            img {
+            svg {
                 height: 1em;
             }
         }
@@ -262,19 +326,41 @@ article {
     details {
         padding-bottom: 1em;
         summary {
-            font-weight: bold;
+            font-style: italic;
+        }
+    }
+
+    // list
+    ul, ol {
+        p {
+            margin: .2em;
         }
     }
 
     // definition list
     dl {
         dt {
+            margin-top: .5em;
             font-weight: bold;
         }
-        dd {
-            margin-top: -.9em;
-            dt {
-                margin-top: .9em;
+        dd p, dd div:only-child ul {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    // table
+    table.tableblock {
+        background: $white;
+        margin: 0 auto;
+        border-collapse: collapse;
+        td, th {
+            border: 1px solid $gray-highlight-color;
+            padding: 5px;
+
+            text-align: left;
+            p {
+                margin: 0;
             }
         }
     }
@@ -296,6 +382,7 @@ article {
     }
     // code blocks
     pre {
+        margin: 0;
         overflow: auto;
         padding: 10px;
         background: $white;
@@ -332,18 +419,21 @@ article {
     .tok-c, .tok-cm, .tok-cp, .tok-c1, .tok-cs {
         color: #999988;
         font-style: italic;
+        font-weight: initial;
     }
 
     // keyword
     .tok-k, .tok-kc, .tok-kd, .tok-kp, .tok-kr, .tok-kt,
     .ace_storage, .ace_keyword, {
         color: #445588;
+        font-style: initial;
         font-weight: bold;
     }
     // operator, punctuator
     .tok-o, .tok-p,
     .ace_keyword.ace_operator, .ace_paren, .ace_punctuation {
         color: #ff0000;
+        font-style: initial;
         font-weight: initial;
     }
 
@@ -351,6 +441,7 @@ article {
     .tok-m, .tok-mf, .tok-mh, .tok-mi, .tok-mo,
     .ace_constant {
         color: #FF8000;
+        font-style: initial;
         font-weight: initial;
     }
     // string
@@ -358,13 +449,21 @@ article {
     .tok-sh, .tok-si, .tok-sx, .tok-sr, .tok-s1, .tok-ss, .tok-se,
     .ace_string {
         color: #008000;
+        font-style: initial;
         font-weight: initial;
+    }
+    // preprocessor
+    .tok-cp {
+        color: #008000;
+        font-style: initial;
+        font-weight: bold;
     }
 
     // error
     .tok-err,
     .ace_invalid {
         color: #ff0000;
+        font-style: initial;
         font-weight: initial;
     }
 }

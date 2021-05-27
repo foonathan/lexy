@@ -1,0 +1,176 @@
+---
+layout: header
+header: "lexy/dsl/context_counter.hpp"
+entities:
+  "lexy::dsl::context_counter": context_counter
+---
+
+[#context_counter]
+== Rule DSL `lexy::dsl::context_counter`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    struct _context_counter-dsl_ // note: not a rule itself
+    {
+        template <int InitialValue = 0>
+        consteval _rule_ auto create() const;
+
+        consteval _rule_ auto inc() const;
+        consteval _rule_ auto dec() const;
+
+        consteval _rule_ auto push(_rule_ auto r) const;
+        consteval _rule_ auto pop(_rule_ auto r) const;
+
+        template <int Value>
+        consteval _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+
+        template <int Value = 0>
+        consteval _see-below_ require() const;
+    };
+
+    template <typename Id>
+    constexpr _context_counter-dsl_ context_counter;
+}
+----
+
+[.lead]
+`context_counter` is not a rule, but a DSL for specifying rules that manipulate a counter of the current context.
+
+The "name" of the counter is given by `Id`, which is an arbitrary type.
+Two `context_counter` objects manipulate the same counter if they are instantiated by the same type.
+The "namespace" is unique per type, if a different context counter ({{% docref "lexy::dsl::context_flag" %}}, {{% docref "lexy::dsl::context_lexeme" %}}) uses `Id`, it refers to a different counter.
+
+The counter is created inside the current context:
+it is not accessible outside the current production, including in child production.
+Once the current production finishes parsing, all context counters of it are destroyed;
+it is impossible to create on that persists between different productions including multiple invocations of the same production.
+
+{{% playground_example "context_counter" "Parse `n` `a`s, then `n` `b`s without recursion" %}}
+
+=== Rule `.create()`
+
+{{% interface %}}
+----
+template <int InitialValue = 0>
+consteval _rule_ auto create() const;
+----
+
+[.lead]
+`.create()` returns a rule that creates the counter.
+
+Parsing::
+  Matches everything, without consuming anything.
+  As a side effect, it creates a counter with name `Id` inside the current context.
+  This counter is initialized to `InitialValue`; it's underlying type is `int`.
+Errors::
+  None.
+Values::
+  None.
+
+=== Rules `.inc()`, `.dec()`
+
+{{% interface %}}
+----
+consteval _rule_ auto inc() const;
+consteval _rule_ auto dec() const;
+----
+
+[.lead]
+`.inc()`, `.dec()` return rules that increment/decrement counter.
+
+Requires::
+  A counter with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Matches everything, without consuming anything.
+  As a side effect, it modifies the counter with name `Id` of the current context:
+  * `.inc()` increments it by one.
+  * `.dec()` decrements it by one.
+Errors::
+  None.
+Values::
+  None.
+
+=== Rules `.push()`, `.pop()`
+
+{{% interface %}}
+----
+consteval _rule_ auto push(_rule_ auto r) const;
+consteval _rule_ auto pop(_rule_ auto r) const;
+----
+
+[.lead]
+`.push()`, `.pop()` return rules that add/subtract the counter.
+
+Requires::
+  A counter with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Parses `r` and counts the number of code units consumed by `r`.
+  As a side effect, it modifies the counter with name `Id` of the current context:
+  * `.push()` adds the number of code units to it.
+  * `.pop()` subtracts the number of code units from it.
+Errors::
+  All errors raised by parsing `r`.
+  The rule then fails if `r` has failed.
+Values::
+  All errors produced by parsing `r`.
+
+CAUTION: The count includes any whitespace characters.
+
+=== Rule `.compare()`
+
+{{% interface %}}
+----
+template <int Value>
+consteval _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+----
+
+[.lead]
+`.compare()` returns a rule that branches on the value of the counter.
+
+Requires::
+  A counter with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Reads the value of the counter with the name `Id` of the current context.
+  Then compares it to `Value`:
+  * if it less than `Value`: parses `lt`,
+  * if it is equal to `Value`: parses `eq`,
+  * if it s greater than `Value`: parses `gt`.
+Errors::
+  All errors raised by the selected rule.
+  The rule then fails if the selected rule has failed.
+Values::
+  All values produced by the selected rule.
+
+=== Rule `.require()`
+
+{{% interface %}}
+----
+struct _require-dsl_
+{
+    template <typename Tag>
+    static constexpr _rule_ auto error;
+};
+
+template <int Value = 0>
+consteval _require-dsl_ require() const;
+----
+
+[.lead]
+`.require()` returns a rule that errors if the counter does not have a certain value.
+
+Requires::
+  A counter with the name `Id` has been created in the current context,
+  i.e. `.create()` has been parsed earlier.
+Parsing::
+  Matches everything, without consuming anything.
+Errors::
+  A generic error with the specified `Tag` if the counter with the name `Id` of the current context does not have the value `Value`.
+  It is raised at the current position of the reader and the rule then fails.
+Values::
+  None.
+
