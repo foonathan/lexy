@@ -8,6 +8,13 @@ target_link_libraries(lexy_test_playground PRIVATE lexy_test_base)
 add_executable(lexy_test_godbolt godbolt.cpp)
 target_link_libraries(lexy_test_godbolt PRIVATE lexy_test_base)
 
+# Compile-only godbolt example tests.
+add_executable(lexy_test_godbolt_examples)
+target_link_libraries(lexy_test_godbolt_examples PRIVATE lexy_test_base)
+
+file(GLOB examples CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/assets/examples/*.cpp)
+target_sources(lexy_test_godbolt_examples PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/${name})
+
 # Compile-only playground example tests.
 add_executable(lexy_test_playground_examples)
 target_link_libraries(lexy_test_playground_examples PRIVATE lexy_test_base)

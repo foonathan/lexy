@@ -108,7 +108,7 @@ export function get_godbolt_url(source, input)
 {
     const state = get_godbolt_clientstate(source, input);
     const state_str = JSON.stringify(state);
-    return "https://godbolt.org/clientstate/" + btoa(state_str);
+    return "https://godbolt.org/clientstate/" + encodeURIComponent(btoa(state_str));
 }
 
 export async function load_example(url)

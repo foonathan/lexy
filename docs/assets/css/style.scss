@@ -236,6 +236,29 @@ article {
         }
     }
 
+    .exampleblock {
+        margin-top: 1em;
+        margin-bottom: 1em;
+
+        .title {
+            font-style: italic;
+        }
+    }
+
+    // the try it online link
+    .playground-example .title, .godbolt-example .title {
+        position: relative;
+        a {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+
+            img {
+                height: 1em;
+            }
+        }
+    }
+
     details {
         padding-bottom: 1em;
         summary {

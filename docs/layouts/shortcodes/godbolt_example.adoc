@@ -1,0 +1,26 @@
+{{ $id      := .Get 0 }}
+{{ $source  := ($id | printf "examples/%s.cpp"   | resources.Get).Content | chomp }}
+{{ $input   := ($id | printf "examples/%s.input" | resources.Get).Content | chomp }}
+
+{{ $full_source   := $source | replaceRE "//({|})\\n" "" }}
+{{ $inline_source := $source | replaceRE "(?s:.*//{(.*)//}.*)" "$1" }}
+
+{{ $lexy        := dict "id" "lexy" "version" "trunk" }}
+{{ $compiler    := dict "id" "clang_trunk" "libs" (slice $lexy) "options" "-std=c++20" }}
+{{ $executor    := dict "compiler" $compiler "stdin" $input "stdinVisible" (ne $input "") }}
+{{ $session     := dict "id" 1 "language" "c++" "source" $full_source "compilers" (slice) "executors" (slice $executor) }}
+{{ $clientstate := dict "sessions" (slice $session) }}
+
+{{ $clientstate_b64 := replace ($clientstate | jsonify | base64Encode) "/" "%2F" }}
+
+.{{ .Get 1 }}
+====
+
+[.godbolt-example]
+.image:{{ (resources.Get "icons/play.svg").Permalink }}[link="https://godbolt.org/clientstate/{{ $clientstate_b64 }}", title="Try it online"]
+[source,cpp]
+----
+{{ $inline_source | safeHTML }}
+----
+====
+
