@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install asciidoctor
-      run: sudo gem install asciidoctor rouge
+      run: sudo gem install asciidoctor pygments.rb
     - name: Install hugo
       uses: peaceiris/actions-hugo@v2
       with:

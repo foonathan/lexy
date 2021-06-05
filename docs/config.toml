@@ -8,6 +8,8 @@ disableKinds = ["RSS", "taxonomy", "taxonomyTerm"]
 
 [markup.tableOfContents]
 endLevel = 3
+[markup.asciidocExt.attributes]
+source-highlighter = "pygments"
 
 [menu]
     [[menu.main]]
