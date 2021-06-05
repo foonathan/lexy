@@ -222,6 +222,7 @@ function debounce(func, delay)
 }
 
 window.addEventListener('load', async() => {
+    const doc_entities = await (await fetch("/reference/index.json")).json();
     ace.require("ace/ext/language_tools");
 
     editor_grammar.session.setMode("ace/mode/c_cpp");
@@ -229,6 +230,18 @@ window.addEventListener('load', async() => {
     editor_grammar.setOptions({
         enableBasicAutocompletion: true,
         enableLiveAutocompletion: true
+    });
+    editor_grammar.completers.push({
+        getCompletions: function(editor, session, pos, prefix, callback) {
+            var completions = [];
+            for (let name in doc_entities) {
+                if (name.startsWith("lexy::dsl"))
+                    completions.push({ value: name.replace(/^lexy::/, ''), meta: 'lexy' });
+                else if (name.startsWith("LEXY"))
+                    completions.push({ value: name, meta: 'lexy' });
+            }
+            callback(null, completions);
+        }
     });
 
     editor_input.setTheme("ace/theme/github");
