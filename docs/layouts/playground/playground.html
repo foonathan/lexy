@@ -225,7 +225,23 @@ window.addEventListener('load', async() => {
     const doc_entities = await (await fetch("/reference/index.json")).json();
     ace.require("ace/ext/language_tools");
 
-    editor_grammar.session.setMode("ace/mode/c_cpp");
+    editor_grammar.session.setMode("ace/mode/c_cpp", function() {
+        var session = editor_grammar.session;
+
+        // Add custom highlighting rule for things that look like DSL entities.
+        var rules = session.$mode.$highlightRules.getRules();
+        rules['start'].unshift({
+            token: 'dsl',
+            // regex with three cases
+            // first case is something like dsl::name or dsl::name::name
+            // second case is something like LEXY_NAME
+            regex: '(lexy::)?dsl::[a-z0-9_]+(::[a-z0-9_]+)*|LEXY_[A-Z0-9_]+'
+        });
+
+        // Force recreation of tokenizer.
+        session.$mode.$tokenizer = null;
+        session.bgTokenizer.setTokenizer(session.$mode.getTokenizer());
+    });
     editor_grammar.setShowPrintMargin(false);
     editor_grammar.setOptions({
         enableBasicAutocompletion: true,
@@ -242,6 +258,17 @@ window.addEventListener('load', async() => {
             }
             callback(null, completions);
         }
+    });
+    editor_grammar.on('click', function(){
+        const pos    = editor_grammar.getCursorPosition();
+        const token = editor_grammar.session.getTokenAt(pos.row, pos.column);
+        if (token.type !== 'dsl')
+            return;
+        const identifier = token.value;
+
+        let url = doc_entities[identifier] ?? doc_entities['lexy::' + identifier];
+        if (url)
+            window.location.href = url;
     });
 
     editor_input.setTheme("ace/theme/github");

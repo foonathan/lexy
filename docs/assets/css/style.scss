@@ -437,6 +437,13 @@ article {
         font-weight: initial;
     }
 
+    // DSL entity
+    .ace_dsl {
+        text-decoration: underline;
+        cursor: pointer;
+        pointer-events: auto;
+    }
+
     // number
     .tok-m, .tok-mf, .tok-mh, .tok-mi, .tok-mo,
     .ace_constant {
