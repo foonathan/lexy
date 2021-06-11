@@ -2,6 +2,14 @@ const api = "https://godbolt.org/api/";
 const compiler_id = "clang_trunk";
 const lexy_id = { id: 'lexy', version: 'trunk' };
 
+async function fetch_local_file(url)
+{
+    const response = await fetch(url);
+    if (!response.ok)
+        return "";
+    return await response.text();
+}
+
 export function list_of_productions(source)
 {
     var result = [];
@@ -16,26 +24,28 @@ export function list_of_productions(source)
 
 export async function preprocess_source(target, source, production)
 {
+    /*
     {{ $playground_headers := resources.Get "cpp/playground_headers.single.hpp" }}
     {{ $playground_prefix  := resources.Get "cpp/playground_prefix.cpp" }}
     {{ $playground_main    := resources.Get "cpp/playground_main.cpp" }}
     {{ $godbolt_prefix     := resources.Get "cpp/godbolt_prefix.cpp" }}
     {{ $godbolt_main       := resources.Get "cpp/godbolt_main.cpp" }}
+    */
 
     if (target == 'playground')
     {
-        const header = await (await fetch('{{ $playground_headers.Permalink }}')).text();
+        const header = await fetch_local_file('{{ $playground_headers.RelPermalink }}');
         const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`;
-        const prefix = await (await fetch('{{ $playground_prefix.Permalink }}')).text();
-        const main = await (await fetch('{{ $playground_main.Permalink }}')).text();
+        const prefix = await fetch_local_file('{{ $playground_prefix.RelPermalink }}');
+        const main   = await fetch_local_file('{{ $playground_main.RelPermalink }}');
 
         return header + '\n' + macros + '\n' + prefix + '\n' + source + '\n' + main;
     }
     else
     {
         const macros = `#define LEXY_PLAYGROUND_PRODUCTION ${production}`;
-        const prefix = await (await fetch('{{ $godbolt_prefix.Permalink }}')).text();
-        const main = await (await fetch('{{ $godbolt_main.Permalink }}')).text();
+        const prefix = await fetch_local_file('{{ $godbolt_prefix.RelPermalink }}');
+        const main   = await fetch_local_file('{{ $godbolt_main.RelPermalink }}');
 
         return macros + '\n' + prefix + source + '\n' + main;
     }
@@ -56,11 +66,14 @@ export async function compile_and_run(source, input)
 
     body.lang = "c++";
 
-    const response = await fetch(api + "compiler/" + compiler_id + "/compile", {
+    const response = await fetch(`${api}/compiler/${compiler_id}/compile`, {
         method: "POST",
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(body)
     });
+    if (!response.ok)
+        return { success: false, message: `Compiler Explorer error: ${response.status} - ${response.statusText}` };
+
     const result = await response.json();
 
     if (result.didExecute)
@@ -101,6 +114,8 @@ export async function get_godbolt_permalink(source, input)
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(state)
     });
+    if (!response.ok)
+        return get_godbolt_url(source, input);
     return (await response.json()).url;
 }
 
@@ -114,7 +129,7 @@ export function get_godbolt_url(source, input)
 export async function load_example(url)
 {
     const source_regex = /\/\/ INPUT:(.*)\n/;
-    const source       = await (await fetch(url)).text();
+    const source       = await fetch_local_file(url);
 
     const grammar = source.replace(source_regex, '');
     const input   = (source_regex.exec(source)?.[1] ?? "").replaceAll("\\n", "\n");
@@ -125,6 +140,8 @@ export async function load_example(url)
 export async function load_godbolt_url(id)
 {
     const response = await fetch(api + "shortlinkinfo/" + id);
+    if (!reponse.ok)
+        return { grammar: "", input: "", production: "" };
     const result = await response.json();
 
     const session = result.sessions[0];

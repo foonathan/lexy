@@ -110,7 +110,9 @@ async function load()
     const id      = params.get('id');
     const example = params.get('example');
     if (id !== null)
+    {
         result = await playground.load_godbolt_url(id);
+    }
     else if (example !== null)
     {
         for (var option of toolbar_examples.options)
