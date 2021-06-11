@@ -1,4 +1,4 @@
-title = "lexy: C++ parser combinator library"
+title = "lexy"
 baseURL = "https://lexy.foonathan.net/"
 languageCode = "en-us"
 copyright = "2020-2021"
@@ -11,13 +11,8 @@ endLevel = 3
 [markup.asciidocExt.attributes]
 source-highlighter = "pygments"
 
-[menu]
-    [[menu.main]]
-    name = "GitHub"
-    weight = 5
-    url = "https://github.com/foonathan/lexy"
-
 [params]
+tagline = "C++ parser combinator library"
 github = "https://github.com/foonathan/lexy"
 github_src_prefix = "https://github.com/foonathan/lexy/blob/main"
 github_edit_prefix = "https://github.com/foonathan/lexy/edit/main"

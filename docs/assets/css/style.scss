@@ -109,6 +109,10 @@ nav#menu {
             li {
                 a {
                     text-decoration: none;
+
+                    svg {
+                        height: 1em;
+                    }
                 }
                 a.active {
                     border-width: 0 0 2px;
@@ -121,9 +125,8 @@ nav#menu {
             padding-left: 0px;
             padding-right: 10px;
 
-            li {
+            .title {
                 font-weight: bold;
-
             }
         }
         ul#main {

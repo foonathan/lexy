@@ -7,7 +7,7 @@
     <title>
     {{- block "title"  . -}}
         {{ if .IsHome }}
-            {{ .Site.Title }}
+            {{ .Site.Title }}: {{ .Site.Params.tagline }}
         {{ else }}
             {{ .Title }} — {{ .Site.Title }}
         {{ end }}
@@ -22,7 +22,9 @@
         <div class="menu-container">
         <ul id="home">
             <li>
-                <a href="/">{{ .Site.Title }}</a>
+                <a href="/">
+                    <span class="title">{{ .Site.Title }}:</span> {{ .Site.Params.tagline }}
+                </a>
             </li>
         </ul>
         <ul id="main">
@@ -34,16 +36,21 @@
             </li>
         {{- end -}}
         {{- end -}}
+            <li>
+                <a href="{{ .Site.Params.github }}" title="GitHub">
+                    {{ (resources.Get "icons/github.svg").Content | safeHTML }}
+                </a>
+            </li>
         </ul>
         </div>
     </nav>
     {{- block "main" . -}}{{- end -}}
     <footer id="page-footer">
       <section class="copyright">
-          &copy; {{ .Site.Copyright }}
+          &copy; <a target="_blank" href="{{ .Site.Params.github_src_prefix }}/LICENSE" title="License">{{ .Site.Copyright }}</a>
       </section>
       <section class="patreon">
-          <a target="_blank" href="https://jonathanmueller.dev/support-me/">Support me!</a>.
+          <a target="_blank" href="https://jonathanmueller.dev/support-me/">Support me!</a>
       </section>
       <section class="poweredby">
           Made with <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://fontawesome.com/license">Font Awesome</a>.
