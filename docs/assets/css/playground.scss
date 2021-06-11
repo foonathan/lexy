@@ -1,5 +1,9 @@
 @import "base";
 
+nav#menu div.menu-container {
+    max-width: initial;
+}
+
 #playground {
     padding: 1em;
 }
@@ -15,10 +19,14 @@
     {
         vertical-align: middle;
     }
+    select, button {
+        background-color: $white;
+        border: 1px solid $gray-highlight-color;
+        border-radius: 3px;
+        padding: 5px;
+    }
 
     #toolbar-godbolt {
-        padding: 0;
-
         img {
             height: 1em;
         }
