@@ -261,6 +261,8 @@ private:
         template <typename ChildProduction, typename Iterator>
         constexpr auto production_context(ChildProduction p, Iterator position) const
         {
+            static_assert(!contains(_tag_whitespace{}),
+                          "whitespace rule must not contain dsl::p/dsl::recurse");
             return _parse_context_for<ChildProduction, Iterator>(p, _parent->handler(), position);
         }
 

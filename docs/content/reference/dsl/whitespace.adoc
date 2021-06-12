@@ -51,7 +51,8 @@ namespace lexy::dsl
 The manual `whitespace` overload is a rule that skips whitespace as defined by its argument.
 
 Requires::
-  `ws` is either a {{% branch-rule %}} or a {{% docref choice %}} that does not produce any values.
+  * `ws` is either a {{% branch-rule %}} or a {{% docref choice %}} that does not produce any values.
+  * `ws` does not contain {{% docref "lexy::dsl::p" %}} or {{% docref "lexy::dsl::recurse" %}} rule.
 Parses::
   Parses {{% docref "lexy::dsl::loop" %}}`(ws | lexy::dsl::else_ >> lexy::dsl::break_)` in a context where whitespace skipping is disabled.
 Errors::
