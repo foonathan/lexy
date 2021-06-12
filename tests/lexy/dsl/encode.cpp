@@ -4,13 +4,6 @@
 
 #include <lexy/dsl/encode.hpp>
 
-// Maybe because of this issue here?
-// I don't know, in either case - just disable it.
-// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
-#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
-#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
-#endif
-
 #include "verify.hpp"
 
 namespace

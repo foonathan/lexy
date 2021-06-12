@@ -19,6 +19,9 @@
 // This creates bogus test failures. At runtime everything is ok, so just disable constexpr tests
 // for GCC 7.
 #    define LEXY_DISABLE_CONSTEXPR_TESTS
+#elif !defined(__clang__) && defined(_MSC_VER)
+// MSVC is just too bugy
+#    define LEXY_DISABLE_CONSTEXPR_TESTS
 #endif
 
 #ifdef LEXY_DISABLE_CONSTEXPR_TESTS

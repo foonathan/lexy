@@ -4,10 +4,6 @@
 
 #include <lexy/dsl/bom.hpp>
 
-#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
-#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
-#endif
-
 #include "verify.hpp"
 
 TEST_CASE("dsl::bom")

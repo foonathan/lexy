@@ -4,11 +4,6 @@
 
 #include <lexy/dsl/production.hpp>
 
-// https://developercommunity2.visualstudio.com/t/cl-fails-when-copy-initializing-variable/1277587
-#if !defined(LEXY_DISABLE_CONSTEXPR_TESTS) && !defined(__clang__) && defined(_MSC_VER)
-#    define LEXY_DISABLE_CONSTEXPR_TESTS 1
-#endif
-
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/if.hpp>
