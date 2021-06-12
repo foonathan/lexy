@@ -163,14 +163,32 @@ struct _tryr : rule_base
     template <typename NextParser>
     struct parser
     {
+        struct _continuation
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed, Args&&... args)
+            {
+                failed = false;
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...))
-                // The rule was parsed succesfully, we're done here.
-                return true;
+            auto failed = true;
+            // Parse with special continuation that sets failed to false if reached.
+            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
+                                                                        LEXY_FWD(args)...);
+            if (!failed)
+            {
+                // Rule didn't fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
+                return result;
+            }
             else
             {
+                // Rule has failed.
                 if constexpr (std::is_void_v<Recover>)
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else

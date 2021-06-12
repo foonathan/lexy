@@ -6,6 +6,8 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/newline.hpp>
+#include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("dsl::find")
 {
@@ -263,6 +265,50 @@ TEST_CASE("dsl::try_")
 
         auto recover_failed = LEXY_VERIFY("ab---");
         CHECK(recover_failed == -1);
+    }
+
+    SUBCASE("rule in sequence with try")
+    {
+        static constexpr auto rule = lexy::dsl::try_(LEXY_LIT("abc")) + lexy::dsl::newline;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                return int(cur - str);
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+            {
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("newline"));
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == -1);
+        CHECK(empty.errors(-1, -2));
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc == -2);
+        auto abc_nl = LEXY_VERIFY("abc\n");
+        CHECK(abc_nl == 4);
+
+        auto ab = LEXY_VERIFY("ab\n");
+        CHECK(ab.value == 3);
+        CHECK(ab.errors(-1));
+        auto abd = LEXY_VERIFY("abd\n");
+        CHECK(abd.value == -1);
+        CHECK(abd.errors(-1, -2));
     }
 }
 
