@@ -81,7 +81,7 @@ jobs:
       run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -DLEXY_BUILD_EXAMPLES=OFF
     - name: Build
       working-directory: build/
-      run: cmake --build . --config Debug
+      run: cmake --build . --config Debug -j 2
     - name: Test
       working-directory: build/
       run: ctest -C Debug --output-on-failure

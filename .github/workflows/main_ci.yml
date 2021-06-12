@@ -96,7 +96,7 @@ jobs:
       run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -T ${{matrix.toolset}}
     - name: Build
       working-directory: build/
-      run: cmake --build . --config ${{matrix.build_type}}
+      run: cmake --build . --config ${{matrix.build_type}} -j 2
     - name: Test
       working-directory: build/
       run: ctest -C ${{matrix.build_type}} --output-on-failure
