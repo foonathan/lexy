@@ -15,6 +15,10 @@ struct _int
 {
     using return_type = T;
 
+    // You don't actually produce an integer value.
+    constexpr T operator()(lexy::plus_sign) const  = delete;
+    constexpr T operator()(lexy::minus_sign) const = delete;
+
     template <typename Integer>
     constexpr T operator()(const Integer& value) const
     {
