@@ -38,22 +38,7 @@ For single-byte encodings, this has no effect.</p></dd><dt class=hdlist1>big</dt
 For single-byte encodings, this has no effect.</p></dd><dt class=hdlist1>bom</dt><dd><p>The endianness is determined using the byte-order mark (BOM) of the encoding.
 If no BOM is present, defaults to big endian as per Unicode recommendation.
 For UTF-8, this will skip the optional BOM, but has otherwise no effect.
-For non-Unicode encodings, this has no effect.</p></dd></dl></div></div></div><div class=sect2><h3 id=_the_pre_defined_inputs>The pre-defined Inputs</h3><div class=sect3><h4 id=_null_input>Null input</h4><div class=listingblock><div class=title><code>lexy/input/null_input.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>null_input</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>Reader</span> <span class=tok-n>reader</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-o>&amp;</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>null_lexeme</span> <span class=tok-o>=</span> <span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>null_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>null_error</span> <span class=tok-o>=</span> <span class=tok-n>error_for</span><span class=tok-o>&lt;</span><span class=tok-n>null_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;</span><span class=tok-p>,</span> <span class=tok-n>Tag</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>null_error_context</span> <span class=tok-o>=</span> <span class=tok-n>error_context</span><span class=tok-o>&lt;</span><span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-n>null_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre></div></div><div class=paragraph><p>The class <code>lexy::null_input</code> is an input that is always empty.</p></div></div><div class=sect3><h4 id=_range_input>Range input</h4><div class=listingblock><div class=title><code>lexy/input/range_input.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+For non-Unicode encodings, this has no effect.</p></dd></dl></div></div></div><div class=sect2><h3 id=_the_pre_defined_inputs>The pre-defined Inputs</h3><div class=sect3><h4 id=_range_input>Range input</h4><div class=listingblock><div class=title><code>lexy/input/range_input.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
 <span class=tok-p>{</span>
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Encoding</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Iterator</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Sentinel</span> <span class=tok-o>=</span> <span class=tok-n>Iterator</span><span class=tok-o>&gt;</span>
     <span class=tok-k>class</span> <span class=tok-nc>range_input</span>
@@ -251,75 +236,7 @@ If reading was successful, the <code>operator bool</code> will return <code>true
 <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>result</span><span class=tok-p>)</span>
     <span class=tok-k>throw</span> <span class=tok-n>my_file_read_error_exception</span><span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>.</span><span class=tok-n>error</span><span class=tok-p>());</span> // <b class=conum>(1)</b>
 
-<span class=tok-err>…</span> <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Throw an exception giving it the <code>lexy::file_error</code>.</p></li><li><p>Now you can use <code>result</code> as an <code>Input</code> or access the file contents.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_shell_input>Shell Input</h4><div class=listingblock><div class=title><code>lexy/input/shell.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>default_prompt</span><span class=tok-p>;</span>
-
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Prompt</span> <span class=tok-o>=</span> <span class=tok-n>default_prompt</span><span class=tok-o>&lt;&gt;&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>shell</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>encoding</span>    <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Prompt</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span>   <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>prompt_type</span> <span class=tok-o>=</span> <span class=tok-n>Prompt</span><span class=tok-p>;</span>
-
-        <span class=tok-n>shell</span><span class=tok-p>();</span>
-        <span class=tok-k>explicit</span> <span class=tok-nf>shell</span><span class=tok-p>(</span><span class=tok-n>Prompt</span> <span class=tok-n>prompt</span><span class=tok-p>);</span>
-
-        <span class=tok-kt>bool</span> <span class=tok-nf>is_open</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-
-        <span class=tok-n>Input</span> <span class=tok-nf>prompt_for_input</span><span class=tok-p>();</span>
-
-        <span class=tok-k>class</span> <span class=tok-nc>writer</span><span class=tok-p>;</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-        <span class=tok-n>writer</span> <span class=tok-n>write_message</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>);</span>
-
-        <span class=tok-n>Prompt</span><span class=tok-o>&amp;</span> <span class=tok-nf>get_prompt</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>const</span> <span class=tok-n>Prompt</span><span class=tok-o>&amp;</span> <span class=tok-n>get_prompt</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Prompt</span> <span class=tok-o>=</span> <span class=tok-n>default_prompt</span><span class=tok-o>&lt;&gt;&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>shell_lexeme</span> <span class=tok-o>=</span> <span class=tok-cm>/* unspecified */</span><span class=tok-p>;</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Prompt</span> <span class=tok-o>=</span> <span class=tok-n>default_prompt</span><span class=tok-o>&lt;&gt;&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>shell_error</span> <span class=tok-o>=</span> <span class=tok-cm>/* unspecified */</span><span class=tok-p>;</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Prompt</span> <span class=tok-o>=</span> <span class=tok-n>default_prompt</span><span class=tok-o>&lt;&gt;&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>shell_error_context</span> <span class=tok-o>=</span> <span class=tok-cm>/* unspecified */</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre></div></div><div class=paragraph><p>The class <code>lexy::shell</code> creates an interactive shell to ask for user input and write messages out.
-The exact behavior is controlled by the <code>Prompt</code>.
-By default, it uses <code>lexy::default_prompt</code> which reads from <code>stdin</code> and writes to <code>stdout</code>.</p></div><div class="admonitionblock warning"><table><tbody><tr><td class=icon><div class=title>Warning</div></td><td class=content>The interface of a <code>Prompt</code> is currently experimental.
-Refer to <code>lexy::default_prompt</code> if you want to write your own.</td></tr></tbody></table></div><div class=sect4><h5 id=_state>State</h5><div class=listingblock><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>bool</span> <span class=tok-nf>is_open</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre></div></div><div class=paragraph><p>A shell is initially open and can receive input, but the user can close the shell.
-For <code>lexy::default_prompt</code>, the shell is closed if the user enters EOF e.g. by pressing kbd:[Ctrl + D] under Linux.</p></div><div class=paragraph><p><code>is_open()</code> returns <code>false</code> if the user has closed it, and <code>true</code> otherwise.</p></div></div><div class=sect4><h5 id=_input>Input</h5><div class=listingblock><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-n>Input</span> <span class=tok-nf>prompt_for_input</span><span class=tok-p>();</span></code></pre></div></div><div class=paragraph><p>A shell object is not itself an <code>Input</code>, but it can be used to create one.
-Calling <code>prompt_for_input()</code> will ask the user to enter some input, and then return an unspecified <code>Input</code> type that refers to that input.
-If parsing reaches the end of the input and the shell is still open, it will automatically ask the user for continuation input that will be appended to the current input.
-Once parsing of the input is done, <code>prompt_for_input()</code> can be called again to request new input from the user.</p></div><div class="admonitionblock warning"><table><tbody><tr><td class=icon><div class=title>Warning</div></td><td class=content>Calling <code>prompt_for_input()</code> again will invalidate all memory used by the previous input.</td></tr></tbody></table></div><div class=paragraph><p>The <code>lexy::default_prompt</code> asks for input by display <code>> ` and reading an entire line from `stdin</code>.
-If continuation input is requested, it will display `. ` and reads another line.</p></div></div><div class=sect4><h5 id=_output>Output</h5><div class=listingblock><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>class</span> <span class=tok-nc>writer</span>
-<span class=tok-p>{</span>
-<span class=tok-k>public</span><span class=tok-o>:</span>
-    <span class=tok-c1>// non-copyable</span>
-
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>CharT</span><span class=tok-o>&gt;</span>
-    <span class=tok-n>writer</span><span class=tok-o>&amp;</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-k>const</span> <span class=tok-n>CharT</span><span class=tok-o>*</span> <span class=tok-n>str</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>length</span><span class=tok-p>);</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>CharT</span><span class=tok-o>&gt;</span>
-    <span class=tok-n>writer</span><span class=tok-o>&amp;</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-k>const</span> <span class=tok-n>CharT</span><span class=tok-o>*</span> <span class=tok-n>str</span><span class=tok-p>);</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>CharT</span><span class=tok-o>&gt;</span>
-    <span class=tok-n>writer</span><span class=tok-o>&amp;</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>CharT</span> <span class=tok-n>c</span><span class=tok-p>);</span>
-
-    <span class=tok-n>writer</span><span class=tok-o>&amp;</span> <span class=tok-nf>operator</span><span class=tok-p>()(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-cm>/* input type */</span><span class=tok-o>&gt;</span> <span class=tok-n>lexeme</span><span class=tok-p>);</span>
-<span class=tok-p>};</span>
-
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-<span class=tok-n>writer</span> <span class=tok-n>write_message</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>);</span></code></pre></div></div><div class=paragraph><p>Calling <code>write_message()</code> will prepare the prompt for displaying a message and returns a <code>writer</code> function object that can be used to specify the contents of the message.
-The arguments of <code>write_message()</code> are forwarded to the prompt and can be used to distinguish between e.g. normal and error messages.
-The <code>writer</code> can be invoked multiple times to give different parts of the message; the entire message is written out when the writer is destroyed.
-A <code>writer</code> can only write messages whose character type are the primary or secondary character type of the encoding.</p></div><div class=paragraph><p>Using <code>lexy::default_prompt</code> does not require any message arguments and it will simply write the message to <code>stdout</code>, appending a newline at the end.</p></div><details><summary class=title>Example</summary><div class=content><div class=paragraph><p>An interactive REPL.</p></div><div class=listingblock><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>shell</span><span class=tok-o>&lt;&gt;</span> <span class=tok-n>shell</span><span class=tok-p>;</span>
-<span class=tok-k>while</span> <span class=tok-p>(</span><span class=tok-n>shell</span><span class=tok-p>.</span><span class=tok-n>is_open</span><span class=tok-p>())</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>auto</span> <span class=tok-n>input</span> <span class=tok-o>=</span> <span class=tok-n>shell</span><span class=tok-p>.</span><span class=tok-n>prompt_for_input</span><span class=tok-p>();</span> // <b class=conum>(1)</b>
-    <span class=tok-k>auto</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>parse</span><span class=tok-o>&lt;</span><span class=tok-n>expression</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>,</span> <span class=tok-err>…</span><span class=tok-p>);</span> // <b class=conum>(2)</b>
-    <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>)</span>
-        <span class=tok-n>shell</span><span class=tok-p>.</span><span class=tok-n>write_message</span><span class=tok-p>()(</span><span class=tok-n>result</span><span class=tok-p>.</span><span class=tok-n>value</span><span class=tok-p>());</span> // <b class=conum>(3)</b>
-<span class=tok-p>}</span></code></pre></div></div><div class="colist arabic"><ol><li><p>Ask the user to enter more input.</p></li><li><p>Parse the input, requesting continuation input if necessary.</p></li><li><p>Write the result.</p></li></ol></div><div class=paragraph><p>For a full example, see <code>examples/shell.cpp</code>.</p></div></div></details></div></div><div class=sect3><h4 id=_command_line_argument_input>Command-line argument Input</h4><div class=listingblock><div class=title><code>lexy/input/argv_input.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+<span class=tok-err>…</span> <b class=conum>(2)</b></code></pre></div></div><div class="colist arabic"><ol><li><p>Throw an exception giving it the <code>lexy::file_error</code>.</p></li><li><p>Now you can use <code>result</code> as an <code>Input</code> or access the file contents.</p></li></ol></div></div></details></div><div class=sect3><h4 id=_command_line_argument_input>Command-line argument Input</h4><div class=listingblock><div class=title><code>lexy/input/argv_input.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
 <span class=tok-p>{</span>
     <span class=tok-k>class</span> <span class=tok-nc>argv_sentinel</span><span class=tok-p>;</span>
     <span class=tok-k>class</span> <span class=tok-nc>argv_iterator</span><span class=tok-p>;</span>

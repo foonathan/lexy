@@ -402,11 +402,12 @@ public:
     constexpr lazy_init() noexcept = default;
 
     template <typename... Args>
-    constexpr void emplace(Args&&... args)
+    constexpr T& emplace(Args&&... args)
     {
         LEXY_PRECONDITION(!*this);
 
         *this = lazy_init(0, LEXY_FWD(args)...);
+        return this->_value;
     }
 
     constexpr explicit operator bool() const noexcept
@@ -4580,11 +4581,12 @@ struct _prevent : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.cur();
-            if (lexy::engine_try_match<typename Token::token_engine>(reader))
+            auto copy  = reader;
+            if (lexy::engine_try_match<typename Token::token_engine>(copy))
             {
-                // Token did match what we don't want, and we've consumed it.
+                // Token did match what we don't want.
                 // Report an error, but continue parsing.
-                auto err = lexy::make_error<Reader, Tag>(begin, reader.cur());
+                auto err = lexy::make_error<Reader, Tag>(begin, copy.cur());
                 context.error(err);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
@@ -4941,9 +4943,11 @@ namespace lexy
 enum predefined_token_kind : std::uint_least16_t
 {
     unknown_token_kind              = UINT_LEAST16_MAX,
-    eof_token_kind                  = UINT_LEAST16_MAX - 1,
-    position_token_kind             = UINT_LEAST16_MAX - 2,
-    identifier_token_kind           = UINT_LEAST16_MAX - 3,
+    position_token_kind             = UINT_LEAST16_MAX - 1,
+    eof_token_kind                  = UINT_LEAST16_MAX - 2,
+    newline_token_kind              = UINT_LEAST16_MAX - 3,
+    eol_token_kind                  = UINT_LEAST16_MAX - 4,
+    identifier_token_kind           = UINT_LEAST16_MAX - 5,
     _smallest_predefined_token_kind = identifier_token_kind,
 };
 
@@ -4953,10 +4957,14 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     {
     case unknown_token_kind:
         return "token";
-    case eof_token_kind:
-        return "EOF";
     case position_token_kind:
         return "position";
+    case eof_token_kind:
+        return "EOF";
+    case newline_token_kind:
+        return "newline";
+    case eol_token_kind:
+        return "eol";
     case identifier_token_kind:
         return "identifier";
     }
@@ -5513,14 +5521,32 @@ struct _tryr : rule_base
     template <typename NextParser>
     struct parser
     {
+        struct _continuation
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed, Args&&... args)
+            {
+                failed = false;
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...))
-                // The rule was parsed succesfully, we're done here.
-                return true;
+            auto failed = true;
+            // Parse with special continuation that sets failed to false if reached.
+            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
+                                                                        LEXY_FWD(args)...);
+            if (!failed)
+            {
+                // Rule didn't fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
+                return result;
+            }
             else
             {
+                // Rule has failed.
                 if constexpr (std::is_void_v<Recover>)
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
@@ -5899,7 +5925,10 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        return rule + terminator();
+        if constexpr (lexy::is_branch<Rule>)
+            return rule >> terminator();
+        else
+            return rule + terminator();
     }
 
     /// Matches rule followed by the terminator, recovering on error.
@@ -6690,58 +6719,6 @@ constexpr auto _cp_name()
 }
 
 template <typename Predicate>
-struct _cp_cap : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            auto save = reader;
-
-            // Parse one code point.
-            lexy::engine_cp_auto::error_code ec{};
-            auto                             result = lexy::engine_cp_auto::parse(ec, reader);
-            if (ec != lexy::engine_cp_auto::error_code())
-            {
-                reader = LEXY_MOV(save);
-
-                auto name = _cp_name<typename Reader::encoding>();
-                auto e    = lexy::make_error<Reader, lexy::expected_char_class>(save.cur(), name);
-                context.error(e);
-                return false;
-            }
-            LEXY_PRECONDITION(result.is_scalar());
-
-            // Check it against the predicate.
-            if constexpr (!std::is_void_v<Predicate>)
-            {
-                if (!Predicate{}(result))
-                {
-                    auto name = lexy::_detail::type_name<Predicate>();
-                    auto err
-                        = lexy::make_error<Reader, lexy::expected_char_class>(save.cur(), name);
-                    context.error(err);
-                    // We don't recover, as subsequent code might assume a certain value.
-                    return false;
-                }
-            }
-
-            // Produce it as value.
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-        }
-    };
-
-    template <typename P>
-    constexpr auto if_() const
-    {
-        static_assert(std::is_void_v<Predicate>);
-        return _cp_cap<P>{};
-    }
-};
-
-template <typename Predicate>
 struct _cp : token_base<_cp<Predicate>>
 {
     struct token_engine : lexy::engine_matcher_base
@@ -6788,11 +6765,6 @@ struct _cp : token_base<_cp<Predicate>>
             auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
             context.error(err);
         }
-    }
-
-    constexpr auto capture() const
-    {
-        return _cp_cap<Predicate>{};
     }
 
     template <typename P>
@@ -7965,6 +7937,7 @@ constexpr auto if_(Branch)
 
 
 
+
 #ifdef LEXY_IGNORE_DEPRECATED_SEP
 #    define LEXY_DEPRECATED_SEP
 #else
@@ -7989,7 +7962,7 @@ template <typename Branch, typename Tag>
 struct _sep
 {
     using rule          = Branch;
-    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::error<Tag>));
+    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::try_(lexyd::error<Tag>)));
 
     template <typename Context, typename Reader>
     LEXY_DSL_FUNC void report_trailing_error(Context&                  context, Reader&,
@@ -8075,6 +8048,16 @@ struct _list_sink
     {
         if constexpr (sizeof...(Args) > 0)
             sink(LEXY_FWD(args)...);
+        return true;
+    }
+
+    template <typename Context, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::_detail::lazy_init<Sink>& sink,
+                             Args&&... args)
+    {
+        auto& cb = sink.emplace(context.sink());
+        if constexpr (sizeof...(Args) > 0)
+            cb(LEXY_FWD(args)...);
         return true;
     }
 };
@@ -8370,7 +8353,9 @@ struct _lst : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto sink = context.sink();
+            // We construct the sink lazily only if the branch is taken.
+            using sink_t = std::decay_t<decltype(context.sink())>;
+            lexy::_detail::lazy_init<sink_t> sink;
 
             // Try parsing the initial item.
             using item_parser = lexy::rule_parser<Item, _list_sink>;
@@ -8381,9 +8366,10 @@ struct _lst : rule_base
                 return result;
 
             // Continue with the rest of the items.
+            // At this point, the branch has been taken.
             using continuation = _list_loop<Item, Sep, NextParser, Args...>;
             return static_cast<lexy::rule_try_parse_result>(
-                continuation::parse(context, reader, LEXY_FWD(args)..., sink));
+                continuation::parse(context, reader, LEXY_FWD(args)..., *sink));
         }
 
         template <typename Context, typename Reader, typename... Args>
@@ -10581,47 +10567,46 @@ struct _id : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename... PrevArgs>
-        struct _continuation
-        {
-            template <typename Context, typename Reader>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, PrevArgs&&... prev_args,
-                                     Reader old)
-            {
-                auto begin = old.cur();
-                auto end   = reader.cur();
-
-                // Check that we're not creating a reserved identifier.
-                if constexpr (sizeof...(Reserved) > 0)
-                {
-                    using reserved = decltype((Reserved{} / ...));
-
-                    auto id_reader = lexy::partial_reader(old, end);
-                    if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
-                        && id_reader.cur() == end)
-                    {
-                        // We found a reserved identifier.
-                        auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
-                        context.error(err);
-                        // But we can trivially recover, as we've still matched a well-formed
-                        // identifier.
-                    }
-                }
-
-                // We're done, create the value and continue.
-                return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
-                                         lexy::lexeme<Reader>(begin, end));
-            }
-        };
-
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Parse the pattern with a special continuation.
             using pattern = _idp<Leading, Trailing>;
-            using cont    = _continuation<Args...>;
-            return lexy::rule_parser<pattern, cont>::parse(context, reader, LEXY_FWD(args)...,
-                                                           Reader(reader));
+            using engine  = typename pattern::token_engine;
+
+            // Parse the pattern.
+            [[maybe_unused]] auto saved_reader = reader;
+            auto                  begin        = reader.cur();
+            if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            {
+                pattern::token_error(context, reader, ec, begin);
+                return false;
+            }
+            auto end = reader.cur();
+
+            // Create a node in the parse tree.
+            context.token(pattern::token_kind(), begin, end);
+
+            // Check that we're not creating a reserved identifier.
+            if constexpr (sizeof...(Reserved) > 0)
+            {
+                using reserved = decltype((Reserved{} / ...));
+
+                auto id_reader = lexy::partial_reader(saved_reader, end);
+                if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
+                    && id_reader.cur() == end)
+                {
+                    // We found a reserved identifier.
+                    auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
+                    context.error(err);
+                    // But we can trivially recover, as we've still matched a well-formed
+                    // identifier.
+                }
+            }
+
+            // Skip whitespace and continue.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 
@@ -10946,6 +10931,16 @@ namespace lexyd
 template <typename T>
 constexpr bool _is_bounded = lexy::integer_traits<T>::is_bounded;
 
+template <typename T, std::size_t N, int Radix>
+constexpr bool _ndigits_can_overflow()
+{
+    using traits         = lexy::integer_traits<T>;
+    auto max_digit_count = traits::template max_digit_count<Radix>;
+    // We don't know whether the maximal value is a power of Radix,
+    // so we have to be conservative and don't rule out overflow on the same count.
+    return N >= max_digit_count;
+}
+
 // Parses T in the Base while checking for overflow.
 template <typename T, typename Base>
 struct _unbounded_integer_parser
@@ -11133,7 +11128,9 @@ constexpr auto integer(_ndigits<N, Base>)
 template <typename T, typename Base, std::size_t N, typename Sep>
 constexpr auto integer(_ndigits_s<N, Base, Sep>)
 {
-    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true, void>{};
+    using type
+        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
+    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<type, Base, true, void>{};
 }
 } // namespace lexyd
 
@@ -11152,8 +11149,14 @@ namespace lexyd
 {
 /// Matches the number of a code point.
 template <std::size_t N, typename Base = hex>
-constexpr auto code_point_id = _int_c<_ndigits<N, Base>>{}
-                               + _int_p<lexy::code_point, Base, true, lexy::invalid_code_point>{};
+constexpr auto code_point_id = [] {
+    using type = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
+                                    lexy::code_point, lexy::unbounded<lexy::code_point>>;
+
+    auto digits = _int_c<_ndigits<N, Base>>{};
+    auto parser = _int_p<type, Base, true, lexy::invalid_code_point>{};
+    return digits + parser;
+}();
 } // namespace lexyd
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
@@ -11442,6 +11445,7 @@ constexpr auto operator-(_minus<Token, E>, Except except)
 
 
 
+
 namespace lexyd
 {
 struct _nl : token_base<_nl>
@@ -11449,6 +11453,11 @@ struct _nl : token_base<_nl>
     static constexpr auto _trie
         = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
     using token_engine = lexy::engine_trie<_trie>;
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return lexy::newline_token_kind;
+    }
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
@@ -11486,6 +11495,11 @@ struct _eol : token_base<_eol>
                 return _nl::token_engine::match(reader);
         }
     };
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return lexy::eol_token_kind;
+    }
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
@@ -11886,14 +11900,23 @@ LEXY_PUNCT(comma, ",");
 LEXY_PUNCT(colon, ":");
 LEXY_PUNCT(semicolon, ";");
 
+LEXY_PUNCT(exclamation_mark, "!");
+LEXY_PUNCT(question_mark, "?");
+
 LEXY_PUNCT(hyphen, "-");
 LEXY_PUNCT(slash, "/");
 LEXY_PUNCT(backslash, "\\");
 LEXY_PUNCT(apostrophe, "'");
+LEXY_PUNCT(ampersand, "&");
+LEXY_PUNCT(caret, "^");
+LEXY_PUNCT(asterisk, "*");
+LEXY_PUNCT(tilde, "~");
 
 LEXY_PUNCT(hash_sign, "#");
 LEXY_PUNCT(dollar_sign, "$");
 LEXY_PUNCT(at_sign, "@");
+LEXY_PUNCT(percent_sign, "%");
+LEXY_PUNCT(equal_sign, "=");
 } // namespace lexyd
 
 #endif // LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
@@ -11971,16 +11994,13 @@ struct _sign : rule_base
 };
 
 /// Matches a plus sign or nothing, producing +1.
-constexpr auto plus_sign
-    = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
+constexpr auto plus_sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_;
 /// Matches a minus sign or nothing, producing +1 or -1.
-constexpr auto minus_sign
-    = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
+constexpr auto minus_sign = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
 
 /// Matches a plus or minus sign or nothing, producing +1 or -1.
 constexpr auto sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{}
-                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{}
-                      | else_ >> _sign<lexy::plus_sign>{};
+                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
