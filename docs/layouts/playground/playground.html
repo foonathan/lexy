@@ -255,8 +255,8 @@ window.addEventListener('load', async() => {
             for (let name in doc_entities) {
                 if (name.startsWith("lexy::dsl"))
                     completions.push({ value: name.replace(/^lexy::/, ''), meta: 'lexy' });
-                else if (name.startsWith("LEXY"))
-                    completions.push({ value: name, meta: 'lexy' });
+                else if (name.startsWith("lexy_"))
+                    completions.push({ value: name.toUpperCase(), meta: 'lexy' });
             }
             callback(null, completions);
         }
@@ -266,7 +266,7 @@ window.addEventListener('load', async() => {
         const token = editor_grammar.session.getTokenAt(pos.row, pos.column);
         if (token.type !== 'dsl')
             return;
-        const identifier = token.value;
+        const identifier = token.value.toLowerCase();
 
         let url = doc_entities[identifier] ?? doc_entities['lexy::' + identifier];
         if (url)
