@@ -57,7 +57,10 @@ constexpr void swap(T& lhs, T& rhs)
 
 //=== consteval ===//
 #ifndef LEXY_HAS_CONSTEVAL
-#    if __cpp_consteval
+#    if defined(_MSC_VER) && !defined(__clang__)
+// Currently can't handle returning strings from consteval, check back later.
+#        define LEXY_HAS_CONSTEVAL 0
+#    elif __cpp_consteval
 #        define LEXY_HAS_CONSTEVAL 1
 #    else
 #        define LEXY_HAS_CONSTEVAL 0
