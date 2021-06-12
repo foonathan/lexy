@@ -14,7 +14,7 @@ namespace lexy::dsl
 {
     template <typename Encoding,
       lexy::encoding_endianness Endianness = lexy::encoding_endianness::bom>
-    consteval _rule_ auto encode(_rule_ auto rule);
+    constexpr _rule_ auto encode(_rule_ auto rule);
 }
 ----
 

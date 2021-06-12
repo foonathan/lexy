@@ -127,7 +127,7 @@ struct _comb : rule_base
 /// Matches each of the rules in an arbitrary order.
 /// Only matches each rule exactly once.
 template <typename... R>
-LEXY_CONSTEVAL auto combination(R...)
+constexpr auto combination(R...)
 {
     static_assert((lexy::is_branch<R> && ...), "combination() requires a branch rule");
     return _comb<void, void, R...>{};
@@ -136,7 +136,7 @@ LEXY_CONSTEVAL auto combination(R...)
 /// Matches some of the rules in an arbitrary order.
 /// Only matches a rule at most once.
 template <typename... R>
-LEXY_CONSTEVAL auto partial_combination(R...)
+constexpr auto partial_combination(R...)
 {
     static_assert((lexy::is_branch<R> && ...), "partial_combination() requires a branch rule");
     // If the choice no longer matches, we just break.
@@ -146,14 +146,14 @@ LEXY_CONSTEVAL auto partial_combination(R...)
 template <typename Tag, typename... R>
 LEXY_DEPRECATED_ERROR(
     "replace `combination<Tag>(r...)` by `combination(r...).duplicate_error<Tag>`")
-LEXY_CONSTEVAL auto combination(R... r)
+constexpr auto combination(R... r)
 {
     return combination(r...).template duplicate_error<Tag>;
 }
 template <typename Tag, typename... R>
 LEXY_DEPRECATED_ERROR(
     "replace `partial_combination<Tag>(r...)` by `partial_combination(r...).duplicate_error<Tag>`")
-LEXY_CONSTEVAL auto partial_combination(R... r)
+constexpr auto partial_combination(R... r)
 {
     return partial_combination(r...).template duplicate_error<Tag>;
 }

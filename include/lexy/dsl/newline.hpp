@@ -27,7 +27,7 @@ struct _nl : token_base<_nl>
     }
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -64,7 +64,7 @@ struct _eol : token_base<_eol>
     }
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }

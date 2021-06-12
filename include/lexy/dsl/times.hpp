@@ -21,7 +21,7 @@ using twice = times<2, T>;
 namespace lexyd
 {
 template <std::size_t N, typename Rule>
-LEXY_CONSTEVAL auto _gen_times(Rule rule)
+constexpr auto _gen_times(Rule rule)
 {
     if constexpr (N == 1)
         return rule;
@@ -29,7 +29,7 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule)
         return rule + _gen_times<N - 1>(rule);
 }
 template <std::size_t N, typename Rule, typename Sep>
-LEXY_CONSTEVAL auto _gen_times(Rule rule, Sep)
+constexpr auto _gen_times(Rule rule, Sep)
 {
     if constexpr (N == 1)
         return rule + typename Sep::trailing_rule{};
@@ -40,7 +40,7 @@ LEXY_CONSTEVAL auto _gen_times(Rule rule, Sep)
 template <std::size_t N, typename Rule, typename Sep>
 struct _times : rule_base
 {
-    static LEXY_CONSTEVAL auto _repeated_rule()
+    static constexpr auto _repeated_rule()
     {
         if constexpr (std::is_same_v<Sep, void>)
             return _gen_times<N>(Rule{});
@@ -82,7 +82,7 @@ struct _times : rule_base
 
 /// Repeats the rule N times and collects the values into an array.
 template <std::size_t N, typename Rule>
-LEXY_CONSTEVAL auto times(Rule)
+constexpr auto times(Rule)
 {
     static_assert(N > 0);
     return _times<N, Rule, void>{};
@@ -90,19 +90,19 @@ LEXY_CONSTEVAL auto times(Rule)
 
 /// Repeates the rule N times separated by the separator and collects the values into an array.
 template <std::size_t N, typename Rule, typename Sep>
-LEXY_CONSTEVAL auto times(Rule, Sep)
+constexpr auto times(Rule, Sep)
 {
     static_assert(N > 0);
     return _times<N, Rule, Sep>{};
 }
 
 template <typename Rule>
-LEXY_CONSTEVAL auto twice(Rule rule)
+constexpr auto twice(Rule rule)
 {
     return times<2>(rule);
 }
 template <typename Rule, typename Sep>
-LEXY_CONSTEVAL auto twice(Rule rule, Sep sep)
+constexpr auto twice(Rule rule, Sep sep)
 {
     return times<2>(rule, sep);
 }

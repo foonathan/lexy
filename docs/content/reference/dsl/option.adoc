@@ -62,7 +62,7 @@ NOTE: See {{< github_example tutorial >}} for a more complete version number par
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto opt(_branch-rule_ auto branch);
+    constexpr _rule_ auto opt(_branch-rule_ auto branch);
 }
 ----
 

@@ -23,8 +23,8 @@ This is similar to how an exception will perform stack unwinding until the entir
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto try_(_rule_ auto rule);
-    consteval _rule_ auto try_(_rule_ auto rule, _rule_ auto recovery_rule);
+    constexpr _rule_ auto try_(_rule_ auto rule);
+    constexpr _rule_ auto try_(_rule_ auto rule, _rule_ auto recovery_rule);
 }
 ----
 
@@ -73,7 +73,7 @@ namespace lexy::dsl
         _rule_ auto limit(_token-rule_ auto ... limits);
     };
 
-    consteval _find-dsl_ find(_token-rule_ auto ... tokens);
+    constexpr _find-dsl_ find(_token-rule_ auto ... tokens);
 }
 ----
 
@@ -108,7 +108,7 @@ namespace lexy::dsl
         _rule_ auto limit(_token-rule_ auto ... limits);
     };
 
-    consteval _recover-dsl_ find(_branch-rule_ auto ... branches);
+    constexpr _recover-dsl_ find(_branch-rule_ auto ... branches);
 }
 ----
 

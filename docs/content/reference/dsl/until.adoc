@@ -15,10 +15,10 @@ namespace lexy::dsl
     class _until-dsl_ // models _token-rule_
     {
     public:
-        consteval _token-rule_ auto or_eof() const;
+        constexpr _token-rule_ auto or_eof() const;
     };
 
-    consteval _until-dsl_ until(_token-rule_ auto condition);
+    constexpr _until-dsl_ until(_token-rule_ auto condition);
 }
 ----
 

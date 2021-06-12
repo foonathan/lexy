@@ -21,8 +21,8 @@ namespace lexy::dsl
     class _member-dsl_ // note: not a _rule_ itself
     {
     public:
-        consteval _rule_        auto operator=(_rule_        auto rule);
-        consteval _branch-rule_ auto operator=(_branch-rule_ auto rule);
+        constexpr _rule_        auto operator=(_rule_        auto rule);
+        constexpr _branch-rule_ auto operator=(_branch-rule_ auto rule);
     };
 
     template <auto MemberPtr>

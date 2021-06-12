@@ -32,7 +32,7 @@ struct _look : rule_base
     };
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -41,7 +41,7 @@ struct _look : rule_base
 /// Looks for the Needle before End.
 /// Used as condition to implement arbitrary lookahead.
 template <typename Needle, typename End>
-LEXY_CONSTEVAL auto lookahead(Needle, End)
+constexpr auto lookahead(Needle, End)
 {
     static_assert(lexy::is_token<Needle> && lexy::is_token<End>);
     return _look<typename Needle::token_engine, typename End::token_engine>{};

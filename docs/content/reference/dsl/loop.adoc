@@ -16,7 +16,7 @@ The `loop` and `break_` rules.
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto loop(_rule_ auto rule);
+    constexpr _rule_ auto loop(_rule_ auto rule);
 }
 ----
 

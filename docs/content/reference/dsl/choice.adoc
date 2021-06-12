@@ -20,11 +20,11 @@ namespace lexy::dsl
 {
     struct _choice_ {}; // models _rule_
 
-    consteval _choice_ operator|(_branch-rule_ auto lhs, _branch-rule_ auto rhs);
+    constexpr _choice_ operator|(_branch-rule_ auto lhs, _branch-rule_ auto rhs);
 
-    consteval _choice_ operator|(_choice_ lhs, _branch-rule_ auto rhs);
-    consteval _choice_ operator|(_branch-rule_ auto lhs, _choice_ rhs);
-    consteval _choice_ operator|(_choice_ lhs, _choice_ rhs);
+    constexpr _choice_ operator|(_choice_ lhs, _branch-rule_ auto rhs);
+    constexpr _choice_ operator|(_branch-rule_ auto lhs, _choice_ rhs);
+    constexpr _choice_ operator|(_choice_ lhs, _choice_ rhs);
 }
 ----
 

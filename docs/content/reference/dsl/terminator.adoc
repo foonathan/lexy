@@ -14,30 +14,30 @@ namespace lexy::dsl
 {
     struct _terminator-dsl // note: not a rule itself
     {
-        consteval _branch-rule_ auto terminator() const;
+        constexpr _branch-rule_ auto terminator() const;
 
-        consteval _terminator-dsl_ limit(_token-rule_ auto ... tokens);
-        consteval _rule_ auto      recovery_rule() const;
+        constexpr _terminator-dsl_ limit(_token-rule_ auto ... tokens);
+        constexpr _rule_ auto      recovery_rule() const;
 
         //=== rules ===//
-        consteval _rule_ auto operator()(_rule_ auto rule) const;
+        constexpr _rule_ auto operator()(_rule_ auto rule) const;
 
-        consteval _rule_ auto try_(_rule_ auto rule) const;
+        constexpr _rule_ auto try_(_rule_ auto rule) const;
 
-        consteval _rule_ auto opt(_rule_ auto rule) const;
+        constexpr _rule_ auto opt(_rule_ auto rule) const;
 
-        consteval _rule_        auto while_(_rule_ auto rule) const;
-        consteval _rule_        auto while_one(_rule_ auto rule) const;
-        consteval _branch-rule_ auto while_one(_branch-rule_ auto rule) const;
+        constexpr _rule_        auto while_(_rule_ auto rule) const;
+        constexpr _rule_        auto while_one(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto while_one(_branch-rule_ auto rule) const;
 
-        consteval _rule_ auto list(_rule_ auto item) const;
-        consteval _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
+        constexpr _rule_ auto list(_rule_ auto item) const;
+        constexpr _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 
-        consteval _rule_ auto opt_list(_rule_ auto item) const;
-        consteval _rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
+        constexpr _rule_ auto opt_list(_rule_ auto item) const;
+        constexpr _rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
     };
 
-    consteval _terminator-dsl_ terminator(_branch-rule_ auto branch);
+    constexpr _terminator-dsl_ terminator(_branch-rule_ auto branch);
 }
 ----
 
@@ -56,7 +56,7 @@ NOTE: See {{% docref "lexy::dsl::brackets" %}} if you want to parse something th
 
 {{% interface %}}
 ----
-consteval _branch-rule_ auto terminator() const;
+constexpr _branch-rule_ auto terminator() const;
 ----
 
 [.lead]
@@ -66,7 +66,7 @@ consteval _branch-rule_ auto terminator() const;
 
 {{% interface %}}
 ----
-consteval _terminator-dsl_ limit(_token-rule_ auto ... tokens);
+constexpr _terminator-dsl_ limit(_token-rule_ auto ... tokens);
 ----
 
 [.lead]
@@ -82,7 +82,7 @@ If the limit is reached before the terminator, error recovery fails.
 
 {{% interface %}}
 ----
-consteval _rule_ auto recovery_rule() const;
+constexpr _rule_ auto recovery_rule() const;
 ----
 
 [.lead]
@@ -97,7 +97,7 @@ Recovery fails when it reaches EOF or one of the limits, if any have been specif
 
 {{% interface %}}
 ----
-consteval _rule_ auto operator()(_rule_ auto rule) const
+constexpr _rule_ auto operator()(_rule_ auto rule) const
 {
     return rule + terminator();
 }
@@ -114,7 +114,7 @@ It behaves entirely equivalent to `rule + terminator()`.
 
 {{% interface %}}
 ----
-consteval _rule_ auto try_(_rule_ auto rule) const
+constexpr _rule_ auto try_(_rule_ auto rule) const
 {
     rule lexy::dsl::try_(rule + terminator(), recovery_rule());
 }
@@ -138,7 +138,7 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto opt(_rule_ auto rule) const;
+constexpr _rule_ auto opt(_rule_ auto rule) const;
 ----
 
 [.lead]
@@ -163,13 +163,13 @@ NOTE: `.opt(rule)` consumes the same input as {{% docref "lexy::dsl::opt" %}}`(`
 
 {{% interface %}}
 ----
-consteval _rule_ auto while_(_rule_ auto rule) const;
+constexpr _rule_ auto while_(_rule_ auto rule) const;
 
-consteval _rule_        auto while_one(_rule_ auto rule) const
+constexpr _rule_        auto while_one(_rule_ auto rule) const
 {
     return rule + while_(rule);
 }
-consteval _branch-rule_ auto while_one(_branch-rule_ auto rule) const
+constexpr _branch-rule_ auto while_one(_branch-rule_ auto rule) const
 {
     return rule >> while_(rule);
 }
@@ -198,8 +198,8 @@ NOTE: `.while_(rule)` consumes the same input as {{% docref "lexy::dsl::while_" 
 
 {{% interface %}}
 ----
-consteval _rule_ auto list(_rule_ auto item) const;
-consteval _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
+constexpr _rule_ auto list(_rule_ auto item) const;
+constexpr _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 ----
 
 [.lead]
@@ -247,8 +247,8 @@ NOTE: `.list(rule, sep)` consumes the same input as {{% docref "lexy::dsl::list"
 
 {{% interface %}}
 ----
-consteval _rule_ auto opt_list(_rule_ auto item) const;
-consteval _rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
+constexpr _rule_ auto opt_list(_rule_ auto item) const;
+constexpr _rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
 ----
 
 [.lead]

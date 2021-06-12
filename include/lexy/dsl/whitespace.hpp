@@ -60,23 +60,23 @@ struct _wsr : rule_base
     };
 
     template <typename R>
-    friend LEXY_CONSTEVAL auto operator|(_wsr<Rule>, R r)
+    friend constexpr auto operator|(_wsr<Rule>, R r)
     {
         return _wsr<decltype(Rule{} | r)>{};
     }
     template <typename R>
-    friend LEXY_CONSTEVAL auto operator|(R r, _wsr<Rule>)
+    friend constexpr auto operator|(R r, _wsr<Rule>)
     {
         return _wsr<decltype(r | Rule{})>{};
     }
 
     template <typename R>
-    friend LEXY_CONSTEVAL auto operator/(_wsr<Rule>, R r)
+    friend constexpr auto operator/(_wsr<Rule>, R r)
     {
         return _wsr<decltype(Rule{} / r)>{};
     }
     template <typename R>
-    friend LEXY_CONSTEVAL auto operator/(R r, _wsr<Rule>)
+    friend constexpr auto operator/(R r, _wsr<Rule>)
     {
         return _wsr<decltype(r / Rule{})>{};
     }
@@ -97,7 +97,7 @@ struct _ws : rule_base
 
     /// Overrides implicit whitespace detection.
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator()(Rule) const
+    constexpr auto operator()(Rule) const
     {
         return _wsr<Rule>{};
     }
@@ -152,7 +152,7 @@ struct _wsn : rule_base
 
 /// Disables automatic skipping of whitespace for all tokens of the given rule.
 template <typename Rule>
-LEXY_CONSTEVAL auto no_whitespace(Rule)
+constexpr auto no_whitespace(Rule)
 {
     if constexpr (lexy::is_token<Rule>)
         return Rule{}; // Token already behaves that way.
@@ -192,7 +192,7 @@ struct _wsd : rule_base
     };
 
     template <typename Tag>
-    LEXY_CONSTEVAL auto error() const
+    constexpr auto error() const
     {
         static_assert(lexy::is_token<Rule>);
         return Rule{}.template error<Tag>();
@@ -201,7 +201,7 @@ struct _wsd : rule_base
 
 /// Matches whitespace before parsing rule.
 template <typename Rule, typename Whitespace>
-LEXY_DEPRECATED_WHITESPACE LEXY_CONSTEVAL auto whitespaced(Rule, Whitespace)
+LEXY_DEPRECATED_WHITESPACE constexpr auto whitespaced(Rule, Whitespace)
 {
     return _wsd<Rule, Whitespace>{};
 }

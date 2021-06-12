@@ -46,7 +46,7 @@ struct _lab : rule_base
     };
 
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator()(Rule) const
+    constexpr auto operator()(Rule) const
     {
         return _labr<Label, Rule>{};
     }

@@ -49,14 +49,14 @@ struct _minus : token_base<_minus<Token, Except>>
 
 /// Matches Token unless Except matches on the input Token matched.
 template <typename Token, typename Except>
-LEXY_CONSTEVAL auto operator-(Token, Except)
+constexpr auto operator-(Token, Except)
 {
     static_assert(lexy::is_token<Token>);
     static_assert(lexy::is_token<Except>);
     return _minus<Token, Except>{};
 }
 template <typename Token, typename E, typename Except>
-LEXY_CONSTEVAL auto operator-(_minus<Token, E>, Except except)
+constexpr auto operator-(_minus<Token, E>, Except except)
 {
     static_assert(lexy::is_token<Except>);
     return _minus<Token, decltype(E{} / except)>{};

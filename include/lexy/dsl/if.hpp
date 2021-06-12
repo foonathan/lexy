@@ -34,7 +34,7 @@ struct _if : rule_base
 
 /// If the branch condition matches, matches the branch then.
 template <typename Branch>
-LEXY_CONSTEVAL auto if_(Branch)
+constexpr auto if_(Branch)
 {
     static_assert(lexy::is_branch<Branch>, "if_() requires a branch condition");
     if constexpr (Branch::is_unconditional_branch)

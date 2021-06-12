@@ -16,7 +16,7 @@ The `peek` and `peek_not` branch rules.
 ----
 namespace lexy::dsl
 {
-    consteval _branch-rule_ auto peek(_rule_ auto rule);
+    constexpr _branch-rule_ auto peek(_rule_ auto rule);
 }
 ----
 
@@ -49,7 +49,7 @@ CAUTION: This rule requires backtracking, which can slow down parsing.
 ----
 namespace lexy::dsl
 {
-    consteval _branch-rule_ auto peek_not(_rule_ auto rule);
+    constexpr _branch-rule_ auto peek_not(_rule_ auto rule);
 }
 ----
 

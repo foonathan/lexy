@@ -30,7 +30,7 @@ namespace lexy::dsl
         static constexpr _separator_ auto trailing_error;
     };
 
-    consteval _sep-dsl_ auto sep(_branch-rule_ rule);
+    constexpr _sep-dsl_ auto sep(_branch-rule_ rule);
 }
 ----
 
@@ -54,7 +54,7 @@ If it is not possible, parsing will continue as normal and (presumably) the next
 ----
 namespace lexy::dsl
 {
-    consteval _separator_ auto trailing_sep(_branch-rule_ rule);
+    constexpr _separator_ auto trailing_sep(_branch-rule_ rule);
 }
 ----
 

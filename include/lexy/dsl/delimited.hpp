@@ -175,7 +175,7 @@ struct _delim_dsl
 {
     /// Add tokens that will limit the delimited to detect a missing terminator.
     template <typename... Tokens>
-    LEXY_CONSTEVAL auto limit(Tokens...) const
+    constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
         static_assert((lexy::is_token<Tokens> && ...));
@@ -185,13 +185,13 @@ struct _delim_dsl
     //=== rules ===//
     /// Sets the content.
     template <typename Char>
-    LEXY_CONSTEVAL auto operator()(Char) const
+    constexpr auto operator()(Char) const
     {
         static_assert(lexy::is_token<Char>);
         return no_whitespace(open() >> _del<Close, Char, void, Limit>{});
     }
     template <typename Char, typename Escape>
-    LEXY_CONSTEVAL auto operator()(Char, Escape) const
+    constexpr auto operator()(Char, Escape) const
     {
         static_assert(lexy::is_token<Char>);
         static_assert(lexy::is_branch<Escape>);
@@ -200,12 +200,12 @@ struct _delim_dsl
 
     //=== access ===//
     /// Matches the open delimiter.
-    LEXY_CONSTEVAL auto open() const
+    constexpr auto open() const
     {
         return Open{};
     }
     /// Matches the closing delimiter.
-    LEXY_CONSTEVAL auto close() const
+    constexpr auto close() const
     {
         // Close never has any whitespace.
         return Close{};
@@ -214,7 +214,7 @@ struct _delim_dsl
     //=== deprecated ===//
     /// Sets the whitespace.
     template <typename Ws>
-    LEXY_CONSTEVAL auto operator[](Ws ws) const
+    constexpr auto operator[](Ws ws) const
     {
         auto open = whitespaced(Open{}, ws);
         return _delim_dsl<decltype(open), Close, Limit>{};
@@ -223,7 +223,7 @@ struct _delim_dsl
 
 /// Parses everything between the two delimiters and captures it.
 template <typename Open, typename Close>
-LEXY_CONSTEVAL auto delimited(Open, Close)
+constexpr auto delimited(Open, Close)
 {
     static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
     return _delim_dsl<Open, Close, lexyd::_eof>{};
@@ -231,7 +231,7 @@ LEXY_CONSTEVAL auto delimited(Open, Close)
 
 /// Parses everything between a paired delimiter.
 template <typename Delim>
-LEXY_CONSTEVAL auto delimited(Delim)
+constexpr auto delimited(Delim)
 {
     static_assert(lexy::is_branch<Delim>);
     return _delim_dsl<Delim, Delim, lexyd::_eof>{};
@@ -261,7 +261,7 @@ struct invalid_escape_sequence
 namespace lexyd
 {
 template <typename Escape, typename... Branches>
-LEXY_CONSTEVAL auto _escape_rule(Branches... branches)
+constexpr auto _escape_rule(Branches... branches)
 {
     if constexpr (sizeof...(Branches) == 0)
         return Escape{};
@@ -319,7 +319,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 {
     /// Adds a generic escape rule.
     template <typename Branch>
-    LEXY_CONSTEVAL auto rule(Branch) const
+    constexpr auto rule(Branch) const
     {
         static_assert(lexy::is_branch<Branch>);
         return _escape<Escape, Branches..., Branch>{};
@@ -327,7 +327,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 
     /// Adds an escape rule that captures the token.
     template <typename Token>
-    LEXY_CONSTEVAL auto capture(Token) const
+    constexpr auto capture(Token) const
     {
         static_assert(lexy::is_token<Token>);
         return this->rule(_escape_cap<typename Token::token_engine>{});
@@ -335,13 +335,13 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 
     /// Adds an escape rule that parses the symbol.
     template <const auto& Table, typename Rule>
-    LEXY_CONSTEVAL auto symbol(Rule rule) const
+    constexpr auto symbol(Rule rule) const
     {
         return this->rule(lexyd::symbol<Table>(rule));
     }
     /// Adds an escape rule that parses the symbol from the next code unit.
     template <const auto& Table>
-    LEXY_CONSTEVAL auto symbol() const
+    constexpr auto symbol() const
     {
         return this->symbol<Table>(_escape_char{});
     }
@@ -349,13 +349,13 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 #if LEXY_HAS_NTTP
     /// Adds an escape rule that replaces the escaped string with the replacement.
     template <lexy::_detail::string_literal Str, typename Value>
-    LEXY_DEPRECATED_ESCAPE LEXY_CONSTEVAL auto lit(Value value) const
+    LEXY_DEPRECATED_ESCAPE constexpr auto lit(Value value) const
     {
         return rule(lexyd::lit<Str> >> value);
     }
     /// Adds an escape rule that replaces the escaped string with itself.
     template <lexy::_detail::string_literal Str>
-    LEXY_DEPRECATED_ESCAPE LEXY_CONSTEVAL auto lit() const
+    LEXY_DEPRECATED_ESCAPE constexpr auto lit() const
     {
         return lit<Str>(value_str<Str>);
     }
@@ -363,13 +363,13 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 
     /// Adds an escape rule that replaces the escaped character with the replacement.
     template <auto C, typename Value>
-    LEXY_DEPRECATED_ESCAPE LEXY_CONSTEVAL auto lit_c(Value value) const
+    LEXY_DEPRECATED_ESCAPE constexpr auto lit_c(Value value) const
     {
         return rule(lexyd::lit_c<C> >> value);
     }
     /// Adds an escape rule that replaces the escape character with itself.
     template <auto C>
-    LEXY_DEPRECATED_ESCAPE LEXY_CONSTEVAL auto lit_c() const
+    LEXY_DEPRECATED_ESCAPE constexpr auto lit_c() const
     {
         return lit_c<C>(value_c<C>);
     }
@@ -379,7 +379,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
 /// The token is the initial rule to begin,
 /// and then you can add rules that match after it.
 template <typename EscapeToken>
-LEXY_CONSTEVAL auto escape(EscapeToken)
+constexpr auto escape(EscapeToken)
 {
     static_assert(lexy::is_token<EscapeToken>);
     return _escape<EscapeToken>{};

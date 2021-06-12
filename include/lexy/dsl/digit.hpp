@@ -241,7 +241,7 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
         context.error(err);
     }
 
-    LEXY_CONSTEVAL auto no_leading_zero() const
+    constexpr auto no_leading_zero() const
     {
         return _digits_st<Base, Sep>{};
     }
@@ -270,7 +270,7 @@ struct _digits_t : token_base<_digits_t<Base>>
     }
 
     template <typename Token>
-    LEXY_CONSTEVAL auto sep(Token) const
+    constexpr auto sep(Token) const
     {
         static_assert(lexy::is_token<Token>);
         return _digits_st<Base, Token>{};
@@ -292,13 +292,13 @@ struct _digits : token_base<_digits<Base>>
     }
 
     template <typename Token>
-    LEXY_CONSTEVAL auto sep(Token) const
+    constexpr auto sep(Token) const
     {
         static_assert(lexy::is_token<Token>);
         return _digits_s<Base, Token>{};
     }
 
-    LEXY_CONSTEVAL auto no_leading_zero() const
+    constexpr auto no_leading_zero() const
     {
         return _digits_t<Base>{};
     }
@@ -348,7 +348,7 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     }
 
     template <typename Token>
-    LEXY_CONSTEVAL auto sep(Token) const
+    constexpr auto sep(Token) const
     {
         static_assert(lexy::is_token<Token>);
         return _ndigits_s<N, Base, Token>{};

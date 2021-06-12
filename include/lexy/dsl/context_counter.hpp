@@ -129,53 +129,53 @@ struct _ctx_counter
     {};
 
     template <int InitialValue = 0>
-    LEXY_CONSTEVAL auto create() const
+    constexpr auto create() const
     {
         return _ctx_ccreate<id, InitialValue>{};
     }
 
-    LEXY_CONSTEVAL auto inc() const
+    constexpr auto inc() const
     {
         return _ctx_cadd<id, +1>{};
     }
-    LEXY_CONSTEVAL auto dec() const
+    constexpr auto dec() const
     {
         return _ctx_cadd<id, -1>{};
     }
 
     template <typename Rule>
-    LEXY_CONSTEVAL auto push(Rule) const
+    constexpr auto push(Rule) const
     {
         return _ctx_cpush<id, Rule, +1>{};
     }
     template <typename Rule>
-    LEXY_CONSTEVAL auto pop(Rule) const
+    constexpr auto pop(Rule) const
     {
         return _ctx_cpush<id, Rule, -1>{};
     }
 
     template <int Value, typename R, typename S, typename T>
-    LEXY_CONSTEVAL auto compare(R, S, T) const
+    constexpr auto compare(R, S, T) const
     {
         return _ctx_ccompare<id, Value, R, S, T>{};
     }
 
     template <int Value = 0>
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return _ctx_counter_require<id, Value>{};
     }
 
     template <typename Tag>
     LEXY_DEPRECATED_ERROR("replace `counter.require<Tag>()` by `counter.require().error<Tag>`")
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return require().template error<Tag>;
     }
     template <int Value, typename Tag>
     LEXY_DEPRECATED_ERROR(
         "replace `counter.require<Value, Tag>()` by `counter.require<Value>().error<Tag>`")
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return require<Value>().template error<Tag>;
     }

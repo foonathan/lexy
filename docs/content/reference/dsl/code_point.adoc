@@ -19,7 +19,7 @@ namespace lexy::dsl
     {
     public:
         template <typename Predicate>
-        consteval _token-rule_ auto if_() const; // see below
+        constexpr _token-rule_ auto if_() const; // see below
     };
 
     constexpr _code-point-dsl_ auto code_point;
@@ -54,7 +54,7 @@ NOTE: If the input has been validated, the rule only fails if the reader is at t
 ----
 template <std::predicate<lexy::code_point> Predicate>
   requires std::is_default_constructible_v<Predicate>
-consteval _token-rule_ auto if_() const;
+constexpr _token-rule_ auto if_() const;
 ----
 
 [.lead]

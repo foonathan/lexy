@@ -34,7 +34,7 @@ struct _find : rule_base
     //=== dsl ===//
     /// Fail error recovery if limiting token is found first.
     template <typename... Tokens>
-    LEXY_CONSTEVAL auto limit(Tokens... tokens) const
+    constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
         static_assert((lexy::is_token<Tokens> && ...));
@@ -43,7 +43,7 @@ struct _find : rule_base
         return _find<Token, decltype(l)>{};
     }
 
-    LEXY_CONSTEVAL auto get_limit() const
+    constexpr auto get_limit() const
     {
         return Limit{};
     }
@@ -68,7 +68,7 @@ struct _find<Token, void> : rule_base
     //=== dsl ===//
     /// Fail error recovery if limiting token is found first.
     template <typename... Tokens>
-    LEXY_CONSTEVAL auto limit(Tokens... tokens) const
+    constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
         static_assert((lexy::is_token<Tokens> && ...));
@@ -77,7 +77,7 @@ struct _find<Token, void> : rule_base
         return _find<Token, decltype(l)>{};
     }
 
-    LEXY_CONSTEVAL auto get_limit() const
+    constexpr auto get_limit() const
     {
         return eof;
     }
@@ -85,7 +85,7 @@ struct _find<Token, void> : rule_base
 
 /// Recovers once it finds one of the given tokens (without consuming them).
 template <typename... Tokens>
-LEXY_CONSTEVAL auto find(Tokens... tokens)
+constexpr auto find(Tokens... tokens)
 {
     static_assert(sizeof...(Tokens) > 0);
     static_assert((lexy::is_token<Tokens> && ...));
@@ -130,7 +130,7 @@ struct _reco : rule_base
     //=== dsl ===//
     /// Fail error recovery if Token is found before any of R.
     template <typename... Tokens>
-    LEXY_CONSTEVAL auto limit(Tokens... tokens) const
+    constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
         static_assert((lexy::is_token<Tokens> && ...));
@@ -139,7 +139,7 @@ struct _reco : rule_base
         return _reco<decltype(l), R...>{};
     }
 
-    LEXY_CONSTEVAL auto get_limit() const
+    constexpr auto get_limit() const
     {
         return Limit{};
     }
@@ -147,7 +147,7 @@ struct _reco : rule_base
 
 /// Discards input until one of the branches matches to recover from an error.
 template <typename... Branches>
-LEXY_CONSTEVAL auto recover(Branches...)
+constexpr auto recover(Branches...)
 {
     static_assert(sizeof...(Branches) > 0);
     static_assert((lexy::is_branch<Branches> && ...));
@@ -183,14 +183,14 @@ struct _tryr : rule_base
 
 /// Pares Rule, if that fails, continues immediately.
 template <typename Rule>
-LEXY_CONSTEVAL auto try_(Rule)
+constexpr auto try_(Rule)
 {
     return _tryr<Rule, void>{};
 }
 
 /// Parses Rule, if that fails, parses recovery rule.
 template <typename Rule, typename Recover>
-LEXY_CONSTEVAL auto try_(Rule, Recover)
+constexpr auto try_(Rule, Recover)
 {
     return _tryr<Rule, Recover>{};
 }

@@ -16,11 +16,11 @@ The `list` and `opt_list` rules.
 ----
 namespace lexy::dsl
 {
-    consteval _branch-rule_ auto list(_branch-rule_ auto item);
+    constexpr _branch-rule_ auto list(_branch-rule_ auto item);
 
-    consteval _rule_        auto list(_rule_ auto item,
+    constexpr _rule_        auto list(_rule_ auto item,
                                  _separator_ auto sep);
-    consteval _branch-rule_ auto list(_rule_ auto item,
+    constexpr _branch-rule_ auto list(_rule_ auto item,
                                  _separator_ auto sep);
 }
 ----
@@ -87,9 +87,9 @@ which do not require a branch rule as arguments.
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto opt_list(_branch-rule_ auto item);
+    constexpr _rule_ auto opt_list(_branch-rule_ auto item);
 
-    consteval _rule_ auto opt_list(_branch-rule_ auto item,
+    constexpr _rule_ auto opt_list(_branch-rule_ auto item,
                              _separator_ auto sep);
 }
 ----

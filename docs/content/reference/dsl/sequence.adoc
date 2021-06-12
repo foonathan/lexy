@@ -13,7 +13,7 @@ entities:
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto operator+(_rule_ auto lhs, _rule_ auto rhs);
+    constexpr _rule_ auto operator+(_rule_ auto lhs, _rule_ auto rhs);
 }
 ----
 
@@ -39,9 +39,9 @@ namespace lexy::dsl
 {
     struct _token-seq_ {}; // models _branch-rule_
 
-    consteval _token-seq_ operator+(_token-rule_ auto lhs, _token-rule_ auto rhs);
-    consteval _token-seq_ operator+(_token-seq_ lhs, _token-rule_ auto rhs);
-    consteval _token-seq_ operator+(_token-rule_ auto lhs, _token-seq_ rhs);
+    constexpr _token-seq_ operator+(_token-rule_ auto lhs, _token-rule_ auto rhs);
+    constexpr _token-seq_ operator+(_token-seq_ lhs, _token-rule_ auto rhs);
+    constexpr _token-seq_ operator+(_token-rule_ auto lhs, _token-seq_ rhs);
 }
 ----
 

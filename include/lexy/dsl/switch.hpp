@@ -126,7 +126,7 @@ struct _switch : rule_base
     //=== dsl ===//
     /// Adds a case to the switch.
     template <typename Token, typename Value>
-    LEXY_CONSTEVAL auto case_(_br<Token, Value>) const
+    constexpr auto case_(_br<Token, Value>) const
     {
         static_assert(lexy::is_token<Token>, "case condition must be a token");
         return _switch<Rule, Error, Cases..., _switch_case<Token, Value>>{};
@@ -134,7 +134,7 @@ struct _switch : rule_base
 
     /// Adds a default value to the switch.
     template <typename Default>
-    LEXY_CONSTEVAL auto default_(Default) const
+    constexpr auto default_(Default) const
     {
         return _switch<Rule, Error, Cases..., _switch_case<void, Default>>{};
     }
@@ -153,7 +153,7 @@ struct _switch : rule_base
 /// Switches on the lexeme matched by the rule.
 /// The first case that will match the entire pattern will be taken.
 template <typename Rule>
-LEXY_DEPRECATED_SWITCH LEXY_CONSTEVAL auto switch_(Rule)
+LEXY_DEPRECATED_SWITCH constexpr auto switch_(Rule)
 {
     return _switch<Rule, void>{};
 }

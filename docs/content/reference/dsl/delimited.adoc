@@ -31,20 +31,20 @@ namespace lexy::dsl
 {
     struct _delimited-dsl_ // note: not a rule itself
     {
-        consteval _branch-rule_ auto open() const;
-        consteval _branch-rule_ auto close() const;
+        constexpr _branch-rule_ auto open() const;
+        constexpr _branch-rule_ auto close() const;
 
-        consteval _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+        constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
 
         //=== rules ===//
-        consteval _rule_ auto operator()(_token-rule_ c) const;
-        consteval _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+        constexpr _rule_ auto operator()(_token-rule_ c) const;
+        constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
     };
 
-    consteval _delimited-dsl_ delimited(_branch-rule_ auto open,
+    constexpr _delimited-dsl_ delimited(_branch-rule_ auto open,
                                       _branch-rule_ auto close);
 
-    consteval _delimited-dsl_ delimited(_branch-rule_ auto delim)
+    constexpr _delimited-dsl_ delimited(_branch-rule_ auto delim)
     {
         return delimited(delim, delim)
     }
@@ -67,8 +67,8 @@ This is one is designed for lists of characters.
 
 {{% interface %}}
 ----
-consteval _branch-rule_ auto open() const;
-consteval _branch-rule_ auto close() const;
+constexpr _branch-rule_ auto open() const;
+constexpr _branch-rule_ auto close() const;
 ----
 
 [.lead]
@@ -78,7 +78,7 @@ consteval _branch-rule_ auto close() const;
 
 {{% interface %}}
 ----
-consteval _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
 ----
 
 [.lead]
@@ -97,8 +97,8 @@ CAUTION: The limit must be a character that must not be allowed inside the delim
 
 {{% interface %}}
 ----
-consteval _rule_ auto operator()(_token-rule_ c) const;
-consteval _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+constexpr _rule_ auto operator()(_token-rule_ c) const;
+constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
 ----
 
 [.lead]
@@ -185,17 +185,17 @@ namespace lexy::dsl
 {
     struct _escape-dsl_ // note: not a rule itself
     {
-        consteval _escape-dsl_ rule(_branch-rule_ auto r) const;
+        constexpr _escape-dsl_ rule(_branch-rule_ auto r) const;
 
-        consteval _escape-dsl_ capture(_token-rule_ auto t) const;
+        constexpr _escape-dsl_ capture(_token-rule_ auto t) const;
 
         template <const _symbol_table_& SymbolTable>
-        consteval _escape-dsl_ symbol(_token-rule_ auto t) const;
+        constexpr _escape-dsl_ symbol(_token-rule_ auto t) const;
         template <const _symbol_table_& SymbolTable>
-        consteval _escape-dsl_ symbol() const;
+        constexpr _escape-dsl_ symbol() const;
     };
 
-    consteval _escape-dsl_ escape(_token-rule_ auto escape_char);
+    constexpr _escape-dsl_ escape(_token-rule_ auto escape_char);
 }
 ----
 
@@ -227,7 +227,7 @@ Values::
 
 {{% interface %}}
 ----
-consteval _escape-dsl_ rule(_branch-rule_ auto r) const;
+constexpr _escape-dsl_ rule(_branch-rule_ auto r) const;
 ----
 
 [.lead]
@@ -237,7 +237,7 @@ consteval _escape-dsl_ rule(_branch-rule_ auto r) const;
 
 {{% interface %}}
 ----
-consteval _escape-dsl_ capture(_token-rule_ auto t) const
+constexpr _escape-dsl_ capture(_token-rule_ auto t) const
 {
     return this->rule(lexy::dsl::capture(t));
 }
@@ -253,13 +253,13 @@ It is equivalent to {{% docref "lexy::dsl::capture" %}}.
 {{% interface %}}
 ----
 template <const _symbol_table_& SymbolTable>
-consteval _escape-dsl_ symbol(_token-rule_ auto t) const
+constexpr _escape-dsl_ symbol(_token-rule_ auto t) const
 {
     return this->rule(lexy::dsl::symbol<SymbolTable>(t));
 }
 
 template <const _symbol_table_& SymbolTable>
-consteval _escape-dsl_ symbol() const
+constexpr _escape-dsl_ symbol() const
 {
     return this->rule(lexy::dsl::symbol<SymbolTable>(_see-below_));
 }

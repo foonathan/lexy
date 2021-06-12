@@ -176,7 +176,7 @@ struct _token : token_base<_token<Rule>>
     }
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -184,7 +184,7 @@ struct _token : token_base<_token<Rule>>
 
 /// Turns the arbitrary rule into a token by matching it without producing any values.
 template <typename Rule>
-LEXY_CONSTEVAL auto token(Rule)
+constexpr auto token(Rule)
 {
     if constexpr (lexy::is_token<Rule>)
         return Rule{};

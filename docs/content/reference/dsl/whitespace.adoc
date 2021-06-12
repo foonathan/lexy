@@ -37,13 +37,13 @@ namespace lexy::dsl
     class _ws-rule_ // models _rule_
     {};
 
-    consteval _ws-rule_ whitespace(_rule_ auto ws);
+    constexpr _ws-rule_ whitespace(_rule_ auto ws);
 
-    consteval _ws-rule_ operator|(_ws-rule_ rhs, _rule_ auto lhs) const;
-    consteval _ws-rule_ operator|(_rule_ auto rhs, _ws-rule_ lhs) const;
+    constexpr _ws-rule_ operator|(_ws-rule_ rhs, _rule_ auto lhs) const;
+    constexpr _ws-rule_ operator|(_rule_ auto rhs, _ws-rule_ lhs) const;
 
-    consteval _ws-rule_ operator/(_ws-rule_ rhs, _token-rule_ auto lhs) const;
-    consteval _ws-rule_ operator/(_token-rule_ auto rhs, _ws-rule_ lhs) const;
+    constexpr _ws-rule_ operator/(_ws-rule_ rhs, _token-rule_ auto lhs) const;
+    constexpr _ws-rule_ operator/(_token-rule_ auto rhs, _ws-rule_ lhs) const;
 }
 ----
 
@@ -126,8 +126,8 @@ TIP: Use {{% docref "lexy::dsl::ascii::space" %}} to skip all ASCII whitespace c
 ----
 namespace lexy::dsl
 {
-    consteval _rule_        no_whitespace(_rule_ auto rule);
-    consteval _branch-rule_ no_whitespace(_branch-rule_ auto rule);
+    constexpr _rule_        no_whitespace(_rule_ auto rule);
+    constexpr _branch-rule_ no_whitespace(_branch-rule_ auto rule);
 }
 ----
 

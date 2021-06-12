@@ -142,12 +142,12 @@ struct _id : rule_base
     };
 
     template <typename R>
-    LEXY_CONSTEVAL auto _make_reserve(R r) const
+    constexpr auto _make_reserve(R r) const
     {
         return lexyd::token(r);
     }
     template <typename String, typename Id>
-    LEXY_CONSTEVAL auto _make_reserve(_kw<String, Id>) const
+    constexpr auto _make_reserve(_kw<String, Id>) const
     {
         static_assert(std::is_same_v<decltype(Id{}.pattern()), decltype(pattern())>,
                       "must not reserve keywords from another identifier");
@@ -158,7 +158,7 @@ struct _id : rule_base
     //=== dsl ===//
     /// Adds a set of reserved identifiers.
     template <typename... R>
-    LEXY_CONSTEVAL auto reserve(R... r) const
+    constexpr auto reserve(R... r) const
     {
         static_assert(sizeof...(R) > 0);
         return _id<Leading, Trailing, Reserved..., decltype(_make_reserve(r))...>{};
@@ -166,32 +166,32 @@ struct _id : rule_base
 
     /// Reserves everything starting with the given rule.
     template <typename... R>
-    LEXY_CONSTEVAL auto reserve_prefix(R... prefix) const
+    constexpr auto reserve_prefix(R... prefix) const
     {
         return reserve((prefix + lexyd::any)...);
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
-    LEXY_CONSTEVAL auto reserve_containing(R...) const
+    constexpr auto reserve_containing(R...) const
     {
         return reserve(_contains<R>{}...);
     }
 
     /// Matches every identifier, ignoring reserved ones.
-    LEXY_CONSTEVAL auto pattern() const
+    constexpr auto pattern() const
     {
         return _idp<Leading, Trailing>{};
     }
 
     /// Matches the initial char set of an identifier.
-    LEXY_CONSTEVAL auto leading_pattern() const
+    constexpr auto leading_pattern() const
     {
         return Leading{};
     }
 
     /// Matches the trailing char set of an identifier.
-    LEXY_CONSTEVAL auto trailing_pattern() const
+    constexpr auto trailing_pattern() const
     {
         return Trailing{};
     }
@@ -199,7 +199,7 @@ struct _id : rule_base
 
 /// Creates an identifier that consists of one or more of the given tokens.
 template <typename Token>
-LEXY_CONSTEVAL auto identifier(Token)
+constexpr auto identifier(Token)
 {
     return _id<Token, Token>{};
 }
@@ -207,7 +207,7 @@ LEXY_CONSTEVAL auto identifier(Token)
 /// Creates an identifier that consists of one leading token followed by zero or more trailing
 /// tokens.
 template <typename LeadingToken, typename TrailingToken>
-LEXY_CONSTEVAL auto identifier(LeadingToken, TrailingToken)
+constexpr auto identifier(LeadingToken, TrailingToken)
 {
     return _id<LeadingToken, TrailingToken>{};
 }
@@ -275,7 +275,7 @@ struct _kw : token_base<_kw<String, Id>>
 };
 
 template <typename String, typename L, typename T, typename... R>
-LEXY_CONSTEVAL auto _keyword(_id<L, T, R...>)
+constexpr auto _keyword(_id<L, T, R...>)
 {
     // We don't need the reserved words, remove them to keep type name short.
     static_assert(String::size > 0, "keyword must not be empty");
@@ -285,7 +285,7 @@ LEXY_CONSTEVAL auto _keyword(_id<L, T, R...>)
 #if LEXY_HAS_NTTP
 /// Matches the keyword.
 template <lexy::_detail::string_literal Str, typename L, typename T, typename... R>
-LEXY_CONSTEVAL auto keyword(_id<L, T, R...> id)
+constexpr auto keyword(_id<L, T, R...> id)
 {
     return _keyword<lexy::_detail::type_string<Str>>(id);
 }

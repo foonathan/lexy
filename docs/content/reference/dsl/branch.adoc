@@ -31,9 +31,9 @@ namespace lexy::dsl
 {
     struct _branch_ {}; // models _branch-rule_
 
-    consteval _branch_ operator>>(_branch-rule_ auto condition, _rule_ auto then);
+    constexpr _branch_ operator>>(_branch-rule_ auto condition, _rule_ auto then);
 
-    consteval _branch_ operator+(_branch_ br, _rule_ auto then);
+    constexpr _branch_ operator+(_branch_ br, _rule_ auto then);
 }
 ----
 

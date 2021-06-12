@@ -83,22 +83,22 @@ struct _seq : rule_base
 };
 
 template <typename R, typename S>
-LEXY_CONSTEVAL auto operator+(R, S)
+constexpr auto operator+(R, S)
 {
     return _seq<R, S>{};
 }
 template <typename... R, typename S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, S)
+constexpr auto operator+(_seq<R...>, S)
 {
     return _seq<R..., S>{};
 }
 template <typename R, typename... S>
-LEXY_CONSTEVAL auto operator+(R, _seq<S...>)
+constexpr auto operator+(R, _seq<S...>)
 {
     return _seq<R, S...>{};
 }
 template <typename... R, typename... S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _seq<S...>)
+constexpr auto operator+(_seq<R...>, _seq<S...>)
 {
     return _seq<R..., S...>{};
 }

@@ -98,12 +98,12 @@ namespace lexy
 namespace lexy::dsl
 {
     template <typename T, typename Base>
-    consteval _rule_ auto integer(_rule_ auto digits);
+    constexpr _rule_ auto integer(_rule_ auto digits);
 
     template <typename T>
-    consteval _rule_ auto integer(_digits-dsl_  digits);
+    constexpr _rule_ auto integer(_digits-dsl_  digits);
     template <typename T>
-    consteval _rule_ auto integer(_ndigits-dsl_ digits);
+    constexpr _rule_ auto integer(_ndigits-dsl_ digits);
 }
 ----
 

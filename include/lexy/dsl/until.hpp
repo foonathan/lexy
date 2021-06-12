@@ -34,7 +34,7 @@ struct _until : token_base<_until<Condition>>
     }
 
     /// Also accepts EOF as the closing condition.
-    LEXY_CONSTEVAL auto or_eof() const
+    constexpr auto or_eof() const
     {
         return _until_eof<Condition>{};
     }
@@ -43,7 +43,7 @@ struct _until : token_base<_until<Condition>>
 /// Matches anything until Condition matches.
 /// Then matches Condition.
 template <typename Condition>
-LEXY_CONSTEVAL auto until(Condition)
+constexpr auto until(Condition)
 {
     static_assert(lexy::is_token<Condition>);
     return _until<Condition>{};

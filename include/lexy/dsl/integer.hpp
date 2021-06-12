@@ -316,39 +316,39 @@ struct _int_c : rule_base
 
 /// Parses the digits matched by the rule into an integer type.
 template <typename T, typename Base, typename Rule>
-LEXY_CONSTEVAL auto integer(Rule)
+constexpr auto integer(Rule)
 {
     return _int_c<Rule>{} + _int_p<T, Base, false, void>{};
 }
 
 template <typename T, typename Base>
-LEXY_CONSTEVAL auto integer(_digits<Base>)
+constexpr auto integer(_digits<Base>)
 {
     return _int_c<_digits<Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, typename Sep>
-LEXY_CONSTEVAL auto integer(_digits_s<Base, Sep>)
+constexpr auto integer(_digits_s<Base, Sep>)
 {
     return _int_c<_digits_s<Base, Sep>>{} + _int_p<T, Base, false, void>{};
 }
 template <typename T, typename Base>
-LEXY_CONSTEVAL auto integer(_digits_t<Base>)
+constexpr auto integer(_digits_t<Base>)
 {
     return _int_c<_digits_t<Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, typename Sep>
-LEXY_CONSTEVAL auto integer(_digits_st<Base, Sep>)
+constexpr auto integer(_digits_st<Base, Sep>)
 {
     return _int_c<_digits_st<Base, Sep>>{} + _int_p<T, Base, false, void>{};
 }
 
 template <typename T, typename Base, std::size_t N>
-LEXY_CONSTEVAL auto integer(_ndigits<N, Base>)
+constexpr auto integer(_ndigits<N, Base>)
 {
     return _int_c<_ndigits<N, Base>>{} + _int_p<T, Base, true, void>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
-LEXY_CONSTEVAL auto integer(_ndigits_s<N, Base, Sep>)
+constexpr auto integer(_ndigits_s<N, Base, Sep>)
 {
     return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true, void>{};
 }

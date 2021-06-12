@@ -38,7 +38,7 @@ struct _whl : rule_base
 
 /// Matches the branch rule as often as possible.
 template <typename Rule>
-LEXY_CONSTEVAL auto while_(Rule)
+constexpr auto while_(Rule)
 {
     static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
     return _whl<Rule>{};
@@ -49,7 +49,7 @@ namespace lexyd
 {
 /// Matches the rule at least once, then as often as possible.
 template <typename Rule>
-LEXY_CONSTEVAL auto while_one(Rule rule)
+constexpr auto while_one(Rule rule)
 {
     static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
     return rule >> while_(rule);
@@ -60,7 +60,7 @@ namespace lexyd
 {
 /// Matches then once, then `while_(condition >> then)`.
 template <typename Then, typename Condition>
-LEXY_CONSTEVAL auto do_while(Then then, Condition condition)
+constexpr auto do_while(Then then, Condition condition)
 {
     if constexpr (lexy::is_branch<Then>)
         return then >> while_(condition >> then);

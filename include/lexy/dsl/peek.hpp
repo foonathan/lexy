@@ -31,7 +31,7 @@ struct _peek : rule_base
     };
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -40,7 +40,7 @@ struct _peek : rule_base
 /// Check if at this reader position, the rule would match, but don't actually consume any
 /// characters if it does.
 template <typename Rule>
-LEXY_CONSTEVAL auto peek(Rule rule)
+constexpr auto peek(Rule rule)
 {
     using token = decltype(token(rule));
     return _peek<typename token::token_engine, true>{};
@@ -49,7 +49,7 @@ LEXY_CONSTEVAL auto peek(Rule rule)
 /// Check if at this reader position, the rule would not match, but don't actually consume any
 /// characters if it does.
 template <typename Rule>
-LEXY_CONSTEVAL auto peek_not(Rule rule)
+constexpr auto peek_not(Rule rule)
 {
     using token = decltype(token(rule));
     return _peek<typename token::token_engine, false>{};

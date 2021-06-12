@@ -85,7 +85,7 @@ struct _ctx_push : rule_base
 
 /// Pushes whatever the rule captures onto the context stack.
 template <typename Rule>
-LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_push(Rule)
+LEXY_DEPRECATED_CONTEXT constexpr auto context_push(Rule)
 {
     return _ctx_push<Rule>{};
 }
@@ -214,7 +214,7 @@ struct _ctx_top
 
     /// Sets the error if the context doesn't match.
     template <typename E>
-    LEXY_CONSTEVAL auto error()
+    constexpr auto error()
     {
         return _ctx_top<Rule, Eq, E>{};
     }
@@ -224,7 +224,7 @@ struct _ctx_top
 /// stack.
 /// The context is kept on the stack.
 template <typename Eq = context_eq, typename Rule>
-LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_top(Rule)
+LEXY_DEPRECATED_CONTEXT constexpr auto context_top(Rule)
 {
     return _ctx_top<Rule, Eq, lexy::context_mismatch>{};
 }
@@ -234,7 +234,7 @@ struct _ctx_pop : decltype(_ctx_top<Rule, Eq, Error>{} + context_drop)
 {
     /// Sets the error if the context doesn't match.
     template <typename E>
-    LEXY_CONSTEVAL auto error()
+    constexpr auto error()
     {
         return _ctx_pop<Rule, Eq, E>{};
     }
@@ -244,7 +244,7 @@ struct _ctx_pop : decltype(_ctx_top<Rule, Eq, Error>{} + context_drop)
 /// stack.
 /// The context is removed on the stack.
 template <typename Eq = context_eq, typename Rule>
-LEXY_DEPRECATED_CONTEXT LEXY_CONSTEVAL auto context_pop(Rule)
+LEXY_DEPRECATED_CONTEXT constexpr auto context_pop(Rule)
 {
     return _ctx_pop<Rule, Eq, lexy::context_mismatch>{};
 }

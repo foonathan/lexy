@@ -30,7 +30,7 @@ struct _eof : token_base<_eof>
     }
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }

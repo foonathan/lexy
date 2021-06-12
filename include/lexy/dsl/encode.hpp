@@ -195,7 +195,7 @@ template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _encode
 {
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator()(Rule rule) const
+    constexpr auto operator()(Rule rule) const
     {
         if constexpr (Endianness == lexy::encoding_endianness::bom)
         {

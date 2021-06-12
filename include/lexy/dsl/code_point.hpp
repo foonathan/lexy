@@ -71,7 +71,7 @@ struct _cp_cap : rule_base
     };
 
     template <typename P>
-    LEXY_CONSTEVAL auto if_() const
+    constexpr auto if_() const
     {
         static_assert(std::is_void_v<Predicate>);
         return _cp_cap<P>{};
@@ -127,13 +127,13 @@ struct _cp : token_base<_cp<Predicate>>
         }
     }
 
-    LEXY_CONSTEVAL auto capture() const
+    constexpr auto capture() const
     {
         return _cp_cap<Predicate>{};
     }
 
     template <typename P>
-    LEXY_CONSTEVAL auto if_() const
+    constexpr auto if_() const
     {
         static_assert(std::is_void_v<Predicate>);
         return _cp<P>{};

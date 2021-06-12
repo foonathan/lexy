@@ -25,21 +25,21 @@ namespace lexy::dsl
     struct _identifier-dsl_ // models _rule_
     {
         //=== modifiers ===//
-        consteval _identifier-dsl_ reserve(_rule_ auto ... rules) const;
-        consteval _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const;
-        consteval _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const;
+        constexpr _identifier-dsl_ reserve(_rule_ auto ... rules) const;
+        constexpr _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const;
+        constexpr _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const;
 
         //=== sub-rules ===//
-        consteval _token-rule_ auto pattern() const;
+        constexpr _token-rule_ auto pattern() const;
 
-        consteval _token-rule_ auto leading_pattern() const;
-        consteval _token-rule_ auto trailing_pattern() const;
+        constexpr _token-rule_ auto leading_pattern() const;
+        constexpr _token-rule_ auto trailing_pattern() const;
     };
 
-    consteval _identifier-dsl_ identifier(_token-rule_ auto leading,
+    constexpr _identifier-dsl_ identifier(_token-rule_ auto leading,
                                         _token-rule_ auto trailing);
 
-    consteval _identifier-dsl_ identifier(_token-rule_ auto pattern)
+    constexpr _identifier-dsl_ identifier(_token-rule_ auto pattern)
     {
         return identifier(pattern, pattern);
     }
@@ -76,9 +76,9 @@ TIP: Use the character classes from {{% docref "lexy::dsl::ascii" %}} for simple
 
 {{% interface %}}
 ----
-consteval _identifier-dsl_ reserve(_rule_ auto ... rules) const; <1>
-consteval _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const; <2>
-consteval _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const; <3>
+constexpr _identifier-dsl_ reserve(_rule_ auto ... rules) const; <1>
+constexpr _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const; <2>
+constexpr _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const; <3>
 ----
 
 [.lead]
@@ -110,7 +110,7 @@ NOTE: The common case of passing keywords or literals to `.reserve()` is optimiz
 
 {{% interface %}}
 ----
-consteval _token-rule_ auto pattern() const;
+constexpr _token-rule_ auto pattern() const;
 ----
 
 [.lead]
@@ -133,8 +133,8 @@ Parse tree::
 
 {{% interface %}}
 ----
-consteval _token-rule_ auto leading_pattern() const;
-consteval _token-rule_ auto trailing_pattern() const;
+constexpr _token-rule_ auto leading_pattern() const;
+constexpr _token-rule_ auto trailing_pattern() const;
 ----
 
 [.lead]
@@ -148,7 +148,7 @@ They simply return `leading`/`trailing` from the arguments passed to `identifier
 namespace lexy::dsl
 {
     template <auto Str>
-    consteval _token-rule_ auto keyword(_identifier-dsl_ identifier);
+    constexpr _token-rule_ auto keyword(_identifier-dsl_ identifier);
 }
 
 #define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword<Str>(identifier)

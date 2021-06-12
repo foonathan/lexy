@@ -101,7 +101,7 @@ struct _prd : rule_base
     using parser = _prd_parser<Production, _rule, NextParser>;
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -119,7 +119,7 @@ struct _rec : rule_base
     {};
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }

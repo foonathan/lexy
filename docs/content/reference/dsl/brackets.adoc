@@ -22,32 +22,32 @@ namespace lexy::dsl
 {
     struct _brackets-dsl_ // note: not a rule itself
     {
-        consteval _branch-rule_ auto open() const;
-        consteval _branch-rule_ auto close() const;
+        constexpr _branch-rule_ auto open() const;
+        constexpr _branch-rule_ auto close() const;
 
-        consteval _terminator-dsl_ as_terminator() const;
+        constexpr _terminator-dsl_ as_terminator() const;
 
-        consteval _brackets-dsl_   limit(_token-rule_ auto ... tokens);
-        consteval _rule_ auto      recovery_rule() const;
+        constexpr _brackets-dsl_   limit(_token-rule_ auto ... tokens);
+        constexpr _rule_ auto      recovery_rule() const;
 
         //=== rules ===//
-        consteval _branch-rule_ auto operator()(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto operator()(_rule_ auto rule) const;
 
-        consteval _branch-rule_ auto try_(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto try_(_rule_ auto rule) const;
 
-        consteval _branch-rule_ auto opt(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto opt(_rule_ auto rule) const;
 
-        consteval _branch-rule_ auto while_(_rule_ auto rule) const;
-        consteval _branch-rule_ auto while_one(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto while_(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto while_one(_rule_ auto rule) const;
 
-        consteval _branch-rule_ auto list(_rule_ auto item) const;
-        consteval _branch-rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
+        constexpr _branch-rule_ auto list(_rule_ auto item) const;
+        constexpr _branch-rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 
-        consteval _branch-rule_ auto opt_list(_rule_ auto item) const;
-        consteval _branch-rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
+        constexpr _branch-rule_ auto opt_list(_rule_ auto item) const;
+        constexpr _branch-rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const;
     };
 
-    consteval _brackets-dsl_ brackets(_branch-rule_ auto open, _branch-rule_ auto close);
+    constexpr _brackets-dsl_ brackets(_branch-rule_ auto open, _branch-rule_ auto close);
 }
 ----
 
@@ -68,8 +68,8 @@ NOTE: See {{% docref "lexy::dsl::terminator" %}} if you want to parse something 
 
 {{% interface %}}
 ----
-consteval _branch-rule_ auto open() const;  <1>
-consteval _branch-rule_ auto close() const; <2>
+constexpr _branch-rule_ auto open() const;  <1>
+constexpr _branch-rule_ auto close() const; <2>
 ----
 <1> Returns the opening bracket rule passed as first argument to `brackets()`.
 <2> Returns the opening bracket rule passed as second argument to `brackets()`.
@@ -78,10 +78,10 @@ consteval _branch-rule_ auto close() const; <2>
 
 {{% interface %}}
 ----
-consteval _terminator-dsl_ as_terminator() const;             <1>
+constexpr _terminator-dsl_ as_terminator() const;             <1>
 
-consteval _brackets-dsl_   limit(_token-rule_ auto ... tokens); <2>
-consteval _rule_ auto      recovery_rule() const;             <3>
+constexpr _brackets-dsl_   limit(_token-rule_ auto ... tokens); <2>
+constexpr _rule_ auto      recovery_rule() const;             <3>
 ----
 <1> Returns the corresponding `terminator`.
 <2> Sets the limit for error recovery.
@@ -96,44 +96,44 @@ consteval _rule_ auto      recovery_rule() const;             <3>
 
 {{% interface %}}
 ----
-consteval _branch-rule_ auto operator()(_rule_ auto rule) const
+constexpr _branch-rule_ auto operator()(_rule_ auto rule) const
 {
     return open() >> as_terminator()(rule);
 }
 
-consteval _branch-rule_ auto try_(_rule_ auto rule) const
+constexpr _branch-rule_ auto try_(_rule_ auto rule) const
 {
     return open() >> as_terminator().try_(rule);
 }
 
-consteval _branch-rule_ auto opt(_rule_ auto rule) const
+constexpr _branch-rule_ auto opt(_rule_ auto rule) const
 {
     return open() >> as_terminator().opt(rule);
 }
 
-consteval _branch-rule_ auto while_(_rule_ auto rule) const
+constexpr _branch-rule_ auto while_(_rule_ auto rule) const
 {
     return open() >> as_terminator().while_(rule);
 }
-consteval _branch-rule_ auto while_one(_rule_ auto rule) const
+constexpr _branch-rule_ auto while_one(_rule_ auto rule) const
 {
     return open() >> as_terminator().while_one(rule);
 }
 
-consteval _branch-rule_ auto list(_rule_ auto item) const
+constexpr _branch-rule_ auto list(_rule_ auto item) const
 {
     return open() >> as_terminator().list(item);
 }
-consteval _branch-rule_ auto list(_rule_ auto item, _separator_ auto sep) const
+constexpr _branch-rule_ auto list(_rule_ auto item, _separator_ auto sep) const
 {
     return open() >> as_terminator().list(item, sep);
 }
 
-consteval _branch-rule_ auto opt_list(_rule_ auto item) const
+constexpr _branch-rule_ auto opt_list(_rule_ auto item) const
 {
     return open() >> as_terminator().opt_list(item);
 }
-consteval _branch-rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const
+constexpr _branch-rule_ auto opt_list(_rule_ auto item, _separator_ auto sep) const
 {
     return open() >> as_terminator().opt_list(item, sep);
 }

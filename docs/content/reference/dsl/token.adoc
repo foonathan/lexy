@@ -96,7 +96,7 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    consteval _token-rule_ auto token(_rule_ auto rule);
+    constexpr _token-rule_ auto token(_rule_ auto rule);
 }
 ----
 

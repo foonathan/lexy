@@ -111,47 +111,47 @@ struct _ctx_flag
     {};
 
     template <bool InitialValue = false>
-    LEXY_CONSTEVAL auto create() const
+    constexpr auto create() const
     {
         return _ctx_fcreate<id, InitialValue>{};
     }
 
-    LEXY_CONSTEVAL auto set() const
+    constexpr auto set() const
     {
         return _ctx_fset<id, true>{};
     }
-    LEXY_CONSTEVAL auto reset() const
+    constexpr auto reset() const
     {
         return _ctx_fset<id, false>{};
     }
 
-    LEXY_CONSTEVAL auto toggle() const
+    constexpr auto toggle() const
     {
         return _ctx_ftoggle<id>{};
     }
 
     template <typename R, typename S>
-    LEXY_CONSTEVAL auto select(R, S) const
+    constexpr auto select(R, S) const
     {
         return _ctx_fselect<id, R, S>{};
     }
 
     template <bool Value = true>
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return _ctx_flag_require<id, Value>{};
     }
 
     template <typename Tag>
     LEXY_DEPRECATED_ERROR("replace `flag.require<Tag>()` by `flag.require().error<Tag>`")
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return require().template error<Tag>;
     }
     template <bool Value, typename Tag>
     LEXY_DEPRECATED_ERROR(
         "replace `flag.require<false, Tag>()` by `flag.require<false>().error<Tag>`")
-    LEXY_CONSTEVAL auto require() const
+    constexpr auto require() const
     {
         return require<Value>().template error<Tag>;
     }

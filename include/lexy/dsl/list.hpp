@@ -372,7 +372,7 @@ struct _lst : rule_base
 
 /// Parses a list of items without a separator.
 template <typename Item>
-LEXY_CONSTEVAL auto list(Item)
+constexpr auto list(Item)
 {
     static_assert(lexy::is_branch<Item>, "list() without a separator requires a branch condition");
     return _lst<Item, void>{};
@@ -380,14 +380,14 @@ LEXY_CONSTEVAL auto list(Item)
 
 /// Parses a list of items with the specified separator.
 template <typename Item, typename Sep, typename Tag>
-LEXY_CONSTEVAL auto list(Item, _sep<Sep, Tag>)
+constexpr auto list(Item, _sep<Sep, Tag>)
 {
     return _lst<Item, _sep<Sep, Tag>>{};
 }
 
 /// Parses a list of items with the specified separator that can be trailing.
 template <typename Item, typename Sep>
-LEXY_CONSTEVAL auto list(Item, _tsep<Sep>)
+constexpr auto list(Item, _tsep<Sep>)
 {
     static_assert(lexy::is_branch<Item>,
                   "list() without a trailing separator requires a branch condition");
@@ -428,13 +428,13 @@ struct _olst : rule_base
 
 /// Parses a list that might be empty.
 template <typename Item>
-LEXY_CONSTEVAL auto opt_list(Item)
+constexpr auto opt_list(Item)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, void>{};
 }
 template <typename Item, typename Sep>
-LEXY_CONSTEVAL auto opt_list(Item, Sep)
+constexpr auto opt_list(Item, Sep)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, Sep>{};

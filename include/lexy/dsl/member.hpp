@@ -61,10 +61,10 @@ struct _mem : rule_base
 template <typename Fn>
 struct _mem_dsl
 {
-    LEXY_CONSTEVAL _mem_dsl(Fn = {}) {}
+    constexpr _mem_dsl(Fn = {}) {}
 
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator=(Rule) const
+    constexpr auto operator=(Rule) const
     {
         using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
                                           lexy::_detail::stateless_lambda<Fn>>;

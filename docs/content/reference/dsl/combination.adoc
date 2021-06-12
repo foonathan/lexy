@@ -30,7 +30,7 @@ namespace lexy::dsl
         static constexpr _rule_ auto duplicate_error;
     };
 
-    consteval _combination-dsl_ combination(_branch-rule_ auto ... branches);
+    constexpr _combination-dsl_ combination(_branch-rule_ auto ... branches);
 }
 ----
 
@@ -73,7 +73,7 @@ namespace lexy::dsl
         static constexpr _rule_ auto duplicate_error;
     };
 
-    consteval auto partial_combination(_branch-rule_ auto ... branches)
+    constexpr auto partial_combination(_branch-rule_ auto ... branches)
       -> _partial-combination-dsl_;
 }
 ----

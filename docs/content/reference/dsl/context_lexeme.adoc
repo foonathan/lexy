@@ -14,11 +14,11 @@ namespace lexy::dsl
 {
     struct _context_lexeme-dsl_ // note: not a rule itself
     {
-        consteval _rule_ auto create() const;
+        constexpr _rule_ auto create() const;
 
-        consteval _rule_ auto capture(_rule_ auto r) const;
+        constexpr _rule_ auto capture(_rule_ auto r) const;
 
-        consteval _see-below_ require(_rule_ auto r) const;
+        constexpr _see-below_ require(_rule_ auto r) const;
     };
 
     template <typename Id>
@@ -44,7 +44,7 @@ it is impossible to create on that persists between different productions includ
 
 {{% interface %}}
 ----
-consteval _rule_ auto create() const;
+constexpr _rule_ auto create() const;
 ----
 
 [.lead]
@@ -63,7 +63,7 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto capture(_rule_ auto r) const;
+constexpr _rule_ auto capture(_rule_ auto r) const;
 ----
 
 [.lead]
@@ -92,7 +92,7 @@ struct _require-dsl_
     static constexpr _rule_ auto error;
 };
 
-consteval _require-dsl_ require(_rule_ auto r) const;
+constexpr _require-dsl_ require(_rule_ auto r) const;
 ----
 
 [.lead]

@@ -12,7 +12,7 @@ entities:
 ----
 namespace lexy::dsl
 {
-    consteval _branch-rule_ auto lookahead(_token-rule_ auto needle,
+    constexpr _branch-rule_ auto lookahead(_token-rule_ auto needle,
                                          _token-rule_ auto end);
 }
 ----

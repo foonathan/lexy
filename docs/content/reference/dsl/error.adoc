@@ -21,7 +21,7 @@ namespace lexy::dsl
     constexpr _branch-rule_ auto error;
 
     template <typename Tag>
-    consteval _branch-rule_ auto error(_rule_ auto rule);
+    constexpr _branch-rule_ auto error(_rule_ auto rule);
 }
 ----
 
@@ -67,7 +67,7 @@ namespace lexy::dsl
         static constexpr _rule_ auto error;
     };
 
-    consteval _require-dsl_ require(_rule_ auto rule);
+    constexpr _require-dsl_ require(_rule_ auto rule);
 }
 ----
 
@@ -105,7 +105,7 @@ namespace lexy::dsl
         static constexpr _rule_ auto error;
     };
 
-    consteval _prevent-dsl_ prevent(_rule_ auto rule);
+    constexpr _prevent-dsl_ prevent(_rule_ auto rule);
 }
 ----
 

@@ -37,7 +37,7 @@ struct _lit : token_base<_lit<String>>
 
     //=== dsl ===//
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }

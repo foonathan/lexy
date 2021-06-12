@@ -12,8 +12,8 @@ entities:
 ----
 namespace lexy::dsl
 {
-    consteval _rule_        auto capture(_rule_        auto rule);
-    consteval _branch-rule_ auto capture(_branch-rule_ auto rule);
+    constexpr _rule_        auto capture(_rule_        auto rule);
+    constexpr _branch-rule_ auto capture(_branch-rule_ auto rule);
 }
 ----
 

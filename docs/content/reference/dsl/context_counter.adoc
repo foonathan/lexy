@@ -15,19 +15,19 @@ namespace lexy::dsl
     struct _context_counter-dsl_ // note: not a rule itself
     {
         template <int InitialValue = 0>
-        consteval _rule_ auto create() const;
+        constexpr _rule_ auto create() const;
 
-        consteval _rule_ auto inc() const;
-        consteval _rule_ auto dec() const;
+        constexpr _rule_ auto inc() const;
+        constexpr _rule_ auto dec() const;
 
-        consteval _rule_ auto push(_rule_ auto r) const;
-        consteval _rule_ auto pop(_rule_ auto r) const;
+        constexpr _rule_ auto push(_rule_ auto r) const;
+        constexpr _rule_ auto pop(_rule_ auto r) const;
 
         template <int Value>
-        consteval _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+        constexpr _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
 
         template <int Value = 0>
-        consteval _see-below_ require() const;
+        constexpr _see-below_ require() const;
     };
 
     template <typename Id>
@@ -54,7 +54,7 @@ it is impossible to create on that persists between different productions includ
 {{% interface %}}
 ----
 template <int InitialValue = 0>
-consteval _rule_ auto create() const;
+constexpr _rule_ auto create() const;
 ----
 
 [.lead]
@@ -73,8 +73,8 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto inc() const;
-consteval _rule_ auto dec() const;
+constexpr _rule_ auto inc() const;
+constexpr _rule_ auto dec() const;
 ----
 
 [.lead]
@@ -97,8 +97,8 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto push(_rule_ auto r) const;
-consteval _rule_ auto pop(_rule_ auto r) const;
+constexpr _rule_ auto push(_rule_ auto r) const;
+constexpr _rule_ auto pop(_rule_ auto r) const;
 ----
 
 [.lead]
@@ -125,7 +125,7 @@ CAUTION: The count includes any whitespace characters.
 {{% interface %}}
 ----
 template <int Value>
-consteval _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+constexpr _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
 ----
 
 [.lead]
@@ -157,7 +157,7 @@ struct _require-dsl_
 };
 
 template <int Value = 0>
-consteval _require-dsl_ require() const;
+constexpr _require-dsl_ require() const;
 ----
 
 [.lead]

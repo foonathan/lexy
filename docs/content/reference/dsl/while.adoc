@@ -17,7 +17,7 @@ The `while_`, `while_one`, and `do_while` rules.
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto while_(_branch-rule_ auto rule);
+    constexpr _rule_ auto while_(_branch-rule_ auto rule);
 }
 ----
 
@@ -51,7 +51,7 @@ CAUTION: If {{% docref whitespace %}} skipping is enabled, `while_` will skip wh
 ----
 namespace lexy::dsl
 {
-    consteval _branch-rule_ auto while_one(_branch-rule_ auto rule)
+    constexpr _branch-rule_ auto while_one(_branch-rule_ auto rule)
     {
         return rule >> while_(rule);
     }
@@ -77,12 +77,12 @@ Consider {{% docref "lexy::dsl::identifier" %}}, which does not do that.
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto do_while(_rule_ auto then, _branch-rule_ auto condition)
+    constexpr _rule_ auto do_while(_rule_ auto then, _branch-rule_ auto condition)
     {
         return then + while_(condition >> then);
     }
 
-    consteval _branch-rule_ auto do_while(_branch-rule_ auto then,
+    constexpr _branch-rule_ auto do_while(_branch-rule_ auto then,
                                         _branch-rule_ auto condition)
     {
         return then >> while_(condition >> then);

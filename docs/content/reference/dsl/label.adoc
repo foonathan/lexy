@@ -19,7 +19,7 @@ namespace lexy
     template <typename Label>
     struct label
     {
-        consteval operator auto() const
+        constexpr operator auto() const
         {
             return Tag::value;
         }
@@ -30,8 +30,8 @@ namespace lexy::dsl
 {
     struct _label-dsl_ // models _rule_
     {
-        consteval _rule_        auto operator()(_rule_        auto rule) const;
-        consteval _branch-rule_ auto operator()(_branch-rule_ auto rule) const;
+        constexpr _rule_        auto operator()(_rule_        auto rule) const;
+        constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const;
     };
 
     template <typename Label>

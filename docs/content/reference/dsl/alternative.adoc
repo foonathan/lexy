@@ -18,7 +18,7 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    consteval _token-rule_ auto operator/(_token-rule_ auto lhs,
+    constexpr _token-rule_ auto operator/(_token-rule_ auto lhs,
                                         _token-rule_ auto rhs);
 }
 ----

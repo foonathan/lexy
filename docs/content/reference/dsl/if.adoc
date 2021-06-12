@@ -12,7 +12,7 @@ entities:
 ----
 namespace lexy::dsl
 {
-    consteval _rule_ auto if_(_branch-rule_ auto branch);
+    constexpr _rule_ auto if_(_branch-rule_ auto branch);
 }
 ----
 

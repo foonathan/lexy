@@ -54,7 +54,7 @@ struct _cap : rule_base
     };
 
     template <typename Whitespace>
-    LEXY_CONSTEVAL auto operator[](Whitespace ws) const
+    constexpr auto operator[](Whitespace ws) const
     {
         return whitespaced(*this, ws);
     }
@@ -62,7 +62,7 @@ struct _cap : rule_base
 
 /// Captures whatever the rule matches as a lexeme.
 template <typename Rule>
-LEXY_CONSTEVAL auto capture(Rule)
+constexpr auto capture(Rule)
 {
     return _cap<Rule>{};
 }

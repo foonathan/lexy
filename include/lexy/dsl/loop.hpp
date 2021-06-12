@@ -65,7 +65,7 @@ struct _loop : rule_base
 
 /// Repeatedly matches the rule until a break rule matches.
 template <typename Rule>
-LEXY_CONSTEVAL auto loop(Rule)
+constexpr auto loop(Rule)
 {
     return _loop<Rule>{};
 }

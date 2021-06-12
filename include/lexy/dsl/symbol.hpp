@@ -405,13 +405,13 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 
 /// Parses rule, then matches the resulting lexeme against the symbol table.
 template <const auto& Table, typename Token>
-LEXY_CONSTEVAL auto symbol(Token)
+constexpr auto symbol(Token)
 {
     static_assert(lexy::is_token<Token>);
     return _sym<Table, Token, void>{};
 }
 template <const auto& Table, typename L, typename T, typename... R>
-LEXY_CONSTEVAL auto symbol(_id<L, T, R...> id)
+constexpr auto symbol(_id<L, T, R...> id)
 {
     static_assert(sizeof...(R) == 0,
                   "symbol() must not be used in the presence of reserved identifiers");

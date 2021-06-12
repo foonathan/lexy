@@ -51,7 +51,7 @@ struct _sep
 
 /// Defines a separator for a list.
 template <typename Branch>
-LEXY_CONSTEVAL auto sep(Branch)
+constexpr auto sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};
@@ -70,14 +70,14 @@ struct _tsep
 
 /// Defines a separator for a list that can be trailing.
 template <typename Branch>
-LEXY_CONSTEVAL auto trailing_sep(Branch)
+constexpr auto trailing_sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
     return _tsep<Branch>{};
 }
 
 template <typename Branch>
-LEXY_DEPRECATED_SEP LEXY_CONSTEVAL auto no_trailing_sep(Branch)
+LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
 {
     static_assert(lexy::is_branch<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};

@@ -15,16 +15,16 @@ namespace lexy::dsl
     struct _context_flag-dsl_ // note: not a rule itself
     {
         template <bool InitialValue = false>
-        consteval _rule_ auto create() const;
+        constexpr _rule_ auto create() const;
 
-        consteval _rule_ auto set() const;
-        consteval _rule_ auto reset() const;
-        consteval _rule_ auto toggle() const;
+        constexpr _rule_ auto set() const;
+        constexpr _rule_ auto reset() const;
+        constexpr _rule_ auto toggle() const;
 
-        consteval _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+        constexpr _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
 
         template <bool Value = true>
-        consteval _see-below_ require() const;
+        constexpr _see-below_ require() const;
     };
 
     template <typename Id>
@@ -51,7 +51,7 @@ it is impossible to create on that persists between different productions includ
 {{% interface %}}
 ----
 template <bool InitialValue = false>
-consteval _rule_ auto create() const;
+constexpr _rule_ auto create() const;
 ----
 
 [.lead]
@@ -70,9 +70,9 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto set() const;
-consteval _rule_ auto reset() const;
-consteval _rule_ auto toggle() const;
+constexpr _rule_ auto set() const;
+constexpr _rule_ auto reset() const;
+constexpr _rule_ auto toggle() const;
 ----
 
 [.lead]
@@ -96,7 +96,7 @@ Values::
 
 {{% interface %}}
 ----
-consteval _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+constexpr _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
 ----
 
 [.lead]
@@ -126,7 +126,7 @@ struct _require-dsl_
 };
 
 template <bool Value = true>
-consteval _require-dsl_ require() const;
+constexpr _require-dsl_ require() const;
 ----
 
 [.lead]

@@ -120,9 +120,9 @@ namespace lexy::dsl
     class _digits-dsl_ // models _token-rule_
     {
     public:
-        consteval _digit-dsl_ sep(_token-rule_ auto s) const;
+        constexpr _digit-dsl_ sep(_token-rule_ auto s) const;
 
-        consteval _digit-dsl_ no_leading_zero() const;
+        constexpr _digit-dsl_ no_leading_zero() const;
     };
 
     template <typename Base = decimal>
@@ -164,7 +164,7 @@ namespace lexy::dsl
     class _n_digits-dsl_ // models _token-rule_
     {
     public:
-        consteval _n_digits-dsl_ sep(_token-rule_ auto s) const;
+        constexpr _n_digits-dsl_ sep(_token-rule_ auto s) const;
     };
 
     template <std::size_t N, typename Base = decimal>

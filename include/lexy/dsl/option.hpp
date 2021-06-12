@@ -77,7 +77,7 @@ struct _opt : rule_base
 /// Matches the rule or nothing.
 /// In the latter case, produces a `nullopt` value.
 template <typename Rule>
-LEXY_CONSTEVAL auto opt(Rule)
+constexpr auto opt(Rule)
 {
     static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
     if constexpr (Rule::is_unconditional_branch)

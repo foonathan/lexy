@@ -28,19 +28,19 @@ struct _br : rule_base
 //=== operator>> ===//
 /// Parses `Then` only after `Condition` has matched.
 template <typename Condition, typename Then>
-LEXY_CONSTEVAL auto operator>>(Condition, Then)
+constexpr auto operator>>(Condition, Then)
 {
     static_assert(lexy::is_branch<Condition>, "condition must be a branch");
     return _br<Condition, Then>{};
 }
 template <typename Condition, typename... R>
-LEXY_CONSTEVAL auto operator>>(Condition, _seq<R...>)
+constexpr auto operator>>(Condition, _seq<R...>)
 {
     static_assert(lexy::is_branch<Condition>, "condition must be a branch");
     return _br<Condition, R...>{};
 }
 template <typename Condition, typename C, typename... R>
-LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
+constexpr auto operator>>(Condition, _br<C, R...>)
 {
     static_assert(lexy::is_branch<Condition>, "condition must be a branch");
     return _br<Condition, C, R...>{};
@@ -48,19 +48,19 @@ LEXY_CONSTEVAL auto operator>>(Condition, _br<C, R...>)
 
 // Prevent nested branches in `_br`'s condition.
 template <typename C, typename... R, typename Then>
-LEXY_CONSTEVAL auto operator>>(_br<C, R...>, Then)
+constexpr auto operator>>(_br<C, R...>, Then)
 {
     return C{} >> _seq<R..., Then>{};
 }
 template <typename C, typename... R, typename... S>
-LEXY_CONSTEVAL auto operator>>(_br<C, R...>, _seq<S...>)
+constexpr auto operator>>(_br<C, R...>, _seq<S...>)
 {
     return C{} >> _seq<R..., S...>{};
 }
 
 // Disambiguation.
 template <typename C1, typename... R, typename C2, typename... S>
-LEXY_CONSTEVAL auto operator>>(_br<C1, R...>, _br<C2, S...>)
+constexpr auto operator>>(_br<C1, R...>, _br<C2, S...>)
 {
     return _br<C1, R..., C2, S...>{};
 }
@@ -68,33 +68,33 @@ LEXY_CONSTEVAL auto operator>>(_br<C1, R...>, _br<C2, S...>)
 //=== operator+ ===//
 // If we add something on the left to a branch, we loose the branchy-ness.
 template <typename Rule, typename Condition, typename... R>
-LEXY_CONSTEVAL auto operator+(Rule rule, _br<Condition, R...>)
+constexpr auto operator+(Rule rule, _br<Condition, R...>)
 {
     return rule + _seq<Condition, R...>{};
 }
 // Disambiguation.
 template <typename... R, typename Condition, typename... S>
-LEXY_CONSTEVAL auto operator+(_seq<R...>, _br<Condition, S...>)
+constexpr auto operator+(_seq<R...>, _br<Condition, S...>)
 {
     return _seq<R...>{} + _seq<Condition, S...>{};
 }
 
 // If we add something on the right to a branch, we extend the then.
 template <typename Condition, typename... R, typename Rule>
-LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, Rule)
+constexpr auto operator+(_br<Condition, R...>, Rule)
 {
     return _br<Condition, R..., Rule>{};
 }
 // Disambiguation.
 template <typename Condition, typename... R, typename... S>
-LEXY_CONSTEVAL auto operator+(_br<Condition, R...>, _seq<S...>)
+constexpr auto operator+(_br<Condition, R...>, _seq<S...>)
 {
     return _br<Condition, R..., S...>{};
 }
 
 // If we add two branches, we use the condition of the first one and treat the second as sequence.
 template <typename C1, typename... R, typename C2, typename... S>
-LEXY_CONSTEVAL auto operator+(_br<C1, R...>, _br<C2, S...>)
+constexpr auto operator+(_br<C1, R...>, _br<C2, S...>)
 {
     return _br<C1, R..., C2, S...>{};
 }

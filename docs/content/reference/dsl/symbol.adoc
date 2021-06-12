@@ -32,10 +32,10 @@ The `symbol` rule.
 
         //=== modifiers ===//
         template <auto SymbolString, typename... Args>
-        consteval _symbol-table_ map(Args&&... args) const;
+        constexpr _symbol-table_ map(Args&&... args) const;
 
         template <auto C, typename... Args>
-        consteval _symbol-table_ map(Args&&... args) const;
+        constexpr _symbol-table_ map(Args&&... args) const;
 
         //=== access ===//
         static constexpr bool empty() noexcept;
@@ -68,10 +68,10 @@ The `symbol_table<T>` defines a compile-time mapping of strings to objects of so
 {{% interface %}}
 ----
 template <auto SymbolString, typename... Args>
-consteval _symbol-table_ map(Args&&... args) const;
+constexpr _symbol-table_ map(Args&&... args) const;
 
 template <auto C, typename... Args>
-consteval _symbol-table_ map(Args&&... args) const;
+constexpr _symbol-table_ map(Args&&... args) const;
 ----
 
 [.lead]
@@ -170,10 +170,10 @@ namespace lexy::dsl
     };
 
     template <const _symbol-table_& SymbolTable>
-    consteval _symbol-dsl_ symbol(_token-rule_ auto token);
+    constexpr _symbol-dsl_ symbol(_token-rule_ auto token);
 
     template <const _symbol-table_& SymbolTable>
-    consteval _symbol-dsl_ symbol(_identifier-dsl_ identifier);
+    constexpr _symbol-dsl_ symbol(_identifier-dsl_ identifier);
 }
 ----
 

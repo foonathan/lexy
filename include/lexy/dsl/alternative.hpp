@@ -128,26 +128,26 @@ struct _alt : token_base<_alt<Tokens...>>
 };
 
 template <typename R, typename S>
-LEXY_CONSTEVAL auto operator/(R, S)
+constexpr auto operator/(R, S)
 {
     static_assert(lexy::is_token<R> && lexy::is_token<S>);
     return _alt<R, S>{};
 }
 
 template <typename... R, typename S>
-LEXY_CONSTEVAL auto operator/(_alt<R...>, S)
+constexpr auto operator/(_alt<R...>, S)
 {
     static_assert(lexy::is_token<S>);
     return _alt<R..., S>{};
 }
 template <typename R, typename... S>
-LEXY_CONSTEVAL auto operator/(R, _alt<S...>)
+constexpr auto operator/(R, _alt<S...>)
 {
     static_assert(lexy::is_token<R>);
     return _alt<R, S...>{};
 }
 template <typename... R, typename... S>
-LEXY_CONSTEVAL auto operator/(_alt<R...>, _alt<S...>)
+constexpr auto operator/(_alt<R...>, _alt<S...>)
 {
     return _alt<R..., S...>{};
 }

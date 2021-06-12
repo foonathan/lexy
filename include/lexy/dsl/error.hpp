@@ -39,7 +39,7 @@ struct _err : rule_base
 
     /// Adds a rule whose match will be part of the error location.
     template <typename Rule>
-    LEXY_CONSTEVAL auto operator()(Rule rule) const
+    constexpr auto operator()(Rule rule) const
     {
         auto t = token(rule);
         return _err<Tag, decltype(t)>{};
@@ -121,7 +121,7 @@ struct _prevent_dsl
 
 /// Requires that lookahead will match a rule at a location.
 template <typename Rule>
-LEXY_CONSTEVAL auto require(Rule rule)
+constexpr auto require(Rule rule)
 {
     auto t = token(rule);
     return _require_dsl<decltype(t)>{};
@@ -129,7 +129,7 @@ LEXY_CONSTEVAL auto require(Rule rule)
 
 /// Requires that lookahead does not match a rule at a location.
 template <typename Rule>
-LEXY_CONSTEVAL auto prevent(Rule rule)
+constexpr auto prevent(Rule rule)
 {
     auto t = token(rule);
     return _prevent_dsl<decltype(t)>{};
@@ -137,13 +137,13 @@ LEXY_CONSTEVAL auto prevent(Rule rule)
 
 template <typename Tag, typename Rule>
 LEXY_DEPRECATED_ERROR("replace `require<Tag>(rule)` by `require(rule).error<Tag>`")
-LEXY_CONSTEVAL auto require(Rule rule)
+constexpr auto require(Rule rule)
 {
     return require(rule).template error<Tag>;
 }
 template <typename Tag, typename Rule>
 LEXY_DEPRECATED_ERROR("replace `prevent<Tag>(rule)` by `prevent(rule).error<Tag>`")
-LEXY_CONSTEVAL auto prevent(Rule rule)
+constexpr auto prevent(Rule rule)
 {
     return prevent(rule).template error<Tag>;
 }
