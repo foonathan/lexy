@@ -1949,13 +1949,15 @@ struct _wsr<void> : rule_base
 
 namespace lexy
 {
-struct _whitespace_tag
+struct _tag_no_whitespace
+{};
+struct _tag_whitespace
 {};
 
 template <typename Context>
 using _ws_rule = std::conditional_t<
     // We need to disable whitespace if the context is already currently parsing whitespace.
-    Context::contains(_whitespace_tag{}), void,
+    Context::contains(_tag_no_whitespace{}) || Context::contains(_tag_whitespace{}), void,
     lexy::production_whitespace<typename Context::production, typename Context::root>>;
 
 template <typename Context, typename NextParser>
@@ -2024,12 +2026,6 @@ public:
         return _handler->get_sink(Production{});
     }
 
-    template <typename Iterator>
-    constexpr void whitespace(Iterator begin, Iterator end)
-    {
-        _handler->whitespace(begin, end);
-    }
-
     template <typename TokenKind, typename Iterator>
     constexpr void token(TokenKind kind, Iterator begin, Iterator end)
     {
@@ -2087,6 +2083,8 @@ private:
         template <typename ChildProduction, typename Iterator>
         constexpr auto production_context(ChildProduction p, Iterator position) const
         {
+            static_assert(!contains(_tag_whitespace{}),
+                          "whitespace rule must not contain dsl::p/dsl::recurse");
             return _parse_context_for<ChildProduction, Iterator>(p, _parent->handler(), position);
         }
 
@@ -2126,15 +2124,13 @@ private:
             return _parent->sink();
         }
 
-        template <typename Iterator>
-        constexpr void whitespace(Iterator begin, Iterator end)
-        {
-            _parent->whitespace(begin, end);
-        }
-
         template <typename TokenKind, typename Iterator>
         constexpr void token(TokenKind kind, Iterator begin, Iterator end)
         {
+            if constexpr (contains(_tag_whitespace{}))
+                // Ignore tokens while skipping whitespace.
+                return;
+
             _parent->token(kind, begin, end);
         }
 
@@ -4943,11 +4939,12 @@ namespace lexy
 enum predefined_token_kind : std::uint_least16_t
 {
     unknown_token_kind              = UINT_LEAST16_MAX,
-    position_token_kind             = UINT_LEAST16_MAX - 1,
-    eof_token_kind                  = UINT_LEAST16_MAX - 2,
-    newline_token_kind              = UINT_LEAST16_MAX - 3,
-    eol_token_kind                  = UINT_LEAST16_MAX - 4,
-    identifier_token_kind           = UINT_LEAST16_MAX - 5,
+    whitespace_token_kind           = UINT_LEAST16_MAX - 1,
+    position_token_kind             = UINT_LEAST16_MAX - 2,
+    eof_token_kind                  = UINT_LEAST16_MAX - 3,
+    newline_token_kind              = UINT_LEAST16_MAX - 4,
+    eol_token_kind                  = UINT_LEAST16_MAX - 5,
+    identifier_token_kind           = UINT_LEAST16_MAX - 6,
     _smallest_predefined_token_kind = identifier_token_kind,
 };
 
@@ -4957,6 +4954,8 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     {
     case unknown_token_kind:
         return "token";
+    case whitespace_token_kind:
+        return "whitespace";
     case position_token_kind:
         return "position";
     case eof_token_kind:
@@ -5698,6 +5697,7 @@ inline constexpr bool engine_can_fail<engine_while<Matcher>, Reader> = false;
 #endif // LEXY_ENGINE_WHILE_HPP_INCLUDED
 
 
+
 #ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
 #    define LEXY_DEPRECATED_WHITESPACE
 #else
@@ -5716,22 +5716,17 @@ struct _wsr : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            auto begin = reader.cur();
             if constexpr (lexy::is_token<Rule>)
             {
                 // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
                 using engine = lexy::engine_while<typename Rule::token_engine>;
-
-                auto begin = reader.cur();
                 engine::match(reader);
-                auto end = reader.cur();
-
-                context.token(Rule::token_kind(), begin, end);
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
                 // We need to mark the context with the tag to prevent infinite recursion.
-                auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+                auto ws_context = context.insert(lexy::_tag_whitespace{}, lexy::_tag_whitespace{});
 
                 // We can then parse the rule repeatedly using the special context.
                 using loop_parser
@@ -5739,10 +5734,14 @@ struct _wsr : rule_base
                                         lexy::context_discard_parser<decltype(ws_context)>>;
                 if (!loop_parser::parse(ws_context, reader))
                     return false;
-
-                // And continue with normal parsing.
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
+            auto end = reader.cur();
+
+            // Add a whitespace token node.
+            if (begin != end)
+                context.token(lexy::whitespace_token_kind, begin, end);
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -5821,7 +5820,8 @@ struct _wsn : rule_base
             -> lexy::rule_try_parse_result
         {
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+            auto ws_context
+                = context.insert(lexy::_tag_no_whitespace{}, lexy::_tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::try_parse(ws_context, reader, context,
                                                              LEXY_FWD(args)...);
         }
@@ -5830,7 +5830,8 @@ struct _wsn : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+            auto ws_context
+                = context.insert(lexy::_tag_no_whitespace{}, lexy::_tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::parse(ws_context, reader, context,
                                                          LEXY_FWD(args)...);
         }
