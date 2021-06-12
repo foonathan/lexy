@@ -10,6 +10,7 @@
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/while.hpp>
+#include <lexy/token.hpp>
 
 #ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
 #    define LEXY_DEPRECATED_WHITESPACE
@@ -29,22 +30,17 @@ struct _wsr : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            auto begin = reader.cur();
             if constexpr (lexy::is_token<Rule>)
             {
                 // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
                 using engine = lexy::engine_while<typename Rule::token_engine>;
-
-                auto begin = reader.cur();
                 engine::match(reader);
-                auto end = reader.cur();
-
-                context.token(Rule::token_kind(), begin, end);
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
                 // We need to mark the context with the tag to prevent infinite recursion.
-                auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+                auto ws_context = context.insert(lexy::_tag_whitespace{}, lexy::_tag_whitespace{});
 
                 // We can then parse the rule repeatedly using the special context.
                 using loop_parser
@@ -52,10 +48,14 @@ struct _wsr : rule_base
                                         lexy::context_discard_parser<decltype(ws_context)>>;
                 if (!loop_parser::parse(ws_context, reader))
                     return false;
-
-                // And continue with normal parsing.
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
+            auto end = reader.cur();
+
+            // Add a whitespace token node.
+            if (begin != end)
+                context.token(lexy::whitespace_token_kind, begin, end);
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -134,7 +134,8 @@ struct _wsn : rule_base
             -> lexy::rule_try_parse_result
         {
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+            auto ws_context
+                = context.insert(lexy::_tag_no_whitespace{}, lexy::_tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::try_parse(ws_context, reader, context,
                                                              LEXY_FWD(args)...);
         }
@@ -143,7 +144,8 @@ struct _wsn : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_whitespace_tag{}, lexy::_whitespace_tag{});
+            auto ws_context
+                = context.insert(lexy::_tag_no_whitespace{}, lexy::_tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::parse(ws_context, reader, context,
                                                          LEXY_FWD(args)...);
         }

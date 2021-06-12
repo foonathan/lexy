@@ -11,6 +11,7 @@ Until the first release is done, breaking changes -- but not new features -- are
 * *Behavior change*: Don't produce a tag value if no sign was present in `dsl::[minus/plus_]sign`.
   If you use `lexy::as_integer` as callback, this doesn't affect you.
 * *Behavior change*: Don't consume input in `dsl::prevent`.
+* *Behavior change*: Produce only a single whitespace node in parse tree, instead of the individual token nodes.
 
 == 2021-05-25
 

@@ -10,8 +10,10 @@
 #include <lexy/dsl/delimited.hpp>
 #include <lexy/dsl/digit.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/newline.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/until.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy_ext/parse_tree_doctest.hpp>
@@ -56,8 +58,9 @@ struct child_p
 
 struct root_p
 {
-    static constexpr auto name       = "root_p";
-    static constexpr auto whitespace = lexy::dsl::ascii::space;
+    static constexpr auto name = "root_p";
+    static constexpr auto whitespace
+        = lexy::dsl::ascii::space | LEXY_LIT("//") >> lexy::dsl::until(lexy::dsl::eol);
 
     static constexpr auto rule = [] {
         auto digits = lexy::dsl::digits<>.kind<token_kind::a>;
@@ -725,21 +728,21 @@ TEST_CASE("parse_as_tree")
     }
     SUBCASE("whitespace")
     {
-        auto input  = lexy::zstring_input("123 ( abc ) 321");
+        auto input  = lexy::zstring_input("123 ( abc //  \n) 321");
         auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
         CHECK(result);
 
         // clang-format off
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
             .token(token_kind::a, "123")
-            .token(" ")
+            .whitespace(" ")
             .production(child_p{})
                 .token(token_kind::b, "(")
-                .token(" ")
+                .whitespace(" ")
                 .token(token_kind::c, "abc")
-                .token(" ")
+                .whitespace(" //  \\{a}")
                 .token(token_kind::b, ")")
-                .token(" ")
+                .whitespace(" ")
                 .finish()
             .token(token_kind::a, "321");
         // clang-format on

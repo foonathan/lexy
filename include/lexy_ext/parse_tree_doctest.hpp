@@ -74,6 +74,11 @@ public:
     {
         return token(lexy::unknown_token_kind, spelling);
     }
+    template <typename CharT>
+    parse_tree_desc& whitespace(const CharT* spelling)
+    {
+        return token(lexy::whitespace_token_kind, spelling);
+    }
 
     parse_tree_desc& eof()
     {

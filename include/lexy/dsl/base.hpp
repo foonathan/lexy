@@ -127,13 +127,15 @@ struct _wsr<void> : rule_base
 
 namespace lexy
 {
-struct _whitespace_tag
+struct _tag_no_whitespace
+{};
+struct _tag_whitespace
 {};
 
 template <typename Context>
 using _ws_rule = std::conditional_t<
     // We need to disable whitespace if the context is already currently parsing whitespace.
-    Context::contains(_whitespace_tag{}), void,
+    Context::contains(_tag_no_whitespace{}) || Context::contains(_tag_whitespace{}), void,
     lexy::production_whitespace<typename Context::production, typename Context::root>>;
 
 template <typename Context, typename NextParser>
@@ -200,12 +202,6 @@ public:
     constexpr auto sink() const
     {
         return _handler->get_sink(Production{});
-    }
-
-    template <typename Iterator>
-    constexpr void whitespace(Iterator begin, Iterator end)
-    {
-        _handler->whitespace(begin, end);
     }
 
     template <typename TokenKind, typename Iterator>
@@ -304,15 +300,13 @@ private:
             return _parent->sink();
         }
 
-        template <typename Iterator>
-        constexpr void whitespace(Iterator begin, Iterator end)
-        {
-            _parent->whitespace(begin, end);
-        }
-
         template <typename TokenKind, typename Iterator>
         constexpr void token(TokenKind kind, Iterator begin, Iterator end)
         {
+            if constexpr (contains(_tag_whitespace{}))
+                // Ignore tokens while skipping whitespace.
+                return;
+
             _parent->token(kind, begin, end);
         }
 
