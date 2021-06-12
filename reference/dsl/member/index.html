@@ -12,8 +12,8 @@
     <span class=tok-k>class</span> <span class=tok-nc><em>member</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// note: not a <em>rule</em> itself</span>
     <span class=tok-p>{</span>
     <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
     <span class=tok-p>};</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>MemberPtr</span><span class=tok-o>&gt;</span>

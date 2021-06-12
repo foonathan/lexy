@@ -6,10 +6,10 @@
     <span class=tok-k>class</span> <span class=tok-nc><em>until</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// models <em>token-rule</em></span>
     <span class=tok-p>{</span>
     <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>or_eof</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>or_eof</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
-    <span class=tok-k>consteval</span> <span class=tok-n><em>until</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>until</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>condition</span><span class=tok-p>);</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>until</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>until</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>condition</span><span class=tok-p>);</span>
 <span class=tok-p>}</span></code></pre></div></div><div class="paragraph lead"><p><code>until</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches all input until and including a terminating condition.</p></div><div class=dlist><dl><dt class=hdlist1>Matching</dt><dd><p>Tries to match <code>condition</code> anywhere in the remaining input, then consumes it.
 If <code>.or_eof()</code> has been used, succeeds when it reaches EOF without matching <code>condition</code>.
 Otherwise, fails when it reaches EOF.</p></dd><dt class=hdlist1>Errors</dt><dd><p>All errors raised by matching <code>condition</code> at EOF, if <code>.or_eof()</code> has not been used.

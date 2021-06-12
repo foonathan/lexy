@@ -36,9 +36,9 @@ The rule then fails.</p></dd></dl></div><div class=exampleblock><div class=title
     <span class=tok-k>class</span> <span class=tok-nc><em>digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// models <em>token-rule</em></span>
     <span class=tok-p>{</span>
     <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>digit</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>s</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>digit</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>s</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
-        <span class=tok-k>consteval</span> <span class=tok-n><em>digit</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>no_leading_zero</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>digit</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>no_leading_zero</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Base</span> <span class=tok-o>=</span> <span class=tok-n>decimal</span><span class=tok-o>&gt;</span>
@@ -60,7 +60,7 @@ Use <a href=/reference/dsl/integer/#integer><code>lexy::dsl::integer</code></a> 
     <span class=tok-k>class</span> <span class=tok-nc><em>n_digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// models <em>token-rule</em></span>
     <span class=tok-p>{</span>
     <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>n_digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>s</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>n_digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>s</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>N</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Base</span> <span class=tok-o>=</span> <span class=tok-n>decimal</span><span class=tok-o>&gt;</span>
