@@ -31,3 +31,8 @@ Values::
 
 {{% godbolt_example capture "Parse a name" %}}
 
+{{% godbolt_example capture_whitespace "Parse a name, but disable whitespace skipping" %}}
+
+CAUTION: If a {{% token-rule %}} is captured, the `lexy::lexeme` includes the automatic whitespace skipped after the token.
+Use {{% docref "lexy::dsl::no_whitespace" %}} around the `lexy::dsl::capture()` as seen in the example above.
+
