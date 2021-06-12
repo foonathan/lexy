@@ -8,6 +8,7 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
+#include <lexy/dsl/recover.hpp>
 #include <lexy/error.hpp>
 
 #ifdef LEXY_IGNORE_DEPRECATED_SEP
@@ -34,7 +35,7 @@ template <typename Branch, typename Tag>
 struct _sep
 {
     using rule          = Branch;
-    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::error<Tag>));
+    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::try_(lexyd::error<Tag>)));
 
     template <typename Context, typename Reader>
     LEXY_DSL_FUNC void report_trailing_error(Context&                  context, Reader&,

@@ -52,7 +52,7 @@ TEST_CASE("times")
 
             LEXY_VERIFY_FN int success(const char* cur, lexy::twice<lexy::id<1>> value)
             {
-                LEXY_VERIFY_CHECK(cur - str == 7);
+                LEXY_VERIFY_CHECK((cur - str == 7 || cur - str == 8));
                 LEXY_VERIFY_CHECK(value[0] == 1);
                 LEXY_VERIFY_CHECK(value[1] == 1);
                 return 0;
@@ -86,7 +86,8 @@ TEST_CASE("times")
         CHECK(no_sep == -2);
 
         auto trailing_sep = LEXY_VERIFY("abc,abc,");
-        CHECK(trailing_sep == -3);
+        CHECK(trailing_sep.value == 0);
+        CHECK(trailing_sep.errors(-3));
     }
     SUBCASE("trailing_sep")
     {

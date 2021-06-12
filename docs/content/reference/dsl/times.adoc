@@ -45,7 +45,7 @@ Errors::
   * All errors raised by parsing `rule` or `sep`.
     The rule then fails.
   * `lexy::unexpected_trailing_separator`: if a trailing separator can be matched after the last item; at the position of the separator.
-    The separator is consumed and the rule fails.
+    It then recovers by simply consuming the separator and continues.
 Values::
   Produces a reference to an array that contains the `N` produced values in order.
 
