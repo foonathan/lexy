@@ -9,6 +9,7 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/trie.hpp>
+#include <lexy/token.hpp>
 
 namespace lexyd
 {
@@ -17,6 +18,11 @@ struct _nl : token_base<_nl>
     static constexpr auto _trie
         = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
     using token_engine = lexy::engine_trie<_trie>;
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return lexy::newline_token_kind;
+    }
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
@@ -54,6 +60,11 @@ struct _eol : token_base<_eol>
                 return _nl::token_engine::match(reader);
         }
     };
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return lexy::eol_token_kind;
+    }
 
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,

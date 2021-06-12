@@ -28,6 +28,8 @@ Matching::
   Succeeds if one of them matched.
 Errors::
   `lexy::expected_char_class` (`"newline"`): if they both did not match; at the starting reader position.
+Parse tree::
+  Single token type whose kind is the predefined `lexy::newline_token_kind`.
 
 {{% playground_example newline "Match a newline at the end" %}}
 
@@ -56,6 +58,8 @@ Matching::
   Succeeds if one of them matched.
 Errors::
   `lexy::expected_char_class` (`"EOF"`): if they all did not match; at the starting reader position.
+Parse tree::
+  Single token type whose kind is the predefined `lexy::newline_token_kind`.
 
 {{% playground_example eol "Match a newline or EOF at the end" %}}
 
