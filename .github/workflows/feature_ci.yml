@@ -12,7 +12,7 @@ jobs:
       matrix:
         image:
           # List: https://github.com/conan-io/conan-docker-tools
-          - gcc10
+          - gcc11
           - gcc7
           - clang11
           - clang60
@@ -31,13 +31,13 @@ jobs:
 
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DLEXY_BUILD_EXAMPLES=OFF
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug
     - name: Build
       working-directory: build/
       run: cmake --build .
     - name: Test
       working-directory: build/
-      run: ctest -C Debug --output-on-failure
+      run: ctest --output-on-failure
 
   macos:
     strategy:
@@ -59,7 +59,7 @@ jobs:
 
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DLEXY_BUILD_EXAMPLES=OFF
+      run: cmake -GNinja $GITHUB_WORKSPACE
     - name: Build
       working-directory: build/
       run: cmake --build .
@@ -78,7 +78,7 @@ jobs:
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -DLEXY_BUILD_EXAMPLES=OFF
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019"
     - name: Build
       working-directory: build/
       run: cmake --build . --config Debug -j 2

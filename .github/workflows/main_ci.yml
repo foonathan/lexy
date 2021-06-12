@@ -11,6 +11,7 @@ jobs:
       matrix:
         image:
           # List: https://github.com/conan-io/conan-docker-tools
+          - gcc11
           - gcc10
           - gcc9
           - gcc8
@@ -43,7 +44,7 @@ jobs:
       run: cmake --build .
     - name: Test
       working-directory: build/
-      run: ctest -C ${{matrix.build_type}} --output-on-failure
+      run: ctest --output-on-failure
 
   macos:
     strategy:
