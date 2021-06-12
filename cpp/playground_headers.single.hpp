@@ -78,7 +78,10 @@ constexpr void swap(T& lhs, T& rhs)
 
 //=== consteval ===//
 #ifndef LEXY_HAS_CONSTEVAL
-#    if __cpp_consteval
+#    if defined(_MSC_VER) && !defined(__clang__)
+// Currently can't handle returning strings from consteval, check back later.
+#        define LEXY_HAS_CONSTEVAL 0
+#    elif __cpp_consteval
 #        define LEXY_HAS_CONSTEVAL 1
 #    else
 #        define LEXY_HAS_CONSTEVAL 0
@@ -3393,11 +3396,11 @@ class ascii_table
     using int_n = _int_n_t<CategoryCount>;
 
 public:
-    LEXY_CONSTEVAL ascii_table() : _table() {}
+    constexpr ascii_table() : _table() {}
 
     /// Adds the character to the given category.
     template <typename CharT>
-    LEXY_CONSTEVAL ascii_table& insert(CharT c, std::size_t category)
+    constexpr ascii_table& insert(CharT c, std::size_t category)
     {
         auto as_unsigned = static_cast<unsigned char>(c);
         LEXY_PRECONDITION(as_unsigned <= 0x7F);
@@ -6908,7 +6911,7 @@ struct label
 template <typename T>
 struct label<T, decltype(void(T::value))>
 {
-    LEXY_CONSTEVAL operator decltype(T::value)() const
+    constexpr operator decltype(T::value)() const
     {
         return T::value;
     }
