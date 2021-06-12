@@ -16,6 +16,10 @@ TEST_CASE("dsl::plus_sign")
     {
         const char* str;
 
+        LEXY_VERIFY_FN int success(const char*)
+        {
+            return 0;
+        }
         LEXY_VERIFY_FN int success(const char*, lexy::plus_sign sign)
         {
             return sign;
@@ -24,16 +28,19 @@ TEST_CASE("dsl::plus_sign")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return 0;
+            return -2;
         }
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(+1));
+    CHECK(empty.success(0));
     auto plus = LEXY_VERIFY("+");
     CHECK(plus.success(+1));
     auto minus = LEXY_VERIFY("-");
-    CHECK(minus.fatal(0));
+    CHECK(minus.fatal(-2));
+
+    auto other = LEXY_VERIFY("a");
+    CHECK(other.fatal(-2));
 }
 
 TEST_CASE("dsl::minus_sign")
@@ -45,9 +52,9 @@ TEST_CASE("dsl::minus_sign")
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char*, lexy::plus_sign sign)
+        LEXY_VERIFY_FN int success(const char*)
         {
-            return sign;
+            return 0;
         }
         LEXY_VERIFY_FN int success(const char*, lexy::minus_sign sign)
         {
@@ -57,16 +64,19 @@ TEST_CASE("dsl::minus_sign")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return 0;
+            return -2;
         }
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(+1));
+    CHECK(empty.success(0));
     auto plus = LEXY_VERIFY("+");
-    CHECK(plus.fatal(0));
+    CHECK(plus.fatal(-2));
     auto minus = LEXY_VERIFY("-");
     CHECK(minus.success(-1));
+
+    auto other = LEXY_VERIFY("a");
+    CHECK(other.fatal(-2));
 }
 
 TEST_CASE("dsl::sign")
@@ -78,6 +88,11 @@ TEST_CASE("dsl::sign")
     {
         const char* str;
 
+        LEXY_VERIFY_FN int success(const char* cur)
+        {
+            LEXY_VERIFY_CHECK(*cur == '\0');
+            return 0;
+        }
         LEXY_VERIFY_FN int success(const char* cur, lexy::plus_sign sign)
         {
             LEXY_VERIFY_CHECK(*cur == '\0');
@@ -92,15 +107,18 @@ TEST_CASE("dsl::sign")
         LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
         {
             LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return 0;
+            return -2;
         }
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(+1));
+    CHECK(empty.success(0));
     auto plus = LEXY_VERIFY("+");
     CHECK(plus.success(+1));
     auto minus = LEXY_VERIFY("-");
     CHECK(minus.success(-1));
+
+    auto other = LEXY_VERIFY("a");
+    CHECK(other.fatal(-2));
 }
 

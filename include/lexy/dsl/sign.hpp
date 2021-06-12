@@ -44,16 +44,13 @@ struct _sign : rule_base
 };
 
 /// Matches a plus sign or nothing, producing +1.
-constexpr auto plus_sign
-    = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
+constexpr auto plus_sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_;
 /// Matches a minus sign or nothing, producing +1 or -1.
-constexpr auto minus_sign
-    = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_ >> _sign<lexy::plus_sign>{};
+constexpr auto minus_sign = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
 
 /// Matches a plus or minus sign or nothing, producing +1 or -1.
 constexpr auto sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{}
-                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{}
-                      | else_ >> _sign<lexy::plus_sign>{};
+                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED

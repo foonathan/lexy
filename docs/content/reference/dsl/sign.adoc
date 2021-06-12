@@ -61,7 +61,8 @@ Parsing::
 Errors::
   None.
 Values::
-  An object of type `lexy::plus_sign` in either case.
+  If it matched a `+`, an object of type `lexy::plus_sign`.
+  Otherwise, no values.
 
 {{% playground_example plus_sign "A number with an optional plus sign" %}}
 
@@ -85,7 +86,8 @@ Parsing::
 Errors::
   None.
 Values::
-  An object of type `lexy::minus_sign` in either case.
+  If it matched a `-`, an object of type `lexy::minus_sign`.
+  Otherwise, no values.
 
 {{% playground_example minus_sign "A number with an optional minus sign" %}}
 
@@ -109,8 +111,9 @@ Parsing::
 Errors::
   None.
 Values::
-  An object of type `lexy::minus_sign` if it matched a `-`.
-  Otherwise, an object of type `lexy::plus_sign`.
+  If it matched a `+`, an object of type `lexy::plus_sign`.
+  If it matched a `-`, an object of type `lexy::minus_sign`.
+  Otherwise, no values.
 
 {{% playground_example sign "A number with an optional plus/minus sign" %}}
 
