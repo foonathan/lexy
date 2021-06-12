@@ -251,12 +251,24 @@ TEST_CASE("dsl::integer")
         for (auto i = 10; i < 100; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
     }
-    SUBCASE("n_digits")
+
+    SUBCASE("n_digits, bounded")
     {
         static constexpr auto rule = lexy::dsl::integer<std::uint8_t>(lexy::dsl::n_digits<2>);
+        CHECK(!lexy::dsl::_ndigits_can_overflow<std::uint8_t, 2, 10>());
 
         for (auto i = 10; i < 100; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
+    }
+    SUBCASE("n_digits, unbounded")
+    {
+        static constexpr auto rule = lexy::dsl::integer<std::uint8_t>(lexy::dsl::n_digits<3>);
+        CHECK(lexy::dsl::_ndigits_can_overflow<std::uint8_t, 3, 10>());
+
+        for (auto i = 100; i < 256; ++i)
+            CHECK(parse(rule, std::to_string(i).c_str()) == i);
+        for (auto i = 256; i < 1000; ++i)
+            CHECK(parse(rule, std::to_string(i).c_str()) == -1);
     }
 }
 

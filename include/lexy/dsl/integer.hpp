@@ -163,6 +163,16 @@ namespace lexyd
 template <typename T>
 constexpr bool _is_bounded = lexy::integer_traits<T>::is_bounded;
 
+template <typename T, std::size_t N, int Radix>
+constexpr bool _ndigits_can_overflow()
+{
+    using traits         = lexy::integer_traits<T>;
+    auto max_digit_count = traits::template max_digit_count<Radix>;
+    // We don't know whether the maximal value is a power of Radix,
+    // so we have to be conservative and don't rule out overflow on the same count.
+    return N >= max_digit_count;
+}
+
 // Parses T in the Base while checking for overflow.
 template <typename T, typename Base>
 struct _unbounded_integer_parser
@@ -350,7 +360,9 @@ constexpr auto integer(_ndigits<N, Base>)
 template <typename T, typename Base, std::size_t N, typename Sep>
 constexpr auto integer(_ndigits_s<N, Base, Sep>)
 {
-    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<T, Base, true, void>{};
+    using type
+        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
+    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<type, Base, true, void>{};
 }
 } // namespace lexyd
 
@@ -369,8 +381,14 @@ namespace lexyd
 {
 /// Matches the number of a code point.
 template <std::size_t N, typename Base = hex>
-constexpr auto code_point_id = _int_c<_ndigits<N, Base>>{}
-                               + _int_p<lexy::code_point, Base, true, lexy::invalid_code_point>{};
+constexpr auto code_point_id = [] {
+    using type = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
+                                    lexy::code_point, lexy::unbounded<lexy::code_point>>;
+
+    auto digits = _int_c<_ndigits<N, Base>>{};
+    auto parser = _int_p<type, Base, true, lexy::invalid_code_point>{};
+    return digits + parser;
+}();
 } // namespace lexyd
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
