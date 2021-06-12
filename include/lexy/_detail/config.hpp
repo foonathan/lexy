@@ -151,8 +151,8 @@ struct _char8_str
 #ifndef LEXY_EMPTY_MEMBER
 
 #    if defined(__has_cpp_attribute)
-#        if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 11
-//           GCC < 11 has buggy support, see e.g. https://godbolt.org/z/jhd9jPTYv
+#        if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
+//           GCC <= 11 has buggy support, see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101040
 #            define LEXY_HAS_EMPTY_MEMBER 0
 #        elif __has_cpp_attribute(no_unique_address)
 #            define LEXY_HAS_EMPTY_MEMBER 1
