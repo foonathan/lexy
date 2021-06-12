@@ -153,11 +153,11 @@ class ascii_table
     using int_n = _int_n_t<CategoryCount>;
 
 public:
-    LEXY_CONSTEVAL ascii_table() : _table() {}
+    constexpr ascii_table() : _table() {}
 
     /// Adds the character to the given category.
     template <typename CharT>
-    LEXY_CONSTEVAL ascii_table& insert(CharT c, std::size_t category)
+    constexpr ascii_table& insert(CharT c, std::size_t category)
     {
         auto as_unsigned = static_cast<unsigned char>(c);
         LEXY_PRECONDITION(as_unsigned <= 0x7F);
