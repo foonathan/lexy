@@ -97,47 +97,46 @@ struct _id : rule_base
     template <typename NextParser>
     struct parser
     {
-        template <typename... PrevArgs>
-        struct _continuation
-        {
-            template <typename Context, typename Reader>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, PrevArgs&&... prev_args,
-                                     Reader old)
-            {
-                auto begin = old.cur();
-                auto end   = reader.cur();
-
-                // Check that we're not creating a reserved identifier.
-                if constexpr (sizeof...(Reserved) > 0)
-                {
-                    using reserved = decltype((Reserved{} / ...));
-
-                    auto id_reader = lexy::partial_reader(old, end);
-                    if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
-                        && id_reader.cur() == end)
-                    {
-                        // We found a reserved identifier.
-                        auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
-                        context.error(err);
-                        // But we can trivially recover, as we've still matched a well-formed
-                        // identifier.
-                    }
-                }
-
-                // We're done, create the value and continue.
-                return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
-                                         lexy::lexeme<Reader>(begin, end));
-            }
-        };
-
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Parse the pattern with a special continuation.
             using pattern = _idp<Leading, Trailing>;
-            using cont    = _continuation<Args...>;
-            return lexy::rule_parser<pattern, cont>::parse(context, reader, LEXY_FWD(args)...,
-                                                           Reader(reader));
+            using engine  = typename pattern::token_engine;
+
+            // Parse the pattern.
+            [[maybe_unused]] auto saved_reader = reader;
+            auto                  begin        = reader.cur();
+            if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            {
+                pattern::token_error(context, reader, ec, begin);
+                return false;
+            }
+            auto end = reader.cur();
+
+            // Create a node in the parse tree.
+            context.token(pattern::token_kind(), begin, end);
+
+            // Check that we're not creating a reserved identifier.
+            if constexpr (sizeof...(Reserved) > 0)
+            {
+                using reserved = decltype((Reserved{} / ...));
+
+                auto id_reader = lexy::partial_reader(saved_reader, end);
+                if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
+                    && id_reader.cur() == end)
+                {
+                    // We found a reserved identifier.
+                    auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
+                    context.error(err);
+                    // But we can trivially recover, as we've still matched a well-formed
+                    // identifier.
+                }
+            }
+
+            // Skip whitespace and continue.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 

@@ -6,6 +6,15 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/whitespace.hpp>
+
+namespace
+{
+struct ws_production
+{
+    static constexpr auto whitespace = LEXY_LIT(" ");
+};
+} // namespace
 
 TEST_CASE("dsl::identifier()")
 {
@@ -101,6 +110,49 @@ TEST_CASE("dsl::identifier()")
         CHECK(abc1 == 3);
         auto abcA = LEXY_VERIFY("AbcA");
         CHECK(abcA == 3);
+    }
+
+    SUBCASE("whitespace")
+    {
+        static constexpr auto rule = identifier(lexy::dsl::ascii::alpha);
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> id)
+            {
+                LEXY_VERIFY_CHECK(id.begin() == str);
+                LEXY_VERIFY_CHECK(id.end() <= cur);
+                return int(id.end() - id.begin());
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alpha"));
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY_PRODUCTION(ws_production, "");
+        CHECK(empty == -1);
+
+        auto a = LEXY_VERIFY_PRODUCTION(ws_production, "a");
+        CHECK(a == 1);
+        auto ab = LEXY_VERIFY_PRODUCTION(ws_production, "ab");
+        CHECK(ab == 2);
+        auto abc = LEXY_VERIFY_PRODUCTION(ws_production, "abc");
+        CHECK(abc == 3);
+
+        auto abc1 = LEXY_VERIFY_PRODUCTION(ws_production, "abc1");
+        CHECK(abc1 == 3);
+
+        auto abc_space_after = LEXY_VERIFY_PRODUCTION(ws_production, "abc  ");
+        CHECK(abc_space_after == 3);
+        auto abc_space_inside = LEXY_VERIFY_PRODUCTION(ws_production, "a b c");
+        CHECK(abc_space_inside == 1);
     }
 
     SUBCASE(".reserve()")
