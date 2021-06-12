@@ -88,11 +88,12 @@ struct _prevent : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.cur();
-            if (lexy::engine_try_match<typename Token::token_engine>(reader))
+            auto copy  = reader;
+            if (lexy::engine_try_match<typename Token::token_engine>(copy))
             {
-                // Token did match what we don't want, and we've consumed it.
+                // Token did match what we don't want.
                 // Report an error, but continue parsing.
-                auto err = lexy::make_error<Reader, Tag>(begin, reader.cur());
+                auto err = lexy::make_error<Reader, Tag>(begin, copy.cur());
                 context.error(err);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }

@@ -5,6 +5,7 @@
 #include <lexy/dsl/error.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/ascii.hpp>
 
 TEST_CASE(".error")
 {
@@ -130,7 +131,8 @@ TEST_CASE("dsl::require")
 TEST_CASE("dsl::prevent")
 {
     struct tag;
-    static constexpr auto rule = lexy::dsl::prevent(LEXY_LIT("ab") + LEXY_LIT("c")).error<tag>;
+    static constexpr auto rule
+        = lexy::dsl::prevent(LEXY_LIT("ab") + LEXY_LIT("c")).error<tag> + lexy::dsl::ascii::alpha;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -147,13 +149,22 @@ TEST_CASE("dsl::prevent")
             LEXY_VERIFY_CHECK(e.position() == str);
             return -1;
         }
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+        {
+            LEXY_VERIFY_CHECK(e.position() == str);
+            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alpha"));
+            return -2;
+        }
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty == -2);
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc.value == 3);
+    CHECK(abc.value == 1);
     CHECK(abc.errors(-1));
+
+    auto d = LEXY_VERIFY("d");
+    CHECK(d == 1);
 }
 
