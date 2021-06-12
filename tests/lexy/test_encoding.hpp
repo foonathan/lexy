@@ -53,12 +53,12 @@ struct test_encoding
     template <typename OtherCharType>
     static constexpr bool is_secondary_char_type = false;
 
-    static LEXY_CONSTEVAL int_type eof()
+    static constexpr int_type eof()
     {
         return {lexy::default_encoding::eof()};
     }
 
-    static LEXY_CONSTEVAL int_type to_int_type(char_type c) noexcept
+    static constexpr int_type to_int_type(char_type c) noexcept
     {
         return {lexy::default_encoding::to_int_type(c)};
     }
