@@ -91,7 +91,6 @@ set(tests
         input/base.cpp
         input/buffer.cpp
         input/file.cpp
-        input/null_input.cpp
         input/range_input.cpp
         input/string_input.cpp
 

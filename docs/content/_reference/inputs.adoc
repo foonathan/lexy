@@ -100,31 +100,6 @@ bom::
 
 === The pre-defined Inputs
 
-==== Null input
-
-.`lexy/input/null_input.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-    template <typename Encoding = default_encoding>
-    class null_input
-    {
-    public:
-        constexpr Reader reader() const& noexcept;
-    };
-
-    template <typename Encoding = default_encoding>
-    using null_lexeme = lexeme_for<null_input<Encoding>>;
-    template <typename Tag, typename Encoding = default_encoding>
-    using null_error = error_for<null_input<Encoding>, Tag>;
-    template <typename Production, typename Encoding = default_encoding>
-    using null_error_context = error_context<Production, null_input<Encoding>>;
-}
-----
-
-The class `lexy::null_input` is an input that is always empty.
-
 ==== Range input
 
 .`lexy/input/range_input.hpp`
