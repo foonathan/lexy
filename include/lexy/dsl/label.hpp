@@ -17,7 +17,7 @@ struct label
 template <typename T>
 struct label<T, decltype(void(T::value))>
 {
-    LEXY_CONSTEVAL operator decltype(T::value)() const
+    constexpr operator decltype(T::value)() const
     {
         return T::value;
     }
