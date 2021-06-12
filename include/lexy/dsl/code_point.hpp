@@ -27,58 +27,6 @@ constexpr auto _cp_name()
 }
 
 template <typename Predicate>
-struct _cp_cap : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            auto save = reader;
-
-            // Parse one code point.
-            lexy::engine_cp_auto::error_code ec{};
-            auto                             result = lexy::engine_cp_auto::parse(ec, reader);
-            if (ec != lexy::engine_cp_auto::error_code())
-            {
-                reader = LEXY_MOV(save);
-
-                auto name = _cp_name<typename Reader::encoding>();
-                auto e    = lexy::make_error<Reader, lexy::expected_char_class>(save.cur(), name);
-                context.error(e);
-                return false;
-            }
-            LEXY_PRECONDITION(result.is_scalar());
-
-            // Check it against the predicate.
-            if constexpr (!std::is_void_v<Predicate>)
-            {
-                if (!Predicate{}(result))
-                {
-                    auto name = lexy::_detail::type_name<Predicate>();
-                    auto err
-                        = lexy::make_error<Reader, lexy::expected_char_class>(save.cur(), name);
-                    context.error(err);
-                    // We don't recover, as subsequent code might assume a certain value.
-                    return false;
-                }
-            }
-
-            // Produce it as value.
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-        }
-    };
-
-    template <typename P>
-    constexpr auto if_() const
-    {
-        static_assert(std::is_void_v<Predicate>);
-        return _cp_cap<P>{};
-    }
-};
-
-template <typename Predicate>
 struct _cp : token_base<_cp<Predicate>>
 {
     struct token_engine : lexy::engine_matcher_base
@@ -125,11 +73,6 @@ struct _cp : token_base<_cp<Predicate>>
             auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
             context.error(err);
         }
-    }
-
-    constexpr auto capture() const
-    {
-        return _cp_cap<Predicate>{};
     }
 
     template <typename P>
