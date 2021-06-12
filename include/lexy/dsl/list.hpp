@@ -44,6 +44,16 @@ struct _list_sink
             sink(LEXY_FWD(args)...);
         return true;
     }
+
+    template <typename Context, typename Reader, typename Sink, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::_detail::lazy_init<Sink>& sink,
+                             Args&&... args)
+    {
+        auto& cb = sink.emplace(context.sink());
+        if constexpr (sizeof...(Args) > 0)
+            cb(LEXY_FWD(args)...);
+        return true;
+    }
 };
 
 // Loop to parse all remaining items (after the initial one).
@@ -337,7 +347,9 @@ struct _lst : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto sink = context.sink();
+            // We construct the sink lazily only if the branch is taken.
+            using sink_t = std::decay_t<decltype(context.sink())>;
+            lexy::_detail::lazy_init<sink_t> sink;
 
             // Try parsing the initial item.
             using item_parser = lexy::rule_parser<Item, _list_sink>;
@@ -348,9 +360,10 @@ struct _lst : rule_base
                 return result;
 
             // Continue with the rest of the items.
+            // At this point, the branch has been taken.
             using continuation = _list_loop<Item, Sep, NextParser, Args...>;
             return static_cast<lexy::rule_try_parse_result>(
-                continuation::parse(context, reader, LEXY_FWD(args)..., sink));
+                continuation::parse(context, reader, LEXY_FWD(args)..., *sink));
         }
 
         template <typename Context, typename Reader, typename... Args>

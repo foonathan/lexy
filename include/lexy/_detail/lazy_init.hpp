@@ -128,11 +128,12 @@ public:
     constexpr lazy_init() noexcept = default;
 
     template <typename... Args>
-    constexpr void emplace(Args&&... args)
+    constexpr T& emplace(Args&&... args)
     {
         LEXY_PRECONDITION(!*this);
 
         *this = lazy_init(0, LEXY_FWD(args)...);
+        return this->_value;
     }
 
     constexpr explicit operator bool() const noexcept
