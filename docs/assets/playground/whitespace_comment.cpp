@@ -6,5 +6,5 @@ struct production
         = dsl::ascii::space | LEXY_LIT("/*") >> dsl::until(LEXY_LIT("*/"));
 
     static constexpr auto rule //
-        = LEXY_LIT("Hello") + LEXY_LIT("World") + dsl::lit_c<'!'>;
+        = LEXY_LIT("Hello") + LEXY_LIT("World") + dsl::exclamation_mark;
 };

@@ -14,6 +14,6 @@ struct production
 
     static constexpr auto rule = [] {
         auto greeting = LEXY_LIT("Hello");
-        return greeting + dsl::p<name> + dsl::lit_c<'!'> + dsl::eof;
+        return greeting + dsl::p<name> + dsl::exclamation_mark + dsl::eof;
     }();
 };

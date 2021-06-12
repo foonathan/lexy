@@ -12,7 +12,7 @@ struct name
 
         // We know that a name is always followed by an `!`, so ensure it.
         // But note that it is not our responsibility to parse it.
-        return name + dsl::require(dsl::lit_c<'!'>).error<invalid_character>;
+        return name + dsl::require(dsl::exclamation_mark).error<invalid_character>;
     }();
 };
 
@@ -24,6 +24,6 @@ struct production
 
     static constexpr auto rule = [] {
         auto greeting = LEXY_LIT("Hello");
-        return greeting + dsl::p<name> + dsl::lit_c<'!'> + dsl::eof;
+        return greeting + dsl::p<name> + dsl::exclamation_mark + dsl::eof;
     }();
 };

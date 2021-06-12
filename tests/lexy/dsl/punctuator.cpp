@@ -22,13 +22,22 @@ TEST_CASE("dsl punctuators")
     CHECK(is_punct(lexy::dsl::colon, LEXY_LIT(":")));
     CHECK(is_punct(lexy::dsl::semicolon, LEXY_LIT(";")));
 
+    CHECK(is_punct(lexy::dsl::exclamation_mark, LEXY_LIT("!")));
+    CHECK(is_punct(lexy::dsl::question_mark, LEXY_LIT("?")));
+
     CHECK(is_punct(lexy::dsl::hyphen, LEXY_LIT("-")));
     CHECK(is_punct(lexy::dsl::slash, LEXY_LIT("/")));
     CHECK(is_punct(lexy::dsl::backslash, LEXY_LIT("\\")));
     CHECK(is_punct(lexy::dsl::apostrophe, LEXY_LIT("'")));
+    CHECK(is_punct(lexy::dsl::ampersand, LEXY_LIT("&")));
+    CHECK(is_punct(lexy::dsl::caret, LEXY_LIT("^")));
+    CHECK(is_punct(lexy::dsl::asterisk, LEXY_LIT("*")));
+    CHECK(is_punct(lexy::dsl::tilde, LEXY_LIT("~")));
 
     CHECK(is_punct(lexy::dsl::hash_sign, LEXY_LIT("#")));
     CHECK(is_punct(lexy::dsl::dollar_sign, LEXY_LIT("$")));
     CHECK(is_punct(lexy::dsl::at_sign, LEXY_LIT("@")));
+    CHECK(is_punct(lexy::dsl::percent_sign, LEXY_LIT("%")));
+    CHECK(is_punct(lexy::dsl::equal_sign, LEXY_LIT("=")));
 }
 
