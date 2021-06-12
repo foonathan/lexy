@@ -2,7 +2,7 @@ name: Feature CI
 
 on:
   push:
-    branches-ignore: ['main']
+    branches-ignore: ['main', 'fix/*']
   pull_request:
 
 jobs:
