@@ -93,7 +93,6 @@ set(tests
         input/file.cpp
         input/null_input.cpp
         input/range_input.cpp
-        input/shell.cpp
         input/string_input.cpp
 
         callback.cpp

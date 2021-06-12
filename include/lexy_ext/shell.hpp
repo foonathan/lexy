@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_INPUT_SHELL_HPP_INCLUDED
-#define LEXY_INPUT_SHELL_HPP_INCLUDED
+#ifndef LEXY_EXT_SHELL_HPP_INCLUDED
+#define LEXY_EXT_SHELL_HPP_INCLUDED
 
 #include <cstdio>
 
@@ -13,7 +13,7 @@
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
-namespace lexy
+namespace lexy_ext
 {
 #if 0
 /// Controls how the shell performs I/O.
@@ -54,7 +54,7 @@ class Prompt
     struct write_message_callback
     {
         /// Writes the buffer.
-        void operator()(const char_type* buffer, std::size_t size); 
+        void operator()(const char_type* buffer, std::size_t size);
 
         /// Called to finish writing.
         void done() &&;
@@ -69,7 +69,8 @@ class Prompt
 };
 #endif
 
-template <typename Encoding = default_encoding>
+/// Prompt using stdin and stdout.
+template <typename Encoding = lexy::default_encoding>
 struct default_prompt
 {
     using encoding  = Encoding;
@@ -134,9 +135,9 @@ struct default_prompt
         return write_message_callback{};
     }
 };
-} // namespace lexy
+} // namespace lexy_ext
 
-namespace lexy
+namespace lexy_ext
 {
 /// Reads input from an interactive shell.
 template <typename Prompt = default_prompt<>>
@@ -156,13 +157,13 @@ public:
         return _prompt.is_open();
     }
 
-    // This is both Reader and Input.
+    /// This is both Reader and Input.
     class input
     {
     public:
         using encoding         = typename Prompt::encoding;
         using char_type        = typename encoding::char_type;
-        using iterator         = typename _detail::buffer_builder<char_type>::stable_iterator;
+        using iterator         = typename lexy::_detail::buffer_builder<char_type>::stable_iterator;
         using canonical_reader = input;
 
         auto reader() const&
@@ -298,7 +299,8 @@ public:
         friend shell;
     };
 
-    /// Writes a message out to the shell.
+    /// Constructs a writer for writing to the prompt.
+    /// The arguments depend on the Prompt in use.
     template <typename... Args>
     auto write_message(Args&&... args)
     {
@@ -353,20 +355,20 @@ private:
         return false;
     }
 
-    _detail::buffer_builder<char_type> _buffer;
-    LEXY_EMPTY_MEMBER Prompt           _prompt;
+    lexy::_detail::buffer_builder<char_type> _buffer;
+    LEXY_EMPTY_MEMBER Prompt                 _prompt;
 };
 
 //=== convenience typedefs ===//
 template <typename Prompt = default_prompt<>>
-using shell_lexeme = lexeme_for<shell<Prompt>>;
+using shell_lexeme = lexy::lexeme_for<shell<Prompt>>;
 
 template <typename Tag, typename Prompt = default_prompt<>>
-using shell_error = error_for<shell<Prompt>, Tag>;
+using shell_error = lexy::error_for<shell<Prompt>, Tag>;
 
 template <typename Production, typename Prompt = default_prompt<>>
-using shell_error_context = error_context<Production, shell<Prompt>>;
-} // namespace lexy
+using shell_error_context = lexy::error_context<Production, shell<Prompt>>;
+} // namespace lexy_ext
 
-#endif // LEXY_INPUT_SHELL_HPP_INCLUDED
+#endif // LEXY_EXT_SHELL_HPP_INCLUDED
 

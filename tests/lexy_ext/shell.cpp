@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/input/shell.hpp>
+#include <lexy_ext/shell.hpp>
 
 #include <doctest/doctest.h>
 
@@ -77,7 +77,7 @@ public:
 
 TEST_CASE("shell")
 {
-    lexy::shell<test_prompt> shell(test_prompt(3));
+    lexy_ext::shell<test_prompt> shell(test_prompt(3));
     CHECK(shell.is_open());
 
     {

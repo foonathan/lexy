@@ -8,6 +8,7 @@ set(tests
         parse_tree_algorithm.cpp
         parse_tree_doctest.cpp
         parse_tree_dump.cpp
+        shell.cpp
     )
 
 add_executable(lexy_ext_test ${tests})

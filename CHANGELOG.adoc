@@ -5,6 +5,7 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-06-12
 
+* Downgraded `lexy/input/shell.hpp` to `lexy_ext/shell.hpp`, with the namespace change to `lexy_ext`.
 * Removed `.capture()` from `dsl::code_point`; use `dsl::capture()` instead.
 * *Behavior change*: Don't produce a tag value if no sign was present in `dsl::[minus/plus_]sign`.
   If you use `lexy::as_integer` as callback, this doesn't affect you.

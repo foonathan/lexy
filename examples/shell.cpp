@@ -8,10 +8,10 @@
 
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy/input/shell.hpp>
 #include <lexy/parse.hpp>
 
 #include <lexy_ext/report_error.hpp> // lexy_ext::report_error
+#include <lexy_ext/shell.hpp>
 
 // A shell with a couple of basic commands.
 namespace shell
@@ -19,7 +19,7 @@ namespace shell
 struct interpreter
 {
     // Manages I/O.
-    lexy::shell<lexy::default_prompt<lexy::utf8_encoding>> shell;
+    lexy_ext::shell<lexy_ext::default_prompt<lexy::utf8_encoding>> shell;
     // The values of variables.
     std::map<std::string, std::string> variables;
 

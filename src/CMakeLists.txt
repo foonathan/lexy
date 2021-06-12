@@ -101,7 +101,6 @@ set(header_files
         ${include_dir}/input/file.hpp
         ${include_dir}/input/null_input.hpp
         ${include_dir}/input/range_input.hpp
-        ${include_dir}/input/shell.hpp
         ${include_dir}/input/string_input.hpp
 
         ${include_dir}/callback.hpp
