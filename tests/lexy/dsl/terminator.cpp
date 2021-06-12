@@ -80,7 +80,7 @@ TEST_CASE("dsl::terminator")
     SUBCASE("basic")
     {
         static constexpr auto rule       = terminator(inner);
-        constexpr auto        equivalent = inner + LEXY_LIT(";");
+        constexpr auto        equivalent = inner >> LEXY_LIT(";");
         CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
 
         auto empty = LEXY_VERIFY("");

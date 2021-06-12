@@ -20,7 +20,8 @@ namespace lexy::dsl
         constexpr _rule_ auto      recovery_rule() const;
 
         //=== rules ===//
-        constexpr _rule_ auto operator()(_rule_ auto rule) const;
+        constexpr _rule_        auto operator()(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const;
 
         constexpr _rule_ auto try_(_rule_ auto rule) const;
 
@@ -101,12 +102,16 @@ constexpr _rule_ auto operator()(_rule_ auto rule) const
 {
     return rule + terminator();
 }
+constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const
+{
+    return rule >> terminator();
+}
 ----
 
 [.lead]
 `.operator()` returns a rule that parses `rule`, then parses the terminator.
 
-It behaves entirely equivalent to `rule + terminator()`.
+It behaves entirely equivalent to `rule + terminator()` or `rule >> terminator()`.
 
 {{% playground_example terminator "Parse a statement" %}}
 
