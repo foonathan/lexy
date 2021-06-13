@@ -5,7 +5,8 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-06-13
 
-Removed `dsl::label` and `dsl::id`; use a separate production instead.
+* Removed `dsl::label` and `dsl::id`; use a separate production instead.
+* Removed `lexy::sink`; instead of `lexy::sink<T>(fn)` use `lexy::fold_inplace<T>({}, fn)`.
 
 == 2021-06-12
 

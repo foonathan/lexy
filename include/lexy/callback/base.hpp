@@ -9,6 +9,13 @@
 #include <lexy/_detail/detect.hpp>
 #include <lexy/_detail/invoke.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_SINK
+#    define LEXY_DEPRECATED_SINK
+#else
+#    define LEXY_DEPRECATED_SINK                                                                   \
+        [[deprecated("`dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`")]]
+#endif
+
 //=== implementation ===//
 namespace lexy
 {
@@ -122,7 +129,7 @@ private:
 
 /// Creates a sink callback.
 template <typename T, typename... Fns>
-constexpr auto sink(Fns&&... fns)
+LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
 {
     return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }

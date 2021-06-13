@@ -219,41 +219,6 @@ Creates a callback with the given `ReturnType` from multiple functions.
 When calling the resulting callback, it will use overload resolution to determine the correct function to call.
 It supports function pointers, lambdas, and member function or data pointers.
 
-.`lexy/callback/base.hpp`
-[source,cpp]
-----
-namespace lexy
-{
-    template <typename T, typename... Fns>
-    constexpr Sink sink(Fns&&... fns);
-}
-----
-
-Creates a sink constructing the given `T` using the given functions.
-The sink will value-construct the `T` and then call one of the functions selected by overload resolution, passing it a reference to the resulting object as first argument.
-It supports function pointers, lambdas, and member function or data pointers.
-The sink function does not accept any arguments.
-
-.Example
-[%collapsible]
-====
-Creating a sink that will add all values.
-
-[source,cpp]
-----
-constexpr auto adder = lexy::sink<int>([](int& cur, int arg) { cur += arg; }); // <1>
-
-auto s = adder.sink(); // <2>
-s(1);
-s(2);
-s(3);
-auto result = std::move(s).finish();
-assert(result == 1 + 2 + 3);
-----
-<1> Define the sink.
-<2> Use it.
-====
-
 ==== Callback composition
 
 .`lexy/callback/base.hpp`

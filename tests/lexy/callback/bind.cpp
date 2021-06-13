@@ -5,6 +5,7 @@
 #include <lexy/callback/bind.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/fold.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/parse.hpp>
 
@@ -85,7 +86,8 @@ TEST_CASE("bind a callback")
 
 TEST_CASE("bind a sink")
 {
-    constexpr auto sink = lexy::sink<int>([](int& result, int a, int b) { result += b / a; });
+    constexpr auto sink
+        = lexy::fold_inplace<int>(0, [](int& result, int a, int b) { result += b / a; });
 
     // Placeholders themselves tested above, only test the item specific stuff.
     constexpr auto bound = lexy::bind(sink, lexy::parse_state, lexy::_1);
@@ -102,7 +104,8 @@ TEST_CASE("bind_sink")
     {
         auto sink(int i, float f) const
         {
-            return lexy::sink<int>([i, f](int& result, int arg) { result += i * arg + int(f); })
+            return lexy::fold_inplace<int>(0, [i, f](int& result,
+                                                     int  arg) { result += i * arg + int(f); })
                 .sink();
         }
     };

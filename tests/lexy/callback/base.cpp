@@ -5,6 +5,7 @@
 #include <lexy/callback/base.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/fold.hpp>
 #include <string>
 #include <vector>
 
@@ -69,20 +70,6 @@ TEST_CASE("callback")
     }
 }
 
-TEST_CASE("sink")
-{
-    constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; },
-                                          [](int& result, const char* ptr) { result += *ptr; });
-    CHECK(lexy::is_sink<decltype(sink)>);
-
-    auto cb = sink.sink();
-    cb(4);
-    cb("abc");
-
-    int result = LEXY_MOV(cb).finish();
-    CHECK(result == 4 + 'a');
-}
-
 TEST_CASE("callback compose")
 {
     SUBCASE("callbacks")
@@ -98,7 +85,7 @@ TEST_CASE("callback compose")
     }
     SUBCASE("sink and callback")
     {
-        constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; });
+        constexpr auto sink = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
         constexpr auto cb   = lexy::callback<std::string>([](int i) { return std::to_string(i); });
 
         constexpr auto composed = sink >> cb;
@@ -112,7 +99,7 @@ TEST_CASE("callback compose")
     }
     SUBCASE("sink and two callback")
     {
-        constexpr auto sink = lexy::sink<int>([](int& result, int i) { result += i; });
+        constexpr auto sink = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
         constexpr auto cb_a = lexy::callback<std::string>([](int i) { return std::to_string(i); });
         constexpr auto cb_b = lexy::callback<std::size_t>(&std::string::length);
 
