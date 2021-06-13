@@ -5,6 +5,7 @@
 #include <lexy/callback/string.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/dsl/option.hpp>
 #include <lexy/input/string_input.hpp>
 #include <string>
 
@@ -107,6 +108,9 @@ TEST_CASE("as_string")
 
     SUBCASE("callback")
     {
+        std::string from_nullopt = lexy::as_string<std::string>(lexy::nullopt{});
+        CHECK(from_nullopt.empty());
+
         std::string from_ptr_size = lexy::as_string<std::string>("abc", 2);
         CHECK(from_ptr_size == "ab");
 

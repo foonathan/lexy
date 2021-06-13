@@ -432,6 +432,7 @@ If no encoding is specified, it deduces one from the character type of the strin
 As a callback, it constructs the string directly from the given argument.
 Then it accepts:
 
+* `lexy::nullopt`, which results in a default-constructed `String` object.
 * A reference to an existing `String` object, which is forwarded as the result.
 * A `const CharT*` and a `std::size_t`, where `CharT` is a compatible character type. The two arguments are forwarded to a `String` constructor.
 * A `lexy::lexeme<Reader> lex`, where `Reader::iterator` is a pointer.

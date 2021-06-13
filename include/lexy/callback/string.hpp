@@ -130,6 +130,8 @@ struct encode_code_point<lexy::utf32_encoding>
 
 namespace lexy
 {
+struct nullopt;
+
 template <typename String>
 using _string_char_type = std::decay_t<decltype(LEXY_DECLVAL(String)[0])>;
 
@@ -138,6 +140,11 @@ struct _as_string
 {
     using return_type = String;
     using _char_type  = _string_char_type<String>;
+
+    constexpr String operator()(nullopt&&) const
+    {
+        return String();
+    }
 
     constexpr String operator()(String&& str) const
     {
