@@ -26,6 +26,7 @@ set(header_files
         ${include_dir}/callback/bind.hpp
         ${include_dir}/callback/constant.hpp
         ${include_dir}/callback/container.hpp
+        ${include_dir}/callback/fold.hpp
         ${include_dir}/callback/forward.hpp
         ${include_dir}/callback/integer.hpp
         ${include_dir}/callback/noop.hpp

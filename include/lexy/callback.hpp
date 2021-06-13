@@ -10,6 +10,7 @@
 #include <lexy/callback/bind.hpp>
 #include <lexy/callback/constant.hpp>
 #include <lexy/callback/container.hpp>
+#include <lexy/callback/fold.hpp>
 #include <lexy/callback/forward.hpp>
 #include <lexy/callback/integer.hpp>
 #include <lexy/callback/noop.hpp>

@@ -19,6 +19,7 @@ set(tests
         callback/bind.cpp
         callback/constant.cpp
         callback/container.cpp
+        callback/fold.cpp
         callback/forward.cpp
         callback/integer.cpp
         callback/noop.cpp

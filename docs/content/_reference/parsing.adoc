@@ -658,6 +658,48 @@ It supports member pointers.
 
 TIP: Use `lexy::parse_state` to pass allocators to your containers.
 
+==== Folding and counting
+
+.`lexy/callback/fold.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    template <typename T, typename Arg = T, typename Op>
+    constexpr auto fold(Arg&& init, Op&& op);
+
+    template <typename T, typename Arg = T, typename Op>
+    constexpr auto fold_inplace(Arg&& init, Op&& op);
+}
+----
+
+`lexy::fold` and `lexy::fold_inplace` are both callbacks and sinks.
+
+As a callback, they initialize their result of type `T` from `init` and then perform a left fold over all arguments:
+`lexy::fold` with `result = invoke(op)(result, arg)`, `lexy::fold_inplace` with `invoke(op)(result, arg)`,
+where `arg` ranges over the arguments in order.
+
+As a sink, they also initialize their result of type `T` from `init` and then fold with every invocation of the sink callback:
+`lexy::fold` with `result = invoke(op)(result, args...)`, `lexy::fold_inplace` with `invoke(op)(result, args...)`,
+where `args` are the argument of the sink callback.
+
+.`lexy/callback/fold.hpp`
+[source,cpp]
+----
+namespace lexy
+{
+    constexpr auto count;
+}
+----
+
+`lexy::count` is a callback and a sink that counts the number of arguments.
+
+As a callback, it returns the number of arguments it was invoked with as a `std::size_t`.
+As a sink, it returns the number of invocations of the sink callback as a `std::size_t`.
+Each invocation of the sink callback can be done with an arbitrary number of arguments that are all ignored itself.
+
+It is equivalent to a `lexy::fold` with `init` to `0` and where the operation increments the result and ignores all other arguments.
+
 ==== Rule-specific callbacks
 
 .`lexy/callback/aggregate.hpp`
