@@ -6793,169 +6793,6 @@ constexpr auto code_point = _cp<void>{};
 
 
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_LABEL_HPP_INCLUDED
-#define LEXY_DSL_LABEL_HPP_INCLUDED
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-#define LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-
-
-
-namespace lexy::_detail
-{
-template <typename Lambda>
-struct stateless_lambda
-{
-    static_assert(std::is_class_v<Lambda>);
-    static_assert(std::is_empty_v<Lambda>);
-
-    static constexpr Lambda get()
-    {
-        if constexpr (std::is_default_constructible_v<Lambda>)
-        {
-            // We're using C++20, lambdas are default constructible.
-            return Lambda();
-        }
-        else
-        {
-            // We're not having C++20; use a sequence of weird workarounds to legally construct a
-            // Lambda object without invoking any constructors.
-            // This works and is well-defined, but sadly not constexpr.
-            // Taken from: https://www.youtube.com/watch?v=yTb6xz_FSkY
-
-            // We're defining two standard layout types that have a char as a common initial
-            // sequence (as the Lambda is empty, it doesn't add anymore members to B).
-            struct A
-            {
-                char member;
-            };
-            struct B : Lambda
-            {
-                char member;
-            };
-            static_assert(std::is_standard_layout_v<A> && std::is_standard_layout_v<B>);
-
-            // We put the two types in a union and initialize the a member, which we can do.
-            union storage_t
-            {
-                A a;
-                B b;
-            } storage{};
-
-            // We can now take the address of member via b, as it is in the common initial sequence.
-            auto char_ptr = &storage.b.member;
-            // char_ptr is a pointer to the first member of B, so we can reinterpret_cast it to a
-            // pointer to B.
-            auto b_ptr = reinterpret_cast<B*>(char_ptr);
-            // Now we're having a pointer to a B object, which can we can cast to the base class
-            // Lambda.
-            auto lambda_ptr = static_cast<Lambda*>(b_ptr);
-            // Dereference the pointer to get the lambda object.
-            return *lambda_ptr;
-        }
-    }
-
-    template <typename... Args>
-    constexpr decltype(auto) operator()(Args&&... args) const
-    {
-        return get()(LEXY_FWD(args)...);
-    }
-};
-} // namespace lexy::_detail
-
-#endif // LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
-
-
-
-
-namespace lexy
-{
-template <typename T, typename = void>
-struct label
-{};
-template <typename T>
-struct label<T, decltype(void(T::value))>
-{
-    constexpr operator decltype(T::value)() const
-    {
-        return T::value;
-    }
-};
-
-template <auto Id>
-using id = label<std::integral_constant<int, Id>>;
-} // namespace lexy
-
-namespace lexyd
-{
-template <typename Label, typename Rule>
-struct _labr;
-
-template <typename Label>
-struct _lab : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::label<Label>{});
-        }
-    };
-
-    template <typename Rule>
-    constexpr auto operator()(Rule) const
-    {
-        return _labr<Label, Rule>{};
-    }
-};
-
-template <typename Label, typename Rule>
-struct _labr : rule_base
-{
-    static constexpr auto is_branch               = Rule::is_branch;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
-                                                                  LEXY_FWD(args)...,
-                                                                  lexy::label<Label>{});
-        }
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
-                                                              lexy::label<Label>{});
-        }
-    };
-};
-
-/// Matches with the specified label.
-template <typename Label>
-constexpr auto label = _lab<Label>{};
-
-/// Matches with the specified id.
-template <auto Id>
-constexpr auto id = _lab<std::integral_constant<int, Id>>{};
-} // namespace lexyd
-
-#endif // LEXY_DSL_LABEL_HPP_INCLUDED
-
 
 
 
@@ -6978,23 +6815,48 @@ struct _comb_state
     // The sink to store values of the item.
     Sink& sink;
     // Write the index of the item in here.
-    int idx = 0;
+    std::size_t idx = 0;
     // Whether or not we should break.
     bool loop_break = false;
 };
 
 // Final parser for one item in the combination.
-struct _comb_it
+struct _comb_final
 {
-    template <typename Context, typename Reader, int Idx, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::id<Idx>, Args&&... args)
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, std::size_t idx, Args&&... args)
     {
         auto& state = context.get(_break{});
-        state.idx   = Idx;
+        state.idx   = idx;
         if constexpr (sizeof...(Args) > 0)
             state.sink(LEXY_FWD(args)...);
         return true;
     }
+};
+
+// Parser for one item in the combination.
+template <std::size_t Idx, typename Rule>
+struct _comb_it : rule_base
+{
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader, Idx);
+        }
+
+        template <typename Context, typename Reader>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader)
+        {
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, Idx);
+        }
+    };
 };
 
 template <typename DuplicateError, typename ElseRule, typename... R>
@@ -7004,9 +6866,9 @@ struct _comb : rule_base
     static auto _comb_choice_(lexy::_detail::index_sequence<Idx...>)
     {
         if constexpr (std::is_void_v<ElseRule>)
-            return (id<Idx>(R{}) | ...);
+            return (_comb_it<Idx, R>{} | ...);
         else
-            return (id<Idx>(R{}) | ... | ElseRule{});
+            return (_comb_it<Idx, R>{} | ... | ElseRule{});
     }
     using _comb_choice = decltype(_comb_choice_(lexy::_detail::index_sequence_for<R...>{}));
 
@@ -7028,7 +6890,7 @@ struct _comb : rule_base
             {
                 auto begin = reader.cur();
 
-                using parser = lexy::rule_parser<_comb_choice, _comb_it>;
+                using parser = lexy::rule_parser<_comb_choice, _comb_final>;
                 if (!parser::parse(comb_context, reader))
                     return false;
                 else if (state.loop_break)
@@ -11162,6 +11024,175 @@ constexpr auto code_point_id = [] {
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_LABEL_HPP_INCLUDED
+#define LEXY_DSL_LABEL_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
+#define LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
+
+
+
+namespace lexy::_detail
+{
+template <typename Lambda>
+struct stateless_lambda
+{
+    static_assert(std::is_class_v<Lambda>);
+    static_assert(std::is_empty_v<Lambda>);
+
+    static constexpr Lambda get()
+    {
+        if constexpr (std::is_default_constructible_v<Lambda>)
+        {
+            // We're using C++20, lambdas are default constructible.
+            return Lambda();
+        }
+        else
+        {
+            // We're not having C++20; use a sequence of weird workarounds to legally construct a
+            // Lambda object without invoking any constructors.
+            // This works and is well-defined, but sadly not constexpr.
+            // Taken from: https://www.youtube.com/watch?v=yTb6xz_FSkY
+
+            // We're defining two standard layout types that have a char as a common initial
+            // sequence (as the Lambda is empty, it doesn't add anymore members to B).
+            struct A
+            {
+                char member;
+            };
+            struct B : Lambda
+            {
+                char member;
+            };
+            static_assert(std::is_standard_layout_v<A> && std::is_standard_layout_v<B>);
+
+            // We put the two types in a union and initialize the a member, which we can do.
+            union storage_t
+            {
+                A a;
+                B b;
+            } storage{};
+
+            // We can now take the address of member via b, as it is in the common initial sequence.
+            auto char_ptr = &storage.b.member;
+            // char_ptr is a pointer to the first member of B, so we can reinterpret_cast it to a
+            // pointer to B.
+            auto b_ptr = reinterpret_cast<B*>(char_ptr);
+            // Now we're having a pointer to a B object, which can we can cast to the base class
+            // Lambda.
+            auto lambda_ptr = static_cast<Lambda*>(b_ptr);
+            // Dereference the pointer to get the lambda object.
+            return *lambda_ptr;
+        }
+    }
+
+    template <typename... Args>
+    constexpr decltype(auto) operator()(Args&&... args) const
+    {
+        return get()(LEXY_FWD(args)...);
+    }
+};
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
+
+
+
+
+#ifdef LEXY_IGNORE_DEPRECATED_LABEL
+#    define LEXY_DEPRECATED_LABEL
+#else
+#    define LEXY_DEPRECATED_LABEL                                                                  \
+        [[deprecated("`dsl::label/id()` has been deprecated; use productions instead")]]
+#endif
+
+namespace lexy
+{
+template <typename T, typename = void>
+struct label
+{};
+template <typename T>
+struct label<T, decltype(void(T::value))>
+{
+    constexpr operator decltype(T::value)() const
+    {
+        return T::value;
+    }
+};
+
+template <auto Id>
+using id = label<std::integral_constant<int, Id>>;
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Label, typename Rule>
+struct _labr;
+
+template <typename Label>
+struct _lab : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::label<Label>{});
+        }
+    };
+
+    template <typename Rule>
+    constexpr auto operator()(Rule) const
+    {
+        return _labr<Label, Rule>{};
+    }
+};
+
+template <typename Label, typename Rule>
+struct _labr : rule_base
+{
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
+                                                                  LEXY_FWD(args)...,
+                                                                  lexy::label<Label>{});
+        }
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
+                                                              lexy::label<Label>{});
+        }
+    };
+};
+
+/// Matches with the specified label.
+template <typename Label>
+LEXY_DEPRECATED_LABEL constexpr auto label = _lab<Label>{};
+
+/// Matches with the specified id.
+template <auto Id>
+LEXY_DEPRECATED_LABEL constexpr auto id = _lab<std::integral_constant<int, Id>>{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_LABEL_HPP_INCLUDED
 
 
 
