@@ -13,8 +13,8 @@ namespace lexy
 template <typename T, bool Inplace, typename Op>
 struct _fold_sink_callback
 {
-    T         _result;
-    const Op* _op;
+    T  _result;
+    Op _op;
 
     using return_type = T;
 
@@ -22,9 +22,9 @@ struct _fold_sink_callback
     constexpr void operator()(Args&&... args)
     {
         if constexpr (Inplace)
-            _detail::invoke(*_op, _result, LEXY_FWD(args)...);
+            _detail::invoke(_op, _result, LEXY_FWD(args)...);
         else
-            _result = _detail::invoke(*_op, LEXY_MOV(_result), LEXY_FWD(args)...);
+            _result = _detail::invoke(_op, LEXY_MOV(_result), LEXY_FWD(args)...);
     }
 
     constexpr T finish() &&
@@ -54,7 +54,7 @@ struct _fold
 
     constexpr auto sink() const
     {
-        return _fold_sink_callback<T, Inplace, Op>{_init, &_op};
+        return _fold_sink_callback<T, Inplace, Op>{_init, _op};
     }
 };
 
