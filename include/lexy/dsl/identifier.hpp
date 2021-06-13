@@ -94,27 +94,18 @@ struct _kw;
 template <typename Leading, typename Trailing, typename... Reserved>
 struct _id : rule_base
 {
+    static constexpr auto is_branch = true;
+
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename Context, typename Reader, typename Iter, typename... Args>
+        LEXY_DSL_FUNC bool _parse_impl(Context& context, Reader& reader,
+                                       [[maybe_unused]] Reader saved_reader, Iter begin, Iter end,
+                                       Args&&... args)
         {
-            using pattern = _idp<Leading, Trailing>;
-            using engine  = typename pattern::token_engine;
-
-            // Parse the pattern.
-            [[maybe_unused]] auto saved_reader = reader;
-            auto                  begin        = reader.cur();
-            if (auto ec = engine::match(reader); ec != typename engine::error_code())
-            {
-                pattern::token_error(context, reader, ec, begin);
-                return false;
-            }
-            auto end = reader.cur();
-
             // Create a node in the parse tree.
-            context.token(pattern::token_kind(), begin, end);
+            context.token(lexy::identifier_token_kind, begin, end);
 
             // Check that we're not creating a reserved identifier.
             if constexpr (sizeof...(Reserved) > 0)
@@ -137,6 +128,45 @@ struct _id : rule_base
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...,
                                        lexy::lexeme<Reader>(begin, end));
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            using engine = typename _idp<Leading, Trailing>::token_engine;
+
+            // Trie to parse the pattern.
+            [[maybe_unused]] auto saved_reader = reader;
+            auto                  begin        = reader.cur();
+            if (auto ec = engine::match(reader); ec != typename engine::error_code())
+                return lexy::rule_try_parse_result::backtracked;
+            auto end = reader.cur();
+
+            // Check for reserved patterns, etc.
+            return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using pattern = _idp<Leading, Trailing>;
+            using engine  = typename pattern::token_engine;
+
+            // Parse the pattern.
+            [[maybe_unused]] auto saved_reader = reader;
+            auto                  begin        = reader.cur();
+            if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            {
+                pattern::token_error(context, reader, ec, begin);
+                return false;
+            }
+            auto end = reader.cur();
+
+            // Check for reserved patterns, etc.
+            return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...);
         }
     };
 

@@ -22,7 +22,7 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    struct _identifier-dsl_ // models _rule_
+    struct _identifier-dsl_ // models _branch-rule_
     {
         //=== modifiers ===//
         constexpr _identifier-dsl_ reserve(_rule_ auto ... rules) const;
@@ -58,8 +58,11 @@ The second overload takes just one {{% token-rule %}} and uses it both as `leadi
 Parsing::
   Matches and consumes the token `.pattern()` (see below).
   Then verifies that the lexeme formed from `.pattern()` (excluding any trailing whitespace), is not reserved (see below).
+Branch parsing::
+  Tries to match and consume the token `.pattern()` (see below), backtracking if that fails.
+  Otherwise it checks for reserved identifiers but does not backtrack when one is encountered.
 Errors::
-  * All errors raised by `.pattern()`. The rule then fails.
+  * All errors raised by `.pattern()`. The rule then fails if not during branch parsing.
   * `lexy::reserved_identifier`: if the identifier is reserved; its range covers the identifier.
     The rule then recovers.
 Values::

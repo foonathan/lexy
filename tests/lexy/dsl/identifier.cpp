@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
 namespace
@@ -322,6 +323,97 @@ TEST_CASE("dsl::identifier()")
 
         auto a1 = LEXY_VERIFY("a1");
         CHECK(a1 == 1);
+    }
+
+    SUBCASE("branch")
+    {
+        static constexpr auto rule = lexy::dsl::if_(identifier(lexy::dsl::ascii::alpha));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                LEXY_VERIFY_CHECK(cur == str);
+                return 0;
+            }
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> id)
+            {
+                LEXY_VERIFY_CHECK(id.begin() == str);
+                LEXY_VERIFY_CHECK(id.end() == cur);
+                return int(cur - str);
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == 0);
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a == 1);
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab == 2);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc == 3);
+
+        auto abc1 = LEXY_VERIFY("abc1");
+        CHECK(abc1 == 3);
+    }
+    SUBCASE(".reserve() branch")
+    {
+        static constexpr auto rule = lexy::dsl::if_(
+            identifier(lexy::dsl::ascii::alpha)
+                .reserve(LEXY_LIT("ab"), LEXY_KEYWORD("abc", identifier(lexy::dsl::ascii::alpha)))
+                .reserve(LEXY_LIT("int")));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                LEXY_VERIFY_CHECK(cur == str);
+                return 0;
+            }
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> id)
+            {
+                LEXY_VERIFY_CHECK(id.begin() == str);
+                LEXY_VERIFY_CHECK(id.end() == cur);
+                return int(cur - str);
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::reserved_identifier> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == 0);
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a == 1);
+        auto abcd = LEXY_VERIFY("abcd");
+        CHECK(abcd == 4);
+        auto integer = LEXY_VERIFY("integer");
+        CHECK(integer == 7);
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.value == 2);
+        CHECK(ab.errors(-2));
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.value == 3);
+        CHECK(abc.errors(-2));
+        auto int_ = LEXY_VERIFY("int");
+        CHECK(int_.value == 3);
+        CHECK(int_.errors(-2));
+
+        auto abcd1 = LEXY_VERIFY("abcd1");
+        CHECK(abcd1 == 4);
     }
 
     SUBCASE(".pattern()")
