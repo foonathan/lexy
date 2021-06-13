@@ -14,12 +14,6 @@ The `times` and `twice` rules.
 
 {{% interface %}}
 ----
-namespace lexy
-{
-    template <std::size_t N, typename T>
-    using times = T(&)[N]; // reference to an array of `N` `T`s
-}
-
 namespace lexy::dsl
 {
     template <std::size_t N>
@@ -31,12 +25,8 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`times` is a rule that parses `rule` exactly `N` times, with an optional separator in between.
+`times` is a rule that parses `rule` exactly `N` times in sequence, with an optional separator in between.
 
-Requires::
-  * `rule` produces a single value.
-    All potential values share a common type.
-  * If a separator has been specified, it does not produce a value.
 Parsing::
   Parses `rule` exactly `N` times in {{% docref sequence %}}.
   If a {{% docref separator %}} has been specified, parses it in between.
@@ -47,7 +37,7 @@ Errors::
   * `lexy::unexpected_trailing_separator`: if a trailing separator can be matched after the last item; at the position of the separator.
     It then recovers by simply consuming the separator and continues.
 Values::
-  Produces a reference to an array that contains the `N` produced values in order.
+  All values produced by each `rule` invocation in order.
 
 {{% godbolt_example times_tsep "Parse and sum three integers separated by comma" %}}
 
@@ -56,12 +46,6 @@ Values::
 
 {{% interface %}}
 ----
-namespace lexy
-{
-    template <typename T>
-    using twice = times<2, T>;
-}
-
 namespace lexy::dsl
 {
     constexpr _rule_ auto twice(_rule_ auto rule)
@@ -77,5 +61,5 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`twice` is a rule that is an alias for `times()` where `N == 2`.
+`twice` is a rule that is an alias for `times` where `N == 2`.
 

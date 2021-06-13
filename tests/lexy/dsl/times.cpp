@@ -17,11 +17,9 @@ TEST_CASE("times")
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<id<1>> value)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
             {
                 LEXY_VERIFY_CHECK(cur - str == 6);
-                LEXY_VERIFY_CHECK(value[0] == 1);
-                LEXY_VERIFY_CHECK(value[1] == 1);
                 return 0;
             }
 
@@ -49,11 +47,9 @@ TEST_CASE("times")
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<id<1>> value)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
             {
                 LEXY_VERIFY_CHECK((cur - str == 7 || cur - str == 8));
-                LEXY_VERIFY_CHECK(value[0] == 1);
-                LEXY_VERIFY_CHECK(value[1] == 1);
                 return 0;
             }
 
@@ -97,11 +93,8 @@ TEST_CASE("times")
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::twice<id<1>> value)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
             {
-                LEXY_VERIFY_CHECK(value[0] == 1);
-                LEXY_VERIFY_CHECK(value[1] == 1);
-
                 if (cur - str == 7)
                     return 0;
                 else if (cur - str == 8)

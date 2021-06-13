@@ -7,6 +7,8 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 * Removed `dsl::label` and `dsl::id`; use a separate production instead.
 * Removed `lexy::sink`; instead of `lexy::sink<T>(fn)` use `lexy::fold_inplace<T>({}, fn)`.
+* *Behavior change*: `dsl::times`/`dsl::twice` no longer produce an array, but instead all values individually.
+  Use `lexy::fold` instead of a loop.
 
 == 2021-06-12
 

@@ -11,9 +11,10 @@ which gives you all the flexibility and control of a handwritten parser without 
 
 Documentation: https://lexy.foonathan.net/[lexy.foonathan.net]
 
-.IPv4 address parser: try it on https://godbolt.org/z/b83Gsr[Compiler Explorer]
+.IPv4 address parser
 [source,cpp]
 ----
+#include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
 
 namespace dsl = lexy::dsl;
@@ -32,21 +33,16 @@ struct ipv4_address
 
     // How the matched output is being stored.
     static constexpr auto value
-        = lexy::callback<std::uint32_t>([](lexy::times<4, std::uint8_t> octets) {
-              std::uint32_t result = 0;
-              for (auto o : octets)
-              {
-                  result <<= 8;
-                  result |= o;
-              }
-              return result;
+        = lexy::fold<std::uint32_t>(0u, [](std::uint32_t result, std::uint8_t octet) {
+              return (result << 8) | octet;
           });
 };
 ----
 
 See https://github.com/foonathan/lexy/tree/main/examples[examples/] for more examples, such as a fully conforming JSON parser,
-a (subset of) XML parser, or an interactive REPL for a bash-like language, among others.
-Or jump directly to the https://lexy.foonathan.net/tutorial/[tutorial] to learn how to write your own grammars.
+a (subset of) XML parser, or an interactive REPL for a bash-like language, among others;
+play with the parsing on the https://lexy.foonathan.net/playground/[online playground];
+or jump directly to the https://lexy.foonathan.net/tutorial/[tutorial] to learn how to write your own grammars.
 
 == Features
 
@@ -119,9 +115,6 @@ Why should I use `lexy` over XYZ?::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
     Use `lexy` if you like `lexy` more.
-+
-For reference, this is an IPv4 parser implemented in Boost.Spirit: https://godbolt.org/z/Pv53Y8
-  
   https://github.com/taocpp/PEGTL[PEGTL]:::
     PEGTL is very similar and was a big inspiration.
     The biggest difference is that `lexy` uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
