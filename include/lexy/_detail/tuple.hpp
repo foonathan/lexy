@@ -43,10 +43,9 @@ public:
 template <typename... T>
 struct tuple : _tuple<index_sequence_for<T...>, T...>
 {
-    template <typename... Args,
-              typename = std::enable_if_t<((sizeof...(Args) == sizeof...(T)) && ...
-                                           && std::is_constructible_v<T, Args&&>)>>
-    constexpr tuple(Args&&... args) : _tuple<index_sequence_for<T...>, T...>(0, LEXY_FWD(args)...)
+    template <typename... Args>
+    constexpr tuple(int, Args&&... args)
+    : _tuple<index_sequence_for<T...>, T...>(0, LEXY_FWD(args)...)
     {}
 
     template <std::size_t N>
@@ -71,6 +70,8 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
 template <>
 struct tuple<>
 {
+    constexpr tuple(int) {}
+
     constexpr auto index_sequence() const
     {
         return index_sequence_for<>{};
@@ -78,12 +79,15 @@ struct tuple<>
 };
 
 template <typename... Args>
-tuple(Args&&... args) -> tuple<std::decay_t<Args>...>;
+constexpr auto make_tuple(Args&&... args)
+{
+    return tuple<std::decay_t<Args>...>(0, LEXY_FWD(args)...);
+}
 
 template <typename... Args>
 constexpr auto forward_as_tuple(Args&&... args)
 {
-    return tuple<Args&&...>(LEXY_FWD(args)...);
+    return tuple<Args&&...>(0, LEXY_FWD(args)...);
 }
 } // namespace lexy::_detail
 

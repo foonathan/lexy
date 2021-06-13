@@ -13,7 +13,7 @@ TEST_CASE("_detail::tuple")
 {
     SUBCASE("normal")
     {
-        constexpr auto tuple = lexy::_detail::tuple(11, 3.14f, true, 42);
+        constexpr auto tuple = lexy::_detail::make_tuple(11, 3.14f, true, 42);
         CHECK(std::is_same_v<decltype(tuple), const lexy::_detail::tuple<int, float, bool, int>>);
 
         CHECK(tuple.get<0>() == 11);

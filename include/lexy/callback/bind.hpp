@@ -357,7 +357,7 @@ constexpr auto bind(Callback&& callback, BoundArgs&&... args)
         LEXY_EMPTY_MEMBER _detail::tuple<std::decay_t<BoundArgs>...> _bound;
     };
 
-    return bound{{}, {}, LEXY_FWD(callback), _detail::tuple(LEXY_FWD(args)...)};
+    return bound{{}, {}, LEXY_FWD(callback), _detail::make_tuple(LEXY_FWD(args)...)};
 }
 } // namespace lexy
 
@@ -404,7 +404,7 @@ constexpr auto bind_sink(Sink&& sink, BoundArgs&&... args)
         (!std::is_same_v<std::decay_t<BoundArgs>, _detail::all_values_placeholder> && ...),
         "lexy::values as a placeholder for bind_sink() doesn't make sense - there won't be any values");
     using bound = _bound_sink<std::decay_t<Sink>, std::decay_t<BoundArgs>...>;
-    return bound{LEXY_FWD(sink), _detail::tuple(LEXY_FWD(args)...)};
+    return bound{LEXY_FWD(sink), _detail::make_tuple(LEXY_FWD(args)...)};
 }
 } // namespace lexy
 
