@@ -25,6 +25,9 @@ namespace lexy::dsl
 {
     constexpr _rule_ auto try_(_rule_ auto rule);
     constexpr _rule_ auto try_(_rule_ auto rule, _rule_ auto recovery_rule);
+
+    constexpr _branch-rule_ auto try_(_branch-rule_ auto rule);
+    constexpr _branch-rule_ auto try_(_branch-rule_ auto rule, _rule_ auto recovery_rule);
 }
 ----
 
@@ -33,12 +36,17 @@ namespace lexy::dsl
 
 Parsing::
   Parses `rule`.
+Branch parsing::
+  Tries to parse `rule` and succeeds if that succeeds.
+  If `rule` backtracks, this is not considered a situation where recovery needs to happen, and it also backtracks.
+  Only recovers if `rule` fails, failure of recovery (see below) do not lead to a backtrack;
+  at this point the branch has been committed.
 Errors::
   All errors raised by `rule`.
   If `rule` has not already recovered, recovers for it:
-  * The first overload does it by consuming nothing,
+  * The single argument overload does it by consuming nothing,
     parsing then simply continues as if nothing happened.
-  * The second overload does it by parsing `recovery_rule`.
+  * The two argument overload does it by parsing `recovery_rule`.
     If that succeeds, recovery is finished.
     Otherwise, raises all errors from it unchanged and cancels.
 Values::
@@ -46,8 +54,8 @@ Values::
   Otherwise, all values produced by `recovery_rule`.
   In particular, the values of `rule` are _not_ produced in that case.
 
-The first overload useful if `rule` matches something that is not technically necessary for parsing, but just there for redundancy.
-The second overload accepts a `recovery_rule` whose purpose is to bring the parser into a known state.
+The single argument overload useful if `rule` matches something that is not technically necessary for parsing, but just there for redundancy.
+The two argument overload accepts a `recovery_rule` whose purpose is to bring the parser into a known state.
 This is useful to skip bad input until a well-known synchronization point is reached, like a statement separator.
 If `recovery_rule` fails, it requires a `try_` rule at a higher level.
 

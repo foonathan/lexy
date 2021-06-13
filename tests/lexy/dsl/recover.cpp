@@ -6,8 +6,8 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/newline.hpp>
-#include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("dsl::find")
 {
@@ -309,6 +309,45 @@ TEST_CASE("dsl::try_")
         auto abd = LEXY_VERIFY("abd\n");
         CHECK(abd.value == -1);
         CHECK(abd.errors(-1, -2));
+    }
+
+    SUBCASE("branch")
+    {
+        static constexpr auto rule
+            = lexy::dsl::if_(lexy::dsl::try_(LEXY_LIT("abc") >> LEXY_LIT("!")));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                return int(cur - str);
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str + 3);
+                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("!"));
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == 0);
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.value == 3);
+        CHECK(abc.errors(-1));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab == 0);
+        auto abd = LEXY_VERIFY("abd");
+        CHECK(abd == 0);
+
+        auto abc_excl = LEXY_VERIFY("abc!");
+        CHECK(abc_excl == 4);
     }
 }
 

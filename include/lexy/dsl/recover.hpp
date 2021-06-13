@@ -160,6 +160,9 @@ namespace lexyd
 template <typename Rule, typename Recover>
 struct _tryr : rule_base
 {
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
     template <typename NextParser>
     struct parser
     {
@@ -172,6 +175,41 @@ struct _tryr : rule_base
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto failed = true;
+            // Try parsing with special continuation that sets failed to false if reached.
+            auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
+                                                                            LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+            {
+                // Rule backtracked, which is not a failure.
+                return result;
+            }
+            else if (!failed)
+            {
+                // Rule didn't fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
+                return result;
+            }
+            else
+            {
+                // Rule has failed, recover.
+                // Note that we already took the branch, so we no longer backtrack.
+                if constexpr (std::is_void_v<Recover>)
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                               ? lexy::rule_try_parse_result::ok
+                               : lexy::rule_try_parse_result::canceled;
+                else
+                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
+                                                                         LEXY_FWD(args)...)
+                               ? lexy::rule_try_parse_result::ok
+                               : lexy::rule_try_parse_result::canceled;
+            }
+        }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
@@ -188,7 +226,7 @@ struct _tryr : rule_base
             }
             else
             {
-                // Rule has failed.
+                // Rule has failed, recover.
                 if constexpr (std::is_void_v<Recover>)
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
