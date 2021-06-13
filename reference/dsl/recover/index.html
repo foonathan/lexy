@@ -8,14 +8,20 @@ This is similar to how an exception will perform stack unwinding until the entir
 <span class=tok-p>{</span>
     <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
     <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>,</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>recovery_rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre></div></div><div class="paragraph lead"><p><code>try</code> is a rule that catches any errors raised during parsing of <code>rule</code> and recovers from them, so parsing can continue.</p></div><div class=dlist><dl><dt class=hdlist1>Parsing</dt><dd><p>Parses <code>rule</code>.</p></dd><dt class=hdlist1>Errors</dt><dd><p>All errors raised by <code>rule</code>.
-If <code>rule</code> has not already recovered, recovers for it:</p><div class=ulist><ul><li><p>The first overload does it by consuming nothing,
-parsing then simply continues as if nothing happened.</p></li><li><p>The second overload does it by parsing <code>recovery_rule</code>.
+
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>,</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>recovery_rule</span><span class=tok-p>);</span>
+<span class=tok-p>}</span></code></pre></div></div><div class="paragraph lead"><p><code>try</code> is a rule that catches any errors raised during parsing of <code>rule</code> and recovers from them, so parsing can continue.</p></div><div class=dlist><dl><dt class=hdlist1>Parsing</dt><dd><p>Parses <code>rule</code>.</p></dd><dt class=hdlist1>Branch parsing</dt><dd><p>Tries to parse <code>rule</code> and succeeds if that succeeds.
+If <code>rule</code> backtracks, this is not considered a situation where recovery needs to happen, and it also backtracks.
+Only recovers if <code>rule</code> fails, failure of recovery (see below) do not lead to a backtrack;
+at this point the branch has been committed.</p></dd><dt class=hdlist1>Errors</dt><dd><p>All errors raised by <code>rule</code>.
+If <code>rule</code> has not already recovered, recovers for it:</p><div class=ulist><ul><li><p>The single argument overload does it by consuming nothing,
+parsing then simply continues as if nothing happened.</p></li><li><p>The two argument overload does it by parsing <code>recovery_rule</code>.
 If that succeeds, recovery is finished.
 Otherwise, raises all errors from it unchanged and cancels.</p></li></ul></div></dd><dt class=hdlist1>Values</dt><dd><p>If <code>rule</code> succeeded, all values produced by <code>rule</code>.
 Otherwise, all values produced by <code>recovery_rule</code>.
-In particular, the values of <code>rule</code> are <em>not</em> produced in that case.</p></dd></dl></div><div class=paragraph><p>The first overload useful if <code>rule</code> matches something that is not technically necessary for parsing, but just there for redundancy.
-The second overload accepts a <code>recovery_rule</code> whose purpose is to bring the parser into a known state.
+In particular, the values of <code>rule</code> are <em>not</em> produced in that case.</p></dd></dl></div><div class=paragraph><p>The single argument overload useful if <code>rule</code> matches something that is not technically necessary for parsing, but just there for redundancy.
+The two argument overload accepts a <code>recovery_rule</code> whose purpose is to bring the parser into a known state.
 This is useful to skip bad input until a well-known synchronization point is reached, like a statement separator.
 If <code>recovery_rule</code> fails, it requires a <code>try_</code> rule at a higher level.</p></div><div class=paragraph><p>The behavior of <code>try_</code> is analogous to a C++ <code>try</code> block.
 If an error is raised during <code>rule</code>, it is caught by the <code>recovery_rule</code>, which corresponds to a <code>catch (…​)</code> block.

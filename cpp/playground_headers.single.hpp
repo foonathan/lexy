@@ -1532,6 +1532,16 @@ constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(ar
 #endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
 
 
+#ifdef LEXY_IGNORE_DEPRECATED_SINK
+#    define LEXY_DEPRECATED_SINK
+#else
+// `dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`.
+// I'd put it into the deprecated message, but then GCC 7 doesn't like a std::enable_if in
+// _detail::tuple's constructor. Really: removing the deprecated message from here, which is
+// COMPLETELY UNRELATED CODE, fixes an SFINAE bug. I swear I'm not making this up.
+#    define LEXY_DEPRECATED_SINK [[deprecated]]
+#endif
+
 //=== implementation ===//
 namespace lexy
 {
@@ -1645,7 +1655,7 @@ private:
 
 /// Creates a sink callback.
 template <typename T, typename... Fns>
-constexpr auto sink(Fns&&... fns)
+LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
 {
     return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
@@ -5517,6 +5527,9 @@ namespace lexyd
 template <typename Rule, typename Recover>
 struct _tryr : rule_base
 {
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
     template <typename NextParser>
     struct parser
     {
@@ -5529,6 +5542,41 @@ struct _tryr : rule_base
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto failed = true;
+            // Try parsing with special continuation that sets failed to false if reached.
+            auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
+                                                                            LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+            {
+                // Rule backtracked, which is not a failure.
+                return result;
+            }
+            else if (!failed)
+            {
+                // Rule didn't fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
+                return result;
+            }
+            else
+            {
+                // Rule has failed, recover.
+                // Note that we already took the branch, so we no longer backtrack.
+                if constexpr (std::is_void_v<Recover>)
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                               ? lexy::rule_try_parse_result::ok
+                               : lexy::rule_try_parse_result::canceled;
+                else
+                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
+                                                                         LEXY_FWD(args)...)
+                               ? lexy::rule_try_parse_result::ok
+                               : lexy::rule_try_parse_result::canceled;
+            }
+        }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
@@ -5545,7 +5593,7 @@ struct _tryr : rule_base
             }
             else
             {
-                // Rule has failed.
+                // Rule has failed, recover.
                 if constexpr (std::is_void_v<Recover>)
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 else
@@ -12220,15 +12268,6 @@ LEXY_DEPRECATED_SWITCH constexpr auto switch_(Rule)
 
 
 
-namespace lexy
-{
-template <std::size_t N, typename T>
-using times = T (&)[N];
-
-template <typename T>
-using twice = times<2, T>;
-} // namespace lexy
-
 namespace lexyd
 {
 template <std::size_t N, typename Rule>
@@ -12259,39 +12298,19 @@ struct _times : rule_base
             return _gen_times<N>(Rule{}, Sep{});
     }
 
-    // We only use this template if our rule does not have a matcher.
-
     template <typename NextParser>
     struct parser
     {
-        template <typename... Args>
-        struct _continuation
-        {
-            template <typename Context, typename Reader, typename... RuleArgs>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args,
-                                     RuleArgs&&... rule_args)
-            {
-                // Create an array containing the rule arguments.
-                static_assert(N == sizeof...(RuleArgs), "rule must create exactly one value");
-                using array_type    = std::common_type_t<std::decay_t<RuleArgs>...>;
-                array_type array[N] = {LEXY_FWD(rule_args)...};
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., array);
-            }
-        };
-
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Parse the rule with the special continuation that converts the value into an array
-            // afterwards.
-            using rule         = decltype(_repeated_rule());
-            using continuation = _continuation<Args...>;
-            return lexy::rule_parser<rule, continuation>::parse(context, reader, LEXY_FWD(args)...);
+            using rule = decltype(_repeated_rule());
+            return lexy::rule_parser<rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
 
-/// Repeats the rule N times and collects the values into an array.
+/// Repeats the rule N times in sequence.
 template <std::size_t N, typename Rule>
 constexpr auto times(Rule)
 {
@@ -12299,7 +12318,7 @@ constexpr auto times(Rule)
     return _times<N, Rule, void>{};
 }
 
-/// Repeates the rule N times separated by the separator and collects the values into an array.
+/// Repeates the rule N times in sequence separated by a separator.
 template <std::size_t N, typename Rule, typename Sep>
 constexpr auto times(Rule, Sep)
 {

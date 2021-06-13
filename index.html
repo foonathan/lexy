@@ -3,7 +3,8 @@
 <span class=image><a class=image href=https://codecov.io/gh/foonathan/lexy><img src="https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4YNK41S9" alt=codecov></a></span>
 <span class=image><a class=image href=https://lexy.foonathan.net/playground><img src=https://img.shields.io/badge/try-online-blue alt=Playground></a></span></p></div><div class=paragraph><p><code>lexy</code> is a parser combinator library for C++17 and onwards.
 It allows you to write a parser by specifying it in a convenient C++ DSL,
-which gives you all the flexibility and control of a handwritten parser without all the manual work.</p></div><div class=paragraph><p>Documentation: <a href=https://lexy.foonathan.net/>lexy.foonathan.net</a></p></div><div class=listingblock><div class=title>IPv4 address parser: try it on <a href=https://godbolt.org/z/b83Gsr>Compiler Explorer</a></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-cp>#include</span> <span class=tok-cpf>&lt;lexy/dsl.hpp&gt;</span><span class=tok-cp></span>
+which gives you all the flexibility and control of a handwritten parser without all the manual work.</p></div><div class=paragraph><p>Documentation: <a href=https://lexy.foonathan.net/>lexy.foonathan.net</a></p></div><div class=listingblock><div class=title>IPv4 address parser</div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-cp>#include</span> <span class=tok-cpf>&lt;lexy/callback.hpp&gt;</span><span class=tok-cp></span>
+<span class=tok-cp>#include</span> <span class=tok-cpf>&lt;lexy/dsl.hpp&gt;</span><span class=tok-cp></span>
 
 <span class=tok-k>namespace</span> <span class=tok-n>dsl</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-p>;</span>
 
@@ -21,18 +22,13 @@ which gives you all the flexibility and control of a handwritten parser without 
 
     <span class=tok-c1>// How the matched output is being stored.</span>
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span>
-        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>times</span><span class=tok-o>&lt;</span><span class=tok-mi>4</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-o>&gt;</span> <span class=tok-n>octets</span><span class=tok-p>)</span> <span class=tok-p>{</span>
-              <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-mi>0</span><span class=tok-p>;</span>
-              <span class=tok-k>for</span> <span class=tok-p>(</span><span class=tok-k>auto</span> <span class=tok-nl>o</span> <span class=tok-p>:</span> <span class=tok-n>octets</span><span class=tok-p>)</span>
-              <span class=tok-p>{</span>
-                  <span class=tok-n>result</span> <span class=tok-o>&lt;&lt;=</span> <span class=tok-mi>8</span><span class=tok-p>;</span>
-                  <span class=tok-n>result</span> <span class=tok-o>|=</span> <span class=tok-n>o</span><span class=tok-p>;</span>
-              <span class=tok-p>}</span>
-              <span class=tok-k>return</span> <span class=tok-n>result</span><span class=tok-p>;</span>
+        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>fold</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-mi>0u</span><span class=tok-p>,</span> <span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>octet</span><span class=tok-p>)</span> <span class=tok-p>{</span>
+              <span class=tok-k>return</span> <span class=tok-p>(</span><span class=tok-n>result</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>8</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>octet</span><span class=tok-p>;</span>
           <span class=tok-p>});</span>
 <span class=tok-p>};</span></code></pre></div></div><div class=paragraph><p>See <a href=https://github.com/foonathan/lexy/tree/main/examples>examples/</a> for more examples, such as a fully conforming JSON parser,
-a (subset of) XML parser, or an interactive REPL for a bash-like language, among others.
-Or jump directly to the <a href=https://lexy.foonathan.net/tutorial/>tutorial</a> to learn how to write your own grammars.</p></div></div></div><div class=sect1><h2 id=_features>Features</h2><div class=sectionbody><div class=dlist><dl><dt class=hdlist1>Describe the parser, not some abstract grammar</dt><dd><p>Unlike parser generators that use some table driven magic for parsing, `lexy’s grammar is just syntax sugar for a hand-written recursive descent parser.
+a (subset of) XML parser, or an interactive REPL for a bash-like language, among others;
+play with the parsing on the <a href=https://lexy.foonathan.net/playground/>online playground</a>;
+or jump directly to the <a href=https://lexy.foonathan.net/tutorial/>tutorial</a> to learn how to write your own grammars.</p></div></div></div><div class=sect1><h2 id=_features>Features</h2><div class=sectionbody><div class=dlist><dl><dt class=hdlist1>Describe the parser, not some abstract grammar</dt><dd><p>Unlike parser generators that use some table driven magic for parsing, `lexy’s grammar is just syntax sugar for a hand-written recursive descent parser.
 The parsing algorithm does exactly what you’ve instructed it to do.
 No more ambiguities or weird shift/reduce errors!</p></dd><dt class=hdlist1>A pure C++ DSL</dt><dd><p>No need to use an external grammar file, embed the DSL directly in your C++ using operator overloading and functions.</p></dd><dt class=hdlist1>No implicit backtracking or lookahead</dt><dd><p>It will only backtrack when you say it should, and only lookahead when and how far you want it.
 Don’t worry about rules that have side-effects, they won’t be executed unnecessarily thanks to the user-specified lookahead conditions.</p></dd><dt class=hdlist1>Bring your own data structures</dt><dd><p>The input is parsed into the data structures you’ve provided.
@@ -49,7 +45,7 @@ However, they usually do more implicit backtracking, which can hurt performance 
 This is not the case for <code>lexy</code>, where backtracking is controlled using branch conditions.
 <code>lexy</code> also gives you a lot of control over error reporting and supports error recovery.</p><div class=dlist><dl><dt class=hdlist1><a href=http://boost-spirit.com/home/>Boost.Spirit</a></dt><dd><p>The main difference: it is not a Boost library.
 Otherwise, it is just a different implementation with a different flavor.
-Use <code>lexy</code> if you like <code>lexy</code> more.</p><div class=paragraph><p>For reference, this is an IPv4 parser implemented in Boost.Spirit: <a href=https://godbolt.org/z/Pv53Y8 class=bare>https://godbolt.org/z/Pv53Y8</a></p></div></dd><dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt><dd><p>PEGTL is very similar and was a big inspiration.
+Use <code>lexy</code> if you like <code>lexy</code> more.</p></dd><dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt><dd><p>PEGTL is very similar and was a big inspiration.
 The biggest difference is that <code>lexy</code> uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
 depending on your preference this can be an advantage or disadvantage.</p></dd><dt class=hdlist1>Handwritten Parsers</dt><dd><p>Writing a handwritten parser is more manual work and error prone.
 <code>lexy</code> automates that away without having to sacrifice control.
