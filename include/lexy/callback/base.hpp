@@ -12,8 +12,11 @@
 #ifdef LEXY_IGNORE_DEPRECATED_SINK
 #    define LEXY_DEPRECATED_SINK
 #else
-#    define LEXY_DEPRECATED_SINK                                                                   \
-        [[deprecated("`dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`")]]
+// `dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`.
+// I'd put it into the deprecated message, but then GCC 7 doesn't like a std::enable_if in
+// _detail::tuple's constructor. Really: removing the deprecated message from here, which is
+// COMPLETELY UNRELATED CODE, fixes an SFINAE bug. I swear I'm not making this up.
+#    define LEXY_DEPRECATED_SINK [[deprecated]]
 #endif
 
 //=== implementation ===//
