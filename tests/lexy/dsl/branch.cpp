@@ -5,18 +5,17 @@
 #include <lexy/dsl/branch.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::operator>>")
 {
-    static constexpr auto rule = LEXY_LIT("a") >> lexy::dsl::label<struct lab>;
+    static constexpr auto rule = LEXY_LIT("a") >> label<0>;
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char* cur, lexy::label<lab>)
+        LEXY_VERIFY_FN int success(const char* cur, id<0>)
         {
             LEXY_VERIFY_CHECK(str + 1 == cur);
             return 0;

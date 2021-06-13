@@ -48,7 +48,6 @@ set(tests
         dsl/identifier.cpp
         dsl/if.cpp
         dsl/integer.cpp
-        dsl/label.cpp
         dsl/list.cpp
         dsl/literal.cpp
         dsl/lookahead.cpp

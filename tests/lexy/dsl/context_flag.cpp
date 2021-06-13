@@ -12,9 +12,8 @@ TEST_CASE("dsl::context_flag")
 {
     struct error;
 
-    static constexpr auto flag = lexy::dsl::context_flag<struct id>;
-    static constexpr auto get
-        = [] { return flag.select(lexy::dsl::id<true>, lexy::dsl::id<false>); }();
+    static constexpr auto flag = lexy::dsl::context_flag<struct flag_id>;
+    static constexpr auto get  = [] { return flag.select(label<true>, label<false>); }();
 
     struct callback
     {

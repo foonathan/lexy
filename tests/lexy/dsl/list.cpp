@@ -6,13 +6,11 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/capture.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("dsl::list()")
 {
-    static LEXY_VERIFY_FN auto rule
-        = list(LEXY_LIT("ab") >> lexy::dsl::lit_c<'c'> + lexy::dsl::id<0>);
+    static LEXY_VERIFY_FN auto rule = list(LEXY_LIT("ab") >> lexy::dsl::lit_c<'c'> + label<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -27,7 +25,7 @@ TEST_CASE("dsl::list()")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }
@@ -86,7 +84,7 @@ TEST_CASE("dsl::list() sep")
 {
     SUBCASE("cannot check for trailing sep")
     {
-        static constexpr auto rule = list(lexy::dsl::id<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
+        static constexpr auto rule = list(label<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -101,7 +99,7 @@ TEST_CASE("dsl::list() sep")
 
                     using return_type = int;
 
-                    LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                    LEXY_VERIFY_FN void operator()(id<0>)
                     {
                         ++count;
                     }
@@ -150,7 +148,7 @@ TEST_CASE("dsl::list() sep")
     }
     SUBCASE("can check for trailing sep")
     {
-        static constexpr auto rule = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(",")));
+        static constexpr auto rule = list(LEXY_LIT("abc") >> label<0>, sep(LEXY_LIT(",")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -165,7 +163,7 @@ TEST_CASE("dsl::list() sep")
 
                     using return_type = int;
 
-                    LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                    LEXY_VERIFY_FN void operator()(id<0>)
                     {
                         ++count;
                     }
@@ -223,8 +221,7 @@ TEST_CASE("dsl::list() sep")
 
 TEST_CASE("dsl::list() trailing_sep")
 {
-    static constexpr auto rule
-        = list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
+    static constexpr auto rule = list(LEXY_LIT("abc") >> label<0>, trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -239,7 +236,7 @@ TEST_CASE("dsl::list() trailing_sep")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }
@@ -290,7 +287,7 @@ TEST_CASE("dsl::list() trailing_sep")
 
 TEST_CASE("dsl::opt_list())")
 {
-    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>);
+    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> label<0>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -305,7 +302,7 @@ TEST_CASE("dsl::opt_list())")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }
@@ -340,7 +337,7 @@ TEST_CASE("dsl::opt_list())")
 
 TEST_CASE("dsl::opt_list() sep")
 {
-    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, sep(LEXY_LIT(",")));
+    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> label<0>, sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -355,7 +352,7 @@ TEST_CASE("dsl::opt_list() sep")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }
@@ -413,8 +410,7 @@ TEST_CASE("dsl::opt_list() sep")
 
 TEST_CASE("dsl::opt_list() trailing_sep")
 {
-    static constexpr auto rule
-        = opt_list(LEXY_LIT("abc") >> lexy::dsl::id<0>, trailing_sep(LEXY_LIT(",")));
+    static constexpr auto rule = opt_list(LEXY_LIT("abc") >> label<0>, trailing_sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -429,7 +425,7 @@ TEST_CASE("dsl::opt_list() trailing_sep")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }

@@ -5,12 +5,11 @@
 #include <lexy/dsl/token.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 
 TEST_CASE("dsl::token")
 {
-    static constexpr auto rule = token(list(LEXY_LIT("abc") >> lexy::dsl::id<0>));
+    static constexpr auto rule = token(list(LEXY_LIT("abc") >> label<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
     CHECK(lexy::is_token<decltype(rule)>);
 

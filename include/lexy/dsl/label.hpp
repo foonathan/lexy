@@ -9,6 +9,13 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_LABEL
+#    define LEXY_DEPRECATED_LABEL
+#else
+#    define LEXY_DEPRECATED_LABEL                                                                  \
+        [[deprecated("`dsl::label/id()` has been deprecated; use productions instead")]]
+#endif
+
 namespace lexy
 {
 template <typename T, typename = void>
@@ -80,11 +87,11 @@ struct _labr : rule_base
 
 /// Matches with the specified label.
 template <typename Label>
-constexpr auto label = _lab<Label>{};
+LEXY_DEPRECATED_LABEL constexpr auto label = _lab<Label>{};
 
 /// Matches with the specified id.
 template <auto Id>
-constexpr auto id = _lab<std::integral_constant<int, Id>>{};
+LEXY_DEPRECATED_LABEL constexpr auto id = _lab<std::integral_constant<int, Id>>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_LABEL_HPP_INCLUDED

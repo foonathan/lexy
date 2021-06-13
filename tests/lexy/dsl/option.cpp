@@ -5,7 +5,6 @@
 #include <lexy/dsl/option.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::nullopt")
 {
@@ -32,7 +31,7 @@ TEST_CASE("dsl::nullopt")
 
 TEST_CASE("dsl::opt()")
 {
-    static constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + lexy::dsl::id<1>);
+    static constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + label<1>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback

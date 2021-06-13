@@ -5,16 +5,16 @@
 #include <lexy/dsl/combination.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/error.hpp>
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::combination()")
 {
     SUBCASE("basic")
     {
         static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> lexy::dsl::id<0>,
-                                     LEXY_LIT("c") >> lexy::dsl::id<1>);
+            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
+                                     LEXY_LIT("c") >> label<1>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -29,11 +29,11 @@ TEST_CASE("dsl::combination()")
 
                     using return_type = int;
 
-                    LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                    LEXY_VERIFY_FN void operator()(id<0>)
                     {
                         ++count;
                     }
-                    LEXY_VERIFY_FN void operator()(lexy::id<1>)
+                    LEXY_VERIFY_FN void operator()(id<1>)
                     {
                         ++count;
                     }
@@ -94,8 +94,8 @@ TEST_CASE("dsl::combination()")
     SUBCASE(".duplicate_error")
     {
         static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> lexy::dsl::id<0>,
-                                     LEXY_LIT("c") >> lexy::dsl::id<1>)
+            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
+                                     LEXY_LIT("c") >> label<1>)
                   .duplicate_error<struct tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -111,11 +111,11 @@ TEST_CASE("dsl::combination()")
 
                     using return_type = int;
 
-                    LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                    LEXY_VERIFY_FN void operator()(id<0>)
                     {
                         ++count;
                     }
-                    LEXY_VERIFY_FN void operator()(lexy::id<1>)
+                    LEXY_VERIFY_FN void operator()(id<1>)
                     {
                         ++count;
                     }
@@ -176,8 +176,8 @@ TEST_CASE("dsl::combination()")
     SUBCASE(".missing_error")
     {
         static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> lexy::dsl::id<0>,
-                                     LEXY_LIT("c") >> lexy::dsl::id<1>)
+            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
+                                     LEXY_LIT("c") >> label<1>)
                   .missing_error<struct tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -193,11 +193,11 @@ TEST_CASE("dsl::combination()")
 
                     using return_type = int;
 
-                    LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                    LEXY_VERIFY_FN void operator()(id<0>)
                     {
                         ++count;
                     }
-                    LEXY_VERIFY_FN void operator()(lexy::id<1>)
+                    LEXY_VERIFY_FN void operator()(id<1>)
                     {
                         ++count;
                     }
@@ -259,9 +259,9 @@ TEST_CASE("dsl::combination()")
 
 TEST_CASE("dsl::partial_combination()")
 {
-    static constexpr auto rule = lexy::dsl::partial_combination(LEXY_LIT("a") >> lexy::dsl::id<0>,
-                                                                LEXY_LIT("b") >> lexy::dsl::id<1>,
-                                                                LEXY_LIT("c") >> lexy::dsl::id<2>);
+    static constexpr auto rule
+        = lexy::dsl::partial_combination(LEXY_LIT("a") >> label<0>, LEXY_LIT("b") >> label<1>,
+                                         LEXY_LIT("c") >> label<2>);
     CHECK(lexy::is_rule<decltype(rule)>);
 
     struct callback
@@ -276,15 +276,15 @@ TEST_CASE("dsl::partial_combination()")
 
                 using return_type = int;
 
-                LEXY_VERIFY_FN void operator()(lexy::id<0>)
+                LEXY_VERIFY_FN void operator()(id<0>)
                 {
                     ++count;
                 }
-                LEXY_VERIFY_FN void operator()(lexy::id<1>)
+                LEXY_VERIFY_FN void operator()(id<1>)
                 {
                     ++count;
                 }
-                LEXY_VERIFY_FN void operator()(lexy::id<2>)
+                LEXY_VERIFY_FN void operator()(id<2>)
                 {
                     ++count;
                 }

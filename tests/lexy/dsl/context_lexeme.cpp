@@ -12,7 +12,7 @@ TEST_CASE("dsl::context_lexeme")
 {
     struct error;
 
-    static constexpr auto lex     = lexy::dsl::context_lexeme<struct id>;
+    static constexpr auto lex     = lexy::dsl::context_lexeme<struct lex_id>;
     static constexpr auto pattern = while_(lexy::dsl::lit_c<'*'> / lexy::dsl::lit_c<'+'>);
     static constexpr auto rule    = lex.create() + lex.capture(pattern)
                                  + lexy::dsl::lit_c<'-'> + lex.require(pattern).error<error>;

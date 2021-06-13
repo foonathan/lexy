@@ -7,27 +7,25 @@
 #include "verify.hpp"
 #include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::operator|")
 {
     SUBCASE("simple")
     {
-        static constexpr auto rule
-            = LEXY_LIT("abc") >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        static constexpr auto rule = LEXY_LIT("abc") >> label<0> | LEXY_LIT("def") >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
+            LEXY_VERIFY_FN int success(const char* cur, id<0>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "abc");
                 return 0;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "def");
@@ -82,21 +80,20 @@ TEST_CASE("dsl::operator|")
     }
     SUBCASE("else")
     {
-        static constexpr auto rule
-            = LEXY_LIT("abc") >> lexy::dsl::id<0> | lexy::dsl::else_ >> lexy::dsl::id<1>;
+        static constexpr auto rule = LEXY_LIT("abc") >> label<0> | lexy::dsl::else_ >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
+            LEXY_VERIFY_FN int success(const char* cur, id<0>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "abc");
                 return 0;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 LEXY_VERIFY_CHECK(cur == str);
                 return 1;
@@ -113,21 +110,20 @@ TEST_CASE("dsl::operator|")
     {
         struct tag;
         static constexpr auto rule
-            = LEXY_LIT("abc")
-                  >> lexy::dsl::id<0> | LEXY_LIT("def") >> lexy::dsl::id<1> | lexy::dsl::error<tag>;
+            = LEXY_LIT("abc") >> label<0> | LEXY_LIT("def") >> label<1> | lexy::dsl::error<tag>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
+            LEXY_VERIFY_FN int success(const char* cur, id<0>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "abc");
                 return 0;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "def");
@@ -152,8 +148,8 @@ TEST_CASE("dsl::operator|")
 
     SUBCASE("as branch")
     {
-        static constexpr auto rule = lexy::dsl::if_(LEXY_LIT("abc") >> lexy::dsl::id<1> //
-                                                    | LEXY_LIT("def") >> lexy::dsl::id<2>);
+        static constexpr auto rule = lexy::dsl::if_(LEXY_LIT("abc") >> label<1> //
+                                                    | LEXY_LIT("def") >> label<2>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
@@ -165,13 +161,13 @@ TEST_CASE("dsl::operator|")
                 LEXY_VERIFY_CHECK(str == cur);
                 return 0;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "abc");
                 return 1;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<2>)
+            LEXY_VERIFY_FN int success(const char* cur, id<2>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "def");
@@ -189,28 +185,28 @@ TEST_CASE("dsl::operator|")
     }
     SUBCASE("as unconditional branch")
     {
-        static constexpr auto rule = lexy::dsl::if_(LEXY_LIT("abc") >> lexy::dsl::id<1>   //
-                                                    | LEXY_LIT("def") >> lexy::dsl::id<2> //
-                                                    | lexy::dsl::else_ >> lexy::dsl::id<3>);
+        static constexpr auto rule = lexy::dsl::if_(LEXY_LIT("abc") >> label<1>   //
+                                                    | LEXY_LIT("def") >> label<2> //
+                                                    | lexy::dsl::else_ >> label<3>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "abc");
                 return 1;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<2>)
+            LEXY_VERIFY_FN int success(const char* cur, id<2>)
             {
                 auto match = lexy::_detail::string_view(str, cur);
                 LEXY_VERIFY_CHECK(match == "def");
                 return 2;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<3>)
+            LEXY_VERIFY_FN int success(const char* cur, id<3>)
             {
                 LEXY_VERIFY_CHECK(str == cur);
                 return 3;

@@ -9,7 +9,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/error.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/sequence.hpp>
 
@@ -32,23 +31,48 @@ struct _comb_state
     // The sink to store values of the item.
     Sink& sink;
     // Write the index of the item in here.
-    int idx = 0;
+    std::size_t idx = 0;
     // Whether or not we should break.
     bool loop_break = false;
 };
 
 // Final parser for one item in the combination.
-struct _comb_it
+struct _comb_final
 {
-    template <typename Context, typename Reader, int Idx, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::id<Idx>, Args&&... args)
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader&, std::size_t idx, Args&&... args)
     {
         auto& state = context.get(_break{});
-        state.idx   = Idx;
+        state.idx   = idx;
         if constexpr (sizeof...(Args) > 0)
             state.sink(LEXY_FWD(args)...);
         return true;
     }
+};
+
+// Parser for one item in the combination.
+template <std::size_t Idx, typename Rule>
+struct _comb_it : rule_base
+{
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader, Idx);
+        }
+
+        template <typename Context, typename Reader>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader)
+        {
+            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, Idx);
+        }
+    };
 };
 
 template <typename DuplicateError, typename ElseRule, typename... R>
@@ -58,9 +82,9 @@ struct _comb : rule_base
     static auto _comb_choice_(lexy::_detail::index_sequence<Idx...>)
     {
         if constexpr (std::is_void_v<ElseRule>)
-            return (id<Idx>(R{}) | ...);
+            return (_comb_it<Idx, R>{} | ...);
         else
-            return (id<Idx>(R{}) | ... | ElseRule{});
+            return (_comb_it<Idx, R>{} | ... | ElseRule{});
     }
     using _comb_choice = decltype(_comb_choice_(lexy::_detail::index_sequence_for<R...>{}));
 
@@ -82,7 +106,7 @@ struct _comb : rule_base
             {
                 auto begin = reader.cur();
 
-                using parser = lexy::rule_parser<_comb_choice, _comb_it>;
+                using parser = lexy::rule_parser<_comb_choice, _comb_final>;
                 if (!parser::parse(comb_context, reader))
                     return false;
                 else if (state.loop_break)

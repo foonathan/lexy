@@ -43,15 +43,14 @@ TEST_CASE("dsl::capture()")
     }
     SUBCASE("capture label")
     {
-        static constexpr auto rule = capture(lexy::dsl::label<struct lab>);
+        static constexpr auto rule = capture(label<0>);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex,
-                                       lexy::label<lab>)
+            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex, id<0>)
             {
                 LEXY_VERIFY_CHECK(str == cur);
                 LEXY_VERIFY_CHECK(lex.empty());

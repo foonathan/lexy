@@ -204,5 +204,25 @@ LEXY_VERIFY_FN test_result verify(Rule _rule, const CharT* str, std::size_t size
     return handler.result;
 }
 
+template <int Id>
+using id = std::integral_constant<int, Id>;
+
+template <int Id>
+struct _label : lexy::dsl::rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., id<Id>{});
+        }
+    };
+};
+
+template <int Id>
+constexpr auto label = _label<Id>{};
+
 #endif // TEST_DSL_VERIFY_HPP_INCLUDED
 

@@ -167,8 +167,6 @@ Parse tree::
   produce the current input position
 {{% docref "lexy::dsl::nullopt" %}}::
   produce an empty placeholder value
-{{% docref "lexy::dsl::id" %}} and {{% docref "lexy::dsl::label" %}}::
-  label a branch with a tag value
 {{% docref "lexy::dsl::member" %}}::
   parse something into a member variable
 =====

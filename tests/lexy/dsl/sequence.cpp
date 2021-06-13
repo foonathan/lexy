@@ -14,15 +14,14 @@ TEST_CASE("dsl::operator+")
     SUBCASE("rule")
     {
         static constexpr auto rule
-            = LEXY_LIT("a") + lexy::dsl::label<struct lab> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
+            = LEXY_LIT("a") + label<0> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char*                  cur, lexy::label<lab>,
-                                       lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN int success(const char* cur, id<0>, lexy::lexeme_for<test_input> lex)
             {
                 LEXY_VERIFY_CHECK(str + 3 == cur);
                 LEXY_VERIFY_CHECK(*lex.begin() == 'c');

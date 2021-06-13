@@ -18,7 +18,7 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    struct _choice_ {}; // models _rule_
+    struct _choice_ {}; // models _branch-rule_
 
     constexpr _choice_ operator|(_branch-rule_ auto lhs, _branch-rule_ auto rhs);
 
@@ -33,6 +33,9 @@ namespace lexy::dsl
 
 Parsing::
   Tries to parse `lhs`, then tries to parse `rhs`.
+Branch parsing::
+  Tries to parse `lhs`, then tries to parse `rhs`.
+  Backtracks instead of failing for an exhausted choice.
 Errors::
   * `lexy::exhausted_choice`: if neither `lhs` nor `rhs` could be parsed, at the starting reader position. The rule then fails.
   * All errors raised by `lhs` or `rhs` during branch parsing.

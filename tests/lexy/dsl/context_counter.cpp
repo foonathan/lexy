@@ -12,7 +12,7 @@ TEST_CASE("dsl::context_counter")
 {
     struct error;
 
-    static constexpr auto counter = lexy::dsl::context_counter<struct id>;
+    static constexpr auto counter = lexy::dsl::context_counter<struct counter_id>;
 
     struct callback
     {
@@ -87,8 +87,7 @@ TEST_CASE("dsl::context_counter")
         CHECK(result == 0);
     }
 
-    static constexpr auto compare
-        = counter.compare<0>(lexy::dsl::id<-1>, lexy::dsl::id<0>, lexy::dsl::id<1>);
+    static constexpr auto compare = counter.compare<0>(label<-1>, label<0>, label<1>);
     SUBCASE("compare - less")
     {
         static constexpr auto rule = counter.create<-1>() + compare;

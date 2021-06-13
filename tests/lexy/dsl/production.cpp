@@ -7,14 +7,13 @@
 #include "verify.hpp"
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace p_basic
 {
 struct prod
 {
-    static constexpr auto rule = LEXY_LIT("abc") + lexy::dsl::id<0>;
+    static constexpr auto rule = LEXY_LIT("abc") + label<0>;
 };
 } // namespace p_basic
 
@@ -30,7 +29,7 @@ namespace p_branch
 {
 struct prod
 {
-    static constexpr auto rule = LEXY_LIT("abc") >> lexy::dsl::id<0>;
+    static constexpr auto rule = LEXY_LIT("abc") >> label<0>;
 };
 } // namespace p_branch
 
@@ -52,7 +51,7 @@ TEST_CASE("dsl::inline_")
     {
         const char* str;
 
-        LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
+        LEXY_VERIFY_FN int success(const char* cur, id<0>)
         {
             LEXY_VERIFY_CHECK(cur - str == 3);
             return 0;
@@ -84,7 +83,7 @@ TEST_CASE("dsl::p")
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(prod, id<0>)
             {
                 return 0;
             }
@@ -145,14 +144,14 @@ TEST_CASE("dsl::p")
     SUBCASE("branch")
     {
         using namespace p_branch;
-        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(prod, id<0>)
             {
                 return 0;
             }
@@ -163,7 +162,7 @@ TEST_CASE("dsl::p")
                 LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
@@ -187,14 +186,14 @@ TEST_CASE("dsl::p")
     SUBCASE("branch in branch")
     {
         using namespace p_branch_branch;
-        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> lexy::dsl::id<1>;
+        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(p_branch::prod, lexy::id<0>)
+            LEXY_VERIFY_FN int success(p_branch::prod, id<0>)
             {
                 return 0;
             }
@@ -209,7 +208,7 @@ TEST_CASE("dsl::p")
                 LEXY_VERIFY_CHECK(result == 0);
                 return result;
             }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::id<1>)
+            LEXY_VERIFY_FN int success(const char* cur, id<1>)
             {
                 LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
                 return 1;
