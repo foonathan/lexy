@@ -462,6 +462,7 @@ struct version
 We can again clean this up a bit.
 `lexy` predefines `dsl::period` to match a '.' character, which looks cleaner than `dsl::lit_c<'.'>`.
 Constructing a type from arguments is also a common callback, so it is provided as `lexy::construct<T>`, which does `T(args...)` if that compiles and `T{args...}` otherwise.
+The rule `dsl::times` can be used to parse the same rule multiple times, and we can give it a `dsl::sep` as the second argument.
 
 .The final `version` production (https://godbolt.org/z/G6KcsM[godbolt])
 [source,cpp]
@@ -473,7 +474,7 @@ struct version
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::period;
 
-        return number + dot + number + dot + number;
+        return dsl::times<3>(number, dsl::sep(dot));
     }();
 
     // Construct a PackageVersion as the result of the production.
@@ -498,7 +499,7 @@ struct version
     static constexpr auto rule = []{
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::period;
-        auto dot_version = number + dot + number + dot + number; <1>
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot)); <1>
 
         auto unreleased = LEXY_LIT("unreleased");
 
@@ -601,7 +602,7 @@ struct version
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::period;
 
-        auto dot_version = number + dot + number + dot + number;
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot));
         auto dot_version_condition = dsl::digit<>; <1>
 
         auto unreleased = LEXY_LIT("unreleased");
@@ -631,7 +632,7 @@ struct version
         auto number = dsl::integer<int>(dsl::digits<>);
         auto dot    = dsl::period;
 
-        auto dot_version = number + dot + number + dot + number;
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot));
         auto dot_version_condition = dsl::peek(dsl::digit<>); <1>
 
         auto unreleased = LEXY_LIT("unreleased");
@@ -656,9 +657,9 @@ This branch is called `dsl::else_`.
 struct version
 {
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
-        auto dot    = dsl::period;
-        auto dot_version = number + dot + number + dot + number;
+        auto number      = dsl::integer<int>(dsl::digits<>);
+        auto dot         = dsl::period;
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot));
 
         auto unreleased = LEXY_LIT("unreleased");
 
@@ -686,9 +687,9 @@ The second overload takes no arguments and creates a `0.0.0` `PackageVersion` ma
 struct version
 {
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
-        auto dot    = dsl::lit_c<'.'>;
-        auto dot_version = number + dot + number + dot + number;
+        auto number      = dsl::integer<int>(dsl::digits<>);
+        auto dot         = dsl::lit_c<'.'>;
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot));
 
         auto unreleased = LEXY_LIT("unreleased");
 
@@ -1438,8 +1439,10 @@ struct version
     static constexpr auto rule = [] {
         …
 
-        return number + dot + number + dot + number
-               + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
+        auto dot_version = dsl::times<3>(number, dsl::sep(dot))
+                           + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
+
+        …
     }();
 };
 ----
@@ -1495,12 +1498,12 @@ Simply make every dot and number "optional" as shown here:
 [source,cpp]
 ----
 auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt); <1>
-auto dot         = dsl::try_(dsl::period);                                    <2>
-auto dot_version = number + dot + number + dot + number
-                   + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
+auto dot         = dsl::try_(dsl::period, dsl::find(dsl::digit<>));           <2>
+auto dot_version = dsl::times<3>(number, dsl::sep(dot))
+                           + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 ----
 <1> If we don't have an integer, produce `lexy::nullopt` instead.
-<2> If we don't have a dot, just continue without doing anything else.
+<2> If we don't have a dot, discard input until we find a digit, which is not consumed.
 
 Now if we try to parse something like `1..`, we will create two errors for the missing minor and patch version, but parsing recovers.
 The rule will then produce three values: the major version `1` and two `lexy::nullopt` objects for minor and patch version.
