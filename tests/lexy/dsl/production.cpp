@@ -18,13 +18,13 @@ struct prod
 };
 } // namespace p_basic
 
-namespace p_pattern
+namespace p_token
 {
 struct prod
 {
     static constexpr auto rule = LEXY_LIT("abc");
 };
-} // namespace p_pattern
+} // namespace p_token
 
 namespace p_branch
 {
@@ -41,6 +41,36 @@ struct prod
     static constexpr auto rule = lexy::dsl::p<p_branch::prod>;
 };
 } // namespace p_branch_branch
+
+TEST_CASE("dsl::inline_")
+{
+    using namespace p_basic;
+    static constexpr auto rule = lexy::dsl::inline_<prod>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        LEXY_VERIFY_FN int success(const char* cur, lexy::id<0>)
+        {
+            LEXY_VERIFY_CHECK(cur - str == 3);
+            return 0;
+        }
+
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+        {
+            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
+            return -1;
+        }
+    };
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty == -1);
+
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc == 0);
+}
 
 TEST_CASE("dsl::p")
 {
@@ -78,9 +108,9 @@ TEST_CASE("dsl::p")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 0);
     }
-    SUBCASE("pattern")
+    SUBCASE("token")
     {
-        using namespace p_pattern;
+        using namespace p_token;
         static constexpr auto rule = lexy::dsl::p<prod>;
         CHECK(lexy::is_rule<decltype(rule)>);
 

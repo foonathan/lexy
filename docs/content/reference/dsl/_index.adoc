@@ -152,6 +152,8 @@ Parse tree::
 ====
 {{% docref "lexy::dsl::p" %}} and {{% docref "lexy::dsl::recurse" %}}::
   parse another production
+{{% docref "lexy::dsl::inline_" %}}::
+  parse another production's rule inline
 {{% docref "lexy::dsl::return_" %}}::
   exit early from parsing a production
 ====

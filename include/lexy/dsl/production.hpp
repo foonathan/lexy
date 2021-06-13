@@ -10,6 +10,13 @@
 
 namespace lexyd
 {
+/// Parses the rule of the production as if it were part of the current production.
+template <typename Production>
+constexpr auto inline_ = lexy::production_rule<Production>{};
+} // namespace lexyd
+
+namespace lexyd
+{
 // Not inline: one function per production.
 template <typename Rule, typename Context, typename Reader>
 constexpr bool _parse(Context& context, Reader& reader)

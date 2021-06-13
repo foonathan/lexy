@@ -2,12 +2,52 @@
 layout: header
 header: "lexy/dsl/production.hpp"
 entities:
+  "lexy::dsl::inline_": inline_
   "lexy::dsl::p": p
   "lexy::dsl::recurse": recurse
 ---
 
 [.lead]
-The `p` and `recurse` rules.
+The `inline_`, `p`, and `recurse` rules.
+
+[#inline_]
+== Rule `lexy::dsl::inline_`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <_production_ P>
+    constexpr _rule_ auto inline_;
+
+    template <_production_ P>
+      requires _token-rule_<production_rule<P>>
+    constexpr _token-rule_ auto inline_;
+
+    template <_production_ P>
+      requires _branch-rule_<production_rule<P>>
+    constexpr _branch-rule_ auto inline_;
+}
+----
+
+[.lead]
+`inline_` is a rule that parses the rule of production `P` as part of the current production.
+
+Requires::
+  `P` is a complete type, i.e. `p` cannot be used for recursion.
+Matching::
+  Matches `P::rule`.
+(Branch) Parsing::
+  Parses `P::rule`.
+Errors::
+  All errors raised by `P::rule`.
+  The rule then fails if `P::rule` has failed.
+Values::
+  All values produced by `P::rule`.
+
+{{% playground_example inline "Parse a child production inline" %}}
+
+TIP: Use `inline_` when you need to parse a production as part of the whitespace rule.
 
 [#p]
 == Rule `lexy::dsl::p`

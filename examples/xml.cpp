@@ -260,8 +260,8 @@ struct document
 {
     static constexpr auto rule = [] {
         // We allow surrounding the document with comments and whitespace.
-        // (Whitespace does not allow productions, so we add the rule itself).
-        auto ws_comment = ws | comment::rule;
+        // (Whitespace does not allow productions, so we need to inline it).
+        auto ws_comment = ws | dsl::inline_<comment>;
         return ws_comment + dsl::p<element> + ws_comment + dsl::eof;
     }();
     static constexpr auto value = lexy::forward<ast::xml_node_ptr>;
