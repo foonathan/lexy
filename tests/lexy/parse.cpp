@@ -9,12 +9,12 @@
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/brackets.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/punctuator.hpp>
 #include <lexy/dsl/sequence.hpp>
-#include <lexy/dsl/while.hpp>
 #include <lexy/input/string_input.hpp>
 #include <vector>
 
@@ -32,7 +32,7 @@ namespace dsl = lexy::dsl;
 
 struct string_p
 {
-    static constexpr auto rule = capture(dsl::ascii::alnum + while_(dsl::ascii::alnum));
+    static constexpr auto rule = dsl::identifier(dsl::ascii::alnum);
 
     static constexpr auto value = lexy::as_string<lexy::_detail::string_view>;
 };

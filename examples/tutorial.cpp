@@ -45,7 +45,7 @@ struct name : lexy::token_production
         auto lead_char     = dsl::ascii::alpha;
         auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
 
-        return dsl::capture(lead_char + dsl::while_(trailing_char))
+        return dsl::identifier(lead_char, trailing_char)
                + dsl::require(dsl::ascii::space).error<invalid_character>;
     }();
 

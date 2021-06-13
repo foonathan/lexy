@@ -328,9 +328,11 @@ struct name
 };
 ----
 
-To finish it up, there are two things we can improve.
+To finish it up, there are three things we can improve.
 First, converting a `lexy::lexeme` to a `std::string` is an incredible common thing you want to do,
 so the library provides the callback `lexy::as_string<std::string>` for it.
+Second, we're essentially parsing an identifier.
+There is a predefined rule `dsl::identifier()`, which does exactly the same thing as what we've just implemented.
 Second, the rule definition has become somewhat unreadable as its one big expression.
 We can use an immediately invoked lambda to improve that.
 
@@ -345,7 +347,7 @@ struct name
         auto lead_char     = dsl::ascii::alpha;
         auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
 
-        return dsl::capture(lead_char + dsl::while_(trailing_char));
+        return dsl::identifier(lead_char, trailing_char);
     }();
 
     // The final value of this production is a std::string we've created from the lexeme.

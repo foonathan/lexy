@@ -8,7 +8,7 @@ struct name
 
     static constexpr auto rule = [] {
         // One or more alpha numeric characters, underscores or hyphens.
-        auto name = dsl::while_one(dsl::ascii::alnum / dsl::lit_c<'_'> / dsl::lit_c<'-'>);
+        auto name = dsl::identifier(dsl::ascii::alnum / dsl::lit_c<'_'> / dsl::lit_c<'-'>);
 
         // We know that a name is always followed by an `!`, so ensure it.
         // But note that it is not our responsibility to parse it.

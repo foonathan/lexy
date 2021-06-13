@@ -87,7 +87,7 @@ constexpr auto atext = dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / L
 // Text of the specified characters.
 // In the grammar it is always surrounded by whitespace.
 // Here, we only add trailing whitespace; leading whitespace is taken care of earlier.
-constexpr auto atom = dsl::capture(dsl::while_one(atext)) + ws;
+constexpr auto atom = dsl::identifier(atext) + ws;
 
 struct dot_atom
 {
@@ -160,7 +160,7 @@ struct address_list
 //=== https://tools.ietf.org/html/rfc5322#section-3.5/6 ===//
 struct unstructured
 {
-    static constexpr auto rule  = dsl::capture(dsl::while_(dsl::ascii::print));
+    static constexpr auto rule  = dsl::opt(dsl::identifier(dsl::ascii::print));
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
