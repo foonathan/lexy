@@ -73,7 +73,7 @@ TEST_CASE("arg_string")
 {
     pass(R"(echo "string")");
     pass(R"(echo "string \\\"\n\r")");
-    pass(R"(echo "\{var}")");
+    pass(R"(echo "${var}")");
 
     fail(R"(echo "unterminated)");
     fail(R"(echo "\x")");

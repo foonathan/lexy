@@ -97,25 +97,18 @@ private:
 namespace grammar
 {
 namespace dsl = lexy::dsl;
-struct argument;
 
-constexpr auto arg_sep = [] {
-    // Arguments are separated by ' ' or '\t' or by a backslash followed by newline.
-    auto c = dsl::ascii::blank | dsl::backslash >> dsl::newline;
+// A bare argument or command name.
+constexpr auto identifier = dsl::identifier(dsl::ascii::alnum);
 
-    auto condition = dsl::peek(dsl::ascii::blank / dsl::backslash);
-    return condition >> c + dsl::loop(c | dsl::break_);
-}();
-
-// Characters allowed in a bare argument or command name.
-constexpr auto bare_char = dsl::ascii::alnum;
+//=== The arguments ===//
 // The content of a string literal: any unicode code point except for control characters.
 constexpr auto str_char = dsl::code_point - dsl::ascii::control;
 
 // An unquoted sequence of characters.
 struct arg_bare
 {
-    static constexpr auto rule  = dsl::capture(dsl::while_(bare_char));
+    static constexpr auto rule  = identifier;
     static constexpr auto value = lexy::as_string<std::string>;
 };
 
@@ -131,28 +124,29 @@ struct arg_quoted
 {
     struct interpolation
     {
-        static constexpr auto rule = dsl::curly_bracketed(dsl::recurse<argument>);
+        static constexpr auto rule = dsl::curly_bracketed(dsl::recurse<struct argument>);
         static constexpr auto value
             = lexy::bind(lexy::callback<std::string>(&shell::interpreter::lookup_var),
                          lexy::parse_state, lexy::values);
     };
 
-    static constexpr auto escaped_symbols = lexy::symbol_table<char> //
-                                                .map<'"'>('"')
-                                                .map<'\\'>('\\')
-                                                .map<'/'>('/')
-                                                .map<'b'>('\b')
-                                                .map<'f'>('\f')
-                                                .map<'n'>('\n')
-                                                .map<'r'>('\r')
-                                                .map<'t'>('\t');
+    static constexpr auto escaped_sequences = lexy::symbol_table<char> //
+                                                  .map<'"'>('"')
+                                                  .map<'\\'>('\\')
+                                                  .map<'/'>('/')
+                                                  .map<'b'>('\b')
+                                                  .map<'f'>('\f')
+                                                  .map<'n'>('\n')
+                                                  .map<'r'>('\r')
+                                                  .map<'t'>('\t');
 
     static constexpr auto rule = [] {
-        auto escape = dsl::backslash_escape //
-                          .symbol<escaped_symbols>()
-                          .rule(dsl::p<interpolation>);
+        // C style escape sequences.
+        auto backslash_escape = dsl::backslash_escape.symbol<escaped_sequences>();
+        // Interpolation.
+        auto dollar_escape = dsl::dollar_escape.rule(dsl::p<interpolation>);
 
-        return dsl::quoted(str_char, escape);
+        return dsl::quoted(str_char, backslash_escape, dollar_escape);
     }();
     static constexpr auto value = lexy::as_string<std::string>;
 };
@@ -175,27 +169,52 @@ struct arg_var
 // An argument to a command.
 struct argument
 {
+    struct invalid
+    {
+        static constexpr auto name = "invalid argument character";
+    };
+
     static constexpr auto rule = dsl::p<arg_string> | dsl::p<arg_quoted> //
-                                 | dsl::p<arg_var> | dsl::else_ >> dsl::p<arg_bare>;
+                                 | dsl::p<arg_var> | dsl::p<arg_bare>    //
+                                 | dsl::error<invalid>;
     static constexpr auto value = lexy::forward<std::string>;
 };
 
+// The separator between arguments.
+constexpr auto arg_sep = [] {
+    struct missing_argument
+    {
+        static constexpr auto name()
+        {
+            return "missing argument";
+        }
+    };
+
+    // It's either blank or a backlash that escapes the newline.
+    // We turn it into a token to be able to trigger a single error if it doesn't match.
+    // If we used `... | dsl::error<missing_argument>` without the token,
+    // the `dsl::if_(arg_sep)` would always take the branch as the choice is now unconditional.
+    auto sep = dsl::token(dsl::ascii::blank | dsl::backslash >> dsl::newline);
+    return dsl::while_one(sep.error<missing_argument>);
+}();
+
+//=== the commands ===//
 struct cmd_exit
 {
-    static constexpr auto rule  = LEXY_LIT("exit") / dsl::eof;
+    static constexpr auto rule  = LEXY_KEYWORD("exit", identifier) | dsl::eof;
     static constexpr auto value = lexy::new_<shell::cmd_exit, shell::command>;
 };
 
 struct cmd_echo
 {
-    static constexpr auto rule  = LEXY_LIT("echo") >> arg_sep + dsl::p<argument>;
+    static constexpr auto rule  = LEXY_KEYWORD("echo", identifier) >> arg_sep + dsl::p<argument>;
     static constexpr auto value = lexy::new_<shell::cmd_echo, shell::command>;
 };
 
 struct cmd_set
 {
-    static constexpr auto rule
-        = LEXY_LIT("set") >> arg_sep + dsl::p<argument> + arg_sep + dsl::p<argument>;
+    static constexpr auto rule = LEXY_KEYWORD("set", identifier)
+                                 >> arg_sep + dsl::p<argument> + arg_sep + dsl::p<argument>;
     static constexpr auto value = lexy::new_<shell::cmd_set, shell::command>;
 };
 
@@ -204,24 +223,20 @@ struct command
 {
     struct unknown_command
     {
-        static LEXY_CONSTEVAL auto name()
-        {
-            return "unknown command";
-        }
+        static constexpr auto name = "unknown command";
     };
     struct trailing_args
     {
-        static LEXY_CONSTEVAL auto name()
-        {
-            return "trailing command arguments";
-        }
+        static constexpr auto name = "trailing command arguments";
     };
 
     static constexpr auto rule = [] {
-        auto unknown  = dsl::error<unknown_command>(dsl::while_(bare_char));
+        auto unknown  = dsl::error<unknown_command>(identifier);
         auto commands = dsl::p<cmd_exit> | dsl::p<cmd_echo> //
-                        | dsl::p<cmd_set> | dsl::else_ >> unknown;
+                        | dsl::p<cmd_set> | unknown;
 
+        // Allow an optional argument separator after the final command,
+        // but then there should not be any other arguments after that.
         return commands + dsl::if_(arg_sep) + dsl::eol.error<trailing_args>;
     }();
     static constexpr auto value = lexy::forward<shell::command>;
