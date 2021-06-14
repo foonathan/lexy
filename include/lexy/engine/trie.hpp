@@ -187,7 +187,6 @@ struct engine_trie : engine_matcher_base, engine_parser_base
                            true)
                         : false)
                    || ...);
-            (void)cur;
 
             if constexpr (Trie.node_value(Node) != Trie.invalid_value)
             {
@@ -207,6 +206,16 @@ struct engine_trie : engine_matcher_base, engine_parser_base
                 // actual result.
                 return result;
             }
+        }
+    };
+    template <std::size_t Node>
+    struct _node<Node, lexy::_detail::index_sequence<>>
+    {
+        template <typename Reader>
+        static constexpr auto parse(Reader&)
+        {
+            // A node without transitions returns its value immediately.
+            return Trie.node_value(Node);
         }
     };
 
