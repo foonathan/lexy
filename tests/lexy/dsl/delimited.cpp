@@ -541,6 +541,109 @@ TEST_CASE("dsl::delimited with escape")
         CHECK(invalid_escape.value == 2); // a\n
         CHECK(invalid_escape.errors(-4));
     }
+
+    SUBCASE("multiple escapes")
+    {
+        static constexpr auto rule
+            = delimited(LEXY_LIT("("),
+                        LEXY_LIT(
+                            ")"))(cp,
+                                  lexy::dsl::escape(LEXY_LIT("$")).capture(lexy::dsl::ascii::upper),
+                                  lexy::dsl::escape(LEXY_LIT("\\"))
+                                      .capture(lexy::dsl::ascii::lower));
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(lexy::is_branch<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN auto list()
+            {
+                struct b
+                {
+                    int count = 0;
+
+                    using return_type = int;
+
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
+                    {
+                        count += int(lex.size());
+                    }
+
+                    LEXY_VERIFY_FN int finish() &&
+                    {
+                        return count;
+                    }
+                };
+                return b{};
+            }
+            LEXY_VERIFY_FN int success(const char* cur, int count)
+            {
+                LEXY_VERIFY_CHECK(cur[-1] == ')');
+                return count;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+            {
+                LEXY_VERIFY_CHECK(e.character() == '(');
+                LEXY_VERIFY_CHECK(e.position() == str);
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str + 1);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                LEXY_VERIFY_CHECK(e.message() == lexy::_detail::string_view("missing delimiter"));
+                return -2;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
+            {
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
+                return -3;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
+            {
+                LEXY_VERIFY_CHECK(e.message()
+                                  == lexy::_detail::string_view("invalid escape sequence"));
+                return -4;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero == 0);
+        auto one = LEXY_VERIFY("(a)");
+        CHECK(one == 1);
+        auto two = LEXY_VERIFY("(ab)");
+        CHECK(two == 2);
+        auto three = LEXY_VERIFY("(abc)");
+        CHECK(three == 3);
+
+        auto unterminated = LEXY_VERIFY("(abc");
+        CHECK(unterminated == -2);
+
+        auto invalid_ascii = LEXY_VERIFY("(ab\xF0)");
+        CHECK(invalid_ascii.value == 2);
+        CHECK(invalid_ascii.errors(-3));
+
+        auto escape_one = LEXY_VERIFY("(a$Bc$D)");
+        CHECK(escape_one == 4); // abc)
+        auto invalid_escape_one = LEXY_VERIFY("(a$b)");
+        CHECK(invalid_escape_one.value == 2); // ab
+        CHECK(invalid_escape_one.errors(-4));
+
+        auto escape_two = LEXY_VERIFY("(a\\bc\\d)");
+        CHECK(escape_two == 4); // abc)
+        auto invalid_escape_two = LEXY_VERIFY("(a\\B)");
+        CHECK(invalid_escape_two.value == 2); // aB
+        CHECK(invalid_escape_two.errors(-4));
+
+        auto both_escapes = LEXY_VERIFY("(a$Bc\\d)");
+        CHECK(both_escapes == 4);
+    }
 }
 
 TEST_CASE("predefined dsl::delimited")

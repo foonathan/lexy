@@ -72,63 +72,8 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
     return true;
 }
 
-template <typename Close, typename Char, typename Escape, typename Limit>
+template <typename Close, typename Char, typename Limit, typename... Escapes>
 struct _del : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            auto sink      = context.sink();
-            auto del_begin = reader.cur();
-
-            using close  = lexy::rule_parser<Close, _list_finish<NextParser, Args...>>;
-            using escape = lexy::rule_parser<Escape, _list_sink>;
-            while (true)
-            {
-                // Try to finish parsing the production.
-                if (auto result = close::try_parse(context, reader, LEXY_FWD(args)..., sink);
-                    result != lexy::rule_try_parse_result::backtracked)
-                {
-                    // We had a closing delimiter, return that result.
-                    return static_cast<bool>(result);
-                }
-                // Check for missing closing delimiter.
-                else if (lexy::engine_peek<typename Limit::token_engine>(reader))
-                {
-                    auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
-                                                                                 reader.cur());
-                    context.error(err);
-                    return false;
-                }
-                // Try to parse an escape sequence.
-                else if (auto result = escape::try_parse(context, reader, sink);
-                         result != lexy::rule_try_parse_result::backtracked)
-                {
-                    // If we just parsed an escape sequence, we just continue with the next
-                    // character.
-                    //
-                    // If we had an invalid escape sequence, we also just continue as if
-                    // nothing happened.
-                    // The leading escape character will be skipped, as well as any valid prefixes.
-                    // We could try and add them to the list, but it should be fine as-is.
-                }
-                // Parse the next character.
-                else
-                {
-                    if (!_del_parse_char<Char>(context, reader, sink))
-                        return false;
-                }
-            }
-
-            return false; // unreachable
-        }
-    };
-};
-template <typename Close, typename Char, typename Limit>
-struct _del<Close, Char, void, Limit>
 {
     template <typename NextParser>
     struct parser
@@ -157,6 +102,23 @@ struct _del<Close, Char, void, Limit>
                     context.error(err);
                     return false;
                 }
+                // Try to parse the escape sequences.
+                else if (auto result = lexy::rule_try_parse_result::backtracked;
+                         // This tries to parse each escape in order until one doesn't backtrack.
+                         // Then enters the if.
+                         ((result = lexy::rule_parser<Escapes, _list_sink>::try_parse(context,
+                                                                                      reader, sink),
+                           result != lexy::rule_try_parse_result::backtracked)
+                          || ...))
+                {
+                    // If we just parsed an escape sequence, we just continue with the next
+                    // character.
+                    //
+                    // If we had an invalid escape sequence, we also just continue as if
+                    // nothing happened.
+                    // The leading escape character will be skipped, as well as any valid prefixes.
+                    // We could try and add them to the list, but it should be fine as-is.
+                }
                 // Parse the next character.
                 else
                 {
@@ -169,6 +131,9 @@ struct _del<Close, Char, void, Limit>
         }
     };
 };
+
+struct _escape_base
+{};
 
 template <typename Open, typename Close, typename Limit>
 struct _delim_dsl
@@ -184,18 +149,12 @@ struct _delim_dsl
 
     //=== rules ===//
     /// Sets the content.
-    template <typename Char>
-    constexpr auto operator()(Char) const
+    template <typename Char, typename... Escapes>
+    constexpr auto operator()(Char, Escapes...) const
     {
         static_assert(lexy::is_token<Char>);
-        return no_whitespace(open() >> _del<Close, Char, void, Limit>{});
-    }
-    template <typename Char, typename Escape>
-    constexpr auto operator()(Char, Escape) const
-    {
-        static_assert(lexy::is_token<Char>);
-        static_assert(lexy::is_branch<Escape>);
-        return no_whitespace(open() >> _del<Close, Char, Escape, Limit>{});
+        static_assert((std::is_base_of_v<_escape_base, Escapes> && ...));
+        return no_whitespace(open() >> _del<Close, Char, Limit, Escapes...>{});
     }
 
     //=== access ===//
@@ -315,7 +274,7 @@ struct _escape_char : token_base<_escape_char>
 };
 
 template <typename Escape, typename... Branches>
-struct _escape : decltype(_escape_rule<Escape>(Branches{}...))
+struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
 {
     /// Adds a generic escape rule.
     template <typename Branch>

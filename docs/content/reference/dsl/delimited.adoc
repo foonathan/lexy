@@ -38,7 +38,7 @@ namespace lexy::dsl
 
         //=== rules ===//
         constexpr _rule_ auto operator()(_token-rule_ c) const;
-        constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+        constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ ... escapes) const;
     };
 
     constexpr _delimited-dsl_ delimited(_branch-rule_ auto open,
@@ -98,20 +98,22 @@ CAUTION: The limit must be a character that must not be allowed inside the delim
 {{% interface %}}
 ----
 constexpr _rule_ auto operator()(_token-rule_ c) const;
-constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ escape) const;
+constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ ... escapes) const;
 ----
 
 [.lead]
 `.operator()` returns a rule that parses zero or more occurrences of `c` inside the delimited,
 with optional `escape` sequences.
 
+Requires::
+  Each escape sequence `escapes` must begin with a distinct escape character (e.g. one with backslash and one with dollar).
 Parsing::
   Parses `open()`, then enters a loop where it repeatedly does the following in order:
   1. Tries parsing `close()`. If that succeeds, finishes.
   2. Tries match any of the token rules provided as a limit, if there are any,
      and tries to match {{% docref "lexy::dsl::eof" %}}.
      If any of them match, fails with a missing delimiter.
-  3. For the second overload, tries to parse `escape` (see below).
+  3. For the second overload, tries to parse all `escapes` (see below for what it does).
   4. Parses `c`.
   While parsing the delimited, automatic whitespace skipping is disabled;
   whitespace is only skipped after `close()`.
