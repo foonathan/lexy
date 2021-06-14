@@ -18,7 +18,7 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    struct _choice_ {}; // models _branch-rule_
+    struct _choice_ {}; // models _rule_, and sometimes _branch-rule_
 
     constexpr _choice_ operator|(_branch-rule_ auto lhs, _branch-rule_ auto rhs);
 
@@ -34,6 +34,7 @@ namespace lexy::dsl
 Parsing::
   Tries to parse `lhs`, then tries to parse `rhs`.
 Branch parsing::
+  It is a branch rule if neither `lhs` nor `rhs` are unconditional branches (e.g. {{% docref "lexy::dsl::else_" %}}).
   Tries to parse `lhs`, then tries to parse `rhs`.
   Backtracks instead of failing for an exhausted choice.
 Errors::

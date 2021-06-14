@@ -96,8 +96,12 @@ struct _chc_parser<NextParser, H, T...>
 template <typename... R>
 struct _chc : rule_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = (R::is_unconditional_branch || ...);
+    static constexpr auto _would_be_unconditional_branch = (R::is_unconditional_branch || ...);
+
+    // We only make it a choice if it's not an unconditional branch;
+    // this is almost surely a bug.
+    static constexpr auto is_branch              = !_would_be_unconditional_branch;
+    static constexpr auto is_unconditonal_branch = false;
 
     template <typename NextParser>
     using parser = _chc_parser<NextParser, R...>;

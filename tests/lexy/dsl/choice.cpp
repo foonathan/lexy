@@ -82,6 +82,7 @@ TEST_CASE("dsl::operator|")
     {
         static constexpr auto rule = LEXY_LIT("abc") >> label<0> | lexy::dsl::else_ >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(!lexy::is_branch<decltype(rule)>);
 
         struct callback
         {
@@ -177,44 +178,6 @@ TEST_CASE("dsl::operator|")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty == 0);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 1);
-        auto def = LEXY_VERIFY("def");
-        CHECK(def == 2);
-    }
-    SUBCASE("as unconditional branch")
-    {
-        static constexpr auto rule = lexy::dsl::if_(LEXY_LIT("abc") >> label<1>   //
-                                                    | LEXY_LIT("def") >> label<2> //
-                                                    | lexy::dsl::else_ >> label<3>);
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, id<1>)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                LEXY_VERIFY_CHECK(match == "abc");
-                return 1;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, id<2>)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                LEXY_VERIFY_CHECK(match == "def");
-                return 2;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, id<3>)
-            {
-                LEXY_VERIFY_CHECK(str == cur);
-                return 3;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 3);
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc == 1);

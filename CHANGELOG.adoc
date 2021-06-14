@@ -3,6 +3,11 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-06-14
+
+Choice (`operator|`) is no longer a branch rule if it would be an unconditional branch rule;
+using an unconditional choice as a branch is almost surely a bug.
+
 == 2021-06-13
 
 * Removed `dsl::label` and `dsl::id`; use a separate production instead.
