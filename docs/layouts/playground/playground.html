@@ -132,7 +132,7 @@ async function load()
     else
     {
         // Load session entry or default.
-        var def = await playground.load_example('default');
+        var def = await playground.load_example("{{ (resources.Get "playground/default.cpp").RelPermalink }}");
         result.grammar    = storage.getItem('editor-grammar') || def.grammar;
         result.input      = storage.getItem('editor-input') || def.input;
         result.production = storage.getItem('toolbar-production') || def.production;
