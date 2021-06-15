@@ -50,13 +50,13 @@ template <typename T>
 constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
 
 template <typename T, typename... Args>
-using _detect_callback_for = decltype(LEXY_DECLVAL(T)(LEXY_DECLVAL(Args)...));
+using _detect_callback_for = decltype(LEXY_DECLVAL(const T)(LEXY_DECLVAL(Args)...));
 template <typename T, typename... Args>
 constexpr bool is_callback_for
     = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 
 template <typename T, typename Context>
-using _detect_callback_context = decltype(LEXY_DECLVAL(T)[LEXY_DECLVAL(const Context&)]);
+using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
 template <typename T, typename Context>
 constexpr bool is_callback_context = _detail::is_detected<_detect_callback_context, T, Context>;
 
@@ -65,7 +65,7 @@ template <typename Sink, typename... Args>
 using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
 
 template <typename T, typename... Args>
-using _detect_sink = decltype(LEXY_DECLVAL(T).sink(LEXY_DECLVAL(Args)...).finish());
+using _detect_sink = decltype(LEXY_DECLVAL(const T).sink(LEXY_DECLVAL(Args)...).finish());
 template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy

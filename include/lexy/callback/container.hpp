@@ -6,28 +6,76 @@
 #define LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/detect.hpp>
 
 namespace lexy
 {
+struct nullopt;
+
+template <typename Container>
+using _detect_reserve = decltype(LEXY_DECLVAL(Container&).reserve(std::size_t()));
+template <typename Container>
+constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
+
 template <typename Container>
 struct _list
 {
+    constexpr Container operator()(Container&& container) const
+    {
+        return LEXY_MOV(container);
+    }
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                 LEXY_DECLVAL(Container))>
+    {
+        Container result;
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace_back() for efficiency (or something),
+        // but SFINAE check for push_back(), as we don't want arbitrary conversions
+        // (and also emplace_back() isn't constrained).
+        (result.emplace_back(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+    template <typename C = Container, typename... Args>
+    constexpr auto operator()(const typename C::allocator_type& allocator, Args&&... args) const
+        -> decltype((LEXY_DECLVAL(C&).push_back(LEXY_FWD(args)), ...), C(allocator))
+    {
+        Container result(allocator);
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // See above.
+        (result.emplace_back(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
     struct _sink
     {
         Container _result;
 
         using return_type = Container;
 
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
+        template <typename C = Container, typename U>
+        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
         {
             return _result.push_back(LEXY_FWD(obj));
         }
 
-        template <typename... Args>
-        void operator()(Args&&... args)
+        template <typename C = Container, typename... Args>
+        auto operator()(Args&&... args)
+            -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
         {
-            _result.emplace_back(LEXY_FWD(args)...);
+            return _result.emplace_back(LEXY_FWD(args)...);
         }
 
         Container&& finish() &&
@@ -55,22 +103,64 @@ constexpr auto as_list = _list<Container>{};
 template <typename Container>
 struct _collection
 {
+    constexpr Container operator()(Container&& container) const
+    {
+        return LEXY_MOV(container);
+    }
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                 LEXY_DECLVAL(Container))>
+    {
+        Container result;
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace() for efficiency (or something),
+        // but SFINAE check for insert(), as we don't want arbitrary conversions
+        // (and also emplace() isn't constrained).
+        (result.emplace(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
+    template <typename C = Container, typename... Args>
+    constexpr auto operator()(const typename C::allocator_type& allocator, Args&&... args) const
+        -> decltype((LEXY_DECLVAL(C&).insert(LEXY_FWD(args)), ...), C(allocator))
+    {
+        Container result(allocator);
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace() for efficiency (or something),
+        // but SFINAE check for insert(), as we don't want arbitrary conversions
+        // (and also emplace() isn't constrained).
+        (result.emplace(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
     struct _sink
     {
         Container _result;
 
         using return_type = Container;
 
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
+        template <typename C = Container, typename U>
+        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
         {
             return _result.insert(LEXY_FWD(obj));
         }
 
-        template <typename... Args>
-        void operator()(Args&&... args)
+        template <typename C = Container, typename... Args>
+        auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
         {
-            _result.emplace(LEXY_FWD(args)...);
+            return _result.emplace(LEXY_FWD(args)...);
         }
 
         Container&& finish() &&

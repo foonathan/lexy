@@ -38,7 +38,7 @@ It will discard any values produced and does not give detailed information about
 
 NOTE: A production does not necessarily need to consume the entire input for it to match.
 Add `lexy::dsl::eof` to the end if the production should consume the entire input.
-
+42
 [discrete]
 === Validating
 
@@ -367,10 +367,14 @@ namespace lexy
 }
 ----
 
-`lexy::as_list<Container>` is a sink.
-If `.sink()` is called with no arguments, it default constructs a `Container`.
-If `.sink()` is called with a single argument of type `Container::allocator_type`, it constructs an empty `Container` using that allocator.
-It then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
+`lexy::as_list<Container>` is a callback and a sink:
+
+* As a callback, it accepts a `lexy::nullopt` which results in an empty `Container`,
+  or a sequence of arguments with optional allocator.
+  In the latter case, all arguments are added via `push_back()` to an empty container.
+* If `.sink()` is called with no arguments, it default constructs a `Container`.
+  If `.sink()` is called with a single argument of type `Container::allocator_type`, it constructs an empty `Container` using that allocator.
+  It then repeatedly calls `push_back()` for single arguments and `emplace_back()` otherwise.
 
 `lexy::as_collection<Container>` is like `lexy::as_list<Container>`, but instead of calling `push_back()` and `emplace_back()`, it calls `insert()` and `emplace()`.
 
