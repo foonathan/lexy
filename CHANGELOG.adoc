@@ -11,6 +11,7 @@ Until the first release is done, breaking changes -- but not new features -- are
 * *Behavior change*: `.opt_list()` of `dsl::terminator`/`dsl::brackets` now produces `lexy::nullopt` instead of an empty sink result if the list has no items.
   If you're using pre-defined callbacks like `lexy::as_list`, `lexy::as_collection`, or `lexy::as_string`, it continues to work as expected.
   If you're using `sink >> callback`, `callback` now requires one overload that takes `lexy::nullopt`.
+* Removed `.while[_one]()` from `dsl::terminator`/`dsl::brackets`.
 
 == 2021-06-14
 

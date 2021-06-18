@@ -38,19 +38,6 @@ struct _brackets
         return open() >> as_terminator().try_(r);
     }
 
-    /// Matches rule as often as possible, surrounded by brackets.
-    template <typename R>
-    constexpr auto while_(R r) const
-    {
-        return open() >> as_terminator().while_(r);
-    }
-    /// Matches rule as often as possible but at least once, surrounded by brackets.
-    template <typename R>
-    constexpr auto while_one(R r) const
-    {
-        return open() >> r + as_terminator().while_(r);
-    }
-
     /// Matches `opt(r)` surrounded by brackets.
     /// The rule does not require a condition.
     template <typename R>

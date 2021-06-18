@@ -16,8 +16,6 @@ namespace lexyd
 {
 template <typename Terminator, typename R, typename Recover>
 struct _optt;
-template <typename Terminator, typename R, typename Recover>
-struct _whlt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _lstt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
@@ -51,22 +49,6 @@ struct _term
     constexpr auto try_(Rule rule) const
     {
         return lexyd::try_(rule + terminator(), recovery_rule());
-    }
-
-    /// Matches rule as long as terminator isn't matched.
-    template <typename Rule>
-    constexpr auto while_(Rule) const
-    {
-        return _whlt<Terminator, Rule, decltype(recovery_rule())>{};
-    }
-    /// Matches rule as long as terminator isn't matched, but at least once.
-    template <typename Rule>
-    constexpr auto while_one(Rule rule) const
-    {
-        if constexpr (lexy::is_branch<Rule>)
-            return rule >> while_(rule);
-        else
-            return rule + while_(rule);
     }
 
     /// Matches opt(rule) followed by terminator.

@@ -27,10 +27,6 @@ namespace lexy::dsl
 
         constexpr _rule_ auto opt(_rule_ auto rule) const;
 
-        constexpr _rule_        auto while_(_rule_ auto rule) const;
-        constexpr _rule_        auto while_one(_rule_ auto rule) const;
-        constexpr _branch-rule_ auto while_one(_branch-rule_ auto rule) const;
-
         constexpr _rule_ auto list(_rule_ auto item) const;
         constexpr _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 
@@ -163,41 +159,6 @@ Values::
 {{% playground_example terminator_opt "Parse a (null) statement" %}}
 
 NOTE: `.opt(rule)` consumes the same input as {{% docref "lexy::dsl::opt" %}}`(` {{% docref "lexy::dsl::peek_not" %}}`(terminator()) >> rule ) + terminator()`, but more efficiently.
-
-=== Rules `.while_()` and `.while_one()`
-
-{{% interface %}}
-----
-constexpr _rule_ auto while_(_rule_ auto rule) const;
-
-constexpr _rule_        auto while_one(_rule_ auto rule) const
-{
-    return rule + while_(rule);
-}
-constexpr _branch-rule_ auto while_one(_branch-rule_ auto rule) const
-{
-    return rule >> while_(rule);
-}
-----
-
-[.lead]
-`.while_()` returns a rule that parses `rule` as often as possible and then the terminator.
-
-Requires::
-  `rule` must not produce any values or set context variables that persist over loop iterations.
-Parsing::
-  While `terminator()` does not match, parses `rule`.
-  Then parses `terminator()`.
-Errors::
-  All errors raised by parsing `rule` or `terminator()`.
-  It can recover from a failed `rule` by parsing `recovery_rule()`.
-  It does not recover from a failed `terminator()`.
-Values::
-  All values produced by `terminator()`.
-
-`.while_one()` is just syntax sugar for the expression indicated above.
-
-NOTE: `.while_(rule)` consumes the same input as {{% docref "lexy::dsl::while_" %}}`(` {{% docref "lexy::dsl::peek_not" %}}`(terminator()) >> rule ) + terminator()`, but more efficiently.
 
 === Rule `.list()`
 

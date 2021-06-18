@@ -37,9 +37,6 @@ namespace lexy::dsl
 
         constexpr _branch-rule_ auto opt(_rule_ auto rule) const;
 
-        constexpr _branch-rule_ auto while_(_rule_ auto rule) const;
-        constexpr _branch-rule_ auto while_one(_rule_ auto rule) const;
-
         constexpr _branch-rule_ auto list(_rule_ auto item) const;
         constexpr _branch-rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 
@@ -109,15 +106,6 @@ constexpr _branch-rule_ auto try_(_rule_ auto rule) const
 constexpr _branch-rule_ auto opt(_rule_ auto rule) const
 {
     return open() >> as_terminator().opt(rule);
-}
-
-constexpr _branch-rule_ auto while_(_rule_ auto rule) const
-{
-    return open() >> as_terminator().while_(rule);
-}
-constexpr _branch-rule_ auto while_one(_rule_ auto rule) const
-{
-    return open() >> as_terminator().while_one(rule);
 }
 
 constexpr _branch-rule_ auto list(_rule_ auto item) const

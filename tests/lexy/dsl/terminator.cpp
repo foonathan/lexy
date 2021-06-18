@@ -8,7 +8,6 @@
 #include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
-#include <lexy/dsl/while.hpp>
 
 TEST_CASE("dsl::terminator")
 {
@@ -114,54 +113,6 @@ TEST_CASE("dsl::terminator")
 
         auto no_terminator = LEXY_VERIFY("abc");
         CHECK(no_terminator == -4);
-    }
-    SUBCASE("while")
-    {
-        static constexpr auto rule = terminator.while_(inner);
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto zero = LEXY_VERIFY(";");
-        CHECK(zero == 1);
-        auto one = LEXY_VERIFY("abc;");
-        CHECK(one == 4);
-        auto two = LEXY_VERIFY("abcabc;");
-        CHECK(two == 7);
-
-        auto partial = LEXY_VERIFY("abcab;");
-        CHECK(partial.value == 6);
-        CHECK(partial.errors(-1));
-        auto invalid = LEXY_VERIFY("abcabdef;");
-        CHECK(invalid.value == 9);
-        CHECK(invalid.errors(-1));
-
-        auto no_terminator = LEXY_VERIFY("abc");
-        CHECK(no_terminator == -1);
-    }
-    SUBCASE("while_one")
-    {
-        static constexpr auto rule = terminator.while_one(inner);
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto zero = LEXY_VERIFY(";");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("abc;");
-        CHECK(one == 4);
-        auto two = LEXY_VERIFY("abcabc;");
-        CHECK(two == 7);
-
-        auto partial = LEXY_VERIFY("abcab;");
-        CHECK(partial.value == 6);
-        CHECK(partial.errors(-1));
-        auto invalid = LEXY_VERIFY("abcabdef;");
-        CHECK(invalid.value == 9);
-        CHECK(invalid.errors(-1));
-
-        auto no_terminator = LEXY_VERIFY("abc");
-        CHECK(no_terminator == -1);
     }
     SUBCASE("opt")
     {

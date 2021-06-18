@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
-#include <lexy/dsl/while.hpp>
 
 TEST_CASE("dsl::bracketed")
 {
@@ -124,42 +123,6 @@ TEST_CASE("dsl::bracketed")
         CHECK(partial.errors(-1));
         auto invalid = LEXY_VERIFY("(abdef)");
         CHECK(invalid.value == 7);
-        CHECK(invalid.errors(-1));
-    }
-    SUBCASE("while")
-    {
-        static constexpr auto rule = lexy::dsl::parenthesized.while_(inner);
-
-        auto zero = LEXY_VERIFY("()");
-        CHECK(zero == 2);
-        auto one = LEXY_VERIFY("(abc)");
-        CHECK(one == 5);
-        auto two = LEXY_VERIFY("(abcabc)");
-        CHECK(two == 8);
-
-        auto partial = LEXY_VERIFY("(abcab)");
-        CHECK(partial.value == 7);
-        CHECK(partial.errors(-1));
-        auto invalid = LEXY_VERIFY("(abcabdef)");
-        CHECK(invalid.value == 10);
-        CHECK(invalid.errors(-1));
-    }
-    SUBCASE("while_one")
-    {
-        static constexpr auto rule = lexy::dsl::parenthesized.while_one(inner);
-
-        auto zero = LEXY_VERIFY("()");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("(abc)");
-        CHECK(one == 5);
-        auto two = LEXY_VERIFY("(abcabc)");
-        CHECK(two == 8);
-
-        auto partial = LEXY_VERIFY("(abcab)");
-        CHECK(partial.value == 7);
-        CHECK(partial.errors(-1));
-        auto invalid = LEXY_VERIFY("(abcabdef)");
-        CHECK(invalid.value == 10);
         CHECK(invalid.errors(-1));
     }
     SUBCASE("opt")
