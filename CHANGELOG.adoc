@@ -5,8 +5,12 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-06-18
 
-`lexy::fold[_inplace]` is now longer a callback, only a sink;
-use `lexy::callback(lexy::fold(...))` to turn it into a callback if needed.
+* `lexy::fold[_inplace]` is now longer a callback, only a sink;
+  use `lexy::callback(lexy::fold(...))` to turn it into a callback if needed.
+* Removed `dsl::opt_list()`; use `dsl::opt(dsl::list())` instead.
+* *Behavior change*: `.opt_list()` of `dsl::terminator`/`dsl::brackets` now produces `lexy::nullopt` instead of an empty sink result if the list has no items.
+  If you're using pre-defined callbacks like `lexy::as_list`, `lexy::as_collection`, or `lexy::as_string`, it continues to work as expected.
+  If you're using `sink >> callback`, `callback` now requires one overload that takes `lexy::nullopt`.
 
 == 2021-06-14
 

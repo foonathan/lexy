@@ -266,8 +266,11 @@ Errors::
   All errors raised by branch parsing of `terminator()` or parsing of `.list()`.
   It never recovers from the terminator, and recovers from `.list()` as described there.
 Values::
-  * The result of a sink that is finished without every invoking it followed by all values of `terminator()` in the first case.
+  The first argument is:
+  * a `lexy::nullopt` object in the first case,
   * The result of the `.list()` rule in the second case.
+  It is then followed by all values produced by `terminator()`.
 
-NOTE: `.list(rule, sep)` consumes the same input as {{% docref "lexy::dsl::opt_list" %}}`(` {{% docref "lexy::dsl::peek_not" %}}`(terminator()) >> rule, sep ) + terminator()`, but more efficiently.
+NOTE: This is different from `term.opt(term.list(r))` as that would parse the terminator twice: once by `.list()` and once by `.opt()`.
+Apart from that, it behaves identically.
 

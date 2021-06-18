@@ -7,7 +7,15 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/option.hpp>
 #include <lexy/dsl/separator.hpp>
+
+#ifdef LEXY_IGNORE_DEPRECATED_OPT_LIST
+#    define LEXY_DEPRECATED_OPT_LIST
+#else
+#    define LEXY_DEPRECATED_OPT_LIST                                                               \
+        [[deprecated("`dsl::opt_list(...)` has been replaced by `dsl::opt(dsl::list(...))`")]]
+#endif
 
 namespace lexyd
 {
@@ -441,13 +449,13 @@ struct _olst : rule_base
 
 /// Parses a list that might be empty.
 template <typename Item>
-constexpr auto opt_list(Item)
+LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, void>{};
 }
 template <typename Item, typename Sep>
-constexpr auto opt_list(Item, Sep)
+LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item, Sep)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, Sep>{};
@@ -491,11 +499,12 @@ struct _olstt : rule_base
             auto sink = context.sink();
 
             // Try parsing the terminator.
-            using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, Args...>>;
-            if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+            using term_parser = lexy::rule_parser<Term, NextParser>;
+            if (auto result
+                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
                 result != lexy::rule_try_parse_result::backtracked)
             {
-                // We had the terminator, and thus created an empty list.
+                // We had the terminator, and thus produced a nullopt.
                 return static_cast<bool>(result);
             }
             else

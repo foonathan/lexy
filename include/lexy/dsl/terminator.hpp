@@ -77,7 +77,7 @@ struct _term
         return _optt<Terminator, R, decltype(recovery_rule())>{};
     }
 
-    /// Matches `list(r, sep)` surrounded by brackets.
+    /// Matches `list(r, sep)` followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
     constexpr auto list(R) const
@@ -90,7 +90,7 @@ struct _term
         return _lstt<Terminator, R, Sep, decltype(recovery_rule())>{};
     }
 
-    /// Matches `opt_list(r, sep)` surrounded by brackets.
+    /// Matches `opt_list(r, sep)` followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
     constexpr auto opt_list(R) const

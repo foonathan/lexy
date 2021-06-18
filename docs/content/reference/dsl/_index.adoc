@@ -129,7 +129,7 @@ Parse tree::
   parse a branch rule while its condition matches
 {{% docref "lexy::dsl::times" %}}::
   parse a rule N times
-{{% docref "lexy::dsl::list" %}} and {{% docref "lexy::dsl::opt_list" %}}::
+{{% docref "lexy::dsl::list" %}}::
   parse a list of things
 {{% docref "lexy::dsl::until" %}}::
   skip everything until a rule matches

@@ -246,7 +246,7 @@ struct element
     // We collect the children as vector; then we construct a node from it.
     static constexpr auto value
         = lexy::as_list<std::vector<ast::xml_node_ptr>> >> lexy::callback<ast::xml_node_ptr>(
-              [](auto name) {
+              [](auto name, lexy::nullopt = {}) {
                   return std::make_unique<ast::xml_element>(lexy::as_string<std::string>(name));
               },
               [](auto name, auto&& children) {

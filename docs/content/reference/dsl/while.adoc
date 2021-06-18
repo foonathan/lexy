@@ -38,7 +38,7 @@ It can accept the empty string if `rule` backtracks on the first iteration.
 
 {{% playground_example while "Parse a word, which can be empty" %}}
 
-TIP: Use {{% docref "lexy::dsl::opt_list" %}} if `rule` produces values.
+TIP: Use {{% docref "lexy::dsl::opt" %}} and {{% docref "lexy::dsl::list" %}} if `rule` produces values.
 
 WARNING: If `rule` does not consume any characters, `while_` will loop forever.
 

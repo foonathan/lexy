@@ -3,11 +3,7 @@ layout: header
 header: "lexy/dsl/list.hpp"
 entities:
   "lexy::dsl::list": list
-  "lexy::dsl::opt_list": opt_list
 ---
-
-[.lead]
-The `list` and `opt_list` rules.
 
 [#list]
 == Rule `lexy::dsl::list`
@@ -80,31 +76,6 @@ TIP: If your list is always followed by a certain token or surrounded in parenth
 you can use {{% docref "lexy::dsl::terminator" %}} and {{% docref "lexy::dsl::brackets" %}},
 which do not require a branch rule as arguments.
 
-[#opt_list]
-== Rule `lexy::dsl::opt_list`
-
-{{% interface %}}
-----
-namespace lexy::dsl
-{
-    constexpr _rule_ auto opt_list(_branch-rule_ auto item);
-
-    constexpr _rule_ auto opt_list(_branch-rule_ auto item,
-                             _separator_ auto sep);
-}
-----
-
-[.lead]
-`opt_list` is a rule that parses a (possible empty) list of `item`, optionally separated by `sep`.
-
-Parsing::
-  Parses {{% docref `lexy::dsl::if_` %}}`(list(item))` (first overload), `lexy::dsl::if_(list(item, sep))` (second overload).
-Errors::
-  All errors raised during branch parsing of the normal list.
-  It then fails.
-Values::
-  If it has parsed a non-empty list, produces its value unchanged.
-  Otherwise, produces the value created from a sink that is finished without ever invoking it.
-
-{{% godbolt_example opt_list "Parse a (possibly empty) list of letters" %}}
+TIP: Use {{% docref "lexy::dsl::opt" %}}`(lexy::dsl::list(...))` to parse a list that might be empty;
+this requires a branch condition.
 

@@ -76,8 +76,11 @@ struct string_list_p
 
     static constexpr auto value = [] {
         auto sink = lexy::as_list<std::vector<lexy::_detail::string_view>>;
-        auto cb   = lexy::callback<std::size_t>(
-            [](const std::vector<lexy::_detail::string_view>& vec) { return vec.size(); });
+        auto cb
+            = lexy::callback<std::size_t>([](lexy::nullopt) { return 0u; },
+                                          [](const std::vector<lexy::_detail::string_view>& vec) {
+                                              return vec.size();
+                                          });
 
         return sink >> cb;
     }();
