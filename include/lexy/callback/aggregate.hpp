@@ -30,31 +30,23 @@ struct _as_aggregate
     using return_type = T;
     static_assert(std::is_aggregate_v<return_type>);
 
-    template <typename Fn, typename H, typename... Tail>
-    constexpr void _set(T& result, lexy::member<Fn>, H&& value, Tail&&... tail) const
+    constexpr T operator()(T&& result) const
     {
-        Fn()(result, LEXY_FWD(value));
-        if constexpr (sizeof...(Tail) > 0)
-            _set(result, LEXY_FWD(tail)...);
-    }
-
-    template <typename Fn, typename... Args>
-    constexpr auto operator()(lexy::member<Fn> member, Args&&... args) const
-    {
-        static_assert(sizeof...(Args) % 2 == 1, "missing dsl::member rules");
-
-        T result{};
-        _set(result, member, LEXY_FWD(args)...);
-        return result;
-    }
-    template <typename... Args>
-    constexpr auto operator()(return_type&& result, Args&&... args) const
-        -> std::enable_if_t<(sizeof...(Args) > 0), return_type>
-    {
-        static_assert(sizeof...(Args) % 2 == 0, "missing dsl::member rules");
-
-        _set(result, LEXY_FWD(args)...);
         return LEXY_MOV(result);
+    }
+
+    template <typename Fn, typename Value, typename... Tail>
+    constexpr T operator()(lexy::member<Fn>, Value&& value, Tail&&... tail) const
+    {
+        T result{};
+        Fn{}(result, LEXY_FWD(value));
+        return (*this)(LEXY_MOV(result), LEXY_FWD(tail)...);
+    }
+    template <typename Fn, typename Value, typename... Tail>
+    constexpr T operator()(T&& result, lexy::member<Fn>, Value&& value, Tail&&... tail) const
+    {
+        Fn{}(result, LEXY_FWD(value));
+        return (*this)(LEXY_MOV(result), LEXY_FWD(tail)...);
     }
 
     struct _sink
