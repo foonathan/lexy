@@ -190,12 +190,10 @@ constexpr auto arg_sep = [] {
         }
     };
 
-    // It's either blank or a backlash that escapes the newline.
-    // We turn it into a token to be able to trigger a single error if it doesn't match.
-    // If we used `... | dsl::error<missing_argument>` without the token,
-    // the `dsl::if_(arg_sep)` would always take the branch as the choice is now unconditional.
-    auto sep = dsl::token(dsl::ascii::blank | dsl::backslash >> dsl::newline);
-    return dsl::while_one(sep.error<missing_argument>);
+    auto blank      = dsl::ascii::blank;
+    auto escaped_nl = dsl::backslash >> dsl::newline;
+    auto sep        = dsl::must(blank | escaped_nl).error<missing_argument>;
+    return dsl::while_one(sep);
 }();
 
 //=== the commands ===//
