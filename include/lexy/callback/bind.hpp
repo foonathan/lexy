@@ -278,7 +278,7 @@ struct _bind_impl_callback<Derived, Callback, _detail::void_t<typename Callback:
         const Context& _context;
 
         template <typename... Args>
-        constexpr auto operator()(Args&&... args) const&&
+        constexpr return_type operator()(Args&&... args) const&&
         {
             return _detail::invoke_bound(_derived._callback, _derived._bound,
                                          _derived._bound.index_sequence(), _context,
@@ -351,6 +351,10 @@ template <typename Callback, typename... BoundArgs>
 constexpr auto bind(Callback&& callback, BoundArgs&&... args)
 {
     using callback_t = std::decay_t<Callback>;
+    static_assert(lexy::is_callback<callback_t> || lexy::is_sink<callback_t>);
+    static_assert(!lexy::is_callback<callback_t> || !lexy::is_sink<callback_t>,
+                  "cannot bind something that is both a Callback and a Sink;"
+                  "it would break the logic of lexy::parse");
     struct bound : _bind_impl_callback<bound, callback_t>, _bind_impl_sink<bound, callback_t>
     {
         LEXY_EMPTY_MEMBER callback_t _callback;
