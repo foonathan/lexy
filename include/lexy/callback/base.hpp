@@ -90,6 +90,31 @@ constexpr auto callback(Fns&&... fns)
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
 }
 
+template <typename Sink>
+struct _cb_from_sink
+{
+    Sink _sink;
+
+    using _cb         = lexy::sink_callback<Sink>;
+    using return_type = typename _cb::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
+    {
+        auto cb = _sink.sink();
+        (cb(LEXY_FWD(args)), ...);
+        return LEXY_MOV(cb).finish();
+    }
+};
+
+/// Creates a callback that forwards all arguments to the sink.
+template <typename Sink, typename = lexy::sink_callback<Sink>>
+constexpr auto callback(Sink&& sink)
+{
+    return _cb_from_sink<std::decay_t<Sink>>{LEXY_FWD(sink)};
+}
+
 template <typename T, typename Callback>
 class _sink_cb
 {

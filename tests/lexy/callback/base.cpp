@@ -70,6 +70,15 @@ TEST_CASE("callback")
     }
 }
 
+TEST_CASE("callback from sink")
+{
+    constexpr auto sink     = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
+    constexpr auto callback = lexy::callback(sink);
+
+    CHECK(callback() == 0);
+    CHECK(callback(1, 2, 3) == 6);
+}
+
 TEST_CASE("callback compose")
 {
     SUBCASE("callbacks")
