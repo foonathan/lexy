@@ -7,9 +7,9 @@
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/identifier.hpp>
+#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/dsl/while.hpp>
 
 TEST_CASE("symbol_table")
 {

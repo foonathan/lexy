@@ -6,7 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/alternative.hpp>
-#include <lexy/dsl/while.hpp>
+#include <lexy/dsl/loop.hpp>
 
 TEST_CASE("dsl::context_lexeme")
 {

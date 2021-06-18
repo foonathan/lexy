@@ -5,69 +5,8 @@
 #ifndef LEXY_DSL_WHILE_HPP_INCLUDED
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
-#include <lexy/dsl/base.hpp>
-#include <lexy/dsl/branch.hpp>
-
-namespace lexyd
-{
-template <typename Branch>
-struct _whl : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            while (true)
-            {
-                using branch_parser
-                    = lexy::rule_parser<Branch, lexy::context_discard_parser<Context>>;
-
-                auto result = branch_parser::try_parse(context, reader);
-                if (result == lexy::rule_try_parse_result::backtracked)
-                    break;
-                else if (result == lexy::rule_try_parse_result::canceled)
-                    return false;
-            }
-
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-};
-
-/// Matches the branch rule as often as possible.
-template <typename Rule>
-constexpr auto while_(Rule)
-{
-    static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
-    return _whl<Rule>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-/// Matches the rule at least once, then as often as possible.
-template <typename Rule>
-constexpr auto while_one(Rule rule)
-{
-    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
-    return rule >> while_(rule);
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-/// Matches then once, then `while_(condition >> then)`.
-template <typename Then, typename Condition>
-constexpr auto do_while(Then then, Condition condition)
-{
-    if constexpr (lexy::is_branch<Then>)
-        return then >> while_(condition >> then);
-    else
-        return then + while_(condition >> then);
-}
-} // namespace lexyd
+#warning "include <lexy/dsl/loop.hpp> instead"
+#include <lexy/dsl/loop.hpp>
 
 namespace lexyd
 {

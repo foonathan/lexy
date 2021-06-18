@@ -52,7 +52,6 @@
 #include <lexy/dsl/token.hpp>
 #include <lexy/dsl/until.hpp>
 #include <lexy/dsl/value.hpp>
-#include <lexy/dsl/while.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
 #endif // LEXY_DSL_HPP_INCLUDED

@@ -71,7 +71,6 @@ set(tests
         dsl/times.cpp
         dsl/token.cpp
         dsl/until.cpp
-        dsl/while.cpp
         dsl/whitespace.cpp
 
         engine/any.cpp

@@ -6,7 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/while.hpp>
+#include <lexy/dsl/loop.hpp>
 
 TEST_CASE("dsl::operator/")
 {

@@ -79,7 +79,6 @@ set(header_files
         ${include_dir}/dsl/token.hpp
         ${include_dir}/dsl/until.hpp
         ${include_dir}/dsl/value.hpp
-        ${include_dir}/dsl/while.hpp
         ${include_dir}/dsl/whitespace.hpp
 
         ${include_dir}/engine/any.hpp
