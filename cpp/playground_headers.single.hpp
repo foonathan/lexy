@@ -1573,13 +1573,13 @@ template <typename T>
 constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
 
 template <typename T, typename... Args>
-using _detect_callback_for = decltype(LEXY_DECLVAL(T)(LEXY_DECLVAL(Args)...));
+using _detect_callback_for = decltype(LEXY_DECLVAL(const T)(LEXY_DECLVAL(Args)...));
 template <typename T, typename... Args>
 constexpr bool is_callback_for
     = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 
 template <typename T, typename Context>
-using _detect_callback_context = decltype(LEXY_DECLVAL(T)[LEXY_DECLVAL(const Context&)]);
+using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
 template <typename T, typename Context>
 constexpr bool is_callback_context = _detail::is_detected<_detect_callback_context, T, Context>;
 
@@ -1588,7 +1588,7 @@ template <typename Sink, typename... Args>
 using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
 
 template <typename T, typename... Args>
-using _detect_sink = decltype(LEXY_DECLVAL(T).sink(LEXY_DECLVAL(Args)...).finish());
+using _detect_sink = decltype(LEXY_DECLVAL(const T).sink(LEXY_DECLVAL(Args)...).finish());
 template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy
@@ -1611,6 +1611,31 @@ template <typename ReturnType = void, typename... Fns>
 constexpr auto callback(Fns&&... fns)
 {
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+
+template <typename Sink>
+struct _cb_from_sink
+{
+    Sink _sink;
+
+    using _cb         = lexy::sink_callback<Sink>;
+    using return_type = typename _cb::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
+    {
+        auto cb = _sink.sink();
+        (cb(LEXY_FWD(args)), ...);
+        return LEXY_MOV(cb).finish();
+    }
+};
+
+/// Creates a callback that forwards all arguments to the sink.
+template <typename Sink, typename = lexy::sink_callback<Sink>>
+constexpr auto callback(Sink&& sink)
+{
+    return _cb_from_sink<std::decay_t<Sink>>{LEXY_FWD(sink)};
 }
 
 template <typename T, typename Callback>
@@ -4516,6 +4541,7 @@ inline constexpr auto else_ = _else{};
 
 
 
+
 namespace lexyd
 {
 template <typename Tag, typename Token>
@@ -4557,6 +4583,62 @@ struct _err : rule_base
 /// Matches nothing, produces an error with the given tag.
 template <typename Tag>
 constexpr auto error = _err<Tag, void>{};
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Branch, typename Error>
+struct _must : rule_base
+{
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = false;
+
+    template <typename NextParser>
+    struct parser : lexy::rule_parser<Branch, NextParser>
+    {
+        // inherit try_parse() from Branch
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using parser = lexy::rule_parser<Branch, NextParser>;
+            auto result  = parser::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result != lexy::rule_try_parse_result::backtracked)
+                return static_cast<bool>(result);
+            else
+                return lexy::rule_parser<Error, NextParser>::parse(context, reader,
+                                                                   LEXY_FWD(args)...);
+        }
+    };
+};
+
+template <typename Branch>
+struct _must_dsl
+{
+    template <typename Tag>
+    struct _err : _must<Branch, lexyd::_err<Tag, void>>
+    {
+        template <typename Rule>
+        constexpr auto operator()(Rule rule) const
+        {
+            auto err = lexyd::error<Tag>(rule);
+            return _must<Branch, decltype(err)>{};
+        }
+    };
+
+    template <typename Tag>
+    static constexpr _err<Tag> error = _err<Tag>{};
+};
+
+/// Tries to parse `Branch` and raises a specific error on failure.
+/// It can still be used as a branch rule; then behaves exactly like `Branch.`
+template <typename Branch>
+constexpr auto must(Branch)
+{
+    static_assert(lexy::is_branch<Branch>);
+    static_assert(!Branch::is_unconditional_branch);
+    return _must_dsl<Branch>{};
+}
 } // namespace lexyd
 
 namespace lexyd
@@ -5653,6 +5735,7 @@ constexpr auto try_(Rule, Recover)
 
 
 
+
 namespace lexyd
 {
 struct _break : rule_base
@@ -5714,6 +5797,67 @@ template <typename Rule>
 constexpr auto loop(Rule)
 {
     return _loop<Rule>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Branch>
+struct _whl : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            while (true)
+            {
+                using branch_parser
+                    = lexy::rule_parser<Branch, lexy::context_discard_parser<Context>>;
+
+                auto result = branch_parser::try_parse(context, reader);
+                if (result == lexy::rule_try_parse_result::backtracked)
+                    break;
+                else if (result == lexy::rule_try_parse_result::canceled)
+                    return false;
+            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+};
+
+/// Matches the branch rule as often as possible.
+template <typename Rule>
+constexpr auto while_(Rule)
+{
+    static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
+    return _whl<Rule>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+/// Matches the rule at least once, then as often as possible.
+template <typename Rule>
+constexpr auto while_one(Rule rule)
+{
+    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
+    return rule >> while_(rule);
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+/// Matches then once, then `while_(condition >> then)`.
+template <typename Then, typename Condition>
+constexpr auto do_while(Then then, Condition condition)
+{
+    if constexpr (lexy::is_branch<Then>)
+        return then >> while_(condition >> then);
+    else
+        return then + while_(condition >> then);
 }
 } // namespace lexyd
 
@@ -5963,8 +6107,6 @@ namespace lexyd
 {
 template <typename Terminator, typename R, typename Recover>
 struct _optt;
-template <typename Terminator, typename R, typename Recover>
-struct _whlt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _lstt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
@@ -6000,22 +6142,6 @@ struct _term
         return lexyd::try_(rule + terminator(), recovery_rule());
     }
 
-    /// Matches rule as long as terminator isn't matched.
-    template <typename Rule>
-    constexpr auto while_(Rule) const
-    {
-        return _whlt<Terminator, Rule, decltype(recovery_rule())>{};
-    }
-    /// Matches rule as long as terminator isn't matched, but at least once.
-    template <typename Rule>
-    constexpr auto while_one(Rule rule) const
-    {
-        if constexpr (lexy::is_branch<Rule>)
-            return rule >> while_(rule);
-        else
-            return rule + while_(rule);
-    }
-
     /// Matches opt(rule) followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
@@ -6024,7 +6150,7 @@ struct _term
         return _optt<Terminator, R, decltype(recovery_rule())>{};
     }
 
-    /// Matches `list(r, sep)` surrounded by brackets.
+    /// Matches `list(r, sep)` followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
     constexpr auto list(R) const
@@ -6037,7 +6163,7 @@ struct _term
         return _lstt<Terminator, R, Sep, decltype(recovery_rule())>{};
     }
 
-    /// Matches `opt_list(r, sep)` surrounded by brackets.
+    /// Matches `opt_list(r, sep)` followed by terminator.
     /// The rule does not require a condition.
     template <typename R>
     constexpr auto opt_list(R) const
@@ -6115,19 +6241,6 @@ struct _brackets
     constexpr auto try_(R r) const
     {
         return open() >> as_terminator().try_(r);
-    }
-
-    /// Matches rule as often as possible, surrounded by brackets.
-    template <typename R>
-    constexpr auto while_(R r) const
-    {
-        return open() >> as_terminator().while_(r);
-    }
-    /// Matches rule as often as possible but at least once, surrounded by brackets.
-    template <typename R>
-    constexpr auto while_one(R r) const
-    {
-        return open() >> r + as_terminator().while_(r);
     }
 
     /// Matches `opt(r)` surrounded by brackets.
@@ -7805,6 +7918,133 @@ constexpr auto context_lexeme = _ctx_lexeme<Id>{};
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#ifndef LEXY_DSL_OPTION_HPP_INCLUDED
+#define LEXY_DSL_OPTION_HPP_INCLUDED
+
+
+
+
+namespace lexy
+{
+// An optional type is something that has the following:
+// * a default constructors: this means we can actually construct it from our `nullopt`
+// * a dereference operator: this means that it actually contains something else
+// * a contextual conversion to bool: this means that it might be "false" (i.e. empty)
+//
+// This definition should work:
+// * it excludes all default constructible types that are convertible to bool (e.g. integers...)
+// * it includes pointers, which is ok
+// * it includes `std::optional` and all non-std implementations of it
+template <typename T>
+using _detect_optional_like = decltype(T(), *LEXY_DECLVAL(T&), !LEXY_DECLVAL(const T&));
+
+struct nullopt
+{
+    template <typename T, typename = _detect_optional_like<T>>
+    constexpr operator T() const
+    {
+        return T();
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+struct _nullopt : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+        }
+    };
+};
+
+constexpr auto nullopt = _nullopt{};
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Branch>
+struct _opt : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using branch_parser = lexy::rule_parser<Branch, NextParser>;
+
+            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
+            if (result == lexy::rule_try_parse_result::backtracked)
+                // Branch wasn't taken, continue anyway with nullopt.
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+            else
+                // Return true/false depending on result.
+                return static_cast<bool>(result);
+        }
+    };
+};
+
+/// Matches the rule or nothing.
+/// In the latter case, produces a `nullopt` value.
+template <typename Rule>
+constexpr auto opt(Rule)
+{
+    static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
+    if constexpr (Rule::is_unconditional_branch)
+        // Branch is always taken, so don't wrap in opt().
+        return Rule{};
+    else
+        return _opt<Rule>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Term, typename R, typename Recover>
+struct _optt : rule_base
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            // Try to parse the terminator.
+            using term_parser = lexy::rule_parser<Term, NextParser>;
+            if (auto result
+                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+                result != lexy::rule_try_parse_result::backtracked)
+            {
+                // We had the terminator, and thus created the empty optional.
+                return static_cast<bool>(result);
+            }
+
+            // Parse the rule followed by the terminator.
+            using parser = lexy::rule_parser<R, term_parser>;
+            if (!parser::parse(context, reader, LEXY_FWD(args)...))
+            {
+                using recovery = lexy::rule_parser<Recover, NextParser>;
+                return recovery::parse(context, reader, LEXY_FWD(args)...);
+            }
+
+            return true;
+        }
+    };
+};
+} // namespace lexyd
+
+#endif // LEXY_DSL_OPTION_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef LEXY_DSL_SEPARATOR_HPP_INCLUDED
 #define LEXY_DSL_SEPARATOR_HPP_INCLUDED
 
@@ -7938,6 +8178,13 @@ LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
 
 #endif // LEXY_DSL_SEPARATOR_HPP_INCLUDED
 
+
+#ifdef LEXY_IGNORE_DEPRECATED_OPT_LIST
+#    define LEXY_DEPRECATED_OPT_LIST
+#else
+#    define LEXY_DEPRECATED_OPT_LIST                                                               \
+        [[deprecated("`dsl::opt_list(...)` has been replaced by `dsl::opt(dsl::list(...))`")]]
+#endif
 
 namespace lexyd
 {
@@ -8371,13 +8618,13 @@ struct _olst : rule_base
 
 /// Parses a list that might be empty.
 template <typename Item>
-constexpr auto opt_list(Item)
+LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, void>{};
 }
 template <typename Item, typename Sep>
-constexpr auto opt_list(Item, Sep)
+LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item, Sep)
 {
     static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
     return _olst<Item, Sep>{};
@@ -8421,11 +8668,12 @@ struct _olstt : rule_base
             auto sink = context.sink();
 
             // Try parsing the terminator.
-            using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, Args...>>;
-            if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+            using term_parser = lexy::rule_parser<Term, NextParser>;
+            if (auto result
+                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
                 result != lexy::rule_try_parse_result::backtracked)
             {
-                // We had the terminator, and thus created an empty list.
+                // We had the terminator, and thus produced a nullopt.
                 return static_cast<bool>(result);
             }
             else
@@ -11604,132 +11852,6 @@ constexpr auto eol = _eol{};
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_OPTION_HPP_INCLUDED
-#define LEXY_DSL_OPTION_HPP_INCLUDED
-
-
-
-
-namespace lexy
-{
-// An optional type is something that has the following:
-// * a default constructors: this means we can actually construct it from our `nullopt`
-// * a dereference operator: this means that it actually contains something else
-// * a contextual conversion to bool: this means that it might be "false" (i.e. empty)
-//
-// This definition should work:
-// * it excludes all default constructible types that are convertible to bool (e.g. integers...)
-// * it includes pointers, which is ok
-// * it includes `std::optional` and all non-std implementations of it
-template <typename T>
-using _detect_optional_like = decltype(T(), *LEXY_DECLVAL(T&), !LEXY_DECLVAL(const T&));
-
-struct nullopt
-{
-    template <typename T, typename = _detect_optional_like<T>>
-    constexpr operator T() const
-    {
-        return T();
-    }
-};
-} // namespace lexy
-
-namespace lexyd
-{
-struct _nullopt : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
-        }
-    };
-};
-
-constexpr auto nullopt = _nullopt{};
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Branch>
-struct _opt : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using branch_parser = lexy::rule_parser<Branch, NextParser>;
-
-            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::backtracked)
-                // Branch wasn't taken, continue anyway with nullopt.
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
-            else
-                // Return true/false depending on result.
-                return static_cast<bool>(result);
-        }
-    };
-};
-
-/// Matches the rule or nothing.
-/// In the latter case, produces a `nullopt` value.
-template <typename Rule>
-constexpr auto opt(Rule)
-{
-    static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
-    if constexpr (Rule::is_unconditional_branch)
-        // Branch is always taken, so don't wrap in opt().
-        return Rule{};
-    else
-        return _opt<Rule>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Term, typename R, typename Recover>
-struct _optt : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            // Try to parse the terminator.
-            using term_parser = lexy::rule_parser<Term, NextParser>;
-            if (auto result
-                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
-                result != lexy::rule_try_parse_result::backtracked)
-            {
-                // We had the terminator, and thus created the empty optional.
-                return static_cast<bool>(result);
-            }
-
-            // Parse the rule followed by the terminator.
-            using parser = lexy::rule_parser<R, term_parser>;
-            if (!parser::parse(context, reader, LEXY_FWD(args)...))
-            {
-                using recovery = lexy::rule_parser<Recover, NextParser>;
-                return recovery::parse(context, reader, LEXY_FWD(args)...);
-            }
-
-            return true;
-        }
-    };
-};
-} // namespace lexyd
-
-#endif // LEXY_DSL_OPTION_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -12468,114 +12590,6 @@ constexpr auto until(Condition)
 #endif // LEXY_DSL_UNTIL_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_WHILE_HPP_INCLUDED
-#define LEXY_DSL_WHILE_HPP_INCLUDED
-
-
-
-
-namespace lexyd
-{
-template <typename Branch>
-struct _whl : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            while (true)
-            {
-                using branch_parser
-                    = lexy::rule_parser<Branch, lexy::context_discard_parser<Context>>;
-
-                auto result = branch_parser::try_parse(context, reader);
-                if (result == lexy::rule_try_parse_result::backtracked)
-                    break;
-                else if (result == lexy::rule_try_parse_result::canceled)
-                    return false;
-            }
-
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-};
-
-/// Matches the branch rule as often as possible.
-template <typename Rule>
-constexpr auto while_(Rule)
-{
-    static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
-    return _whl<Rule>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-/// Matches the rule at least once, then as often as possible.
-template <typename Rule>
-constexpr auto while_one(Rule rule)
-{
-    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
-    return rule >> while_(rule);
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-/// Matches then once, then `while_(condition >> then)`.
-template <typename Then, typename Condition>
-constexpr auto do_while(Then then, Condition condition)
-{
-    if constexpr (lexy::is_branch<Then>)
-        return then >> while_(condition >> then);
-    else
-        return then + while_(condition >> then);
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Term, typename Rule, typename Recover>
-struct _whlt : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            while (true)
-            {
-                using term_parser = lexy::rule_parser<Term, NextParser>;
-                if (auto result = term_parser::try_parse(context, reader, LEXY_FWD(args)...);
-                    result != lexy::rule_try_parse_result::backtracked)
-                {
-                    // We had the terminator, and thus are done.
-                    return static_cast<bool>(result);
-                }
-
-                using parser = lexy::rule_parser<Rule, lexy::context_discard_parser<Context>>;
-                if (!parser::parse(context, reader))
-                {
-                    using recovery = lexy::rule_parser<Recover, NextParser>;
-                    return recovery::parse(context, reader, LEXY_FWD(args)...);
-                }
-            }
-
-            return false; // unreachable
-        }
-    };
-};
-} // namespace lexyd
-
-#endif // LEXY_DSL_WHILE_HPP_INCLUDED
-
 
 
 #endif // LEXY_DSL_HPP_INCLUDED
@@ -12750,27 +12764,75 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
+
 namespace lexy
 {
+struct nullopt;
+
+template <typename Container>
+using _detect_reserve = decltype(LEXY_DECLVAL(Container&).reserve(std::size_t()));
+template <typename Container>
+constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
+
 template <typename Container>
 struct _list
 {
+    constexpr Container operator()(Container&& container) const
+    {
+        return LEXY_MOV(container);
+    }
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                 LEXY_DECLVAL(Container))>
+    {
+        Container result;
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace_back() for efficiency (or something),
+        // but SFINAE check for push_back(), as we don't want arbitrary conversions
+        // (and also emplace_back() isn't constrained).
+        (result.emplace_back(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+    template <typename C = Container, typename... Args>
+    constexpr auto operator()(const typename C::allocator_type& allocator, Args&&... args) const
+        -> decltype((LEXY_DECLVAL(C&).push_back(LEXY_FWD(args)), ...), C(allocator))
+    {
+        Container result(allocator);
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // See above.
+        (result.emplace_back(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
     struct _sink
     {
         Container _result;
 
         using return_type = Container;
 
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.push_back(LEXY_FWD(obj)))
+        template <typename C = Container, typename U>
+        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
         {
             return _result.push_back(LEXY_FWD(obj));
         }
 
-        template <typename... Args>
-        void operator()(Args&&... args)
+        template <typename C = Container, typename... Args>
+        auto operator()(Args&&... args)
+            -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
         {
-            _result.emplace_back(LEXY_FWD(args)...);
+            return _result.emplace_back(LEXY_FWD(args)...);
         }
 
         Container&& finish() &&
@@ -12798,22 +12860,64 @@ constexpr auto as_list = _list<Container>{};
 template <typename Container>
 struct _collection
 {
+    constexpr Container operator()(Container&& container) const
+    {
+        return LEXY_MOV(container);
+    }
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                 LEXY_DECLVAL(Container))>
+    {
+        Container result;
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace() for efficiency (or something),
+        // but SFINAE check for insert(), as we don't want arbitrary conversions
+        // (and also emplace() isn't constrained).
+        (result.emplace(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
+    template <typename C = Container, typename... Args>
+    constexpr auto operator()(const typename C::allocator_type& allocator, Args&&... args) const
+        -> decltype((LEXY_DECLVAL(C&).insert(LEXY_FWD(args)), ...), C(allocator))
+    {
+        Container result(allocator);
+        if constexpr (_has_reserve<Container>)
+            result.reserve(sizeof...(args));
+
+        // Note that we call emplace() for efficiency (or something),
+        // but SFINAE check for insert(), as we don't want arbitrary conversions
+        // (and also emplace() isn't constrained).
+        (result.emplace(LEXY_FWD(args)), ...);
+
+        return result;
+    }
+
     struct _sink
     {
         Container _result;
 
         using return_type = Container;
 
-        template <typename U>
-        auto operator()(U&& obj) -> decltype(_result.insert(LEXY_FWD(obj)))
+        template <typename C = Container, typename U>
+        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
         {
             return _result.insert(LEXY_FWD(obj));
         }
 
-        template <typename... Args>
-        void operator()(Args&&... args)
+        template <typename C = Container, typename... Args>
+        auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
         {
-            _result.emplace(LEXY_FWD(args)...);
+            return _result.emplace(LEXY_FWD(args)...);
         }
 
         Container&& finish() &&

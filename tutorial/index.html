@@ -156,9 +156,11 @@ and then add a callback that takes the lexeme and converts it into a <code>std::
     <span class=tok-c1>// The final value of this production is a std::string we&#39;ve created from the lexeme.</span>
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span>
         <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>string</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-k>auto</span> <span class=tok-n>lexeme</span><span class=tok-p>)</span> <span class=tok-p>{</span> <span class=tok-k>return</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>string</span><span class=tok-p>(</span><span class=tok-n>lexeme</span><span class=tok-p>.</span><span class=tok-n>begin</span><span class=tok-p>(),</span> <span class=tok-n>lexeme</span><span class=tok-p>.</span><span class=tok-n>end</span><span class=tok-p>());</span> <span class=tok-p>});</span>
-<span class=tok-p>};</span></code></pre></div></div><div class=paragraph><p>To finish it up, there are two things we can improve.
+<span class=tok-p>};</span></code></pre></div></div><div class=paragraph><p>To finish it up, there are three things we can improve.
 First, converting a <code>lexy::lexeme</code> to a <code>std::string</code> is an incredible common thing you want to do,
 so the library provides the callback <code>lexy::as_string&lt;std::string></code> for it.
+Second, we’re essentially parsing an identifier.
+There is a predefined rule <code>dsl::identifier()</code>, which does exactly the same thing as what we’ve just implemented.
 Second, the rule definition has become somewhat unreadable as its one big expression.
 We can use an immediately invoked lambda to improve that.</p></div><div class=listingblock><div class=title>The final <code>name</code> production (<a href=https://godbolt.org/z/v7rPbs>godbolt</a>)</div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>name</span>
 <span class=tok-p>{</span>
@@ -168,7 +170,7 @@ We can use an immediately invoked lambda to improve that.</p></div><div class=li
         <span class=tok-k>auto</span> <span class=tok-n>lead_char</span>     <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>;</span>
         <span class=tok-k>auto</span> <span class=tok-n>trailing_char</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;_&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
 
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n>lead_char</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n>trailing_char</span><span class=tok-p>));</span>
+        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>lead_char</span><span class=tok-p>,</span> <span class=tok-n>trailing_char</span><span class=tok-p>);</span>
     <span class=tok-p>}();</span>
 
     <span class=tok-c1>// The final value of this production is a std::string we&#39;ve created from the lexeme.</span>

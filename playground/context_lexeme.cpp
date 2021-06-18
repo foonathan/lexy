@@ -1,7 +1,7 @@
 // INPUT:Hello,Hallo
-struct word : lexy::token_production
+struct word
 {
-    static constexpr auto rule = dsl::while_one(dsl::ascii::alpha);
+    static constexpr auto rule = dsl::identifier(dsl::ascii::alpha);
 };
 
 struct production

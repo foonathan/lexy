@@ -20,9 +20,6 @@
 
         <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>opt</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-
         <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>list</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>item</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
         <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>list</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>item</span><span class=tok-p>,</span> <span class=tok-n><em>separator</em></span> <span class=tok-k>auto</span> <span class=tok-n>sep</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
@@ -55,15 +52,6 @@ As such, you don’t need to provide a branch condition anymore.</p></div><div c
 <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>opt</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
 <span class=tok-p>{</span>
     <span class=tok-k>return</span> <span class=tok-nf>open</span><span class=tok-p>()</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>as_terminator</span><span class=tok-p>().</span><span class=tok-n>opt</span><span class=tok-p>(</span><span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span>
-
-<span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-nf>open</span><span class=tok-p>()</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>as_terminator</span><span class=tok-p>().</span><span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-nf>open</span><span class=tok-p>()</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>as_terminator</span><span class=tok-p>().</span><span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n>rule</span><span class=tok-p>);</span>
 <span class=tok-p>}</span>
 
 <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>list</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>item</span><span class=tok-p>)</span> <span class=tok-k>const</span>
