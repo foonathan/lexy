@@ -7,6 +7,37 @@
 #include "verify.hpp"
 #include <lexy/dsl/list.hpp>
 
+TEST_CASE(".error")
+{
+    struct error;
+    static constexpr auto rule = LEXY_LIT("abc").error<error>;
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(lexy::is_token<decltype(rule)>);
+
+    struct callback
+    {
+        const char* str;
+
+        LEXY_VERIFY_FN int success(const char* cur)
+        {
+            LEXY_VERIFY_CHECK(cur - str == 3);
+            return 0;
+        }
+
+        LEXY_VERIFY_FN int error(test_error<error> e)
+        {
+            LEXY_VERIFY_CHECK(e.position() == str);
+            return -1;
+        }
+    };
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty == -1);
+
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc == 0);
+}
+
 TEST_CASE("dsl::token")
 {
     static constexpr auto rule = token(list(LEXY_LIT("abc") >> label<0>));

@@ -8,7 +8,7 @@
 
 TEST_CASE("dsl::if_()")
 {
-    SUBCASE("rule")
+    SUBCASE("token")
     {
         static constexpr auto rule = if_(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
