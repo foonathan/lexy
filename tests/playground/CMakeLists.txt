@@ -24,10 +24,11 @@ foreach(file ${examples})
     get_filename_component(name ${file} NAME)
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${name}
-        COMMAND ${CMAKE_COMMAND} -E echo "#include <lexy/dsl.hpp>"    >  "${CMAKE_CURRENT_BINARY_DIR}/${name}"
-        COMMAND ${CMAKE_COMMAND} -E echo "namespace dsl = lexy::dsl;" >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
-        COMMAND ${CMAKE_COMMAND} -E echo "#line 1 \"${file}\""        >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
-        COMMAND ${CMAKE_COMMAND} -E cat "${file}"                     >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "#include <lexy/dsl.hpp>"                                  >  "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "namespace dsl = lexy::dsl;"                               >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "#line 1 \"${file}\""                                      >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E cat "${file}"                                                   >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "[[maybe_unused]] constexpr auto rule = production::rule;" >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         VERBATIM DEPENDS "${file}")
     target_sources(lexy_test_playground_examples PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/${name})
 endforeach()
