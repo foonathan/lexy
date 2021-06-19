@@ -20,7 +20,7 @@ struct _ctx_lcreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Add the lexeme to the context.
+            static_assert(!Context::contains(Id{}));
             auto lex_ctx = context.insert(Id{}, lexy::lexeme<Reader>());
             return NextParser::parse(lex_ctx, reader, LEXY_FWD(args)...);
         }

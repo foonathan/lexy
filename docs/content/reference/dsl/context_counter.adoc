@@ -3,7 +3,11 @@ layout: header
 header: "lexy/dsl/context_counter.hpp"
 entities:
   "lexy::dsl::context_counter": context_counter
+  "lexy::dsl::equal_counts": equal_counts
 ---
+
+[.lead]
+A counter that can be manipulated during parsing.
 
 [#context_counter]
 == Rule DSL `lexy::dsl::context_counter`
@@ -24,10 +28,10 @@ namespace lexy::dsl
         constexpr _rule_ auto pop(_rule_ auto r) const;
 
         template <int Value>
-        constexpr _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+        constexpr _branch-rule_ auto is() const;
+        constexpr _branch-rule_ auto is_zero() const;
 
-        template <int Value = 0>
-        constexpr _see-below_ require() const;
+        constexpr _rule_ auto value() const;
     };
 
     template <typename Id>
@@ -47,7 +51,7 @@ it is not accessible outside the current production, including in child producti
 Once the current production finishes parsing, all context counters of it are destroyed;
 it is impossible to create on that persists between different productions including multiple invocations of the same production.
 
-{{% playground_example "context_counter" "Parse `n` `a`s, then `n` `b`s without recursion" %}}
+{{% playground_example "context_counter" "Parse `n` `a`, then `n` `b` without recursion" %}}
 
 === Rule `.create()`
 
@@ -60,6 +64,9 @@ constexpr _rule_ auto create() const;
 [.lead]
 `.create()` returns a rule that creates the counter.
 
+Requires::
+  The counter with the name `Id` has not been created yet in the current context,
+  i.e. `.create()` has not been parsed earlier.
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates a counter with name `Id` inside the current context.
@@ -120,48 +127,44 @@ Values::
 
 CAUTION: The count includes any whitespace characters.
 
-=== Rule `.compare()`
+=== Branch rules `.is()`, `.is_zero()`
 
 {{% interface %}}
 ----
 template <int Value>
-constexpr _rule_ auto compare(_rule_ auto lt, _rule_ auto eq, _rule_ auto gt) const;
+constexpr _branch-rule_ auto is() const;
+
+constexpr _branch-rule_ auto is_zero() const
+{
+    return is<0>();
+}
 ----
 
 [.lead]
-`.compare()` returns a rule that branches on the value of the counter.
+`.is()` and `.is_zero()` return {{% branch-rule %}}s that check the value of the counter.
 
 Requires::
   A counter with the name `Id` has been created in the current context,
   i.e. `.create()` has been parsed earlier.
 Parsing::
-  Reads the value of the counter with the name `Id` of the current context.
-  Then compares it to `Value`:
-  * if it less than `Value`: parses `lt`,
-  * if it is equal to `Value`: parses `eq`,
-  * if it s greater than `Value`: parses `gt`.
+  Matches everything, without consuming anything.
+Branch parsing::
+  Backtracks unless the value of the boolean with name `Id` of the current context is `Value` (`.is()`) or `0` (`.is_zero()`).
+  Then matches everything without consuming anything.
 Errors::
-  All errors raised by the selected rule.
-  The rule then fails if the selected rule has failed.
+  None.
 Values::
-  All values produced by the selected rule.
+  None.
 
-=== Rule `.require()`
+=== Rule `.value()`
 
 {{% interface %}}
 ----
-struct _require-dsl_
-{
-    template <typename Tag>
-    static constexpr _rule_ auto error;
-};
-
-template <int Value = 0>
-constexpr _require-dsl_ require() const;
+constexpr _rule_ auto value() const;
 ----
 
 [.lead]
-`.require()` returns a rule that errors if the counter does not have a certain value.
+`.value()` is a rule that returns the value of the counter.
 
 Requires::
   A counter with the name `Id` has been created in the current context,
@@ -169,8 +172,39 @@ Requires::
 Parsing::
   Matches everything, without consuming anything.
 Errors::
-  A generic error with the specified `Tag` if the counter with the name `Id` of the current context does not have the value `Value`.
-  It is raised at the current position of the reader and the rule then fails.
+  None.
+Values::
+  The current value of the counter (an `int`) with name `Id` of the current context.
+
+[#equal_counts]
+== Rule DSL `lexy::dsl::equal_counts`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _branch-rule_ auto equal_counts(_context_counter-dsl_... counters);
+}
+----
+
+[.lead]
+`equal_counts` is a {{% branch-rule %}} that checks whether all counters have the same value.
+
+Requires::
+  * `sizeof...(counters) > 1`
+  * All counters have been created in the current context,
+    i.e. `.create()` has been parsed earlier.
+Parsing::
+  Matches everything, without consuming anything.
+  Only succeeds if all counters have the same value in the current context.
+Branch parsing::
+  Backtracks unless all counters have the same value in the current context; no error is raised.
+  Matches everything, without consuming anything.
+Errors::
+  A generic error with the tag `lexy::unequal_counts` at the unchanged reader position.
+  It then recovers without having consumed any input.
 Values::
   None.
+
+{{% playground_example "equal_counts" "Parse `n` `a`, then `n` `b`, then `n` `c`" %}}
 

@@ -5,15 +5,14 @@
 #include <lexy/dsl/context_flag.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::context_flag")
 {
     struct error;
 
     static constexpr auto flag = lexy::dsl::context_flag<struct flag_id>;
-    static constexpr auto get  = [] { return flag.select(label<true>, label<false>); }();
 
     struct callback
     {
@@ -34,14 +33,14 @@ TEST_CASE("dsl::context_flag")
 
     SUBCASE("create - false")
     {
-        static constexpr auto rule = flag.create() + get;
+        static constexpr auto rule = flag.create() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
     }
     SUBCASE("create - true")
     {
-        static constexpr auto rule = flag.create<true>() + get;
+        static constexpr auto rule = flag.create<true>() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 1);
@@ -49,14 +48,14 @@ TEST_CASE("dsl::context_flag")
 
     SUBCASE("set")
     {
-        static constexpr auto rule = flag.create() + flag.set() + get;
+        static constexpr auto rule = flag.create() + flag.set() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 1);
     }
     SUBCASE("reset")
     {
-        static constexpr auto rule = flag.create<true>() + flag.reset() + get;
+        static constexpr auto rule = flag.create<true>() + flag.reset() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
@@ -64,29 +63,52 @@ TEST_CASE("dsl::context_flag")
 
     SUBCASE("toggle - on")
     {
-        static constexpr auto rule = flag.create() + flag.toggle() + get;
+        static constexpr auto rule = flag.create() + flag.toggle() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 1);
     }
     SUBCASE("toggle - off")
     {
-        static constexpr auto rule = flag.create<true>() + flag.toggle() + get;
+        static constexpr auto rule = flag.create<true>() + flag.toggle() + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);
     }
 
-    SUBCASE("require - failed")
+    SUBCASE("is_set - true")
     {
-        static constexpr auto rule = flag.create() + flag.require().error<error> + get;
+        static constexpr auto rule
+            = flag.create<true>() + (flag.is_set() >> flag.reset() | lexy::dsl::else_ >> flag.set())
+              + flag.value();
 
         auto result = LEXY_VERIFY("");
-        CHECK(result == -1);
+        CHECK(result == 0);
     }
-    SUBCASE("require - pass")
+    SUBCASE("is_set - false")
     {
-        static constexpr auto rule = flag.create() + flag.require<false>().error<error> + get;
+        static constexpr auto rule
+            = flag.create<false>()
+              + (flag.is_set() >> flag.reset() | lexy::dsl::else_ >> flag.set()) + flag.value();
+
+        auto result = LEXY_VERIFY("");
+        CHECK(result == 1);
+    }
+
+    SUBCASE("is_reset - true")
+    {
+        static constexpr auto rule
+            = flag.create<false>()
+              + (flag.is_reset() >> flag.set() | lexy::dsl::else_ >> flag.reset()) + flag.value();
+
+        auto result = LEXY_VERIFY("");
+        CHECK(result == 1);
+    }
+    SUBCASE("is_reset - false")
+    {
+        static constexpr auto rule
+            = flag.create<true>()
+              + (flag.is_reset() >> flag.set() | lexy::dsl::else_ >> flag.reset()) + flag.value();
 
         auto result = LEXY_VERIFY("");
         CHECK(result == 0);

@@ -21,10 +21,10 @@ namespace lexy::dsl
         constexpr _rule_ auto reset() const;
         constexpr _rule_ auto toggle() const;
 
-        constexpr _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+        constexpr _branch-rule_ auto is_set() const;
+        constexpr _branch-rule_ auto is_reset() const;
 
-        template <bool Value = true>
-        constexpr _see-below_ require() const;
+        constexpr _rule_ auto value() const;
     };
 
     template <typename Id>
@@ -57,6 +57,9 @@ constexpr _rule_ auto create() const;
 [.lead]
 `.create()` returns a rule that creates the boolean.
 
+Requires::
+  The boolean with the name `Id` has not been created yet in the current context,
+  i.e. `.create()` has not been parsed earlier.
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates a boolean with name `Id` inside the current context.
@@ -92,45 +95,39 @@ Errors::
 Values::
   None.
 
-=== Rule `.select()`
+=== Branch rules `.is_set()`, `.is_reset()`
 
 {{% interface %}}
 ----
-constexpr _rule_ auto select(_rule_ auto if_true, _rule_ auto if_false) const;
+constexpr _branch-rule_ auto is_set() const;
+constexpr _branch-rule_ auto is_reset() const;
 ----
 
 [.lead]
-`.select()` returns a rule that branches on the value of the boolean.
+`.is_set()` and `.is_reset()` return {{% branch-rule %}}s that check the value of the boolean variable.
 
 Requires::
   A boolean with the name `Id` has been created in the current context,
   i.e. `.create()` has been parsed earlier.
 Parsing::
-  Reads the value of the boolean with the name `Id` of the current context.
-  If it is `true`, parses `if_true`.
-  Otherwise, parses `if_false`.
+  Matches everything, without consuming anything.
+Branch parsing::
+  Backtracks unless the value of the boolean with name `Id` of the current context is `true` (`.is_set()`) or `false` (`.is_reset()`).
+  Then matches everything without consuming anything.
 Errors::
-  All errors raised by the selected rule.
-  This rule then fails if the selected rule has failed.
+  None.
 Values::
-  All values produced by the selected rule.
+  None.
 
-=== Rule `.require()`
+=== Rule `.value()`
 
 {{% interface %}}
 ----
-struct _require-dsl_
-{
-    template <typename Tag>
-    static constexpr _rule_ auto error;
-};
-
-template <bool Value = true>
-constexpr _require-dsl_ require() const;
+constexpr _rule_ auto value() const;
 ----
 
 [.lead]
-`.require()` returns a rule that errors if the boolean does not have a certain value.
+`.value()` is a rule that returns the value of the boolean variable.
 
 Requires::
   A boolean with the name `Id` has been created in the current context,
@@ -138,8 +135,7 @@ Requires::
 Parsing::
   Matches everything, without consuming anything.
 Errors::
-  A generic error with the specified `Tag` if the boolean with the name `Id` of the current context does not have the value `Value`.
-  It is raised at the current position of the reader and the rule then fails.
-Values::
   None.
+Values::
+  The current value of the boolean with name `Id` of the current context.
 

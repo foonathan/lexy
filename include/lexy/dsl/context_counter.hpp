@@ -6,7 +6,18 @@
 #define LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/error.hpp>
+#include <lexy/dsl/error.hpp>
+
+namespace lexy
+{
+struct unequal_counts
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "unequal counts";
+    }
+};
+} // namespace lexy
 
 namespace lexyd
 {
@@ -19,7 +30,7 @@ struct _ctx_ccreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Add the counter to the context.
+            static_assert(!Context::contains(Id{}));
             auto counter_ctx = context.insert(Id{}, InitialValue);
             return NextParser::parse(counter_ctx, reader, LEXY_FWD(args)...);
         }
@@ -45,6 +56,9 @@ struct _ctx_cadd : rule_base
 template <typename Id, typename Rule, int Sign>
 struct _ctx_cpush : rule_base
 {
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
     template <typename NextParser>
     struct parser
     {
@@ -64,6 +78,14 @@ struct _ctx_cpush : rule_base
         };
 
         template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            return lexy::rule_parser<Rule, _cont>::try_parse(context, reader, reader.cur(),
+                                                             LEXY_FWD(args)...);
+        }
+
+        template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return lexy::rule_parser<Rule, _cont>::parse(context, reader, reader.cur(),
@@ -72,8 +94,32 @@ struct _ctx_cpush : rule_base
     };
 };
 
-template <typename Id, int Value, typename R, typename S, typename T>
-struct _ctx_ccompare : rule_base
+template <typename Id, int Value>
+struct _ctx_cis : rule_base
+{
+    static constexpr auto is_branch = true;
+
+    template <typename NextParser>
+    struct parser : NextParser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            if (context.get(Id{}) != Value)
+                return lexy::rule_try_parse_result::backtracked;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        // inherit parse
+    };
+};
+
+template <typename Id>
+struct _ctx_cvalue : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -81,47 +127,54 @@ struct _ctx_ccompare : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (context.get(Id{}) < Value)
-                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
-            else if (context.get(Id{}) == Value)
-                return lexy::rule_parser<S, NextParser>::parse(context, reader, LEXY_FWD(args)...);
-            else // context.get(Id{}) > Value
-                return lexy::rule_parser<T, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., context.get(Id{}));
         }
     };
 };
 
-template <typename Id, typename Tag, int Value>
-struct _ctx_crequire : rule_base
+template <typename... Ids>
+struct _ctx_ceq;
+template <typename H, typename... T>
+struct _ctx_ceq<H, T...> : rule_base
 {
+    static constexpr auto is_branch = true;
+
     template <typename NextParser>
     struct parser
     {
         template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto value = context.get(H{});
+            if (((value != context.get(T{})) || ...))
+                return lexy::rule_try_parse_result::backtracked;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (context.get(Id{}) == Value)
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            else
+            auto value = context.get(H{});
+            if (((value != context.get(T{})) || ...))
             {
-                auto err = lexy::make_error<Reader, Tag>(reader.cur());
+                auto err = lexy::make_error<Reader, lexy::unequal_counts>(reader.cur());
                 context.error(err);
-                return false;
+                // Trivially recover.
             }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
+
 } // namespace lexyd
 
 namespace lexyd
 {
-template <typename Id, int Value>
-struct _ctx_counter_require
-{
-    template <typename Tag>
-    static constexpr _ctx_crequire<Id, Tag, Value> error = {};
-};
-
 template <typename Id>
 struct _ctx_counter
 {
@@ -154,36 +207,33 @@ struct _ctx_counter
         return _ctx_cpush<id, Rule, -1>{};
     }
 
-    template <int Value, typename R, typename S, typename T>
-    constexpr auto compare(R, S, T) const
+    template <int Value>
+    constexpr auto is() const
     {
-        return _ctx_ccompare<id, Value, R, S, T>{};
+        return _ctx_cis<id, Value>{};
+    }
+    constexpr auto is_zero() const
+    {
+        return is<0>();
     }
 
-    template <int Value = 0>
-    constexpr auto require() const
+    constexpr auto value() const
     {
-        return _ctx_counter_require<id, Value>{};
-    }
-
-    template <typename Tag>
-    LEXY_DEPRECATED_ERROR("replace `counter.require<Tag>()` by `counter.require().error<Tag>`")
-    constexpr auto require() const
-    {
-        return require().template error<Tag>;
-    }
-    template <int Value, typename Tag>
-    LEXY_DEPRECATED_ERROR(
-        "replace `counter.require<Value, Tag>()` by `counter.require<Value>().error<Tag>`")
-    constexpr auto require() const
-    {
-        return require<Value>().template error<Tag>;
+        return _ctx_cvalue<id>{};
     }
 };
 
 /// Declares an integer counter that is added to the parsing context.
 template <typename Id>
 constexpr auto context_counter = _ctx_counter<Id>{};
+
+/// Takes a branch only if all counters are equal.
+template <typename... Ids>
+constexpr auto equal_counts(_ctx_counter<Ids>...)
+{
+    static_assert(sizeof...(Ids) > 1);
+    return _ctx_ceq<typename _ctx_counter<Ids>::id...>{};
+}
 } // namespace lexyd
 
 #endif // LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED

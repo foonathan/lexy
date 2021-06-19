@@ -6,7 +6,6 @@
 #define LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/error.hpp>
 
 namespace lexyd
 {
@@ -19,7 +18,7 @@ struct _ctx_fcreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Add the flag to the context.
+            static_assert(!Context::contains(Id{}));
             auto flag_ctx = context.insert(Id{}, InitialValue);
             return NextParser::parse(flag_ctx, reader, LEXY_FWD(args)...);
         }
@@ -56,25 +55,32 @@ struct _ctx_ftoggle : rule_base
     };
 };
 
-template <typename Id, typename R, typename S>
-struct _ctx_fselect : rule_base
+template <typename Id, bool Value>
+struct _ctx_fis : rule_base
 {
+    static constexpr auto is_branch = true;
+
     template <typename NextParser>
-    struct parser
+    struct parser : NextParser
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
         {
-            if (context.get(Id{}))
-                return lexy::rule_parser<R, NextParser>::parse(context, reader, LEXY_FWD(args)...);
-            else
-                return lexy::rule_parser<S, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            if (context.get(Id{}) != Value)
+                return lexy::rule_try_parse_result::backtracked;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
         }
+
+        // inherit parse
     };
 };
 
-template <typename Id, typename Tag, bool Value>
-struct _ctx_frequire : rule_base
+template <typename Id>
+struct _ctx_fvalue : rule_base
 {
     template <typename NextParser>
     struct parser
@@ -82,14 +88,7 @@ struct _ctx_frequire : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (context.get(Id{}) == Value)
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            else
-            {
-                auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                context.error(err);
-                return false;
-            }
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., context.get(Id{}));
         }
     };
 };
@@ -97,13 +96,6 @@ struct _ctx_frequire : rule_base
 
 namespace lexyd
 {
-template <typename Id, bool Value>
-struct _ctx_flag_require
-{
-    template <typename Tag>
-    static constexpr _ctx_frequire<Id, Tag, Value> error = {};
-};
-
 template <typename Id>
 struct _ctx_flag
 {
@@ -130,30 +122,18 @@ struct _ctx_flag
         return _ctx_ftoggle<id>{};
     }
 
-    template <typename R, typename S>
-    constexpr auto select(R, S) const
+    constexpr auto is_set() const
     {
-        return _ctx_fselect<id, R, S>{};
+        return _ctx_fis<id, true>{};
+    }
+    constexpr auto is_reset() const
+    {
+        return _ctx_fis<id, false>{};
     }
 
-    template <bool Value = true>
-    constexpr auto require() const
+    constexpr auto value() const
     {
-        return _ctx_flag_require<id, Value>{};
-    }
-
-    template <typename Tag>
-    LEXY_DEPRECATED_ERROR("replace `flag.require<Tag>()` by `flag.require().error<Tag>`")
-    constexpr auto require() const
-    {
-        return require().template error<Tag>;
-    }
-    template <bool Value, typename Tag>
-    LEXY_DEPRECATED_ERROR(
-        "replace `flag.require<false, Tag>()` by `flag.require<false>().error<Tag>`")
-    constexpr auto require() const
-    {
-        return require<Value>().template error<Tag>;
+        return _ctx_fvalue<id>{};
     }
 };
 

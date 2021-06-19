@@ -50,6 +50,9 @@ constexpr _rule_ auto create() const;
 [.lead]
 `.create()` returns a rule that creates the string variable.
 
+Requires::
+  The string with the name `Id` has not been created yet in the current context,
+  i.e. `.create()` has not been parsed earlier.
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates a counter with name `Id` inside the current context.
