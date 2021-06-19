@@ -7,7 +7,7 @@
     <span class=tok-k>struct</span> <span class=tok-nc>integer_traits</span><span class=tok-p>;</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Integer</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>requires</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_integral_v</span><span class=tok-o>&lt;</span><span class=tok-n>Integer</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>requires</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_integral_v</span><span class=tok-o>&lt;</span><span class=tok-n>Integer</span><span class=tok-o>&gt;</span> <span class=tok-o>&amp;&amp;</span> <span class=tok-o>!</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_same_v</span><span class=tok-o>&lt;</span><span class=tok-n>Integer</span><span class=tok-p>,</span> <span class=tok-kt>bool</span><span class=tok-o>&gt;</span>
     <span class=tok-k>struct</span> <span class=tok-nc>integer_traits</span><span class=tok-o>&lt;</span><span class=tok-n>Integer</span><span class=tok-o>&gt;</span> <span class=tok-p>{</span> <span class=tok-err>…</span> <span class=tok-p>};</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;&gt;</span>
@@ -44,7 +44,7 @@
     <span class=tok-c1>// Returns: <code>true</code> if the resulting value fits in <code>type</code>, <code>false</code> if an overflow occurred or would occurr.</span>
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-kt>int</span> <span class=tok-n>Radix</span><span class=tok-o>&gt;</span>
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>add_digit_checked</span><span class=tok-p>(</span><span class=tok-n>type</span><span class=tok-o>&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-kt>unsigned</span> <span class=tok-n>digit</span><span class=tok-p>);</span>
-<span class=tok-p>};</span></code></pre></div></div><div class=paragraph><p>The integer traits are specialized for the built-in types with the expected semantics,
+<span class=tok-p>};</span></code></pre></div></div><div class=paragraph><p>The integer traits are specialized for the built-in integral types (except <code>bool</code>) with the expected semantics,
 as well as <code>lexy::code_point</code>.
 The specialization for <code>lexy::unbounded&lt;T></code> behaves the same as the one for plain <code>T</code>,
 except that <code>is_bounded == false</code>.</p></div><div class="admonitionblock tip"><table><tbody><tr><td class=icon><div class=title>Tip</div></td><td class=content>Use <code>lexy::unbounded&lt;T></code> when you know that overflow is impossible,

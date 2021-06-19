@@ -10934,7 +10934,7 @@ constexpr auto keyword(_id<L, T, R...> id)
 #ifndef LEXY_DSL_INTEGER_HPP_INCLUDED
 #define LEXY_DSL_INTEGER_HPP_INCLUDED
 
-#include <limits>
+#include <climits>
 
 
 
@@ -10963,15 +10963,51 @@ constexpr std::size_t _digit_count(int radix, Integer value)
 template <typename T>
 struct integer_traits
 {
-    using _limits = std::numeric_limits<T>;
-    static_assert(_limits::is_integer);
+    static_assert(std::is_integral_v<T> && !std::is_same_v<T, bool>,
+                  "specialize integer_traits for your custom integer types");
 
     using type = T;
 
-    static constexpr auto is_bounded = _limits::is_bounded;
+    static constexpr auto is_bounded = true;
 
+    static constexpr auto _max = [] {
+        if constexpr (std::is_same_v<T, char>)
+            return CHAR_MAX;
+        else if constexpr (std::is_same_v<T, signed char>)
+            return SCHAR_MAX;
+        else if constexpr (std::is_same_v<T, unsigned char>)
+            return UCHAR_MAX;
+        else if constexpr (std::is_same_v<T, wchar_t>)
+            return WCHAR_MAX;
+#if LEXY_HAS_CHAR8_T
+        else if constexpr (std::is_same_v<T, char8_t>)
+            return UCHAR_MAX;
+#endif
+        else if constexpr (std::is_same_v<T, char16_t>)
+            return UINT_LEAST16_MAX;
+        else if constexpr (std::is_same_v<T, char32_t>)
+            return UINT_LEAST32_MAX;
+        else if constexpr (std::is_same_v<T, signed short>)
+            return SHRT_MAX;
+        else if constexpr (std::is_same_v<T, unsigned short>)
+            return USHRT_MAX;
+        else if constexpr (std::is_same_v<T, signed int>)
+            return INT_MAX;
+        else if constexpr (std::is_same_v<T, unsigned int>)
+            return UINT_MAX;
+        else if constexpr (std::is_same_v<T, signed long>)
+            return LONG_MAX;
+        else if constexpr (std::is_same_v<T, unsigned long>)
+            return ULONG_MAX;
+        else if constexpr (std::is_same_v<T, signed long long>)
+            return LLONG_MAX;
+        else if constexpr (std::is_same_v<T, unsigned long long>)
+            return ULLONG_MAX;
+        else
+            static_assert(_detail::error<T>);
+    }();
     template <int Radix>
-    static constexpr std::size_t max_digit_count = _digit_count(Radix, _limits::max());
+    static constexpr std::size_t max_digit_count = _digit_count(Radix, _max);
 
     template <int Radix>
     static constexpr void add_digit_unchecked(T& result, unsigned digit)
@@ -10983,16 +11019,13 @@ struct integer_traits
     static constexpr bool add_digit_checked(T& result, unsigned digit)
     {
         constexpr auto can_use_unsigned = [] {
-            if constexpr (!std::is_integral_v<T>)
-                // If it's not a built-in integer, be careful and don't do it.
-                return false;
-            else if constexpr (sizeof(T) >= sizeof(unsigned))
-                // If it's bigger than unsigned, we can't use unsigned.
+            if constexpr (sizeof(T) >= sizeof(unsigned))
+                // If it's bigger or of the same size as unsigned, we can't use unsigned.
                 return false;
             else
             {
                 // We can do it if the worst-case does not overflow unsigned.
-                auto worst_case = static_cast<unsigned>(_limits::max());
+                auto worst_case = static_cast<unsigned>(_max);
                 return integer_traits<unsigned>::add_digit_checked<Radix>(worst_case, Radix - 1);
             }
         }();
@@ -11005,7 +11038,7 @@ struct integer_traits
             auto value = static_cast<unsigned>(result) * Radix + digit;
 
             // Check whether the final value can fit.
-            if (value > static_cast<unsigned>(_limits::max()))
+            if (value > static_cast<unsigned>(_max))
                 return false;
             else
             {
@@ -11016,13 +11049,13 @@ struct integer_traits
         else
         {
             // result *= Radix
-            constexpr auto max_per_radix = _limits::max() / Radix;
+            constexpr auto max_per_radix = T(_max / Radix);
             if (result > max_per_radix)
                 return false;
             result = T(result * Radix);
 
             // result += digit
-            if (result > T(_limits::max() - digit))
+            if (result > T(_max - digit))
                 return false;
             result = T(result + T(digit));
 
