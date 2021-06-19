@@ -21,7 +21,7 @@ namespace lexy
     struct integer_traits;
 
     template <typename Integer>
-        requires std::is_integral_v<Integer>
+        requires std::is_integral_v<Integer> && !std::is_same_v<Integer, bool>
     struct integer_traits<Integer> { … };
 
     template <>
@@ -78,7 +78,7 @@ struct _integer-traits-bounded-specialization_
 };
 ----
 
-The integer traits are specialized for the built-in types with the expected semantics,
+The integer traits are specialized for the built-in integral types (except `bool`) with the expected semantics,
 as well as `lexy::code_point`.
 The specialization for `lexy::unbounded<T>` behaves the same as the one for plain `T`,
 except that `is_bounded == false`.
