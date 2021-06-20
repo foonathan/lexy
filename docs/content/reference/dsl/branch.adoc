@@ -70,21 +70,24 @@ CAUTION: If `then` is also a branch rule, it will still only use `condition` as 
 ----
 namespace lexy::dsl
 {
-    constexpr _branch-rule_ auto else_;
+    struct _else_ // note: not a _rule_ itself
+    {
+        friend constexpr _branch-rule_ operator>>(_else_, _rule_ auto rule);
+    };
+
+    constexpr _else_ else_;
 }
 ----
 
 [.lead]
-`else_` is a branch rule that is always taken and consumes nothing.
+`else_` is a tag that can be used as the condition for link:#branch[`operator>>`] to indicate that the rule should always be taken.
 
 (Branch) Parsing::
-  Always succeeds without consuming anything.
+  Parses `rule` without every backtracking.
 Errors::
-  None.
+  All errors raised by parsing `rule`.
 Values::
-  None.
-
-The rule is meant to be used in combination with link:#branch[`operator>>`] to create a branch that should always be taken.
+  All values produced by `rule`.
 
 {{% playground_example choice_else "If it is not a known greeting, require that the empty is empty" %}}
 

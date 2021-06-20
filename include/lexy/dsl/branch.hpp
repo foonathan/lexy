@@ -110,9 +110,27 @@ struct _else : rule_base
     template <typename NextParser>
     using parser = NextParser;
 };
+struct _else_dsl
+{
+    template <typename R>
+    friend constexpr auto operator>>(_else_dsl, R rule)
+    {
+        return _else{} >> rule;
+    }
+    template <typename... R>
+    friend constexpr auto operator>>(_else_dsl, _seq<R...> rule)
+    {
+        return _else{} >> rule;
+    }
+    template <typename C, typename... R>
+    friend constexpr auto operator>>(_else_dsl, _br<C, R...> rule)
+    {
+        return _else{} >> rule;
+    }
+};
 
 /// Takes the branch unconditionally.
-inline constexpr auto else_ = _else{};
+inline constexpr auto else_ = _else_dsl{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
