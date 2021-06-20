@@ -44,7 +44,7 @@ namespace lexy::dsl
 
 The "name" of the counter is given by `Id`, which is an arbitrary type.
 Two `context_counter` objects manipulate the same counter if they are instantiated by the same type.
-The "namespace" is unique per type, if a different context counter ({{% docref "lexy::dsl::context_flag" %}}, {{% docref "lexy::dsl::context_lexeme" %}}) uses `Id`, it refers to a different counter.
+The "namespace" is unique per type, if a different context counter ({{% docref "lexy::dsl::context_flag" %}}, {{% docref "lexy::dsl::context_identifier" %}}) uses `Id`, it refers to a different counter.
 
 The counter is created inside the current context:
 it is not accessible outside the current production, including in child production.

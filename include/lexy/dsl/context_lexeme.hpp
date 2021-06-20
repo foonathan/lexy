@@ -9,6 +9,13 @@
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_CONTEXT_LEXEME
+#    define LEXY_DEPRECATED_CONTEXT_LEXEME
+#else
+#    define LEXY_DEPRECATED_CONTEXT_LEXEME                                                         \
+        [[deprecated("`dsl::context_lexeme` has been replaced by `dsl::context_identifier()`")]]
+#endif
+
 namespace lexyd
 {
 template <typename Id>
@@ -133,7 +140,7 @@ struct _ctx_lexeme
 
 /// Declares a lexeme.
 template <typename Id>
-constexpr auto context_lexeme = _ctx_lexeme<Id>{};
+LEXY_DEPRECATED_CONTEXT_LEXEME constexpr auto context_lexeme = _ctx_lexeme<Id>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_CONTEXT_LEXEME_HPP_INCLUDED

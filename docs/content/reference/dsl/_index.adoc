@@ -236,8 +236,6 @@ Parse tree::
   an integer counter
 {{% docref "lexy::dsl::context_identifier" %}}::
   an identifier variable
-{{% docref "lexy::dsl::context_lexeme" %}}::
-  a string variable
 ====
 
 [%collapsible]

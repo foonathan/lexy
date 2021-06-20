@@ -5,16 +5,14 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-06-20
 
-Improved and simplified interface for `dsl::context_flag` and `dsl::context_counter`:
-instead of `.select()`/`.compare()`, you now use `.is_set()`/`.is()` as a branch condition,
-and instead of `.require()`, you now use `dsl::must()` with `.is[_set]()`.
-
-== 2021-06-20
-
 * Turned `dsl::else_` into a tag object that can only be used with `operator>>`, instead of a stand-alone rule.
 * **Behavior change**: `dsl::peek[_not]()` and `dsl::lookahead()` are no longer no-ops when used outside a branch condition.
   Instead, they will perform lookahead and raise an error if that fails.
 * Removed `dsl::require/prevent(rule).error<tag>`; use `dsl::peek[_not](rule).error<tag>` instead.
+* Improved and simplified interface for `dsl::context_flag` and `dsl::context_counter`:
+  instead of `.select()`/`.compare()`, you now use `.is_set()`/`.is()` as a branch condition,
+  and instead of `.require()`, you now use `dsl::must()` with `.is[_set]()`.
+* Removed `dsl::context_lexeme`; use `dsl::context_identifier` instead.
 
 == 2021-06-18
 
