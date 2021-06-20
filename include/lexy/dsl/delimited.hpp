@@ -143,7 +143,7 @@ struct _delim_dsl
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _delim_dsl<Open, Close, decltype((Limit{} / ... / Tokens{}))>{};
     }
 
@@ -152,7 +152,7 @@ struct _delim_dsl
     template <typename Char, typename... Escapes>
     constexpr auto operator()(Char, Escapes...) const
     {
-        static_assert(lexy::is_token<Char>);
+        static_assert(lexy::is_token_rule<Char>);
         static_assert((std::is_base_of_v<_escape_base, Escapes> && ...));
         return no_whitespace(open() >> _del<Close, Char, Limit, Escapes...>{});
     }
@@ -184,7 +184,7 @@ struct _delim_dsl
 template <typename Open, typename Close>
 constexpr auto delimited(Open, Close)
 {
-    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _delim_dsl<Open, Close, lexyd::_eof>{};
 }
 
@@ -192,7 +192,7 @@ constexpr auto delimited(Open, Close)
 template <typename Delim>
 constexpr auto delimited(Delim)
 {
-    static_assert(lexy::is_branch<Delim>);
+    static_assert(lexy::is_branch_rule<Delim>);
     return _delim_dsl<Delim, Delim, lexyd::_eof>{};
 }
 
@@ -280,7 +280,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     template <typename Branch>
     constexpr auto rule(Branch) const
     {
-        static_assert(lexy::is_branch<Branch>);
+        static_assert(lexy::is_branch_rule<Branch>);
         return _escape<Escape, Branches..., Branch>{};
     }
 
@@ -288,7 +288,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     template <typename Token>
     constexpr auto capture(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return this->rule(_escape_cap<typename Token::token_engine>{});
     }
 
@@ -340,7 +340,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
 template <typename EscapeToken>
 constexpr auto escape(EscapeToken)
 {
-    static_assert(lexy::is_token<EscapeToken>);
+    static_assert(lexy::is_token_rule<EscapeToken>);
     return _escape<EscapeToken>{};
 }
 

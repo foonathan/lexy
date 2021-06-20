@@ -43,7 +43,7 @@ struct _look : rule_base
 template <typename Needle, typename End>
 constexpr auto lookahead(Needle, End)
 {
-    static_assert(lexy::is_token<Needle> && lexy::is_token<End>);
+    static_assert(lexy::is_token_rule<Needle> && lexy::is_token_rule<End>);
     return _look<typename Needle::token_engine, typename End::token_engine>{};
 }
 } // namespace lexyd

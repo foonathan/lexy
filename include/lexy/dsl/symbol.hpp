@@ -407,7 +407,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 template <const auto& Table, typename Token>
 constexpr auto symbol(Token)
 {
-    static_assert(lexy::is_token<Token>);
+    static_assert(lexy::is_token_rule<Token>);
     return _sym<Table, Token, void>{};
 }
 template <const auto& Table, typename L, typename T, typename... R>

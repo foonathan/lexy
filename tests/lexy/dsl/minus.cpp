@@ -14,7 +14,7 @@ TEST_CASE("dsl::operator-")
     {
         static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -56,7 +56,7 @@ TEST_CASE("dsl::operator-")
     {
         static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -98,7 +98,7 @@ TEST_CASE("dsl::operator-")
     {
         static constexpr auto rule = until(LEXY_LIT("!")) - lexy::dsl::any;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

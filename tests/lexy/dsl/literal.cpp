@@ -10,7 +10,7 @@ TEST_CASE("dsl::lit")
 {
     static constexpr auto rule = LEXY_LIT("abc");
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
     CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::lit<"abc">)>);

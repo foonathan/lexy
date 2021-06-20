@@ -186,7 +186,7 @@ struct _token : token_base<_token<Rule>>
 template <typename Rule>
 constexpr auto token(Rule)
 {
-    if constexpr (lexy::is_token<Rule>)
+    if constexpr (lexy::is_token_rule<Rule>)
         return Rule{};
     else
         return _token<Rule>{};

@@ -12,7 +12,7 @@ TEST_CASE("atom: argv_separator")
     {
         static constexpr auto rule = lexy::dsl::argv_separator;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

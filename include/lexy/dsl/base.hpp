@@ -88,10 +88,10 @@ namespace dsl = lexyd;
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
 template <typename T>
-constexpr bool is_token = std::is_base_of_v<dsl::_token_base, T>;
+constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
-constexpr bool is_branch = [] {
+constexpr bool is_branch_rule = [] {
     if constexpr (is_rule<T>)
         return T::is_branch;
     else

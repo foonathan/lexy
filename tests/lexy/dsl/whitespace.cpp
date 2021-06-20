@@ -197,7 +197,7 @@ TEST_CASE("dsl::no_whitespace()")
     {
         static constexpr auto rule = no_whitespace(LEXY_LIT("abc"));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

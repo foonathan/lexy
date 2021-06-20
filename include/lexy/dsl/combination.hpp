@@ -153,7 +153,7 @@ struct _comb : rule_base
 template <typename... R>
 constexpr auto combination(R...)
 {
-    static_assert((lexy::is_branch<R> && ...), "combination() requires a branch rule");
+    static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
     return _comb<void, void, R...>{};
 }
 
@@ -162,7 +162,7 @@ constexpr auto combination(R...)
 template <typename... R>
 constexpr auto partial_combination(R...)
 {
-    static_assert((lexy::is_branch<R> && ...), "partial_combination() requires a branch rule");
+    static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};
 }

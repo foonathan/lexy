@@ -13,7 +13,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::default_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -33,7 +33,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::utf8_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -64,7 +64,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -96,7 +96,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::utf16_encoding, lexy::encoding_endianness::big>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -128,7 +128,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::little>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -160,7 +160,7 @@ TEST_CASE("dsl::bom")
         static constexpr auto rule
             = lexy::dsl::bom<lexy::utf32_encoding, lexy::encoding_endianness::big>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

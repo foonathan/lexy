@@ -68,7 +68,7 @@ struct _tk_map
     template <decltype(Kind) NewKind, typename T>
     LEXY_CONSTEVAL auto map(T) const
     {
-        static_assert(lexy::is_token<T>, "cannot map non-token to token kind");
+        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
         static_assert(!std::is_same_v<typename T::token_type, Token>, "already inserted");
         return _tk_map<typename T::token_type, NewKind, _tk_map>{};
     }
@@ -85,7 +85,7 @@ struct _tk_map_empty
     template <auto TokenKind, typename T>
     LEXY_CONSTEVAL auto map(T) const
     {
-        static_assert(lexy::is_token<T>, "cannot map non-token to token kind");
+        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
         return _tk_map<typename T::token_type, TokenKind, _tk_map_empty>{};
     }
 };
@@ -124,7 +124,7 @@ public:
     }
 
     /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
     constexpr token_kind(TokenRule) noexcept : token_kind()
     {
         // Look for internal mapping first.
@@ -208,7 +208,7 @@ public:
     }
 
     /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
     constexpr token_kind(TokenRule) noexcept : token_kind()
     {
         auto token_rule_kind = TokenRule::token_kind();
@@ -275,7 +275,7 @@ template <typename TokenKind, typename = std::enable_if_t<std::is_integral_v<Tok
 token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
-template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
 token_kind(TokenRule)
     -> token_kind<std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
                                      decltype(TokenRule::token_kind()), void>>;
@@ -332,7 +332,7 @@ template <typename TokenKind, typename Reader,
           typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
 template <typename TokenRule, typename Reader,
-          typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+          typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
 token(TokenRule, lexy::lexeme<Reader>)
     -> token<Reader, std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
                                         decltype(TokenRule::token_kind()), void>>;

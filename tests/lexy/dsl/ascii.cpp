@@ -13,7 +13,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::control;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -48,7 +48,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::blank;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -82,7 +82,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::newline;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -117,7 +117,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::other_space;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -152,7 +152,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::space;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -186,7 +186,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::lower;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -220,7 +220,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::upper;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -254,7 +254,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::alpha;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -288,7 +288,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::alpha_underscore;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -323,7 +323,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::digit;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -358,7 +358,7 @@ TEST_CASE("dsl::ascii::*")
         static constexpr auto rule = lexy::dsl::ascii::alpha_digit;
         CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::ascii::alnum)>);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -393,7 +393,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::alpha_digit_underscore;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -428,7 +428,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::punct;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -462,7 +462,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::graph;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -496,7 +496,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::print;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -530,7 +530,7 @@ TEST_CASE("dsl::ascii::*")
     {
         static constexpr auto rule = lexy::dsl::ascii::character;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

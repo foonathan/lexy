@@ -102,7 +102,7 @@ struct _must_dsl
 template <typename Branch>
 constexpr auto must(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     static_assert(!Branch::is_unconditional_branch);
     return _must_dsl<Branch>{};
 }

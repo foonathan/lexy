@@ -37,7 +37,7 @@ struct _find : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (Limit{} / ... / tokens);
         return _find<Token, decltype(l)>{};
@@ -71,7 +71,7 @@ struct _find<Token, void> : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (tokens / ...);
         return _find<Token, decltype(l)>{};
@@ -88,7 +88,7 @@ template <typename... Tokens>
 constexpr auto find(Tokens... tokens)
 {
     static_assert(sizeof...(Tokens) > 0);
-    static_assert((lexy::is_token<Tokens> && ...));
+    static_assert((lexy::is_token_rule<Tokens> && ...));
 
     auto needle = (tokens / ...);
     return _find<decltype(needle), void>{};
@@ -133,7 +133,7 @@ struct _reco : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (Limit{} / ... / tokens);
         return _reco<decltype(l), R...>{};
@@ -150,7 +150,7 @@ template <typename... Branches>
 constexpr auto recover(Branches...)
 {
     static_assert(sizeof...(Branches) > 0);
-    static_assert((lexy::is_branch<Branches> && ...));
+    static_assert((lexy::is_branch_rule<Branches> && ...));
     return _reco<lexyd::_eof, Branches...>{};
 }
 } // namespace lexyd

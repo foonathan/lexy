@@ -10,7 +10,7 @@ TEST_CASE("dsl::any")
 {
     static constexpr auto rule = lexy::dsl::any;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {

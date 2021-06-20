@@ -15,7 +15,7 @@ TEST_CASE("dsl::operator/")
         static constexpr auto rule
             = LEXY_LIT("abc") / LEXY_LIT("a") / LEXY_LIT("ab") / LEXY_LIT("def");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -64,7 +64,7 @@ TEST_CASE("dsl::operator/")
                                      / token(while_one(lexy::dsl::lit_c<'a'>))
                                      / token(while_one(lexy::dsl::ascii::alpha));
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -105,7 +105,7 @@ TEST_CASE("dsl::operator/")
                                      / token(while_one(lexy::dsl::lit_c<'a'>)) / LEXY_LIT("ab")
                                      / LEXY_LIT("def");
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

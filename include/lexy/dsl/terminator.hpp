@@ -29,7 +29,7 @@ struct _term
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _term<Terminator, RecoveryLimit..., Tokens...>{};
     }
 
@@ -38,7 +38,7 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        if constexpr (lexy::is_branch<Rule>)
+        if constexpr (lexy::is_branch_rule<Rule>)
             return rule >> terminator();
         else
             return rule + terminator();
@@ -115,7 +115,7 @@ struct _term
 template <typename Branch>
 constexpr auto terminator(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _term<Branch>{};
 }
 } // namespace lexyd

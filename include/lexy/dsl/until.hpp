@@ -45,7 +45,7 @@ struct _until : token_base<_until<Condition>>
 template <typename Condition>
 constexpr auto until(Condition)
 {
-    static_assert(lexy::is_token<Condition>);
+    static_assert(lexy::is_token_rule<Condition>);
     return _until<Condition>{};
 }
 } // namespace lexyd

@@ -19,7 +19,7 @@ struct _brackets
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _brackets<Open, Close, RecoveryLimit..., Tokens...>{};
     }
 
@@ -110,7 +110,7 @@ struct _brackets
 template <typename Open, typename Close>
 constexpr auto brackets(Open, Close)
 {
-    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _brackets<Open, Close>{};
 }
 

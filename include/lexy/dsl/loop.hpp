@@ -104,7 +104,7 @@ struct _whl : rule_base
 template <typename Rule>
 constexpr auto while_(Rule)
 {
-    static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
     return _whl<Rule>{};
 }
 } // namespace lexyd
@@ -115,7 +115,7 @@ namespace lexyd
 template <typename Rule>
 constexpr auto while_one(Rule rule)
 {
-    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "while_one() requires a branch condition");
     return rule >> while_(rule);
 }
 } // namespace lexyd
@@ -126,7 +126,7 @@ namespace lexyd
 template <typename Then, typename Condition>
 constexpr auto do_while(Then then, Condition condition)
 {
-    if constexpr (lexy::is_branch<Then>)
+    if constexpr (lexy::is_branch_rule<Then>)
         return then >> while_(condition >> then);
     else
         return then + while_(condition >> then);

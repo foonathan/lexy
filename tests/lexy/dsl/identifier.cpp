@@ -461,7 +461,7 @@ TEST_CASE("dsl::keyword")
 
     static constexpr auto rule = LEXY_KEYWORD("abc", id);
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
     CHECK(std::is_same_v<decltype(rule), const decltype(lexy::dsl::keyword<"abc">(id))>);

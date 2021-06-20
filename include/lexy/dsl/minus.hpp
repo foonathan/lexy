@@ -51,14 +51,14 @@ struct _minus : token_base<_minus<Token, Except>>
 template <typename Token, typename Except>
 constexpr auto operator-(Token, Except)
 {
-    static_assert(lexy::is_token<Token>);
-    static_assert(lexy::is_token<Except>);
+    static_assert(lexy::is_token_rule<Token>);
+    static_assert(lexy::is_token_rule<Except>);
     return _minus<Token, Except>{};
 }
 template <typename Token, typename E, typename Except>
 constexpr auto operator-(_minus<Token, E>, Except except)
 {
-    static_assert(lexy::is_token<Except>);
+    static_assert(lexy::is_token_rule<Except>);
     return _minus<Token, decltype(E{} / except)>{};
 }
 } // namespace lexyd

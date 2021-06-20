@@ -11,7 +11,7 @@ TEST_CASE("dsl::until()")
 {
     static constexpr auto rule = until(LEXY_LIT("!"));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {
@@ -48,7 +48,7 @@ TEST_CASE("dsl::until().or_eof()")
 {
     static constexpr auto rule = until(LEXY_LIT("!")).or_eof();
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {

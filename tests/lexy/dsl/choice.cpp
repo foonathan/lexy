@@ -82,7 +82,7 @@ TEST_CASE("dsl::operator|")
     {
         static constexpr auto rule = LEXY_LIT("abc") >> label<0> | lexy::dsl::else_ >> label<1>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(!lexy::is_branch<decltype(rule)>);
+        CHECK(!lexy::is_branch_rule<decltype(rule)>);
 
         struct callback
         {

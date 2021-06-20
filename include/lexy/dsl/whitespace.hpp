@@ -31,7 +31,7 @@ struct _wsr : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.cur();
-            if constexpr (lexy::is_token<Rule>)
+            if constexpr (lexy::is_token_rule<Rule>)
             {
                 // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
                 using engine = lexy::engine_while<typename Rule::token_engine>;
@@ -156,7 +156,7 @@ struct _wsn : rule_base
 template <typename Rule>
 constexpr auto no_whitespace(Rule)
 {
-    if constexpr (lexy::is_token<Rule>)
+    if constexpr (lexy::is_token_rule<Rule>)
         return Rule{}; // Token already behaves that way.
     else
         return _wsn<Rule>{};
@@ -196,7 +196,7 @@ struct _wsd : rule_base
     template <typename Tag>
     constexpr auto error() const
     {
-        static_assert(lexy::is_token<Rule>);
+        static_assert(lexy::is_token_rule<Rule>);
         return Rule{}.template error<Tag>();
     }
 };

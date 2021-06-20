@@ -272,7 +272,7 @@ struct _digits_t : token_base<_digits_t<Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _digits_st<Base, Token>{};
     }
 };
@@ -294,7 +294,7 @@ struct _digits : token_base<_digits<Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _digits_s<Base, Token>{};
     }
 
@@ -350,7 +350,7 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _ndigits_s<N, Base, Token>{};
     }
 };

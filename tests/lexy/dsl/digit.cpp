@@ -121,7 +121,7 @@ TEST_CASE("dsl::zero")
 {
     static constexpr auto rule = lexy::dsl::zero;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {
@@ -157,7 +157,7 @@ TEST_CASE("dsl::digit")
 {
     static constexpr auto rule = lexy::dsl::digit<lexy::dsl::octal>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {
@@ -199,7 +199,7 @@ TEST_CASE("dsl::digits")
     {
         static constexpr auto rule = lexy::dsl::digits<>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -238,7 +238,7 @@ TEST_CASE("dsl::digits")
     {
         static constexpr auto rule = lexy::dsl::digits<>.no_leading_zero();
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -283,7 +283,7 @@ TEST_CASE("dsl::digits")
     {
         static constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -328,7 +328,7 @@ TEST_CASE("dsl::digits")
         static constexpr auto rule
             = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         constexpr auto equivalent
             = lexy::dsl::digits<>.no_leading_zero().sep(lexy::dsl::digit_sep_tick);
@@ -389,7 +389,7 @@ TEST_CASE("dsl::n_digits")
     {
         static constexpr auto rule = lexy::dsl::n_digits<3>;
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {
@@ -427,7 +427,7 @@ TEST_CASE("dsl::n_digits")
     {
         static constexpr auto rule = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

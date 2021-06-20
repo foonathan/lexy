@@ -11,7 +11,7 @@ TEST_CASE("dsl::code_point")
 {
     static constexpr auto rule = lexy::dsl::code_point;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     // Only basic sanity checks needed, the actual engine is tested extensively.
 
@@ -137,7 +137,7 @@ TEST_CASE("dsl::code_point")
 
         static constexpr auto rule = lexy::dsl::code_point.if_<predicate>();
         CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token<decltype(rule)>);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
         struct callback
         {

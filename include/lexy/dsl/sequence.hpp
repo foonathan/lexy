@@ -75,7 +75,7 @@ struct _seq : rule_base
 {
     static_assert(sizeof...(R) > 1);
 
-    static constexpr auto is_branch               = (lexy::is_token<R> && ...);
+    static constexpr auto is_branch               = (lexy::is_token_rule<R> && ...);
     static constexpr auto is_unconditional_branch = false;
 
     template <typename NextParser>

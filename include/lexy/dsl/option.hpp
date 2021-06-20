@@ -79,7 +79,7 @@ struct _opt : rule_base
 template <typename Rule>
 constexpr auto opt(Rule)
 {
-    static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
     if constexpr (Rule::is_unconditional_branch)
         // Branch is always taken, so don't wrap in opt().
         return Rule{};

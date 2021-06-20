@@ -128,7 +128,7 @@ struct _switch : rule_base
     template <typename Token, typename Value>
     constexpr auto case_(_br<Token, Value>) const
     {
-        static_assert(lexy::is_token<Token>, "case condition must be a token");
+        static_assert(lexy::is_token_rule<Token>, "case condition must be a token");
         return _switch<Rule, Error, Cases..., _switch_case<Token, Value>>{};
     }
 

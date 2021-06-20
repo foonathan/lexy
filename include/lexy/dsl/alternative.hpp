@@ -130,20 +130,20 @@ struct _alt : token_base<_alt<Tokens...>>
 template <typename R, typename S>
 constexpr auto operator/(R, S)
 {
-    static_assert(lexy::is_token<R> && lexy::is_token<S>);
+    static_assert(lexy::is_token_rule<R> && lexy::is_token_rule<S>);
     return _alt<R, S>{};
 }
 
 template <typename... R, typename S>
 constexpr auto operator/(_alt<R...>, S)
 {
-    static_assert(lexy::is_token<S>);
+    static_assert(lexy::is_token_rule<S>);
     return _alt<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator/(R, _alt<S...>)
 {
-    static_assert(lexy::is_token<R>);
+    static_assert(lexy::is_token_rule<R>);
     return _alt<R, S...>{};
 }
 template <typename... R, typename... S>

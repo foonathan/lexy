@@ -10,7 +10,7 @@ TEST_CASE("dsl::newline")
 {
     static constexpr auto rule = lexy::dsl::newline;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {
@@ -50,7 +50,7 @@ TEST_CASE("dsl::eol")
 {
     static constexpr auto rule = lexy::dsl::eol;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {

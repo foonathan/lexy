@@ -12,7 +12,7 @@ TEST_CASE(".error")
     struct error;
     static constexpr auto rule = LEXY_LIT("abc").error<error>;
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {
@@ -42,7 +42,7 @@ TEST_CASE("dsl::token")
 {
     static constexpr auto rule = token(list(LEXY_LIT("abc") >> label<0>));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token<decltype(rule)>);
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
     struct callback
     {

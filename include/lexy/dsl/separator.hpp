@@ -54,7 +54,7 @@ struct _sep
 template <typename Branch>
 constexpr auto sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 
@@ -73,14 +73,14 @@ struct _tsep
 template <typename Branch>
 constexpr auto trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _tsep<Branch>{};
 }
 
 template <typename Branch>
 LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 } // namespace lexyd

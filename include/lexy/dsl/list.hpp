@@ -395,7 +395,8 @@ struct _lst : rule_base
 template <typename Item>
 constexpr auto list(Item)
 {
-    static_assert(lexy::is_branch<Item>, "list() without a separator requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>,
+                  "list() without a separator requires a branch condition");
     return _lst<Item, void>{};
 }
 
@@ -410,7 +411,7 @@ constexpr auto list(Item, _sep<Sep, Tag>)
 template <typename Item, typename Sep>
 constexpr auto list(Item, _tsep<Sep>)
 {
-    static_assert(lexy::is_branch<Item>,
+    static_assert(lexy::is_branch_rule<Item>,
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
 }
@@ -451,13 +452,13 @@ struct _olst : rule_base
 template <typename Item>
 LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item)
 {
-    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
     return _olst<Item, void>{};
 }
 template <typename Item, typename Sep>
 LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item, Sep)
 {
-    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
     return _olst<Item, Sep>{};
 }
 } // namespace lexyd
