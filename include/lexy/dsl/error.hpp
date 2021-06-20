@@ -9,6 +9,13 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/token.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_REQUIRE
+#    define LEXY_DEPRECATED_REQUIRE
+#else
+#    define LEXY_DEPRECATED_REQUIRE                                                                \
+        [[deprecated("`dsl::require()/dsl::prevent()` have been replaced by `dsl::peek[_not]()`")]]
+#endif
+
 namespace lexyd
 {
 template <typename Tag, typename Token>
@@ -179,7 +186,7 @@ struct _prevent_dsl
 
 /// Requires that lookahead will match a rule at a location.
 template <typename Rule>
-constexpr auto require(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto require(Rule rule)
 {
     auto t = token(rule);
     return _require_dsl<decltype(t)>{};
@@ -187,21 +194,19 @@ constexpr auto require(Rule rule)
 
 /// Requires that lookahead does not match a rule at a location.
 template <typename Rule>
-constexpr auto prevent(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto prevent(Rule rule)
 {
     auto t = token(rule);
     return _prevent_dsl<decltype(t)>{};
 }
 
 template <typename Tag, typename Rule>
-LEXY_DEPRECATED_ERROR("replace `require<Tag>(rule)` by `require(rule).error<Tag>`")
-constexpr auto require(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto require(Rule rule)
 {
     return require(rule).template error<Tag>;
 }
 template <typename Tag, typename Rule>
-LEXY_DEPRECATED_ERROR("replace `prevent<Tag>(rule)` by `prevent(rule).error<Tag>`")
-constexpr auto prevent(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto prevent(Rule rule)
 {
     return prevent(rule).template error<Tag>;
 }

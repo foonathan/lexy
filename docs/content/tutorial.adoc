@@ -1385,15 +1385,15 @@ error: while parsing config
      | ^^^^^^^^^^^^^^^ duplicate config field
 ----
 
-=== Using `dsl::require()` and `dsl::prevent()` to handle common mistakes
+=== Using `dsl::peek()` and `dsl::peek_not()` to handle common mistakes
 
 There are more error messages that could be improved.
 For example, when you have a name like `my-package`, you get an "expected newline" error pointing to the first `-`, as that's where the name production stops parsing.
-We can improve that using `dsl::require()`.
+We can improve that using `dsl::peek()`.
 This rule raises an error with the specified tag if the pattern would not match at the input,
 but it doesn't actually consume anything.
 
-.`name` production with `dsl::require`
+.`name` production with `dsl::peek`
 [source,cpp]
 ----
 struct name
@@ -1407,7 +1407,7 @@ struct name
         …
 
         return dsl::capture(lead_char + dsl::while_(trailing_char))
-               + dsl::require(dsl::ascii::space).error<invalid_character>; <3>
+               + dsl::peek(dsl::ascii::space).error<invalid_character>; <3>
     }();
 };
 ----
@@ -1425,10 +1425,10 @@ error: while parsing name
      |        ~~^ invalid name character
 ----
 
-Likewise, we can use `dsl::prevent()`, which fails if a pattern would match, if we were to specify a build string in our version.
+Likewise, we can use `dsl::peek_not()`, which fails if a pattern would match, if we were to specify a build string in our version.
 
 
-.`version` production with `dsl::prevent()`
+.`version` production with `dsl::peek_not()`
 [source,cpp]
 ----
 struct version
@@ -1442,7 +1442,7 @@ struct version
         …
 
         auto dot_version = dsl::times<3>(number, dsl::sep(dot))
-                           + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
+                           + dsl::peek_not(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
 
         …
     }();
@@ -1487,7 +1487,7 @@ Note that this is unlike `dsl::if_(dsl::lit_c<'='>)` which would not raise an er
 
 Similar, we can help recover if there isn't a newline after the rule.
 Input like `name = my-package` will raise the invalid name character error as demonstrated above.
-This is not a fatal error by design of `dsl::require()`, so parsing continues and tries to parse `dsl::newline`.
+This is not a fatal error by design of `dsl::peek()`, so parsing continues and tries to parse `dsl::newline`.
 The latter will fail though and abort parsing.
 
 Instead of `dsl::newline` we can use `dsl::try_(dsl::newline, dsl::until(dsl::newline))`.

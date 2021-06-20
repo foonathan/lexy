@@ -46,7 +46,7 @@ struct name : lexy::token_production
         auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
 
         return dsl::identifier(lead_char, trailing_char)
-               + dsl::require(dsl::ascii::space).error<invalid_character>;
+               + dsl::peek(dsl::ascii::space).error<invalid_character>;
     }();
 
     // The final value of this production is a std::string we've created from the lexeme.
@@ -65,7 +65,7 @@ struct version : lexy::token_production
         auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt);
         auto dot         = dsl::try_(dsl::period, dsl::find(dsl::digit<>));
         auto dot_version = dsl::times<3>(number, dsl::sep(dot))
-                           + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
+                           + dsl::peek_not(dsl::lit_c<'-'>).error<forbidden_build_string>;
 
         auto unreleased = LEXY_LIT("unreleased");
 
