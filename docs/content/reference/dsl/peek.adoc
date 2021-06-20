@@ -14,9 +14,20 @@ The `peek` and `peek_not` branch rules.
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct peek_failure {};
+}
+
 namespace lexy::dsl
 {
-    constexpr _branch-rule_ auto peek(_rule_ auto rule);
+    struct _peek_ // models _branch-rule_
+    {
+        template <typename Tag>
+        static constexpr _peek_ error;
+    };
+
+    constexpr _peek_ peek(_rule_ auto rule);
 }
 ----
 
@@ -24,13 +35,14 @@ namespace lexy::dsl
 `peek` is a {{% branch-rule %}} that checks if `rule` matches without consuming anything.
 
 Parsing::
-  Always succeeds without consuming anything.
-Branch parsing::
   Tries to match `rule` in a new context.
   If that succeeds, the branch is taken without consuming anything.
-  Otherwise, it backtracks.
+  Otherwise, it raises an error.
+Branch parsing::
+  Same as parsing, but backtracks instead of raising an error.
 Errors::
-  No errors are raised as the rule can only backtrack and never fails.
+  A generic error with the specified `Tag` or `lexy::peek_failure` at the position where it started to match rule.
+  It then recovers without consuming additional input.
 Values::
   None.
 
@@ -47,9 +59,20 @@ CAUTION: This rule requires backtracking, which can slow down parsing.
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct unexpected {};
+}
+
 namespace lexy::dsl
 {
-    constexpr _branch-rule_ auto peek_not(_rule_ auto rule);
+    struct _peek_not_ // models _branch-rule_
+    {
+        template <typename Tag>
+        static constexpr _peek_not_ error;
+    };
+
+    constexpr _peek_not_ peek_not(_rule_ auto rule);
 }
 ----
 
@@ -57,15 +80,18 @@ namespace lexy::dsl
 `peek_not` is a {{% branch-rule %}} that checks if `rule` does not match without consuming anything.
 
 Parsing::
-  Always succeeds without consuming anything.
-Branch parsing::
   Tries to match `rule` in a new context.
   If that does not succeed, the branch is taken without consuming anything.
-  Otherwise, it backtracks.
+  Otherwise, it raises an error.
+Branch parsing::
+  Same as parsing, but backtracks instead of raising an error.
 Errors::
-  No errors are raised as the rule can only backtrack and never fails.
+  A generic error with the specified `Tag` or `lexy::unexpected` covering everything `rule` would have consumed.
+  It then recovers without having consumed any input.
 Values::
   None.
+
+{{% playground_example peek_not "Explicitly prohibit trailing spaces" %}}
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
 

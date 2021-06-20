@@ -10,10 +10,21 @@ entities:
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct lookahead_failure {};
+}
+
 namespace lexy::dsl
 {
-    constexpr _branch-rule_ auto lookahead(_token-rule_ auto needle,
-                                         _token-rule_ auto end);
+    struct lookahead // models _branch-rule_
+    {
+        template <typename Tag>
+        static constexpr _lookahead_ error;
+    };
+
+    constexpr _lookahead_ lookahead(_token-rule_ auto needle,
+                                  _token-rule_ auto end);
 }
 ----
 
@@ -21,12 +32,13 @@ namespace lexy::dsl
 `lookahead` is a {{% branch-rule %}} that checks if `needle` is found before `end`.
 
 Parsing::
-  Always succeeds without consuming anything.
-Branch parsing::
   If it can match `needle` before `end` is matched or before EOF is reached, the branch is taken without having consumed any input.
-  Otherwise, it backtracks.
+  Otherwise, it raises an error.
+Branch parsing::
+  Same as parsing, but backtracks instead of raising an error.
 Errors::
-  No errors are raised as the rule can only backtrack and never fails.
+  A generic error with the specified `Tag` or `lexy::lookahead_failure` at the position where it started to match rule.
+  It then recovers without consuming additional input.
 Values::
   None.
 
@@ -35,4 +47,6 @@ Values::
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `needle` or `end`.
 
 CAUTION: This rule requires backtracking, which can slow down parsing.
+
+TIP: Use {{% docref "lexy::dsl::peek" %}} if you want to check that `needle` matches at the current position.
 
