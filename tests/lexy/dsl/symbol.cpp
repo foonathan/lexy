@@ -64,15 +64,15 @@ TEST_CASE("symbol_table")
 namespace
 {
 constexpr auto symbols = lexy::symbol_table<int> //
-                             .map<'a'>(0)
-                             .map<'b'>(1)
-                             .map<'c'>(2)
-                             .map<LEXY_SYMBOL("abc")>(3);
+                             .map<'A'>(0)
+                             .map<'B'>(1)
+                             .map<'C'>(2)
+                             .map<LEXY_SYMBOL("Abc")>(3);
 }
 
 TEST_CASE("dsl::symbol(token)")
 {
-    constexpr auto id = token(while_one(lexy::dsl::ascii::lower));
+    constexpr auto id = token(identifier(lexy::dsl::ascii::upper, lexy::dsl::ascii::lower));
 
     SUBCASE("basic")
     {
@@ -97,8 +97,12 @@ TEST_CASE("dsl::symbol(token)")
                 LEXY_VERIFY_CHECK(e.begin() == str);
 
                 auto end = str;
-                while ('a' <= *end && *end <= 'z')
+                if ('A' <= *end && *end <= 'Z')
+                {
                     ++end;
+                    while ('a' <= *end && *end <= 'z')
+                        ++end;
+                }
                 LEXY_VERIFY_CHECK(e.end() == end);
 
                 return -1;
@@ -113,17 +117,17 @@ TEST_CASE("dsl::symbol(token)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
-        auto c = LEXY_VERIFY("c");
+        auto c = LEXY_VERIFY("C");
         CHECK(c == 2);
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY("Abc");
         CHECK(abc == 3);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
@@ -155,17 +159,17 @@ TEST_CASE("dsl::symbol(token)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == 42);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
-        auto c = LEXY_VERIFY("c");
+        auto c = LEXY_VERIFY("C");
         CHECK(c == 2);
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY("Abc");
         CHECK(abc == 3);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == 42);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == 42);
@@ -191,8 +195,12 @@ TEST_CASE("dsl::symbol(token)")
                 LEXY_VERIFY_CHECK(e.begin() == str);
 
                 auto end = str;
-                while ('a' <= *end && *end <= 'z')
+                if ('A' <= *end && *end <= 'Z')
+                {
                     ++end;
+                    while ('a' <= *end && *end <= 'z')
+                        ++end;
+                }
                 LEXY_VERIFY_CHECK(e.end() == end);
 
                 return -1;
@@ -207,20 +215,21 @@ TEST_CASE("dsl::symbol(token)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
     }
 }
+
 TEST_CASE("dsl::symbol(identifier)")
 {
-    constexpr auto id = identifier(lexy::dsl::ascii::lower);
+    constexpr auto id = identifier(lexy::dsl::ascii::upper, lexy::dsl::ascii::lower);
 
     SUBCASE("basic")
     {
@@ -245,15 +254,19 @@ TEST_CASE("dsl::symbol(identifier)")
                 LEXY_VERIFY_CHECK(e.begin() == str);
 
                 auto end = str;
-                while ('a' <= *end && *end <= 'z')
+                if ('A' <= *end && *end <= 'Z')
+                {
                     ++end;
+                    while ('a' <= *end && *end <= 'z')
+                        ++end;
+                }
                 LEXY_VERIFY_CHECK(e.end() == end);
 
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.lower"));
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
                 LEXY_VERIFY_CHECK(e.position() == str);
                 return -2;
             }
@@ -262,17 +275,17 @@ TEST_CASE("dsl::symbol(identifier)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
-        auto c = LEXY_VERIFY("c");
+        auto c = LEXY_VERIFY("C");
         CHECK(c == 2);
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY("Abc");
         CHECK(abc == 3);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
@@ -304,17 +317,17 @@ TEST_CASE("dsl::symbol(identifier)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == 42);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
-        auto c = LEXY_VERIFY("c");
+        auto c = LEXY_VERIFY("C");
         CHECK(c == 2);
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY("Abc");
         CHECK(abc == 3);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == 42);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == 42);
@@ -340,15 +353,19 @@ TEST_CASE("dsl::symbol(identifier)")
                 LEXY_VERIFY_CHECK(e.begin() == str);
 
                 auto end = str;
-                while ('a' <= *end && *end <= 'z')
+                if ('A' <= *end && *end <= 'Z')
+                {
                     ++end;
+                    while ('a' <= *end && *end <= 'z')
+                        ++end;
+                }
                 LEXY_VERIFY_CHECK(e.end() == end);
 
                 return -1;
             }
             LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
             {
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.lower"));
+                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
                 LEXY_VERIFY_CHECK(e.position() == str);
                 return -2;
             }
@@ -357,12 +374,12 @@ TEST_CASE("dsl::symbol(identifier)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty == -2);
 
-        auto a = LEXY_VERIFY("a");
+        auto a = LEXY_VERIFY("A");
         CHECK(a == 0);
-        auto b = LEXY_VERIFY("b");
+        auto b = LEXY_VERIFY("B");
         CHECK(b == 1);
 
-        auto unknown = LEXY_VERIFY("unknown");
+        auto unknown = LEXY_VERIFY("Unknown");
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);

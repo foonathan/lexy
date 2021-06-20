@@ -363,7 +363,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                 // Otherwise, we don't call `context.token()` or have the same end as the
                 // non-optimized symbol parser.
 
-                if (!idx)
+                if (begin == reader.cur())
                 {
                     // We need to parse the entire identifier from scratch.
                     // The identifier pattern does not produce a value, so we can safely discard.
