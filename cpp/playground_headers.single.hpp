@@ -1945,10 +1945,10 @@ namespace dsl = lexyd;
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
 template <typename T>
-constexpr bool is_token = std::is_base_of_v<dsl::_token_base, T>;
+constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
-constexpr bool is_branch = [] {
+constexpr bool is_branch_rule = [] {
     if constexpr (is_rule<T>)
         return T::is_branch;
     else
@@ -2772,7 +2772,7 @@ struct _token : token_base<_token<Rule>>
 template <typename Rule>
 constexpr auto token(Rule)
 {
-    if constexpr (lexy::is_token<Rule>)
+    if constexpr (lexy::is_token_rule<Rule>)
         return Rule{};
     else
         return _token<Rule>{};
@@ -3187,20 +3187,20 @@ struct _alt : token_base<_alt<Tokens...>>
 template <typename R, typename S>
 constexpr auto operator/(R, S)
 {
-    static_assert(lexy::is_token<R> && lexy::is_token<S>);
+    static_assert(lexy::is_token_rule<R> && lexy::is_token_rule<S>);
     return _alt<R, S>{};
 }
 
 template <typename... R, typename S>
 constexpr auto operator/(_alt<R...>, S)
 {
-    static_assert(lexy::is_token<S>);
+    static_assert(lexy::is_token_rule<S>);
     return _alt<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator/(R, _alt<S...>)
 {
-    static_assert(lexy::is_token<R>);
+    static_assert(lexy::is_token_rule<R>);
     return _alt<R, S...>{};
 }
 template <typename... R, typename... S>
@@ -4390,7 +4390,7 @@ struct _seq : rule_base
 {
     static_assert(sizeof...(R) > 1);
 
-    static constexpr auto is_branch               = (lexy::is_token<R> && ...);
+    static constexpr auto is_branch               = (lexy::is_token_rule<R> && ...);
     static constexpr auto is_unconditional_branch = false;
 
     template <typename NextParser>
@@ -4444,19 +4444,19 @@ struct _br : rule_base
 template <typename Condition, typename Then>
 constexpr auto operator>>(Condition, Then)
 {
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
     return _br<Condition, Then>{};
 }
 template <typename Condition, typename... R>
 constexpr auto operator>>(Condition, _seq<R...>)
 {
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
     return _br<Condition, R...>{};
 }
 template <typename Condition, typename C, typename... R>
 constexpr auto operator>>(Condition, _br<C, R...>)
 {
-    static_assert(lexy::is_branch<Condition>, "condition must be a branch");
+    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
     return _br<Condition, C, R...>{};
 }
 
@@ -4524,9 +4524,27 @@ struct _else : rule_base
     template <typename NextParser>
     using parser = NextParser;
 };
+struct _else_dsl
+{
+    template <typename R>
+    friend constexpr auto operator>>(_else_dsl, R rule)
+    {
+        return _else{} >> rule;
+    }
+    template <typename... R>
+    friend constexpr auto operator>>(_else_dsl, _seq<R...> rule)
+    {
+        return _else{} >> rule;
+    }
+    template <typename C, typename... R>
+    friend constexpr auto operator>>(_else_dsl, _br<C, R...> rule)
+    {
+        return _else{} >> rule;
+    }
+};
 
 /// Takes the branch unconditionally.
-inline constexpr auto else_ = _else{};
+inline constexpr auto else_ = _else_dsl{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
@@ -4541,6 +4559,13 @@ inline constexpr auto else_ = _else{};
 
 
 
+
+#ifdef LEXY_IGNORE_DEPRECATED_REQUIRE
+#    define LEXY_DEPRECATED_REQUIRE
+#else
+#    define LEXY_DEPRECATED_REQUIRE                                                                \
+        [[deprecated("`dsl::require()/dsl::prevent()` have been replaced by `dsl::peek[_not]()`")]]
+#endif
 
 namespace lexyd
 {
@@ -4635,7 +4660,7 @@ struct _must_dsl
 template <typename Branch>
 constexpr auto must(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     static_assert(!Branch::is_unconditional_branch);
     return _must_dsl<Branch>{};
 }
@@ -4712,7 +4737,7 @@ struct _prevent_dsl
 
 /// Requires that lookahead will match a rule at a location.
 template <typename Rule>
-constexpr auto require(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto require(Rule rule)
 {
     auto t = token(rule);
     return _require_dsl<decltype(t)>{};
@@ -4720,21 +4745,19 @@ constexpr auto require(Rule rule)
 
 /// Requires that lookahead does not match a rule at a location.
 template <typename Rule>
-constexpr auto prevent(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto prevent(Rule rule)
 {
     auto t = token(rule);
     return _prevent_dsl<decltype(t)>{};
 }
 
 template <typename Tag, typename Rule>
-LEXY_DEPRECATED_ERROR("replace `require<Tag>(rule)` by `require(rule).error<Tag>`")
-constexpr auto require(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto require(Rule rule)
 {
     return require(rule).template error<Tag>;
 }
 template <typename Tag, typename Rule>
-LEXY_DEPRECATED_ERROR("replace `prevent<Tag>(rule)` by `prevent(rule).error<Tag>`")
-constexpr auto prevent(Rule rule)
+LEXY_DEPRECATED_REQUIRE constexpr auto prevent(Rule rule)
 {
     return prevent(rule).template error<Tag>;
 }
@@ -4863,20 +4886,20 @@ struct _chc : rule_base
 template <typename R, typename S>
 constexpr auto operator|(R, S)
 {
-    static_assert(lexy::is_branch<R>, "choice requires a branch condition");
-    static_assert(lexy::is_branch<S>, "choice requires a branch condition");
+    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
+    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
     return _chc<R, S>{};
 }
 template <typename... R, typename S>
 constexpr auto operator|(_chc<R...>, S)
 {
-    static_assert(lexy::is_branch<S>, "choice requires a branch condition");
+    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
     return _chc<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator|(R, _chc<S...>)
 {
-    static_assert(lexy::is_branch<R>, "choice requires a branch condition");
+    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
     return _chc<R, S...>{};
 }
 template <typename... R, typename... S>
@@ -5094,7 +5117,7 @@ struct _tk_map
     template <decltype(Kind) NewKind, typename T>
     LEXY_CONSTEVAL auto map(T) const
     {
-        static_assert(lexy::is_token<T>, "cannot map non-token to token kind");
+        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
         static_assert(!std::is_same_v<typename T::token_type, Token>, "already inserted");
         return _tk_map<typename T::token_type, NewKind, _tk_map>{};
     }
@@ -5111,7 +5134,7 @@ struct _tk_map_empty
     template <auto TokenKind, typename T>
     LEXY_CONSTEVAL auto map(T) const
     {
-        static_assert(lexy::is_token<T>, "cannot map non-token to token kind");
+        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
         return _tk_map<typename T::token_type, TokenKind, _tk_map_empty>{};
     }
 };
@@ -5150,7 +5173,7 @@ public:
     }
 
     /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
     constexpr token_kind(TokenRule) noexcept : token_kind()
     {
         // Look for internal mapping first.
@@ -5234,7 +5257,7 @@ public:
     }
 
     /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
     constexpr token_kind(TokenRule) noexcept : token_kind()
     {
         auto token_rule_kind = TokenRule::token_kind();
@@ -5301,7 +5324,7 @@ template <typename TokenKind, typename = std::enable_if_t<std::is_integral_v<Tok
 token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
-template <typename TokenRule, typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
 token_kind(TokenRule)
     -> token_kind<std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
                                      decltype(TokenRule::token_kind()), void>>;
@@ -5358,7 +5381,7 @@ template <typename TokenKind, typename Reader,
           typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
 template <typename TokenRule, typename Reader,
-          typename = std::enable_if_t<lexy::is_token<TokenRule>>>
+          typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
 token(TokenRule, lexy::lexeme<Reader>)
     -> token<Reader, std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
                                         decltype(TokenRule::token_kind()), void>>;
@@ -5499,7 +5522,7 @@ struct _find : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (Limit{} / ... / tokens);
         return _find<Token, decltype(l)>{};
@@ -5533,7 +5556,7 @@ struct _find<Token, void> : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (tokens / ...);
         return _find<Token, decltype(l)>{};
@@ -5550,7 +5573,7 @@ template <typename... Tokens>
 constexpr auto find(Tokens... tokens)
 {
     static_assert(sizeof...(Tokens) > 0);
-    static_assert((lexy::is_token<Tokens> && ...));
+    static_assert((lexy::is_token_rule<Tokens> && ...));
 
     auto needle = (tokens / ...);
     return _find<decltype(needle), void>{};
@@ -5595,7 +5618,7 @@ struct _reco : rule_base
     constexpr auto limit(Tokens... tokens) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
 
         auto l = (Limit{} / ... / tokens);
         return _reco<decltype(l), R...>{};
@@ -5612,7 +5635,7 @@ template <typename... Branches>
 constexpr auto recover(Branches...)
 {
     static_assert(sizeof...(Branches) > 0);
-    static_assert((lexy::is_branch<Branches> && ...));
+    static_assert((lexy::is_branch_rule<Branches> && ...));
     return _reco<lexyd::_eof, Branches...>{};
 }
 } // namespace lexyd
@@ -5832,7 +5855,7 @@ struct _whl : rule_base
 template <typename Rule>
 constexpr auto while_(Rule)
 {
-    static_assert(lexy::is_branch<Rule>, "while() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
     return _whl<Rule>{};
 }
 } // namespace lexyd
@@ -5843,7 +5866,7 @@ namespace lexyd
 template <typename Rule>
 constexpr auto while_one(Rule rule)
 {
-    static_assert(lexy::is_branch<Rule>, "while_one() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "while_one() requires a branch condition");
     return rule >> while_(rule);
 }
 } // namespace lexyd
@@ -5854,7 +5877,7 @@ namespace lexyd
 template <typename Then, typename Condition>
 constexpr auto do_while(Then then, Condition condition)
 {
-    if constexpr (lexy::is_branch<Then>)
+    if constexpr (lexy::is_branch_rule<Then>)
         return then >> while_(condition >> then);
     else
         return then + while_(condition >> then);
@@ -5922,7 +5945,7 @@ struct _wsr : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.cur();
-            if constexpr (lexy::is_token<Rule>)
+            if constexpr (lexy::is_token_rule<Rule>)
             {
                 // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
                 using engine = lexy::engine_while<typename Rule::token_engine>;
@@ -6047,7 +6070,7 @@ struct _wsn : rule_base
 template <typename Rule>
 constexpr auto no_whitespace(Rule)
 {
-    if constexpr (lexy::is_token<Rule>)
+    if constexpr (lexy::is_token_rule<Rule>)
         return Rule{}; // Token already behaves that way.
     else
         return _wsn<Rule>{};
@@ -6087,7 +6110,7 @@ struct _wsd : rule_base
     template <typename Tag>
     constexpr auto error() const
     {
-        static_assert(lexy::is_token<Rule>);
+        static_assert(lexy::is_token_rule<Rule>);
         return Rule{}.template error<Tag>();
     }
 };
@@ -6120,7 +6143,7 @@ struct _term
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _term<Terminator, RecoveryLimit..., Tokens...>{};
     }
 
@@ -6129,7 +6152,7 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        if constexpr (lexy::is_branch<Rule>)
+        if constexpr (lexy::is_branch_rule<Rule>)
             return rule >> terminator();
         else
             return rule + terminator();
@@ -6206,7 +6229,7 @@ struct _term
 template <typename Branch>
 constexpr auto terminator(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _term<Branch>{};
 }
 } // namespace lexyd
@@ -6224,7 +6247,7 @@ struct _brackets
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _brackets<Open, Close, RecoveryLimit..., Tokens...>{};
     }
 
@@ -6315,7 +6338,7 @@ struct _brackets
 template <typename Open, typename Close>
 constexpr auto brackets(Open, Close)
 {
-    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _brackets<Open, Close>{};
 }
 
@@ -7111,7 +7134,7 @@ struct _comb : rule_base
 template <typename... R>
 constexpr auto combination(R...)
 {
-    static_assert((lexy::is_branch<R> && ...), "combination() requires a branch rule");
+    static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
     return _comb<void, void, R...>{};
 }
 
@@ -7120,7 +7143,7 @@ constexpr auto combination(R...)
 template <typename... R>
 constexpr auto partial_combination(R...)
 {
-    static_assert((lexy::is_branch<R> && ...), "partial_combination() requires a branch rule");
+    static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};
 }
@@ -7995,7 +8018,7 @@ struct _opt : rule_base
 template <typename Rule>
 constexpr auto opt(Rule)
 {
-    static_assert(lexy::is_branch<Rule>, "opt() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
     if constexpr (Rule::is_unconditional_branch)
         // Branch is always taken, so don't wrap in opt().
         return Rule{};
@@ -8088,7 +8111,7 @@ struct _if : rule_base
 template <typename Branch>
 constexpr auto if_(Branch)
 {
-    static_assert(lexy::is_branch<Branch>, "if_() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Branch>, "if_() requires a branch condition");
     if constexpr (Branch::is_unconditional_branch)
         // Branch is always taken, so don't wrap in if_().
         return Branch{};
@@ -8145,7 +8168,7 @@ struct _sep
 template <typename Branch>
 constexpr auto sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 
@@ -8164,14 +8187,14 @@ struct _tsep
 template <typename Branch>
 constexpr auto trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _tsep<Branch>{};
 }
 
 template <typename Branch>
 LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch<Branch>);
+    static_assert(lexy::is_branch_rule<Branch>);
     return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 } // namespace lexyd
@@ -8564,7 +8587,8 @@ struct _lst : rule_base
 template <typename Item>
 constexpr auto list(Item)
 {
-    static_assert(lexy::is_branch<Item>, "list() without a separator requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>,
+                  "list() without a separator requires a branch condition");
     return _lst<Item, void>{};
 }
 
@@ -8579,7 +8603,7 @@ constexpr auto list(Item, _sep<Sep, Tag>)
 template <typename Item, typename Sep>
 constexpr auto list(Item, _tsep<Sep>)
 {
-    static_assert(lexy::is_branch<Item>,
+    static_assert(lexy::is_branch_rule<Item>,
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
 }
@@ -8620,13 +8644,13 @@ struct _olst : rule_base
 template <typename Item>
 LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item)
 {
-    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
     return _olst<Item, void>{};
 }
 template <typename Item, typename Sep>
 LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item, Sep)
 {
-    static_assert(lexy::is_branch<Item>, "opt_list() requires a branch condition");
+    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
     return _olst<Item, Sep>{};
 }
 } // namespace lexyd
@@ -9256,7 +9280,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 template <const auto& Table, typename Token>
 constexpr auto symbol(Token)
 {
-    static_assert(lexy::is_token<Token>);
+    static_assert(lexy::is_token_rule<Token>);
     return _sym<Table, Token, void>{};
 }
 template <const auto& Table, typename L, typename T, typename... R>
@@ -9527,7 +9551,7 @@ struct _delim_dsl
     constexpr auto limit(Tokens...) const
     {
         static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token<Tokens> && ...));
+        static_assert((lexy::is_token_rule<Tokens> && ...));
         return _delim_dsl<Open, Close, decltype((Limit{} / ... / Tokens{}))>{};
     }
 
@@ -9536,7 +9560,7 @@ struct _delim_dsl
     template <typename Char, typename... Escapes>
     constexpr auto operator()(Char, Escapes...) const
     {
-        static_assert(lexy::is_token<Char>);
+        static_assert(lexy::is_token_rule<Char>);
         static_assert((std::is_base_of_v<_escape_base, Escapes> && ...));
         return no_whitespace(open() >> _del<Close, Char, Limit, Escapes...>{});
     }
@@ -9568,7 +9592,7 @@ struct _delim_dsl
 template <typename Open, typename Close>
 constexpr auto delimited(Open, Close)
 {
-    static_assert(lexy::is_branch<Open> && lexy::is_branch<Close>);
+    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
     return _delim_dsl<Open, Close, lexyd::_eof>{};
 }
 
@@ -9576,7 +9600,7 @@ constexpr auto delimited(Open, Close)
 template <typename Delim>
 constexpr auto delimited(Delim)
 {
-    static_assert(lexy::is_branch<Delim>);
+    static_assert(lexy::is_branch_rule<Delim>);
     return _delim_dsl<Delim, Delim, lexyd::_eof>{};
 }
 
@@ -9664,7 +9688,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     template <typename Branch>
     constexpr auto rule(Branch) const
     {
-        static_assert(lexy::is_branch<Branch>);
+        static_assert(lexy::is_branch_rule<Branch>);
         return _escape<Escape, Branches..., Branch>{};
     }
 
@@ -9672,7 +9696,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     template <typename Token>
     constexpr auto capture(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return this->rule(_escape_cap<typename Token::token_engine>{});
     }
 
@@ -9724,7 +9748,7 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
 template <typename EscapeToken>
 constexpr auto escape(EscapeToken)
 {
-    static_assert(lexy::is_token<EscapeToken>);
+    static_assert(lexy::is_token_rule<EscapeToken>);
     return _escape<EscapeToken>{};
 }
 
@@ -10276,7 +10300,7 @@ struct _digits_t : token_base<_digits_t<Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _digits_st<Base, Token>{};
     }
 };
@@ -10298,7 +10322,7 @@ struct _digits : token_base<_digits<Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _digits_s<Base, Token>{};
     }
 
@@ -10354,7 +10378,7 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     template <typename Token>
     constexpr auto sep(Token) const
     {
-        static_assert(lexy::is_token<Token>);
+        static_assert(lexy::is_token_rule<Token>);
         return _ndigits_s<N, Base, Token>{};
     }
 };
@@ -11537,15 +11561,28 @@ LEXY_DEPRECATED_LABEL constexpr auto id = _lab<std::integral_constant<int, Id>>{
 
 
 
+
+namespace lexy
+{
+/// We've failed to match a lookahead.
+struct lookahead_failure
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "lookahead failure";
+    }
+};
+} // namespace lexy
+
 namespace lexyd
 {
-template <typename Needle, typename End>
+template <typename Needle, typename End, typename Tag>
 struct _look : rule_base
 {
     static constexpr auto is_branch = true;
 
     template <typename NextParser>
-    struct parser : NextParser // delegate parse
+    struct parser
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
@@ -11555,16 +11592,28 @@ struct _look : rule_base
             if (!lexy::engine_peek<engine>(reader))
                 return lexy::rule_try_parse_result::backtracked;
 
-            return static_cast<lexy::rule_try_parse_result>(
-                NextParser::parse(context, reader, LEXY_FWD(args)...));
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using engine = lexy::engine_find_before<Needle, End>;
+            if (!lexy::engine_peek<engine>(reader))
+            {
+                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::lookahead_failure, Tag>;
+                auto err  = lexy::make_error<Reader, tag>(reader.cur());
+                context.error(err);
+            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
+    template <typename Error>
+    static constexpr _look<Needle, End, Error> error = {};
 };
 
 /// Looks for the Needle before End.
@@ -11572,8 +11621,8 @@ struct _look : rule_base
 template <typename Needle, typename End>
 constexpr auto lookahead(Needle, End)
 {
-    static_assert(lexy::is_token<Needle> && lexy::is_token<End>);
-    return _look<typename Needle::token_engine, typename End::token_engine>{};
+    static_assert(lexy::is_token_rule<Needle> && lexy::is_token_rule<End>);
+    return _look<typename Needle::token_engine, typename End::token_engine, void>{};
 }
 } // namespace lexyd
 
@@ -11782,14 +11831,14 @@ struct _minus : token_base<_minus<Token, Except>>
 template <typename Token, typename Except>
 constexpr auto operator-(Token, Except)
 {
-    static_assert(lexy::is_token<Token>);
-    static_assert(lexy::is_token<Except>);
+    static_assert(lexy::is_token_rule<Token>);
+    static_assert(lexy::is_token_rule<Except>);
     return _minus<Token, Except>{};
 }
 template <typename Token, typename E, typename Except>
 constexpr auto operator-(_minus<Token, E>, Except except)
 {
-    static_assert(lexy::is_token<Except>);
+    static_assert(lexy::is_token_rule<Except>);
     return _minus<Token, decltype(E{} / except)>{};
 }
 } // namespace lexyd
@@ -11896,33 +11945,104 @@ constexpr auto eol = _eol{};
 
 
 
+namespace lexy
+{
+/// We've failed to match a peek.
+struct peek_failure
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "peek failure";
+    }
+};
+
+/// We've failed to match a peek not.
+struct unexpected
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "unexpected";
+    }
+};
+} // namespace lexy
+
 namespace lexyd
 {
-template <typename Engine, bool Expected>
+template <typename Engine, typename Tag>
 struct _peek : rule_base
 {
     static constexpr auto is_branch = true;
 
     template <typename NextParser>
-    struct parser : NextParser // propagate parse
+    struct parser
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            if (lexy::engine_peek<Engine>(reader) != Expected)
+            if (!lexy::engine_peek<Engine>(reader))
                 return lexy::rule_try_parse_result::backtracked;
 
-            return static_cast<lexy::rule_try_parse_result>(
-                NextParser::parse(context, reader, LEXY_FWD(args)...));
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (!lexy::engine_peek<Engine>(reader))
+            {
+                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::peek_failure, Tag>;
+                auto err  = lexy::make_error<Reader, tag>(reader.cur());
+                context.error(err);
+            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
+    template <typename Error>
+    static constexpr _peek<Engine, Error> error = {};
+};
+
+template <typename Engine, typename Tag>
+struct _peekn : rule_base
+{
+    static constexpr auto is_branch = true;
+
+    template <typename NextParser>
+    struct parser
     {
-        return whitespaced(*this, ws);
-    }
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            if (lexy::engine_peek<Engine>(reader))
+                return lexy::rule_try_parse_result::backtracked;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...)
+                       ? lexy::rule_try_parse_result::ok
+                       : lexy::rule_try_parse_result::canceled;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto copy = reader;
+            if (auto begin = copy.cur(); lexy::engine_try_match<Engine>(copy))
+            {
+                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unexpected, Tag>;
+                auto err  = lexy::make_error<Reader, tag>(begin, copy.cur());
+                context.error(err);
+            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename Error>
+    static constexpr _peekn<Engine, Error> error = {};
 };
 
 /// Check if at this reader position, the rule would match, but don't actually consume any
@@ -11931,7 +12051,7 @@ template <typename Rule>
 constexpr auto peek(Rule rule)
 {
     using token = decltype(token(rule));
-    return _peek<typename token::token_engine, true>{};
+    return _peek<typename token::token_engine, void>{};
 }
 
 /// Check if at this reader position, the rule would not match, but don't actually consume any
@@ -11940,7 +12060,7 @@ template <typename Rule>
 constexpr auto peek_not(Rule rule)
 {
     using token = decltype(token(rule));
-    return _peek<typename token::token_engine, false>{};
+    return _peekn<typename token::token_engine, void>{};
 }
 } // namespace lexyd
 
@@ -12204,6 +12324,7 @@ constexpr auto return_ = _ret{};
 
 
 
+
 namespace lexy
 {
 template <int I>
@@ -12238,13 +12359,13 @@ struct _sign : rule_base
 };
 
 /// Matches a plus sign or nothing, producing +1.
-constexpr auto plus_sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | else_;
+constexpr auto plus_sign = if_(LEXY_LIT("+") >> _sign<lexy::plus_sign>{});
 /// Matches a minus sign or nothing, producing +1 or -1.
-constexpr auto minus_sign = LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
+constexpr auto minus_sign = if_(LEXY_LIT("-") >> _sign<lexy::minus_sign>{});
 
 /// Matches a plus or minus sign or nothing, producing +1 or -1.
-constexpr auto sign = LEXY_LIT("+") >> _sign<lexy::plus_sign>{}
-                      | LEXY_LIT("-") >> _sign<lexy::minus_sign>{} | else_;
+constexpr auto sign
+    = if_(LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | LEXY_LIT("-") >> _sign<lexy::minus_sign>{});
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
@@ -12379,7 +12500,7 @@ struct _switch : rule_base
     template <typename Token, typename Value>
     constexpr auto case_(_br<Token, Value>) const
     {
-        static_assert(lexy::is_token<Token>, "case condition must be a token");
+        static_assert(lexy::is_token_rule<Token>, "case condition must be a token");
         return _switch<Rule, Error, Cases..., _switch_case<Token, Value>>{};
     }
 
@@ -12615,7 +12736,7 @@ struct _until : token_base<_until<Condition>>
 template <typename Condition>
 constexpr auto until(Condition)
 {
-    static_assert(lexy::is_token<Condition>);
+    static_assert(lexy::is_token_rule<Condition>);
     return _until<Condition>{};
 }
 } // namespace lexyd

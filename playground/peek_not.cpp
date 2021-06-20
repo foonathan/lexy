@@ -8,5 +8,5 @@ struct production
 
     static constexpr auto rule
         = LEXY_LIT("Hello World")
-          + dsl::prevent(dsl::ascii::space).error<trailing_spaces> + dsl::eof;
+          + dsl::peek_not(dsl::ascii::space).error<trailing_spaces> + dsl::eof;
 };
