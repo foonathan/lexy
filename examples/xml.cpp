@@ -219,19 +219,19 @@ struct element
         auto close_tagged = dsl::brackets(LEXY_LIT("</"), LEXY_LIT(">"));
 
         // To check that the name is equal for the opening and closing tag,
-        // we use a variable that has the type lexeme.
+        // we use a variable that can store one name.
         // Note: this only declares the variable, we still need to create it below.
-        auto name_var = dsl::context_lexeme<struct name_var_tag>;
+        auto name_var = dsl::context_identifier<struct name_var_tag>(name);
 
         // The open tag parses a name and captures it in the variable.
         // It also checks for an empty tag (<name/>), in which case we're done and immediately
         // return.
         auto empty    = dsl::if_(LEXY_LIT("/") >> LEXY_LIT(">") + dsl::return_);
-        auto open_tag = open_tagged(name_var.capture(name) + ws + empty);
+        auto open_tag = open_tagged(name_var.capture() + ws + empty);
 
         // The closing tag matches the name again and requires that it matches the one we've stored
         // earlier.
-        auto close_tag = close_tagged(name_var.require(name).error<tag_mismatch> + ws);
+        auto close_tag = close_tagged(name_var.rematch().error<tag_mismatch> + ws);
 
         // The content of the element.
         auto content = dsl::p<comment> | dsl::p<cdata>                     //

@@ -17,6 +17,7 @@
 #include <lexy/dsl/combination.hpp>
 #include <lexy/dsl/context_counter.hpp>
 #include <lexy/dsl/context_flag.hpp>
+#include <lexy/dsl/context_identifier.hpp>
 #include <lexy/dsl/context_lexeme.hpp>
 #include <lexy/dsl/delimited.hpp>
 #include <lexy/dsl/digit.hpp>

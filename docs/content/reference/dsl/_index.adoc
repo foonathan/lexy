@@ -234,6 +234,8 @@ Parse tree::
   a boolean flag
 {{% docref "lexy::dsl::context_counter" %}}::
   an integer counter
+{{% docref "lexy::dsl::context_identifier" %}}::
+  an identifier variable
 {{% docref "lexy::dsl::context_lexeme" %}}::
   a string variable
 ====
