@@ -329,13 +329,11 @@ struct _int_p : rule_base
             using error_type = lexy::error<typename Reader::canonical_reader, tag>;
 
             auto result = typename integer_parser::result_type(0);
-            if (integer_parser::parse(result, begin, reader.cur()))
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-            else
-            {
+            if (!integer_parser::parse(result, begin, reader.cur()))
+                // Raise error but recover.
                 context.error(error_type(begin, reader.cur()));
-                return false;
-            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
         }
     };
 };

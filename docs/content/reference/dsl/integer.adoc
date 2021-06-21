@@ -121,7 +121,8 @@ Parsing::
 Errors::
   * `lexy::integer_overflow`: if converting the consumed digits to an integer leads to overflow.
     Its range covers everything consumed by `digits`.
-    The rule then fails.
+    The rule then recovers without consuming additional input;
+    the integer value produced is the last value it had before the overflow occurred.
   * All errors raised by parsing `digits`.
     The rule then fails if `digits` has failed.
 Values::
@@ -156,4 +157,7 @@ namespace lexy::dsl
 The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_point` as opposed to `lexy::integer_overflow`.
 
 {{% godbolt_example code_point_id "Parse a code point value" %}}
+
+CAUTION: The rule still recovers from a `lexy::invalid_code_point`.
+The `lexy::code_point` produced might be invalid in that case, i.e. `.is_invalid() == true`.
 

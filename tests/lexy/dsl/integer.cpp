@@ -114,11 +114,18 @@ TEST_CASE("dsl::integer")
         for (auto i = 0; i < 256; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
         for (auto i = 256; i < 512; ++i)
-            CHECK(parse(rule, std::to_string(i).c_str()) == -1);
+        {
+            auto result = parse(rule, std::to_string(i).c_str());
+            CHECK(result.value == i / 10);
+            CHECK(result.errors(-1));
+        }
 
         CHECK(parse(rule, "000000000000") == 0);
         CHECK(parse(rule, "000000000000255") == 255);
-        CHECK(parse(rule, "000000000000256") == -1);
+
+        auto overflow_zeroes = parse(rule, "000000000000256");
+        CHECK(overflow_zeroes.value == 25);
+        CHECK(overflow_zeroes.errors(-1));
 
         CHECK(parse(rule, "1'2'3") == 123);
         CHECK(parse(rule, "0'0'0'0'0'0'1'2'3") == 123);
@@ -131,11 +138,18 @@ TEST_CASE("dsl::integer")
         for (auto i = 0; i < 128; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
         for (auto i = 128; i < 512; ++i)
-            CHECK(parse(rule, std::to_string(i).c_str()) == -1);
+        {
+            auto result = parse(rule, std::to_string(i).c_str());
+            CHECK(result.value == i / 10);
+            CHECK(result.errors(-1));
+        }
 
         CHECK(parse(rule, "000000000000") == 0);
         CHECK(parse(rule, "000000000000127") == 127);
-        CHECK(parse(rule, "000000000000128") == -1);
+
+        auto overflow_zeroes = parse(rule, "000000000000128");
+        CHECK(overflow_zeroes.value == 12);
+        CHECK(overflow_zeroes.errors(-1));
 
         CHECK(parse(rule, "1'2'3") == 123);
         CHECK(parse(rule, "0'0'0'0'0'0'1'2'3") == 123);
@@ -160,7 +174,10 @@ TEST_CASE("dsl::integer")
 
         CHECK(parse(rule, "000000000000") == 0);
         CHECK(parse(rule, "00000000000065535") == 65535);
-        CHECK(parse(rule, "00000000000065536") == -1);
+
+        auto overflow_zeroes = parse(rule, "00000000000065536");
+        CHECK(overflow_zeroes.value == 6553);
+        CHECK(overflow_zeroes.errors(-1));
 
         CHECK(parse(rule, "1'2'3'4'5") == 12345);
         CHECK(parse(rule, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
@@ -185,7 +202,11 @@ TEST_CASE("dsl::integer")
 
         CHECK(parse(rule, "000000000000") == 0);
         CHECK(parse(rule, ("000000000000" + std::to_string(INT_MAX)).c_str()) == INT_MAX);
-        CHECK(parse(rule, ("000000000000" + std::to_string(INT_MAX + 1ll)).c_str()) == -1);
+
+        auto overflow_zeroes
+            = parse(rule, ("000000000000" + std::to_string(INT_MAX + 1ll)).c_str());
+        CHECK(overflow_zeroes.value == INT_MAX / 10 * 10);
+        CHECK(overflow_zeroes.errors(-1));
 
         CHECK(parse(rule, "1'2'3'4'5") == 12345);
         CHECK(parse(rule, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
@@ -237,7 +258,10 @@ TEST_CASE("dsl::integer")
 
         CHECK(parse(rule, "0000") == 0);
         CHECK(parse(rule, "00FF") == 0xFF);
-        CHECK(parse(rule, "0100") == -1);
+
+        auto overflow_zeroes = parse(rule, "0100");
+        CHECK(overflow_zeroes.value == 0x10);
+        CHECK(overflow_zeroes.errors(-1));
 
         CHECK(parse(rule, "0'0'F'F") == 255);
         CHECK(parse(rule, "0'0'F'F") == 255);
@@ -268,7 +292,11 @@ TEST_CASE("dsl::integer")
         for (auto i = 100; i < 256; ++i)
             CHECK(parse(rule, std::to_string(i).c_str()) == i);
         for (auto i = 256; i < 1000; ++i)
-            CHECK(parse(rule, std::to_string(i).c_str()) == -1);
+        {
+            auto result = parse(rule, std::to_string(i).c_str());
+            CHECK(result.value == i / 10);
+            CHECK(result.errors(-1));
+        }
     }
 }
 
@@ -313,6 +341,7 @@ TEST_CASE("dsl::code_point_id")
     auto extra_digits = LEXY_VERIFY("0000001");
     CHECK(extra_digits == 0);
     auto overflow = LEXY_VERIFY("ABCDEF");
-    CHECK(overflow == -1);
+    CHECK(overflow.value == 0xABCDEF);
+    CHECK(overflow.errors(-1));
 }
 
