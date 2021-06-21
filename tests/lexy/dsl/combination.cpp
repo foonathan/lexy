@@ -49,7 +49,7 @@ TEST_CASE("dsl::combination()")
             LEXY_VERIFY_FN int success(const char* cur, int count)
             {
                 LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str == 3);
+                LEXY_VERIFY_CHECK(cur - str >= 3);
                 return *str;
             }
 
@@ -81,9 +81,18 @@ TEST_CASE("dsl::combination()")
         CHECK(cba == 'c');
 
         auto aab = LEXY_VERIFY("aab");
-        CHECK(aab == -1);
+        CHECK(aab.value == -1);
+        CHECK(aab.errors(-1, -2));
         auto aba = LEXY_VERIFY("aba");
-        CHECK(aba == -1);
+        CHECK(aba.value == -1);
+        CHECK(aba.errors(-1, -2));
+
+        auto aabc = LEXY_VERIFY("aabc");
+        CHECK(aabc.value == 'a');
+        CHECK(aabc.errors(-1));
+        auto cacab = LEXY_VERIFY("cacab");
+        CHECK(cacab.value == 'c');
+        CHECK(cacab.errors(-1, -1));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab == -2);
@@ -131,7 +140,7 @@ TEST_CASE("dsl::combination()")
             LEXY_VERIFY_FN int success(const char* cur, int count)
             {
                 LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str == 3);
+                LEXY_VERIFY_CHECK(cur - str >= 3);
                 return *str;
             }
 
@@ -163,9 +172,18 @@ TEST_CASE("dsl::combination()")
         CHECK(cba == 'c');
 
         auto aab = LEXY_VERIFY("aab");
-        CHECK(aab == -1);
+        CHECK(aab.value == -1);
+        CHECK(aab.errors(-1, -2));
         auto aba = LEXY_VERIFY("aba");
-        CHECK(aba == -1);
+        CHECK(aba.value == -1);
+        CHECK(aba.errors(-1, -2));
+
+        auto aabc = LEXY_VERIFY("aabc");
+        CHECK(aabc.value == 'a');
+        CHECK(aabc.errors(-1));
+        auto cacab = LEXY_VERIFY("cacab");
+        CHECK(cacab.value == 'c');
+        CHECK(cacab.errors(-1, -1));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab == -2);
@@ -213,7 +231,7 @@ TEST_CASE("dsl::combination()")
             LEXY_VERIFY_FN int success(const char* cur, int count)
             {
                 LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str == 3);
+                LEXY_VERIFY_CHECK(cur - str >= 3);
                 return *str;
             }
 
@@ -245,9 +263,18 @@ TEST_CASE("dsl::combination()")
         CHECK(cba == 'c');
 
         auto aab = LEXY_VERIFY("aab");
-        CHECK(aab == -1);
+        CHECK(aab.value == -1);
+        CHECK(aab.errors(-1, -2));
         auto aba = LEXY_VERIFY("aba");
-        CHECK(aba == -1);
+        CHECK(aba.value == -1);
+        CHECK(aba.errors(-1, -2));
+
+        auto aabc = LEXY_VERIFY("aabc");
+        CHECK(aabc.value == 'a');
+        CHECK(aabc.errors(-1));
+        auto cacab = LEXY_VERIFY("cacab");
+        CHECK(cacab.value == 'c');
+        CHECK(cacab.errors(-1, -1));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab == -2);
@@ -299,7 +326,7 @@ TEST_CASE("dsl::partial_combination()")
 
         LEXY_VERIFY_FN int success(const char* cur, int count)
         {
-            LEXY_VERIFY_CHECK(cur - str == count);
+            LEXY_VERIFY_CHECK(cur - str >= count);
             return count;
         }
 
@@ -347,9 +374,18 @@ TEST_CASE("dsl::partial_combination()")
     CHECK(cba == 3);
 
     auto aab = LEXY_VERIFY("aab");
-    CHECK(aab == -1);
+    CHECK(aab.value == 2);
+    CHECK(aab.errors(-1));
     auto aba = LEXY_VERIFY("aba");
-    CHECK(aba == -1);
+    CHECK(aba.value == 2);
+    CHECK(aba.errors(-1));
+
+    auto aabc = LEXY_VERIFY("aabc");
+    CHECK(aabc.value == 3);
+    CHECK(aabc.errors(-1));
+    auto cacab = LEXY_VERIFY("cacab");
+    CHECK(cacab.value == 3);
+    CHECK(cacab.errors(-1, -1));
 
     auto abca = LEXY_VERIFY("abca");
     CHECK(abca == 3);

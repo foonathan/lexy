@@ -30,6 +30,8 @@ struct _comb_state
 {
     // The sink to store values of the item.
     Sink& sink;
+    // Whether or not the state has already been handled.
+    const bool* handled;
     // Write the index of the item in here.
     std::size_t idx = 0;
     // Whether or not we should break.
@@ -45,7 +47,11 @@ struct _comb_final
         auto& state = context.get(_break{});
         state.idx   = idx;
         if constexpr (sizeof...(Args) > 0)
-            state.sink(LEXY_FWD(args)...);
+        {
+            if (!state.handled[idx])
+                // Only call the sink if it is not a duplicate.
+                state.sink(LEXY_FWD(args)...);
+        }
         return true;
     }
 };
@@ -96,13 +102,14 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto  sink         = context.sink();
-            bool  handled[N]   = {};
-            auto  comb_context = context.insert(_break{}, _comb_state<decltype(sink)>{sink});
-            auto& state        = comb_context.get(_break{});
+            auto sink       = context.sink();
+            bool handled[N] = {};
+            auto comb_context
+                = context.insert(_break{}, _comb_state<decltype(sink)>{sink, handled});
+            auto& state = comb_context.get(_break{});
 
             // Parse all iterations of the choice.
-            for (std::size_t count = 0; count < N; ++count)
+            for (auto count = 0; count < int(N); ++count)
             {
                 auto begin = reader.cur();
 
@@ -118,7 +125,8 @@ struct _comb : rule_base
                                                    lexy::combination_duplicate, DuplicateError>;
                     auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
                     context.error(err);
-                    return false;
+                    // We can trivially recover, but need to do another iteration.
+                    --count;
                 }
                 else
                 {
@@ -154,6 +162,8 @@ template <typename... R>
 constexpr auto combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
+    static_assert((!R::is_unconditional_branch && ...),
+                  "combination() does not support unconditional branches");
     return _comb<void, void, R...>{};
 }
 
@@ -163,6 +173,8 @@ template <typename... R>
 constexpr auto partial_combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
+    static_assert((!R::is_unconditional_branch && ...),
+                  "partial_combination() does not support unconditional branches");
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};
 }

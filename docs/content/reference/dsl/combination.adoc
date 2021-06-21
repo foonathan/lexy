@@ -44,7 +44,8 @@ Errors::
     The rule then fails.
     This error tag can be changed by specifying a different `Tag` using `.missing_error`.
   * `lexy::combination_duplicate`: if one iteration parses a branch rule that has already been selected in a previous iteration; at the starting position of the later iteration.
-    The rule then fails.
+    The rule then recovers without consuming additional input, but the values produced by the duplicate are not forwarded to the sink,
+    and the duplicated iteration does not count towards the total number of repetitions.
     This error tag can be changed by specifying a different `Tag` using `.duplicate_error`.
   * All other errors raised by the choice `(branches | ...)`, i.e. the errors raised by the individual rules during branch parsing.
     The rule then fails if they have failed.
@@ -87,7 +88,8 @@ Parsing::
   Instead the rule succeeds early without consuming additional input.
 Errors::
   * `lexy::combination_duplicate`: if one iteration parses a branch rule that has already been selected in a previous iteration; at the starting position of the later iteration.
-    The rule then fails.
+    The rule then recovers without consuming additional input, but the values produced by the duplicate are not forwarded to the sink,
+    and the duplicated iteration does not count towards the total number of repetitions.
     This error tag can be changed by specifying a different `Tag` using `.duplicate_error`.
   * All other errors raised by the choice `(branches | ...)`, i.e. the errors raised by the individual rules during branch parsing.
     The rule then fails if they have failed.
