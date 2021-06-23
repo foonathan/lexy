@@ -49,10 +49,10 @@ Use <code>lexy</code> if you like <code>lexy</code> more.</p></dd><dt class=hdli
 The biggest difference is that <code>lexy</code> uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
 depending on your preference this can be an advantage or disadvantage.</p></dd><dt class=hdlist1>Handwritten Parsers</dt><dd><p>Writing a handwritten parser is more manual work and error prone.
 <code>lexy</code> automates that away without having to sacrifice control.
-You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.</p></dd></dl></div></dd><dt class=hdlist1>How bad are the compilation times?</dt><dd><p>They’re not as bad as you might expect (in debug mode, that is).</p><div class=paragraph><p>Compiling the example JSON parser with any of the lexy specific things removed,
-i.e. just the datastructure built using <code>std::variant</code> and <code>std::map</code>, takes about one second on my machine.
-The entire parser takes about two seconds if you disable force inline on the parse productions.
-With force inline, it takes about five seconds.</p></div><div class=paragraph><p>Compile time benchmarks and optimizations are planned.
+You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.</p></dd></dl></div></dd><dt class=hdlist1>How bad are the compilation times?</dt><dd><p>They’re not as bad as you might expect (in debug mode, that is).</p><div class=paragraph><p>The example JSON parser compiles in about 2s on my machine.
+If we remove all the lexy specific parts and just benchmark the time it takes for the compiler to process the datastructure (and stdlib includes),
+that takes about 700ms.
+If we validate JSON only instead of parsing it, so remove the data structures and keep only the lexy specific parts, we’re looking at about 840ms.</p></div><div class=paragraph><p>Compile time benchmarks and optimizations are planned.
 Keep in mind, that you can fully isolate <code>lexy</code> in a single translation unit that only needs to be touched when you change the parser.</p></div></dd><dt class=hdlist1>How bad are the C++ error messages if you mess something up?</dt><dd><p>They’re certainly worse than the error message <code>lexy</code> gives you.
 The big problem here is that the first line gives you the error, followed by dozens of template instantiations, which end at your <code>lexy::parse</code> call.
 Besides providing an external tool to filter those error messages, there is nothing I can do about that.</p></dd><dt class=hdlist1>How fast is it?</dt><dd><p>Benchmarks are available in the <code>benchmarks/</code> directory.

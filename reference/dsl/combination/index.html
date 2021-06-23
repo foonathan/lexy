@@ -21,7 +21,8 @@
 <span class=tok-p>}</span></code></pre></div></div><div class="paragraph lead"><p><code>combination</code> is a rule that parses all of the specified <a href=/reference/dsl/branch/#doc>branch rule</a>s, but in arbitrary order.</p></div><div class=dlist><dl><dt class=hdlist1>Parsing</dt><dd><p>Parses the <a href=/reference/dsl/choice/#choice><code>choice</code></a> <code>(branches | …​)</code> a total of <code>sizeof…​(branches)</code> times in <a href=/reference/dsl/sequence/#sequence><code>sequence</code></a>.</p></dd><dt class=hdlist1>Errors</dt><dd><div class=ulist><ul><li><p><code>lexy::exhausted_choice</code>: if one iteration of the choice does not match; at the starting position of the iteration.
 The rule then fails.
 This error tag can be changed by specifying a different <code>Tag</code> using <code>.missing_error</code>.</p></li><li><p><code>lexy::combination_duplicate</code>: if one iteration parses a branch rule that has already been selected in a previous iteration; at the starting position of the later iteration.
-The rule then fails.
+The rule then recovers without consuming additional input, but the values produced by the duplicate are not forwarded to the sink,
+and the duplicated iteration does not count towards the total number of repetitions.
 This error tag can be changed by specifying a different <code>Tag</code> using <code>.duplicate_error</code>.</p></li><li><p>All other errors raised by the choice <code>(branches | …​)</code>, i.e. the errors raised by the individual rules during branch parsing.
 The rule then fails if they have failed.</p></li></ul></div></dd><dt class=hdlist1>Values</dt><dd><p>It creates a sink of the current context.
 All values produced by the selected branch in an iteration are forwarded to the sink.
@@ -43,7 +44,8 @@ If an earlier branch always matches the same as a later branch, the later branch
 <span class=tok-p>}</span></code></pre></div></div><div class="paragraph lead"><p><code>partial_combination</code> is a rule that parses a subset of the specified <a href=/reference/dsl/branch/#doc>branch rule</a>s, but in arbitrary order.</p></div><div class=dlist><dl><dt class=hdlist1>Parsing</dt><dd><p>Parses the <a href=/reference/dsl/choice/#choice><code>choice</code></a> <code>(branches | …​)</code> a total of <code>sizeof…​(branches)</code> times in <a href=/reference/dsl/sequence/#sequence><code>sequence</code></a>.
 If the choice would fail with a <code>lexy::exhausted_choice</code> error, this error is not reported.
 Instead the rule succeeds early without consuming additional input.</p></dd><dt class=hdlist1>Errors</dt><dd><div class=ulist><ul><li><p><code>lexy::combination_duplicate</code>: if one iteration parses a branch rule that has already been selected in a previous iteration; at the starting position of the later iteration.
-The rule then fails.
+The rule then recovers without consuming additional input, but the values produced by the duplicate are not forwarded to the sink,
+and the duplicated iteration does not count towards the total number of repetitions.
 This error tag can be changed by specifying a different <code>Tag</code> using <code>.duplicate_error</code>.</p></li><li><p>All other errors raised by the choice <code>(branches | …​)</code>, i.e. the errors raised by the individual rules during branch parsing.
 The rule then fails if they have failed.</p></li></ul></div></dd><dt class=hdlist1>Values</dt><dd><p>It creates a sink of the current context.
 All values produced by the selected branch in an iteration are forwarded to the sink.

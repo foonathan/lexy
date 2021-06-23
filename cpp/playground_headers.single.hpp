@@ -7011,6 +7011,8 @@ struct _comb_state
 {
     // The sink to store values of the item.
     Sink& sink;
+    // Whether or not the state has already been handled.
+    const bool* handled;
     // Write the index of the item in here.
     std::size_t idx = 0;
     // Whether or not we should break.
@@ -7026,7 +7028,11 @@ struct _comb_final
         auto& state = context.get(_break{});
         state.idx   = idx;
         if constexpr (sizeof...(Args) > 0)
-            state.sink(LEXY_FWD(args)...);
+        {
+            if (!state.handled[idx])
+                // Only call the sink if it is not a duplicate.
+                state.sink(LEXY_FWD(args)...);
+        }
         return true;
     }
 };
@@ -7077,13 +7083,14 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto  sink         = context.sink();
-            bool  handled[N]   = {};
-            auto  comb_context = context.insert(_break{}, _comb_state<decltype(sink)>{sink});
-            auto& state        = comb_context.get(_break{});
+            auto sink       = context.sink();
+            bool handled[N] = {};
+            auto comb_context
+                = context.insert(_break{}, _comb_state<decltype(sink)>{sink, handled});
+            auto& state = comb_context.get(_break{});
 
             // Parse all iterations of the choice.
-            for (std::size_t count = 0; count < N; ++count)
+            for (auto count = 0; count < int(N); ++count)
             {
                 auto begin = reader.cur();
 
@@ -7099,7 +7106,8 @@ struct _comb : rule_base
                                                    lexy::combination_duplicate, DuplicateError>;
                     auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
                     context.error(err);
-                    return false;
+                    // We can trivially recover, but need to do another iteration.
+                    --count;
                 }
                 else
                 {
@@ -7135,6 +7143,8 @@ template <typename... R>
 constexpr auto combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
+    static_assert((!R::is_unconditional_branch && ...),
+                  "combination() does not support unconditional branches");
     return _comb<void, void, R...>{};
 }
 
@@ -7144,6 +7154,8 @@ template <typename... R>
 constexpr auto partial_combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
+    static_assert((!R::is_unconditional_branch && ...),
+                  "partial_combination() does not support unconditional branches");
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};
 }
@@ -11126,6 +11138,7 @@ struct _unbounded_integer_parser
 {
     using traits      = lexy::integer_traits<T>;
     using result_type = typename traits::type;
+    using base        = Base;
 
     static constexpr auto radix = Base::radix;
 
@@ -11153,6 +11166,7 @@ struct _bounded_integer_parser
 {
     using traits      = lexy::integer_traits<T>;
     using result_type = typename traits::type;
+    using base        = Base;
 
     static constexpr auto radix = Base::radix;
 
@@ -11224,49 +11238,83 @@ struct _bounded_integer_parser
         return cur == end;
     }
 };
+template <typename T, typename Base, bool AssumeOnlyDigits>
+using _integer_parser
+    = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
+                         _unbounded_integer_parser<T, Base>>;
 
-// Continuation of integer that assumes the rule is already dealt with.
-template <typename T, typename Base, bool AssumeOnlyDigits, typename Tag>
-struct _int_p : rule_base
+template <typename Rule, typename Sep, typename IntParser, typename Tag>
+struct _int : rule_base
 {
-    using integer_parser
-        = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
-                             _unbounded_integer_parser<T, Base>>;
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
 
     template <typename NextParser>
     struct parser
     {
-        template <typename Context, typename Reader, typename Iterator, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Iterator begin, Args&&... args)
+        struct _continuation
         {
-            using tag        = std::conditional_t<std::is_void_v<Tag>, lexy::integer_overflow, Tag>;
-            using error_type = lexy::error<typename Reader::canonical_reader, tag>;
-
-            auto result = typename integer_parser::result_type(0);
-            if (integer_parser::parse(result, begin, reader.cur()))
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-            else
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed,
+                                     typename Reader::iterator begin, Args&&... args)
             {
-                context.error(error_type(begin, reader.cur()));
-                return false;
-            }
-        }
-    };
-};
+                failed   = false;
+                auto end = reader.cur();
 
-// Captures the rule which is then parsed.
-// Must be followed by _int_p.
-template <typename Rule>
-struct _int_c : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
+                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::integer_overflow, Tag>;
+                using error_type = lexy::error<typename Reader::canonical_reader, tag>;
+
+                auto result = typename IntParser::result_type(0);
+                if (!IntParser::parse(result, begin, end))
+                    // Raise error but recover.
+                    context.error(error_type(begin, end));
+
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
+            }
+        };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto failed = true; // doesn't matter
+            return lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
+                                                                     reader.cur(),
+                                                                     LEXY_FWD(args)...);
+        }
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, reader.cur(),
-                                                              LEXY_FWD(args)...);
+            auto failed = true;
+            auto begin  = reader.cur();
+
+            // Parse the digits rule with the special continuation.
+            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
+                                                                        begin, LEXY_FWD(args)...);
+            if (!failed)
+            {
+                // Propagate result of following rules.
+                return result;
+            }
+            else
+            {
+                // Recover.
+                if constexpr (std::is_void_v<Sep>)
+                {
+                    while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader))
+                    {}
+                }
+                else
+                {
+                    while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader)
+                           || lexy::engine_try_match<typename Sep::token_engine>(reader))
+                    {}
+                }
+
+                // Now try to convert this to an integer.
+                return _continuation::parse(context, reader, failed, begin, LEXY_FWD(args)...);
+            }
         }
     };
 };
@@ -11275,41 +11323,50 @@ struct _int_c : rule_base
 template <typename T, typename Base, typename Rule>
 constexpr auto integer(Rule)
 {
-    return _int_c<Rule>{} + _int_p<T, Base, false, void>{};
+    using parser = _integer_parser<T, Base, false>;
+    return _int<Rule, void, parser, void>{};
 }
 
 template <typename T, typename Base>
 constexpr auto integer(_digits<Base>)
 {
-    return _int_c<_digits<Base>>{} + _int_p<T, Base, true, void>{};
+    using parser = _integer_parser<T, Base, true>;
+    return _int<_digits<Base>, void, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_s<Base, Sep>)
 {
-    return _int_c<_digits_s<Base, Sep>>{} + _int_p<T, Base, false, void>{};
+    using parser = _integer_parser<T, Base, false>;
+    return _int<_digits_s<Base, Sep>, Sep, parser, void>{};
 }
 template <typename T, typename Base>
 constexpr auto integer(_digits_t<Base>)
 {
-    return _int_c<_digits_t<Base>>{} + _int_p<T, Base, true, void>{};
+    using parser = _integer_parser<T, Base, true>;
+    return _int<_digits_t<Base>, void, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_st<Base, Sep>)
 {
-    return _int_c<_digits_st<Base, Sep>>{} + _int_p<T, Base, false, void>{};
+    using parser = _integer_parser<T, Base, false>;
+    return _int<_digits_st<Base, Sep>, Sep, parser, void>{};
 }
 
 template <typename T, typename Base, std::size_t N>
 constexpr auto integer(_ndigits<N, Base>)
 {
-    return _int_c<_ndigits<N, Base>>{} + _int_p<T, Base, true, void>{};
+    using type
+        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
+    using parser = _integer_parser<type, Base, true>;
+    return _int<_ndigits<N, Base>, void, parser, void>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
 constexpr auto integer(_ndigits_s<N, Base, Sep>)
 {
     using type
         = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
-    return _int_c<_ndigits_s<N, Base, Sep>>{} + _int_p<type, Base, true, void>{};
+    using parser = _integer_parser<type, Base, false>;
+    return _int<_ndigits_s<N, Base, Sep>, Sep, parser, void>{};
 }
 } // namespace lexyd
 
@@ -11329,12 +11386,10 @@ namespace lexyd
 /// Matches the number of a code point.
 template <std::size_t N, typename Base = hex>
 constexpr auto code_point_id = [] {
-    using type = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
+    using type   = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
                                     lexy::code_point, lexy::unbounded<lexy::code_point>>;
-
-    auto digits = _int_c<_ndigits<N, Base>>{};
-    auto parser = _int_p<type, Base, true, lexy::invalid_code_point>{};
-    return digits + parser;
+    using parser = _integer_parser<type, Base, true>;
+    return _int<_ndigits<N, Base>, void, parser, lexy::invalid_code_point>{};
 }();
 } // namespace lexyd
 
