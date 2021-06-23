@@ -77,7 +77,7 @@ TEST_CASE("lexyd::_digit_count")
     }
 }
 
-TEST_CASE("dsl::integer")
+TEST_CASE("dsl::integer conversion")
 {
     auto parse = [](auto rule, const char* str) -> test_result {
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -300,6 +300,360 @@ TEST_CASE("dsl::integer")
     }
 }
 
+TEST_CASE("dsl::integer parsing")
+{
+    SUBCASE("generic rule")
+    {
+        static constexpr auto rule
+            = lexy::dsl::integer<int, lexy::dsl::decimal>(lexy::dsl::digit<> + lexy::dsl::digit<>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, int value)
+            {
+                LEXY_VERIFY_CHECK((cur - str) <= 2);
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit.value == 4);
+        CHECK(one_digit.errors(-2));
+
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 42);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+    }
+
+    SUBCASE("digits")
+    {
+        static constexpr auto rule = lexy::dsl::integer<int>(lexy::dsl::digits<>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit == 4);
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+    }
+    SUBCASE("digits separator")
+    {
+        static constexpr auto rule
+            = lexy::dsl::integer<int>(lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick));
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit == 4);
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+
+        auto with_sep = LEXY_VERIFY("4'2");
+        CHECK(with_sep == 42);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+
+        auto leading_sep = LEXY_VERIFY("'11");
+        CHECK(leading_sep.value == 11);
+        CHECK(leading_sep.errors(-2));
+        auto trailing_sep = LEXY_VERIFY("11'");
+        CHECK(trailing_sep.value == 11);
+        CHECK(trailing_sep.errors(-2));
+    }
+    SUBCASE("digits no leading zero")
+    {
+        static constexpr auto rule = lexy::dsl::integer<int>(lexy::dsl::digits<>.no_leading_zero());
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == str + 1);
+                return -3;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit == 4);
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+
+        auto leading_zero = LEXY_VERIFY("011");
+        CHECK(leading_zero.value == 11);
+        CHECK(leading_zero.errors(-3));
+    }
+    SUBCASE("digits separator no leading zero")
+    {
+        static constexpr auto rule = lexy::dsl::integer<int>(
+            lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero());
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == str + 1);
+                return -3;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit == 4);
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+
+        auto with_sep = LEXY_VERIFY("4'2");
+        CHECK(with_sep == 42);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+
+        auto leading_zero = LEXY_VERIFY("011");
+        CHECK(leading_zero.value == 11);
+        CHECK(leading_zero.errors(-3));
+
+        auto leading_sep = LEXY_VERIFY("'11");
+        CHECK(leading_sep.value == 11);
+        CHECK(leading_sep.errors(-2));
+        auto trailing_sep = LEXY_VERIFY("11'");
+        CHECK(trailing_sep.value == 11);
+        CHECK(trailing_sep.errors(-2));
+    }
+
+    SUBCASE("n_digits")
+    {
+        static constexpr auto rule = lexy::dsl::integer<int>(lexy::dsl::n_digits<3>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit.value == 4);
+        CHECK(one_digit.errors(-2));
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits.value == 42);
+        CHECK(two_digits.errors(-2));
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+        auto four_digits = LEXY_VERIFY("4200");
+        CHECK(four_digits == 420);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+    }
+    SUBCASE("n_digits separator")
+    {
+        static constexpr auto rule
+            = lexy::dsl::integer<int>(lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick));
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.value == 0);
+        CHECK(empty.errors(-2));
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit.value == 4);
+        CHECK(one_digit.errors(-2));
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits.value == 42);
+        CHECK(two_digits.errors(-2));
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+        auto four_digits = LEXY_VERIFY("4200");
+        CHECK(four_digits == 420);
+
+        auto with_sep = LEXY_VERIFY("4'2'0");
+        CHECK(with_sep == 420);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit.value == 0);
+        CHECK(no_digit.errors(-2));
+
+        auto leading_sep = LEXY_VERIFY("'111");
+        CHECK(leading_sep.value == 111);
+        CHECK(leading_sep.errors(-2));
+        auto trailing_sep = LEXY_VERIFY("111'");
+        CHECK(trailing_sep == 111);
+        auto trailing_sep_missing = LEXY_VERIFY("11'");
+        CHECK(trailing_sep_missing.value == 11);
+        CHECK(trailing_sep_missing.errors(-2));
+    }
+}
+
 TEST_CASE("dsl::code_point_id")
 {
     static constexpr auto rule = lexy::dsl::code_point_id<6>;
@@ -311,7 +665,7 @@ TEST_CASE("dsl::code_point_id")
 
         LEXY_VERIFY_FN int success(const char* cur, lexy::code_point cp)
         {
-            LEXY_VERIFY_CHECK(cur == str + 6);
+            LEXY_VERIFY_CHECK((cur - str) <= 6);
             return int(cp.value());
         }
 
@@ -329,7 +683,8 @@ TEST_CASE("dsl::code_point_id")
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -2);
+    CHECK(empty.value == 0);
+    CHECK(empty.errors(-2));
 
     auto latin_small_letter_e_with_acute = LEXY_VERIFY("0000E9");
     CHECK(latin_small_letter_e_with_acute == 0x0000E9);

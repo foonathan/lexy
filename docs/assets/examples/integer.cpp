@@ -23,9 +23,10 @@ int main()
 {
     auto input  = lexy_ext::read_file<>(stdin);
     auto result = lexy::parse<production>(input, lexy_ext::report_error);
-    if (!result)
+    if (!result.has_value())
         return 1;
 
     std::printf("The value is: %d\n", result.value());
+    return result ? 0 : 1;
 }
 

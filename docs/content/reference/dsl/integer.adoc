@@ -124,7 +124,10 @@ Errors::
     The rule then recovers without consuming additional input;
     the integer value produced is the last value it had before the overflow occurred.
   * All errors raised by parsing `digits`.
-    The rule then fails if `digits` has failed.
+    The rule then recovers by consuming as much additional digits of the `Base` as possible.
+    If `digits` is a known instantiation with a separator, it will also skip separators.
+    This happens without any validation for trailing separators or leading zeros.
+    It then converts everything already consumed by the failed `digits` and everything recovered to an integer as if nothing happened.
 Values::
   First produces all values from parsing `digits`.
   Then produces the integer of type `T` by iterating over the code units consumed by `digits` and handling them as follows:
