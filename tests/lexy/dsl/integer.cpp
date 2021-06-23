@@ -7,6 +7,7 @@
 #include "verify.hpp"
 #include <cstdint>
 #include <cstdio>
+#include <lexy/dsl/if.hpp>
 #include <string>
 
 TEST_CASE("lexyd::_digit_count")
@@ -651,6 +652,50 @@ TEST_CASE("dsl::integer parsing")
         auto trailing_sep_missing = LEXY_VERIFY("11'");
         CHECK(trailing_sep_missing.value == 11);
         CHECK(trailing_sep_missing.errors(-2));
+    }
+
+    SUBCASE("branch")
+    {
+        static constexpr auto rule = lexy::dsl::if_(lexy::dsl::integer<int>(lexy::dsl::digits<>));
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur)
+            {
+                LEXY_VERIFY_CHECK(cur == str);
+                return 0;
+            }
+            LEXY_VERIFY_FN int success(const char*, int value)
+            {
+                return value;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::integer_overflow> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str);
+                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class>)
+            {
+                return -2;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == 0);
+
+        auto one_digit = LEXY_VERIFY("4");
+        CHECK(one_digit == 4);
+        auto two_digits = LEXY_VERIFY("42");
+        CHECK(two_digits == 42);
+        auto three_digits = LEXY_VERIFY("420");
+        CHECK(three_digits == 420);
+
+        auto no_digit = LEXY_VERIFY("abc");
+        CHECK(no_digit == 0);
     }
 }
 

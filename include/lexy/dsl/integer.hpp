@@ -320,6 +320,9 @@ using _integer_parser
 template <typename Rule, typename Sep, typename IntParser, typename Tag>
 struct _int : rule_base
 {
+    static constexpr auto is_branch               = Rule::is_branch;
+    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
+
     template <typename NextParser>
     struct parser
     {
@@ -343,6 +346,16 @@ struct _int : rule_base
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             }
         };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            auto failed = true; // doesn't matter
+            return lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
+                                                                     reader.cur(),
+                                                                     LEXY_FWD(args)...);
+        }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)

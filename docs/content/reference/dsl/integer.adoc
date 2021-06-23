@@ -100,16 +100,18 @@ namespace lexy::dsl
 {
     template <typename T, typename Base>
     constexpr _rule_ auto integer(_rule_ auto digits);
+    template <typename T, typename Base>
+    constexpr _branch-rule_ auto integer(_branch-rule_ auto digits);
 
     template <typename T>
-    constexpr _rule_ auto integer(_digits-dsl_  digits);
+    constexpr _branch-rule_ auto integer(_digits-dsl_  digits);
     template <typename T>
-    constexpr _rule_ auto integer(_ndigits-dsl_ digits);
+    constexpr _branch-rule_ auto integer(_ndigits-dsl_ digits);
 }
 ----
 
 [.lead]
-`integer` is a rule that parses a sequence of digits as an integer.
+`integer` is a rule and usually a {{% branch-rule %}} that parses a sequence of digits as an integer.
 
 Requires::
   * `T` is a type with a specialization of <<integer_traits>>.
@@ -118,6 +120,9 @@ Requires::
     `Base` is deduced and must not be specified.
 Parsing::
   Parses `digits`.
+Branch parsing::
+  Tries to parse `digits`, backtracks if that backtracks.
+  It will not backtrack on integer overflow.
 Errors::
   * `lexy::integer_overflow`: if converting the consumed digits to an integer leads to overflow.
     Its range covers everything consumed by `digits`.
@@ -149,12 +154,12 @@ namespace lexy
 namespace lexy::dsl
 {
     template <std::size_t N, typename Base = hex>
-    constexpr _rule_ auto code_point_id;
+    constexpr _branch-rule_ auto code_point_id;
 }
 ----
 
 [.lead]
-`code_point_id` is a rule that parses a sequence of `N` digits as a `lexy::code_point`.
+`code_point_id` is a {{% branch-rule %}} that parses a sequence of `N` digits as a `lexy::code_point`.
 
 `code_point_id<N, Base>` behaves almost exactly like `integer<lexy::code_point>(n_digits<N, Base>)`.
 The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_point` as opposed to `lexy::integer_overflow`.
