@@ -7,12 +7,12 @@
 
 #include <lexy/input/file.hpp>
 
-bool json_baseline(const lexy::buffer<lexy::utf8_encoding>& input);
-bool json_lexy(const lexy::buffer<lexy::utf8_encoding>& input);
-bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& input);
-bool json_nlohmann(const lexy::buffer<lexy::utf8_encoding>& input);
-bool json_rapid(const lexy::buffer<lexy::utf8_encoding>& input);
-bool json_boost(const lexy::buffer<lexy::utf8_encoding>& input);
+bool json_baseline(const lexy::read_file_result<lexy::utf8_encoding>& input);
+bool json_lexy(const lexy::read_file_result<lexy::utf8_encoding>& input);
+bool json_pegtl(const lexy::read_file_result<lexy::utf8_encoding>& input);
+bool json_nlohmann(const lexy::read_file_result<lexy::utf8_encoding>& input);
+bool json_rapid(const lexy::read_file_result<lexy::utf8_encoding>& input);
+bool json_boost(const lexy::read_file_result<lexy::utf8_encoding>& input);
 
 auto get_data(const char* file_name)
 {
@@ -20,7 +20,7 @@ auto get_data(const char* file_name)
     auto result = lexy::read_file<lexy::utf8_encoding>(path.c_str());
     if (!result)
         throw std::runtime_error("unable to read data file");
-    return LEXY_MOV(result).value();
+    return LEXY_MOV(result);
 }
 
 const char* output_prefix()

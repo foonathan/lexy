@@ -5,7 +5,7 @@
 #include <lexy/input/file.hpp>
 #include <rapidjson/reader.h>
 
-bool json_rapid(const lexy::buffer<lexy::utf8_encoding>& input)
+bool json_rapid(const lexy::read_file_result<lexy::utf8_encoding>& input)
 {
     rapidjson::MemoryStream stream(reinterpret_cast<const char*>(input.data()), input.size());
     rapidjson::BaseReaderHandler<> handler;

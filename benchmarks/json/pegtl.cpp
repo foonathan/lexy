@@ -9,7 +9,7 @@
 
 namespace pegtl = TAO_PEGTL_NAMESPACE;
 
-bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& _input)
+bool json_pegtl(const lexy::read_file_result<lexy::utf8_encoding>& _input)
 {
     using grammar = pegtl::seq<pegtl::json::text, pegtl::eof>;
 
