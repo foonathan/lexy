@@ -195,10 +195,7 @@ struct _graph : _ascii<_graph>
         return "ASCII.graph";
     }
 
-    using token_engine
-        = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table, lexy::_detail::ascii_table_alpha,
-                                   lexy::_detail::ascii_table_digit,
-                                   lexy::_detail::ascii_table_punct>;
+    using token_engine = lexy::engine_char_range<0x21, 0x7E>;
 };
 inline constexpr auto graph = _graph{};
 
@@ -209,23 +206,7 @@ struct _print : _ascii<_print>
         return "ASCII.print";
     }
 
-    struct token_engine : lexy::engine_matcher_base
-    {
-        using error_code = _graph::token_engine::error_code;
-
-        template <typename Reader>
-        static constexpr auto match(Reader& reader)
-        {
-            using encoding = typename Reader::encoding;
-            if (reader.peek() == lexy::_char_to_int_type<encoding>(' '))
-            {
-                reader.bump();
-                return error_code();
-            }
-            else
-                return _graph::token_engine::match(reader);
-        }
-    };
+    using token_engine = lexy::engine_char_range<0x20, 0x7E>;
 };
 inline constexpr auto print = _print{};
 
