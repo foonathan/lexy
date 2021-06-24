@@ -6,6 +6,8 @@ menu:
   main:
     name: "DSL"
     weight: 3
+entities:
+  "rule": doc
 ---
 
 [.lead]
