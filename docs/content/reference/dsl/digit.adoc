@@ -96,7 +96,7 @@ Requires::
   `Base` must be one of the <<bases>>.
 Matching::
   Matches and consumes one of the digits of `Base` specified in the table above.
-  Any transcoding from ASCII to the input encoding for the comparison is done by a simple `static_cast`.
+  Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
 Errors::
   `lexy::expected_char_class` (`"digit.<base>"`): at the starting reader position.
   The rule then fails.

@@ -19,10 +19,10 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`encode` is a rule that temporarily changes the encoding of the input while parsing `rule`.
+`encode` is a rule that temporarily changes the {{% encoding %}} of the input while parsing `rule`.
 
 Requires::
-  * The input encoding has single byte code units (e.g. `lexy::byte_encoding`).
+  * The input encoding has single byte code units (e.g. {{% docref "lexy::byte_encoding" %}}).
   * If `Endianness == lexy::encoding_endianness::bom`, `Encoding` is ASCII, UTF-8, UTF-16, or UTF-32.
 Parsing::
   * If `Endianness != lexy::encoding_endianness::bom`:

@@ -180,5 +180,5 @@ NOTE: While {{% docref "lexy::dsl::lit" %}}`<"int">` would happily consume a pre
 
 NOTE: A keyword does not necessarily need to be a reserved identifier or vice-versa.
 
-NOTE: The same encoding caveats of {[% docref "lexy::dsl::lit" %}} apply here as well.
+NOTE: The same {{% encoding %}} caveats of {{% docref "lexy::dsl::lit" %}} apply here as well.
 

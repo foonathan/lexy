@@ -30,8 +30,8 @@ namespace lexy::dsl
 `code_point` is a {{% token-rule %}} that matches a single Unicode https://en.wikipedia.org/wiki/Code_point[code point].
 
 Requires::
-  The input encoding is ASCII, UTF-8, UTF-16, or UTF-32.
-  In particular, `lexy::default_encoding` and `lexy::byte_encoding` are not supported.
+  The input {{% encoding %}} is ASCII, UTF-8, UTF-16, or UTF-32.
+  In particular, {{% docref "lexy::default_encoding" %}} and {{% docref "lexy::byte_encoding" %}} are not supported.
 Matching::
   Matches and consumes all code points that form a code point in this encoding.
   For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.

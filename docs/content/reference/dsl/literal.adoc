@@ -28,9 +28,9 @@ namespace lexy::dsl
 `lit` is a {{% token-rule %}} that matches the specified sequence of characters.
 
 Requires::
-  `Str` is a string literal of some character type `CharT`, that is compatible with the input encoding, i.e. it must be one of the two cases described below.
+  `Str` is a string literal of some character type `CharT`, that is compatible with the input {{% encoding %}}, i.e. it must be one of the two cases described below.
 Matching::
-  1. If `CharT` is the same as character type of the input encoding, `lit<Str>` compares each code unit of `Str` in order with the next code unit of the reader and consumes it.
+  1. If `CharT` is the same as character type of the input {{% encoding %}}, `lit<Str>` compares each code unit of `Str` in order with the next code unit of the reader and consumes it.
      It is not checked whether `Str` is a well-formed string (e.g. that it contains no https://en.wikipedia.org/wiki/UTF-8#Invalid_sequences_and_error_handling[ill-formed UTF-8]),
      and no https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization[normalization] or other https://en.wikipedia.org/wiki/Unicode_equivalence[equivalence checking] is done.
   2. Otherwise, if `CharT` is `char`, `Str` must only contain ASCII characters (i.e. `0x00-0x7F`).

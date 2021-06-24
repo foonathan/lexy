@@ -18,11 +18,11 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`bom` is a {{% token-rule %}} that matches the https://en.wikipedia.org/wiki/Byte_order_mark[byte order mark (BOM)] of the given encoding in the given endianness.
+`bom` is a {{% token-rule %}} that matches the https://en.wikipedia.org/wiki/Byte_order_mark[byte order mark (BOM)] of the given {{% encoding %}} in the given {{% docref "lexy::encoding_endianness" %}}.
 
 Requires::
   * The combination of `Encoding` and `Endianness` is listed in the table below.
-  * The input encoding has single byte code units (e.g. `lexy::byte_encoding`).
+  * The input encoding has single byte code units (e.g. {{% docref "lexy::byte_encoding" %}}).
 Matching::
   Matches and consumes the byte sequence given in the table below.
   This is done by repeatedly comparing the code unit against the numeric values.
