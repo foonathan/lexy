@@ -43,6 +43,15 @@ TEST_CASE("bind a callback")
         CHECK(bound(3.14f, lexy::nullopt{}, 42) == 42 + 3 + 9);
         CHECK(bound(lexy::nullopt{}, lexy::nullopt{}, 42) == 42 + 2 + 9);
     }
+    SUBCASE("nth_value or_default")
+    {
+        auto bound = lexy::bind(cb, lexy::_3.or_default(), lexy::_1, lexy::_2);
+        CHECK(bound(3.14f, "123", 42) == 42 + 3 + 1);
+        CHECK(bound(3.14f, "123", 42, nullptr, 11) == 42 + 3 + 1);
+
+        CHECK(bound(3.14f, "123") == 0 + 3 + 1);
+        CHECK(bound(3.14f, "123", lexy::nullopt{}) == 0 + 3 + 1);
+    }
     SUBCASE("nth_value map")
     {
         auto bound

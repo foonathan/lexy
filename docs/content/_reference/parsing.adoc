@@ -569,6 +569,8 @@ namespace lexy
         template <typename Arg>
         constexpr nth-value-impl operator||(Arg&& fallback) const;
 
+        constexpr nth-value-impl or_default() const;
+
         template <typename Fn>
         constexpr nth-value-impl map(Fn&& fn) const;
     };
@@ -597,6 +599,7 @@ If there are fewer than `N` arguments, it expands to `fallback`.
 Without a fallback, this would be a compile-time error.
 If the `N`th argument is of type `lexy::nullopt` (e.g. as produced by a `dsl::opt()` rule), it expands to `fallback`.
 Without a fallback, it would expand to the `lexy::nullopt` value unchanged.
+The member function `.or_default()` provides a fallback that can produce a default constructed value of any type via implicit conversion.
 
 If both a mapping and a fallback is specified, the fallback is not passed to `fn` but kept as-is.
 

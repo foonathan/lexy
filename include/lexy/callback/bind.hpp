@@ -102,6 +102,15 @@ constexpr auto values = _detail::all_values_placeholder{};
 
 struct nullopt;
 
+struct _default
+{
+    template <typename T, typename = std::enable_if_t<std::is_default_constructible_v<T>>>
+    constexpr operator T() const noexcept
+    {
+        return T();
+    }
+};
+
 template <std::size_t N, typename T, typename Fn>
 struct _nth_value : _detail::placeholder_base // fallback + map
 {
@@ -174,6 +183,11 @@ struct _nth_value<N, void, Fn> : _detail::placeholder_base // map only
     {
         return *this || LEXY_FWD(fallback);
     }
+
+    constexpr auto or_default() const
+    {
+        return *this || _default{};
+    }
 };
 template <std::size_t N>
 struct _nth_value<N, void, void> : _detail::placeholder_base
@@ -198,6 +212,11 @@ struct _nth_value<N, void, void> : _detail::placeholder_base
     constexpr auto or_(Arg&& fallback) const
     {
         return *this || LEXY_FWD(fallback);
+    }
+
+    constexpr auto or_default() const
+    {
+        return *this || _default{};
     }
 
     template <typename Fn>
