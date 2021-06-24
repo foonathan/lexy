@@ -39,9 +39,9 @@ Errors::
 Parse tree::
   Only a token node for `token` whose kind is determined by the minus rule; nothing for `except`.
 
-{{% playground_example minus_any "Match words that don't start with `'no'`" %}}
+{{% playground-example minus_any "Match words that don't start with `'no'`" %}}
 
-{{% playground_example quoted "Match a string literal that doesn't contain control characters" %}}
+{{% playground-example quoted "Match a string literal that doesn't contain control characters" %}}
 
 CAUTION: When using `.error<Tag>` to override the generic `lexy::minus_failure` tag,
 keep in mind that this also overrides all errors `token` might raise.

@@ -89,7 +89,7 @@ if `close` is missing in the input it will consume the entire input.
 By specifying a limit, which is a (or an alternative of) {{% token-rule %}}(s),
 it fails once it matches one of them before the closing delimiter.
 
-{{% playground_example "quoted_limit" "Detect missing closing delimiter" %}}
+{{% playground-example "quoted_limit" "Detect missing closing delimiter" %}}
 
 CAUTION: The limit must be a character that must not be allowed inside the delimited.
 
@@ -143,11 +143,11 @@ Parse tree::
   If the current production inherits from `lexy::token_production`,
   adjacent token nodes of the same kind (which includes the default kind) are merged.
 
-{{% playground_example "quoted" "Parse a quoted string" %}}
+{{% playground-example "quoted" "Parse a quoted string" %}}
 
-{{% playground_example "quoted_error" "Parse a quoted string with custom error" %}}
+{{% playground-example "quoted_error" "Parse a quoted string with custom error" %}}
 
-{{% playground_example "quoted_token" "Parse a quoted string with whitespace and token production" %}}
+{{% playground-example "quoted_token" "Parse a quoted string with whitespace and token production" %}}
 
 [#delimited-predefined]
 == Predefined delimited
@@ -223,7 +223,7 @@ Values::
   All values produced by the selected escape sequence.
   `delimited` forwards them to the sink in one invocation.
 
-{{% godbolt_example "quoted_escape" "Parse a quoted string with escape sequences" %}}
+{{% godbolt-example "quoted_escape" "Parse a quoted string with escape sequences" %}}
 
 === Escape sequence `.rule()`
 

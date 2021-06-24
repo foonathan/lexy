@@ -46,7 +46,7 @@ Errors::
 Values::
   None.
 
-{{% playground_example peek "Parse an optional number" %}}
+{{% playground-example peek "Parse an optional number" %}}
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
 
@@ -91,7 +91,7 @@ Errors::
 Values::
   None.
 
-{{% playground_example peek_not "Explicitly prohibit trailing spaces" %}}
+{{% playground-example peek_not "Explicitly prohibit trailing spaces" %}}
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
 

@@ -42,7 +42,7 @@ but it is an error if `rule` is after the last item.
 In that case, a generic error with tag `lexy::unexpected_trailing_separator` is raised at the position where the separator begins.
 This tag can be overridden by specifying a different tag via `.trailing_error`.
 
-{{% godbolt_example list_sep "Parse a list of letters separated by commas" %}}
+{{% godbolt-example list_sep "Parse a list of letters separated by commas" %}}
 
 NOTE: It is not always possible to check for the existence of a trailing separator.
 If it is not possible, parsing will continue as normal and (presumably) the next rule will fail due to the unexpected separator.
@@ -65,7 +65,7 @@ If specified as a separator, it will parse `rule` between two items,
 or after the last item.
 If no separator is present after the last item, it is not an error.
 
-{{% godbolt_example times_tsep "Parse three integers separated by comma" %}}
+{{% godbolt-example times_tsep "Parse three integers separated by comma" %}}
 
 TIP: To create a separator that _must_ be present after every the last item (and every item before that),
 simply add the separator to the item itself.

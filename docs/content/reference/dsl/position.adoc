@@ -28,7 +28,7 @@ Values::
 Parse tree::
   A single token node, whose range is begins and ends at its position and whose is kind is `lexy::psoition_token_node`.
 
-{{% playground_example position "Determine the position of a function declaration" %}}
+{{% playground-example position "Determine the position of a function declaration" %}}
 
 NOTE: As a rule, `position` does not do {{% docref whitespace %}} skipping.
 If used immediately before a {{% token-rule %}} it will produce the position that is the beginning of this token,

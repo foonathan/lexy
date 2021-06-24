@@ -55,7 +55,7 @@ If the result of `operator>>` is used in the beginning of a {{% docref sequence 
 this is equivalent to `condition >> rule1 + rule2`, i.e. the original branch is extended.
 `rule1 + (condition >> rule2)`, on the other hand, is equivalent to `rule1 + condition + rule2`.
 
-{{% playground_example if "Only parse a fraction if preceded by a dot" %}}
+{{% playground-example if "Only parse a fraction if preceded by a dot" %}}
 
 NOTE: A branch rule is only parsed as a branch if its required.
 If you just use it by itself, the branch condition does not matter.
@@ -89,5 +89,5 @@ Errors::
 Values::
   All values produced by `rule`.
 
-{{% playground_example choice_else "If it is not a known greeting, require that the empty is empty" %}}
+{{% playground-example choice_else "If it is not a known greeting, require that the empty is empty" %}}
 

@@ -65,9 +65,9 @@ Values::
   there are separate calls for every iteration and for `item` and `sep`.
   The value of the finished sink is produced as the only value of the `list` rule.
 
-{{% godbolt_example list "Parse a list of letters (first overload)" %}}
+{{% godbolt-example list "Parse a list of letters (first overload)" %}}
 
-{{% godbolt_example list_sep "Parse a list of letters separated by commas (second overload, case 2)" %}}
+{{% godbolt-example list_sep "Parse a list of letters separated by commas (second overload, case 2)" %}}
 
 NOTE: `lexy::dsl::list(item)` matches the same input as {{% docref "lexy::dsl::while_one" %}}`(item)`;
 `lexy::dsl::list(item, sep)` (case 2) matches the same input as {{% docref "lexy::dsl::do_while" %}}`(item, sep)`.

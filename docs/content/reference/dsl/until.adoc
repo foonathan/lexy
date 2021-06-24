@@ -43,7 +43,7 @@ It doesn't matter what the input is.
 i.e. the end of the input is also considered to be a terminating condition.
 If `.or_eof()` was used, the rule never fails, but it may consume the rest of the input.
 
-{{% playground_example cpp_comment "A C++-style comment" %}}
+{{% playground-example cpp_comment "A C++-style comment" %}}
 
 CAUTION: `until()` does not care what input it consumes to find `condition`; it can be {{% docref "lexy::dsl::any" %}}thing, including ill-formed Unicode.
 To restrict the input that is allowed before `condition`, use {{% docref "lexy::dsl::terminator" %}}`(condition).while_(before)`.

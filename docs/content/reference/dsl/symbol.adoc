@@ -242,7 +242,7 @@ Errors::
 Values::
   The value of the symbol table that corresponds to the partial input.
 
-{{% godbolt_example symbol "Parse one of the predefined XML entities" %}}
+{{% godbolt-example symbol "Parse one of the predefined XML entities" %}}
 
-NOTE: See {{< github_example xml >}} for an XML parser.
+NOTE: See {{< github-example xml >}} for an XML parser.
 

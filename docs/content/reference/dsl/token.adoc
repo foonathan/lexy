@@ -52,7 +52,7 @@ Errors::
   Its range covers everything already consumed by `token`.
   The rule then fails as well.
 
-{{% playground_example quoted_error "A string literal with a nice error" %}}
+{{% playground-example quoted_error "A string literal with a nice error" %}}
 
 CAUTION: `.error<Tag>` overrides _all_ errors raised by a token rule to the same error.
 If a token can fail with different kinds of errors, this information is lost.
@@ -110,7 +110,7 @@ Errors::
   its range covers everything `rule` has already consumed.
   The rule then fails.
 
-{{% playground_example minus_any "Use `token` to turn rules into token rules where required" %}}
+{{% playground-example minus_any "Use `token` to turn rules into token rules where required" %}}
 
 NOTE: {{% docref whitespace "Whitespace skipping" %}} is disabled while parsing `rule`,
 but it is skipped at the end, as it is a token rule.

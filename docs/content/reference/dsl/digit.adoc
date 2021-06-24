@@ -75,7 +75,7 @@ Errors::
   `lexy::expected_char_class` (`"digit.zero"`): instead of `lexy::expected_literal`; at the starting reader position.
   The rule then fails.
 
-{{% playground_example zero "The number zero" %}}
+{{% playground-example zero "The number zero" %}}
 
 [#digit]
 == Token rule `lexy::dsl::digit`
@@ -101,7 +101,7 @@ Errors::
   `lexy::expected_char_class` (`"digit.<base>"`): at the starting reader position.
   The rule then fails.
 
-{{% playground_example digit "A hexadecimal digit, upper-case letters only" %}}
+{{% playground-example digit "A hexadecimal digit, upper-case letters only" %}}
 
 NOTE: The only difference between `lexy::dsl::digit<decimal>` and {{% docref "lexy::dsl::ascii::digit" %}} is the name of the character class in the error.
 
@@ -146,7 +146,7 @@ Errors::
   * All errors raised by matching a digit after a separator to prevent trailing separators.
     The rule then fails.
 
-{{% playground_example digits "Decimal digits with digit separator but without leading zeroes" %}}
+{{% playground-example digits "Decimal digits with digit separator but without leading zeroes" %}}
 
 NOTE: If a digit separator is specified, it can be between any two digits.
 lexy does not enforce the use of thousands separators only, or other conventions.
@@ -182,7 +182,7 @@ Matching::
 Errors::
   All errors raised by matching `digit<Base>`. The rule then fails.
 
-{{% playground_example n_digits "A `\x` escape sequence" %}}
+{{% playground-example n_digits "A `\x` escape sequence" %}}
 
 NOTE: If a digit separator is specified, it can be between any two digits.
 lexy does not enforce the use of thousands separators only, or other conventions.

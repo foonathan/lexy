@@ -49,11 +49,11 @@ Values::
   A single object of the tag type `lexy::nullopt`.
   This type is implicitly convertible to any type that is `_optional-like_` by constructing a default constructible instance of it.
 
-{{% godbolt_example try "Recover from missing version numbers" %}}
+{{% godbolt-example try "Recover from missing version numbers" %}}
 
-NOTE: See {{< github_example tutorial >}} for a more complete version number parser.
+NOTE: See {{< github-example tutorial >}} for a more complete version number parser.
 
-{{% godbolt_example lookahead "Create an empty optional if we're not having the key" %}}
+{{% godbolt-example lookahead "Create an empty optional if we're not having the key" %}}
 
 [#opt]
 == Rule `lexy::dsl::opt`
@@ -79,7 +79,7 @@ Values::
   If `branch` was parsed, all values produced by it.
   Otherwise, a single object of the tag type `lexy::nullopt` (see above).
 
-{{% godbolt_example opt "Only parse a fraction if preceded by a dot " %}}
+{{% godbolt-example opt "Only parse a fraction if preceded by a dot " %}}
 
 NOTE: `opt(branch)` is functionally equivalent to the {{% docref choice %}} `branch | lexy::dsl::else_ >> lexy::dsl::nullopt`,
 and it parses the same as {{% docref "lexy::dsl::if_" %}}.

@@ -28,7 +28,7 @@ Errors::
 Values::
   All values produced from `rhs` followed by all values produced by `rhs`.
 
-{{% playground_example default "Sequence rule is used practically all the time" %}}
+{{% playground-example default "Sequence rule is used practically all the time" %}}
 
 [#sequence-token]
 == Branch rule `lexy::dsl::operator+` (tokens only)

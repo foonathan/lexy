@@ -43,7 +43,7 @@ it is not accessible outside the current production, including in child producti
 Once the current production finishes parsing, all context variables of it are destroyed;
 it is impossible to create on that persists between different productions including multiple invocations of the same production.
 
-{{% playground_example "context_identifier" "Parse the same word twice" %}}
+{{% playground-example "context_identifier" "Parse the same word twice" %}}
 
 === Rule `.create()`
 

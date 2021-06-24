@@ -47,13 +47,13 @@ Values::
 `operator|` can be chained:
 `a | (b | c)` is equivalent to `a | lexy::dsl::else_ >> (b | c)`, and likewise for the other cases.
 
-{{% playground_example choice "Parse a greeting" %}}
-{{% playground_example choice_error "Raise a different error if no greeting matches" %}}
-{{% playground_example choice_else "Do something differently if no greeting matches" %}}
+{{% playground-example choice "Parse a greeting" %}}
+{{% playground-example choice_error "Raise a different error if no greeting matches" %}}
+{{% playground-example choice_else "Do something differently if no greeting matches" %}}
 
-{{% playground_example choice_production "Branches can be arbitrarily complex" %}}
+{{% playground-example choice_production "Branches can be arbitrarily complex" %}}
 
-{{% playground_example choice_branch "Only the branch condition is checked" %}}
+{{% playground-example choice_branch "Only the branch condition is checked" %}}
 
 TIP: Use {{% docref "lexy::dsl::operator>>" %}} to turn a rule into a branch by giving it a condition.
 Use {{% docref "lexy::dsl::peek" %}} or {{% docref "lexy::dsl::lookahead" %}} as conditions if there is no simple token rule to check the beginning of the branch.

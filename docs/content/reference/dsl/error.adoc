@@ -43,9 +43,9 @@ Errors::
 Values::
   None.
 
-{{% playground_example choice_error "Generate a custom error for an unknown greeting" %}}
+{{% playground-example choice_error "Generate a custom error for an unknown greeting" %}}
 
-{{% playground_example choice_error_range "Generate a custom error for an unknown greeting with range" %}}
+{{% playground-example choice_error_range "Generate a custom error for an unknown greeting with range" %}}
 
 TIP: Use `error` in error production: if a certain ill-formed input is common, create a separate rule for it.
 If it is parsed, a custom error is always raised.
@@ -95,9 +95,9 @@ Errors::
     if the rule backtracks during non-branch parsing.
     Its range covers anything consumed by the optional `capture` rule, just like `lexy::dsl::error`.
 
-{{% playground_example must "Parse a very basic echo command" %}}
+{{% playground-example must "Parse a very basic echo command" %}}
 
-NOTE: See {{< github_example shell >}} for a more complete shell parser.
+NOTE: See {{< github-example shell >}} for a more complete shell parser.
 
 TIP: Use `must(rule).error<Tag>` if you sometimes need to parse `rule` unconditionally with a specific error, and sometimes as a branch rule.
 

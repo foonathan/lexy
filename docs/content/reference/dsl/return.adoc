@@ -30,7 +30,7 @@ Values::
   None; but all existing values are immediately parsed to the context,
   e.g. the callback is immediately invoked if `lexy::parse()` is used.
 
-{{% playground_example return "Parse a (simplified) XML element, which can be empty" %}}
+{{% playground-example return "Parse a (simplified) XML element, which can be empty" %}}
 
-NOTE: See {{< github_example xml >}} for a more complete XML parser.
+NOTE: See {{< github-example xml >}} for a more complete XML parser.
 

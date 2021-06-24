@@ -26,9 +26,9 @@ Matching::
 Errors::
   None.
 
-{{% playground_example any "Match literally any input" %}}
+{{% playground-example any "Match literally any input" %}}
 
-{{% playground_example minus_any "Match words that don't start with `'no'`" %}}
+{{% playground-example minus_any "Match words that don't start with `'no'`" %}}
 
 CAUTION: `any` does not care what input it consumes; it can be anything, including ill-formed Unicode.
 To restrict the input that is consumed, use {{% docref "lexy::dsl::while_" %}} instead.

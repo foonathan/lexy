@@ -56,7 +56,7 @@ Values::
 The macro version `LEXY_MEM(member) = rule` behaves identical, except that `member` is not a member pointer but the name of a member.
 The resulting `Fn` can take an arbitrary aggregate type and will assign the member with that name.
 
-{{% godbolt_example member "Parse a point" %}}
+{{% godbolt-example member "Parse a point" %}}
 
 TIP: The `member` rule works good in combination with {{% docref "lexy::dsl::combination" %}} where rules are parsed in an arbitrary order.
 

@@ -29,9 +29,9 @@ Values::
   A `lexy::lexeme` whose range covers everything consumed by `rule`,
   followed by all values produced by `rule`.
 
-{{% godbolt_example capture "Parse a name" %}}
+{{% godbolt-example capture "Parse a name" %}}
 
-{{% godbolt_example capture_whitespace "Parse a name, but disable whitespace skipping" %}}
+{{% godbolt-example capture_whitespace "Parse a name, but disable whitespace skipping" %}}
 
 CAUTION: If a {{% token-rule %}} is captured, the `lexy::lexeme` includes the automatic whitespace skipped after the token.
 Use {{% docref "lexy::dsl::no_whitespace" %}} around the `lexy::dsl::capture()` as seen in the example above.

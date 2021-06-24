@@ -36,7 +36,7 @@ Errors::
 Values::
   None.
 
-{{% playground_example loop "Repeatedly match a choice" %}}
+{{% playground-example loop "Repeatedly match a choice" %}}
 
 TIP: Use {{% docref "lexy::dsl::while_" %}} if there is a simple exit condition,
 {{% docref "lexy::dsl::list" %}} if the rule should produce values.
@@ -88,7 +88,7 @@ It is entirely equivalent to `loop(rule | break_)`.
 It can only fail, if `rule` can fail after it decided to select the branch.
 It can accept the empty string if `rule` backtracks on the first iteration.
 
-{{% playground_example while "Parse a word, which can be empty" %}}
+{{% playground-example while "Parse a word, which can be empty" %}}
 
 TIP: Use {{% docref "lexy::dsl::opt" %}} and {{% docref "lexy::dsl::list" %}} if `rule` produces values.
 
@@ -115,7 +115,7 @@ namespace lexy::dsl
 
 It is entirely equivalent to `rule >> while_(rule)`.
 
-{{% playground_example while_one "Parse a word, which cannot be empty" %}}
+{{% playground-example while_one "Parse a word, which cannot be empty" %}}
 
 TIP: Use {{% docref "lexy::dsl::list" %}} if `rule` produces values.
 
@@ -148,7 +148,7 @@ namespace lexy::dsl
 It is entirely equivalent to `then + while_(condition >> then)` if `then` is not a branch,
 and `then >> while_(condition >> then)` otherwise.
 
-{{% playground_example do_while "Parse a list of non-empty words separated by spaces" %}}
+{{% playground-example do_while "Parse a list of non-empty words separated by spaces" %}}
 
 TIP: Use {{% docref "lexy::dsl::list" %}} if `then` produces values with `condition` as separator.
 

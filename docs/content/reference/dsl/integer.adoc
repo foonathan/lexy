@@ -139,7 +139,7 @@ Values::
   If a code unit is a valid digit of `Base`, its numerical value is determined and the resulting digit added to the result using <<integer_traits>>.
   Otherwise, the code unit is ignored without any additional validation.
 
-{{% godbolt_example integer "Parse an `int`" %}}
+{{% godbolt-example integer "Parse an `int`" %}}
 
 [#code_point_id]
 == Rule `lexy::dsl::code_point_id`
@@ -164,7 +164,7 @@ namespace lexy::dsl
 `code_point_id<N, Base>` behaves almost exactly like `integer<lexy::code_point>(n_digits<N, Base>)`.
 The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_point` as opposed to `lexy::integer_overflow`.
 
-{{% godbolt_example code_point_id "Parse a code point value" %}}
+{{% godbolt-example code_point_id "Parse a code point value" %}}
 
 CAUTION: The rule still recovers from a `lexy::invalid_code_point`.
 The `lexy::code_point` produced might be invalid in that case, i.e. `.is_invalid() == true`.

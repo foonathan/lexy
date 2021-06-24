@@ -65,9 +65,9 @@ If `recovery_rule` succeeds, this corresponds to a `catch` block that is execute
 If `recovery_rule` raises an error, this corresponds to a `catch` block whose execution raises another exception.
 `recovery_rule` can also fail without raising an error; this corresponds to a `throw;` statement that re-throws the exception.
 
-{{% godbolt_example try "Recover from missing version numbers" %}}
+{{% godbolt-example try "Recover from missing version numbers" %}}
 
-NOTE: See {{< github_example tutorial >}} for a more complete version number parser.
+NOTE: See {{< github-example tutorial >}} for a more complete version number parser.
 
 [#find]
 == Rule `lexy::dsl::find`
@@ -102,7 +102,7 @@ If recovery is successful, the reader has been advanced to the position just bef
 Parsing can then continue from this known state, e.g. from a statement separator.
 If recovery fails, no additional error is raised but parsing is canceled, to try recovery at a higher level.
 
-{{% playground_example find "Parse a list of declarations with error recovery using `find()`" %}}
+{{% playground-example find "Parse a list of declarations with error recovery using `find()`" %}}
 
 [#recover]
 == Rule `lexy::dsl::recover`
@@ -140,5 +140,5 @@ If recovery has been successful, it has parsed the selected rule.
 Parsing can then continue as it would normally do a after that rule.
 If recovery fails, no additional error is raised but parsing is canceled, to try recovery at a higher level.
 
-{{% playground_example recover "Parse a list of declarations with error recovery using `recover()`" %}}
+{{% playground-example recover "Parse a list of declarations with error recovery using `recover()`" %}}
 

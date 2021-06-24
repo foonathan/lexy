@@ -64,7 +64,7 @@ Values::
   If it matched a `+`, an object of type `lexy::plus_sign`.
   Otherwise, no values.
 
-{{% playground_example plus_sign "A number with an optional plus sign" %}}
+{{% playground-example plus_sign "A number with an optional plus sign" %}}
 
 [#minus_sign]
 == Rule `lexy::dsl::minus_sign`
@@ -89,7 +89,7 @@ Values::
   If it matched a `-`, an object of type `lexy::minus_sign`.
   Otherwise, no values.
 
-{{% playground_example minus_sign "A number with an optional minus sign" %}}
+{{% playground-example minus_sign "A number with an optional minus sign" %}}
 
 [#sign]
 == Rule `lexy::dsl::sign`
@@ -115,7 +115,7 @@ Values::
   If it matched a `-`, an object of type `lexy::minus_sign`.
   Otherwise, no values.
 
-{{% playground_example sign "A number with an optional plus/minus sign" %}}
+{{% playground-example sign "A number with an optional plus/minus sign" %}}
 
 TODO: link callback
 

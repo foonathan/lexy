@@ -153,5 +153,5 @@ namespace lexy::dsl
 [.lead]
 ASCII brackets are pre-defined.
 
-{{% playground_example parenthesized "Parse a parenthesized list of things" %}}
+{{% playground-example parenthesized "Parse a parenthesized list of things" %}}
 

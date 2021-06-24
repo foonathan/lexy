@@ -31,7 +31,7 @@ Errors::
 Parse tree::
   Single token type whose kind is the predefined `lexy::newline_token_kind`.
 
-{{% playground_example newline "Match a newline at the end" %}}
+{{% playground-example newline "Match a newline at the end" %}}
 
 CAUTION: As a token rule, it matches {{% docref whitespace %}} immediately following the newline.
 As such, the rule is best used in contexts where automatic whitespace skipping is disabled,
@@ -61,7 +61,7 @@ Errors::
 Parse tree::
   Single token type whose kind is the predefined `lexy::newline_token_kind`.
 
-{{% playground_example eol "Match a newline or EOF at the end" %}}
+{{% playground-example eol "Match a newline or EOF at the end" %}}
 
 CAUTION: The same caveat about {{% docref whitespace %}} as for `newline` applies here as well.
 

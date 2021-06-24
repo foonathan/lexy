@@ -94,9 +94,9 @@ Errors::
 |===
 ====
 
-{{% playground_example identifier "A C-like identifier" %}}
+{{% playground-example identifier "A C-like identifier" %}}
 
-{{% playground_example whitespace "Allow ASCII whitespace between tokens" %}}
+{{% playground-example whitespace "Allow ASCII whitespace between tokens" %}}
 
 NOTE: The only difference between `lexy::dsl::ascii::digit` and {{% docref "lexy::dsl::digit" "`lexy::dsl::digit<lexy::dsl::decimal>`" %}} is the name of the character class in the error.
 

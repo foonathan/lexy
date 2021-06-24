@@ -44,7 +44,7 @@ it is not accessible outside the current production, including in child producti
 Once the current production finishes parsing, all context variables of it are destroyed;
 it is impossible to create on that persists between different productions including multiple invocations of the same production.
 
-{{% playground_example context_flag "Parse `(a|b|c)*` where the first b must occur after the first a" %}}
+{{% playground-example context_flag "Parse `(a|b|c)*` where the first b must occur after the first a" %}}
 
 === Rule `.create()`
 

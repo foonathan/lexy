@@ -28,7 +28,7 @@ Errors::
 Values::
   All values produced by `branch`.
 
-{{% playground_example if "Only parse a fraction if preceded by a dot " %}}
+{{% playground-example if "Only parse a fraction if preceded by a dot " %}}
 
 NOTE: `if_(branch)` is functionally equivalent to the {{% docref choice %}} `branch | lexy::dsl::else_`.
 

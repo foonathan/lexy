@@ -40,5 +40,5 @@ Values::
   Note that types that are templated on the reader (e.g. `lexy::lexeme`) are instantiated with an unspecified reader type.
   Types that are only templated on the iterator do not change, as the unspecified reader has the same iterator type.
 
-{{% godbolt_example encode "Match umlauts in different encodings" %}}
+{{% godbolt-example encode "Match umlauts in different encodings" %}}
 

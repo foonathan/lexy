@@ -71,7 +71,7 @@ Parse tree::
   The single token node created by `.pattern()` (see below).
   Its kind cannot be overridden.
 
-{{% playground_example identifier "Parse a C like identifier" %}}
+{{% playground-example identifier "Parse a C like identifier" %}}
 
 TIP: Use the character classes from {{% docref "lexy::dsl::ascii" %}} for simple identifier matching as seen in the example.
 
@@ -101,7 +101,7 @@ If this has happened, parsing the `identifier` rule creates a partial input from
   If they match somewhere in the partial input, the identifier is reserved.
   This is comparable to {{% docref "lexy::dsl::find" %}}.
 
-{{% playground_example identifier_reserved "Parse a C like identifier that is not reserved" %}}
+{{% playground-example identifier_reserved "Parse a C like identifier that is not reserved" %}}
 
 CAUTION: The `identifier` rule doesn't magically learn about the keywords you have created.
 They are only reserved if you actually pass them to `.reserve()`.
@@ -174,7 +174,7 @@ The macro `LEXY_KEYWORD(Str, Identifier)` is equivalent to `keyword<Str>(Identif
 except that it also works on older compilers that do not support C++20's extended NTTPs.
 Use this instead of `keyword<Str>(identifier)` if you need to support them.
 
-{{% playground_example keyword "Parse a keyword" %}}
+{{% playground-example keyword "Parse a keyword" %}}
 
 NOTE: While {{% docref "lexy::dsl::lit" %}}`<"int">` would happily consume a prefix of `"integer"`, `keyword<"int">(id)`, for a matching `id`, would not.
 

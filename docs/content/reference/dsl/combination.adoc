@@ -54,7 +54,7 @@ Values::
   All values produced by the selected branch in an iteration are forwarded to the sink.
   The value of the finished sink is produced as only value of the `combination` rule.
 
-{{% playground_example combination "Parse `a`, `b`, `c` in some order" %}}
+{{% playground-example combination "Parse `a`, `b`, `c` in some order" %}}
 
 WARNING: The branches are always tried in the same order and branches already taken are not removed in future iterations.
 If an earlier branch always matches the same as a later branch, the later branch is not taken and the rule cannot succeed.
@@ -98,7 +98,7 @@ Values::
   All values produced by the selected branch in an iteration are forwarded to the sink.
   The value of the finished sink is produced as only value of the `combination` rule.
 
-{{% playground_example partial_combination "Parse a subset of `a`, `b`, `c` in some order" %}}
+{{% playground-example partial_combination "Parse a subset of `a`, `b`, `c` in some order" %}}
 
 NOTE: `partial_combination` can match the empty string.
 

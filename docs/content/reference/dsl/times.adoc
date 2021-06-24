@@ -39,7 +39,7 @@ Errors::
 Values::
   All values produced by each `rule` invocation in order.
 
-{{% godbolt_example times_tsep "Parse and sum three integers separated by comma" %}}
+{{% godbolt-example times_tsep "Parse and sum three integers separated by comma" %}}
 
 [#twice]
 == Rule `lexy::dsl::twice`

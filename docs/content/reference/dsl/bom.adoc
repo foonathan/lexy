@@ -45,7 +45,7 @@ Errors::
 |===
 ====
 
-{{% godbolt_example bom "Skip an optional UTF-8 BOM" %}}
+{{% godbolt-example bom "Skip an optional UTF-8 BOM" %}}
 
 CAUTION: As a token rule, it matches whitespace immediately following the BOM.
 As such, the rule is best used in contexts where automatic whitespace skipping is disabled.

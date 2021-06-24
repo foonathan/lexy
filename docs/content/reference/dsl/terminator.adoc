@@ -73,7 +73,7 @@ Provide a limit for error recovery.
 Similar to {{% docref "lexy::dsl::find" %}} or {{% docref "lexy::dsl::recover" %}} one can provide a limit, which is a {{% token-rule %}} or combination of token rules.
 If the limit is reached before the terminator, error recovery fails.
 
-{{% playground_example terminator_recovery "Recover while parsing a list of statements" %}}
+{{% playground-example terminator_recovery "Recover while parsing a list of statements" %}}
 
 === `.recovery_rule()`
 
@@ -109,7 +109,7 @@ constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const
 
 It behaves entirely equivalent to `rule + terminator()` or `rule >> terminator()`.
 
-{{% playground_example terminator "Parse a statement" %}}
+{{% playground-example terminator "Parse a statement" %}}
 
 === Rule `.try_()`
 
@@ -133,7 +133,7 @@ Errors::
 Values::
   All values produced by `rule` followed by all values produced by `terminator()`.
 
-{{% playground_example terminator_try "Parse a statement; recover on failure" %}}
+{{% playground-example terminator_try "Parse a statement; recover on failure" %}}
 
 === Rule `.opt()`
 
@@ -156,7 +156,7 @@ Values::
   * An object of type {{% docref "lexy::dsl::nullopt" "`lexy::nullopt`" %}} followed by all values produced by `terminator()` in the first case.
   * All values produced by `rule` followed by all values produced by `terminator()` in the second case.
 
-{{% playground_example terminator_opt "Parse a (null) statement" %}}
+{{% playground-example terminator_opt "Parse a (null) statement" %}}
 
 NOTE: `.opt(rule)` consumes the same input as {{% docref "lexy::dsl::opt" %}}`(` {{% docref "lexy::dsl::peek_not" %}}`(terminator()) >> rule ) + terminator()`, but more efficiently.
 
@@ -205,7 +205,7 @@ Values::
   there are separate calls for every iteration and for `item` and `sep`.
   The value of the finished sink is then produced followed by all values of `terminator()`.
 
-{{% playground_example terminator_list "Parse a list of things terminated by a period" %}}
+{{% playground-example terminator_list "Parse a list of things terminated by a period" %}}
 
 NOTE: `.list(rule, sep)` consumes the same input as {{% docref "lexy::dsl::list" %}}`(` {{% docref "lexy::dsl::peek_not" %}}`(terminator()) >> rule, sep ) + terminator()`, but more efficiently.
 

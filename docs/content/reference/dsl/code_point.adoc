@@ -40,7 +40,7 @@ Errors::
   This includes surrogates, overlong UTF-8 sequences, or out of range code points (especially for ASCII).
   The rule then fails.
 
-{{% playground_example code_point "Parse one code point in the inputs encoding" %}}
+{{% playground-example code_point "Parse one code point in the inputs encoding" %}}
 
 CAUTION: As a token rule, it matches {{% docref whitespace whitespace %}} immediately following the code point.
 As such, the rule is best used in contexts where automatic whitespace skipping is disabled.
@@ -67,7 +67,7 @@ Errors::
     The rule then fails.
   * All errors raised by the normal `code_point` rule. The rule then fails.
 
-{{% playground_example code_point_if "Parse even code points only" %}}
+{{% playground-example code_point_if "Parse even code points only" %}}
 
 NOTE: As the rule uses the type name of `Predicate` in the error, it does not accept a lambda as predicate, but should be called with a named type instead.
 

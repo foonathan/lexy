@@ -51,7 +51,7 @@ it is not accessible outside the current production, including in child producti
 Once the current production finishes parsing, all context counters of it are destroyed;
 it is impossible to create on that persists between different productions including multiple invocations of the same production.
 
-{{% playground_example "context_counter" "Parse `n` `a`, then `n` `b` without recursion" %}}
+{{% playground-example "context_counter" "Parse `n` `a`, then `n` `b` without recursion" %}}
 
 === Rule `.create()`
 
@@ -206,5 +206,5 @@ Errors::
 Values::
   None.
 
-{{% playground_example "equal_counts" "Parse `n` `a`, then `n` `b`, then `n` `c`" %}}
+{{% playground-example "equal_counts" "Parse `n` `a`, then `n` `b`, then `n` `c`" %}}
 

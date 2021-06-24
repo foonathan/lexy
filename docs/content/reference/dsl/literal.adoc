@@ -42,11 +42,11 @@ Errors::
 The macro `LEXY_LIT(Str)` is equivalent to `lit<Str>`, except that it also works on older compilers that do not support C++20's extended NTTPs.
 Use this instead of `lit<Str>` if you need to support them.
 
-{{% playground_example lit "Hello World!" %}}
+{{% playground-example lit "Hello World!" %}}
 
-{{% playground_example lit_ascii "A different character type, but only ASCII characters" %}}
+{{% playground-example lit_ascii "A different character type, but only ASCII characters" %}}
 
-{{% playground_example lit_utf8 "UTF-8 encoded string literal" %}}
+{{% playground-example lit_utf8 "UTF-8 encoded string literal" %}}
 
 TIP: When using non-ASCII characters in a `lit<Str>` rule, it is best to specify code points with the `\uXXXX` escape sequences and normalize the input before passing it to `lexy`.
 

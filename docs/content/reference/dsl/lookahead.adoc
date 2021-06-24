@@ -42,7 +42,7 @@ Errors::
 Values::
   None.
 
-{{% godbolt_example lookahead "Look for an `=` sign before deciding on a branch" %}}
+{{% godbolt-example lookahead "Look for an `=` sign before deciding on a branch" %}}
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `needle` or `end`.
 

@@ -36,7 +36,7 @@ Parse tree::
 
 As the result of `operator/` is itself a token rule, it can be chained.
 
-{{% playground_example alternative "Match one of the given literals." %}}
+{{% playground-example alternative "Match one of the given literals." %}}
 
 CAUTION: For literal token rules, the implementation uses a https://en.wikipedia.org/wiki/Trie[trie] to match them efficiently.
 For complex tokens the alternative rule requires backtracking.
