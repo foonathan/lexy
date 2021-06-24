@@ -695,6 +695,8 @@ This requires that you call <code>lexy::parse()</code> passing it a <code>MyStat
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Arg</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-n>nth</span><span class=tok-o>-</span><span class=tok-n>value</span><span class=tok-o>-</span><span class=tok-n>impl</span> <span class=tok-k>operator</span><span class=tok-o>||</span><span class=tok-p>(</span><span class=tok-n>Arg</span><span class=tok-o>&amp;&amp;</span> <span class=tok-n>fallback</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
+        <span class=tok-k>constexpr</span> <span class=tok-n>nth</span><span class=tok-o>-</span><span class=tok-n>value</span><span class=tok-o>-</span><span class=tok-n>impl</span> <span class=tok-n>or_default</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Fn</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-n>nth</span><span class=tok-o>-</span><span class=tok-n>value</span><span class=tok-o>-</span><span class=tok-n>impl</span> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Fn</span><span class=tok-o>&amp;&amp;</span> <span class=tok-n>fn</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
@@ -715,7 +717,8 @@ It supports member pointers.</p></div><div class=paragraph><p>The member functio
 If there are fewer than <code>N</code> arguments, it expands to <code>fallback</code>.
 Without a fallback, this would be a compile-time error.
 If the <code>N`th argument is of type `lexy::nullopt</code> (e.g. as produced by a <code>dsl::opt()</code> rule), it expands to <code>fallback</code>.
-Without a fallback, it would expand to the <code>lexy::nullopt</code> value unchanged.</p></div><div class=paragraph><p>If both a mapping and a fallback is specified, the fallback is not passed to <code>fn</code> but kept as-is.</p></div></div><div class=sect4><h5 id=_lexyvalues><code>lexy::values</code></h5><div class=listingblock><div class=title><code>lexy/callback/bind.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+Without a fallback, it would expand to the <code>lexy::nullopt</code> value unchanged.
+The member function <code>.or_default()</code> provides a fallback that can produce a default constructed value of any type via implicit conversion.</p></div><div class=paragraph><p>If both a mapping and a fallback is specified, the fallback is not passed to <code>fn</code> but kept as-is.</p></div></div><div class=sect4><h5 id=_lexyvalues><code>lexy::values</code></h5><div class=listingblock><div class=title><code>lexy/callback/bind.hpp</code></div><div class=content><pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
 <span class=tok-p>{</span>
     <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>values</span> <span class=tok-o>=</span> <span class=tok-n>values</span><span class=tok-o>-</span><span class=tok-n>impl</span><span class=tok-p>{};</span>
 <span class=tok-p>}</span></code></pre></div></div><div class=paragraph><p>The bind placeholder <code>lexy::values</code> expands to all arguments passed to the bound callback, unchanged and in the same order.
