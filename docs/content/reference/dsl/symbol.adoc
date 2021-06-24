@@ -163,22 +163,63 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    struct _symbol-dsl_ // models _rule_
+    struct _symbol-dsl_ // models _branch-rule_
     {
         template <typename Tag>
-        static constexpr _rule_ auto error;
+        static constexpr _branch-rule_ auto error;
     };
 
     template <const _symbol-table_& SymbolTable>
-    constexpr _symbol-dsl_ symbol(_token-rule_ auto token);
+    constexpr _symbol-dsl_ symbol;
 
+    template <const _symbol-table_& SymbolTable>
+    constexpr _symbol-dsl_ symbol(_token-rule_ auto token);
     template <const _symbol-table_& SymbolTable>
     constexpr _symbol-dsl_ symbol(_identifier-dsl_ identifier);
 }
 ----
 
 [.lead]
-`symbol` is a rule that parses one symbol of `SymbolTable`.
+`symbol` is a {{% branch-rule %}} that parses one symbol of `SymbolTable`.
+
+=== Version without argument
+
+{{% interface %}}
+----
+template <const _symbol-table_& SymbolTable>
+constexpr _symbol-dsl_ symbol;
+----
+
+Parsing::
+  Matches the longest symbol of the `SymbolTable` by consuming characters beginning at the current input.
+  Fails if no symbol matches.
+  It skips implicit whitespace afterwards.
+Branch Parsing::
+  As a branch, it parses exactly the same input as before.
+  However, instead of failing (for any reason), it backtracks without raising an error.
+Errors::
+  `lexy::unknown_symbol`: if it could not produce a symbol;
+  its range covers the entire partial input.
+  The rule then fails.
+  The tag can be overridden by specifying a different `Tag` with `.error`.
+Values::
+  The value of the symbol table that corresponds to the partial input.
+Parse tree::
+  A single token node covering the symbol.
+  Its kind is the predefined `lexy::identifier_token_kind` and cannot be overridden.
+
+NOTE: This version behaves like the other version if parsed a non-deterministic token rule that always consumes as much input as is necessary to match the symbol.
+
+=== Version with argument
+
+{{% interface %}}
+----
+template <const _symbol-table_& SymbolTable>
+constexpr _symbol-dsl_ symbol(_token-rule_ auto token);
+
+template <const _symbol-table_& SymbolTable>
+constexpr _symbol-dsl_ symbol(_identifier-dsl_ identifier);
+----
 
 Requires::
   The {{% docref "lexy::dsl::identifier" %}} of the second overload has no reserved identifiers.

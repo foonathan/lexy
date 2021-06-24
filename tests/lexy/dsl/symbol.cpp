@@ -70,6 +70,137 @@ constexpr auto symbols = lexy::symbol_table<int> //
                              .map<LEXY_SYMBOL("Abc")>(3);
 }
 
+TEST_CASE("dsl::symbol")
+{
+    SUBCASE("basic")
+    {
+        static constexpr auto rule = lexy::dsl::symbol<symbols>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, int i)
+            {
+                if (i == 3)
+                    LEXY_VERIFY_CHECK(cur - str == 3);
+                else
+                    LEXY_VERIFY_CHECK(cur - str == 1);
+                return i;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::unknown_symbol> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        auto a = LEXY_VERIFY("A");
+        CHECK(a == 0);
+        auto b = LEXY_VERIFY("B");
+        CHECK(b == 1);
+        auto c = LEXY_VERIFY("C");
+        CHECK(c == 2);
+
+        auto abc = LEXY_VERIFY("Abc");
+        CHECK(abc == 3);
+
+        auto unknown = LEXY_VERIFY("Unknown");
+        CHECK(unknown == -1);
+        auto non_alpha = LEXY_VERIFY("123");
+        CHECK(non_alpha == -1);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == 0);
+    }
+    SUBCASE("branch")
+    {
+        static constexpr auto rule = opt(lexy::dsl::symbol<symbols>);
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
+            {
+                LEXY_VERIFY_CHECK(cur == str);
+                return 42;
+            }
+            LEXY_VERIFY_FN int success(const char* cur, int i)
+            {
+                if (i == 3)
+                    LEXY_VERIFY_CHECK(cur - str == 3);
+                else
+                    LEXY_VERIFY_CHECK(cur - str == 1);
+                return i;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == 42);
+
+        auto a = LEXY_VERIFY("A");
+        CHECK(a == 0);
+        auto b = LEXY_VERIFY("B");
+        CHECK(b == 1);
+        auto c = LEXY_VERIFY("C");
+        CHECK(c == 2);
+
+        auto abc = LEXY_VERIFY("Abc");
+        CHECK(abc == 3);
+
+        auto unknown = LEXY_VERIFY("Unknown");
+        CHECK(unknown == 42);
+        auto non_alpha = LEXY_VERIFY("123");
+        CHECK(non_alpha == 42);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == 0);
+    }
+
+    SUBCASE(".error")
+    {
+        static constexpr auto rule = lexy::dsl::symbol<symbols>.error<struct tag>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN int success(const char* cur, int i)
+            {
+                LEXY_VERIFY_CHECK(cur - str == 1);
+                return i;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<tag> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                return -1;
+            }
+        };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty == -1);
+
+        auto a = LEXY_VERIFY("A");
+        CHECK(a == 0);
+        auto b = LEXY_VERIFY("B");
+        CHECK(b == 1);
+
+        auto unknown = LEXY_VERIFY("Unknown");
+        CHECK(unknown == -1);
+        auto non_alpha = LEXY_VERIFY("123");
+        CHECK(non_alpha == -1);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == 0);
+    }
+}
+
 TEST_CASE("dsl::symbol(token)")
 {
     constexpr auto id = token(identifier(lexy::dsl::ascii::upper, lexy::dsl::ascii::lower));
@@ -131,6 +262,8 @@ TEST_CASE("dsl::symbol(token)")
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == -1);
     }
     SUBCASE("branch")
     {
@@ -173,6 +306,8 @@ TEST_CASE("dsl::symbol(token)")
         CHECK(unknown == 42);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == 42);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == 42);
     }
 
     SUBCASE(".error")
@@ -224,6 +359,8 @@ TEST_CASE("dsl::symbol(token)")
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == -1);
     }
 }
 
@@ -289,6 +426,8 @@ TEST_CASE("dsl::symbol(identifier)")
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == -1);
     }
     SUBCASE("branch")
     {
@@ -331,6 +470,8 @@ TEST_CASE("dsl::symbol(identifier)")
         CHECK(unknown == 42);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == 42);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == 42);
     }
 
     SUBCASE(".error")
@@ -383,5 +524,7 @@ TEST_CASE("dsl::symbol(identifier)")
         CHECK(unknown == -1);
         auto non_alpha = LEXY_VERIFY("123");
         CHECK(non_alpha == -2);
+        auto ab = LEXY_VERIFY("Ab");
+        CHECK(ab == -1);
     }
 }

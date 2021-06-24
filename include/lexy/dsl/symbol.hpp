@@ -13,6 +13,7 @@
 #include <lexy/engine/while.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
+#include <lexy/token.hpp>
 
 namespace lexy
 {
@@ -403,20 +404,86 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
     static constexpr _sym<Table, _idp<L, T>, ErrorTag> error = {};
 };
 
-/// Parses rule, then matches the resulting lexeme against the symbol table.
-template <const auto& Table, typename Token>
-constexpr auto symbol(Token)
+template <const auto& Table, typename Tag>
+struct _sym<Table, void, Tag> : rule_base
 {
-    static_assert(lexy::is_token_rule<Token>);
-    return _sym<Table, Token, void>{};
-}
-template <const auto& Table, typename L, typename T, typename... R>
-constexpr auto symbol(_id<L, T, R...> id)
+    static constexpr auto is_branch               = true;
+    static constexpr auto is_unconditional_branch = false;
+
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
+            -> lexy::rule_try_parse_result
+        {
+            // Try to parse the symbol.
+            auto save = reader;
+            auto idx  = Table.try_parse(reader);
+            if (!idx)
+            {
+                // We didn't have a symbol, so backtrack.
+                reader = LEXY_MOV(save);
+                return lexy::rule_try_parse_result::backtracked;
+            }
+
+            // We've succesfully matched a symbol.
+            // Report its corresponding identifier token and produce the value.
+            context.token(lexy::identifier_token_kind, save.cur(), reader.cur());
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return static_cast<lexy::rule_try_parse_result>(
+                continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.cur();
+            auto idx   = Table.try_parse(reader);
+            if (!idx)
+            {
+                // We didn't have a symbol.
+                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unknown_symbol, Tag>;
+                auto err  = lexy::make_error<Reader, tag>(begin);
+                context.error(err);
+                return false;
+            }
+            auto end = reader.cur();
+
+            // We've succesfully matched a symbol.
+            // Report its corresponding identifier token and produce the value.
+            context.token(lexy::identifier_token_kind, begin, end);
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
+        }
+    };
+
+    //=== dsl ===//
+    template <typename ErrorTag>
+    static constexpr _sym<Table, void, ErrorTag> error = {};
+};
+
+template <const auto& Table>
+struct _sym_dsl : _sym<Table, void, void>
 {
-    static_assert(sizeof...(R) == 0,
-                  "symbol() must not be used in the presence of reserved identifiers");
-    return _sym<Table, decltype(id.pattern()), void>{};
-}
+    template <typename Token>
+    constexpr auto operator()(Token) const
+    {
+        static_assert(lexy::is_token_rule<Token>);
+        return _sym<Table, Token, void>{};
+    }
+    template <typename L, typename T, typename... R>
+    constexpr auto operator()(_id<L, T, R...> id) const
+    {
+        static_assert(sizeof...(R) == 0,
+                      "symbol() must not be used in the presence of reserved identifiers");
+        return _sym<Table, decltype(id.pattern()), void>{};
+    }
+};
+
+/// Parses optional rule, then matches the resulting lexeme against the symbol table.
+template <const auto& Table>
+constexpr auto symbol = _sym_dsl<Table>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_SYMBOL_HPP_INCLUDED
