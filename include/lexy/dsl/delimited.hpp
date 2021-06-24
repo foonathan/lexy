@@ -251,28 +251,6 @@ struct _escape_cap : rule_base
     };
 };
 
-struct _escape_char : token_base<_escape_char>
-{
-    struct token_engine : lexy::engine_matcher_base
-    {
-        enum class error_code
-        {
-            error = 1,
-        };
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            if (reader.eof())
-                return error_code::error;
-            reader.bump();
-            return error_code();
-        }
-    };
-
-    // Don't need error, it won't be called.
-};
-
 template <typename Escape, typename... Branches>
 struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
 {
@@ -298,11 +276,10 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     {
         return this->rule(lexyd::symbol<Table>(rule));
     }
-    /// Adds an escape rule that parses the symbol from the next code unit.
     template <const auto& Table>
     constexpr auto symbol() const
     {
-        return this->symbol<Table>(_escape_char{});
+        return this->rule(lexyd::symbol<Table>);
     }
 
 #if LEXY_HAS_NTTP

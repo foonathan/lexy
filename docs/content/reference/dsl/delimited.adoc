@@ -263,19 +263,16 @@ constexpr _escape-dsl_ symbol(_token-rule_ auto t) const
 template <const _symbol_table_& SymbolTable>
 constexpr _escape-dsl_ symbol() const
 {
-    return this->rule(lexy::dsl::symbol<SymbolTable>(_see-below_));
+    return this->rule(lexy::dsl::symbol<SymbolTable>);
 }
 ----
 
 [.lead]
 `.symbol()` specifies an escape sequence that parses a symbol.
 
-The first overload simply forwards to {{% docref "lexy::dsl::symbol" %}}:
+The first overload forwards to argument version {{% docref "lexy::dsl::symbol" %}}:
 it matches `t` and looks it up in the `SymbolTable` and corresponding value produced.
-
-The second overload behaves similar, but instead of using a user-defined rule `t`,
-it uses a rule that only matches the next code unit.
-This is then looked up in the `SymbolTable` and the corresponding value produced.
+The second overload forwards to the non-argument version that immediately looks up a symbol of the `SymbolTable`.
 
 [#escape-predefined]
 == Predefined escapes
