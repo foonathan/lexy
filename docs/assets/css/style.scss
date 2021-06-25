@@ -494,5 +494,19 @@ article {
         font-style: initial;
         font-weight: initial;
     }
+
+    // hack to allow asterisk:
+    // we don't style strong in a special way, and manually add back the asterisk
+    strong {
+        font-weight: initial;
+    }
+    strong:not(:empty)::before {
+        content: "*";
+        color: #ff0000;
+    }
+    strong:not(:empty)::after {
+        content: "*";
+        color: #ff0000;
+    }
 }
 

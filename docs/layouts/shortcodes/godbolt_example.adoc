@@ -2,7 +2,7 @@
 {{ $source  := ($id | printf "examples/%s.cpp"   | resources.Get).Content | chomp }}
 {{ $input   := ($id | printf "examples/%s.input" | resources.Get).Content | chomp }}
 
-{{ $full_source   := $source | replaceRE "//({|})\\n" "" }}
+{{ $full_source   := $source | replaceRE "//({|})\\n?" "" }}
 {{ $inline_source := $source | replaceRE "(?s:.*//{\n(.*)//}.*)" "$1"}}
 
 {{ $lexy        := dict "id" "lexy" "version" "trunk" }}
