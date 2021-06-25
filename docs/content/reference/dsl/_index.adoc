@@ -13,6 +13,12 @@ entities:
 [.lead]
 The rule DSL for specifying the grammar.
 
+{{% interface %}}
+----
+template <typename T>
+concept _rule_ = …;
+----
+
 The grammar in lexy is specified in several productions, where each one defines an associated _rule_.
 This rule is an object built from the objects and functions of namespace `lexy::dsl` that defines some (implementation-defined) parsing function.
 Parsing a rule takes the reader, which remembers the current position of the input, and the context, which stores information about the current production and whitespace rules, and is responsible for handling errors and values;

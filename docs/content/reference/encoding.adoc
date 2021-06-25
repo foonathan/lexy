@@ -16,10 +16,16 @@ entities:
 [.lead]
 Facilities for handling the encoding of an input.
 
+{{% interface %}}
+----
+template <typename T>
+concept _encoding_ = …;
+----
+
 An _encoding_ determines how characters are encoded in the input by defining the type of individual code units and how they are used to form Unicode code points, if applicable.
-Its _primary character type_ is the actual character type an input gives you,
+Its _primary character type_ `::char_type` is the actual character type an input gives you,
 but it can also have _secondary character types_ which are also accepted but then internally normalized to the primary character type.
-Its _integer type_ is an integer type which can store any valid character type or a special EOF value.
+Its _integer type_ `::int_type` is an integer type which can store any valid character type or a special EOF value.
 If this is the same type as the primary character type, some optimizations are possible.
 
 Some {{% docref "rule" %}}s require a certain encoding.
