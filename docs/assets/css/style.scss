@@ -243,7 +243,7 @@ article {
             }
 
             form.search {
-                @media(min-width: 700px) {  
+                @media(min-width: 700px) {
                     margin-left: auto;
                 }
 
@@ -277,19 +277,37 @@ article {
         margin-bottom: 1em;
 
         td.icon {
-            width: 75px;
             font-weight: bold;
-            border-right: 1px solid $gray-highlight-color;
-            padding: .5em;
         }
-
         td.content {
-            padding-left: .5em;
             div:first-child p {
                 margin-top: 0;
             }
             div:last-child p {
                 margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            tr {
+                display: block;
+                float: left;
+                padding-left: .5em;
+                padding-right: .5em;
+
+                td {
+                    display: block;
+                }
+            }
+        }
+        @media (min-width: 600px) {
+            td.icon {
+                width: 75px;
+                text-align: center;
+                border-right: 1px solid $gray-highlight-color;
+            }
+            td.content {
+                padding-left: .5em;
             }
         }
     }
