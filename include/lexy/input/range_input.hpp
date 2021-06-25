@@ -19,11 +19,12 @@ public:
     using char_type = typename encoding::char_type;
 
     using iterator = Iterator;
+    using sentinel = Sentinel;
 
     //=== constructors ===//
     constexpr range_input() noexcept : _begin(), _end() {}
 
-    constexpr range_input(Iterator begin, Sentinel end) noexcept : _begin(begin), _end(end) {}
+    constexpr range_input(iterator begin, sentinel end) noexcept : _begin(begin), _end(end) {}
 
     //=== access ===//
     constexpr iterator begin() const noexcept
@@ -31,7 +32,7 @@ public:
         return _begin;
     }
 
-    constexpr iterator end() const noexcept
+    constexpr sentinel end() const noexcept
     {
         return _end;
     }
