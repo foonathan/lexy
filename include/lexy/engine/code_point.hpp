@@ -6,6 +6,7 @@
 #define LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
 
 #include <lexy/_detail/detect.hpp>
+#include <lexy/code_point.hpp>
 #include <lexy/engine/base.hpp>
 
 namespace lexy

@@ -94,6 +94,7 @@ set(tests
         input/string_input.cpp
 
         callback.cpp
+        code_point.cpp
         encoding.cpp
         error.cpp
         lexeme.cpp

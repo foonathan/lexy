@@ -103,6 +103,7 @@ set(header_files
         ${include_dir}/input/string_input.hpp
 
         ${include_dir}/callback.hpp
+        ${include_dir}/code_point.hpp
         ${include_dir}/dsl.hpp
         ${include_dir}/encoding.hpp
         ${include_dir}/error.hpp

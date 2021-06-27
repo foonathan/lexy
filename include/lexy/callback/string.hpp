@@ -6,6 +6,7 @@
 #define LEXY_CALLBACK_STRING_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/code_point.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/lexeme.hpp>
 

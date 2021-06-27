@@ -8,6 +8,7 @@
 #include <climits>
 
 #include <lexy/_detail/assert.hpp>
+#include <lexy/code_point.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/digit.hpp>
 
