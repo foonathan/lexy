@@ -357,6 +357,10 @@ article {
             margin: .2em;
         }
     }
+    // no margin if it has a title
+    div ul:not(:first-child), div ol:not(:first-child) {
+        margin-top: 0;
+    }
 
     // definition list
     dl {
@@ -368,6 +372,10 @@ article {
             margin: 0;
             padding: 0;
         }
+    }
+    // no margin if it has a title
+    div dl:not(:first-child) {
+        margin-top: 0;
     }
 
     // table

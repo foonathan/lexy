@@ -11,13 +11,59 @@ outputs: [html, json]
 :toclevels: 3
 :source-highlighter: rouge
 
-This is the reference documentation for `lexy`.
+This is the reference documentation for lexy.
 
 ****
-If anything in the documentation could be improved (and there is probably a lot),
-please raise an issue or -- even better -- create a PR.
-Thank you!
+The documentation is currently in the process of being rewritten.
+As such, some parts of this page are already transformed into high-level entry points with links to the actual documentation,
+while others are still the full documentation inline.
 ****
+
+== Infrastructure
+
+{{% docref "lexy::code_point" %}}::
+  A Unicode code point.
+{{% docref "lexy::lexeme" %}}::
+  A lexeme, i.e. a subrange of the input.
+
+== Inputs and Encodings
+
+[source,cpp]
+----
+template <typename T>
+concept auto reader = …;
+
+template <typename Input>
+concept auto input = requires(const Input& obj) {
+  { obj.reader() } -> reader;
+};
+----
+
+An input defines the input that will be parsed by lexy.
+It has a corresponding {{% encoding %}} that controls, among other things, its character type and whether certain rules are available.
+The input itself is unchanging and it produces a reader which remembers the current position of the input during parsing.
+
+.The supported encodings:
+{{% docref "lexy::default_encoding" %}}::
+  An unknown single byte encoding.
+{{% docref "lexy::ascii_encoding" %}}::
+  ASCII
+{{% docref "lexy::utf8_encoding" %}}, {{% docref "lexy::utf16_encoding" %}}, {{% docref "lexy::utf32_encoding" %}}::
+  UTF-8, UTF-16, UTF-32
+{{% docref "lexy::byte_encoding" %}}::
+  Bytes, not text.
+
+.The pre-defined inputs:
+{{% docref "lexy::range_input" %}}::
+  Use a generic iterator range as input.
+{{% docref "lexy::string_input" %}} and {{% docref "lexy::zstring_input" %}}::
+  Use a string as input.
+{{% docref "lexy::buffer" %}}::
+  Create a buffer that contains the input.
+{{% docref "lexy::read_file" %}}::
+  Use a file as input.
+{{% docref "lexy::argv_input" %}}::
+  Use the command-line arguments as input.
 
 include::content/_reference/inputs.adoc[]
 
