@@ -1,0 +1,72 @@
+---
+layout: header
+header: "lexy/code_point.hpp"
+entities:
+  "lexy::code_point": code_point
+---
+
+[#code_point]
+== Class `lexy::code_point`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    class code_point
+    {
+    public:
+        constexpr code_point() noexcept;
+        constexpr explicit code_point(char32_t value) noexcept;
+
+        constexpr char32_t value() const noexcept;
+
+        constexpr bool is_valid() const noexcept;
+        constexpr bool is_surrogate() const noexcept;
+        constexpr bool is_scalar() const noexcept;
+
+        constexpr bool is_ascii() const noexcept;
+        constexpr bool is_bmp() const noexcept;
+
+        friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept;
+        friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept;
+    };
+}
+----
+
+[.lead]
+A single Unicode https://en.wikipedia.org/wiki/Code_point[code point].
+
+It is a simple wrapper over a `char32_t`.
+
+=== Constructors
+
+{{% interface %}}
+----
+constexpr code_point() noexcept;                        <1>
+constexpr explicit code_point(char32_t value) noexcept; <2>
+----
+<1> Creates an invalid code point.
+<2> Creates the code point with the specified value.
+
+=== Validity
+
+{{% interface %}}
+----
+constexpr bool is_valid() const noexcept;     <1>
+constexpr bool is_surrogate() const noexcept; <2>
+constexpr bool is_scalar() const noexcept;    <3>
+----
+<1> Returns `true` if the code point is less than `0x10'FFFF`, `false` otherwise.
+<2> Returns `true` if the code point is a UTF-16 surrogate, `false` otherwise.
+<3> Returns `true` if the code point is valid and not a surrogate, `false` otherwise.
+
+=== Category
+
+{{% interface %}}
+----
+constexpr bool is_ascii() const noexcept; <1>
+constexpr bool is_bmp() const noexcept;   <2>
+----
+<1> Returns `true` if the code point is ASCII (7-bit value), `false` otherwise.
+<2> Returns `true` if the code point is in the Unicode BMP (16-bit value), `false` otherwise.
+

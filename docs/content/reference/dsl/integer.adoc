@@ -79,7 +79,7 @@ struct _integer-traits-bounded-specialization_
 ----
 
 The integer traits are specialized for the built-in integral types (except `bool`) with the expected semantics,
-as well as `lexy::code_point`.
+as well as {{% docref "lexy::code_point" %}}.
 The specialization for `lexy::unbounded<T>` behaves the same as the one for plain `T`,
 except that `is_bounded == false`.
 
@@ -159,7 +159,7 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`code_point_id` is a {{% branch-rule %}} that parses a sequence of `N` digits as a `lexy::code_point`.
+`code_point_id` is a {{% branch-rule %}} that parses a sequence of `N` digits as a {{% docref "lexy::code_point" %}}.
 
 `code_point_id<N, Base>` behaves almost exactly like `integer<lexy::code_point>(n_digits<N, Base>)`.
 The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_point` as opposed to `lexy::integer_overflow`.
