@@ -10,6 +10,7 @@ entities:
   "lexy::argv_lexeme": typedefs
   "lexy::argv_error": typedefs
   "lexy::argv_error_context": typedefs
+  "lexy::dsl::argv_separator": argv_separator
 ---
 
 [.lead]
@@ -99,4 +100,27 @@ namespace lexy
 
 [.lead]
 Convenience typedefs for the command-line argument input.
+
+[#argv_separator]
+== Token rule `lexy::dsl::argv_separator`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _token-rule_ auto argv_separator;
+}
+----
+
+[.lead]
+`argv_separator` is a {{% token-rule %}} that matches the separator between two command-line arguments.
+
+Matching::
+  Matches and consumes the separator between two command-line arguments.
+Errors::
+  `lexy::expected_char_class` (`"argv-separator"`): at the unchanged reader position.
+  The rule then fails.
+
+The rule can only succeed on a {{% docref "lexy::argv_input" %}}.
+There is no argument separator before the first command-line argument, or after the last one.
 
