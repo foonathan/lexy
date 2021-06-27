@@ -507,59 +507,7 @@ private:
 
 
 
-//=== code_point ===//
-namespace lexy
-{
-/// A unicode code point.
-class code_point
-{
-public:
-    constexpr code_point() noexcept : _value(0xFFFF'FFFF) {}
-    constexpr explicit code_point(char32_t value) noexcept : _value(value) {}
-
-    constexpr auto value() const noexcept
-    {
-        return _value;
-    }
-
-    //=== classification ===//
-    constexpr bool is_valid() const noexcept
-    {
-        return _value <= 0x10'FFFF;
-    }
-    constexpr bool is_surrogate() const noexcept
-    {
-        return 0xD800 <= _value && _value <= 0xDFFF;
-    }
-    constexpr bool is_scalar() const noexcept
-    {
-        return is_valid() && !is_surrogate();
-    }
-
-    constexpr bool is_ascii() const noexcept
-    {
-        return _value <= 0x7F;
-    }
-    constexpr bool is_bmp() const noexcept
-    {
-        return _value <= 0xFFFF;
-    }
-
-    friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept
-    {
-        return lhs._value == rhs._value;
-    }
-    friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept
-    {
-        return lhs._value != rhs._value;
-    }
-
-private:
-    char32_t _value;
-};
-} // namespace lexy
-
-//=== encoding ===//
+//=== encoding classes ===//
 namespace lexy
 {
 /// The endianness used by an encoding.
@@ -6424,6 +6372,70 @@ constexpr auto capture(Rule)
 #define LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
 
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CODE_POINT_HPP_INCLUDED
+#define LEXY_CODE_POINT_HPP_INCLUDED
+
+#include <cstdint>
+
+
+
+namespace lexy
+{
+/// A unicode code point.
+class code_point
+{
+public:
+    constexpr code_point() noexcept : _value(0xFFFF'FFFF) {}
+    constexpr explicit code_point(char32_t value) noexcept : _value(value) {}
+
+    constexpr auto value() const noexcept
+    {
+        return _value;
+    }
+
+    //=== classification ===//
+    constexpr bool is_valid() const noexcept
+    {
+        return _value <= 0x10'FFFF;
+    }
+    constexpr bool is_surrogate() const noexcept
+    {
+        return 0xD800 <= _value && _value <= 0xDFFF;
+    }
+    constexpr bool is_scalar() const noexcept
+    {
+        return is_valid() && !is_surrogate();
+    }
+
+    constexpr bool is_ascii() const noexcept
+    {
+        return _value <= 0x7F;
+    }
+    constexpr bool is_bmp() const noexcept
+    {
+        return _value <= 0xFFFF;
+    }
+
+    friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept
+    {
+        return lhs._value == rhs._value;
+    }
+    friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept
+    {
+        return lhs._value != rhs._value;
+    }
+
+private:
+    char32_t _value;
+};
+} // namespace lexy
+
+#endif // LEXY_CODE_POINT_HPP_INCLUDED
+
 
 
 namespace lexy
@@ -10962,6 +10974,7 @@ constexpr auto encode = _encode<Encoding, Endianness>{};
 
 
 
+
 namespace lexy
 {
 // Number of digits to express the given value.
@@ -14712,6 +14725,7 @@ class buffer
 public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
+    static_assert(std::is_trivial_v<char_type>);
 
     //=== constructors ===//
     /// Allows the creation of an uninitialized buffer that is then filled by the user.
@@ -14837,30 +14851,12 @@ public:
     }
 
     //=== access ===//
-    const char_type* begin() const noexcept
-    {
-        return _data;
-    }
-    const char_type* end() const noexcept
-    {
-        return _data + _size;
-    }
-
     const char_type* data() const noexcept
     {
         return _data;
     }
 
-    bool empty() const noexcept
-    {
-        return _size == 0;
-    }
-
     std::size_t size() const noexcept
-    {
-        return _size;
-    }
-    std::size_t length() const noexcept
     {
         return _size;
     }
