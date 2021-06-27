@@ -18,9 +18,9 @@ TEST_CASE("error_context")
     };
 
     auto input   = lexy::zstring_input("abc");
-    auto context = lexy::error_context(production{}, input, input.begin());
+    auto context = lexy::error_context(production{}, input, input.data());
     CHECK(&context.input() == &input);
     CHECK(context.production() == lexy::_detail::string_view("production"));
-    CHECK(context.position() == input.begin());
+    CHECK(context.position() == input.data());
 }
 

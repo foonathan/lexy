@@ -151,30 +151,12 @@ public:
     }
 
     //=== access ===//
-    const char_type* begin() const noexcept
-    {
-        return _data;
-    }
-    const char_type* end() const noexcept
-    {
-        return _data + _size;
-    }
-
     const char_type* data() const noexcept
     {
         return _data;
     }
 
-    bool empty() const noexcept
-    {
-        return _size == 0;
-    }
-
     std::size_t size() const noexcept
-    {
-        return _size;
-    }
-    std::size_t length() const noexcept
     {
         return _size;
     }

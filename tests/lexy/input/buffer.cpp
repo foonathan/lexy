@@ -30,12 +30,7 @@ TEST_CASE("buffer")
     };
 
     auto verify = [](const auto& buffer) {
-        CHECK(!buffer.empty());
-
-        CHECK(buffer.begin() == buffer.data());
-        CHECK(buffer.end() == buffer.data() + 3);
         CHECK(buffer.size() == 3);
-        CHECK(buffer.length() == 3);
 
         CHECK(buffer.data()[0] == 'a');
         CHECK(buffer.data()[1] == 'b');
@@ -182,14 +177,14 @@ TEST_CASE("buffer")
 
         lexy::buffer move(LEXY_MOV(original));
         verify(move);
-        CHECK(original.empty());
+        CHECK(original.size() == 0);
     }
     SUBCASE("copy assignment")
     {
         const lexy::buffer other(str, str + 3);
 
         lexy::buffer buffer{};
-        CHECK(buffer.empty());
+        CHECK(buffer.size() == 0);
         buffer = other;
         verify(buffer);
     }
@@ -198,10 +193,10 @@ TEST_CASE("buffer")
         lexy::buffer other(str, str + 3);
 
         lexy::buffer buffer{};
-        CHECK(buffer.empty());
+        CHECK(buffer.size() == 0);
         buffer = LEXY_MOV(other);
         verify(buffer);
-        CHECK(other.empty());
+        CHECK(other.size() == 0);
     }
 
     SUBCASE("reader, no sentinel")

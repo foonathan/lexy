@@ -25,8 +25,8 @@ TEST_CASE("string_input")
     SUBCASE("basic")
     {
         lexy::string_input<> input;
-        CHECK(input.begin() == nullptr);
-        CHECK(input.end() == nullptr);
+        CHECK(input.data() == nullptr);
+        CHECK(input.size() == 0u);
         CHECK(input.reader().cur() == nullptr);
         CHECK(input.reader().peek() == lexy::default_encoding::eof());
         CHECK(input.reader().eof());
@@ -47,8 +47,8 @@ TEST_CASE("string_input")
         {
             input = lexy::zstring_input(str);
         }
-        CHECK(input.begin() == str);
-        CHECK(input.end() == str + 3);
+        CHECK(input.data() == str);
+        CHECK(input.size() == 3);
 
         auto reader = input.reader();
         CHECK(reader.cur() == str);
@@ -91,8 +91,8 @@ TEST_CASE("string_input")
             input = lexy::zstring_input<lexy::byte_encoding>(str);
         }
 
-        CHECK(input.begin() == reinterpret_cast<const unsigned char*>(str));
-        CHECK(input.end() == reinterpret_cast<const unsigned char*>(str + 3));
+        CHECK(input.data() == reinterpret_cast<const unsigned char*>(str));
+        CHECK(input.size() == 3);
     }
 }
 

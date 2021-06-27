@@ -52,18 +52,18 @@ TEST_CASE("dump_parse_tree()")
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
-        builder.token(token_kind::a, input.begin(), input.begin() + 3);
+        builder.token(token_kind::a, input.data(), input.data() + 3);
 
         auto child     = builder.start_production(child_p{});
         auto sub_child = builder.start_production(child_p{});
-        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-        builder.token(token_kind::c, input.begin() + 4, input.begin() + 10);
-        builder.token(token_kind::b, input.begin() + 10, input.begin() + 11);
+        builder.token(token_kind::b, input.data() + 3, input.data() + 4);
+        builder.token(token_kind::c, input.data() + 4, input.data() + 10);
+        builder.token(token_kind::b, input.data() + 10, input.data() + 11);
         builder.finish_production(LEXY_MOV(sub_child));
         builder.finish_production(LEXY_MOV(child));
 
-        builder.token(token_kind::a, input.begin() + 11, input.end());
-        builder.token(lexy::eof_token_kind, input.end(), input.end());
+        builder.token(token_kind::a, input.data() + 11, input.data() + 14);
+        builder.token(lexy::eof_token_kind, input.data() + 14, input.data() + 14);
 
         return LEXY_MOV(builder).finish();
     }();

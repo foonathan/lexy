@@ -22,61 +22,59 @@ public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
 
-    using iterator = const char_type*;
-
     //=== constructors ===//
-    constexpr string_input() noexcept : _begin(nullptr), _end(nullptr) {}
+    constexpr string_input() noexcept : _data(nullptr), _size(0u) {}
 
-    constexpr string_input(const char_type* begin, const char_type* end) noexcept
-    : _begin(begin), _end(end)
-    {}
     constexpr string_input(const char_type* data, std::size_t size) noexcept
-    : string_input(data, data + size)
+    : _data(data), _size(size)
+    {}
+    constexpr string_input(const char_type* begin, const char_type* end) noexcept
+    : string_input(begin, std::size_t(end - begin))
     {}
 
+    template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
+    string_input(const CharT* data, std::size_t size) noexcept
+    : _data(reinterpret_cast<const char_type*>(data)), _size(size)
+    {}
     template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
     string_input(const CharT* begin, const CharT* end) noexcept
-    : _begin(reinterpret_cast<iterator>(begin)), _end(reinterpret_cast<iterator>(end))
-    {}
-    template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
-    string_input(const CharT* data, std::size_t size) noexcept : string_input(data, data + size)
+    : string_input(begin, std::size_t(end - begin))
     {}
 
     template <typename View, typename CharT = _string_view_char_type<View>>
-    constexpr explicit string_input(const View& view) noexcept
+    constexpr explicit string_input(const View& view) noexcept : _size(view.size())
     {
         if constexpr (std::is_same_v<CharT, char_type>)
         {
-            _begin = view.data();
-            _end   = _begin + view.size();
+            _data = view.data();
         }
         else
         {
             static_assert(Encoding::template is_secondary_char_type<CharT>);
-            _begin = reinterpret_cast<iterator>(view.data());
-            _end   = _begin + view.size();
+            _data = reinterpret_cast<const char_type*>(view.data());
         }
     }
 
     //=== access ===//
-    constexpr iterator begin() const noexcept
+    constexpr const char_type* data() const noexcept
     {
-        return _begin;
+        return _data;
     }
 
-    constexpr iterator end() const noexcept
+    constexpr std::size_t size() const noexcept
     {
-        return _end;
+        return _size;
     }
 
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<encoding, iterator>(_begin, _end);
+        return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
     }
 
 private:
-    iterator _begin, _end;
+    const char_type* _data;
+    std::size_t      _size;
 };
 
 template <typename CharT>

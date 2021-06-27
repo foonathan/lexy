@@ -10,10 +10,10 @@
 TEST_CASE("partial_reader()")
 {
     auto input = lexy::zstring_input("abc");
-    auto end   = input.end() - 1;
+    auto end   = input.data() + 2;
 
     auto partial = lexy::partial_reader(input.reader(), end);
-    CHECK(partial.cur() == input.begin());
+    CHECK(partial.cur() == input.data());
     CHECK(partial.peek() == 'a');
     CHECK(!partial.eof());
 

@@ -85,15 +85,15 @@ TEST_CASE("parse_tree::builder")
 
         auto tree = [&] {
             parse_tree::builder builder(root_p{});
-            builder.token(token_kind::a, input.begin(), input.begin() + 3);
+            builder.token(token_kind::a, input.data(), input.data() + 3);
 
             auto child = builder.start_production(child_p{});
-            builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-            builder.token(token_kind::c, input.begin() + 4, input.begin() + 7);
-            builder.token(token_kind::b, input.begin() + 7, input.begin() + 8);
+            builder.token(token_kind::b, input.data() + 3, input.data() + 4);
+            builder.token(token_kind::c, input.data() + 4, input.data() + 7);
+            builder.token(token_kind::b, input.data() + 7, input.data() + 8);
             builder.finish_production(LEXY_MOV(child));
 
-            builder.token(token_kind::a, input.begin() + 8, input.end());
+            builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
             return LEXY_MOV(builder).finish();
         }();
@@ -125,9 +125,9 @@ TEST_CASE("parse_tree::builder")
         auto tree  = [&] {
             parse_tree::builder builder(root_p{});
 
-            builder.token(token_kind::b, input.begin(), input.begin() + 1);
-            builder.token(token_kind::c, input.begin() + 1, input.begin() + 4);
-            builder.token(token_kind::b, input.begin() + 4, input.end());
+            builder.token(token_kind::b, input.data(), input.data() + 1);
+            builder.token(token_kind::c, input.data() + 1, input.data() + 4);
+            builder.token(token_kind::b, input.data() + 4, input.data() + 5);
 
             return LEXY_MOV(builder).finish();
         }();
@@ -146,7 +146,7 @@ TEST_CASE("parse_tree::builder")
             parse_tree::builder builder(root_p{});
 
             auto child = builder.start_production(child_p{});
-            builder.token(token_kind::c, input.begin(), input.end());
+            builder.token(token_kind::c, input.data(), input.data() + 3);
             builder.finish_production(LEXY_MOV(child));
 
             return LEXY_MOV(builder).finish();
@@ -165,12 +165,12 @@ TEST_CASE("parse_tree::builder")
 
         auto tree = [&] {
             parse_tree::builder builder(root_p{});
-            builder.token(token_kind::a, input.begin(), input.begin() + 3);
+            builder.token(token_kind::a, input.data(), input.data() + 3);
 
             auto child = builder.start_production(child_p{});
             builder.finish_production(LEXY_MOV(child));
 
-            builder.token(token_kind::a, input.begin() + 3, input.end());
+            builder.token(token_kind::a, input.data() + 3, input.data() + 6);
 
             return LEXY_MOV(builder).finish();
         }();
@@ -196,7 +196,7 @@ TEST_CASE("parse_tree::builder")
             for (auto i = 0u; i != many_count; ++i)
             {
                 auto state = builder.start_production(child_p{});
-                builder.token(token_kind::a, input.begin(), input.end());
+                builder.token(token_kind::a, input.data(), input.data() + input.size());
                 builder.finish_production(LEXY_MOV(state));
             }
 
@@ -224,7 +224,7 @@ TEST_CASE("parse_tree::builder")
                 auto state = builder.start_production(child_p{});
                 states.push_back(LEXY_MOV(state));
             }
-            builder.token(token_kind::a, input.begin(), input.end());
+            builder.token(token_kind::a, input.data(), input.data() + input.size());
             for (auto i = 0u; i != many_count; ++i)
             {
                 builder.finish_production(LEXY_MOV(states.back()));
@@ -304,15 +304,15 @@ TEST_CASE("parse_tree::node")
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
-        builder.token(token_kind::a, input.begin(), input.begin() + 3);
+        builder.token(token_kind::a, input.data(), input.data() + 3);
 
         auto child = builder.start_production(child_p{});
-        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-        builder.token(token_kind::c, input.begin() + 4, input.begin() + 7);
-        builder.token(token_kind::b, input.begin() + 7, input.begin() + 8);
+        builder.token(token_kind::b, input.data() + 3, input.data() + 4);
+        builder.token(token_kind::c, input.data() + 4, input.data() + 7);
+        builder.token(token_kind::b, input.data() + 7, input.data() + 8);
         builder.finish_production(LEXY_MOV(child));
 
-        builder.token(token_kind::a, input.begin() + 8, input.end());
+        builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
@@ -332,7 +332,7 @@ TEST_CASE("parse_tree::node")
 
     auto iter = children.begin();
     CHECK(iter != children.end());
-    check_token(*iter, token_kind::a, input.begin(), input.begin() + 3);
+    check_token(*iter, token_kind::a, input.data(), input.data() + 3);
     CHECK(iter->parent() == root);
 
     ++iter;
@@ -349,17 +349,17 @@ TEST_CASE("parse_tree::node")
 
         auto iter = children.begin();
         CHECK(iter != children.end());
-        check_token(*iter, token_kind::b, input.begin() + 3, input.begin() + 4);
+        check_token(*iter, token_kind::b, input.data() + 3, input.data() + 4);
         CHECK(iter->parent() == child);
 
         ++iter;
         CHECK(iter != children.end());
-        check_token(*iter, token_kind::c, input.begin() + 4, input.begin() + 7);
+        check_token(*iter, token_kind::c, input.data() + 4, input.data() + 7);
         CHECK(iter->parent() == child);
 
         ++iter;
         CHECK(iter != children.end());
-        check_token(*iter, token_kind::b, input.begin() + 7, input.begin() + 8);
+        check_token(*iter, token_kind::b, input.data() + 7, input.data() + 8);
         CHECK(iter->parent() == child);
 
         ++iter;
@@ -368,7 +368,7 @@ TEST_CASE("parse_tree::node")
 
     ++iter;
     CHECK(iter != children.end());
-    check_token(*iter, token_kind::a, input.begin() + 8, input.end());
+    check_token(*iter, token_kind::a, input.data() + 8, input.data() + 11);
     CHECK(iter->parent() == root);
 
     ++iter;
@@ -395,13 +395,13 @@ TEST_CASE("parse_tree::node::sibling_range")
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
-        builder.token(token_kind::a, input.begin(), input.begin() + 3);
+        builder.token(token_kind::a, input.data(), input.data() + 3);
 
         auto child = builder.start_production(child_p{});
-        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
+        builder.token(token_kind::b, input.data() + 3, input.data() + 4);
         builder.finish_production(LEXY_MOV(child));
 
-        builder.token(token_kind::a, input.begin() + 8, input.end());
+        builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
         return LEXY_MOV(builder).finish();
     }();
@@ -411,7 +411,7 @@ TEST_CASE("parse_tree::node::sibling_range")
     {
         auto node = [&] {
             auto iter = tree.root().children().begin();
-            check_token(*iter, token_kind::a, input.begin(), input.begin() + 3);
+            check_token(*iter, token_kind::a, input.data(), input.data() + 3);
             return *iter;
         }();
 
@@ -424,7 +424,7 @@ TEST_CASE("parse_tree::node::sibling_range")
 
         ++iter;
         CHECK(iter != range.end());
-        check_token(*iter, token_kind::a, input.begin() + 8, input.end());
+        check_token(*iter, token_kind::a, input.data() + 8, input.data() + 11);
 
         ++iter;
         CHECK(iter == range.end());
@@ -443,11 +443,11 @@ TEST_CASE("parse_tree::node::sibling_range")
 
         auto iter = range.begin();
         CHECK(iter != range.end());
-        check_token(*iter, token_kind::a, input.begin() + 8, input.end());
+        check_token(*iter, token_kind::a, input.data() + 8, input.data() + 11);
 
         ++iter;
         CHECK(iter != range.end());
-        check_token(*iter, token_kind::a, input.begin(), input.begin() + 3);
+        check_token(*iter, token_kind::a, input.data(), input.data() + 3);
 
         ++iter;
         CHECK(iter == range.end());
@@ -458,7 +458,7 @@ TEST_CASE("parse_tree::node::sibling_range")
             auto iter = tree.root().children().begin();
             ++iter;
             ++iter;
-            check_token(*iter, token_kind::a, input.begin() + 8, input.end());
+            check_token(*iter, token_kind::a, input.data() + 8, input.data() + 11);
             return *iter;
         }();
 
@@ -467,7 +467,7 @@ TEST_CASE("parse_tree::node::sibling_range")
 
         auto iter = range.begin();
         CHECK(iter != range.end());
-        check_token(*iter, token_kind::a, input.begin(), input.begin() + 3);
+        check_token(*iter, token_kind::a, input.data(), input.data() + 3);
 
         ++iter;
         CHECK(iter != range.end());
@@ -482,7 +482,7 @@ TEST_CASE("parse_tree::node::sibling_range")
             auto iter = tree.root().children().begin();
             ++iter;
             iter = iter->children().begin();
-            check_token(*iter, token_kind::b, input.begin() + 3, input.begin() + 4);
+            check_token(*iter, token_kind::b, input.data() + 3, input.data() + 4);
             return *iter;
         }();
 
@@ -501,15 +501,15 @@ TEST_CASE("parse_tree::traverse_range")
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
-        builder.token(token_kind::a, input.begin(), input.begin() + 3);
+        builder.token(token_kind::a, input.data(), input.data() + 3);
 
         auto child = builder.start_production(child_p{});
-        builder.token(token_kind::b, input.begin() + 3, input.begin() + 4);
-        builder.token(token_kind::c, input.begin() + 4, input.begin() + 7);
-        builder.token(token_kind::b, input.begin() + 7, input.begin() + 8);
+        builder.token(token_kind::b, input.data() + 3, input.data() + 4);
+        builder.token(token_kind::c, input.data() + 4, input.data() + 7);
+        builder.token(token_kind::b, input.data() + 7, input.data() + 8);
         builder.finish_production(LEXY_MOV(child));
 
-        builder.token(token_kind::a, input.begin() + 8, input.end());
+        builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
@@ -540,7 +540,7 @@ TEST_CASE("parse_tree::traverse_range")
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::a, input.begin(), input.begin() + 3);
+        check_token(iter->node, token_kind::a, input.data(), input.data() + 3);
 
         ++iter;
         CHECK(iter != range.end());
@@ -550,17 +550,17 @@ TEST_CASE("parse_tree::traverse_range")
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::b, input.begin() + 3, input.begin() + 4);
+        check_token(iter->node, token_kind::b, input.data() + 3, input.data() + 4);
 
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::c, input.begin() + 4, input.begin() + 7);
+        check_token(iter->node, token_kind::c, input.data() + 4, input.data() + 7);
 
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::b, input.begin() + 7, input.begin() + 8);
+        check_token(iter->node, token_kind::b, input.data() + 7, input.data() + 8);
 
         ++iter;
         CHECK(iter != range.end());
@@ -570,7 +570,7 @@ TEST_CASE("parse_tree::traverse_range")
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::a, input.begin() + 8, input.end());
+        check_token(iter->node, token_kind::a, input.data() + 8, input.data() + 11);
 
         ++iter;
         CHECK(iter != range.end());
@@ -611,17 +611,17 @@ TEST_CASE("parse_tree::traverse_range")
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::b, input.begin() + 3, input.begin() + 4);
+        check_token(iter->node, token_kind::b, input.data() + 3, input.data() + 4);
 
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::c, input.begin() + 4, input.begin() + 7);
+        check_token(iter->node, token_kind::c, input.data() + 4, input.data() + 7);
 
         ++iter;
         CHECK(iter != range.end());
         CHECK(iter->event == lexy::traverse_event::leaf);
-        check_token(iter->node, token_kind::b, input.begin() + 7, input.begin() + 8);
+        check_token(iter->node, token_kind::b, input.data() + 7, input.data() + 8);
 
         ++iter;
         CHECK(iter != range.end());
@@ -663,7 +663,7 @@ TEST_CASE("parse_tree::traverse_range")
     {
         auto node = [&] {
             auto iter = tree.root().children().begin();
-            check_token(*iter, token_kind::a, input.begin(), input.begin() + 3);
+            check_token(*iter, token_kind::a, input.data(), input.data() + 3);
             return *iter;
         }();
 

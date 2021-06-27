@@ -171,22 +171,22 @@ TEST_CASE("token")
         lexy::token zero(0, lexeme);
         CHECK(zero.kind() == 0);
         CHECK(zero.name() == lexy::_detail::string_view("token"));
-        CHECK(zero.position() == input.begin());
-        CHECK(zero.lexeme().begin() == input.begin());
+        CHECK(zero.position() == input.data());
+        CHECK(zero.lexeme().begin() == input.data());
         CHECK(zero.lexeme().size() == 3);
 
         lexy::token_for<decltype(input)> unknown(lexy::unknown_token_kind, lexeme);
         CHECK(unknown.kind() == lexy::unknown_token_kind);
         CHECK(unknown.name() == lexy::_detail::string_view("token"));
-        CHECK(unknown.position() == input.begin());
-        CHECK(unknown.lexeme().begin() == input.begin());
+        CHECK(unknown.position() == input.data());
+        CHECK(unknown.lexeme().begin() == input.data());
         CHECK(unknown.lexeme().size() == 3);
 
         lexy::token_for<decltype(input)> period(lexy::dsl::period, lexeme);
         CHECK(period.kind() == lexy::unknown_token_kind);
         CHECK(period.name() == lexy::_detail::string_view("token"));
-        CHECK(period.position() == input.begin());
-        CHECK(period.lexeme().begin() == input.begin());
+        CHECK(period.position() == input.data());
+        CHECK(period.lexeme().begin() == input.data());
         CHECK(period.lexeme().size() == 3);
     }
     SUBCASE("enum")
@@ -194,22 +194,22 @@ TEST_CASE("token")
         lexy::token b(token_kind::b, lexeme);
         CHECK(b.kind() == token_kind::b);
         CHECK(b.name() == lexy::_detail::string_view("b"));
-        CHECK(b.position() == input.begin());
-        CHECK(b.lexeme().begin() == input.begin());
+        CHECK(b.position() == input.data());
+        CHECK(b.lexeme().begin() == input.data());
         CHECK(b.lexeme().size() == 3);
 
         lexy::token_for<decltype(input), token_kind> unknown(lexy::unknown_token_kind, lexeme);
         CHECK(unknown.kind() == lexy::unknown_token_kind);
         CHECK(unknown.name() == lexy::_detail::string_view("token"));
-        CHECK(unknown.position() == input.begin());
-        CHECK(unknown.lexeme().begin() == input.begin());
+        CHECK(unknown.position() == input.data());
+        CHECK(unknown.lexeme().begin() == input.data());
         CHECK(unknown.lexeme().size() == 3);
 
         lexy::token_for<decltype(input), token_kind> period(lexy::dsl::period, lexeme);
         CHECK(period.kind() == token_kind::c);
         CHECK(period.name() == lexy::_detail::string_view("c"));
-        CHECK(period.position() == input.begin());
-        CHECK(period.lexeme().begin() == input.begin());
+        CHECK(period.position() == input.data());
+        CHECK(period.lexeme().begin() == input.data());
         CHECK(period.lexeme().size() == 3);
     }
 }
