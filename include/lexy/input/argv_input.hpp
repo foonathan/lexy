@@ -121,8 +121,6 @@ public:
         std::is_same_v<char_type, char> || Encoding::template is_secondary_char_type<char>,
         "invalid encoding for argv");
 
-    using iterator = argv_iterator;
-
     //=== constructors ===//
     constexpr argv_input() = default;
 
@@ -138,7 +136,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<encoding, iterator>(_begin, _end);
+        return _detail::range_reader<encoding, argv_iterator>(_begin, _end);
     }
 
 private:

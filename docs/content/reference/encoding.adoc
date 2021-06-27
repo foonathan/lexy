@@ -154,5 +154,6 @@ the desired endianness can be specified using `encoding_endianness`.
   For UTF-8, it will skip an optional BOM, but it has otherwise no effect.
   If no BOM is present, it defaults to big endian.
 
-TODO: link read_file
+{{% docref "lexy::make_buffer_from_raw" %}} and {{% docref "lexy::read_file" %}} use this enum to handle the endianness of the raw memory,
+and the rule {{% docref "lexy::dsl::encode" %}} uses it to dynamically convert bytes to code units.
 

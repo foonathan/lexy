@@ -7,7 +7,14 @@
 
 {{ $lexy        := dict "id" "lexy" "version" "trunk" }}
 {{ $compiler    := dict "id" "clang_trunk" "libs" (slice $lexy) "options" "-std=c++20" }}
-{{ $executor    := dict "compiler" $compiler "stdin" $input "stdinVisible" (ne $input "") }}
+
+{{ $executor := "" }}
+{{ if findRE "^ARGV:" $input }}
+  {{ $executor = dict "compiler" $compiler "arguments" (replaceRE "^ARGV:" "" $input ) "argumentsVisible" true }}
+{{ else }}
+  {{ $executor = dict "compiler" $compiler "stdin" $input "stdinVisible" (ne $input "") }}
+{{ end }}
+
 {{ $session     := dict "id" 1 "language" "c++" "source" $full_source "compilers" (slice) "executors" (slice $executor) }}
 {{ $clientstate := dict "sessions" (slice $session) }}
 

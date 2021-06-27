@@ -1,0 +1,88 @@
+---
+layout: header
+header: "lexy/input/file.hpp"
+entities:
+  "lexy::file_error": read_file
+  "lexy::read_file_result": read_file
+  "lexy::read_file": read_file
+---
+
+[#read_file]
+== Input `lexy::read_file`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    enum class file_error
+    {
+        os_error,
+        file_not_found,
+        permission_denied,
+    };
+
+    template <typename Encoding       = default_encoding,
+              typename MemoryResource = _default-resource_>
+    class read_file_result
+    {
+    public:
+        using encoding  = Encoding;
+        using char_type = typename encoding::char_type;
+
+        explicit operator bool() const noexcept;
+
+        file_error error() const noexcept;
+
+        const char_type* data() const noexcept;
+        std::size_t      size() const noexcept;
+
+        _reader_ auto reader() const& noexcept;
+    };
+
+    template <_encoding_ Encoding          = default_encoding,
+              encoding_endianness Endian = encoding_endianness::bom,
+              typename MemoryResource>
+    auto read_file(const char*     path,
+                   MemoryResource* resource = _default-resource_)
+        -> read_file_result<Encoding, MemoryResource>;
+}
+----
+
+[.lead]
+The function `read_file` returns an input containing the contents of the file.
+
+The result is an object of the class `lexy::read_file_result`.
+It is logically a union of the error code `lexy::file_error` and {{% docref "lexy::buffer" %}}:
+
+* If it contains an error code, `operator bool()` returns `false`, `error()` returns the error code,
+  and `data()`, `size()`, and `reader()` must not be called.
+  It is thus not usable as an input.
+* If it contains a buffer, `operator bool()` returns `true`, `data()`, `size()` and `reader()` forward to the buffer,
+  and `error()` must not be called.
+  It is thus usable as an input and a rule cannot distinguish between it and {{% docref "lexy::buffer" %}}.
+
+`read_file` tries to read the file at `path` into a buffer whose memory is allocated using the specified `resource`
+and whose contents are interpreted as code units of the {{% encoding %}} `Encoding` with the specified {{% docref "lexy::encoding_endianness" %}},
+as if {{% docref "lexy::make_buffer_from_raw" %}} is used.
+If this is successful, the returned result will contain the buffer.
+Otherwise, it will contain an error:
+
+* `file_error::file_not_found` if the `path` did not resolve to a file,
+* `file_error::permission_denied` if the `path` resolved to a file that cannot be read by the process,
+* or `file_error::os_error` if any other error occurred.
+
+.Read UTF-32 from a file with a BOM.
+====
+[source,cpp]
+----
+// Read the file encoded in UTF-32.
+auto input = lexy::read_file<lexy::utf32_encoding>("input.txt");
+if (!input)
+    throw my_file_read_error_exception(result.error());
+
+// Use the file as input.
+auto result = lexy::match<production>(input);
+…
+----
+====
+

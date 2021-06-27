@@ -26,6 +26,7 @@ class buffer
 public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
+    static_assert(std::is_trivial_v<char_type>);
 
     //=== constructors ===//
     /// Allows the creation of an uninitialized buffer that is then filled by the user.
