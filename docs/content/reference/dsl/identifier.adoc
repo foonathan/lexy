@@ -66,7 +66,7 @@ Errors::
   * `lexy::reserved_identifier`: if the identifier is reserved; its range covers the identifier.
     The rule then recovers.
 Values::
-  A single `lexy::lexeme` that is the parsed identifier (excluding any trailing whitespace).
+  A single {{% docref "lexy::lexeme" %}} that is the parsed identifier (excluding any trailing whitespace).
 Parse tree::
   The single token node created by `.pattern()` (see below).
   Its kind cannot be overridden.

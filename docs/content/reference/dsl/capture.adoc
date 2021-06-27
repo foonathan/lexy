@@ -26,7 +26,7 @@ Errors::
   All errors raised by `rule`.
   The rule then fails if `rule` has failed.
 Values::
-  A `lexy::lexeme` whose range covers everything consumed by `rule`,
+  A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `rule`,
   followed by all values produced by `rule`.
 
 {{% godbolt-example capture "Parse a name" %}}

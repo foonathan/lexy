@@ -133,7 +133,7 @@ Errors::
     Otherwise, it fails.
 Values::
   It creates a sink of the current context.
-  The sink is invoked with a `lexy::lexeme` capturing everything consumed by `c`, separately.
+  The sink is invoked with a {{% docref "lexy::lexeme" %}} capturing everything consumed by `c`, separately.
   It is also invoked with every value produced by `escape`.
   The invocations happen separately in lexical order.
   The rule then produces all values of `open()`, the final value of the sink, and all values of `close()`.
@@ -246,7 +246,7 @@ constexpr _escape-dsl_ capture(_token-rule_ auto t) const
 ----
 
 [.lead]
-`.capture()` specifies an escape sequence that tries to parse the {{% token-rule %}} `t` and produces a `lexy::lexeme`.
+`.capture()` specifies an escape sequence that tries to parse the {{% token-rule %}} `t` and produces a {{% docref "lexy::lexeme" %}}.
 
 It is equivalent to {{% docref "lexy::dsl::capture" %}}.
 

@@ -61,7 +61,7 @@ Requires::
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates an identifier with name `Id` inside the current context.
-  This identifier is initialized to the empty string; it's underlying type is `lexy::lexeme`.
+  This identifier is initialized to the empty string; it's underlying type is {{% docref "lexy::lexeme" %}}.
 Errors::
   None.
 Values::
@@ -82,7 +82,7 @@ Requires::
   i.e. `.create()` has been parsed earlier.
 (Branch) Parsing::
   Parses `identifier`.
-  As a side effect, it sets the identifier with the name `Id` to contain the `lexy::lexeme` also produced by the {{% docref "lexy::dsl::identifier" %}} rule.
+  As a side effect, it sets the identifier with the name `Id` to contain the {{% docref "lexy::lexeme" %}} also produced by the {{% docref "lexy::dsl::identifier" %}} rule.
 Errors::
   All errors raised by parsing `identifier`.
   The rule then fails if `identifier` has failed.

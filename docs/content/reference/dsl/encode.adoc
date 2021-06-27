@@ -37,7 +37,7 @@ Errors::
   Note that the error type is templated on the reader used, which is an unspecified type here.
 Values::
   All values produced by `rule`.
-  Note that types that are templated on the reader (e.g. `lexy::lexeme`) are instantiated with an unspecified reader type.
+  Note that types that are templated on the reader (e.g. {{% docref "lexy::lexeme" %}}) are instantiated with an unspecified reader type.
   Types that are only templated on the iterator do not change, as the unspecified reader has the same iterator type.
 
 {{% godbolt-example encode "Match umlauts in different encodings" %}}
