@@ -31,10 +31,10 @@ while others are still the full documentation inline.
 [source,cpp]
 ----
 template <typename T>
-concept auto reader = …;
+concept reader = …;
 
 template <typename Input>
-concept auto input = requires(const Input& obj) {
+concept input = requires(const Input& obj) {
   { obj.reader() } -> reader;
 };
 ----
