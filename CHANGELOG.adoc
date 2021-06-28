@@ -5,6 +5,10 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2021-06-27
 
+Moved callback adapters and composition into new header files, but still implicitly included by `callback.hpp`.
+
+== 2021-06-27
+
 * Simplified and minimized interface of the input classes, removing e.g. iterators from them.
 * Moved definition of `lexy::code_point` from `encoding.hpp` to new header `code_point.hpp`.
 

@@ -5,7 +5,7 @@
 #include <lexy/callback/container.hpp>
 
 #include <doctest/doctest.h>
-#include <lexy/callback/base.hpp>
+#include <lexy/callback/adapter.hpp>
 #include <lexy/dsl/option.hpp>
 #include <set>
 #include <string>

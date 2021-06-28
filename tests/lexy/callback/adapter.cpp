@@ -1,0 +1,79 @@
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#include <lexy/callback/adapter.hpp>
+
+#include <doctest/doctest.h>
+#include <lexy/callback/fold.hpp>
+
+namespace
+{
+int test_fn(std::nullptr_t)
+{
+    return 0;
+}
+} // namespace
+
+TEST_CASE("callback")
+{
+    SUBCASE("basic")
+    {
+        constexpr auto callback
+            = lexy::callback<int>([](int i) { return 2 * i; }, [](const char* ptr) { return *ptr; },
+                                  &test_fn);
+
+        CHECK(lexy::is_callback<decltype(callback)>);
+        CHECK(std::is_same_v<typename decltype(callback)::return_type, int>);
+
+        CHECK(lexy::is_callback_for<decltype(callback), int>);
+        CHECK(callback(11) == 22);
+
+        CHECK(lexy::is_callback_for<decltype(callback), const char*>);
+        CHECK(callback("abc") == 'a');
+
+        CHECK(lexy::is_callback_for<decltype(callback), std::nullptr_t>);
+        CHECK(callback(nullptr) == 0);
+    }
+    SUBCASE("match all case")
+    {
+        constexpr auto callback
+            = lexy::callback<int>([](const auto&... args) { return sizeof...(args); });
+        CHECK(callback() == 0);
+        CHECK(callback(1) == 1);
+        CHECK(callback(1, 2, 3) == 3);
+    }
+    SUBCASE("member ptr")
+    {
+        struct foo
+        {
+            int member;
+
+            int fn(int i) const
+            {
+                return i;
+            }
+        };
+        foo obj{42};
+
+        constexpr auto callback = lexy::callback<int>(&foo::fn, &foo::member);
+        CHECK(callback(foo(), 4) == 4);
+        CHECK(callback(&obj) == 42);
+    }
+    SUBCASE("with state")
+    {
+        constexpr auto callback = lexy::callback<int>([i = 42](int arg) { return arg + i; });
+        CHECK(callback(0) == 42);
+        CHECK(callback(11) == 53);
+    }
+}
+
+TEST_CASE("callback from sink")
+{
+    constexpr auto sink     = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
+    constexpr auto callback = lexy::callback(sink);
+
+    CHECK(callback() == 0);
+    CHECK(callback(1, 2, 3) == 6);
+}
+

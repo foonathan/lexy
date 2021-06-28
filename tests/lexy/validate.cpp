@@ -5,6 +5,7 @@
 #include <lexy/validate.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/adapter.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>

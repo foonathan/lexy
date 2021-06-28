@@ -5,6 +5,7 @@
 #include <lexy/callback/bind.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/adapter.hpp>
 #include <lexy/callback/fold.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/parse.hpp>

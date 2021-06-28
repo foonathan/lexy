@@ -5,7 +5,7 @@
 #ifndef LEXY_CALLBACK_NOOP_HPP_INCLUDED
 #define LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
-#include <lexy/_detail/config.hpp>
+#include <lexy/callback/base.hpp>
 
 namespace lexy
 {

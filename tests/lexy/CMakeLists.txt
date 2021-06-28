@@ -14,9 +14,11 @@ set(tests
         detail/tuple.cpp
         detail/type_name.cpp
 
+        callback/adapter.cpp
         callback/aggregate.cpp
         callback/base.cpp
         callback/bind.cpp
+        callback/composition.cpp
         callback/constant.cpp
         callback/container.cpp
         callback/fold.cpp

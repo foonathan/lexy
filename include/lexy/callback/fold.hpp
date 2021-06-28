@@ -5,8 +5,7 @@
 #ifndef LEXY_CALLBACK_FOLD_HPP_INCLUDED
 #define LEXY_CALLBACK_FOLD_HPP_INCLUDED
 
-#include <lexy/_detail/config.hpp>
-#include <lexy/_detail/invoke.hpp>
+#include <lexy/callback/base.hpp>
 
 namespace lexy
 {
