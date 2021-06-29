@@ -3,7 +3,6 @@
 
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy/input/string_input.hpp>
 #include <lexy/parse.hpp>
 #include <lexy_ext/cfile.hpp>
 #include <lexy_ext/report_error.hpp>
