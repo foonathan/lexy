@@ -39,7 +39,7 @@ struct _fold
 
     constexpr auto sink() const
     {
-        return _sink_callback{_init, _op};
+        return _sink_callback{T(_init), _op};
     }
 };
 
