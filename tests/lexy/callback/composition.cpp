@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 #include <lexy/callback/adapter.hpp>
+#include <lexy/callback/bind.hpp>
 #include <lexy/callback/fold.hpp>
 #include <string>
 #include <vector>
@@ -23,6 +24,23 @@ TEST_CASE("callback compose")
         CHECK(composed(0) == 0);
         CHECK(composed(8) == 16);
     }
+    SUBCASE("callbacks with context")
+    {
+        constexpr auto a
+            = lexy::bind(lexy::callback<int>([](int factor, int i) { return factor * i; }),
+                         lexy::parse_state, lexy::values);
+        constexpr auto b
+            = lexy::callback<std::string>([](int i) { return std::string(std::size_t(i), 'a'); });
+        constexpr auto c = lexy::bind(lexy::callback<std::size_t>([](int factor, const auto& str) {
+                                          return std::size_t(factor) * str.size();
+                                      }),
+                                      lexy::parse_state, lexy::values);
+
+        constexpr auto composed = a | b | c;
+        CHECK(composed[2](0) == 2 * 0);
+        CHECK(composed[2](8) == 2 * 16);
+    }
+
     SUBCASE("sink and callback")
     {
         constexpr auto sink = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
@@ -51,6 +69,25 @@ TEST_CASE("callback compose")
         s(3);
         auto result = composed(LEXY_MOV(s).finish());
         CHECK(result == 1);
+    }
+    SUBCASE("sink and two callback with context")
+    {
+        constexpr auto sink = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
+        constexpr auto cb_a = lexy::callback<std::string>([](int i) { return std::to_string(i); });
+        constexpr auto cb_b
+            = lexy::bind(lexy::callback<std::size_t>([](int factor, const auto& str) {
+                             return std::size_t(factor) * str.size();
+                         }),
+                         lexy::parse_state, lexy::values);
+
+        constexpr auto composed = sink >> cb_a | cb_b;
+
+        auto s = sink.sink();
+        s(1);
+        s(2);
+        s(3);
+        auto result = composed[2](LEXY_MOV(s).finish());
+        CHECK(result == 2);
     }
 }
 
