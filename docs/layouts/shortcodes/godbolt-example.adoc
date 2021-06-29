@@ -1,6 +1,11 @@
 {{ $id      := .Get 0 }}
 {{ $source  := ($id | printf "examples/%s.cpp"   | resources.Get).Content | chomp }}
-{{ $input   := ($id | printf "examples/%s.input" | resources.Get).Content | chomp }}
+
+{{ $input          := "" }}
+{{ $input_resource := ($id | printf "examples/%s.input" | resources.Get) }}
+{{ if $input_resource }}
+  {{ $input = $input_resource.Content | chomp }}
+{{ end }}
 
 {{ $full_source   := $source | replaceRE "//({|})\\n?" "" }}
 {{ $inline_source := $source | replaceRE "(?s:.*//{\n(.*)//}.*)" "$1"}}
