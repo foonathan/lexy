@@ -347,11 +347,13 @@ struct _bound_sink
     LEXY_EMPTY_MEMBER Sink _sink;
     LEXY_EMPTY_MEMBER _detail::tuple<BoundArgs...> _bound;
 
-    constexpr auto sink() const
-    {
-        return _detail::invoke_bound(_sink_wrapper<Sink>{_sink}, _bound, _bound.index_sequence(),
-                                     _detail::no_bind_context{});
-    }
+    /*
+        constexpr auto sink() const
+        {
+            return _detail::invoke_bound(_sink_wrapper<Sink>{_sink}, _bound,
+       _bound.index_sequence(), _detail::no_bind_context{});
+        }
+        */
     template <typename Context>
     constexpr auto sink(const Context& context) const
     {

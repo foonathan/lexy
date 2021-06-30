@@ -16,8 +16,8 @@ struct production
         return dsl::times<3>(item, sep);
     }();
 
-    static constexpr auto value = lexy::callback<int>(
-        [](lexy::times<3, int> result) { return result[0] + result[1] + result[2]; });
+    static constexpr auto value
+        = lexy::callback<int>([](int a, int b, int c) { return a + b + c; });
 };
 //}
 

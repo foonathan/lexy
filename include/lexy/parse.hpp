@@ -122,8 +122,10 @@ public:
         using value = lexy::production_value<Production>;
         if constexpr (lexy::is_callback<typename value::type>)
             return value::get;
+        else if constexpr (lexy::is_sink<typename value::type, const State&>)
+            return value::get.sink(LEXY_DECLVAL(const State&));
         else
-            return LEXY_DECLVAL(lexy::sink_callback<typename value::type>);
+            return value::get.sink();
     }
     template <typename Production>
     using return_type_for = typename decltype(_value_cb<Production>())::return_type;
@@ -161,7 +163,8 @@ public:
             else
                 return value::get(LEXY_FWD(args)...);
         }
-        else if constexpr (lexy::is_sink<typename value::type> //
+        else if constexpr (((lexy::is_sink<typename value::type>)
+                            || (lexy::is_sink<typename value::type, const State&>))
                            && _is_convertible<return_type_for<Production>, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has the

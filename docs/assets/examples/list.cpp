@@ -18,8 +18,10 @@ struct production
     }();
 
     // Same as `lexy::as_string`.
-    static constexpr auto value = lexy::sink<std::string>(
-        [](std::string& result, auto lexeme) { result.append(lexeme.begin(), lexeme.end()); });
+    static constexpr auto value
+        = lexy::fold_inplace<std::string>("", [](std::string& result, auto lexeme) {
+              result.append(lexeme.begin(), lexeme.end());
+          });
 };
 //}
 
