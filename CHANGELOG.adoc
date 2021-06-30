@@ -3,9 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-06-27
+== 2021-06-30
 
-Moved callback adapters and composition into new header files, but still implicitly included by `callback.hpp`.
+* Moved callback adapters and composition into new header files, but still implicitly included by `callback.hpp`.
+* Removed overload of `lexy::bind` that takes a sink; bind individual items in a separate production instead.
 
 == 2021-06-27
 

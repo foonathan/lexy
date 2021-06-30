@@ -281,26 +281,25 @@ constexpr auto parse_state = _parse_state<void>{};
 //=== bind ===//
 namespace lexy
 {
-// the callback specific part of bind
-template <typename Derived, typename Callback, typename Void = void>
-struct _bind_impl_callback
-{};
-template <typename Derived, typename Callback>
-struct _bind_impl_callback<Derived, Callback, _detail::void_t<typename Callback::return_type>>
+template <typename Callback, typename... BoundArgs>
+struct _bound_cb
 {
+    LEXY_EMPTY_MEMBER Callback _callback;
+    LEXY_EMPTY_MEMBER _detail::tuple<BoundArgs...> _bound_args;
+
     using return_type = typename Callback::return_type;
 
     template <typename Context>
     struct _with_context
     {
-        const Derived& _derived;
-        const Context& _context;
+        const _bound_cb& _bound;
+        const Context&   _context;
 
         template <typename... Args>
         constexpr return_type operator()(Args&&... args) const&&
         {
-            return _detail::invoke_bound(_derived._callback, _derived._bound,
-                                         _derived._bound.index_sequence(), _context,
+            return _detail::invoke_bound(_bound._callback, _bound._bound_args,
+                                         _bound._bound_args.index_sequence(), _context,
                                          LEXY_FWD(args)...);
         }
     };
@@ -308,79 +307,23 @@ struct _bind_impl_callback<Derived, Callback, _detail::void_t<typename Callback:
     template <typename Context>
     constexpr auto operator[](const Context& context) const
     {
-        auto& derived = static_cast<const Derived&>(*this);
-        return _with_context<Context>{derived, context};
+        return _with_context<Context>{*this, context};
     }
 
     template <typename... Args>
     constexpr return_type operator()(Args&&... args) const
     {
-        auto& derived = static_cast<const Derived&>(*this);
-        return _detail::invoke_bound(derived._callback, derived._bound,
-                                     derived._bound.index_sequence(), _detail::no_bind_context{},
-                                     LEXY_FWD(args)...);
+        return _detail::invoke_bound(_callback, _bound_args, _bound_args.index_sequence(),
+                                     _detail::no_bind_context{}, LEXY_FWD(args)...);
     }
 };
 
-// the sink specific part of bind
-template <typename Derived, typename Callback, typename Void = void>
-struct _bind_impl_sink
-{};
-template <typename Derived, typename Callback>
-struct _bind_impl_sink<Derived, Callback, _detail::void_t<lexy::sink_callback<Callback>>>
-{
-    template <typename Context>
-    struct _sink_callback
-    {
-        const Derived&    _derived;
-        LEXY_EMPTY_MEMBER lexy::sink_callback<Callback> _callback;
-        LEXY_EMPTY_MEMBER Context                       _context;
-
-        using return_type = typename lexy::sink_callback<Callback>::return_type;
-
-        template <typename... Args>
-        constexpr void operator()(Args&&... args)
-        {
-            _detail::invoke_bound(_callback, _derived._bound, _derived._bound.index_sequence(),
-                                  _context, LEXY_FWD(args)...);
-        }
-
-        constexpr decltype(auto) finish() &&
-        {
-            return LEXY_MOV(_callback).finish();
-        }
-    };
-
-    constexpr auto sink() const -> _sink_callback<_detail::no_bind_context>
-    {
-        auto& derived = static_cast<const Derived&>(*this);
-        return {derived, derived._callback.sink(), _detail::no_bind_context{}};
-    }
-    template <typename Context>
-    constexpr auto sink(const Context& context) const -> _sink_callback<Context>
-    {
-        auto& derived = static_cast<const Derived&>(*this);
-        return {derived, derived._callback.sink(), context};
-    }
-};
-
-/// For a callback, binds the `operator()` of the callback with pre-defined/remapped values.
-/// For a sink, binds the `operator()` of the sink callback invoked for every item.
+/// Binds the `operator()` of the callback with pre-defined/remapped values.
 template <typename Callback, typename... BoundArgs>
 constexpr auto bind(Callback&& callback, BoundArgs&&... args)
 {
-    using callback_t = std::decay_t<Callback>;
-    static_assert(lexy::is_callback<callback_t> || lexy::is_sink<callback_t>);
-    static_assert(!lexy::is_callback<callback_t> || !lexy::is_sink<callback_t>,
-                  "cannot bind something that is both a Callback and a Sink;"
-                  "it would break the logic of lexy::parse");
-    struct bound : _bind_impl_callback<bound, callback_t>, _bind_impl_sink<bound, callback_t>
-    {
-        LEXY_EMPTY_MEMBER callback_t _callback;
-        LEXY_EMPTY_MEMBER _detail::tuple<std::decay_t<BoundArgs>...> _bound;
-    };
-
-    return bound{{}, {}, LEXY_FWD(callback), _detail::make_tuple(LEXY_FWD(args)...)};
+    using bound = _bound_cb<std::decay_t<Callback>, std::decay_t<BoundArgs>...>;
+    return bound{LEXY_FWD(callback), _detail::make_tuple(LEXY_FWD(args)...)};
 }
 } // namespace lexy
 

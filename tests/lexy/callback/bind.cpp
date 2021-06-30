@@ -94,20 +94,6 @@ TEST_CASE("bind a callback")
     }
 }
 
-TEST_CASE("bind a sink")
-{
-    constexpr auto sink
-        = lexy::fold_inplace<int>(0, [](int& result, int a, int b) { result += b / a; });
-
-    // Placeholders themselves tested above, only test the item specific stuff.
-    constexpr auto bound = lexy::bind(sink, lexy::parse_state, lexy::_1);
-
-    auto cb = bound.sink(2);
-    cb(2 * 11);
-    cb(2 * 42);
-    CHECK(LEXY_MOV(cb).finish() == 11 + 42);
-}
-
 TEST_CASE("bind_sink")
 {
     struct my_sink
