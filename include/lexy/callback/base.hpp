@@ -25,7 +25,8 @@ constexpr bool is_callback_for
 template <typename T, typename Context>
 using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
 template <typename T, typename Context>
-constexpr bool is_callback_context = _detail::is_detected<_detect_callback_context, T, Context>;
+constexpr bool is_callback_context
+    = _detail::is_detected<_detect_callback_context, T, std::decay_t<Context>>;
 
 /// Returns the type of the `.sink()` function.
 template <typename Sink, typename... Args>
