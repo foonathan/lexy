@@ -92,6 +92,10 @@ inline constexpr auto token_kind_map = _tk_map_empty{};
 /// A mapping of token rule to token kind; specialize for your own kinds.
 template <typename TokenKind>
 constexpr auto token_kind_map_for = token_kind_map;
+
+// Prevent user-defined specialization for void.
+template <>
+inline constexpr auto token_kind_map_for<void> = token_kind_map;
 } // namespace lexy
 
 namespace lexy
@@ -103,7 +107,9 @@ using _detect_token_kind_name = decltype(token_kind_name(TokenKind{}));
 template <typename TokenKind = void>
 class token_kind
 {
-    static_assert(std::is_enum_v<TokenKind>, "invalid type for TokenKind");
+    static_assert(std::is_void_v<TokenKind> || std::is_enum_v<TokenKind>,
+                  "invalid type for TokenKind");
+    using _underlying_type = std::conditional_t<std::is_void_v<TokenKind>, int, TokenKind>;
 
 public:
     //=== constructors ===//
@@ -114,10 +120,11 @@ public:
     constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
 
     /// Creates the token kind with the specified value.
-    constexpr token_kind(TokenKind value) noexcept : _value(static_cast<std::uint_least16_t>(value))
+    constexpr token_kind(_underlying_type value) noexcept
+    : _value(static_cast<std::uint_least16_t>(value))
     {
-        auto as_int = std::underlying_type_t<TokenKind>(value);
-        LEXY_PRECONDITION(0 <= as_int && as_int < _smallest_predefined_token_kind);
+        LEXY_PRECONDITION(_underlying_type(0) <= value
+                          && value < _underlying_type(_smallest_predefined_token_kind));
     }
 
     /// Creates the token kind of a token rule.
@@ -126,9 +133,18 @@ public:
     {
         // Look for internal mapping first.
         auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_same_v<decltype(token_rule_kind), TokenKind>)
-            // The token has an associated kind.
+        if constexpr (std::is_enum_v<TokenKind> //
+                      && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+        {
+            // The token has an associated kind of the same enumeration type.
             *this = token_kind(token_rule_kind);
+        }
+        else if constexpr (std::is_void_v<TokenKind> //
+                           && std::is_integral_v<decltype(token_rule_kind)>)
+        {
+            // The token has an integer kind.
+            *this = token_kind(token_rule_kind);
+        }
         else
         {
             // Look for an external mapping.
@@ -153,15 +169,15 @@ public:
         if (is_predefined())
             return _kind_name(static_cast<predefined_token_kind>(_value));
         else if constexpr (lexy::_detail::is_detected<_detect_token_kind_name, TokenKind>)
-            return token_kind_name(get());
+            return token_kind_name(get()); // ADL
         else
             // We only have a generic name.
             return "token";
     }
 
-    constexpr TokenKind get() const noexcept
+    constexpr _underlying_type get() const noexcept
     {
-        return static_cast<TokenKind>(_value);
+        return static_cast<_underlying_type>(_value);
     }
 
     //=== comparision ===//
@@ -182,84 +198,6 @@ public:
     static constexpr token_kind<TokenKind> from_raw(std::uint_least16_t kind) noexcept
     {
         return token_kind<TokenKind>(kind);
-    }
-
-private:
-    constexpr explicit token_kind(std::uint_least16_t kind) noexcept : _value(kind) {}
-
-    std::uint_least16_t _value;
-};
-template <>
-class token_kind<void>
-{
-public:
-    /// Creates an unknown token kind.
-    constexpr token_kind() noexcept : token_kind(unknown_token_kind) {}
-
-    constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
-
-    /// Creates the token kind with the specified value.
-    constexpr token_kind(int value) noexcept : _value(static_cast<std::uint_least16_t>(value))
-    {
-        LEXY_PRECONDITION(0 <= value && value < _smallest_predefined_token_kind);
-    }
-
-    /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-    constexpr token_kind(TokenRule) noexcept : token_kind()
-    {
-        auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_integral_v<decltype(token_rule_kind)>)
-            // The token has an associated kind.
-            *this = token_kind(int(token_rule_kind));
-    }
-
-    //=== access ===//
-    constexpr explicit operator bool() const noexcept
-    {
-        return _value != unknown_token_kind;
-    }
-
-    constexpr bool is_predefined() const noexcept
-    {
-        return _value >= _smallest_predefined_token_kind;
-    }
-
-    constexpr const char* name() const noexcept
-    {
-        if (is_predefined())
-            return _kind_name(static_cast<predefined_token_kind>(_value));
-        else
-            // We only have a generic name.
-            return "token";
-    }
-
-    constexpr int get() const noexcept
-    {
-        if (is_predefined())
-            return -1 - (UINT_LEAST16_MAX - _value);
-        else
-            return _value;
-    }
-
-    //=== comparision ===//
-    friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept
-    {
-        return lhs._value == rhs._value;
-    }
-    friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept
-    {
-        return lhs._value != rhs._value;
-    }
-
-    //=== raw access ===//
-    static constexpr std::uint_least16_t to_raw(token_kind<void> kind) noexcept
-    {
-        return kind._value;
-    }
-    static constexpr token_kind<void> from_raw(std::uint_least16_t kind) noexcept
-    {
-        return token_kind<void>(kind);
     }
 
 private:
