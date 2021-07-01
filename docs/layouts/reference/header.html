@@ -55,7 +55,10 @@ window.addEventListener('load', async function(){
     // build datalist
     for (let name in goto_data) {
         let option = document.createElement('option');
-        option.value = name;
+        if (name.startsWith("lexy_"))
+            option.value = name.toUpperCase(); // macro
+        else
+            option.value = name;
         goto_data_list.appendChild(option);
     }
 
@@ -63,7 +66,7 @@ window.addEventListener('load', async function(){
     goto_form.addEventListener('submit', function(event){
         event.preventDefault();
 
-        let url = goto_data[goto_search.value];
+        let url = goto_data[goto_search.value.toLowerCase()];
         if (url)
             window.location.href = url;
         else
