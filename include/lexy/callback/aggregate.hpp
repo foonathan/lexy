@@ -10,19 +10,7 @@
 
 namespace lexy
 {
-template <typename MemPtr>
-struct _mem_ptr_type_impl;
-template <typename T, typename ClassT>
-struct _mem_ptr_type_impl<T ClassT::*>
-{
-    using class_type  = ClassT;
-    using member_type = T;
-};
-
-template <auto MemPtr>
-using _mem_ptr_class_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::class_type;
-template <auto MemPtr>
-using _mem_ptr_member_type = typename _mem_ptr_type_impl<decltype(MemPtr)>::member_type;
+struct nullopt;
 
 template <typename T>
 struct _as_aggregate
@@ -30,6 +18,10 @@ struct _as_aggregate
     using return_type = T;
     static_assert(std::is_aggregate_v<return_type>);
 
+    constexpr T operator()(lexy::nullopt&&) const
+    {
+        return {};
+    }
     constexpr T operator()(T&& result) const
     {
         return LEXY_MOV(result);

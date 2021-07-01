@@ -5,6 +5,7 @@
 #include <lexy/callback/aggregate.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/dsl/option.hpp>
 
 TEST_CASE("as_aggregate")
 {
@@ -21,6 +22,16 @@ TEST_CASE("as_aggregate")
     static constexpr auto callback = lexy::as_aggregate<agg>;
     SUBCASE("callback")
     {
+        constexpr auto nullopt = callback(lexy::nullopt{});
+        CHECK(nullopt.i == 0);
+        CHECK(nullopt.f == 0.f);
+        CHECK(nullopt.str == nullptr);
+
+        constexpr auto forward = callback(agg{8, 1.41f, "foo"});
+        CHECK(forward.i == 8);
+        CHECK(forward.f == 1.41f);
+        CHECK(*forward.str == 'f');
+
         constexpr auto result = callback(member_f{}, 3.14f, member_str{}, "hello", member_i{}, 42);
         CHECK(result.i == 42);
         CHECK(result.f == 3.14f);
