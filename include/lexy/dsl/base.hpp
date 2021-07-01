@@ -9,8 +9,8 @@
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/lazy_init.hpp>
 #include <lexy/engine/base.hpp>
+#include <lexy/grammar.hpp>
 #include <lexy/input/base.hpp>
-#include <lexy/production.hpp>
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
@@ -19,98 +19,6 @@
 #else
 #    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
 #endif
-
-//=== rule ===//
-#if 0
-struct Rule : rule_base
-{
-    static constexpr auto is_branch = false;
-    static constexpr auto is_unconditional_branch = false; // Only set to true if is_branch is also true.
-
-    template <typename NextParser>
-    struct parser
-    {
-        // Only if `is_branch == true` and `is_unconditional_branch == false`.
-        template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC rule_try_parse_result try_parse(Context& context, Reader& reader, Args&&... args)
-        {
-            if (/* check whether we would match without consuming */)
-            {
-                if (/* matched and consumed */)
-                {
-                    auto result = NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
-                    return static_cast<rule_try_parse_result>(result);
-                }
-                else
-                {
-                    context.error(/* error */);
-                    return rule_try_parse_result::canceled;
-                }
-            }
-            else
-            {
-                return rule_try_parse_result::backtracked;
-            }
-        }
-
-        template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            if (/* matched and consumed */)
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
-            else
-            {
-                context.error(/* error */);
-                return false;
-            }
-        }
-    };
-};
-#endif
-
-namespace lexyd
-{
-struct rule_base
-{
-    static constexpr auto is_branch               = false;
-    static constexpr auto is_unconditional_branch = false;
-};
-
-struct _token_base : rule_base
-{};
-} // namespace lexyd
-
-namespace lexy
-{
-// We use a shorthand namespace to decrease symbol size.
-namespace dsl = lexyd;
-
-template <typename T>
-constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
-template <typename T>
-constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
-
-template <typename T>
-constexpr bool is_branch_rule = [] {
-    if constexpr (is_rule<T>)
-        return T::is_branch;
-    else
-        return false;
-}();
-
-template <typename Rule, typename NextParser>
-using rule_parser = typename Rule::template parser<NextParser>;
-} // namespace lexy
-
-namespace lexy
-{
-enum class rule_try_parse_result
-{
-    ok          = true,
-    canceled    = false,
-    backtracked = 2,
-};
-}
 
 //=== whitespace ===//
 namespace lexyd

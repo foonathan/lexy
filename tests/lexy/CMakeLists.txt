@@ -99,11 +99,11 @@ set(tests
         code_point.cpp
         encoding.cpp
         error.cpp
+        grammar.cpp
         lexeme.cpp
         match.cpp
         parse.cpp
         parse_tree.cpp
-        production.cpp
         token.cpp
         validate.cpp
     )

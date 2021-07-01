@@ -10,7 +10,7 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/detect.hpp>
-#include <lexy/dsl/base.hpp>
+#include <lexy/grammar.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy

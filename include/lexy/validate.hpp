@@ -11,7 +11,6 @@
 #include <lexy/callback/noop.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/error.hpp>
-#include <lexy/production.hpp>
 
 namespace lexy
 {

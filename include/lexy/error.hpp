@@ -6,8 +6,8 @@
 #define LEXY_ERROR_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/grammar.hpp>
 #include <lexy/input/base.hpp>
-#include <lexy/production.hpp>
 
 namespace lexy
 {
