@@ -111,31 +111,41 @@ TEST_CASE("as_string")
         std::string from_nullopt = lexy::as_string<std::string>(lexy::nullopt{});
         CHECK(from_nullopt.empty());
 
-        std::string from_ptr_size = lexy::as_string<std::string>("abc", 2);
-        CHECK(from_ptr_size == "ab");
+        std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
+        CHECK(from_rvalue == "test");
 
         std::string from_char_lexeme = lexy::as_string<std::string>(char_lexeme);
         CHECK(from_char_lexeme == "abc");
+        std::string from_char_lexeme_alloc
+            = lexy::as_string<std::string>(std::allocator<char>{}, char_lexeme);
+        CHECK(from_char_lexeme_alloc == "abc");
+
         std::string from_uchar_lexeme = lexy::as_string<std::string>(uchar_lexeme);
         CHECK(from_uchar_lexeme == "abc");
-
-        std::string from_lvalue = lexy::as_string<std::string>(from_char_lexeme);
-        CHECK(from_lvalue == "abc");
-        std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
-        CHECK(from_rvalue == "test");
+        std::string from_uchar_lexeme_alloc
+            = lexy::as_string<std::string>(std::allocator<char>{}, uchar_lexeme);
+        CHECK(from_uchar_lexeme_alloc == "abc");
 
         std::string from_ascii_cp
             = lexy::as_string<std::string, lexy::ascii_encoding>(lexy::code_point('a'));
         CHECK(from_ascii_cp == "a");
+        std::string from_ascii_cp_alloc
+            = lexy::as_string<std::string, lexy::ascii_encoding>(std::allocator<char>{},
+                                                                 lexy::code_point('a'));
+        CHECK(from_ascii_cp_alloc == "a");
+
         std::string from_unicode_cp
             = lexy::as_string<std::string, lexy::utf8_encoding>(lexy::code_point(0x00E4));
+        CHECK(from_unicode_cp == "\u00E4");
+        std::string from_unicode_cp_alloc
+            = lexy::as_string<std::string, lexy::utf8_encoding>(std::allocator<char>{},
+                                                                lexy::code_point(0x00E4));
         CHECK(from_unicode_cp == "\u00E4");
     }
     SUBCASE("sink")
     {
         auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink();
         sink('a');
-        sink("bcd", 2);
         sink(char_lexeme);
         sink(uchar_lexeme);
         sink(std::string("hi"));
@@ -143,13 +153,12 @@ TEST_CASE("as_string")
         sink(lexy::code_point(0x00E4));
 
         std::string result = LEXY_MOV(sink).finish();
-        CHECK(result == "abcabcabchia\u00E4");
+        CHECK(result == "aabcabchia\u00E4");
     }
     SUBCASE("sink with allocator")
     {
         auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink(std::allocator<int>());
         sink('a');
-        sink("bcd", 2);
         sink(char_lexeme);
         sink(uchar_lexeme);
         sink(std::string("hi"));
@@ -157,7 +166,7 @@ TEST_CASE("as_string")
         sink(lexy::code_point(0x00E4));
 
         std::string result = LEXY_MOV(sink).finish();
-        CHECK(result == "abcabcabchia\u00E4");
+        CHECK(result == "aabcabchia\u00E4");
     }
 }
 

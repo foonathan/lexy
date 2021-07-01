@@ -3,10 +3,12 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-06-30
+== 2021-07-01
 
 * Moved callback adapters and composition into new header files, but still implicitly included by `callback.hpp`.
 * Removed overload of `lexy::bind` that takes a sink; bind individual items in a separate production instead.
+* Removed unneeded overloads of `lexy::as_sink` and changed the transcoding behavior:
+  It will now only use the pointer + size constructor if the character types match and no longer `reinterpret_cast`.
 
 == 2021-06-27
 

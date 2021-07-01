@@ -141,58 +141,56 @@ struct _as_string
 {
     using return_type = String;
     using _char_type  = _string_char_type<String>;
+    static_assert(lexy::_is_compatible_char_type<Encoding, _char_type>,
+                  "invalid character type/encoding combination");
 
     constexpr String operator()(nullopt&&) const
     {
         return String();
     }
-
     constexpr String operator()(String&& str) const
     {
         return LEXY_MOV(str);
-    }
-    constexpr String operator()(const String& str) const
-    {
-        return str;
-    }
-
-    template <typename CharT>
-    constexpr auto operator()(const CharT* str, std::size_t length) const
-        -> decltype(String(str, length))
-    {
-        return String(str, length);
     }
 
     template <typename Reader>
     constexpr String operator()(lexeme<Reader> lex) const
     {
-        using iterator = typename lexeme<Reader>::iterator;
-        if constexpr (std::is_pointer_v<iterator>)
-        {
-            static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
-                          "cannot convert lexeme to this string type");
+        static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
+                      "cannot convert lexeme to this string type");
 
-            if constexpr (std::is_same_v<_char_type, typename Reader::encoding::char_type>)
-                return String(lex.data(), lex.size());
-            else
-                return String(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
-        }
+        using iterator = typename lexeme<Reader>::iterator;
+        if constexpr (std::is_convertible_v<iterator, const _char_type*>)
+            return String(lex.data(), lex.size());
         else
-        {
-            // We're assuming the string constructor can do any necessary conversion/transcoding.
             return String(lex.begin(), lex.end());
-        }
+    }
+    template <typename Str = String, typename Reader>
+    constexpr String operator()(const typename Str::allocator_type& allocator,
+                                lexeme<Reader>                      lex) const
+    {
+        static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
+                      "cannot convert lexeme to this string type");
+
+        using iterator = typename lexeme<Reader>::iterator;
+        if constexpr (std::is_convertible_v<iterator, const _char_type*>)
+            return String(lex.data(), lex.size(), allocator);
+        else
+            return String(lex.begin(), lex.end(), allocator);
     }
 
     constexpr String operator()(code_point cp) const
     {
         typename Encoding::char_type buffer[4] = {};
         auto size = _detail::encode_code_point<Encoding>::encode(cp, buffer, 4);
-
-        if constexpr (std::is_same_v<_char_type, typename Encoding::char_type>)
-            return (*this)(buffer, size);
-        else
-            return (*this)(reinterpret_cast<const _char_type*>(buffer), size);
+        return String(buffer, buffer + size);
+    }
+    template <typename Str = String>
+    constexpr String operator()(const typename Str::allocator_type& allocator, code_point cp) const
+    {
+        typename Encoding::char_type buffer[4] = {};
+        auto size = _detail::encode_code_point<Encoding>::encode(cp, buffer, 4);
+        return String(buffer, buffer + size, allocator);
     }
 
     struct _sink
@@ -207,45 +205,24 @@ struct _as_string
             return _result.push_back(c);
         }
 
-        void operator()(const String& str)
-        {
-            _result.append(str);
-        }
         void operator()(String&& str)
         {
             _result.append(LEXY_MOV(str));
         }
 
-        template <typename CharT>
-        auto operator()(const CharT* str, std::size_t length)
-            -> decltype(_result.append(str, length))
-        {
-            return _result.append(str, length);
-        }
-
         template <typename Reader>
         void operator()(lexeme<Reader> lex)
         {
-            using iterator = typename lexeme<Reader>::iterator;
-            if constexpr (std::is_pointer_v<iterator>)
-            {
-                static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
-                              "cannot convert lexeme to this string type");
-                _result.append(reinterpret_cast<const _char_type*>(lex.data()), lex.size());
-            }
-            else
-            {
-                // We're assuming the string append function can do any necessary
-                // conversion/transcoding.
-                _result.append(lex.begin(), lex.end());
-            }
+            static_assert(lexy::char_type_compatible_with_reader<Reader, _char_type>,
+                          "cannot convert lexeme to this string type");
+            _result.append(lex.begin(), lex.end());
         }
 
         void operator()(code_point cp)
         {
             typename Encoding::char_type buffer[4] = {};
             auto size = _detail::encode_code_point<Encoding>::encode(cp, buffer, 4);
-            (*this)(reinterpret_cast<const _char_type*>(buffer), size);
+            _result.append(buffer, buffer + size);
         }
 
         String&& finish() &&

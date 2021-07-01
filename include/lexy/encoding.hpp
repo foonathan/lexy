@@ -227,6 +227,11 @@ struct _deduce_encoding<std::byte>
 namespace lexy
 {
 template <typename Encoding, typename CharT>
+constexpr bool _is_compatible_char_type
+    = std::is_same_v<typename Encoding::char_type,
+                     CharT> || Encoding::template is_secondary_char_type<CharT>;
+
+template <typename Encoding, typename CharT>
 using _require_secondary_char_type
     = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
 
