@@ -19,11 +19,6 @@ struct _nl : token_base<_nl>
         = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
     using token_engine = lexy::engine_trie<_trie>;
 
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return lexy::newline_token_kind;
-    }
-
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
