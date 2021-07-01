@@ -160,7 +160,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
     # GCC's arry bounds warning seems to have false positives.
     target_compile_options(lexy_dev INTERFACE -Wno-array-bounds)
-elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+elseif(MSVC)
     target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105)
 endif()
 
