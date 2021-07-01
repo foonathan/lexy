@@ -725,6 +725,11 @@ struct _deduce_encoding<std::byte>
 namespace lexy
 {
 template <typename Encoding, typename CharT>
+constexpr bool _is_compatible_char_type
+    = std::is_same_v<typename Encoding::char_type,
+                     CharT> || Encoding::template is_secondary_char_type<CharT>;
+
+template <typename Encoding, typename CharT>
 using _require_secondary_char_type
     = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
 
@@ -1403,6 +1408,13 @@ LEXY_CONSTEVAL const char* type_name()
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#ifndef LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
+#define LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
 #define LEXY_CALLBACK_BASE_HPP_INCLUDED
 
@@ -1480,39 +1492,6 @@ constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(ar
 #endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
 
 
-#ifdef LEXY_IGNORE_DEPRECATED_SINK
-#    define LEXY_DEPRECATED_SINK
-#else
-// `dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`.
-// I'd put it into the deprecated message, but then GCC 7 doesn't like a std::enable_if in
-// _detail::tuple's constructor. Really: removing the deprecated message from here, which is
-// COMPLETELY UNRELATED CODE, fixes an SFINAE bug. I swear I'm not making this up.
-#    define LEXY_DEPRECATED_SINK [[deprecated]]
-#endif
-
-//=== implementation ===//
-namespace lexy
-{
-template <typename Fn>
-struct _fn_holder
-{
-    Fn fn;
-
-    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
-    {
-        return _detail::invoke(fn, LEXY_FWD(args)...);
-    }
-};
-
-template <typename Fn>
-using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
-} // namespace lexy
-
-//=== traits ===//
 namespace lexy
 {
 template <typename T>
@@ -1529,7 +1508,8 @@ constexpr bool is_callback_for
 template <typename T, typename Context>
 using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
 template <typename T, typename Context>
-constexpr bool is_callback_context = _detail::is_detected<_detect_callback_context, T, Context>;
+constexpr bool is_callback_context
+    = _detail::is_detected<_detect_callback_context, T, std::decay_t<Context>>;
 
 /// Returns the type of the `.sink()` function.
 template <typename Sink, typename... Args>
@@ -1541,109 +1521,61 @@ template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy
 
-//=== adapters ===//
+#endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
+
+
 namespace lexy
 {
-template <typename ReturnType, typename... Fns>
-struct _callback : _fn_as_base<Fns>...
+template <typename Cb, typename Context, typename = void>
+struct _compose_context
 {
-    using return_type = ReturnType;
+    const Cb&      _cb;
+    const Context& _context;
 
-    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
-
-    using _fn_as_base<Fns>::operator()...;
-};
-
-/// Creates a callback.
-template <typename ReturnType = void, typename... Fns>
-constexpr auto callback(Fns&&... fns)
-{
-    return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
-}
-
-template <typename Sink>
-struct _cb_from_sink
-{
-    Sink _sink;
-
-    using _cb         = lexy::sink_callback<Sink>;
-    using return_type = typename _cb::return_type;
+    using return_type = typename Cb::return_type;
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
+    constexpr auto operator()(Args&&... args) const -> decltype(_cb(LEXY_FWD(args)...))
     {
-        auto cb = _sink.sink();
-        (cb(LEXY_FWD(args)), ...);
-        return LEXY_MOV(cb).finish();
+        return _cb(LEXY_FWD(args)...);
     }
 };
-
-/// Creates a callback that forwards all arguments to the sink.
-template <typename Sink, typename = lexy::sink_callback<Sink>>
-constexpr auto callback(Sink&& sink)
+template <typename Cb, typename Context>
+struct _compose_context<Cb, Context, std::enable_if_t<lexy::is_callback_context<Cb, Context>>>
 {
-    return _cb_from_sink<std::decay_t<Sink>>{LEXY_FWD(sink)};
-}
+    const Cb&      _cb;
+    const Context& _context;
 
-template <typename T, typename Callback>
-class _sink_cb
-{
-public:
-    using return_type = T;
-
-    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
+    using return_type = typename Cb::return_type;
 
     template <typename... Args>
-    constexpr void operator()(Args&&... args)
+    constexpr auto operator()(Args&&... args) const -> decltype(_cb[_context](LEXY_FWD(args)...))
     {
-        // We pass the value and other arguments to the internal callback.
-        _cb(_value, LEXY_FWD(args)...);
+        return _cb[_context](LEXY_FWD(args)...);
     }
-
-    constexpr T&& finish() &&
-    {
-        return LEXY_MOV(_value);
-    }
-
-private:
-    T                          _value;
-    LEXY_EMPTY_MEMBER Callback _cb;
 };
 
-template <typename T, typename... Fns>
-class _sink
-{
-public:
-    constexpr explicit _sink(Fns... fns) : _cb(fns...) {}
-
-    constexpr auto sink() const
-    {
-        return _sink_cb<T, _callback<void, Fns...>>(_cb);
-    }
-
-private:
-    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
-};
-
-/// Creates a sink callback.
-template <typename T, typename... Fns>
-LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
-{
-    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
-}
-} // namespace lexy
-
-//=== composition ===//
-namespace lexy
-{
 template <typename First, typename Second>
 struct _compose_cb
 {
     LEXY_EMPTY_MEMBER First  _first;
     LEXY_EMPTY_MEMBER Second _second;
 
+    constexpr explicit _compose_cb(First&& first, Second&& second)
+    : _first(LEXY_MOV(first)), _second(LEXY_MOV(second))
+    {}
+
     using return_type = typename Second::return_type;
+
+    template <typename Context,
+              typename = std::enable_if_t<lexy::is_callback_context<First, Context> //
+                                          || lexy::is_callback_context<Second, Context>>>
+    constexpr auto operator[](const Context& context) const
+    {
+        auto first  = _compose_context<First, Context>{_first, context};
+        auto second = _compose_context<Second, Context>{_second, context};
+        return lexy::_compose_cb(LEXY_MOV(first), LEXY_MOV(second));
+    }
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
@@ -1667,6 +1599,13 @@ struct _compose_s
         return _sink.sink(LEXY_FWD(args)...);
     }
 
+    template <typename Context,
+              typename = std::enable_if_t<lexy::is_callback_context<Callback, Context>>>
+    constexpr auto operator[](const Context& context) const
+    {
+        return _compose_context<Callback, Context>{_callback, context};
+    }
+
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const -> decltype(_callback(LEXY_FWD(args)...))
     {
@@ -1679,7 +1618,7 @@ template <typename First, typename Second, typename = _detect_callback<First>,
           typename = _detect_callback<Second>>
 constexpr auto operator|(First first, Second second)
 {
-    return _compose_cb<First, Second>{LEXY_MOV(first), LEXY_MOV(second)};
+    return _compose_cb(LEXY_MOV(first), LEXY_MOV(second));
 }
 template <typename S, typename Cb, typename Second>
 constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
@@ -1696,7 +1635,7 @@ constexpr auto operator>>(Sink sink, Callback cb)
 }
 } // namespace lexy
 
-#endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
+#endif // LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
 
 
 #ifdef LEXY_IGNORE_DEPRECATED_LIST
@@ -12972,7 +12911,6 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
-
 namespace lexy
 {
 struct nullopt;
@@ -15256,6 +15194,139 @@ auto read_file(std::FILE*      file,
 #define LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 
 #include <cstdio>
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
+#define LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
+
+
+
+#ifdef LEXY_IGNORE_DEPRECATED_SINK
+#    define LEXY_DEPRECATED_SINK
+#else
+// `dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`.
+// I'd put it into the deprecated message, but then GCC 7 doesn't like a std::enable_if in
+// _detail::tuple's constructor. Really: removing the deprecated message from here, which is
+// COMPLETELY UNRELATED CODE, fixes an SFINAE bug. I swear I'm not making this up.
+#    define LEXY_DEPRECATED_SINK [[deprecated]]
+#endif
+
+namespace lexy
+{
+template <typename Fn>
+struct _fn_holder
+{
+    Fn fn;
+
+    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    {
+        return _detail::invoke(fn, LEXY_FWD(args)...);
+    }
+};
+
+template <typename Fn>
+using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
+} // namespace lexy
+
+namespace lexy
+{
+template <typename ReturnType, typename... Fns>
+struct _callback : _fn_as_base<Fns>...
+{
+    using return_type = ReturnType;
+
+    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
+
+    using _fn_as_base<Fns>::operator()...;
+};
+
+/// Creates a callback.
+template <typename ReturnType = void, typename... Fns>
+constexpr auto callback(Fns&&... fns)
+{
+    return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+
+template <typename Sink>
+struct _cb_from_sink
+{
+    Sink _sink;
+
+    using _cb         = lexy::sink_callback<Sink>;
+    using return_type = typename _cb::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
+    {
+        auto cb = _sink.sink();
+        (cb(LEXY_FWD(args)), ...);
+        return LEXY_MOV(cb).finish();
+    }
+};
+
+/// Creates a callback that forwards all arguments to the sink.
+template <typename Sink, typename = lexy::sink_callback<Sink>>
+constexpr auto callback(Sink&& sink)
+{
+    return _cb_from_sink<std::decay_t<Sink>>{LEXY_FWD(sink)};
+}
+
+template <typename T, typename Callback>
+class _sink_cb
+{
+public:
+    using return_type = T;
+
+    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
+
+    template <typename... Args>
+    constexpr void operator()(Args&&... args)
+    {
+        // We pass the value and other arguments to the internal callback.
+        _cb(_value, LEXY_FWD(args)...);
+    }
+
+    constexpr T&& finish() &&
+    {
+        return LEXY_MOV(_value);
+    }
+
+private:
+    T                          _value;
+    LEXY_EMPTY_MEMBER Callback _cb;
+};
+
+template <typename T, typename... Fns>
+class _sink
+{
+public:
+    constexpr explicit _sink(Fns... fns) : _cb(fns...) {}
+
+    constexpr auto sink() const
+    {
+        return _sink_cb<T, _callback<void, Fns...>>(_cb);
+    }
+
+private:
+    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
+};
+
+/// Creates a sink callback.
+template <typename T, typename... Fns>
+LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
+{
+    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+} // namespace lexy
+
+#endif // LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
 
 
 
