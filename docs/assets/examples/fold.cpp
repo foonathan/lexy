@@ -1,5 +1,3 @@
-#include <string>
-
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
 #include <lexy/parse.hpp>
@@ -14,11 +12,16 @@ struct production
     static constexpr auto whitespace = dsl::ascii::space;
 
     static constexpr auto rule = [] {
-        auto name = dsl::no_whitespace(dsl::capture(dsl::while_(dsl::ascii::alpha)));
-        return LEXY_LIT("My name is") + name + dsl::period;
+        // An item is a point (x, y)
+        auto integer = dsl::integer<int>(dsl::digits<>);
+        auto item    = dsl::parenthesized(dsl::twice(integer, dsl::sep(dsl::comma)));
+
+        return dsl::list(item, dsl::sep(dsl::comma));
     }();
 
-    static constexpr auto value = lexy::as_string<std::string>;
+    // Sum the x components of the points.
+    static constexpr auto value
+        = lexy::fold<int>(0, [](int current, int x, int) { return current + x; });
 };
 //}
 
@@ -29,6 +32,6 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("Hello %s!\n", result.value().c_str());
+    std::printf("The value is: %d\n", result.value());
 }
 

@@ -1,4 +1,4 @@
-#include <string>
+#include <vector>
 
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
@@ -14,11 +14,11 @@ struct production
     static constexpr auto whitespace = dsl::ascii::space;
 
     static constexpr auto rule = [] {
-        auto name = dsl::no_whitespace(dsl::capture(dsl::while_(dsl::ascii::alpha)));
-        return LEXY_LIT("My name is") + name + dsl::period;
+        auto integer = dsl::integer<int>(dsl::digits<>);
+        return dsl::list(integer, dsl::sep(dsl::comma));
     }();
 
-    static constexpr auto value = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::as_list<std::vector<int>>;
 };
 //}
 
@@ -29,6 +29,9 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("Hello %s!\n", result.value().c_str());
+    std::printf("numbers: ");
+    for (auto i : result.value())
+        std::printf("%d ", i);
+    std::putchar('\n');
 }
 

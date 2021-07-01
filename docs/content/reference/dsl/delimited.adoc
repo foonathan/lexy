@@ -149,6 +149,8 @@ Parse tree::
 
 {{% playground-example "quoted_token" "Parse a quoted string with whitespace and token production" %}}
 
+TIP: Use the sink {{% docref "lexy::as_string" %}} to produce a `std::string` from the rule.
+
 [#delimited-predefined]
 == Predefined delimited
 

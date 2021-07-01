@@ -1,4 +1,3 @@
-#include <optional>
 #include <string>
 
 #include <lexy/callback.hpp>
@@ -12,8 +11,8 @@ namespace dsl = lexy::dsl;
 //{
 struct decimal
 {
-    int                        integer;
-    std::optional<std::string> fraction;
+    int         integer;
+    std::string fraction;
 };
 
 struct production
@@ -30,7 +29,10 @@ struct production
         return integer + dsl::opt(dsl::period >> dsl::p<fraction>);
     }();
 
-    static constexpr auto value = lexy::construct<decimal>;
+    static constexpr auto value = lexy::bind(lexy::construct<decimal>,
+                                             // If the second argument is lexy::nullopt,
+                                             // produce a zero instead.
+                                             lexy::_1, lexy::_2 or "0");
 };
 //}
 
@@ -41,7 +43,6 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("The value is: %d.%s\n", result.value().integer,
-                result.value().fraction.value_or("0").c_str());
+    std::printf("The value is: %d.%s\n", result.value().integer, result.value().fraction.c_str());
 }
 

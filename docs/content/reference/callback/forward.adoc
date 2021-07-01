@@ -1,0 +1,26 @@
+---
+layout: header
+header: "lexy/callback/forward.hpp"
+entities:
+  "lexy::forward": forward
+---
+
+[#forward]
+== Callback `lexy::forward`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr _callback_ auto forward;
+}
+----
+
+[.lead]
+Forwards an existing object.
+
+It accepts `const T&` and `T&&` and forwards them as a `T`.
+
+{{% godbolt-example "true_false" "Forward the value of child productions" %}}
+

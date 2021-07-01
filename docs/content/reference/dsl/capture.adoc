@@ -36,3 +36,5 @@ Values::
 CAUTION: If a {{% token-rule %}} is captured, the `lexy::lexeme` includes the automatic whitespace skipped after the token.
 Use {{% docref "lexy::dsl::no_whitespace" %}} around the `lexy::dsl::capture()` as seen in the example above.
 
+TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
+

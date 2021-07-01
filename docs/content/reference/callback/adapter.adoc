@@ -1,0 +1,53 @@
+---
+layout: header
+header: "lexy/callback/adapter.hpp"
+entities:
+  "lexy::callback": callback
+---
+
+[.lead]
+Adapt a function object or sink into a callback.
+
+[#callback]
+== Callback `lexy::callback`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename ReturnType = void, typename ... Fns>
+    constexpr _callback_ auto callback(Fns&&... fns);
+}
+----
+
+[.lead]
+Turns a regular invocable into a callback by specifying the return type.
+
+The returned callback will take arbitrary arguments and perform overload resolution on the `fns`,
+which must be invocables.
+The result must return an object of the specified `ReturnType`.
+
+{{% godbolt-example "callback" "Build a callback from lambdas" %}}
+
+[#callback-sink]
+== Callback `lexy::callback` (sink overload)
+
+{{% interface %}}
+----
+namespace lexy
+{
+    constexpr _callback_ auto callback(_sink_<> auto&& sink);
+}
+----
+
+[.lead]
+Turns a sink into a callback.
+
+The resulting callback will take arbitrary arguments.
+It will first obtain the sink callback of `sink`, then pass each argument to it in a separate invocation.
+The finished result is returned by the callback.
+
+{{% godbolt-example "callback-fold" "Turn a sink into a callback" %}}
+
+NOTE: See {{% docref "lexy::collect" %}} for the inverse operation that turns a callback into a sink.
+

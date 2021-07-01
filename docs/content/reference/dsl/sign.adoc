@@ -39,7 +39,7 @@ The tag types `plus_sign` and `minus_sign` indicate a plus/minus sign.
 
 They are implicitly convertible to the integer `+1`/`-1`.
 
-TIP: The callback `lexy::as_integer` accepts an optional `plus_sign`/`minus_sign` object followed by an integer and returns the correctly signed integer.
+TIP: The callback {{% docref "lexy::as_integer" %}} accepts an optional `plus_sign`/`minus_sign` object followed by an integer and returns the correctly signed integer.
 
 [#plus_sign]
 == Rule `lexy::dsl::plus_sign`
@@ -115,7 +115,5 @@ Values::
   If it matched a `-`, an object of type `lexy::minus_sign`.
   Otherwise, no values.
 
-{{% playground-example sign "A number with an optional plus/minus sign" %}}
-
-TODO: link callback
+{{% godbolt-example sign "A number with an optional plus/minus sign" %}}
 

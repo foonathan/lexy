@@ -2,6 +2,7 @@
 layout: header
 header: "lexy/dsl/option.hpp"
 entities:
+  "lexy::nullopt": nullopt
   "lexy::dsl::nullopt": nullopt
   "lexy::dsl::opt": opt
 ---
@@ -83,4 +84,6 @@ Values::
 
 NOTE: `opt(branch)` is functionally equivalent to the {{% docref choice %}} `branch | lexy::dsl::else_ >> lexy::dsl::nullopt`,
 and it parses the same as {{% docref "lexy::dsl::if_" %}}.
+
+TIP: Use {{% docref "lexy::bind" %}} with {{% docref "lexy::nth_value" %}} and `or` to pass a different value than `lexy::nullopt` to the callback.
 

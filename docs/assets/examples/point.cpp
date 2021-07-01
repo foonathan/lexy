@@ -1,5 +1,3 @@
-#include <string>
-
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
 #include <lexy/parse.hpp>
@@ -9,16 +7,20 @@
 namespace dsl = lexy::dsl;
 
 //{
+struct point
+{
+    int x, y;
+};
+
 struct production
 {
     static constexpr auto whitespace = dsl::ascii::space;
 
     static constexpr auto rule = [] {
-        auto name = dsl::no_whitespace(dsl::capture(dsl::while_(dsl::ascii::alpha)));
-        return LEXY_LIT("My name is") + name + dsl::period;
+        auto integer = dsl::integer<int>(dsl::digits<>);
+        return dsl::twice(integer, dsl::sep(dsl::comma));
     }();
-
-    static constexpr auto value = lexy::as_string<std::string>;
+    static constexpr auto value = lexy::construct<point>;
 };
 //}
 
@@ -29,6 +31,6 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("Hello %s!\n", result.value().c_str());
+    std::printf("The value is: (%d, %d)\n", result.value().x, result.value().y);
 }
 

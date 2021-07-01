@@ -75,6 +75,8 @@ Parse tree::
 
 TIP: Use the character classes from {{% docref "lexy::dsl::ascii" %}} for simple identifier matching as seen in the example.
 
+TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
+
 === Reserving identifiers
 
 {{% interface %}}

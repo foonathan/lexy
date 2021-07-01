@@ -3,6 +3,8 @@ layout: header
 header: "lexy/dsl/member.hpp"
 entities:
   "lexy::dsl::member": member
+  "lexy::member": member
+  "LEXY_MEM": member
 ---
 
 [#member]
@@ -56,9 +58,9 @@ Values::
 The macro version `LEXY_MEM(member) = rule` behaves identical, except that `member` is not a member pointer but the name of a member.
 The resulting `Fn` can take an arbitrary aggregate type and will assign the member with that name.
 
+It is designed to be used with {{% docref "lexy::as_aggregate" %}} as the callback.
+
 {{% godbolt-example member "Parse a point" %}}
 
 TIP: The `member` rule works good in combination with {{% docref "lexy::dsl::combination" %}} where rules are parsed in an arbitrary order.
-
-TODO: link as_aggregate
 

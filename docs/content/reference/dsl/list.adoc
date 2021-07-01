@@ -79,3 +79,5 @@ which do not require a branch rule as arguments.
 TIP: Use {{% docref "lexy::dsl::opt" %}}`(lexy::dsl::list(...))` to parse a list that might be empty;
 this requires a branch condition.
 
+TIP: Use {{% docref "lexy::as_list" %}} for the callback to create e.g. a `std::vector<T>`.
+

@@ -9,11 +9,8 @@ namespace dsl = lexy::dsl;
 //{
 struct production
 {
-    static constexpr auto rule = [] {
-        auto digits = dsl::digits<>.sep(dsl::digit_sep_tick).no_leading_zero();
-        return dsl::integer<int>(digits);
-    }();
-
+    // Sign followed by a decimal integer.
+    static constexpr auto rule  = dsl::sign + dsl::integer<int>(dsl::digits<>);
     static constexpr auto value = lexy::as_integer<int>;
 };
 //}
