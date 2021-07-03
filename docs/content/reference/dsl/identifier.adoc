@@ -132,7 +132,7 @@ Errors::
   The rule then fails.
 Parse tree::
   A single token node whose range covers everything consumed.
-  Its token kind is `lexy::identifier_token_kind`.
+  Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::identifier_token_kind`.
 
 === Token rules `.leading_pattern()`, `.trailing_pattern()`
 

@@ -26,7 +26,7 @@ Errors::
 Values::
   An iterator to the current position of the reader.
 Parse tree::
-  A single token node, whose range is begins and ends at its position and whose is kind is `lexy::psoition_token_node`.
+  A single token node, whose range is begins and ends at its position, with the {{% docref "lexy::predefined_token_kind" %}} `lexy::position_token_node`.
 
 {{% playground-example position "Determine the position of a function declaration" %}}
 

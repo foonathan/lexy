@@ -25,6 +25,8 @@ while others are still the full documentation inline.
   A Unicode code point.
 {{% docref "lexy::lexeme" %}}::
   A lexeme, i.e. a subrange of the input.
+{{% docref "lexy::token_kind" %}} and {{% docref "lexy::token" %}}::
+  Identify and store tokens, i.e. concrete realization of {{% token-rule %}}s.
 
 == Inputs and Encodings
 
@@ -64,8 +66,6 @@ The input itself is unchanging and it produces a reader which remembers the curr
   Use a file as input.
 {{% docref "lexy::argv_input" %}}::
   Use the command-line arguments as input.
-
-include::content/_reference/inputs.adoc[]
 
 include::content/_reference/parsing.adoc[]
 

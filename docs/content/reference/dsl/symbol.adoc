@@ -61,7 +61,9 @@ The `symbol` rule.
 ----
 
 [.lead]
-The `symbol_table<T>` defines a compile-time mapping of strings to objects of some type `T`.
+Defines a compile-time mapping of strings to objects of some type `T`.
+
+It is initially empty.
 
 === Modifiers
 
@@ -75,7 +77,7 @@ constexpr _symbol-table_ map(Args&&... args) const;
 ----
 
 [.lead]
-`.map()` adds a mapping to the symbol table.
+Adds a mapping to the symbol table.
 
 The result is a new symbol table that contains all the current mappings,
 as well as a new mapping of `SymbolString`/`C` to `T(std::forward<Args>(args)...)`.
@@ -206,7 +208,7 @@ Values::
   The value of the symbol table that corresponds to the partial input.
 Parse tree::
   A single token node covering the symbol.
-  Its kind is the predefined `lexy::identifier_token_kind` and cannot be overridden.
+  Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::identifier_token_kind`, which cannot be overridden.
 
 NOTE: This version behaves like the other version if parsed a non-deterministic token rule that always consumes as much input as is necessary to match the symbol.
 

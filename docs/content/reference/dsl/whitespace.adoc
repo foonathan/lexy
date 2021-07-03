@@ -59,7 +59,7 @@ Errors::
   All errors raised during parsing of `ws | lexy::dsl::else_ >> lexy::dsl::break_`.
   The rule then fails if `ws` has failed; even if in a branch context.
 Parse tree::
-  A single token node with the kind `lexy::whitespace_token_kind` whose range covers everything consumed;
+  A single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::whitespace_token_kind` whose range covers everything consumed;
   all individual token nodes of the whitespace rules are merged into this one.
   It is only added to the parse tree if it is not empty.
 
