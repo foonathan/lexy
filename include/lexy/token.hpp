@@ -10,6 +10,7 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/detect.hpp>
+#include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/grammar.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -50,40 +51,63 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
 
 namespace lexy
 {
-template <typename Token, auto Kind, typename Next>
+template <typename TokenKind, typename... Tokens>
 struct _tk_map
 {
-    template <typename T>
-    static LEXY_CONSTEVAL auto lookup(T)
+    TokenKind _data[sizeof...(Tokens)];
+
+    template <std::size_t... Idx>
+    LEXY_CONSTEVAL explicit _tk_map(lexy::_detail::index_sequence<Idx...>, const TokenKind* data,
+                                    TokenKind new_kind)
+    // Add new kind at the end.
+    : _data{data[Idx]..., new_kind}
+    {}
+
+    template <TokenKind Kind, typename Token>
+    LEXY_CONSTEVAL auto map(Token) const
     {
-        if constexpr (std::is_same_v<typename T::token_type, Token>)
-            return Kind;
-        else
-            return Next::lookup(T{});
+        static_assert(lexy::is_token_rule<Token>, "cannot map non-token to token kind");
+        return _tk_map<TokenKind, Tokens..., Token>(lexy::_detail::index_sequence_for<Tokens...>{},
+                                                    _data, Kind);
     }
 
-    template <decltype(Kind) NewKind, typename T>
-    LEXY_CONSTEVAL auto map(T) const
+    template <typename Token>
+    LEXY_CONSTEVAL auto lookup(Token) const
     {
-        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
-        static_assert(!std::is_same_v<typename T::token_type, Token>, "already inserted");
-        return _tk_map<typename T::token_type, NewKind, _tk_map>{};
+        constexpr auto idx = [] {
+            // There is an easier way to do it via fold expressions but clang 6 generates a bogus
+            // warning about sequence points.
+            // As such, we do the less fancy version of looking for the index in an array.
+            bool is_same[]
+                = {std::is_same_v<typename Token::token_type, typename Tokens::token_type>...};
+
+            for (std::size_t idx = 0; idx != sizeof...(Tokens); ++idx)
+                if (is_same[idx])
+                    return idx;
+
+            return sizeof...(Tokens);
+        }();
+        if constexpr (idx == sizeof...(Tokens))
+            return unknown_token_kind;
+        else
+            return _data[idx];
     }
 };
 
 struct _tk_map_empty
 {
-    template <typename T>
-    static LEXY_CONSTEVAL auto lookup(T)
+    template <typename Token>
+    static LEXY_CONSTEVAL auto lookup(Token)
     {
         return unknown_token_kind;
     }
 
-    template <auto TokenKind, typename T>
-    LEXY_CONSTEVAL auto map(T) const
+    template <auto TokenKind, typename Token>
+    LEXY_CONSTEVAL auto map(Token) const
     {
-        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
-        return _tk_map<typename T::token_type, TokenKind, _tk_map_empty>{};
+        static_assert(lexy::is_token_rule<Token>, "cannot map non-token to token kind");
+        return _tk_map<std::decay_t<decltype(TokenKind)>,
+                       Token>(lexy::_detail::index_sequence_for<>{}, nullptr, TokenKind);
     }
 };
 
