@@ -243,13 +243,16 @@ template <typename Reader, typename TokenKind = void>
 class token
 {
 public:
+    using encoding  = typename Reader::encoding;
+    using char_type = typename encoding::char_type;
+    using iterator  = typename Reader::iterator;
+
     explicit constexpr token(token_kind<TokenKind> kind, lexy::lexeme<Reader> lex) noexcept
     : _lexeme(lex), _kind(kind)
     {
-        LEXY_PRECONDITION(lex.begin() != typename Reader::iterator());
+        LEXY_PRECONDITION(lex.begin() != iterator());
     }
-    explicit constexpr token(token_kind<TokenKind> kind, typename Reader::iterator begin,
-                             typename Reader::iterator end) noexcept
+    explicit constexpr token(token_kind<TokenKind> kind, iterator begin, iterator end) noexcept
     : token(kind, lexy::lexeme<Reader>(begin, end))
     {}
 
@@ -258,12 +261,12 @@ public:
         return _kind;
     }
 
-    constexpr auto name() const noexcept
+    constexpr const char* name() const noexcept
     {
         return _kind.name();
     }
 
-    constexpr auto position() const noexcept -> typename Reader::iterator
+    constexpr iterator position() const noexcept
     {
         return _lexeme.begin();
     }
