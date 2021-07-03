@@ -135,7 +135,7 @@ TEST_CASE("token_kind")
         CHECK(period == token_kind::c);
         CHECK(period == lexy::dsl::period);
 
-        lexy::token_kind manual(lexy::dsl::period.kind<token_kind::b>);
+        lexy::token_kind<token_kind> manual(lexy::dsl::period.kind<token_kind::b>);
         CHECK(manual);
         CHECK(!manual.is_predefined());
         CHECK(manual.get() == token_kind::b);

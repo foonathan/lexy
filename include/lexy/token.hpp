@@ -210,10 +210,6 @@ template <typename TokenKind, typename = std::enable_if_t<std::is_integral_v<Tok
 token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
-template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-token_kind(TokenRule)
-    -> token_kind<std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
-                                     decltype(TokenRule::token_kind()), void>>;
 } // namespace lexy
 
 namespace lexy
@@ -266,11 +262,6 @@ token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, void>;
 template <typename TokenKind, typename Reader,
           typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
-template <typename TokenRule, typename Reader,
-          typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-token(TokenRule, lexy::lexeme<Reader>)
-    -> token<Reader, std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
-                                        decltype(TokenRule::token_kind()), void>>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;
