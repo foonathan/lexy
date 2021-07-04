@@ -1025,13 +1025,12 @@ constexpr bool engine_peek(Reader reader)
 
 #endif // LEXY_ENGINE_BASE_HPP_INCLUDED
 
-
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_PRODUCTION_HPP_INCLUDED
-#define LEXY_PRODUCTION_HPP_INCLUDED
+#ifndef LEXY_GRAMMAR_HPP_INCLUDED
+#define LEXY_GRAMMAR_HPP_INCLUDED
 
 
 
@@ -1404,365 +1403,6 @@ LEXY_CONSTEVAL const char* type_name()
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
-#define LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
-#define LEXY_CALLBACK_BASE_HPP_INCLUDED
-
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
-#define LEXY_DETAIL_INVOKE_HPP_INCLUDED
-
-
-
-namespace lexy::_detail
-{
-template <typename MemberPtr, bool = std::is_member_object_pointer_v<MemberPtr>>
-struct _mem_invoker;
-template <typename R, typename ClassT>
-struct _mem_invoker<R ClassT::*, true>
-{
-    static constexpr decltype(auto) invoke(R ClassT::*f, ClassT& object)
-    {
-        return object.*f;
-    }
-    static constexpr decltype(auto) invoke(R ClassT::*f, const ClassT& object)
-    {
-        return object.*f;
-    }
-
-    template <typename Ptr>
-    static constexpr auto invoke(R ClassT::*f, Ptr&& ptr) -> decltype((*LEXY_FWD(ptr)).*f)
-    {
-        return (*LEXY_FWD(ptr)).*f;
-    }
-};
-template <typename F, typename ClassT>
-struct _mem_invoker<F ClassT::*, false>
-{
-    template <typename ObjectT, typename... Args>
-    static constexpr auto _invoke(int, F ClassT::*f, ObjectT&& object, Args&&... args)
-        -> decltype((LEXY_FWD(object).*f)(LEXY_FWD(args)...))
-    {
-        return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
-    }
-    template <typename PtrT, typename... Args>
-    static constexpr auto _invoke(short, F ClassT::*f, PtrT&& ptr, Args&&... args)
-        -> decltype(((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...))
-    {
-        return ((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...);
-    }
-
-    template <typename... Args>
-    static constexpr auto invoke(F ClassT::*f, Args&&... args)
-        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
-    {
-        return _invoke(0, f, LEXY_FWD(args)...);
-    }
-};
-
-template <typename ClassT, typename F, typename... Args>
-constexpr auto invoke(F ClassT::*f, Args&&... args)
-    -> decltype(_mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...))
-{
-    return _mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...);
-}
-
-template <typename F, typename... Args>
-constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(args)...))
-{
-    return LEXY_FWD(f)(LEXY_FWD(args)...);
-}
-} // namespace lexy::_detail
-
-#endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
-
-
-namespace lexy
-{
-template <typename T>
-using _detect_callback = typename T::return_type;
-template <typename T>
-constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
-
-template <typename T, typename... Args>
-using _detect_callback_for = decltype(LEXY_DECLVAL(const T)(LEXY_DECLVAL(Args)...));
-template <typename T, typename... Args>
-constexpr bool is_callback_for
-    = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
-
-template <typename T, typename Context>
-using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
-template <typename T, typename Context>
-constexpr bool is_callback_context
-    = _detail::is_detected<_detect_callback_context, T, std::decay_t<Context>>;
-
-/// Returns the type of the `.sink()` function.
-template <typename Sink, typename... Args>
-using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
-
-template <typename T, typename... Args>
-using _detect_sink = decltype(LEXY_DECLVAL(const T).sink(LEXY_DECLVAL(Args)...).finish());
-template <typename T, typename... Args>
-constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
-} // namespace lexy
-
-#endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
-
-
-namespace lexy
-{
-template <typename Cb, typename Context, typename = void>
-struct _compose_context
-{
-    const Cb&      _cb;
-    const Context& _context;
-
-    using return_type = typename Cb::return_type;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(_cb(LEXY_FWD(args)...))
-    {
-        return _cb(LEXY_FWD(args)...);
-    }
-};
-template <typename Cb, typename Context>
-struct _compose_context<Cb, Context, std::enable_if_t<lexy::is_callback_context<Cb, Context>>>
-{
-    const Cb&      _cb;
-    const Context& _context;
-
-    using return_type = typename Cb::return_type;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(_cb[_context](LEXY_FWD(args)...))
-    {
-        return _cb[_context](LEXY_FWD(args)...);
-    }
-};
-
-template <typename First, typename Second>
-struct _compose_cb
-{
-    LEXY_EMPTY_MEMBER First  _first;
-    LEXY_EMPTY_MEMBER Second _second;
-
-    constexpr explicit _compose_cb(First&& first, Second&& second)
-    : _first(LEXY_MOV(first)), _second(LEXY_MOV(second))
-    {}
-
-    using return_type = typename Second::return_type;
-
-    template <typename Context,
-              typename = std::enable_if_t<lexy::is_callback_context<First, Context> //
-                                          || lexy::is_callback_context<Second, Context>>>
-    constexpr auto operator[](const Context& context) const
-    {
-        auto first  = _compose_context<First, Context>{_first, context};
-        auto second = _compose_context<Second, Context>{_second, context};
-        return lexy::_compose_cb(LEXY_MOV(first), LEXY_MOV(second));
-    }
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
-    {
-        return _second(_first(LEXY_FWD(args)...));
-    }
-};
-
-template <typename Sink, typename Callback>
-struct _compose_s
-{
-    LEXY_EMPTY_MEMBER Sink     _sink;
-    LEXY_EMPTY_MEMBER Callback _callback;
-
-    using return_type = typename Callback::return_type;
-
-    template <typename... Args>
-    constexpr auto sink(Args&&... args) const -> decltype(_sink.sink(LEXY_FWD(args)...))
-    {
-        return _sink.sink(LEXY_FWD(args)...);
-    }
-
-    template <typename Context,
-              typename = std::enable_if_t<lexy::is_callback_context<Callback, Context>>>
-    constexpr auto operator[](const Context& context) const
-    {
-        return _compose_context<Callback, Context>{_callback, context};
-    }
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(_callback(LEXY_FWD(args)...))
-    {
-        return _callback(LEXY_FWD(args)...);
-    }
-};
-
-/// Composes two callbacks.
-template <typename First, typename Second, typename = _detect_callback<First>,
-          typename = _detect_callback<Second>>
-constexpr auto operator|(First first, Second second)
-{
-    return _compose_cb(LEXY_MOV(first), LEXY_MOV(second));
-}
-template <typename S, typename Cb, typename Second>
-constexpr auto operator|(_compose_s<S, Cb> composed, Second second)
-{
-    auto cb = LEXY_MOV(composed._callback) | LEXY_MOV(second);
-    return _compose_s<S, decltype(cb)>{LEXY_MOV(composed._sink), LEXY_MOV(cb)};
-}
-
-/// Composes a sink with a callback.
-template <typename Sink, typename Callback, typename = _detect_callback<Callback>>
-constexpr auto operator>>(Sink sink, Callback cb)
-{
-    return _compose_s<Sink, Callback>{LEXY_MOV(sink), LEXY_MOV(cb)};
-}
-} // namespace lexy
-
-#endif // LEXY_CALLBACK_COMPOSITION_HPP_INCLUDED
-
-
-#ifdef LEXY_IGNORE_DEPRECATED_LIST
-#    define LEXY_DEPRECATED_LIST
-#else
-#    define LEXY_DEPRECATED_LIST                                                                   \
-        [[deprecated("Production::list has been deprecated; use ::value instead.")]]
-#endif
-
-namespace lexy
-{
-template <typename Production>
-using production_rule = std::decay_t<decltype(Production::rule)>;
-
-template <typename Production>
-constexpr bool is_production = _detail::is_detected<production_rule, Production>;
-
-/// Base class to indicate that this production is conceptually a token.
-/// This inhibits whitespace skipping inside the production.
-///
-/// When generating a parse tree, it will also merge tokens of the same kind into the same node.
-struct token_production
-{};
-
-template <typename Production>
-constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
-
-/// Base class to indicate that this production is transparent for the parse tree generation.
-/// It will not create a node in the tree, all children will be added to the its parent.
-/// If parse tree generation is not used, it has no effect.
-struct transparent_production
-{};
-
-template <typename Production>
-constexpr bool is_transparent_production = std::is_base_of_v<transparent_production, Production>;
-} // namespace lexy
-
-namespace lexy
-{
-template <typename Production>
-LEXY_CONSTEVAL const char* production_name()
-{
-    return _detail::type_name<Production>();
-}
-
-template <typename Production>
-using _detect_whitespace = decltype(Production::whitespace);
-
-template <typename Production, typename Root>
-auto _production_whitespace()
-{
-    if constexpr (is_token_production<Production>)
-        return; // void
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
-        return Production::whitespace;
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
-        return Root::whitespace;
-    else
-        return; // void
-}
-template <typename Production, typename Root>
-using production_whitespace = decltype(_production_whitespace<Production, Root>());
-} // namespace lexy
-
-namespace lexy
-{
-template <typename Production>
-using _detect_value = decltype(&Production::value);
-template <typename Production>
-using _detect_list = decltype(&Production::list);
-
-template <typename Production, bool HasList = _detail::is_detected<_detect_list, Production>,
-          bool HasValue = _detail::is_detected<_detect_value, Production>>
-struct _prod_value;
-template <typename Production>
-struct _prod_value<Production, true, true>
-{
-    // Before:
-    //    static constexpr auto list = sink;
-    //    static constexpr auto value = callback;
-    // After:
-    //    static constexpr auto value = sink >> callback;
-    // Define LEXY_IGNORE_DEPRECATED_LIST to fix later.
-    LEXY_DEPRECATED_LIST
-    static constexpr auto get = Production::list >> Production::value;
-};
-template <typename Production>
-struct _prod_value<Production, true, false>
-{
-    // Before:
-    //    static constexpr auto list = sink;
-    // After:
-    //    static constexpr auto value = sink;
-    // Define LEXY_IGNORE_DEPRECATED_LIST to fix later.
-    LEXY_DEPRECATED_LIST
-    static constexpr auto get = Production::list;
-};
-template <typename Production>
-struct _prod_value<Production, false, true>
-{
-    static constexpr auto get = Production::value;
-};
-template <typename Production>
-struct _prod_value<Production, false, false>
-{
-    static_assert(_detail::error<Production>, "missing Production::value member");
-    static constexpr auto get = Production::value;
-};
-
-template <typename Production>
-struct production_value
-{
-    static constexpr auto get = _prod_value<Production>::get;
-    using type                = std::decay_t<decltype(get)>;
-};
-} // namespace lexy
-
-#endif // LEXY_PRODUCTION_HPP_INCLUDED
-
-
-#define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
-
-#ifdef LEXY_IGNORE_DEPRECATED_ERROR
-#    define LEXY_DEPRECATED_ERROR(msg)
-#else
-#    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
-#endif
 
 //=== rule ===//
 #if 0
@@ -1812,6 +1452,7 @@ struct Rule : rule_base
 };
 #endif
 
+// We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
 struct rule_base
@@ -1826,8 +1467,14 @@ struct _token_base : rule_base
 
 namespace lexy
 {
-// We use a shorthand namespace to decrease symbol size.
 namespace dsl = lexyd;
+
+enum class rule_try_parse_result
+{
+    ok          = true,
+    canceled    = false,
+    backtracked = 2,
+};
 
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
@@ -1846,15 +1493,83 @@ template <typename Rule, typename NextParser>
 using rule_parser = typename Rule::template parser<NextParser>;
 } // namespace lexy
 
+//=== production ===//
 namespace lexy
 {
-enum class rule_try_parse_result
+template <typename Production>
+using production_rule = std::decay_t<decltype(Production::rule)>;
+
+template <typename Production>
+constexpr bool is_production = _detail::is_detected<production_rule, Production>;
+
+/// Base class to indicate that this production is conceptually a token.
+/// This inhibits whitespace skipping inside the production.
+///
+/// When generating a parse tree, it will also merge tokens of the same kind into the same node.
+struct token_production
+{};
+
+template <typename Production>
+constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
+
+/// Base class to indicate that this production is transparent for the parse tree generation.
+/// It will not create a node in the tree, all children will be added to the its parent.
+/// If parse tree generation is not used, it has no effect.
+struct transparent_production
+{};
+
+template <typename Production>
+constexpr bool is_transparent_production = std::is_base_of_v<transparent_production, Production>;
+
+template <typename Production>
+LEXY_CONSTEVAL const char* production_name()
 {
-    ok          = true,
-    canceled    = false,
-    backtracked = 2,
-};
+    return _detail::type_name<Production>();
 }
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Production>
+using _detect_whitespace = decltype(Production::whitespace);
+
+template <typename Production, typename Root>
+auto _production_whitespace()
+{
+    if constexpr (is_token_production<Production>)
+        return; // void
+    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
+        return Production::whitespace;
+    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
+        return Root::whitespace;
+    else
+        return; // void
+}
+template <typename Production, typename Root>
+using production_whitespace = decltype(_production_whitespace<Production, Root>());
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Production>
+struct production_value
+{
+    static constexpr auto get = Production::value;
+    using type                = std::decay_t<decltype(get)>;
+};
+} // namespace lexy
+
+#endif // LEXY_GRAMMAR_HPP_INCLUDED
+
+
+
+#define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
+
+#ifdef LEXY_IGNORE_DEPRECATED_ERROR
+#    define LEXY_DEPRECATED_ERROR(msg)
+#else
+#    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
+#endif
 
 //=== whitespace ===//
 namespace lexyd
@@ -2383,6 +2098,117 @@ private:
 #ifndef LEXY_CALLBACK_NOOP_HPP_INCLUDED
 #define LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
+#define LEXY_CALLBACK_BASE_HPP_INCLUDED
+
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
+#define LEXY_DETAIL_INVOKE_HPP_INCLUDED
+
+
+
+namespace lexy::_detail
+{
+template <typename MemberPtr, bool = std::is_member_object_pointer_v<MemberPtr>>
+struct _mem_invoker;
+template <typename R, typename ClassT>
+struct _mem_invoker<R ClassT::*, true>
+{
+    static constexpr decltype(auto) invoke(R ClassT::*f, ClassT& object)
+    {
+        return object.*f;
+    }
+    static constexpr decltype(auto) invoke(R ClassT::*f, const ClassT& object)
+    {
+        return object.*f;
+    }
+
+    template <typename Ptr>
+    static constexpr auto invoke(R ClassT::*f, Ptr&& ptr) -> decltype((*LEXY_FWD(ptr)).*f)
+    {
+        return (*LEXY_FWD(ptr)).*f;
+    }
+};
+template <typename F, typename ClassT>
+struct _mem_invoker<F ClassT::*, false>
+{
+    template <typename ObjectT, typename... Args>
+    static constexpr auto _invoke(int, F ClassT::*f, ObjectT&& object, Args&&... args)
+        -> decltype((LEXY_FWD(object).*f)(LEXY_FWD(args)...))
+    {
+        return (LEXY_FWD(object).*f)(LEXY_FWD(args)...);
+    }
+    template <typename PtrT, typename... Args>
+    static constexpr auto _invoke(short, F ClassT::*f, PtrT&& ptr, Args&&... args)
+        -> decltype(((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...))
+    {
+        return ((*LEXY_FWD(ptr)).*f)(LEXY_FWD(args)...);
+    }
+
+    template <typename... Args>
+    static constexpr auto invoke(F ClassT::*f, Args&&... args)
+        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
+    {
+        return _invoke(0, f, LEXY_FWD(args)...);
+    }
+};
+
+template <typename ClassT, typename F, typename... Args>
+constexpr auto invoke(F ClassT::*f, Args&&... args)
+    -> decltype(_mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...))
+{
+    return _mem_invoker<F ClassT::*>::invoke(f, LEXY_FWD(args)...);
+}
+
+template <typename F, typename... Args>
+constexpr auto invoke(F&& f, Args&&... args) -> decltype(LEXY_FWD(f)(LEXY_FWD(args)...))
+{
+    return LEXY_FWD(f)(LEXY_FWD(args)...);
+}
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_INVOKE_HPP_INCLUDED
+
+
+namespace lexy
+{
+template <typename T>
+using _detect_callback = typename T::return_type;
+template <typename T>
+constexpr bool is_callback = _detail::is_detected<_detect_callback, T>;
+
+template <typename T, typename... Args>
+using _detect_callback_for = decltype(LEXY_DECLVAL(const T)(LEXY_DECLVAL(Args)...));
+template <typename T, typename... Args>
+constexpr bool is_callback_for
+    = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
+
+template <typename T, typename Context>
+using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
+template <typename T, typename Context>
+constexpr bool is_callback_context
+    = _detail::is_detected<_detect_callback_context, T, std::decay_t<Context>>;
+
+/// Returns the type of the `.sink()` function.
+template <typename Sink, typename... Args>
+using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
+
+template <typename T, typename... Args>
+using _detect_sink = decltype(LEXY_DECLVAL(const T).sink(LEXY_DECLVAL(Args)...).finish());
+template <typename T, typename... Args>
+constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
+} // namespace lexy
+
+#endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
 
 
 namespace lexy
@@ -2410,7 +2236,6 @@ inline constexpr auto noop = _noop{};
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_NOOP_HPP_INCLUDED
-
 
 
 
@@ -4830,6 +4655,7 @@ struct engine_eof : engine_matcher_base
 
 
 
+
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
@@ -4938,9 +4764,8 @@ enum predefined_token_kind : std::uint_least16_t
     whitespace_token_kind           = UINT_LEAST16_MAX - 1,
     position_token_kind             = UINT_LEAST16_MAX - 2,
     eof_token_kind                  = UINT_LEAST16_MAX - 3,
-    newline_token_kind              = UINT_LEAST16_MAX - 4,
-    eol_token_kind                  = UINT_LEAST16_MAX - 5,
-    identifier_token_kind           = UINT_LEAST16_MAX - 6,
+    eol_token_kind                  = UINT_LEAST16_MAX - 4,
+    identifier_token_kind           = UINT_LEAST16_MAX - 5,
     _smallest_predefined_token_kind = identifier_token_kind,
 };
 
@@ -4956,8 +4781,6 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
         return "position";
     case eof_token_kind:
         return "EOF";
-    case newline_token_kind:
-        return "newline";
     case eol_token_kind:
         return "eol";
     case identifier_token_kind:
@@ -4970,40 +4793,63 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
 
 namespace lexy
 {
-template <typename Token, auto Kind, typename Next>
+template <typename TokenKind, typename... Tokens>
 struct _tk_map
 {
-    template <typename T>
-    static LEXY_CONSTEVAL auto lookup(T)
+    TokenKind _data[sizeof...(Tokens)];
+
+    template <std::size_t... Idx>
+    LEXY_CONSTEVAL explicit _tk_map(lexy::_detail::index_sequence<Idx...>, const TokenKind* data,
+                                    TokenKind new_kind)
+    // Add new kind at the end.
+    : _data{data[Idx]..., new_kind}
+    {}
+
+    template <TokenKind Kind, typename Token>
+    LEXY_CONSTEVAL auto map(Token) const
     {
-        if constexpr (std::is_same_v<typename T::token_type, Token>)
-            return Kind;
-        else
-            return Next::lookup(T{});
+        static_assert(lexy::is_token_rule<Token>, "cannot map non-token to token kind");
+        return _tk_map<TokenKind, Tokens..., Token>(lexy::_detail::index_sequence_for<Tokens...>{},
+                                                    _data, Kind);
     }
 
-    template <decltype(Kind) NewKind, typename T>
-    LEXY_CONSTEVAL auto map(T) const
+    template <typename Token>
+    LEXY_CONSTEVAL auto lookup(Token) const
     {
-        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
-        static_assert(!std::is_same_v<typename T::token_type, Token>, "already inserted");
-        return _tk_map<typename T::token_type, NewKind, _tk_map>{};
+        constexpr auto idx = [] {
+            // There is an easier way to do it via fold expressions but clang 6 generates a bogus
+            // warning about sequence points.
+            // As such, we do the less fancy version of looking for the index in an array.
+            bool is_same[]
+                = {std::is_same_v<typename Token::token_type, typename Tokens::token_type>...};
+
+            for (std::size_t idx = 0; idx != sizeof...(Tokens); ++idx)
+                if (is_same[idx])
+                    return idx;
+
+            return sizeof...(Tokens);
+        }();
+        if constexpr (idx == sizeof...(Tokens))
+            return unknown_token_kind;
+        else
+            return _data[idx];
     }
 };
 
 struct _tk_map_empty
 {
-    template <typename T>
-    static LEXY_CONSTEVAL auto lookup(T)
+    template <typename Token>
+    static LEXY_CONSTEVAL auto lookup(Token)
     {
         return unknown_token_kind;
     }
 
-    template <auto TokenKind, typename T>
-    LEXY_CONSTEVAL auto map(T) const
+    template <auto TokenKind, typename Token>
+    LEXY_CONSTEVAL auto map(Token) const
     {
-        static_assert(lexy::is_token_rule<T>, "cannot map non-token to token kind");
-        return _tk_map<typename T::token_type, TokenKind, _tk_map_empty>{};
+        static_assert(lexy::is_token_rule<Token>, "cannot map non-token to token kind");
+        return _tk_map<std::decay_t<decltype(TokenKind)>,
+                       Token>(lexy::_detail::index_sequence_for<>{}, nullptr, TokenKind);
     }
 };
 
@@ -5012,6 +4858,10 @@ inline constexpr auto token_kind_map = _tk_map_empty{};
 /// A mapping of token rule to token kind; specialize for your own kinds.
 template <typename TokenKind>
 constexpr auto token_kind_map_for = token_kind_map;
+
+// Prevent user-defined specialization for void.
+template <>
+inline constexpr auto token_kind_map_for<void> = token_kind_map;
 } // namespace lexy
 
 namespace lexy
@@ -5023,7 +4873,9 @@ using _detect_token_kind_name = decltype(token_kind_name(TokenKind{}));
 template <typename TokenKind = void>
 class token_kind
 {
-    static_assert(std::is_enum_v<TokenKind>, "invalid type for TokenKind");
+    static_assert(std::is_void_v<TokenKind> || std::is_enum_v<TokenKind>,
+                  "invalid type for TokenKind");
+    using _underlying_type = std::conditional_t<std::is_void_v<TokenKind>, int, TokenKind>;
 
 public:
     //=== constructors ===//
@@ -5034,10 +4886,11 @@ public:
     constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
 
     /// Creates the token kind with the specified value.
-    constexpr token_kind(TokenKind value) noexcept : _value(static_cast<std::uint_least16_t>(value))
+    constexpr token_kind(_underlying_type value) noexcept
+    : _value(static_cast<std::uint_least16_t>(value))
     {
-        auto as_int = std::underlying_type_t<TokenKind>(value);
-        LEXY_PRECONDITION(0 <= as_int && as_int < _smallest_predefined_token_kind);
+        LEXY_PRECONDITION(_underlying_type(0) <= value
+                          && value < _underlying_type(_smallest_predefined_token_kind));
     }
 
     /// Creates the token kind of a token rule.
@@ -5046,9 +4899,18 @@ public:
     {
         // Look for internal mapping first.
         auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_same_v<decltype(token_rule_kind), TokenKind>)
-            // The token has an associated kind.
+        if constexpr (std::is_enum_v<TokenKind> //
+                      && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+        {
+            // The token has an associated kind of the same enumeration type.
             *this = token_kind(token_rule_kind);
+        }
+        else if constexpr (std::is_void_v<TokenKind> //
+                           && std::is_integral_v<decltype(token_rule_kind)>)
+        {
+            // The token has an integer kind.
+            *this = token_kind(token_rule_kind);
+        }
         else
         {
             // Look for an external mapping.
@@ -5073,15 +4935,15 @@ public:
         if (is_predefined())
             return _kind_name(static_cast<predefined_token_kind>(_value));
         else if constexpr (lexy::_detail::is_detected<_detect_token_kind_name, TokenKind>)
-            return token_kind_name(get());
+            return token_kind_name(get()); // ADL
         else
             // We only have a generic name.
             return "token";
     }
 
-    constexpr TokenKind get() const noexcept
+    constexpr _underlying_type get() const noexcept
     {
-        return static_cast<TokenKind>(_value);
+        return static_cast<_underlying_type>(_value);
     }
 
     //=== comparision ===//
@@ -5109,93 +4971,11 @@ private:
 
     std::uint_least16_t _value;
 };
-template <>
-class token_kind<void>
-{
-public:
-    /// Creates an unknown token kind.
-    constexpr token_kind() noexcept : token_kind(unknown_token_kind) {}
-
-    constexpr token_kind(predefined_token_kind value) noexcept : _value(value) {}
-
-    /// Creates the token kind with the specified value.
-    constexpr token_kind(int value) noexcept : _value(static_cast<std::uint_least16_t>(value))
-    {
-        LEXY_PRECONDITION(0 <= value && value < _smallest_predefined_token_kind);
-    }
-
-    /// Creates the token kind of a token rule.
-    template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-    constexpr token_kind(TokenRule) noexcept : token_kind()
-    {
-        auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_integral_v<decltype(token_rule_kind)>)
-            // The token has an associated kind.
-            *this = token_kind(int(token_rule_kind));
-    }
-
-    //=== access ===//
-    constexpr explicit operator bool() const noexcept
-    {
-        return _value != unknown_token_kind;
-    }
-
-    constexpr bool is_predefined() const noexcept
-    {
-        return _value >= _smallest_predefined_token_kind;
-    }
-
-    constexpr const char* name() const noexcept
-    {
-        if (is_predefined())
-            return _kind_name(static_cast<predefined_token_kind>(_value));
-        else
-            // We only have a generic name.
-            return "token";
-    }
-
-    constexpr int get() const noexcept
-    {
-        if (is_predefined())
-            return -1 - (UINT_LEAST16_MAX - _value);
-        else
-            return _value;
-    }
-
-    //=== comparision ===//
-    friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept
-    {
-        return lhs._value == rhs._value;
-    }
-    friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept
-    {
-        return lhs._value != rhs._value;
-    }
-
-    //=== raw access ===//
-    static constexpr std::uint_least16_t to_raw(token_kind<void> kind) noexcept
-    {
-        return kind._value;
-    }
-    static constexpr token_kind<void> from_raw(std::uint_least16_t kind) noexcept
-    {
-        return token_kind<void>(kind);
-    }
-
-private:
-    constexpr explicit token_kind(std::uint_least16_t kind) noexcept : _value(kind) {}
-
-    std::uint_least16_t _value;
-};
 
 template <typename TokenKind, typename = std::enable_if_t<std::is_integral_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
-template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-token_kind(TokenRule)
-    -> token_kind<std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
-                                     decltype(TokenRule::token_kind()), void>>;
 } // namespace lexy
 
 namespace lexy
@@ -5205,13 +4985,16 @@ template <typename Reader, typename TokenKind = void>
 class token
 {
 public:
+    using encoding  = typename Reader::encoding;
+    using char_type = typename encoding::char_type;
+    using iterator  = typename Reader::iterator;
+
     explicit constexpr token(token_kind<TokenKind> kind, lexy::lexeme<Reader> lex) noexcept
     : _lexeme(lex), _kind(kind)
     {
-        LEXY_PRECONDITION(lex.begin() != typename Reader::iterator());
+        LEXY_PRECONDITION(lex.begin() != iterator());
     }
-    explicit constexpr token(token_kind<TokenKind> kind, typename Reader::iterator begin,
-                             typename Reader::iterator end) noexcept
+    explicit constexpr token(token_kind<TokenKind> kind, iterator begin, iterator end) noexcept
     : token(kind, lexy::lexeme<Reader>(begin, end))
     {}
 
@@ -5220,12 +5003,12 @@ public:
         return _kind;
     }
 
-    constexpr auto name() const noexcept
+    constexpr const char* name() const noexcept
     {
         return _kind.name();
     }
 
-    constexpr auto position() const noexcept -> typename Reader::iterator
+    constexpr iterator position() const noexcept
     {
         return _lexeme.begin();
     }
@@ -5248,11 +5031,6 @@ token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, void>;
 template <typename TokenKind, typename Reader,
           typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
-template <typename TokenRule, typename Reader,
-          typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-token(TokenRule, lexy::lexeme<Reader>)
-    -> token<Reader, std::conditional_t<std::is_enum_v<decltype(TokenRule::token_kind())>,
-                                        decltype(TokenRule::token_kind()), void>>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;
@@ -11859,11 +11637,6 @@ struct _nl : token_base<_nl>
         = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
     using token_engine = lexy::engine_trie<_trie>;
 
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return lexy::newline_token_kind;
-    }
-
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
@@ -13189,7 +12962,6 @@ constexpr auto collect(Callback&& callback)
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
-
 
 
 
