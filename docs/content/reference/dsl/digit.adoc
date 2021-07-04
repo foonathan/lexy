@@ -72,7 +72,7 @@ namespace lexy::dsl
 Matching::
   Matches and consumes {{% docref "lexy::dsl::lit_c" "`lexy::dsl::lit_c<'0'>`" %}}, i.e. `0`.
 Errors::
-  `lexy::expected_char_class` (`"digit.zero"`): instead of `lexy::expected_literal`; at the starting reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"digit.zero"`): instead of {{% docref "lexy::expected_literal" %}}; at the starting reader position.
   The rule then fails.
 
 {{% playground-example zero "The number zero" %}}
@@ -98,7 +98,7 @@ Matching::
   Matches and consumes one of the digits of `Base` specified in the table above.
   Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
 Errors::
-  `lexy::expected_char_class` (`"digit.<base>"`): at the starting reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"digit.<base>"`): at the starting reader position.
   The rule then fails.
 
 {{% playground-example digit "A hexadecimal digit, upper-case letters only" %}}

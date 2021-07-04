@@ -27,6 +27,8 @@ while others are still the full documentation inline.
   A lexeme, i.e. a subrange of the input.
 {{% docref "lexy::token_kind" %}} and {{% docref "lexy::token" %}}::
   Identify and store tokens, i.e. concrete realization of {{% token-rule %}}s.
+{{% docref "lexy::error" %}} and {{% docref "lexy::error_context" %}}::
+  The parse errors.
 
 == Inputs and Encodings
 

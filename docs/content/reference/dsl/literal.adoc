@@ -36,7 +36,7 @@ Matching::
   2. Otherwise, if `CharT` is `char`, `Str` must only contain ASCII characters (i.e. `0x00-0x7F`).
     `lit<Str>` converts each ASCII character to the input encoding with a simply `static_cast` and then proceeds as done in case 1.
 Errors::
-  `lexy::expected_literal`: if one code unit did not compare equal or the reader reached the end of the input.
+  {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
   Its `.string()` is `Str`, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
 
 The macro `LEXY_LIT(Str)` is equivalent to `lit<Str>`, except that it also works on older compilers that do not support C++20's extended NTTPs.

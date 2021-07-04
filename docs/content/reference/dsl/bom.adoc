@@ -27,7 +27,7 @@ Matching::
   Matches and consumes the byte sequence given in the table below.
   This is done by repeatedly comparing the code unit against the numeric values.
 Errors::
-  `lexy::expected_char_class` (`"BOM.<encoding>-<endianness>"`): at the starting position.
+  {{% docref "lexy::expected_char_class" %}} (`"BOM.<encoding>-<endianness>"`): at the starting position.
   The rule then fails.
 
 [%collapsible]

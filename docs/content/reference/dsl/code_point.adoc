@@ -36,7 +36,7 @@ Matching::
   Matches and consumes all code points that form a code point in this encoding.
   For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
 Errors::
-  `lexy::expected_char_class` (`"<encoding>.code_point"`): if the current code unit(s) do not form a valid code point; at the starting reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"<encoding>.code_point"`): if the current code unit(s) do not form a valid code point; at the starting reader position.
   This includes surrogates, overlong UTF-8 sequences, or out of range code points (especially for ASCII).
   The rule then fails.
 
@@ -63,7 +63,7 @@ constexpr _token-rule_ auto if_() const;
 Matches::
   Matches and consumes the normal `code_point` rule.
 Errors::
-  * `lexy::expected_char_class` (`"<type name of Predicate>"`): if `Predicate{}(cp) == false`, where `cp` is the code point we have just consumed; at the starting reader position.
+  * {{% docref "lexy::expected_char_class" %}} (`"<type name of Predicate>"`): if `Predicate{}(cp) == false`, where `cp` is the code point we have just consumed; at the starting reader position.
     The rule then fails.
   * All errors raised by the normal `code_point` rule. The rule then fails.
 

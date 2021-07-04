@@ -67,7 +67,7 @@ Matching::
   Matches and consumes one character from the character class given in the table below.
   Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
 Errors::
-  `lexy::expected_char_class` (`"ASCII.<name>"`): at the unchanged reader position. The rule then fails.
+  {{% docref "lexy::expected_char_class" %}} (`"ASCII.<name>"`): at the unchanged reader position. The rule then fails.
 
 [%collapsible]
 .The character classes

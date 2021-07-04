@@ -22,7 +22,7 @@ namespace lexy::dsl
 Matching::
   Succeeds if the reader is at the end of the input, without consuming anything.
 Errors::
-  `lexy::expected_char_class` (`"EOF"`): at the unchanged reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"EOF"`): at the unchanged reader position.
 Parse tree::
   Single token type whose range is empty with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eof_token_kind`.
 

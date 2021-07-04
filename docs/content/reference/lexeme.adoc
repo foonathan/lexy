@@ -38,7 +38,7 @@ namespace lexy
         constexpr char_type operator[](std::size_t idx) const noexcept;
     };
 
-    template <typename Input>
+    template <_input_ Input>
     using lexeme_for = lexeme<input_reader<Input>>;
 }
 ----

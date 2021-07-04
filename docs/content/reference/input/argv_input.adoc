@@ -118,7 +118,7 @@ namespace lexy::dsl
 Matching::
   Matches and consumes the separator between two command-line arguments.
 Errors::
-  `lexy::expected_char_class` (`"argv-separator"`): at the unchanged reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"argv-separator"`): at the unchanged reader position.
   The rule then fails.
 
 The rule can only succeed on a {{% docref "lexy::argv_input" %}}.

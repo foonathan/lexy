@@ -103,7 +103,7 @@ If this has happened, parsing the `identifier` rule creates a partial input from
   If they match somewhere in the partial input, the identifier is reserved.
   This is comparable to {{% docref "lexy::dsl::find" %}}.
 
-{{% playground-example identifier_reserved "Parse a C like identifier that is not reserved" %}}
+{{% playground-example reserved_identifier "Parse a C like identifier that is not reserved" %}}
 
 CAUTION: The `identifier` rule doesn't magically learn about the keywords you have created.
 They are only reserved if you actually pass them to `.reserve()`.
@@ -169,7 +169,7 @@ Matching::
   and matches {{% docref "lexy::dsl::lit" %}}`<Str>` on that input.
   Succeeds only if that consumes the entire partial input.
 Errors::
-  `lexy::expected_keyword`: if either `identifier.pattern()` or the `lit` rule failed.
+  {{% docref "lexy::expected_keyword" %}}: if either `identifier.pattern()` or the `lit` rule failed.
   Its range covers the everything consumed by `identifier.pattern()` and its `.string()` is `Str`.
 
 The macro `LEXY_KEYWORD(Str, Identifier)` is equivalent to `keyword<Str>(Identifier)`,

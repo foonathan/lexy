@@ -27,7 +27,7 @@ Matching::
   Tries to match and consume {{% docref "lexy::dsl::lit" %}}`<"\r\n">` or {{% docref "lexy::dsl::lit" %}}`<"\n">`.
   Succeeds if one of them matched.
 Errors::
-  `lexy::expected_char_class` (`"newline"`): if they both did not match; at the starting reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"newline"`): if they both did not match; at the starting reader position.
 
 {{% playground-example newline "Match a newline at the end" %}}
 
@@ -55,7 +55,7 @@ Matching::
   Tries to match and consume {{% docref "lexy::dsl::lit" %}}`<"\r\n">`, {{% docref "lexy::dsl::lit" %}}`<"\n">`, or {{% docref "lexy::dsl::eof" %}}.
   Succeeds if one of them matched.
 Errors::
-  `lexy::expected_char_class` (`"EOF"`): if they all did not match; at the starting reader position.
+  {{% docref "lexy::expected_char_class" %}} (`"EOF"`): if they all did not match; at the starting reader position.
 Parse tree::
   Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eol_token_kind`.
 

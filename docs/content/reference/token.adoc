@@ -267,13 +267,13 @@ namespace lexy
         }
     };
 
-    template <typename Input, typename TokenKind = void>
+    template <_input_ Input, typename TokenKind = void>
     using token_for = token<input_reader<Input>, TokenKind>;
 }
 ----
 
 [.lead]
-Stores a token as a a pair of {{% docref "lexy::token_kind" %}} and {{% docref "lexy::lexeme" %}}.
+Stores a token as a pair of {{% docref "lexy::token_kind" %}} and {{% docref "lexy::lexeme" %}}.
 
 A _token_ is not to be confused with a {{% token-rule %}}:
 the latter describes what sort of input constitutes a token (e.g. a sequence of decimal digits or the keyword `int`),
