@@ -165,10 +165,6 @@ The second overload of `lexy::parse()` allows passing an arbitrary state argumen
 This state will be made available to `lexy::parse_state` (see <<Binding arguments>>) and passed to the `.sink()` of `Production::value`, if it accepts it.
 That way, you can access other information (e.g. allocators for your containers) in the callbacks.
 
-=== Callbacks
-
-This documentation has been moved link:/reference/callback/[here].
-
 === Error handling
 
 Parsing errors are reported by constructing a `lexy::error` object and passing it to the error callback of `lexy::parse` and `lexy::validate` together with the `lexy::error_context`.

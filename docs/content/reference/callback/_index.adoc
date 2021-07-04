@@ -13,20 +13,20 @@ Callbacks that receive the values produced during parsing and process them.
 [#callback]
 == Callback
 
-{{% interface %}}
+[source,cpp]
 ----
 template <typename T>
-concept _callback_ = requires { typename T::return_type; }
+concept callback_ = requires { typename T::return_type; }
 
 template <typename T, typename ... Args>
-concept _callback-for_ = _callback_<T>
+concept callback-for = callback<T>
   && requires(const T& cb, Args&&... args) {
       { cb(std::forward<Args>(args)...) }
         -> std::same_as<typename T::return_type;
     };
 
 template <typename T, typename Context, typename ... Args>
-concept _callback-with-context_ = _callback_<T>
+concept callback-with-context = callback<T>
   && requires(const T& cb, const Context& context) {
         { cb[context](std::forward<Args>(args)...) }
           -> std::same_as<typename T::return_type>;
@@ -46,10 +46,10 @@ During parsing, the callback arguments are the values produced by the rules whil
 [#sink]
 == Sink
 
-{{% interface %}}
+[source,cpp]
 ----
 template <typename T>
-concept _sink-callback_ = requires (T& cb) {
+concept sink-callback = requires (T& cb) {
       typename T::return_type;
 
       // there exist some args... with:
@@ -59,8 +59,8 @@ concept _sink-callback_ = requires (T& cb) {
   };
 
 template <typename T, typename ... Args>
-concept _sink_ = requires (const T& s, Args&&... args) {
-      { s.sink(std::forward<Args>(args)...) } -> _callback-sink_;
+concept sink = requires (const T& s, Args&&... args) {
+      { s.sink(std::forward<Args>(args)...) } -> callback-sink;
   };
 ----
 

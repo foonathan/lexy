@@ -13,10 +13,10 @@ entities:
 [.lead]
 The rule DSL for specifying the grammar.
 
-{{% interface %}}
+[source,cpp]
 ----
 template <typename T>
-concept _rule_ = …;
+concept rule = …;
 ----
 
 The grammar in lexy is specified in several productions, where each one defines an associated _rule_.

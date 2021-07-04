@@ -16,10 +16,10 @@ entities:
 [.lead]
 Facilities for handling the encoding of an input.
 
-{{% interface %}}
+[source,cpp]
 ----
 template <typename T>
-concept _encoding_ = …;
+concept encoding = …;
 ----
 
 An _encoding_ determines how characters are encoded in the input by defining the type of individual code units and how they are used to form Unicode code points, if applicable.

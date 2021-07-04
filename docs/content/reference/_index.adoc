@@ -37,8 +37,8 @@ while others are still the full documentation inline.
 template <typename T>
 concept reader = …;
 
-template <typename Input>
-concept input = requires(const Input& obj) {
+template <typename T>
+concept input = requires(const T& obj) {
   { obj.reader() } -> reader;
 };
 ----
@@ -69,9 +69,32 @@ The input itself is unchanging and it produces a reader which remembers the curr
 {{% docref "lexy::argv_input" %}}::
   Use the command-line arguments as input.
 
-include::content/_reference/parsing.adoc[]
+== The grammar DSL
 
-include::content/_reference/dsl.adoc[]
+[source,cpp]
+----
+template <typename T>
+concept production = requires {
+      { T::production } -> rule;
+      { T::whitespace } -> rule;        // optional
+      { T::value } -> callback-or-sink; // optional
+};
+----
+
+The grammar is specified by _productions_: classes with a `::rule` member that specifies the {{% rule %}}.
+They can optionally have a `::whitespace` member that controls {{% docref "whitespace" "automatic whitespace skipping" %}}.
+Both of those are specified in a C++ DSL.
+For some actions, they also need a `::value` member that controls the value produced by parsing the production.
+It is specified using callbacks, special function objects, and sinks.
+
+link:{{< ref "grammar" >}}[`lexy/grammar.hpp`]::
+  Type traits for defining and interacting with the grammar.
+link:{{< ref "dsl" >}}[`lexy/dsl.hpp`]::
+  The DSL for specifying parse rules.
+link:{{< ref "callback" >}}[`lexy/callback.hpp`]::
+  The predefined callbacks and sinks for specifying the value.
+
+include::content/_reference/parsing.adoc[]
 
 include::content/_reference/glossary.adoc[]
 

@@ -81,7 +81,7 @@ namespace lexy
 ----
 
 [.lead]
-Returns the type {{% docref "whitespace" %}} rule of `Production` in the context of `RootProduction`.
+Returns the type of the {{% docref "whitespace" %}} rule of `Production` in the context of `RootProduction`.
 
 It is determined as follows:
 

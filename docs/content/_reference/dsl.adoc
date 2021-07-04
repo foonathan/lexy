@@ -1,4 +1,0 @@
-== The rule DSL
-
-This documentation has been moved link:/reference/dsl/[here].
-
