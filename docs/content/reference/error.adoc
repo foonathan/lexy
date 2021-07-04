@@ -243,9 +243,7 @@ Contains additional information about an error.
 `input()`::
   The entire input where the error occurred; all positions are iterators into that input.
 `production()`::
-  The name of the production where the error occurred.
-  By default, it is the type name of `Production` after removing the top-level namespace.
-  This can be overridden by `Production::name()` or `Production::name`.
+  The name of the production where the error occurred, i.e. {{% docref "lexy::production_name" %}}.
 `position()`::
   The position where it started to parse `Production`.
 

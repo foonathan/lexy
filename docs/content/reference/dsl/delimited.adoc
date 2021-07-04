@@ -140,7 +140,7 @@ Values::
 Parse tree::
   `delimited` does not have any special parse tree handling:
   it will create the nodes for `open()`, then the nodes for each `c` and `escape`, and the nodes for `close()`.
-  If the current production inherits from `lexy::token_production`,
+  If the current production inherits from {{% docref "lexy::token_production" %}},
   adjacent token nodes of the same kind (which includes the default kind) are merged.
 
 {{% playground-example "quoted" "Parse a quoted string" %}}

@@ -1,0 +1,155 @@
+---
+layout: header
+header: "lexy/grammar.hpp"
+entities:
+  "lexy::production_name": production_name
+  "lexy::production_rule": production_rule
+  "lexy::production_whitespace": production_whitespace
+  "lexy::production_value": production_value
+  "lexy::token_production": token_production
+  "lexy::transparent_production": transparent_production
+---
+
+[.lead]
+Traits and definitions for the grammar.
+
+== Grammar traits
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename T>
+    constexpr bool is_production;  <1>
+
+    template <typename T>
+    constexpr bool is_rule;        <2>
+    template <typename T>
+    constexpr bool is_branch_rule; <3>
+    template <typename T>
+    constexpr bool is_token_rule;  <4>
+}
+----
+<1> Whether or not `T` is a production, i.e. it has a `::rule` member.
+<2> Whether or not `T` is a {{% rule %}}.
+<3> Whether or not `T` is a {{% branch-rule %}}.
+<4> Whether or not `T` is a {{% token-rule %}}.
+
+[#production_name]
+== Function `lexy::production_name`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ Production>
+    consteval const char* production_name();
+}
+----
+
+[.lead]
+Returns the name of the production.
+
+By default, it is the type name of `Production` after removing the top-level namespace.
+This can be overridden by `Production::name()` or `Production::name`.
+
+[#production_rule]
+== Trait `lexy::production_rule`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ Production>
+    using production_rule = std::decay_t<decltype(Production::rule)>;
+}
+----
+
+[.lead]
+Returns the type of the {{% rule %}} of production, i.e. the type of `Production::rule`.
+
+[#production_whitespace]
+== Trait `lexy::production_whitespace`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ Production, _production_ RootProduction>
+    using production_whitespace = _see-below_;
+}
+----
+
+[.lead]
+Returns the type {{% docref "whitespace" %}} rule of `Production` in the context of `RootProduction`.
+
+It is determined as follows:
+
+1. If `Production` inherits from {{% docref "lexy::token_production" %}}, the `production_whitespace` is `void`.
+2. If `Production::whitespace` is valid, returns the decayed type of that.
+3. If `RootProduction::whitespace` is valid, returns the decayed type of that.
+4. Otherwise, returns `void`.
+
+This is used by {{% docref "lexy::dsl::whitespace" %}} during automatic whitespace skipping.
+
+[#production_value]
+== Trait `lexy::production_value`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ Production>
+    struct production_value
+    {
+        static constexpr auto get = Production::value;
+        using type                = std::decay_t<decltype(get)>;
+    };
+}
+----
+
+[.lead]
+Returns the type and object of the callback/sink of the production.
+
+[#token_production]
+== Class `lexy::token_production`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct token_production
+    {};
+
+    template <_production_ Production>
+    constexpr bool is_token_production = std::is_base_of_v<token_production, Production>;
+}
+----
+
+[.lead]
+Base class to indicate that a production is conceptually a token.
+
+This inhibits whitespace skipping (directly) inside the production.
+In the parse tree, it will merge adjacent child tokens of the same {{% docref "lexy::token_kind" %}}.
+
+[#transparent_production]
+== Class `lexy::transparent_production`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct transparent_production
+    {};
+
+    template <_production_ Production>
+    constexpr bool is_transparent_production = std::is_base_of_v<transparent_production, Production>;
+}
+----
+
+[.lead]
+Base class to indicate that this production should not show up in the parse tree.
+
+In the parse tree, there will be no separate node for `Production`.
+Instead, all child nodes of `Production` are added to its parent node.
+
