@@ -6,9 +6,9 @@
 #define LEXY_PARSE_HPP_INCLUDED
 
 #include <lexy/_detail/invoke.hpp>
+#include <lexy/action/base.hpp>
 #include <lexy/callback/base.hpp>
 #include <lexy/callback/bind.hpp>
-#include <lexy/dsl/base.hpp>
 #include <lexy/validate.hpp>
 
 namespace lexy

@@ -5,8 +5,8 @@
 #ifndef LEXY_MATCH_HPP_INCLUDED
 #define LEXY_MATCH_HPP_INCLUDED
 
+#include <lexy/action/base.hpp>
 #include <lexy/callback/noop.hpp>
-#include <lexy/dsl/base.hpp>
 
 namespace lexy
 {

@@ -74,13 +74,6 @@ namespace lexy
 {
 namespace dsl = lexyd;
 
-enum class rule_try_parse_result
-{
-    ok          = true,
-    canceled    = false,
-    backtracked = 2,
-};
-
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
 template <typename T>
@@ -93,9 +86,6 @@ constexpr bool is_branch_rule = [] {
     else
         return false;
 }();
-
-template <typename Rule, typename NextParser>
-using rule_parser = typename Rule::template parser<NextParser>;
 } // namespace lexy
 
 //=== production ===//

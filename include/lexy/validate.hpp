@@ -6,10 +6,10 @@
 #define LEXY_VALIDATE_HPP_INCLUDED
 
 #include <lexy/_detail/lazy_init.hpp>
+#include <lexy/action/base.hpp>
 #include <lexy/callback/base.hpp>
 #include <lexy/callback/container.hpp>
 #include <lexy/callback/noop.hpp>
-#include <lexy/dsl/base.hpp>
 #include <lexy/error.hpp>
 
 namespace lexy

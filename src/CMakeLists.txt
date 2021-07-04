@@ -21,6 +21,8 @@ set(header_files
         ${include_dir}/_detail/tuple.hpp
         ${include_dir}/_detail/type_name.hpp
 
+        ${include_dir}/action/base.hpp
+
         ${include_dir}/callback/adapter.hpp
         ${include_dir}/callback/aggregate.hpp
         ${include_dir}/callback/base.hpp

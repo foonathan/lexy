@@ -14,6 +14,8 @@ set(tests
         detail/tuple.cpp
         detail/type_name.cpp
 
+        action/base.cpp
+
         callback/adapter.cpp
         callback/aggregate.cpp
         callback/base.cpp
