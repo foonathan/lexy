@@ -65,13 +65,13 @@ struct _cp : token_base<_cp<Predicate>>
         {
             auto name = lexy::_detail::type_name<Predicate>();
             auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
-            context.error(err);
+            context.on(_ev::error{}, err);
         }
         else
         {
             auto name = _cp_name<typename Reader::encoding>();
             auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
-            context.error(err);
+            context.on(_ev::error{}, err);
         }
     }
 

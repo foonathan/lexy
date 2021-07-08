@@ -40,7 +40,7 @@ struct _err : rule_base
             }
 
             auto err = lexy::make_error<Reader, Tag>(begin, end);
-            context.error(err);
+            context.on(_ev::error{}, err);
             return false;
         }
     };
@@ -135,7 +135,7 @@ struct _require : rule_base
             {
                 // Token did not match, report the correct error, but continue normally.
                 auto err = lexy::make_error<Reader, Tag>(reader.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         }
@@ -158,7 +158,7 @@ struct _prevent : rule_base
                 // Token did match what we don't want.
                 // Report an error, but continue parsing.
                 auto err = lexy::make_error<Reader, Tag>(begin, copy.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else

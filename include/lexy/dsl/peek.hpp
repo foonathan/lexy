@@ -58,7 +58,7 @@ struct _peek : rule_base
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -97,7 +97,7 @@ struct _peekn : rule_base
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
                 auto err  = lexy::make_error<Reader, tag>(begin, copy.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);

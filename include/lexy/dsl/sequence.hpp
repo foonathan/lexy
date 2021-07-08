@@ -38,7 +38,7 @@ struct _seq_impl<H, T...>
             -> lexy::rule_try_parse_result
         {
             // We can safely discard, token does not produce any values.
-            using token_parser = lexy::rule_parser<H, lexy::context_discard_parser<Context>>;
+            using token_parser = lexy::rule_parser<H, lexy::discard_parser<Context>>;
             auto result        = token_parser::try_parse(context, reader, LEXY_FWD(args)...);
             if (result == lexy::rule_try_parse_result::ok)
             {

@@ -21,7 +21,7 @@ struct _ascii : token_base<Derived>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Derived::name());
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 

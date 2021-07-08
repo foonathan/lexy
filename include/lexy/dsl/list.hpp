@@ -54,10 +54,10 @@ struct _list_sink
     }
 
     template <typename Context, typename Reader, typename Sink, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader&, lexy::_detail::lazy_init<Sink>& sink,
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, lexy::_detail::lazy_init<Sink>& sink,
                              Args&&... args)
     {
-        auto& cb = sink.emplace(context.sink());
+        auto& cb = sink.emplace(context.on(_ev::list{}, reader.cur()));
         if constexpr (sizeof...(Args) > 0)
             cb(LEXY_FWD(args)...);
         return true;
@@ -356,7 +356,7 @@ struct _lst : rule_base
             -> lexy::rule_try_parse_result
         {
             // We construct the sink lazily only if the branch is taken.
-            using sink_t = std::decay_t<decltype(context.sink())>;
+            using sink_t = std::decay_t<decltype(context.on(_ev::list{}, reader.cur()))>;
             lexy::_detail::lazy_init<sink_t> sink;
 
             // Try parsing the initial item.
@@ -377,7 +377,7 @@ struct _lst : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.sink();
+            auto sink = context.on(_ev::list{}, reader.cur());
 
             // Parse the initial item.
             using item_parser = typename lexy::rule_parser<Item, _list_sink>;
@@ -440,7 +440,7 @@ struct _olst : rule_base
             else
             {
                 // We don't have a list: construct a sink and immediately finish it.
-                auto sink = context.sink();
+                auto sink = context.on(_ev::list{}, reader.cur());
                 return _list_finish<NextParser, Args...>::parse(context, reader, LEXY_FWD(args)...,
                                                                 sink);
             }
@@ -474,7 +474,7 @@ struct _lstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.sink();
+            auto sink = context.on(_ev::list{}, reader.cur());
 
             // Parse initial item.
             using item_parser = typename lexy::rule_parser<Item, _list_sink>;
@@ -497,7 +497,7 @@ struct _olstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.sink();
+            auto sink = context.on(_ev::list{}, reader.cur());
 
             // Try parsing the terminator.
             using term_parser = lexy::rule_parser<Term, NextParser>;

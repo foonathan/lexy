@@ -1020,6 +1020,8 @@ namespace lexy
 template <typename Tree, typename Input, typename Callback>
 class _pt_handler
 {
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
 public:
     explicit _pt_handler(Tree& tree, const Input& input, const Callback& cb)
     : _tree(&tree), _depth(0), _validate(input, cb)
@@ -1030,64 +1032,73 @@ public:
         return LEXY_MOV(_validate).get_result(did_recover);
     }
 
-    //=== handler functions ===//
+    //=== events ===//
     template <typename Production>
-    using return_type_for = void;
-
-    template <typename Production>
-    constexpr auto get_sink(Production)
+    struct marker
     {
-        return noop.sink();
-    }
-
-    struct _state_t
-    {
-        typename Tree::builder::production_state     builder_state;
-        typename lexy::input_reader<Input>::iterator pos;
+        typename Tree::builder::production_state                                      builder_state;
+        typename lexy::validate_handler<Input, Callback>::template marker<Production> validate;
     };
 
-    template <typename Production, typename Iterator>
-    constexpr _state_t start_production(Production prod, Iterator pos)
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    constexpr auto on(parse_events::production_start<Production>, iterator pos)
     {
         if (_depth++ == 0)
         {
-            _builder.emplace(LEXY_MOV(*_tree), prod);
-            return {{}, pos};
+            _builder.emplace(LEXY_MOV(*_tree), Production{});
+            return marker<Production>{{}, {pos}};
         }
         else
-            return {_builder->start_production(prod), pos};
+        {
+            return marker<Production>{_builder->start_production(Production{}), {pos}};
+        }
     }
 
-    template <typename Kind, typename Iterator>
-    constexpr void token(Kind kind, Iterator begin, Iterator end)
+    template <typename Production, typename Iterator>
+    constexpr auto on(marker<Production>, parse_events::list, Iterator)
+    {
+        return lexy::noop.sink();
+    }
+
+    template <typename Production, typename TokenKind>
+    constexpr void on(const marker<Production>&, parse_events::token, TokenKind kind,
+                      iterator begin, iterator end)
     {
         _builder->token(kind, begin, end);
     }
 
+    template <typename Production, typename Error>
+    constexpr void on(marker<Production> m, parse_events::error, Error&& error)
+    {
+        _validate.on(m.validate, parse_events::error{}, LEXY_FWD(error));
+    }
+
     template <typename Production, typename... Args>
-    constexpr void finish_production(Production, _state_t&& state, Args&&...)
+    constexpr void on(marker<Production>&& m, parse_events::production_finish<Production>, iterator,
+                      Args&&...)
     {
         if (--_depth == 0)
             // Finish tree instead of production.
             *_tree = LEXY_MOV(*_builder).finish();
         else
-            _builder->finish_production(LEXY_MOV(state.builder_state));
+            _builder->finish_production(LEXY_MOV(m.builder_state));
     }
     template <typename Production>
-    constexpr void backtrack_production(Production, _state_t&& state)
+    constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
     {
         if (--_depth == 0)
             // Clear tree instead of finishing production.
             _tree->clear();
         else
-            _builder->backtrack_production(LEXY_MOV(state.builder_state));
+            _builder->backtrack_production(LEXY_MOV(m.builder_state));
     }
 
-    template <typename Production, typename Error>
-    constexpr void error(Production p, _state_t&& state, Error&& error)
-    {
-        _validate.error(p, state.pos, LEXY_FWD(error));
-    }
+    template <typename... Args>
+    constexpr void on(const Args&...)
+    {}
 
 private:
     lexy::_detail::lazy_init<typename Tree::builder> _builder;
@@ -1106,7 +1117,7 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
     auto handler = _pt_handler(tree, input, LEXY_MOV(callback));
     auto reader  = input.reader();
 
-    auto did_recover = lexy::_detail::parse_impl<Production>(handler, reader);
+    auto did_recover = lexy::_detail::action_impl<Production>(handler, reader);
     return LEXY_MOV(handler).get_result(static_cast<bool>(did_recover));
 }
 } // namespace lexy

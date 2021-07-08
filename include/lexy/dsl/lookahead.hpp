@@ -52,7 +52,7 @@ struct _look : rule_base
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);

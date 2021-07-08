@@ -271,7 +271,7 @@ struct _sym : rule_base
                     // Handle the error.
                     using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                     auto err  = lexy::make_error<Reader, tag>(begin, end);
-                    context.error(err);
+                    context.on(_ev::error{}, err);
                     return false;
                 }
                 else
@@ -289,7 +289,7 @@ struct _sym : rule_base
             auto save = reader;
 
             // We can safely discard; token does not produce any values.
-            using token_parser = lexy::rule_parser<Token, lexy::context_discard_parser<Context>>;
+            using token_parser = lexy::rule_parser<Token, lexy::discard_parser<Context>>;
             auto result        = token_parser::try_parse(context, reader);
             if (result != lexy::rule_try_parse_result::ok)
                 return result;
@@ -343,7 +343,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.token(_idp<L, T>::token_kind(), save.cur(), reader.cur());
+            context.on(_ev::token{}, _idp<L, T>::token_kind(), save.cur(), reader.cur());
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
                 continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
@@ -361,15 +361,14 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
             {
                 // We didn't have a symbol.
                 // But before we can report the error, we need to parse an identifier.
-                // Otherwise, we don't call `context.token()` or have the same end as the
+                // Otherwise, we don't call `context.on(_ev::token{}, )` or have the same end as the
                 // non-optimized symbol parser.
 
                 if (begin == reader.cur())
                 {
                     // We need to parse the entire identifier from scratch.
                     // The identifier pattern does not produce a value, so we can safely discard.
-                    using id_parser
-                        = lexy::rule_parser<_idp<L, T>, lexy::context_discard_parser<Context>>;
+                    using id_parser = lexy::rule_parser<_idp<L, T>, lexy::discard_parser<Context>>;
                     if (!id_parser::parse(context, reader))
                         // Didn't have an identifier, so different error.
                         return false;
@@ -379,21 +378,21 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                     // We're having a prefix of a valid identifier.
                     // As an additional optimization, just need to parse the remaining characters.
                     lexy::engine_while<trailing_engine>::match(reader);
-                    context.token(_idp<L, T>::token_kind(), begin, reader.cur());
+                    context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, reader.cur());
                 }
                 auto end = reader.cur();
 
                 // Now we can report the erorr.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                 auto err  = lexy::make_error<Reader, tag>(begin, end);
-                context.error(err);
+                context.on(_ev::error{}, err);
                 return false;
             }
             auto end = reader.cur();
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.token(_idp<L, T>::token_kind(), begin, end);
+            context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, end);
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
         }
@@ -429,7 +428,7 @@ struct _sym<Table, void, Tag> : rule_base
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.token(lexy::identifier_token_kind, save.cur(), reader.cur());
+            context.on(_ev::token{}, lexy::identifier_token_kind, save.cur(), reader.cur());
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
                 continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
@@ -445,14 +444,14 @@ struct _sym<Table, void, Tag> : rule_base
                 // We didn't have a symbol.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                 auto err  = lexy::make_error<Reader, tag>(begin);
-                context.error(err);
+                context.on(_ev::error{}, err);
                 return false;
             }
             auto end = reader.cur();
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.token(lexy::identifier_token_kind, begin, end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
         }

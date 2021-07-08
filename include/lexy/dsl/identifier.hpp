@@ -105,7 +105,7 @@ struct _id : rule_base
                                        Args&&... args)
         {
             // Create a node in the parse tree.
-            context.token(lexy::identifier_token_kind, begin, end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
 
             // Check that we're not creating a reserved identifier.
             if constexpr (sizeof...(Reserved) > 0)
@@ -118,7 +118,7 @@ struct _id : rule_base
                 {
                     // We found a reserved identifier.
                     auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
-                    context.error(err);
+                    context.on(_ev::error{}, err);
                     // But we can trivially recover, as we've still matched a well-formed
                     // identifier.
                 }
@@ -299,7 +299,7 @@ struct _kw : token_base<_kw<String, Id>>
         auto end = reader.cur();
 
         auto err = lexy::make_error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 

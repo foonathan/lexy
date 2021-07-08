@@ -26,7 +26,7 @@ struct _eof : token_base<_eof>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 

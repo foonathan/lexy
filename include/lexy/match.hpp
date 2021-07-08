@@ -20,41 +20,35 @@ public:
         return !_failed;
     }
 
-    //=== handler functions ===//
+    //=== events ===//
     template <typename Production>
-    using return_type_for = void;
-
-    template <typename Production>
-    constexpr auto get_sink(Production)
-    {
-        return noop.sink();
-    }
-
-    struct state
+    struct marker
     {};
 
+    template <typename Production>
+    using production_result = void;
+
     template <typename Production, typename Iterator>
-    constexpr state start_production(Production, Iterator)
+    constexpr marker<Production> on(parse_events::production_start<Production>, Iterator)
     {
         return {};
     }
 
-    template <typename Kind, typename Iterator>
-    constexpr void token(Kind, Iterator, Iterator)
-    {}
-
-    template <typename Production, typename... Args>
-    constexpr void finish_production(Production, state, Args&&...)
-    {}
-    template <typename Production>
-    constexpr void backtrack_production(Production, state)
-    {}
+    template <typename Production, typename Iterator>
+    constexpr auto on(marker<Production>, parse_events::list, Iterator)
+    {
+        return lexy::noop.sink();
+    }
 
     template <typename Production, typename Error>
-    constexpr void error(Production, state, Error&&)
+    constexpr void on(marker<Production>, parse_events::error, Error&&)
     {
         _failed = true;
     }
+
+    template <typename... Args>
+    constexpr void on(const Args&...)
+    {}
 
 private:
     bool _failed;
@@ -66,7 +60,7 @@ constexpr bool match(const Input& input)
     auto handler = match_handler{};
     auto reader  = input.reader();
 
-    lexy::_detail::parse_impl<Production>(handler, reader);
+    lexy::_detail::action_impl<Production>(handler, reader);
 
     // We only match the production if no error was logged.
     return static_cast<bool>(handler);

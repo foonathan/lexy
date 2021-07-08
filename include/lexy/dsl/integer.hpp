@@ -342,7 +342,7 @@ struct _int : rule_base
                 auto result = typename IntParser::result_type(0);
                 if (!IntParser::parse(result, begin, end))
                     // Raise error but recover.
-                    context.error(error_type(begin, end));
+                    context.on(_ev::error{}, error_type(begin, end));
 
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             }
