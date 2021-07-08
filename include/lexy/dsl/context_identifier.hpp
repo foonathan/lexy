@@ -123,9 +123,8 @@ struct _ctx_irem : rule_base
             // Check that the identifier is the same.
             if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
             {
-                using tag
-                    = std::conditional_t<std::is_void_v<Tag>, lexy::different_identifier, Tag>;
-                auto err = lexy::make_error<Reader, tag>(lexeme.begin(), lexeme.end());
+                using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
+                auto err  = lexy::make_error<Reader, tag>(lexeme.begin(), lexeme.end());
                 context.error(err);
                 // We can trivially recover, as we still had a valid identifier.
             }

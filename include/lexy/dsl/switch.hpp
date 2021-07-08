@@ -72,7 +72,7 @@ struct _switch_select<NextParser, Tag>
     {
         // We didn't match any of the switch cases, report an error.
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
-        using tag = std::conditional_t<std::is_void_v<Tag>, lexy::exhausted_switch, Tag>;
+        using tag = lexy::_detail::type_or<Tag, lexy::exhausted_switch>;
         auto err  = lexy::make_error<Reader, tag>(save.cur(), reader.cur());
         context.error(err);
         return false;

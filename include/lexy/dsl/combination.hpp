@@ -121,8 +121,7 @@ struct _comb : rule_base
 
                 if (handled[state.idx])
                 {
-                    using tag = std::conditional_t<std::is_void_v<DuplicateError>,
-                                                   lexy::combination_duplicate, DuplicateError>;
+                    using tag = lexy::_detail::type_or<DuplicateError, lexy::combination_duplicate>;
                     auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
                     context.error(err);
                     // We can trivially recover, but need to do another iteration.

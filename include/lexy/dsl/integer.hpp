@@ -336,7 +336,7 @@ struct _int : rule_base
                 failed   = false;
                 auto end = reader.cur();
 
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::integer_overflow, Tag>;
+                using tag        = lexy::_detail::type_or<Tag, lexy::integer_overflow>;
                 using error_type = lexy::error<typename Reader::canonical_reader, tag>;
 
                 auto result = typename IntParser::result_type(0);

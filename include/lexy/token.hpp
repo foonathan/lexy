@@ -133,7 +133,7 @@ class token_kind
 {
     static_assert(std::is_void_v<TokenKind> || std::is_enum_v<TokenKind>,
                   "invalid type for TokenKind");
-    using _underlying_type = std::conditional_t<std::is_void_v<TokenKind>, int, TokenKind>;
+    using _underlying_type = lexy::_detail::type_or<TokenKind, int>;
 
 public:
     //=== constructors ===//

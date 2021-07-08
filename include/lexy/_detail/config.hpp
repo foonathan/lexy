@@ -18,16 +18,7 @@
 #    endif
 #endif
 
-//=== move/fwd/declval/swap ===//
-namespace lexy::_detail
-{
-template <typename T>
-using add_rvalue_ref = T&&;
-
-template <typename... T>
-constexpr bool error = false;
-} // namespace lexy::_detail
-
+//=== utility traits===//
 #define LEXY_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #define LEXY_FWD(...) static_cast<decltype(__VA_ARGS__)>(__VA_ARGS__)
 
@@ -37,12 +28,24 @@ constexpr bool error = false;
 namespace lexy::_detail
 {
 template <typename T>
+using add_rvalue_ref = T&&;
+
+template <typename... T>
+constexpr bool error = false;
+
+template <typename T>
 constexpr void swap(T& lhs, T& rhs)
 {
     T tmp = LEXY_MOV(lhs);
     lhs   = LEXY_MOV(rhs);
     rhs   = LEXY_MOV(tmp);
 }
+
+template <typename T, typename U>
+constexpr bool is_decayed_same = std::is_same_v<std::decay_t<T>, std::decay_t<U>>;
+
+template <typename T, typename Fallback>
+using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 } // namespace lexy::_detail
 
 //=== NTTP ===//

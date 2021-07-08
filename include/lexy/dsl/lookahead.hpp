@@ -50,7 +50,7 @@ struct _look : rule_base
             using engine = lexy::engine_find_before<Needle, End>;
             if (!lexy::engine_peek<engine>(reader))
             {
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::lookahead_failure, Tag>;
+                using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
                 context.error(err);
             }

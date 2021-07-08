@@ -24,10 +24,9 @@ struct _proxy_pointer
 template <typename Derived, typename T, typename Reference = T&, typename Pointer = const T*>
 struct forward_iterator_base
 {
-    using value_type = std::remove_cv_t<T>;
-    using reference  = Reference;
-    using pointer
-        = std::conditional_t<std::is_void_v<Pointer>, _proxy_pointer<value_type>, Pointer>;
+    using value_type        = std::remove_cv_t<T>;
+    using reference         = Reference;
+    using pointer           = lexy::_detail::type_or<Pointer, _proxy_pointer<value_type>>;
     using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 

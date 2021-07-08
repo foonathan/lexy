@@ -269,7 +269,7 @@ struct _sym : rule_base
                 if (result == lexy::rule_try_parse_result::backtracked)
                 {
                     // Handle the error.
-                    using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unknown_symbol, Tag>;
+                    using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                     auto err  = lexy::make_error<Reader, tag>(begin, end);
                     context.error(err);
                     return false;
@@ -384,7 +384,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                 auto end = reader.cur();
 
                 // Now we can report the erorr.
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unknown_symbol, Tag>;
+                using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                 auto err  = lexy::make_error<Reader, tag>(begin, end);
                 context.error(err);
                 return false;
@@ -443,7 +443,7 @@ struct _sym<Table, void, Tag> : rule_base
             if (!idx)
             {
                 // We didn't have a symbol.
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unknown_symbol, Tag>;
+                using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
                 auto err  = lexy::make_error<Reader, tag>(begin);
                 context.error(err);
                 return false;

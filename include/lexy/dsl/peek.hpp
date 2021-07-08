@@ -56,7 +56,7 @@ struct _peek : rule_base
         {
             if (!lexy::engine_peek<Engine>(reader))
             {
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::peek_failure, Tag>;
+                using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
                 context.error(err);
             }
@@ -95,7 +95,7 @@ struct _peekn : rule_base
             auto copy = reader;
             if (auto begin = copy.cur(); lexy::engine_try_match<Engine>(copy))
             {
-                using tag = std::conditional_t<std::is_void_v<Tag>, lexy::unexpected, Tag>;
+                using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
                 auto err  = lexy::make_error<Reader, tag>(begin, copy.cur());
                 context.error(err);
             }

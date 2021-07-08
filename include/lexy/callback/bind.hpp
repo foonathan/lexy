@@ -77,7 +77,7 @@ constexpr decltype(auto) invoke_bound(Fn&&                                fn, //
                                       const Context& context, Args&&... args)
 {
     auto actual_args = _detail::forward_as_tuple(LEXY_FWD(args)...);
-    if constexpr ((std::is_same_v<std::decay_t<BoundArgs>, all_values_placeholder> || ...))
+    if constexpr ((_detail::is_decayed_same<BoundArgs, _detail::all_values_placeholder> || ...))
     {
         // If we're having the placeholder we need to recursively expand every argument.
         return _invoke_bound<0>(LEXY_FWD(fn), bound_args, context, actual_args,
@@ -126,7 +126,7 @@ struct _nth_value : _detail::placeholder_base // fallback + map
         else
         {
             using arg_t = typename _detail::tuple<Args...>::template element_type<N - 1>;
-            if constexpr (std::is_same_v<std::decay_t<arg_t>, nullopt>)
+            if constexpr (_detail::is_decayed_same<arg_t, nullopt>)
                 return _fallback; // Argument is nullopt.
             else
                 return _detail::invoke(_fn, args.template get<N - 1>());
@@ -147,7 +147,7 @@ struct _nth_value<N, T, void> : _detail::placeholder_base // fallback only
         else
         {
             using arg_t = typename _detail::tuple<Args...>::template element_type<N - 1>;
-            if constexpr (std::is_same_v<std::decay_t<arg_t>, nullopt>)
+            if constexpr (_detail::is_decayed_same<arg_t, nullopt>)
                 return _fallback; // Argument is nullopt.
             else
                 return args.template get<N - 1>();
@@ -369,7 +369,7 @@ template <typename Sink, typename... BoundArgs>
 constexpr auto bind_sink(Sink&& sink, BoundArgs&&... args)
 {
     static_assert(
-        (!std::is_same_v<std::decay_t<BoundArgs>, _detail::all_values_placeholder> && ...),
+        (!_detail::is_decayed_same<BoundArgs, _detail::all_values_placeholder> && ...),
         "lexy::values as a placeholder for bind_sink() doesn't make sense - there won't be any values");
     using bound = _bound_sink<std::decay_t<Sink>, std::decay_t<BoundArgs>...>;
     return bound{LEXY_FWD(sink), _detail::make_tuple(LEXY_FWD(args)...)};
