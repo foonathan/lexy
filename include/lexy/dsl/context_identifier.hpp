@@ -98,7 +98,7 @@ struct _ctx_irem : rule_base
             if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
                 return lexy::rule_try_parse_result::backtracked;
 
-            context.token(lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
+            context.on(_ev::token{}, lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
             // Don't produce a value.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...)
@@ -125,11 +125,11 @@ struct _ctx_irem : rule_base
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
                 auto err  = lexy::make_error<Reader, tag>(lexeme.begin(), lexeme.end());
-                context.error(err);
+                context.on(_ev::error{}, err);
                 // We can trivially recover, as we still had a valid identifier.
             }
 
-            context.token(lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
+            context.on(_ev::token{}, lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
             // Don't produce a value.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);

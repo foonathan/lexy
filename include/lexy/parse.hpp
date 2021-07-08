@@ -101,6 +101,8 @@ constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 template <typename State, typename Input, typename ErrorCallback>
 class _parse_handler
 {
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
 public:
     constexpr explicit _parse_handler(const State& state, const Input& input,
                                       const ErrorCallback& callback)
@@ -115,9 +117,13 @@ public:
                                               LEXY_MOV(value));
     }
 
-    //=== handler functions ===//
+    //=== events ===//
     template <typename Production>
-    static auto _value_cb()
+    using marker =
+        typename lexy::validate_handler<Input, ErrorCallback>::template marker<Production>;
+
+    template <typename Production>
+    static auto _value_callback()
     {
         using value = lexy::production_value<Production>;
         if constexpr (lexy::is_callback<typename value::type>)
@@ -128,10 +134,16 @@ public:
             return value::get.sink();
     }
     template <typename Production>
-    using return_type_for = typename decltype(_value_cb<Production>())::return_type;
+    using production_result = typename decltype(_value_callback<Production>())::return_type;
 
-    template <typename Production>
-    constexpr auto get_sink(Production)
+    template <typename Production, typename Iterator>
+    constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
+    {
+        return {pos};
+    }
+
+    template <typename Production, typename Iterator>
+    constexpr auto on(marker<Production>, parse_events::list, Iterator)
     {
         using value = lexy::production_value<Production>;
         if constexpr (lexy::is_sink<typename value::type, const State&>)
@@ -140,18 +152,15 @@ public:
             return value::get.sink();
     }
 
-    template <typename Production, typename Iterator>
-    constexpr auto start_production(Production, Iterator pos)
+    template <typename Production, typename Error>
+    constexpr void on(marker<Production> m, parse_events::error, Error&& error)
     {
-        return pos;
+        _validate.on(m, parse_events::error{}, LEXY_FWD(error));
     }
 
-    template <typename Kind, typename Iterator>
-    constexpr void token(Kind, Iterator, Iterator)
-    {}
-
     template <typename Production, typename Iterator, typename... Args>
-    constexpr auto finish_production(Production, Iterator, Args&&... args)
+    constexpr auto on(marker<Production>&&, parse_events::production_finish<Production>, Iterator,
+                      Args&&... args)
     {
         using value = typename lexy::production_value<Production>;
 
@@ -165,29 +174,24 @@ public:
         }
         else if constexpr (((lexy::is_sink<typename value::type>)
                             || (lexy::is_sink<typename value::type, const State&>))
-                           && _is_convertible<return_type_for<Production>, Args&&...>)
+                           && _is_convertible<production_result<Production>, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has the
             // correct type already. Assume it came from the list sink and
             // construct the result without invoking a callback.
-            return return_type_for<Production>(LEXY_FWD(args)...);
+            return production_result<Production>(LEXY_FWD(args)...);
         }
         else
         {
             // We're missing a callback overload.
             static_assert(_detail::error<Production, Args...>,
-                          "missing callback overload for production");
+                          "missing value callback overload for production");
         }
     }
-    template <typename Production, typename Iterator>
-    constexpr void backtrack_production(Production, Iterator)
-    {}
 
-    template <typename Production, typename Iterator, typename Error>
-    constexpr void error(Production p, Iterator pos, Error&& error)
-    {
-        _validate.error(p, pos, LEXY_FWD(error));
-    }
+    template <typename... Args>
+    constexpr void on(const Args&...)
+    {}
 
 private:
     lexy::validate_handler<Input, ErrorCallback> _validate;
@@ -201,7 +205,7 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
     auto handler = lexy::_parse_handler(state, input, LEXY_MOV(callback));
     auto reader  = input.reader();
 
-    auto value = lexy::_detail::parse_impl<Production>(handler, reader);
+    auto value = lexy::_detail::action_impl<Production>(handler, reader);
     return LEXY_MOV(handler).get_result(LEXY_MOV(value));
 }
 

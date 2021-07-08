@@ -56,7 +56,7 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         }
         auto content_end = reader.cur();
 
-        context.token(Char::token_kind(), content_begin, content_end);
+        context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
     }
     else
@@ -65,7 +65,7 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         engine::match(reader);
         auto content_end = reader.cur();
 
-        context.token(Char::token_kind(), content_begin, content_end);
+        context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
     }
 
@@ -81,7 +81,7 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink      = context.sink();
+            auto sink      = context.on(_ev::list{}, reader.cur());
             auto del_begin = reader.cur();
 
             using close = lexy::rule_parser<Close, _list_finish<NextParser, Args...>>;
@@ -99,7 +99,7 @@ struct _del : rule_base
                 {
                     auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
                                                                                  reader.cur());
-                    context.error(err);
+                    context.on(_ev::error{}, err);
                     return false;
                 }
                 // Try to parse the escape sequences.

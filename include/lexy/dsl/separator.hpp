@@ -42,7 +42,7 @@ struct _sep
                                              typename Reader::iterator sep_pos)
     {
         auto err = lexy::make_error<Reader, Tag>(sep_pos);
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 
     //=== dsl ===//

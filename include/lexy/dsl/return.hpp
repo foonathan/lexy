@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_RETURN_HPP_INCLUDED
 #define LEXY_DSL_RETURN_HPP_INCLUDED
 
+#include <lexy/action/base.hpp>
 #include <lexy/dsl/base.hpp>
 
 namespace lexyd
@@ -13,7 +14,7 @@ struct _ret : rule_base
 {
     // We unconditionally jump to the final parser.
     template <typename NextParser>
-    using parser = lexy::context_value_parser;
+    using parser = lexy::_detail::final_parser;
 };
 
 /// Finishes parsing a production without considering subsequent rules.

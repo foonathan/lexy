@@ -54,7 +54,7 @@ struct _loop : rule_base
             while (!loop_context.get(_break{}).loop_break)
             {
                 using parser
-                    = lexy::rule_parser<Rule, lexy::context_discard_parser<decltype(loop_context)>>;
+                    = lexy::rule_parser<Rule, lexy::discard_parser<decltype(loop_context)>>;
                 if (!parser::parse(loop_context, reader))
                     return false;
             }
@@ -85,8 +85,7 @@ struct _whl : rule_base
         {
             while (true)
             {
-                using branch_parser
-                    = lexy::rule_parser<Branch, lexy::context_discard_parser<Context>>;
+                using branch_parser = lexy::rule_parser<Branch, lexy::discard_parser<Context>>;
 
                 auto result = branch_parser::try_parse(context, reader);
                 if (result == lexy::rule_try_parse_result::backtracked)

@@ -38,7 +38,7 @@ struct _minus : token_base<_minus<Token, Except>>
         if (ec == token_engine::error_code::minus_failure)
         {
             auto err = lexy::make_error<Reader, lexy::minus_failure>(pos, reader.cur());
-            context.error(err);
+            context.on(_ev::error{}, err);
         }
         else
         {

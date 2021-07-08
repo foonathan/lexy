@@ -32,7 +32,7 @@ struct _lit : token_base<_lit<String>>
         auto err
             = lexy::make_error<Reader, lexy::expected_literal>(pos, string.c_str(),
                                                                token_engine::index_from_error(ec));
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 

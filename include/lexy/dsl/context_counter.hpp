@@ -162,7 +162,7 @@ struct _ctx_ceq<H, T...> : rule_base
             if (((value != context.get(T{})) || ...))
             {
                 auto err = lexy::make_error<Reader, lexy::unequal_counts>(reader.cur());
-                context.error(err);
+                context.on(_ev::error{}, err);
                 // Trivially recover.
             }
 

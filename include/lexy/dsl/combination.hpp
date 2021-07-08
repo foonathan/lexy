@@ -102,7 +102,7 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto sink       = context.sink();
+            auto sink       = context.on(_ev::list{}, reader.cur());
             bool handled[N] = {};
             auto comb_context
                 = context.insert(_break{}, _comb_state<decltype(sink)>{sink, handled});
@@ -123,7 +123,7 @@ struct _comb : rule_base
                 {
                     using tag = lexy::_detail::type_or<DuplicateError, lexy::combination_duplicate>;
                     auto err  = lexy::make_error<Reader, tag>(begin, reader.cur());
-                    context.error(err);
+                    context.on(_ev::error{}, err);
                     // We can trivially recover, but need to do another iteration.
                     --count;
                 }

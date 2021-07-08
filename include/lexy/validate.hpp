@@ -122,6 +122,8 @@ namespace lexy
 template <typename Input, typename ErrorCallback>
 class validate_handler
 {
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
 public:
     constexpr explicit validate_handler(const Input& input, const ErrorCallback& callback)
     : _sink(_get_error_sink(callback)), _input(&input)
@@ -132,39 +134,38 @@ public:
         return validate_result<ErrorCallback>(did_recover, LEXY_MOV(_sink).finish());
     }
 
-    //=== handler functions ===//
+    //=== events ===//
     template <typename Production>
-    using return_type_for = void;
+    struct marker
+    {
+        iterator position; // beginning of the production
+    };
 
     template <typename Production>
-    constexpr auto get_sink(Production)
+    using production_result = void;
+
+    template <typename Production, typename Iterator>
+    constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
     {
-        return noop.sink();
+        return {pos};
     }
 
     template <typename Production, typename Iterator>
-    constexpr auto start_production(Production, Iterator pos)
+    constexpr auto on(marker<Production>, parse_events::list, Iterator)
     {
-        return pos;
+        return lexy::noop.sink();
     }
 
-    template <typename Kind, typename Iterator>
-    constexpr void token(Kind, Iterator, Iterator)
-    {}
-
-    template <typename Production, typename Iterator, typename... Args>
-    constexpr void finish_production(Production, Iterator, Args&&...)
-    {}
-    template <typename Production, typename Iterator>
-    constexpr void backtrack_production(Production, Iterator)
-    {}
-
-    template <typename Production, typename Iterator, typename Error>
-    constexpr void error(Production p, Iterator pos, Error&& error)
+    template <typename Production, typename Error>
+    constexpr void on(marker<Production> m, parse_events::error, Error&& error)
     {
-        lexy::error_context err_ctx(p, *_input, pos);
+        lexy::error_context err_ctx(Production{}, *_input, m.position);
         _sink(err_ctx, LEXY_FWD(error));
     }
+
+    template <typename... Args>
+    constexpr void on(const Args&...)
+    {}
 
 private:
     _error_sink_t<ErrorCallback> _sink;
@@ -178,7 +179,7 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
     auto handler = validate_handler(input, callback);
     auto reader  = input.reader();
 
-    auto did_recover = lexy::_detail::parse_impl<Production>(handler, reader);
+    auto did_recover = lexy::_detail::action_impl<Production>(handler, reader);
     return LEXY_MOV(handler).get_result(static_cast<bool>(did_recover));
 }
 } // namespace lexy

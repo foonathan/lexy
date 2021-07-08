@@ -74,7 +74,7 @@ struct _switch_select<NextParser, Tag>
         // save.cur() is the beginning of the switched value, reader.cur() at the end.
         using tag = lexy::_detail::type_or<Tag, lexy::exhausted_switch>;
         auto err  = lexy::make_error<Reader, tag>(save.cur(), reader.cur());
-        context.error(err);
+        context.on(_ev::error{}, err);
         return false;
     }
 };

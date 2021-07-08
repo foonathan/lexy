@@ -124,39 +124,28 @@ struct test_handler
 
     constexpr test_handler(const CharT* str) : str(str) {}
 
+    //=== events ===//
     template <typename Production>
-    using return_type_for = int;
+    struct marker
+    {};
 
     template <typename Production>
-    LEXY_VERIFY_FN auto get_sink(Production)
+    using production_result = int;
+
+    template <typename Production, typename Iterator>
+    constexpr marker<Production> on(lexy::parse_events::production_start<Production>, Iterator)
+    {
+        return {};
+    }
+
+    template <typename Production, typename Iterator>
+    constexpr auto on(marker<Production>, lexy::parse_events::list, Iterator)
     {
         return Callback{str}.list();
     }
 
-    template <typename Production, typename Iterator>
-    LEXY_VERIFY_FN auto start_production(Production, Iterator)
-    {
-        return 0;
-    }
-
-    template <typename Kind, typename Iterator>
-    LEXY_VERIFY_FN void token(Kind, Iterator, Iterator)
-    {}
-
-    template <typename Production, typename... Args>
-    LEXY_VERIFY_FN int finish_production(Production, int, Args&&... args)
-    {
-        if constexpr (std::is_same_v<Production, Root>)
-            return Callback{str}.success(LEXY_FWD(args)...);
-        else
-            return Callback{str}.success(Production{}, LEXY_FWD(args)...);
-    }
-    template <typename Production>
-    constexpr void backtrack_production(Production, int)
-    {}
-
     template <typename Production, typename Error>
-    LEXY_VERIFY_FN void error(Production, int, Error&& error)
+    LEXY_VERIFY_FN void on(marker<Production>, lexy::parse_events::error, Error&& error)
     {
         LEXY_VERIFY_CHECK(result.error_count
                           < test_error_count); // Multiple errors shouldn't happen here.
@@ -166,36 +155,42 @@ struct test_handler
             result.error_code[result.error_count++]
                 = Callback{str}.error(Production{}, LEXY_FWD(error));
     }
+
+    template <typename Production, typename Iterator, typename... Args>
+    constexpr int on(marker<Production>&&, lexy::parse_events::production_finish<Production>,
+                     [[maybe_unused]] Iterator pos, Args&&... args)
+    {
+        if constexpr (std::is_same_v<Production, Root>)
+            return Callback{str}.success(pos, LEXY_FWD(args)...);
+        else
+            return Callback{str}.success(Production{}, LEXY_FWD(args)...);
+    }
+
+    template <typename... Args>
+    constexpr void on(const Args&...)
+    {}
 };
 
-struct test_final_rule : lexy::dsl::rule_base
+template <typename Base, typename Rule>
+struct _verify_production : Base
 {
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            // We sneak in the final input position.
-            return NextParser::parse(context, reader, reader.cur(), LEXY_FWD(args)...);
-        }
-    };
+    static constexpr auto rule = Rule{};
 };
 
 template <typename Callback, typename Encoding = test_encoding,
           typename Production = test_production, typename CharT, typename Rule>
-LEXY_VERIFY_FN test_result verify(Rule _rule, const CharT* str, std::size_t size = std::size_t(-1))
+LEXY_VERIFY_FN test_result verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
 {
     auto input = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
                                          : lexy::string_input<Encoding>(str, size);
 
-    using handler_t = test_handler<Callback, CharT, Production>;
+    using production = _verify_production<Production, Rule>;
+    using handler_t  = test_handler<Callback, CharT, production>;
 
     auto handler = handler_t{str};
     auto reader  = input.reader();
 
-    using rule = decltype(_rule + test_final_rule{});
-    if (auto value = lexy::_detail::parse_impl<Production, rule>(handler, reader))
+    if (auto value = lexy::_detail::action_impl<production>(handler, reader))
     {
         handler.result.recovered = true;
         handler.result.value     = *value;

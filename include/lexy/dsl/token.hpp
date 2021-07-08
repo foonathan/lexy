@@ -54,7 +54,7 @@ struct token_base : _token_base
             if (!lexy::engine_try_match<token_engine>(reader))
                 return lexy::rule_try_parse_result::backtracked;
             auto end = reader.cur();
-            context.token(Derived::token_kind(), begin, end);
+            context.on(_ev::token{}, Derived::token_kind(), begin, end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
@@ -80,7 +80,7 @@ struct token_base : _token_base
             {
                 token_engine::match(reader);
             }
-            context.token(Derived::token_kind(), position, reader.cur());
+            context.on(_ev::token{}, Derived::token_kind(), position, reader.cur());
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...);
@@ -125,7 +125,7 @@ struct _toke : token_base<_toke<Tag, Token>>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 
     static LEXY_CONSTEVAL auto token_kind()
@@ -144,12 +144,14 @@ struct _toke : token_base<_toke<Tag, Token>>
 //=== token rule ===//
 namespace lexyd
 {
-struct _token_dummy_production
-{};
-
 template <typename Rule>
 struct _token : token_base<_token<Rule>>
 {
+    struct _production
+    {
+        static constexpr auto rule = Rule{};
+    };
+
     struct token_engine : lexy::engine_matcher_base
     {
         enum class error_code
@@ -161,7 +163,7 @@ struct _token : token_base<_token<Rule>>
         static constexpr error_code match(Reader& reader)
         {
             auto handler = lexy::match_handler();
-            lexy::_detail::parse_impl<_token_dummy_production, Rule>(handler, reader);
+            lexy::_detail::action_impl<_production>(handler, reader);
             return handler ? error_code() : error_code::error;
         }
     };
@@ -172,7 +174,7 @@ struct _token : token_base<_token<Rule>>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 

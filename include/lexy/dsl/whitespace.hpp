@@ -36,9 +36,8 @@ struct _wsr : rule_base
                 auto ws_context = context.insert(lexy::_tag_whitespace{}, lexy::_tag_whitespace{});
 
                 // We can then parse the rule repeatedly using the special context.
-                using loop_parser
-                    = lexy::rule_parser<decltype(loop(Rule{} | break_)),
-                                        lexy::context_discard_parser<decltype(ws_context)>>;
+                using loop_parser = lexy::rule_parser<decltype(loop(Rule{} | break_)),
+                                                      lexy::discard_parser<decltype(ws_context)>>;
                 if (!loop_parser::parse(ws_context, reader))
                     return false;
             }
@@ -46,7 +45,7 @@ struct _wsr : rule_base
 
             // Add a whitespace token node.
             if (begin != end)
-                context.token(lexy::whitespace_token_kind, begin, end);
+                context.on(_ev::token{}, lexy::whitespace_token_kind, begin, end);
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }

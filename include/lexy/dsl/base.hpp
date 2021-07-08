@@ -18,6 +18,33 @@
 #    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
 #endif
 
+//=== parse_events ===//
+namespace lexy::parse_events
+{
+template <typename Production>
+struct production_start
+{};
+template <typename Production>
+struct production_finish
+{};
+template <typename Production>
+struct production_cancel
+{};
+
+struct error
+{};
+
+struct token
+{};
+struct list
+{};
+} // namespace lexy::parse_events
+
+namespace lexyd
+{
+namespace _ev = lexy::parse_events;
+}
+
 //=== parser ===//
 namespace lexy
 {
@@ -31,27 +58,16 @@ enum class rule_try_parse_result
     backtracked = 2,
 };
 
-/// A final parser that forwards all elements to the context.
-struct context_value_parser
-{
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader&, Args&&... args)
-    {
-        context.value(LEXY_FWD(args)...);
-        return true;
-    }
-};
-
 /// A final parser that drops all arguments; creating an empty result.
 template <typename Context>
-struct context_discard_parser
+struct discard_parser
 {
     template <typename NewContext, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(NewContext&, Reader&, Args&&...)
     {
-        static_assert(sizeof...(Args) == 0, "looped rule must not produce any values");
+        static_assert(sizeof...(Args) == 0, "discarded rule must not produce any values");
         static_assert(std::is_same_v<Context, NewContext>,
-                      "looped rule cannot add state to the context");
+                      "discarded rule cannot add state to the context");
         return true;
     }
 };
@@ -81,7 +97,7 @@ template <typename Context>
 using _ws_rule = std::conditional_t<
     // We need to disable whitespace if the context is already currently parsing whitespace.
     Context::contains(_tag_no_whitespace{}) || Context::contains(_tag_whitespace{}), void,
-    lexy::production_whitespace<typename Context::production, typename Context::root>>;
+    lexy::production_whitespace<typename Context::production, typename Context::root_production>>;
 
 template <typename Context, typename NextParser>
 using whitespace_parser = rule_parser<lexy::dsl::_wsr<_ws_rule<Context>>, NextParser>;

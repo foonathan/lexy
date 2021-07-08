@@ -24,7 +24,7 @@ struct _nl : token_base<_nl>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 
@@ -60,7 +60,7 @@ struct _eol : token_base<_eol>
                                       typename Reader::iterator pos)
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
-        context.error(err);
+        context.on(_ev::error{}, err);
     }
 };
 
