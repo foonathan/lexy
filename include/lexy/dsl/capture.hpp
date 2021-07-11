@@ -52,12 +52,6 @@ struct _cap : rule_base
                                                                 begin);
         }
     };
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Captures whatever the rule matches as a lexeme.

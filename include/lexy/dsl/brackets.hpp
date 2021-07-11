@@ -94,16 +94,6 @@ struct _brackets
     {
         return as_terminator().recovery_rule();
     }
-
-    //=== deprecated ===//
-    /// Sets the whitespace.
-    template <typename Ws>
-    constexpr auto operator[](Ws ws) const
-    {
-        auto open  = whitespaced(Open{}, ws);
-        auto close = whitespaced(Close{}, ws);
-        return _brackets<decltype(open), decltype(close)>{};
-    }
 };
 
 /// Defines open and close brackets.

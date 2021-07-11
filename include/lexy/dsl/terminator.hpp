@@ -100,15 +100,6 @@ struct _term
         else
             return recover(terminator()).limit(RecoveryLimit{}...);
     }
-
-    //=== deprecated ===//
-    /// Sets the whitespace that will be skipped before the terminator.
-    template <typename Ws>
-    constexpr auto operator[](Ws ws) const
-    {
-        auto branch = whitespaced(Terminator{}, ws);
-        return _term<decltype(branch)>{};
-    }
 };
 
 /// Creates a terminator using the given branch.

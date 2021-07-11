@@ -26,12 +26,6 @@ struct _nl : token_base<_nl>
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
         context.error(err);
     }
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Matches a newline character.
@@ -67,12 +61,6 @@ struct _eol : token_base<_eol>
     {
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
         context.error(err);
-    }
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
     }
 };
 

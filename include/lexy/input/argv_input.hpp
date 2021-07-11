@@ -194,12 +194,6 @@ struct _argvsep : token_base<_argvsep>
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
         context.error(err);
     }
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Matches the separator between arguments of an argv_input.

@@ -106,12 +106,6 @@ struct _prd : rule_base
 
     template <typename NextParser>
     using parser = _prd_parser<Production, _rule, NextParser>;
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Parses the production.
@@ -124,12 +118,6 @@ struct _rec : rule_base
     template <typename NextParser>
     struct parser : _prd_parser<Production, lexy::production_rule<Production>, NextParser>
     {};
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Parses the production, recursively.

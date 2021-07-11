@@ -169,15 +169,6 @@ struct _delim_dsl
         // Close never has any whitespace.
         return Close{};
     }
-
-    //=== deprecated ===//
-    /// Sets the whitespace.
-    template <typename Ws>
-    constexpr auto operator[](Ws ws) const
-    {
-        auto open = whitespaced(Open{}, ws);
-        return _delim_dsl<decltype(open), Close, Limit>{};
-    }
 };
 
 /// Parses everything between the two delimiters and captures it.

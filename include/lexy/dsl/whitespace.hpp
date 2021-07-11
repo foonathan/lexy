@@ -12,13 +12,6 @@
 #include <lexy/engine/while.hpp>
 #include <lexy/token.hpp>
 
-#ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
-#    define LEXY_DEPRECATED_WHITESPACE
-#else
-#    define LEXY_DEPRECATED_WHITESPACE                                                             \
-        [[deprecated("operator[] has been deprecated; use dsl::whitespace(ws) instead.")]]
-#endif
-
 namespace lexyd
 {
 template <typename Rule>
@@ -160,52 +153,6 @@ constexpr auto no_whitespace(Rule)
         return Rule{}; // Token already behaves that way.
     else
         return _wsn<Rule>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Rule, typename Whitespace>
-struct _wsd : rule_base
-{
-    static constexpr auto is_branch               = Rule::is_branch;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            using ws = decltype(token(loop(Whitespace{} | break_)));
-            lexy::engine_try_match<typename ws::token_engine>(reader);
-
-            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
-                                                                  LEXY_FWD(args)...);
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using rule = decltype(loop(token(Whitespace{}) | break_) + Rule{});
-            return lexy::rule_parser<rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename Tag>
-    constexpr auto error() const
-    {
-        static_assert(lexy::is_token_rule<Rule>);
-        return Rule{}.template error<Tag>();
-    }
-};
-
-/// Matches whitespace before parsing rule.
-template <typename Rule, typename Whitespace>
-LEXY_DEPRECATED_WHITESPACE constexpr auto whitespaced(Rule, Whitespace)
-{
-    return _wsd<Rule, Whitespace>{};
 }
 } // namespace lexyd
 

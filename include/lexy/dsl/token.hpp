@@ -174,12 +174,6 @@ struct _token : token_base<_token<Rule>>
         auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
         context.error(err);
     }
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Turns the arbitrary rule into a token by matching it without producing any values.

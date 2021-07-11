@@ -34,13 +34,6 @@ struct _lit : token_base<_lit<String>>
                                                                token_engine::index_from_error(ec));
         context.error(err);
     }
-
-    //=== dsl ===//
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 template <auto C>

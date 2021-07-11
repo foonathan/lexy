@@ -28,12 +28,6 @@ struct _eof : token_base<_eof>
         auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
         context.error(err);
     }
-
-    template <typename Whitespace>
-    constexpr auto operator[](Whitespace ws) const
-    {
-        return whitespaced(*this, ws);
-    }
 };
 
 /// Matches EOF.
