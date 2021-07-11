@@ -74,33 +74,24 @@ struct discard_parser
 } // namespace lexy
 
 //=== whitespace ===//
-namespace lexyd
+namespace lexy::_detail
 {
-template <typename Rule>
-struct _wsr;
-template <>
-struct _wsr<void> : rule_base
-{
-    template <typename NextParser>
-    using parser = NextParser;
-};
-} // namespace lexyd
+template <typename NextParser>
+struct automatic_ws_parser;
+}
 
 namespace lexy
 {
-struct _tag_no_whitespace
+template <typename Context, typename NextParser,
+          typename = lexy::production_whitespace<typename Context::production,
+                                                 typename Context::root_production>>
+struct whitespace_parser : _detail::automatic_ws_parser<NextParser>
 {};
-struct _tag_whitespace
-{};
-
-template <typename Context>
-using _ws_rule = std::conditional_t<
-    // We need to disable whitespace if the context is already currently parsing whitespace.
-    Context::contains(_tag_no_whitespace{}) || Context::contains(_tag_whitespace{}), void,
-    lexy::production_whitespace<typename Context::production, typename Context::root_production>>;
-
+// If we know the whitespace rule is void, go to NextParser immediately.
+// This is both an optimization and also doesn't require inclusion of whitespace.hpp.
 template <typename Context, typename NextParser>
-using whitespace_parser = rule_parser<lexy::dsl::_wsr<_ws_rule<Context>>, NextParser>;
+struct whitespace_parser<Context, NextParser, void> : NextParser
+{};
 } // namespace lexy
 
 #endif // LEXY_DSL_BASE_HPP_INCLUDED
