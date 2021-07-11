@@ -145,5 +145,8 @@ Values::
 
 {{% playground-example no_whitespace "Disable whitespace between two tokens" %}}
 
+TIP: In most situations, you should prefer a {{% docref "lexy::token_production" %}} instead.
+`no_whitespace` is mostly used as implementation detail for rules that should never have whitespace skipping, like {{% docref "lexy::dsl::delimited" %}}.
+
 CAUTION: When `r` contains a {{% docref "lexy::dsl::p" %}} or {{% docref "lexy::dsl::recurse" %}} rule, whitespace skipping is re-enabled while parsing the production.
 

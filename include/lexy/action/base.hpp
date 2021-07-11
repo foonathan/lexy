@@ -33,12 +33,8 @@ public:
 
     //=== events ===//
     template <typename Event, typename... Args>
-    constexpr auto on([[maybe_unused]] Event ev, [[maybe_unused]] Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        if constexpr (std::is_same_v<Event, parse_events::token> && contains(_tag_whitespace{}))
-            // Ignore tokens while skipping whitespace.
-            return;
-
         return _parent->on(ev, LEXY_FWD(args)...);
     }
 
