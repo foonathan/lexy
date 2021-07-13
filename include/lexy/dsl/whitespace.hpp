@@ -213,8 +213,8 @@ struct _wsn : rule_base
                                                                       LEXY_FWD(args)...);
 
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_detail::tag_no_whitespace{},
-                                             lexy::_detail::tag_no_whitespace{});
+            lexy::_detail::parse_context_var ws_context(context, lexy::_detail::tag_no_whitespace{},
+                                                        lexy::_detail::tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::try_parse(ws_context, reader, context,
                                                              LEXY_FWD(args)...);
         }
@@ -228,8 +228,8 @@ struct _wsn : rule_base
                                                                   LEXY_FWD(args)...);
 
             // Parse the rule using the context that doesn't allow inner whitespace.
-            auto ws_context = context.insert(lexy::_detail::tag_no_whitespace{},
-                                             lexy::_detail::tag_no_whitespace{});
+            lexy::_detail::parse_context_var ws_context(context, lexy::_detail::tag_no_whitespace{},
+                                                        lexy::_detail::tag_no_whitespace{});
             return lexy::rule_parser<Rule, _cont>::parse(ws_context, reader, context,
                                                          LEXY_FWD(args)...);
         }

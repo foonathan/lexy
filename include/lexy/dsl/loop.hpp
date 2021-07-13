@@ -50,7 +50,7 @@ struct _loop : rule_base
                 bool loop_break = false;
             };
 
-            auto loop_context = context.insert(_break{}, flag{});
+            lexy::_detail::parse_context_var loop_context(context, _break{}, flag{});
             while (!loop_context.get(_break{}).loop_break)
             {
                 using parser

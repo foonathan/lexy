@@ -31,7 +31,7 @@ struct _ctx_ccreate : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             static_assert(!Context::contains(Id{}));
-            auto counter_ctx = context.insert(Id{}, InitialValue);
+            lexy::_detail::parse_context_var counter_ctx(context, Id{}, InitialValue);
             return NextParser::parse(counter_ctx, reader, LEXY_FWD(args)...);
         }
     };

@@ -104,9 +104,11 @@ struct _comb : rule_base
 
             auto sink       = context.on(_ev::list{}, reader.cur());
             bool handled[N] = {};
-            auto comb_context
-                = context.insert(_break{}, _comb_state<decltype(sink)>{sink, handled});
-            auto& state = comb_context.get(_break{});
+            using state_t   = _comb_state<decltype(sink)>;
+
+            lexy::_detail::parse_context_var comb_context(context, _break{},
+                                                          state_t{sink, handled});
+            auto&                            state = comb_context.get(_break{});
 
             // Parse all iterations of the choice.
             for (auto count = 0; count < int(N); ++count)
