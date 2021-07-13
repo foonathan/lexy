@@ -21,14 +21,17 @@
 //=== parse_events ===//
 namespace lexy::parse_events
 {
+struct _production_event
+{};
+
 template <typename Production>
-struct production_start
+struct production_start : _production_event
 {};
 template <typename Production>
-struct production_finish
+struct production_finish : _production_event
 {};
 template <typename Production>
-struct production_cancel
+struct production_cancel : _production_event
 {};
 
 struct error
