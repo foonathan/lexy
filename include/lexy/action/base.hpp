@@ -19,70 +19,20 @@ using handler_production_result = typename Handler::template production_result<P
 template <typename Handler, typename Production>
 using handler_marker = typename Handler::template marker<Production>;
 
-template <typename Parent, typename Id, typename T>
-class parse_context_var
-{
-public:
-    constexpr explicit parse_context_var(Parent& parent, Id, T&& value)
-    : _parent(&parent), _value(LEXY_MOV(value))
-    {}
-
-    using handler         = typename Parent::handler;
-    using production      = typename Parent::production;
-    using root_production = typename Parent::root_production;
-
-    //=== events ===//
-    template <typename Event, typename... Args>
-    constexpr auto on(Event ev, Args&&... args)
-    {
-        return _parent->on(ev, LEXY_FWD(args)...);
-    }
-
-    //=== context variables ===//
-    template <typename Id2, typename U>
-    constexpr auto insert(Id2 id, U&& value)
-    {
-        return _detail::parse_context_var(*this, id, LEXY_FWD(value));
-    }
-
-    template <typename Id2>
-    static LEXY_CONSTEVAL bool contains([[maybe_unused]] Id2 id)
-    {
-        if constexpr (std::is_same_v<Id, Id2>)
-            return true;
-        else
-            return Parent::contains(id);
-    }
-
-    template <typename Id2>
-    constexpr auto& get([[maybe_unused]] Id2 id)
-    {
-        (void)id;
-        if constexpr (std::is_same_v<Id2, Id>)
-            return _value;
-        else
-            return _parent->get(id);
-    }
-
-    constexpr auto& parent()
-    {
-        return _parent->parent();
-    }
-
-private:
-    Parent* _parent;
-    T       _value;
-};
-
 template <typename Handler, typename Production, typename RootProduction>
 class parse_context
 {
 public:
+    //=== parse context ===//
     using handler         = Handler;
     using production      = Production;
     using root_production = RootProduction;
 
-    //=== events ===//
+    constexpr auto& production_context()
+    {
+        return *this;
+    }
+
     template <typename Event, typename... Args>
     constexpr auto on(Event ev, Args&&... args)
     {
@@ -98,12 +48,6 @@ public:
     void on(parse_events::production_cancel<Production>, const Args&...) = delete;
 
     //=== context variables ===//
-    template <typename Id, typename T>
-    constexpr auto insert(Id id, T&& value)
-    {
-        return parse_context_var(*this, id, LEXY_FWD(value));
-    }
-
     template <typename Id>
     static LEXY_CONSTEVAL bool contains(Id)
     {
@@ -115,11 +59,6 @@ public:
     {
         static_assert(lexy::_detail::error<Id>, "context does not contain a variable with that id");
         return nullptr;
-    }
-
-    constexpr auto& parent()
-    {
-        return *this;
     }
 
 private:
@@ -149,7 +88,7 @@ struct final_parser
     LEXY_DSL_FUNC bool parse(Context& _context, Reader& reader, Args&&... args)
     {
         using event   = parse_events::production_finish<typename Context::production>;
-        auto& context = _context.parent();
+        auto& context = _context.production_context();
 
         using result_t
             = handler_production_result<typename Context::handler, typename Context::production>;
@@ -219,7 +158,7 @@ struct production_parser
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
         _new_context<typename Context::handler, typename Context::root_production>
-            new_context(*context.parent()._handler, reader.cur());
+            new_context(*context.production_context()._handler, reader.cur());
         if (_parse_production(new_context, reader))
         {
             // Extract the value and continue.
@@ -239,7 +178,7 @@ struct production_parser
         -> lexy::rule_try_parse_result
     {
         _new_context<typename Context::handler, typename Context::root_production>
-            new_context(*context.parent()._handler, reader.cur());
+            new_context(*context.production_context()._handler, reader.cur());
         if (auto result = _try_parse_production(new_context, reader);
             result == lexy::rule_try_parse_result::ok)
         {

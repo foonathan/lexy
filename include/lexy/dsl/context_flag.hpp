@@ -19,7 +19,7 @@ struct _ctx_fcreate : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             static_assert(!Context::contains(Id{}));
-            auto flag_ctx = context.insert(Id{}, InitialValue);
+            lexy::_detail::parse_context_var flag_ctx(context, Id{}, InitialValue);
             return NextParser::parse(flag_ctx, reader, LEXY_FWD(args)...);
         }
     };
