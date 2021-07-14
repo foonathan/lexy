@@ -6,11 +6,11 @@
 #define TEST_DSL_VERIFY_HPP_INCLUDED
 
 #include <doctest/doctest.h>
+#include <lexy/action/match.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/lexeme.hpp>
-#include <lexy/match.hpp>
 
 #include "../test_encoding.hpp"
 

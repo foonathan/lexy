@@ -15,6 +15,9 @@ set(tests
         detail/type_name.cpp
 
         action/base.cpp
+        action/match.cpp
+        action/parse.cpp
+        action/validate.cpp
 
         callback/adapter.cpp
         callback/aggregate.cpp
@@ -103,11 +106,8 @@ set(tests
         error.cpp
         grammar.cpp
         lexeme.cpp
-        match.cpp
-        parse.cpp
         parse_tree.cpp
         token.cpp
-        validate.cpp
     )
 
 option(LEXY_DISABLE_CONSTEXPR_TESTS "whether or not constexpr unit tests are disabled" OFF)

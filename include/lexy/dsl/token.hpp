@@ -5,9 +5,9 @@
 #ifndef LEXY_DSL_TOKEN_HPP_INCLUDED
 #define LEXY_DSL_TOKEN_HPP_INCLUDED
 
+#include <lexy/action/match.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/error.hpp>
-#include <lexy/match.hpp>
 
 namespace lexy
 {

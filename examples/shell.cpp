@@ -6,9 +6,9 @@
 #include <memory>
 #include <string>
 
+#include <lexy/action/parse.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy/parse.hpp>
 
 #include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 #include <lexy_ext/shell.hpp>
