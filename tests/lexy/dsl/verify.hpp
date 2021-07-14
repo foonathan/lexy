@@ -124,13 +124,27 @@ struct test_handler
 
     constexpr test_handler(const CharT* str) : str(str) {}
 
+    //=== result ===//
+    template <typename Production>
+    using production_result = int;
+
+    template <typename Production>
+    constexpr test_result get_result_value(int value) && noexcept
+    {
+        result.recovered = true;
+        result.value     = value;
+        return result;
+    }
+    template <typename Production>
+    constexpr test_result get_result_empty() && noexcept
+    {
+        return result;
+    }
+
     //=== events ===//
     template <typename Production>
     struct marker
     {};
-
-    template <typename Production>
-    using production_result = int;
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(lexy::parse_events::production_start<Production>, Iterator)
@@ -187,16 +201,8 @@ LEXY_VERIFY_FN test_result verify(Rule, const CharT* str, std::size_t size = std
     using production = _verify_production<Production, Rule>;
     using handler_t  = test_handler<Callback, CharT, production>;
 
-    auto handler = handler_t{str};
-    auto reader  = input.reader();
-
-    if (auto value = lexy::_detail::action_impl<production>(handler, reader))
-    {
-        handler.result.recovered = true;
-        handler.result.value     = *value;
-    }
-
-    return handler.result;
+    auto reader = input.reader();
+    return lexy::do_action<production>(handler_t{str}, reader);
 }
 
 template <int Id>

@@ -30,13 +30,25 @@ struct whitespace_handler
 {
     Context* parent;
 
+    //=== result ===//
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    constexpr bool get_result_value() && noexcept
+    {
+        return true;
+    }
+    template <typename Production>
+    constexpr bool get_result_empty() && noexcept
+    {
+        return false;
+    }
+
     //=== events ===//
     template <typename Production>
     struct marker
     {};
-
-    template <typename Production>
-    using production_result = void;
 
     template <typename Rule, typename Iterator>
     constexpr auto on(parse_events::production_start<ws_production<Rule>>, Iterator)
@@ -87,7 +99,7 @@ struct manual_ws_parser
             // Parse the rule using a special handler that only forwards errors.
             using production = ws_production<Rule>;
             whitespace_handler<Context> ws_handler{&context};
-            if (!lexy::_detail::action_impl<production>(ws_handler, reader))
+            if (!lexy::do_action<production>(LEXY_MOV(ws_handler), reader))
                 return false;
         }
         auto end = reader.cur();

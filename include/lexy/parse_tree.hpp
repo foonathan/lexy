@@ -1032,6 +1032,21 @@ public:
         return LEXY_MOV(_validate).get_result(did_recover);
     }
 
+    //=== result ===//
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    constexpr auto get_result_value() && noexcept
+    {
+        return LEXY_MOV(_validate).template get_result_value<Production>();
+    }
+    template <typename Production>
+    constexpr auto get_result_empty() && noexcept
+    {
+        return LEXY_MOV(_validate).template get_result_empty<Production>();
+    }
+
     //=== events ===//
     template <typename Production>
     struct marker
@@ -1039,9 +1054,6 @@ public:
         typename Tree::builder::production_state                                      builder_state;
         typename lexy::validate_handler<Input, Callback>::template marker<Production> validate;
     };
-
-    template <typename Production>
-    using production_result = void;
 
     template <typename Production>
     constexpr auto on(parse_events::production_start<Production>, iterator pos)
@@ -1116,9 +1128,7 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 {
     auto handler = _pt_handler(tree, input, LEXY_MOV(callback));
     auto reader  = input.reader();
-
-    auto did_recover = lexy::_detail::action_impl<Production>(handler, reader);
-    return LEXY_MOV(handler).get_result(static_cast<bool>(did_recover));
+    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
 }
 } // namespace lexy
 

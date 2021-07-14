@@ -77,9 +77,11 @@ public:
     }
 
 private:
-    constexpr explicit parse_result(_impl_t&& impl, lexy::_detail::lazy_init<T>&& v) noexcept
-    : _impl(LEXY_MOV(impl)), _value(LEXY_MOV(v))
-    {}
+    constexpr explicit parse_result(_impl_t&& impl) noexcept : _impl(LEXY_MOV(impl)), _value() {}
+    constexpr explicit parse_result(_impl_t&& impl, T&& v) noexcept : _impl(LEXY_MOV(impl))
+    {
+        _value.emplace(LEXY_MOV(v));
+    }
 
     // In principle we could do a space optimization, as we can reconstruct the impl's status from
     // the state of _value and error. Feel free to implement it.
@@ -117,11 +119,7 @@ public:
                                               LEXY_MOV(value));
     }
 
-    //=== events ===//
-    template <typename Production>
-    using marker =
-        typename lexy::validate_handler<Input, ErrorCallback>::template marker<Production>;
-
+    //=== result ===//
     template <typename Production>
     static auto _value_callback()
     {
@@ -135,6 +133,25 @@ public:
     }
     template <typename Production>
     using production_result = typename decltype(_value_callback<Production>())::return_type;
+
+    template <typename Production>
+    constexpr auto get_result_value(production_result<Production>&& value) && noexcept
+    {
+        using result_t = parse_result<production_result<Production>, ErrorCallback>;
+        return result_t(LEXY_MOV(_validate).template get_result_value<Production>(),
+                        LEXY_MOV(value));
+    }
+    template <typename Production>
+    constexpr auto get_result_empty() && noexcept
+    {
+        using result_t = parse_result<production_result<Production>, ErrorCallback>;
+        return result_t(LEXY_MOV(_validate).template get_result_empty<Production>());
+    }
+
+    //=== events ===//
+    template <typename Production>
+    using marker =
+        typename lexy::validate_handler<Input, ErrorCallback>::template marker<Production>;
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
@@ -204,9 +221,7 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
 {
     auto handler = lexy::_parse_handler(state, input, LEXY_MOV(callback));
     auto reader  = input.reader();
-
-    auto value = lexy::_detail::action_impl<Production>(handler, reader);
-    return LEXY_MOV(handler).get_result(LEXY_MOV(value));
+    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
 }
 
 template <typename Production, typename Input, typename Callback>
