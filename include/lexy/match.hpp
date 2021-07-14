@@ -15,18 +15,29 @@ class match_handler
 public:
     constexpr match_handler() : _failed(false) {}
 
-    constexpr explicit operator bool() const noexcept
+    //=== result ===//
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    constexpr bool get_result_value() && noexcept
     {
+        // Parsing succeeded or parsing recovered from an error.
+        // Return true, if we had an error, false otherwise.
         return !_failed;
+    }
+    template <typename Production>
+    constexpr bool get_result_empty() && noexcept
+    {
+        // Parsing could not recover from an error, return false.
+        LEXY_ASSERT(_failed, "parsing failed without logging an error?!");
+        return false;
     }
 
     //=== events ===//
     template <typename Production>
     struct marker
     {};
-
-    template <typename Production>
-    using production_result = void;
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator)
@@ -57,13 +68,8 @@ private:
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto handler = match_handler{};
-    auto reader  = input.reader();
-
-    lexy::_detail::action_impl<Production>(handler, reader);
-
-    // We only match the production if no error was logged.
-    return static_cast<bool>(handler);
+    auto reader = input.reader();
+    return lexy::do_action<Production>(match_handler{}, reader);
 }
 } // namespace lexy
 

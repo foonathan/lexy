@@ -129,9 +129,19 @@ public:
     : _sink(_get_error_sink(callback)), _input(&input)
     {}
 
-    constexpr auto get_result(bool did_recover) &&
+    //=== result ===//
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    constexpr auto get_result_value() && noexcept
     {
-        return validate_result<ErrorCallback>(did_recover, LEXY_MOV(_sink).finish());
+        return validate_result<ErrorCallback>(true, LEXY_MOV(_sink).finish());
+    }
+    template <typename Production>
+    constexpr auto get_result_empty() && noexcept
+    {
+        return validate_result<ErrorCallback>(false, LEXY_MOV(_sink).finish());
     }
 
     //=== events ===//
@@ -140,9 +150,6 @@ public:
     {
         iterator position; // beginning of the production
     };
-
-    template <typename Production>
-    using production_result = void;
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
@@ -178,9 +185,7 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 {
     auto handler = validate_handler(input, callback);
     auto reader  = input.reader();
-
-    auto did_recover = lexy::_detail::action_impl<Production>(handler, reader);
-    return LEXY_MOV(handler).get_result(static_cast<bool>(did_recover));
+    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
 }
 } // namespace lexy
 

@@ -162,9 +162,8 @@ struct _token : token_base<_token<Rule>>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            auto handler = lexy::match_handler();
-            lexy::_detail::action_impl<_production>(handler, reader);
-            return handler ? error_code() : error_code::error;
+            return lexy::do_action<_production>(lexy::match_handler(), reader) ? error_code()
+                                                                               : error_code::error;
         }
     };
 

@@ -11,6 +11,12 @@
 #include <lexy/grammar.hpp>
 
 //=== parse_context ===//
+namespace lexy
+{
+template <typename Production, typename Handler, typename Reader>
+constexpr auto do_action(Handler&& handler, Reader& reader);
+}
+
 namespace lexy::_detail
 {
 template <typename Handler, typename Production>
@@ -104,11 +110,11 @@ private:
     template <typename, typename>
     friend struct production_parser;
     template <typename P, typename H, typename Reader>
-    friend constexpr auto action_impl(H& handler, Reader& reader);
+    friend constexpr auto lexy::do_action(H&& handler, Reader& reader);
 };
 } // namespace lexy::_detail
 
-//=== action_impl ===//
+//=== do_action ===//
 namespace lexy::_detail
 {
 struct final_parser
@@ -203,21 +209,38 @@ struct production_parser
         }
     }
 };
+} // namespace lexy::_detail
 
-template <typename Production, typename Handler, typename Reader>
-constexpr auto action_impl(Handler& handler, Reader& reader)
+namespace lexy
 {
-    parse_context<Handler, Production, Production> context(handler, reader.cur());
+template <typename Production, typename Handler, typename Reader>
+constexpr auto do_action(Handler&& handler, Reader& reader)
+{
+    static_assert(!std::is_reference_v<Handler>, "need to move handler in");
+    _detail::parse_context<Handler, Production, Production> context(handler, reader.cur());
 
-    if (!parse_production<Production>(context, reader))
+    if (!_detail::parse_production<Production>(context, reader))
     {
         // We had an error, cancel the production.
+        LEXY_ASSERT(!context._result, "result must be empty on cancel");
         LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.cur());
     }
 
-    return LEXY_MOV(context._result);
+    if (context._result)
+    {
+        using result_t = _detail::handler_production_result<Handler, Production>;
+        if constexpr (std::is_void_v<result_t>)
+            return LEXY_MOV(handler).template get_result_value<Production>();
+        else
+            return LEXY_MOV(handler).template get_result_value<Production>(
+                LEXY_MOV(*context._result));
+    }
+    else
+    {
+        return LEXY_MOV(handler).template get_result_empty<Production>();
+    }
 }
-} // namespace lexy::_detail
+} // namespace lexy
 
 #endif // LEXY_ACTION_BASE_HPP_INCLUDED
 
