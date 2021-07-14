@@ -24,6 +24,7 @@ set(header_files
         ${include_dir}/action/base.hpp
         ${include_dir}/action/match.hpp
         ${include_dir}/action/parse.hpp
+        ${include_dir}/action/parse_as_tree.hpp
         ${include_dir}/action/validate.hpp
 
         ${include_dir}/callback/adapter.hpp
