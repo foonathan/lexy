@@ -17,6 +17,7 @@ set(tests
         action/base.cpp
         action/match.cpp
         action/parse.cpp
+        action/parse_as_tree.cpp
         action/validate.cpp
 
         callback/adapter.cpp

@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 #include <lexy/action/match.hpp>
+#include <lexy/action/parse_as_tree.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy_ext/parse_tree_doctest.hpp>
 

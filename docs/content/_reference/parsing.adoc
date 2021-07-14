@@ -259,7 +259,14 @@ namespace lexy
     template <typename Input, typename TokenKind = void,
               typename MemoryResource = /* default */>
     using parse_tree_for = lexy::parse_tree<input_reader<Input>, TokenKind, MemoryResource>;
+}
+----
 
+.`lexy/action/parse_as_tree.hpp`
+[source,cpp]
+----
+namespace lexy
+{
     template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
               typename ErrorCallback>
     auto parse_as_tree(parse_tree<input_reader<Input>, TokenKind, MemoryResource>& tree,
