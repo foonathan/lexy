@@ -108,8 +108,8 @@ namespace grammar <2>
 }
 
 //=== parsing ===//
-#include <lexy/input/file.hpp> // lexy::read_file
-#include <lexy/parse.hpp>      // lexy::parse
+#include <lexy/input/file.hpp>   // lexy::read_file
+#include <lexy/action/parse.hpp> // lexy::parse
 
 int main()
 {

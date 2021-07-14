@@ -5,8 +5,8 @@
 #include "../../examples/email.cpp"
 
 #include <doctest/doctest.h>
+#include <lexy/action/match.hpp>
 #include <lexy/input/string_input.hpp>
-#include <lexy/match.hpp>
 
 namespace
 {

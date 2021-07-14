@@ -5,7 +5,7 @@
 #include <lexy/dsl/code_point.hpp>
 
 #include "verify.hpp"
-#include <lexy/parse.hpp>
+#include <lexy/action/parse.hpp>
 
 TEST_CASE("dsl::code_point")
 {

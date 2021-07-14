@@ -1,6 +1,6 @@
+#include <lexy/action/validate.hpp>
 #include <lexy/dsl.hpp>
 #include <lexy/input/string_input.hpp>
-#include <lexy/validate.hpp>
 #include <lexy_ext/report_error.hpp>
 
 namespace dsl = lexy::dsl;

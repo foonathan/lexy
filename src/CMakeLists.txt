@@ -22,6 +22,9 @@ set(header_files
         ${include_dir}/_detail/type_name.hpp
 
         ${include_dir}/action/base.hpp
+        ${include_dir}/action/match.hpp
+        ${include_dir}/action/parse.hpp
+        ${include_dir}/action/validate.hpp
 
         ${include_dir}/callback/adapter.hpp
         ${include_dir}/callback/aggregate.hpp
@@ -112,11 +115,8 @@ set(header_files
         ${include_dir}/error.hpp
         ${include_dir}/grammar.hpp
         ${include_dir}/lexeme.hpp
-        ${include_dir}/match.hpp
-        ${include_dir}/parse.hpp
         ${include_dir}/parse_tree.hpp
-        ${include_dir}/token.hpp
-        ${include_dir}/validate.hpp)
+        ${include_dir}/token.hpp)
 
 # Base target for common options.
 add_library(_lexy_base INTERFACE)

@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <lexy/match.hpp>
+#include <lexy/action/match.hpp>
 
 #include <doctest/doctest.h>
 #include <lexy/dsl/list.hpp>

@@ -1,6 +1,6 @@
+#include <lexy/action/parse.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy/parse.hpp>
 #include <lexy_ext/cfile.hpp>
 
 namespace dsl = lexy::dsl;

@@ -11,10 +11,10 @@
 #include <lexy/_detail/lazy_init.hpp>
 #include <lexy/_detail/memory_resource.hpp>
 #include <lexy/action/base.hpp>
+#include <lexy/action/validate.hpp>
 #include <lexy/grammar.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/token.hpp>
-#include <lexy/validate.hpp>
 
 //=== internal: pt_node ===//
 namespace lexy::_detail

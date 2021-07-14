@@ -22,7 +22,7 @@ By passing the entry production of the grammar to `lexy::match()`, `lexy::parse(
 [discrete]
 === Matching
 
-.`lexy/match.hpp`
+.`lexy/action/match.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -42,7 +42,7 @@ Add `lexy::dsl::eof` to the end if the production should consume the entire inpu
 [discrete]
 === Validating
 
-.`lexy/validate.hpp`
+.`lexy/action/validate.hpp`
 [source,cpp]
 ----
 namespace lexy
@@ -90,7 +90,7 @@ Add `lexy::dsl::eof` to the end if the production should consume the entire inpu
 [discrete]
 === Parsing
 
-.`lexy/parse.hpp`
+.`lexy/action/parse.hpp`
 [source,cpp]
 ----
 namespace lexy

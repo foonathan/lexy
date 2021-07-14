@@ -5,8 +5,8 @@
 #include "../../examples/json.cpp"
 
 #include <doctest/doctest.h>
+#include <lexy/action/match.hpp>
 #include <lexy/input/string_input.hpp>
-#include <lexy/match.hpp>
 #include <lexy_ext/parse_tree_doctest.hpp>
 
 // We copy the conformance tests from https://github.com/miloyip/nativejson-benchmark.
