@@ -77,9 +77,13 @@ public:
     }
 
 private:
-    constexpr explicit parse_result(_impl_t&& impl) noexcept : _impl(LEXY_MOV(impl)), _value() {}
+    constexpr explicit parse_result(_impl_t&& impl) noexcept : _impl(LEXY_MOV(impl)), _value()
+    {
+        LEXY_PRECONDITION(impl.is_fatal_error());
+    }
     constexpr explicit parse_result(_impl_t&& impl, T&& v) noexcept : _impl(LEXY_MOV(impl))
     {
+        LEXY_PRECONDITION(impl.is_success() || impl.is_recovered_error());
         _value.emplace(LEXY_MOV(v));
     }
 

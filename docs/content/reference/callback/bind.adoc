@@ -150,7 +150,7 @@ CAUTION: Arguments to the bound callback are silently discarded if they're not n
 namespace lexy
 {
     template <typename ... SinkArgs, typename ... BoundArgs>
-    constexpr _sink_<> auto bind(_sink_<SinkArgs...> auto sink, BoundArgs&&... args);
+    constexpr _sink_<> auto bind_sink(_sink_<SinkArgs...> auto sink, BoundArgs&&... args);
 }
 ----
 

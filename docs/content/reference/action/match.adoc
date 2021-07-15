@@ -1,0 +1,33 @@
+---
+layout: header
+header: "lexy/action/match.hpp"
+entities:
+  "lexy::match": match
+---
+
+[#match]
+== Action `lexy::match`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ Production>
+    constexpr bool match(const _input_ auto& input);
+}
+----
+
+[.lead]
+An action that determines whether `Production` matches on `input`.
+
+Parses `Production` on input.
+All values produced during parsing are discarded;
+all errors ignored.
+Returns `true` if parsing was successful without errors,
+returns `false` if parsing lead to an error, even if it recovered.
+
+TIP: Use {{% docref "lexy::validate" %}} to get information about the parse error.
+
+NOTE: `Production` does not need to match the entire `input` to succeed.
+Use {{% docref "lexy::dsl::eof" %}} if it should fail when it didn't consume the entire input.
+
