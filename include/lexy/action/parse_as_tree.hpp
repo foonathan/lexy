@@ -45,7 +45,7 @@ public:
     template <typename Production>
     struct marker
     {
-        typename Tree::builder::production_state                                      builder_state;
+        typename Tree::builder::marker                                                builder;
         typename lexy::validate_handler<Input, Callback>::template marker<Production> validate;
     };
 
@@ -90,7 +90,7 @@ public:
             // Finish tree instead of production.
             *_tree = LEXY_MOV(*_builder).finish();
         else
-            _builder->finish_production(LEXY_MOV(m.builder_state));
+            _builder->finish_production(LEXY_MOV(m.builder));
     }
     template <typename Production>
     constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
@@ -99,7 +99,7 @@ public:
             // Clear tree instead of finishing production.
             _tree->clear();
         else
-            _builder->backtrack_production(LEXY_MOV(m.builder_state));
+            _builder->cancel_production(LEXY_MOV(m.builder));
     }
 
     template <typename... Args>
