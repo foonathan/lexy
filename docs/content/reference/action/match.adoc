@@ -20,7 +20,7 @@ namespace lexy
 [.lead]
 An action that determines whether `Production` matches on `input`.
 
-Parses `Production` on input.
+It parses `Production` on input.
 All values produced during parsing are discarded;
 all errors ignored.
 Returns `true` if parsing was successful without errors,
