@@ -84,7 +84,7 @@ concept production = requires {
 The grammar is specified by _productions_: classes with a `::rule` member that specifies the {{% rule %}}.
 They can optionally have a `::whitespace` member that controls {{% docref "whitespace" "automatic whitespace skipping" %}}.
 Both of those are specified in a C++ DSL.
-For some actions, they also need a `::value` member that controls the value produced by parsing the production.
+The action {{% docref "lexy::parse" %}} also needs a `::value` member that controls the value produced by parsing the production.
 It is specified using callbacks, special function objects, and sinks.
 
 link:{{< ref "grammar" >}}[`lexy/grammar.hpp`]::
@@ -93,6 +93,8 @@ link:{{< ref "dsl" >}}[`lexy/dsl.hpp`]::
   The DSL for specifying parse rules.
 link:{{< ref "callback" >}}[`lexy/callback.hpp`]::
   The predefined callbacks and sinks for specifying the value.
+
+TIP: It is a recommended to put all the productions into a separate namespace.
 
 include::content/_reference/parsing.adoc[]
 
