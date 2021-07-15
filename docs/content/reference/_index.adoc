@@ -98,7 +98,18 @@ link:{{< ref "callback" >}}[`lexy/callback.hpp`]::
 
 TIP: It is a recommended to put all the productions into a separate namespace.
 
-include::content/_reference/parsing.adoc[]
+== Actions
+
+Actions take a grammar and an input, and do something with the grammar on that input.
+
+{{% docref "lexy::match" %}}::
+  Matches a grammar on an input and return a `true`/`false` result.
+{{% docref "lexy::validate" %}}::
+  Validates that a grammar matches on an input, and returns the errors if it does not.
+{{% docref "lexy::parse" %}}::
+  Parses a grammar on an input and returns its value.
+{{% docref "lexy::parse_as_tree" %}}::
+  Parses a grammar on an input and returns the parse tree.
 
 include::content/_reference/glossary.adoc[]
 
