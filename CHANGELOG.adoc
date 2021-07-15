@@ -3,10 +3,12 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
-== 2021-07-14
+== 2021-07-15
 
 * Moved `lexy/match.hpp`, `lexy/parse.hpp`, and `lexy/validate.hpp` to `lexy/action/match.hpp`, `lexy/action/parse.hpp` and `lexy/action/validate.hpp`.
 * Moved `lexy::parse_as_tree()` to new header `lexy/action/parse_as_tree.hpp`; `lexy::parse_tree` stayed in `lexy/parse_tree.hpp`.
+* Renamed `lexy::parse_tree::builder::backtrack_production` to `cancel_production`,
+  and its `production_state` to `marker`.
 
 == 2021-07-01
 

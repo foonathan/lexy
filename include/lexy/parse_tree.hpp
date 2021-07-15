@@ -406,8 +406,6 @@ using parse_tree_for = lexy::parse_tree<lexy::input_reader<Input>, TokenKind, Me
 template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::builder
 {
-    struct state;
-
 public:
     template <typename Production>
     explicit builder(parse_tree&& tree, Production production) : _result(LEXY_MOV(tree))
@@ -419,106 +417,22 @@ public:
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur = state(_result._root);
+        _cur = marker(_result._root);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
     {}
 
-    using production_state = state;
-
-    template <typename Production>
-    auto start_production(Production production)
-    {
-        if constexpr (lexy::is_transparent_production<Production>)
-            // Don't need to add a new node for a transparent production.
-            return state();
-
-        // Allocate a node for the production and append it to the current child list.
-        // We reserve enough memory to allow for a trailing pointer.
-        _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
-                                + sizeof(_detail::pt_node_ptr<Reader>));
-        auto node
-            = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        // Note: don't append the node yet, we might still backtrack.
-
-        // Subsequent insertions are to the new node, so update state and return old one.
-        auto old = LEXY_MOV(_cur);
-        _cur     = state(node);
-        return old;
-    }
-
-    void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
-               typename Reader::iterator end)
-    {
-        if (!_kind && begin == end)
-            // Don't add empty, unknown tokens.
-            return;
-
-        auto kind = token_kind<TokenKind>::to_raw(_kind);
-
-        if (auto token = _cur.last_child.token();
-            _cur.prod->token_production && token && token->kind == kind)
-        {
-            // We're having the same token again, merge with the previous one.
-            token->update_end(end);
-        }
-        else
-        {
-            // Allocate and append.
-            _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
-            auto node
-                = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin,
-                                                                                    end);
-            _cur.append(node);
-        }
-    }
-
-    void finish_production(state&& s)
-    {
-        if (!s.prod)
-            // We're finishing with a transparent production, do nothing.
-            return;
-
-        // We're done with the current production.
-        _cur.finish();
-        // Append to previous production.
-        s.append(_cur.prod);
-        // Continue with the previous production.
-        _cur = LEXY_MOV(s);
-    }
-
-    void backtrack_production(state&& s)
-    {
-        if (!s.prod)
-            // We're backtracking a transparent production, do nothing.
-            return;
-
-        // Deallocate everything from the backtracked production.
-        _result._buffer.unwind(_cur.prod);
-        // Continue with previous production.
-        _cur = LEXY_MOV(s);
-    }
-
-    parse_tree finish() &&
-    {
-        LEXY_PRECONDITION(_cur.prod == _result._root);
-        _cur.finish();
-        return LEXY_MOV(_result);
-    }
-
-private:
-    parse_tree _result;
-    struct state
+    struct marker
     {
         // The current production all tokens are appended to.
         _detail::pt_node_production<Reader>* prod = nullptr;
         // The last child of the current production.
         _detail::pt_node_ptr<Reader> last_child;
 
-        state() = default;
+        marker() = default;
 
-        explicit state(_detail::pt_node_production<Reader>* prod) : prod(prod) {}
+        explicit marker(_detail::pt_node_production<Reader>* prod) : prod(prod) {}
 
         template <typename T>
         void append(T* child)
@@ -562,7 +476,91 @@ private:
                 // The pointer of the last child needs to point back to prod.
                 last_child.base()->ptr.set_parent(prod);
         }
-    } _cur;
+    };
+
+    template <typename Production>
+    auto start_production(Production production)
+    {
+        if constexpr (lexy::is_transparent_production<Production>)
+            // Don't need to add a new node for a transparent production.
+            return marker();
+
+        // Allocate a node for the production and append it to the current child list.
+        // We reserve enough memory to allow for a trailing pointer.
+        _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
+                                + sizeof(_detail::pt_node_ptr<Reader>));
+        auto node
+            = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
+        // Note: don't append the node yet, we might still backtrack.
+
+        // Subsequent inertions are to the new node, so update marker and return old one.
+        auto old = LEXY_MOV(_cur);
+        _cur     = marker(node);
+        return old;
+    }
+
+    void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
+               typename Reader::iterator end)
+    {
+        if (!_kind && begin == end)
+            // Don't add empty, unknown tokens.
+            return;
+
+        auto kind = token_kind<TokenKind>::to_raw(_kind);
+
+        if (auto token = _cur.last_child.token();
+            _cur.prod->token_production && token && token->kind == kind)
+        {
+            // We're having the same token again, merge with the previous one.
+            token->update_end(end);
+        }
+        else
+        {
+            // Allocate and append.
+            _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
+            auto node
+                = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin,
+                                                                                    end);
+            _cur.append(node);
+        }
+    }
+
+    void finish_production(marker&& m)
+    {
+        if (!m.prod)
+            // We're finishing with a transparent production, do nothing.
+            return;
+
+        // We're done with the current production.
+        _cur.finish();
+        // Append to previous production.
+        m.append(_cur.prod);
+        // Continue with the previous production.
+        _cur = LEXY_MOV(m);
+    }
+
+    void cancel_production(marker&& m)
+    {
+        if (!m.prod)
+            // We're backtracking a transparent production, do nothing.
+            return;
+
+        // Deallocate everything from the backtracked production.
+        _result._buffer.unwind(_cur.prod);
+        // Continue with previous production.
+        _cur = LEXY_MOV(m);
+    }
+
+    parse_tree&& finish() &&
+    {
+        LEXY_PRECONDITION(_cur.prod == _result._root);
+        _cur.finish();
+        return LEXY_MOV(_result);
+    }
+
+private:
+    parse_tree _result;
+    marker     _cur;
 };
 
 template <typename Reader, typename TokenKind, typename MemoryResource>

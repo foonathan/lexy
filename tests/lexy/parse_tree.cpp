@@ -163,12 +163,12 @@ TEST_CASE("parse_tree::builder")
         auto tree = [&] {
             parse_tree::builder builder(root_p{});
 
-            std::vector<parse_tree::builder::production_state> states;
+            std::vector<parse_tree::builder::marker> markers;
             for (auto i = 0u; i != many_count; ++i)
             {
-                auto state = builder.start_production(child_p{});
+                auto m = builder.start_production(child_p{});
                 builder.token(token_kind::a, input.data(), input.data() + input.size());
-                builder.finish_production(LEXY_MOV(state));
+                builder.finish_production(LEXY_MOV(m));
             }
 
             return LEXY_MOV(builder).finish();
@@ -189,17 +189,17 @@ TEST_CASE("parse_tree::builder")
         auto tree = [&] {
             parse_tree::builder builder(root_p{});
 
-            std::vector<parse_tree::builder::production_state> states;
+            std::vector<parse_tree::builder::marker> markers;
             for (auto i = 0u; i != many_count; ++i)
             {
-                auto state = builder.start_production(child_p{});
-                states.push_back(LEXY_MOV(state));
+                auto m = builder.start_production(child_p{});
+                markers.push_back(LEXY_MOV(m));
             }
             builder.token(token_kind::a, input.data(), input.data() + input.size());
             for (auto i = 0u; i != many_count; ++i)
             {
-                builder.finish_production(LEXY_MOV(states.back()));
-                states.pop_back();
+                builder.finish_production(LEXY_MOV(markers.back()));
+                markers.pop_back();
             }
 
             return LEXY_MOV(builder).finish();
