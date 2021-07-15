@@ -121,7 +121,7 @@ namespace lexy
 {
     template <_production_ Production>
     constexpr auto validate(const _input_ auto& input,
-                            _error-callback_ error_callback)
+                            _error-callback_ auto error_callback)
       -> validate_result<decltype(error_callback)>;
 }
 ----
@@ -129,7 +129,7 @@ namespace lexy
 [.lead]
 An action that validates `input` according to `Production`.
 
-Parses `Production` on input.
+It parses `Production` on input.
 All values produced during parsing are discarded;
 all errors raised are forwarded to the {{% error-callback %}}.
 Returns the {{% docref "lexy::validate_result" %}} containing the result of the error callback.
