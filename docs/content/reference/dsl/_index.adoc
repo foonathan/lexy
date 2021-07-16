@@ -1,10 +1,6 @@
 ---
 layout: single
 header: "lexy/dsl.hpp"
-menu:
-  main:
-    name: "DSL"
-    weight: 3
 entities:
   "rule": doc
 ---
