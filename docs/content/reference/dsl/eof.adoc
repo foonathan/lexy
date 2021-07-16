@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/eof.hpp"
 entities:
   "lexy::dsl::eof": eof

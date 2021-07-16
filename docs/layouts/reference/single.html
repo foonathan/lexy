@@ -1,5 +1,9 @@
 {{ define "title" }}
-{{ .Params.header }} — {{ .Site.Title }}
+{{ if (isset .Params "header") }}
+    {{ .Params.header }} — {{ .Site.Title }}
+{{ else }}
+    {{ .Page.Title }} - {{ .Site.Title }}
+{{ end }}
 {{ end }}
 
 {{ define "main" }}
@@ -7,7 +11,11 @@
 
 <article id="doc">
     <header>
+        {{ if (isset .Params "header") }}
         <h1>Header <code>{{ .Params.header }}</code> </h1>
+        {{ else }}
+        <h1>{{ .Page.Title }}</h1>
+        {{ end }}
         <nav>
             <a href="{{ .Site.Params.github_src_prefix }}/include/{{ .Params.header }}">
                 {{ (resources.Get "icons/github.svg").Content | safeHTML }} View source
@@ -30,7 +38,7 @@
     {{ .Content }}
     </section>
 
-    {{- if and (eq (.Params.umbrella | default false) false) (.Scratch.Get "see-also") -}}
+    {{- if and (ne .Kind "section") (.Scratch.Get "see-also") -}}
     <section id="see-also">
         <h2>See also</h2>
         <ul>

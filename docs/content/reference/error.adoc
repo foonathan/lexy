@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/error.hpp"
 entities:
   "lexy::error": error

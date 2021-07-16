@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/literal.hpp"
 entities:
   "lexy::dsl::lit": lit

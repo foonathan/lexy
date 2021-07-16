@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/input/string_input.hpp"
 entities:
   "lexy::string_input": string_input

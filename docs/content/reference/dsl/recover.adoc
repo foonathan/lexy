@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/recover.hpp"
 entities:
   "error recovery": doc

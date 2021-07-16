@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/branch.hpp"
 entities:
   "branch-rule": doc

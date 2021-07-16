@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/context_counter.hpp"
 entities:
   "lexy::dsl::context_counter": context_counter

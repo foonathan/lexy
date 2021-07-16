@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/noop.hpp"
 entities:
   "lexy::noop": noop

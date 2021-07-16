@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/if.hpp"
 entities:
   "lexy::dsl::if_": if_

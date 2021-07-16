@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/parse_tree.hpp"
 entities:
   "lexy::parse_tree": parse_tree

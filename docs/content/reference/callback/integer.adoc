@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/integer.hpp"
 entities:
   "lexy::as_integer": as_integer

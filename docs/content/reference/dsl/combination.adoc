@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/combination.hpp"
 entities:
   "lexy::dsl::combination": combination

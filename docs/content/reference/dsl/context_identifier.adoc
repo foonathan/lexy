@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/context_identifier.hpp"
 entities:
   "lexy::dsl::context_identifier": context_identifier

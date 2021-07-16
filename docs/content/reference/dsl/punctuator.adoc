@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/punctuator.hpp"
 entities:
   punctuators: doc

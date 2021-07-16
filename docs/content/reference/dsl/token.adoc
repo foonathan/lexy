@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/token.hpp"
 entities:
   "token-rule": doc

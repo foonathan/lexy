@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/symbol.hpp"
 entities:
   "lexy::symbol_table": "symbol_table"

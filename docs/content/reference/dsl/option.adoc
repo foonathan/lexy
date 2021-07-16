@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/option.hpp"
 entities:
   "lexy::nullopt": nullopt

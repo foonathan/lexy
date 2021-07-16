@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/position.hpp"
 entities:
   "lexy::dsl::position": position

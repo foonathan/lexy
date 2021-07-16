@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/newline.hpp"
 entities:
   "lexy::dsl::newline": newline

@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/lookahead.hpp"
 entities:
   "lexy::dsl::lookahead": lookahead

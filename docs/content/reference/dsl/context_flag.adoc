@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/context_flag.hpp"
 entities:
   "lexy::dsl::context_flag": context_flag

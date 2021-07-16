@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/integer.hpp"
 entities:
   "lexy::integer_traits": integer_traits

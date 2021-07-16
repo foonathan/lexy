@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/string.hpp"
 entities:
   "lexy::as_string": as_string

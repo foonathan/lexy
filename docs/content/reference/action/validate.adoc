@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/action/validate.hpp"
 entities:
   "lexy::validate_result": validate_result
