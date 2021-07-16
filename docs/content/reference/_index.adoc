@@ -7,18 +7,18 @@ menu:
     weight: 2
 outputs: [html, json]
 ---
-:toc: left
-:toclevels: 3
-:source-highlighter: rouge
 
-This is the reference documentation for lexy.
+To use lexy, you need three things:
 
-****
-The documentation is currently in the process of being rewritten.
-As such, some parts of this page are already transformed into high-level entry points with links to the actual documentation,
-while others are still the full documentation inline.
-****
+1. Define a link:#grammar[grammar] using the rule DSL and callbacks.
+2. Create an link:#input[input] object that represents the input you want to parse.
+3. Call an link:#action[action] that will parse the grammar on the input.
 
+lexy is designed to work with your own types and data structures.
+As such, its usage can be hidden away in the implementation of a parse function whose interface does not mention lexy specific types.
+Nevertheless, lexy defines some link:#infrastructure[infrastructure] types that can be used as vocabulary types in your project interfaces.
+
+[#infrastructure]
 == Infrastructure
 
 {{% docref "lexy::code_point" %}}::
@@ -32,6 +32,7 @@ while others are still the full documentation inline.
 {{% docref "lexy::error" %}} and {{% docref "lexy::error_context" %}}::
   The parse errors.
 
+[#input]
 == Inputs and Encodings
 
 [source,cpp]
@@ -71,6 +72,7 @@ The input itself is unchanging and it produces a reader which remembers the curr
 {{% docref "lexy::argv_input" %}}::
   Use the command-line arguments as input.
 
+[#grammar]
 == The grammar DSL
 
 [source,cpp]
@@ -98,6 +100,7 @@ link:{{< ref "callback" >}}[`lexy/callback.hpp`]::
 
 TIP: It is a recommended to put all the productions into a separate namespace.
 
+[#action]
 == Actions
 
 Actions take a grammar and an input, and do something with the grammar on that input.
