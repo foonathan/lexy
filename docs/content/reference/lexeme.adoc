@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/lexeme.hpp"
 entities:
   "lexy::lexeme": lexeme

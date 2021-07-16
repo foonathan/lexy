@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/times.hpp"
 entities:
   "lexy::dsl::times": times

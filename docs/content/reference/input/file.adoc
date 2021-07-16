@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/input/file.hpp"
 entities:
   "lexy::file_error": read_file

@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/grammar.hpp"
 entities:
   "lexy::production_name": production_name

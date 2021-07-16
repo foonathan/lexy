@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/return.hpp"
 entities:
   "lexy::dsl::return_": return_

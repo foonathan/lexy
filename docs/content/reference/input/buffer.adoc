@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/input/buffer.hpp"
 entities:
   "lexy::buffer": buffer

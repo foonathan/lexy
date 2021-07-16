@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/code_point.hpp"
 entities:
   "lexy::code_point": code_point

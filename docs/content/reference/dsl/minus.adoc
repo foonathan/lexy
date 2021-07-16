@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/minus.hpp"
 entities:
   "lexy::dsl::operator-": minus

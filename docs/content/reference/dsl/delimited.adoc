@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/delimited.hpp"
 entities:
   "lexy::dsl::delimited": delimited

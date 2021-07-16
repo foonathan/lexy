@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/brackets.hpp"
 entities:
   "lexy::dsl::brackets": brackets

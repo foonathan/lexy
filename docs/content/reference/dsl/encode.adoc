@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/encode.hpp"
 entities:
   "lexy::dsl::encode": encode

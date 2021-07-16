@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/separator.hpp"
 entities:
   "separator": doc

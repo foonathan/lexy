@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/list.hpp"
 entities:
   "lexy::dsl::list": list

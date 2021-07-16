@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/container.hpp"
 entities:
   "lexy::as_list": as_list

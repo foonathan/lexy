@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/token.hpp"
 entities:
   "lexy::predefined_token_kind": token_kind

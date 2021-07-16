@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/identifier.hpp"
 entities:
   "lexy::dsl::identifier": identifier

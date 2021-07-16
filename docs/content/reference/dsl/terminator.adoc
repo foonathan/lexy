@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/terminator.hpp"
 entities:
   "lexy::dsl::terminator": terminator

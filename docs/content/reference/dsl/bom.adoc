@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/bom.hpp"
 entities:
   "lexy::dsl::bom": bom

@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/until.hpp"
 entities:
   "lexy::dsl::until": until

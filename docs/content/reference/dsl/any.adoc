@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/any.hpp"
 entities:
   "lexy::dsl::any": any

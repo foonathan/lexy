@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/choice.hpp"
 entities:
   "lexy::dsl::operator|": choice

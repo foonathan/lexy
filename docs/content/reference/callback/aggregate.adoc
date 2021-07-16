@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/aggregate.hpp"
 entities:
   "lexy::as_aggregate": as_aggregate

@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/whitespace.hpp"
 entities:
   "whitespace": doc

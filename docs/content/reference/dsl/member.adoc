@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/member.hpp"
 entities:
   "lexy::dsl::member": member

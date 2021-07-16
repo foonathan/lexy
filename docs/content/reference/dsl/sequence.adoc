@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/sequence.hpp"
 entities:
   "lexy::dsl::operator+": sequence

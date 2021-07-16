@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/encoding.hpp"
 entities:
   "encoding": doc

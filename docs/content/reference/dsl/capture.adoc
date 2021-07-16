@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/capture.hpp"
 entities:
   "lexy::dsl::capture": capture

@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/loop.hpp"
 entities:
   "lexy::dsl::loop": loop

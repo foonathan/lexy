@@ -1,10 +1,10 @@
 ---
+layout: single
 title: "Reference"
 menu:
   main:
     name: "Reference"
     weight: 2
-layout: legacy
 outputs: [html, json]
 ---
 :toc: left

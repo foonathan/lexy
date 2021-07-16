@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/ascii.hpp"
 entities:
   "lexy::dsl::ascii": doc

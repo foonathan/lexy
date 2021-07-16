@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/input/argv_input.hpp"
 entities:
   "lexy::argv_iterator": range

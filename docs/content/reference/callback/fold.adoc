@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/callback/fold.hpp"
 entities:
   "lexy::fold": fold

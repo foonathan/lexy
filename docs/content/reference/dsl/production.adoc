@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/production.hpp"
 entities:
   "lexy::dsl::inline_": inline_

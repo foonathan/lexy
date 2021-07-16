@@ -1,5 +1,4 @@
 ---
-layout: header
 header: "lexy/dsl/sign.hpp"
 entities:
   "lexy::dsl::plus_sign": plus_sign

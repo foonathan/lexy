@@ -1,7 +1,6 @@
 ---
-layout: header
+layout: single
 header: "lexy/dsl.hpp"
-umbrella: true
 menu:
   main:
     name: "DSL"
