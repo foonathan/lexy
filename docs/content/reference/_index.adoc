@@ -111,5 +111,3 @@ Actions take a grammar and an input, and do something with the grammar on that i
 {{% docref "lexy::parse_as_tree" %}}::
   Parses a grammar on an input and returns the parse tree.
 
-include::content/_reference/glossary.adoc[]
-
