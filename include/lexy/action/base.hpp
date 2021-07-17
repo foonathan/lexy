@@ -56,7 +56,12 @@ public:
         return nullptr;
     }
 
+#ifndef _MSC_VER
 private:
+    // MSVC is a bad compiler and should feel bad.
+    // Or at least fix their friend declarations.
+#endif
+
     template <typename Iterator>
     constexpr explicit parse_context(Handler& handler, Iterator begin)
     : _handler(&handler), _marker(handler.on(parse_events::production_start<Production>{}, begin))
