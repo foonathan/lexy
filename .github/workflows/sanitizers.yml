@@ -25,3 +25,20 @@ jobs:
       env:
         ASAN_OPTIONS: detect_stack_use_after_return=1
 
+  clang-tidy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+    - name: Install ninja and clang-tidy
+      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build clang-tidy
+
+    - name: Configure
+      working-directory: build/
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+    - name: Build
+      working-directory: build/
+      run: cmake --build .
+
