@@ -23,7 +23,5 @@ jobs:
       working-directory: build/
       run: ctest -C Debug --output-on-failure
 
-    - name: Collect code coverage
-      working-directory: build/
-      run: bash <(curl -s https://codecov.io/bash)
+    - uses: codecov/codecov-action@v1
 
