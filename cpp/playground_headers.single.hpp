@@ -233,7 +233,7 @@ struct _char8_str
 #        include <cassert>
 
 #        define LEXY_PRECONDITION(Expr) ((Expr) ? void(0) : assert(Expr))
-#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : assert((Expr) && Msg))
+#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : assert((Expr) && (Msg)))
 
 #    endif
 
@@ -1529,13 +1529,22 @@ template <typename Production, typename Root>
 auto _production_whitespace()
 {
     if constexpr (is_token_production<Production>)
-        return; // void
+    {
+        // Token productions don't have whitespace.
+        return;
+    }
     else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
+    {
+        // We have whitespace defined in the production.
         return Production::whitespace;
+    }
     else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
+    {
+        // We have whitespace defined in the root.
         return Root::whitespace;
-    else
-        return; // void
+    }
+
+    // If we didn't have any cases, function returns void.
 }
 template <typename Production, typename Root>
 using production_whitespace = decltype(_production_whitespace<Production, Root>());
@@ -1654,8 +1663,8 @@ using rule_parser = typename Rule::template parser<NextParser>;
 
 enum class rule_try_parse_result
 {
-    ok          = true,
-    canceled    = false,
+    ok          = int(true),
+    canceled    = int(false),
     backtracked = 2,
 };
 
@@ -2962,7 +2971,7 @@ namespace lexy::_detail
 class default_memory_resource
 {
 public:
-    void* allocate(std::size_t bytes, std::size_t alignment)
+    static void* allocate(std::size_t bytes, std::size_t alignment)
     {
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
             return ::operator new (bytes, std::align_val_t{alignment});
@@ -2970,7 +2979,7 @@ public:
             return ::operator new(bytes);
     }
 
-    void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
+    static void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
     {
 #ifdef __cpp_sized_deallocation
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
@@ -3329,16 +3338,12 @@ public:
     {
         // Look for internal mapping first.
         auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_enum_v<TokenKind> //
-                      && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+        if constexpr ((std::is_enum_v<TokenKind> //
+                       && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+                      || (std::is_void_v<TokenKind> //
+                          && std::is_integral_v<decltype(token_rule_kind)>))
         {
-            // The token has an associated kind of the same enumeration type.
-            *this = token_kind(token_rule_kind);
-        }
-        else if constexpr (std::is_void_v<TokenKind> //
-                           && std::is_integral_v<decltype(token_rule_kind)>)
-        {
-            // The token has an integer kind.
+            // The token has an associated kind of the same type.
             *this = token_kind(token_rule_kind);
         }
         else
@@ -3524,6 +3529,7 @@ public:
 
     auto* base() const noexcept
     {
+        // NOLINTNEXTLINE: We need pointer conversion.
         return reinterpret_cast<pt_node<Reader>*>(_value & ~std::uintptr_t(0b11));
     }
 
@@ -4399,18 +4405,14 @@ public:
 
         void increment() noexcept
         {
-            if (_cur.token())
-                // We're currently pointing to a token.
+            if (_cur.token() || _cur.is_parent_ptr())
+                // We're currently pointing to a token or back to the parent production.
                 // Continue with its sibling.
                 _cur = _cur.base()->ptr;
             else if (_cur.is_sibling_ptr())
                 // We're currently pointing to a production for the first time.
                 // Continue to the first child.
                 _cur = _cur.production()->first_child();
-            else if (_cur.is_parent_ptr())
-                // We're currently pointing back to the parent production.
-                // We continue with its sibling.
-                _cur = _cur.base()->ptr;
             else
                 LEXY_ASSERT(false, "unreachable");
         }
@@ -5538,7 +5540,7 @@ public:
         LEXY_PRECONDITION(category < CategoryCount);
 
         // Set the given bit.
-        _table[as_unsigned] |= int_n(1 << category);
+        _table[as_unsigned] = int_n(_table[as_unsigned] | 1 << category);
 
         return *this;
     }
@@ -5552,6 +5554,7 @@ public:
 
         if (_char_to_int_type<Encoding>(0x00) <= i && i <= _char_to_int_type<Encoding>(0x7F))
         {
+            // NOLINTNEXTLINE: We've checked that we're positive in the condition above.
             auto index = static_cast<std::size_t>(i);
             return (_table[index] & mask) != 0;
         }
@@ -7285,15 +7288,9 @@ struct _tryr : rule_base
             // Try parsing with special continuation that sets failed to false if reached.
             auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
                                                                             LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::backtracked)
+            if (!failed)
             {
-                // Rule backtracked, which is not a failure.
-                return result;
-            }
-            else if (!failed)
-            {
-                // Rule didn't fail.
-                // It could be the case that some later rule has failed, but that's not our problem.
+                // If we didn't fail, don't do anything.
                 return result;
             }
             else
@@ -11227,11 +11224,8 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         if (auto ec = engine::match(reader); ec != typename engine::error_code())
         {
             Char::token_error(context, reader, ec, content_begin);
-            if (!engine::recover(reader, ec))
-                return false;
-            else
-                // We've recovered, repeat loop.
-                return true;
+            // Repeat loop if we've recovered.
+            return engine::recover(reader, ec);
         }
         auto content_end = reader.cur();
 
@@ -12410,16 +12404,16 @@ struct integer_traits
 
     static constexpr auto _max = [] {
         if constexpr (std::is_same_v<T, char>)
-            return CHAR_MAX;
+            return CHAR_MAX; // NOLINT
         else if constexpr (std::is_same_v<T, signed char>)
             return SCHAR_MAX;
         else if constexpr (std::is_same_v<T, unsigned char>)
-            return UCHAR_MAX;
+            return UCHAR_MAX; // NOLINT
         else if constexpr (std::is_same_v<T, wchar_t>)
-            return WCHAR_MAX;
+            return WCHAR_MAX; // NOLINT
 #if LEXY_HAS_CHAR8_T
         else if constexpr (std::is_same_v<T, char8_t>)
-            return UCHAR_MAX;
+            return UCHAR_MAX; // NOLINT
 #endif
         else if constexpr (std::is_same_v<T, char16_t>)
             return UINT_LEAST16_MAX;
@@ -12614,20 +12608,25 @@ struct _bounded_integer_parser
     template <typename Iterator>
     static constexpr unsigned find_digit(Iterator& cur, Iterator end)
     {
-        auto digit = 0u;
-        while (true)
+        if constexpr (AssumeOnlyDigits)
         {
             if (cur == end)
-                // No more digits.
                 return unsigned(-1);
-
-            digit = Base::value(*cur++);
-            if constexpr (AssumeOnlyDigits)
-                break;
-            else if (digit < Base::radix)
-                break;
+            else
+                return Base::value(*cur++);
         }
-        return digit;
+        else
+        {
+            auto digit = 0u;
+            do
+            {
+                if (cur == end)
+                    return unsigned(-1);
+
+                digit = Base::value(*cur++);
+            } while (digit >= Base::radix);
+            return digit;
+        }
     }
 
     template <typename Iterator>
@@ -13152,7 +13151,7 @@ struct _mem_dsl
     constexpr _mem_dsl(Fn = {}) {}
 
     template <typename Rule>
-    constexpr auto operator=(Rule) const
+    constexpr auto operator=(Rule) const // NOLINT: it _is_ an unconventional assignment operator
     {
         using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
                                           lexy::_detail::stateless_lambda<Fn>>;
@@ -13608,7 +13607,7 @@ namespace lexyd
 #define LEXY_PUNCT(Name, String)                                                                   \
     struct _##Name : ::lexyd::_lit<LEXY_NTTP_STRING(String)>                                       \
     {};                                                                                            \
-    inline constexpr auto Name = _##Name {}
+    inline constexpr auto(Name) = _##Name {}
 
 LEXY_PUNCT(period, ".");
 LEXY_PUNCT(comma, ",");
@@ -14393,13 +14392,15 @@ public:
             _resource->deallocate(_data, _size * sizeof(char_type), alignof(char_type));
     }
 
-    buffer& operator=(const buffer& other)
+    buffer& operator=(const buffer& other) // NOLINT: we do guard against self-assignment
     {
         // Create a temporary buffer that owns the same memory as other but with our resource.
         // We then move assign it to *this.
-        return *this = buffer(other, _resource.get());
+        *this = buffer(other, _resource.get());
+        return *this;
     }
 
+    // NOLINTNEXTLINE: Unfortunately, sometimes move is not noexcept.
     buffer& operator=(buffer&& other) noexcept(std::is_empty_v<MemoryResource>)
     {
         if (*_resource == *other._resource)
@@ -14617,14 +14618,15 @@ struct _make_buffer<utf32_encoding, encoding_endianness::bom>
         constexpr auto utf32_little = _make_buffer<utf32_encoding, encoding_endianness::little>{};
         auto           memory       = static_cast<const unsigned char*>(_memory);
 
-        if (size < 4)
-            return utf32_big(memory, size, resource);
-        else if (memory[0] == 0xFF && memory[1] == 0xFE && memory[2] == 0x00 && memory[3] == 0x00)
-            return utf32_little(memory + 4, size - 4, resource);
-        else if (memory[0] == 0x00 && memory[1] == 0x00 && memory[2] == 0xFE && memory[3])
-            return utf32_big(memory + 4, size - 4, resource);
-        else
-            return utf32_big(memory, size, resource);
+        if (size >= 4)
+        {
+            if (memory[0] == 0xFF && memory[1] == 0xFE && memory[2] == 0x00 && memory[3] == 0x00)
+                return utf32_little(memory + 4, size - 4, resource);
+            else if (memory[0] == 0x00 && memory[1] == 0x00 && memory[2] == 0xFE && memory[3])
+                return utf32_big(memory + 4, size - 4, resource);
+        }
+
+        return utf32_big(memory, size, resource);
     }
 };
 
@@ -15016,9 +15018,7 @@ public:
             // Find the end of the line.
             while (true)
             {
-                if (lexy::engine_peek<engine_line>(reader))
-                    break;
-                else if (reader.eof())
+                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
                     break;
                 else
                     reader.bump();
