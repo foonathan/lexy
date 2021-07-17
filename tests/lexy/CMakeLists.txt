@@ -111,12 +111,6 @@ set(tests
         token.cpp
     )
 
-option(LEXY_DISABLE_CONSTEXPR_TESTS "whether or not constexpr unit tests are disabled" OFF)
-
 add_executable(lexy_test ${tests})
 target_link_libraries(lexy_test PRIVATE lexy_test_base)
-if(LEXY_DISABLE_CONSTEXPR_TESTS)
-    message(STATUS "constexpr unit tests are disabled")
-    target_compile_definitions(lexy_test PRIVATE -DLEXY_DISABLE_CONSTEXPR_TESTS)
-endif()
 

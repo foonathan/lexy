@@ -2,7 +2,6 @@
 
 image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json[Project Status,link=https://www.jonathanmueller.dev/project/]
 image:https://github.com/foonathan/lexy/workflows/Main%20CI/badge.svg[Build Status]
-image:https://codecov.io/gh/foonathan/lexy/branch/main/graph/badge.svg?token=3K4YNK41S9[codecov,link=https://codecov.io/gh/foonathan/lexy]
 image:https://img.shields.io/badge/try-online-blue[Playground,link=https://lexy.foonathan.net/playground]
 
 `lexy` is a parser combinator library for {cpp}17 and onwards.
