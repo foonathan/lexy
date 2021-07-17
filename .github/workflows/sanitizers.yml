@@ -1,0 +1,27 @@
+name: Sanitizers
+
+on: [push, pull_request]
+
+jobs:
+  sanitizers:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install ninja
+      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build
+
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+    - name: Configure
+      working-directory: build/
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DLEXY_DISABLE_CONSTEXPR_TESTS -fsanitize=address,undefined,leak -fno-sanitize-recover=all" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined,leak"
+    - name: Build
+      working-directory: build/
+      run: cmake --build .
+    - name: Test
+      working-directory: build/
+      run: ctest --output-on-failure
+      env:
+        ASAN_OPTIONS: detect_stack_use_after_return=1
+
