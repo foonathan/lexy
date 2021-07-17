@@ -2,21 +2,26 @@
 #  This file is subject to the license terms in the LICENSE file
 #  found in the top-level directory of this distribution.
 
+#===
 # Compile-only playground and godbolt infrastructure tests.
-add_executable(lexy_test_playground playground.cpp)
+add_library(lexy_test_playground OBJECT playground.cpp)
 target_link_libraries(lexy_test_playground PRIVATE lexy_test_base)
-add_executable(lexy_test_godbolt godbolt.cpp)
-target_link_libraries(lexy_test_godbolt PRIVATE lexy_test_base)
 
+add_library(lexy_test_godbolt OBJECT godbolt.cpp)
+target_link_libraries(lexy_test_godbolt PRIVATE lexy_test_base)
+#===
+
+#===
 # Compile-only godbolt example tests.
 add_library(lexy_test_godbolt_examples OBJECT)
 target_link_libraries(lexy_test_godbolt_examples PRIVATE lexy_test_base)
 
 file(GLOB examples CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/assets/examples/*.cpp)
 target_sources(lexy_test_godbolt_examples PRIVATE ${examples})
+#===
 
 # Compile-only playground example tests.
-add_executable(lexy_test_playground_examples)
+add_library(lexy_test_playground_examples OBJECT)
 target_link_libraries(lexy_test_playground_examples PRIVATE lexy_test_base)
 
 file(GLOB examples CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/assets/playground/*.cpp)
