@@ -67,6 +67,7 @@ public:
 
     auto* base() const noexcept
     {
+        // NOLINTNEXTLINE: We need pointer conversion.
         return reinterpret_cast<pt_node<Reader>*>(_value & ~std::uintptr_t(0b11));
     }
 
@@ -942,18 +943,14 @@ public:
 
         void increment() noexcept
         {
-            if (_cur.token())
-                // We're currently pointing to a token.
+            if (_cur.token() || _cur.is_parent_ptr())
+                // We're currently pointing to a token or back to the parent production.
                 // Continue with its sibling.
                 _cur = _cur.base()->ptr;
             else if (_cur.is_sibling_ptr())
                 // We're currently pointing to a production for the first time.
                 // Continue to the first child.
                 _cur = _cur.production()->first_child();
-            else if (_cur.is_parent_ptr())
-                // We're currently pointing back to the parent production.
-                // We continue with its sibling.
-                _cur = _cur.base()->ptr;
             else
                 LEXY_ASSERT(false, "unreachable");
         }

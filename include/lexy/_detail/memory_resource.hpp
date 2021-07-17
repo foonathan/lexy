@@ -26,7 +26,7 @@ namespace lexy::_detail
 class default_memory_resource
 {
 public:
-    void* allocate(std::size_t bytes, std::size_t alignment)
+    static void* allocate(std::size_t bytes, std::size_t alignment)
     {
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
             return ::operator new (bytes, std::align_val_t{alignment});
@@ -34,7 +34,7 @@ public:
             return ::operator new(bytes);
     }
 
-    void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
+    static void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
     {
 #ifdef __cpp_sized_deallocation
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)

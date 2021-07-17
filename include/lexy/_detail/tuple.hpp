@@ -54,11 +54,13 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
     template <std::size_t N>
     constexpr decltype(auto) get() noexcept
     {
+        // NOLINTNEXTLINE: this is perfectly fine.
         return LEXY_FWD(static_cast<_tuple_holder<N, element_type<N>>&>(*this).value);
     }
     template <std::size_t N>
     constexpr decltype(auto) get() const noexcept
     {
+        // NOLINTNEXTLINE: this is perfectly fine.
         return LEXY_FWD(static_cast<const _tuple_holder<N, element_type<N>>&>(*this).value);
     }
 
@@ -72,7 +74,7 @@ struct tuple<>
 {
     constexpr tuple(int) {}
 
-    constexpr auto index_sequence() const
+    static constexpr auto index_sequence()
     {
         return index_sequence_for<>{};
     }

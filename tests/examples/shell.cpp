@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "../../examples/shell.cpp"
+#include "../../examples/shell.cpp" // NOLINT
 
 #include <doctest/doctest.h>
 #include <lexy/action/match.hpp>

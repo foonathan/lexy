@@ -184,15 +184,9 @@ struct _tryr : rule_base
             // Try parsing with special continuation that sets failed to false if reached.
             auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
                                                                             LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::backtracked)
+            if (!failed)
             {
-                // Rule backtracked, which is not a failure.
-                return result;
-            }
-            else if (!failed)
-            {
-                // Rule didn't fail.
-                // It could be the case that some later rule has failed, but that's not our problem.
+                // If we didn't fail, don't do anything.
                 return result;
             }
             else

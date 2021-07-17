@@ -157,16 +157,12 @@ public:
     {
         // Look for internal mapping first.
         auto token_rule_kind = TokenRule::token_kind();
-        if constexpr (std::is_enum_v<TokenKind> //
-                      && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+        if constexpr ((std::is_enum_v<TokenKind> //
+                       && std::is_same_v<decltype(token_rule_kind), TokenKind>)
+                      || (std::is_void_v<TokenKind> //
+                          && std::is_integral_v<decltype(token_rule_kind)>))
         {
-            // The token has an associated kind of the same enumeration type.
-            *this = token_kind(token_rule_kind);
-        }
-        else if constexpr (std::is_void_v<TokenKind> //
-                           && std::is_integral_v<decltype(token_rule_kind)>)
-        {
-            // The token has an integer kind.
+            // The token has an associated kind of the same type.
             *this = token_kind(token_rule_kind);
         }
         else

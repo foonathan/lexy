@@ -9,15 +9,15 @@
 TEST_CASE("_detail::invoke")
 {
     const auto function
-        = lexy::_detail::invoke([](int a, char b, float c) { return float(a) + b + c; }, 1, '\x02',
-                                3.f);
+        = lexy::_detail::invoke([](int a, char b, float c) { return float(a) + float(b) + c; }, 1,
+                                '\x02', 3.f);
     CHECK(function == 6.);
 
     struct test_class
     {
         int data = 42;
 
-        int memfn(int arg)
+        int memfn(int arg) const
         {
             return arg + data;
         }

@@ -21,7 +21,7 @@ TEST_CASE("dsl::context_flag")
         LEXY_VERIFY_FN int success(const char* cur, bool value)
         {
             LEXY_VERIFY_CHECK(str == cur);
-            return value;
+            return static_cast<int>(value);
         }
 
         LEXY_VERIFY_FN int error(test_error<error> error)

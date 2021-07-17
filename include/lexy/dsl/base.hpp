@@ -109,8 +109,8 @@ using rule_parser = typename Rule::template parser<NextParser>;
 
 enum class rule_try_parse_result
 {
-    ok          = true,
-    canceled    = false,
+    ok          = int(true),
+    canceled    = int(false),
     backtracked = 2,
 };
 

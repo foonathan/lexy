@@ -48,11 +48,8 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         if (auto ec = engine::match(reader); ec != typename engine::error_code())
         {
             Char::token_error(context, reader, ec, content_begin);
-            if (!engine::recover(reader, ec))
-                return false;
-            else
-                // We've recovered, repeat loop.
-                return true;
+            // Repeat loop if we've recovered.
+            return engine::recover(reader, ec);
         }
         auto content_end = reader.cur();
 

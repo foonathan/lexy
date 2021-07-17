@@ -42,7 +42,7 @@ TEST_CASE("_detail::lazy_init")
 
         SUBCASE("copy constructor from empty")
         {
-            auto copy = empty;
+            auto copy = empty; // NOLINT
             CHECK(!copy);
         }
         SUBCASE("copy constructor from emplaced")

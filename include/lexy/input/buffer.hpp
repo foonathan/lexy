@@ -122,13 +122,15 @@ public:
             _resource->deallocate(_data, _size * sizeof(char_type), alignof(char_type));
     }
 
-    buffer& operator=(const buffer& other)
+    buffer& operator=(const buffer& other) // NOLINT: we do guard against self-assignment
     {
         // Create a temporary buffer that owns the same memory as other but with our resource.
         // We then move assign it to *this.
-        return *this = buffer(other, _resource.get());
+        *this = buffer(other, _resource.get());
+        return *this;
     }
 
+    // NOLINTNEXTLINE: Unfortunately, sometimes move is not noexcept.
     buffer& operator=(buffer&& other) noexcept(std::is_empty_v<MemoryResource>)
     {
         if (*_resource == *other._resource)
@@ -346,14 +348,15 @@ struct _make_buffer<utf32_encoding, encoding_endianness::bom>
         constexpr auto utf32_little = _make_buffer<utf32_encoding, encoding_endianness::little>{};
         auto           memory       = static_cast<const unsigned char*>(_memory);
 
-        if (size < 4)
-            return utf32_big(memory, size, resource);
-        else if (memory[0] == 0xFF && memory[1] == 0xFE && memory[2] == 0x00 && memory[3] == 0x00)
-            return utf32_little(memory + 4, size - 4, resource);
-        else if (memory[0] == 0x00 && memory[1] == 0x00 && memory[2] == 0xFE && memory[3])
-            return utf32_big(memory + 4, size - 4, resource);
-        else
-            return utf32_big(memory, size, resource);
+        if (size >= 4)
+        {
+            if (memory[0] == 0xFF && memory[1] == 0xFE && memory[2] == 0x00 && memory[3] == 0x00)
+                return utf32_little(memory + 4, size - 4, resource);
+            else if (memory[0] == 0x00 && memory[1] == 0x00 && memory[2] == 0xFE && memory[3])
+                return utf32_big(memory + 4, size - 4, resource);
+        }
+
+        return utf32_big(memory, size, resource);
     }
 };
 

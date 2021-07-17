@@ -35,7 +35,7 @@
 #        include <cassert>
 
 #        define LEXY_PRECONDITION(Expr) ((Expr) ? void(0) : assert(Expr))
-#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : assert((Expr) && Msg))
+#        define LEXY_ASSERT(Expr, Msg) ((Expr) ? void(0) : assert((Expr) && (Msg)))
 
 #    endif
 

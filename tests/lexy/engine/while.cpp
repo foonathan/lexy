@@ -10,7 +10,7 @@
 
 namespace
 {
-static constexpr auto trie = lexy::linear_trie<LEXY_NTTP_STRING("ab")>;
+constexpr auto trie = lexy::linear_trie<LEXY_NTTP_STRING("ab")>;
 }
 
 TEST_CASE("engine_while")

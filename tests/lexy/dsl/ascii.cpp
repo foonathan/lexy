@@ -40,7 +40,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::iscntrl(c) ? 0 : -1;
+            auto       result = std::iscntrl(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -74,7 +74,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isblank(c) ? 0 : -1;
+            auto       result = std::isblank(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -178,7 +178,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isspace(c) ? 0 : -1;
+            auto       result = std::isspace(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -212,7 +212,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::islower(c) ? 0 : -1;
+            auto       result = std::islower(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -246,7 +246,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isupper(c) ? 0 : -1;
+            auto       result = std::isupper(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -280,7 +280,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isalpha(c) ? 0 : -1;
+            auto       result = std::isalpha(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -315,7 +315,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isalpha(c) || c == '_' ? 0 : -1;
+            auto       result = std::isalpha(c) != 0 || c == '_' ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -349,7 +349,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isdigit(c) ? 0 : -1;
+            auto       result = std::isdigit(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -385,7 +385,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isalnum(c) ? 0 : -1;
+            auto       result = std::isalnum(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -420,7 +420,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isalnum(c) || c == '_' ? 0 : -1;
+            auto       result = std::isalnum(c) != 0 || c == '_' ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -454,7 +454,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::ispunct(c) ? 0 : -1;
+            auto       result = std::ispunct(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -488,7 +488,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isgraph(c) ? 0 : -1;
+            auto       result = std::isgraph(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }
@@ -522,7 +522,7 @@ TEST_CASE("dsl::ascii::*")
         for (auto c = 0; c <= 127; ++c)
         {
             const char str[]  = {char(c), char(c)};
-            auto       result = std::isprint(c) ? 0 : -1;
+            auto       result = std::isprint(c) != 0 ? 0 : -1;
             CHECK(verify<callback>(rule, str, 2) == result);
         }
     }

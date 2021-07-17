@@ -94,7 +94,7 @@ lexy::file_error lexy::_detail::read_file(const char* path, file_callback cb, vo
     else
     {
         auto memory = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (memory == MAP_FAILED)
+        if (memory == MAP_FAILED) // NOLINT: int-to-ptr conversion happens in header
             return lexy::file_error::os_error;
 
         cb(user_data, reinterpret_cast<const char*>(memory), size);

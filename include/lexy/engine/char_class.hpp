@@ -164,7 +164,7 @@ public:
         LEXY_PRECONDITION(category < CategoryCount);
 
         // Set the given bit.
-        _table[as_unsigned] |= int_n(1 << category);
+        _table[as_unsigned] = int_n(_table[as_unsigned] | 1 << category);
 
         return *this;
     }
@@ -178,6 +178,7 @@ public:
 
         if (_char_to_int_type<Encoding>(0x00) <= i && i <= _char_to_int_type<Encoding>(0x7F))
         {
+            // NOLINTNEXTLINE: We've checked that we're positive in the condition above.
             auto index = static_cast<std::size_t>(i);
             return (_table[index] & mask) != 0;
         }

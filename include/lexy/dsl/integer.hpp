@@ -44,16 +44,16 @@ struct integer_traits
 
     static constexpr auto _max = [] {
         if constexpr (std::is_same_v<T, char>)
-            return CHAR_MAX;
+            return CHAR_MAX; // NOLINT
         else if constexpr (std::is_same_v<T, signed char>)
             return SCHAR_MAX;
         else if constexpr (std::is_same_v<T, unsigned char>)
-            return UCHAR_MAX;
+            return UCHAR_MAX; // NOLINT
         else if constexpr (std::is_same_v<T, wchar_t>)
-            return WCHAR_MAX;
+            return WCHAR_MAX; // NOLINT
 #if LEXY_HAS_CHAR8_T
         else if constexpr (std::is_same_v<T, char8_t>)
-            return UCHAR_MAX;
+            return UCHAR_MAX; // NOLINT
 #endif
         else if constexpr (std::is_same_v<T, char16_t>)
             return UINT_LEAST16_MAX;
@@ -248,20 +248,25 @@ struct _bounded_integer_parser
     template <typename Iterator>
     static constexpr unsigned find_digit(Iterator& cur, Iterator end)
     {
-        auto digit = 0u;
-        while (true)
+        if constexpr (AssumeOnlyDigits)
         {
             if (cur == end)
-                // No more digits.
                 return unsigned(-1);
-
-            digit = Base::value(*cur++);
-            if constexpr (AssumeOnlyDigits)
-                break;
-            else if (digit < Base::radix)
-                break;
+            else
+                return Base::value(*cur++);
         }
-        return digit;
+        else
+        {
+            auto digit = 0u;
+            do
+            {
+                if (cur == end)
+                    return unsigned(-1);
+
+                digit = Base::value(*cur++);
+            } while (digit >= Base::radix);
+            return digit;
+        }
     }
 
     template <typename Iterator>

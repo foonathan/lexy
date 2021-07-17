@@ -27,7 +27,7 @@ struct production
 
     static constexpr auto value
         // Collect all the numbers in a vector, then turn the result into an entry.
-        = lexy::as_list<std::vector<int>> >> lexy::callback<entry>([](auto&& vec) {
+        = lexy::as_list<std::vector<int>> >> lexy::callback<entry>([](std::vector<int>&& vec) {
               return entry{"foo", std::move(vec)};
           });
 };

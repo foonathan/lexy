@@ -64,7 +64,7 @@ struct _mem_dsl
     constexpr _mem_dsl(Fn = {}) {}
 
     template <typename Rule>
-    constexpr auto operator=(Rule) const
+    constexpr auto operator=(Rule) const // NOLINT: it _is_ an unconventional assignment operator
     {
         using lambda = std::conditional_t<std::is_default_constructible_v<Fn>, Fn,
                                           lexy::_detail::stateless_lambda<Fn>>;

@@ -49,9 +49,7 @@ public:
             // Find the end of the line.
             while (true)
             {
-                if (lexy::engine_peek<engine_line>(reader))
-                    break;
-                else if (reader.eof())
+                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
                     break;
                 else
                     reader.bump();

@@ -95,7 +95,7 @@ struct default_prompt
 
     bool is_open() const noexcept
     {
-        return !std::feof(stdin) && !std::ferror(stdin);
+        return std::feof(stdin) == 0 && std::ferror(stdin) == 0;
     }
 
     struct read_line_callback

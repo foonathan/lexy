@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "../../examples/json.cpp"
+#include "../../examples/json.cpp" // NOLINT
 
 #include <doctest/doctest.h>
 #include <lexy/action/match.hpp>

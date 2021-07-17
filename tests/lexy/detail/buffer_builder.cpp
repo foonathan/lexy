@@ -13,7 +13,7 @@ TEST_CASE("_detail::buffer_builder")
     REQUIRE(buffer.write_size() == buffer.capacity());
     REQUIRE(buffer.read_data() == buffer.write_data());
 
-    std::strcpy(buffer.write_data(), "abc");
+    std::strcpy(buffer.write_data(), "abc"); // NOLINT
     buffer.commit(3);
     REQUIRE(buffer.read_size() == 3);
     REQUIRE(buffer.write_size() == buffer.capacity() - 3);
@@ -79,7 +79,7 @@ TEST_CASE("_detail::buffer_builder::stable_iterator")
     lexy::_detail::buffer_builder<char> buffer;
     {
         auto input = "012346789";
-        std::strcpy(buffer.write_data(), input);
+        std::strcpy(buffer.write_data(), input); // NOLINT
         buffer.commit(std::strlen(input));
     }
 

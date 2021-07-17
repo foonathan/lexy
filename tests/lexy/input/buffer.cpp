@@ -164,7 +164,7 @@ TEST_CASE("buffer")
     {
         const lexy::buffer original(str, str + 3);
 
-        const lexy::buffer copy(original);
+        const lexy::buffer copy(original); // NOLINT
         verify(copy);
 
         lexy::_detail::default_memory_resource other_resource;

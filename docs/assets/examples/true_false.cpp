@@ -36,6 +36,6 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("The value is: %d\n", result.value());
+    std::printf("The value is: %d\n", static_cast<int>(result.value()));
 }
 

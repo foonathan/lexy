@@ -80,7 +80,7 @@ struct json_value
                 std::fputs(R"(\")", stdout);
             else if (c == '\\')
                 std::fputs(R"(\\)", stdout);
-            else if (std::iscntrl(c))
+            else if (std::iscntrl(c) != 0)
                 std::fprintf(stdout, "\\x%02x", static_cast<unsigned char>(c));
             else
                 std::fputc(c, stdout);

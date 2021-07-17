@@ -100,9 +100,9 @@ private:
 namespace lexy
 {
 template <typename To, typename... Args>
-constexpr bool _is_convertible = false;
+inline constexpr bool _is_convertible = false;
 template <typename To, typename Arg>
-constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
+inline constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 
 template <typename State, typename Input, typename ErrorCallback>
 class parse_handler

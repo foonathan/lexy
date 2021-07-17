@@ -3,12 +3,12 @@
 // found in the top-level directory of this distribution.
 
 #define LEXY_PLAYGROUND_PRODUCTION production
-#include "../../docs/assets/cpp/godbolt_prefix.cpp"
+#include "../../docs/assets/cpp/godbolt_prefix.cpp" // NOLINT
 
 struct production
 {
     static constexpr auto rule = LEXY_LIT("hello");
 };
 
-#include "../../docs/assets/cpp/godbolt_main.cpp"
+#include "../../docs/assets/cpp/godbolt_main.cpp" // NOLINT
 
