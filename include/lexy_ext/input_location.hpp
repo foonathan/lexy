@@ -102,6 +102,12 @@ public:
     : _reader(input.reader())
     {}
 
+    /// The starting location.
+    constexpr location beginning() const
+    {
+        return location(_reader, 1, 1);
+    }
+
     /// Finds the given position, starting at the anchor location.
     /// This is an optimization if you know the position is after the anchor.
     constexpr location find(iterator pos, const location& anchor) const
@@ -154,7 +160,7 @@ public:
     constexpr location find(iterator pos) const
     {
         // We start at the beginning of the file with the search.
-        location anchor(_reader, 1, 1);
+        auto anchor = beginning();
         return find(pos, anchor);
     }
 
