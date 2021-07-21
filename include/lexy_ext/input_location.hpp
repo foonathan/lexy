@@ -6,11 +6,34 @@
 #define LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/newline.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexy_ext
 {
+// Fake token that counts code units without verification.
+struct _unchecked_code_unit
+{
+    struct token_engine : lexy::engine_matcher_base
+    {
+        enum class error_code
+        {
+            invalid = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (reader.eof())
+                return error_code::invalid;
+
+            reader.bump();
+            return error_code();
+        }
+    };
+};
+
 /// Converts positions (iterators) into locations (line/column nr).
 ///
 /// The unit for line and column numbers can be customized.
@@ -18,7 +41,10 @@ namespace lexy_ext
 ///
 /// See https://foonathan.net/2021/02/column/ for a discussion of potential units.
 /// Use e.g. `lexy::dsl::code_point` and `lexy::dsl::newline` to count code points.
-template <typename Input, typename TokenColumn, typename TokenLine>
+///
+/// By default, it counts code units and newlines.
+template <typename Input, typename TokenColumn = _unchecked_code_unit,
+          typename TokenLine = std::decay_t<decltype(lexy::dsl::newline)>>
 class input_location_finder
 {
     using engine_column = typename TokenColumn::token_engine;
@@ -71,6 +97,7 @@ public:
         friend input_location_finder;
     };
 
+    constexpr explicit input_location_finder(const Input& input) : _reader(input.reader()) {}
     constexpr explicit input_location_finder(const Input& input, TokenColumn, TokenLine)
     : _reader(input.reader())
     {}
@@ -138,11 +165,16 @@ private:
 /// Convenience function to find a single location.
 template <typename Input, typename TokenColumn, typename TokenLine>
 constexpr auto find_input_location(const Input&                                 input,
-                                   typename lexy::input_reader<Input>::iterator pos,
-                                   TokenColumn column, TokenLine line)
+                                   typename lexy::input_reader<Input>::iterator pos, TokenColumn,
+                                   TokenLine)
 {
-    input_location_finder finder(input, column, line);
-    return finder.find(pos);
+    return input_location_finder<Input, TokenColumn, TokenLine>(input).find(pos);
+}
+template <typename Input>
+constexpr auto find_input_location(const Input&                                 input,
+                                   typename lexy::input_reader<Input>::iterator pos)
+{
+    return input_location_finder<Input>(input).find(pos);
 }
 } // namespace lexy_ext
 

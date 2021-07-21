@@ -189,5 +189,27 @@ TEST_CASE("find_input_location")
         CHECK(after.column_nr() == 4);
         CHECK(after.context().size() == 5);
     }
+
+    SUBCASE("weird character, default")
+    {
+        // 0xFF isn't an ascii character
+        static constexpr char array[] = {'a', 'b', 'c', char(0xFF), 'd', '\0'};
+        TEST_CONSTEXPR auto   input   = lexy::zstring_input(array);
+
+        TEST_CONSTEXPR auto before = lexy_ext::find_input_location(input, input.data() + 2);
+        CHECK(before.line_nr() == 1);
+        CHECK(before.column_nr() == 3);
+        CHECK(before.context().size() == 5);
+
+        TEST_CONSTEXPR auto weird = lexy_ext::find_input_location(input, input.data() + 3);
+        CHECK(weird.line_nr() == 1);
+        CHECK(weird.column_nr() == 4);
+        CHECK(weird.context().size() == 5);
+
+        TEST_CONSTEXPR auto after = lexy_ext::find_input_location(input, input.data() + 4);
+        CHECK(after.line_nr() == 1);
+        CHECK(after.column_nr() == 5);
+        CHECK(after.context().size() == 5);
+    }
 }
 

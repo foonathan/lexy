@@ -7,8 +7,6 @@
 
 #include <cstdio>
 #include <lexy/callback/adapter.hpp>
-#include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/newline.hpp>
 #include <lexy/error.hpp>
 #include <lexy_ext/input_location.hpp>
 
@@ -87,12 +85,12 @@ void _print_message(Location, const lexy::error<Reader, lexy::expected_char_clas
 
 // The error callback that prints to stderr.
 constexpr auto report_error = lexy::callback([](const auto& context, const auto& error) {
+    lexy_ext::input_location_finder finder(context.input());
+
     // Convert the context location and error location into line/column information.
-    lexy_ext::input_location_finder finder(context.input(), lexy::dsl::ascii::character,
-                                           lexy::dsl::newline);
-    auto                            context_location = finder.find(context.position());
-    auto                            location         = finder.find(error.position(),
-                                context_location); // error position is after context position
+    auto context_location = finder.find(context.position());
+    // Error position is after context position.
+    auto location = finder.find(error.position(), context_location);
 
     // Print the main error headline.
     auto prod_name = context.production();
