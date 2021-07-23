@@ -24,19 +24,6 @@ public:
     }
 
     //=== classification ===//
-    constexpr bool is_valid() const noexcept
-    {
-        return _value <= 0x10'FFFF;
-    }
-    constexpr bool is_surrogate() const noexcept
-    {
-        return 0xD800 <= _value && _value <= 0xDFFF;
-    }
-    constexpr bool is_scalar() const noexcept
-    {
-        return is_valid() && !is_surrogate();
-    }
-
     constexpr bool is_ascii() const noexcept
     {
         return _value <= 0x7F;
@@ -44,6 +31,40 @@ public:
     constexpr bool is_bmp() const noexcept
     {
         return _value <= 0xFFFF;
+    }
+    constexpr bool is_valid() const noexcept
+    {
+        return _value <= 0x10'FFFF;
+    }
+
+    constexpr bool is_control() const noexcept
+    {
+        return _value <= 0x1F || (0x7F <= _value && _value <= 0x9F);
+    }
+    constexpr bool is_surrogate() const noexcept
+    {
+        return 0xD800 <= _value && _value <= 0xDFFF;
+    }
+    constexpr bool is_private_use() const noexcept
+    {
+        return (0xE000 <= _value && _value <= 0xF8FF)
+               || (0x0F'0000 <= _value && _value <= 0x0F'FFFD)
+               || (0x10'0000 <= _value && _value <= 0x10'FFFD);
+    }
+    constexpr bool is_noncharacter() const noexcept
+    {
+        // Contiguous range of 32 non-characters.
+        if (0xFDD0 <= _value && _value <= 0xFDEF)
+            return true;
+
+        // Last two code points of every plane.
+        auto in_plane = _value & 0xFFFF;
+        return in_plane == 0xFFFE || in_plane == 0xFFFF;
+    }
+
+    constexpr bool is_scalar() const noexcept
+    {
+        return is_valid() && !is_surrogate();
     }
 
     friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept

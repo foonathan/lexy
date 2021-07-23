@@ -19,13 +19,19 @@ namespace lexy
 
         constexpr char32_t value() const noexcept;
 
-        constexpr bool is_valid() const noexcept;
-        constexpr bool is_surrogate() const noexcept;
-        constexpr bool is_scalar() const noexcept;
-
+        //=== classification ===//
         constexpr bool is_ascii() const noexcept;
         constexpr bool is_bmp() const noexcept;
+        constexpr bool is_valid() const noexcept;
 
+        constexpr bool is_control() const noexcept;
+        constexpr bool is_surrogate() const noexcept;
+        constexpr bool is_private_use() const noexcept;
+        constexpr bool is_noncharacter() const noexcept;
+
+        constexpr bool is_scalar() const noexcept;
+
+        //=== comparison ===//
         friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept;
         friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept;
     };
@@ -47,25 +53,40 @@ constexpr explicit code_point(char32_t value) noexcept; <2>
 <1> Creates an invalid code point.
 <2> Creates the code point with the specified value.
 
-=== Validity
-
-{{% interface %}}
-----
-constexpr bool is_valid() const noexcept;     <1>
-constexpr bool is_surrogate() const noexcept; <2>
-constexpr bool is_scalar() const noexcept;    <3>
-----
-<1> Returns `true` if the code point is less than `0x10'FFFF`, `false` otherwise.
-<2> Returns `true` if the code point is a UTF-16 surrogate, `false` otherwise.
-<3> Returns `true` if the code point is valid and not a surrogate, `false` otherwise.
-
-=== Category
+=== Classification
 
 {{% interface %}}
 ----
 constexpr bool is_ascii() const noexcept; <1>
 constexpr bool is_bmp() const noexcept;   <2>
+constexpr bool is_valid() const noexcept; <3>
 ----
-<1> Returns `true` if the code point is ASCII (7-bit value), `false` otherwise.
-<2> Returns `true` if the code point is in the Unicode BMP (16-bit value), `false` otherwise.
+<1> Returns `true` if the code point is ASCII (`0x00-0x7F`), `false` otherwise.
+<2> Returns `true` if the code point is in the link:https://en.wikipedia.org/wiki/Plane_(Unicode)#Basic_Multilingual_Plane[Unicode BMP] (`0x0000-0xFFFF`), `false` otherwise.
+<3> Returns `true` if the code point is a value in the Unicode codespace (`<= 0x10'FFFF`), `false` otherwise.
+
+{{% interface %}}
+----
+constexpr bool is_control() const noexcept;      <1>
+constexpr bool is_surrogate() const noexcept;    <2>
+constexpr bool is_private_use() const noexcept;  <3>
+constexpr bool is_noncharacter() const noexcept; <4>
+----
+<1> Returns `true` if the code point's general category is `Cc` (control), `false` otherwise.
+<2> Returns `true` if the code point's general category is `Cs` (surrogate), `false` otherwise.
+<3> Returns `true` if the code point's general category is `Co` (private-use), `false` otherwise.
+<4> Returns `true` if the code point's general category is `Cn` (not assigned) and the code point is not reserved, `false` otherwise.
+
+NOTE: Those are all of the link:https://en.wikipedia.org/wiki/Unicode_character_property#General_Category[general categories] that are stable.
+
+{{% interface %}}
+----
+constexpr bool is_scalar() const noexcept
+{
+    return is_valid() && !is_surrogate();
+}
+----
+
+[.lead]
+Returns `true` if the code point is valid and not a surrogate, `false` otherwise.
 
