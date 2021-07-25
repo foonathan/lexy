@@ -935,6 +935,8 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::traverse_range
 {
 public:
+    using event = traverse_event;
+
     struct _value_type
     {
         traverse_event   event;

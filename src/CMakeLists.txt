@@ -118,7 +118,9 @@ set(header_files
         ${include_dir}/grammar.hpp
         ${include_dir}/lexeme.hpp
         ${include_dir}/parse_tree.hpp
-        ${include_dir}/token.hpp)
+        ${include_dir}/token.hpp
+        ${include_dir}/visualize.hpp
+        )
 set(ext_header_files
         ${ext_include_dir}/cfile.hpp
         ${ext_include_dir}/input_location.hpp

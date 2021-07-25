@@ -109,6 +109,7 @@ set(tests
         lexeme.cpp
         parse_tree.cpp
         token.cpp
+        visualize.cpp
     )
 
 add_executable(lexy_test ${tests})

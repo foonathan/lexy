@@ -7,7 +7,6 @@ set(tests
         input_location.cpp
         parse_tree_algorithm.cpp
         parse_tree_doctest.cpp
-        parse_tree_dump.cpp
         shell.cpp
     )
 

@@ -1,7 +1,7 @@
 //=== main function ===//
 #include <lexy/action/parse_as_tree.hpp>
+#include <lexy/visualize.hpp>
 #include <lexy_ext/cfile.hpp>
-#include <lexy_ext/parse_tree_dump.hpp>
 #include <lexy_ext/report_error.hpp>
 
 int main()
@@ -12,7 +12,7 @@ int main()
     auto                                  result
         = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
 
-    lexy_ext::dump_parse_tree(stdout, tree);
+    lexy::visualize(stdout, tree, {lexy::visualize_fancy});
 
     if (!result)
         return 1;

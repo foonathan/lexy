@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-08-17
+
+Replaced `lexy_ext::dump_parse_tree()` by `lexy::visualize()`.
+
 == 2021-07-15
 
 * Moved `lexy/match.hpp`, `lexy/parse.hpp`, and `lexy/validate.hpp` to `lexy/action/match.hpp`, `lexy/action/parse.hpp` and `lexy/action/validate.hpp`.

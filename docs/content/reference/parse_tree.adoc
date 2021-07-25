@@ -412,6 +412,7 @@ namespace lexy
 class parse_tree::traverse_range
 {
 public:
+    using event = traverse_event;
     class iterator; // struct value_type { traverse_event event; node node; };
 
     iterator begin() const noexcept;

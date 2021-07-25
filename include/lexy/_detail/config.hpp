@@ -87,6 +87,7 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 
 #if LEXY_HAS_CHAR8_T
 
+#    define LEXY_CHAR_OF_u8 char8_t
 #    define LEXY_CHAR8_T char8_t
 #    define LEXY_CHAR8_STR(Str) u8##Str
 
@@ -115,6 +116,7 @@ struct _char8_str
 };
 } // namespace lexy
 
+#    define LEXY_CHAR_OF_u8 char
 #    define LEXY_CHAR8_T ::lexy::_char8_t
 #    define LEXY_CHAR8_STR(Str) (::lexy::_char8_str<LEXY_NTTP_STRING(u8##Str)>::get.data)
 

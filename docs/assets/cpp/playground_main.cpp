@@ -1,5 +1,30 @@
 #line 1 "playground.cpp"
-#include <cctype>
+
+namespace
+{
+struct print_quoted_iterator
+{
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    print_quoted_iterator& operator=(char c)
+    {
+        if (c == '"')
+            std::fputs(R"(\")", stdout);
+        else if (c == '\\')
+            std::fputs(R"(\\)", stdout);
+        else
+            std::fputc(c, stdout);
+        return *this;
+    }
+};
+} // namespace
 
 int main()
 {
@@ -34,21 +59,9 @@ int main()
             }
             else
             {
-                for (auto c : node.lexeme())
-                {
-                    if (c == '"')
-                        std::fputs(R"(\")", stdout);
-                    else if (c == ' ')
-                        std::fputs("␣", stdout);
-                    else if (c == '\n')
-                        std::fputs("⏎", stdout);
-                    else if (c == '\\')
-                        std::fputs("\\\\", stdout);
-                    else if (std::iscntrl(c))
-                        std::printf("0x%02X", unsigned(c) & 0xFF);
-                    else
-                        std::putchar(c);
-                }
+                lexy::visualize_to(print_quoted_iterator{}, node.lexeme(),
+                                   {lexy::visualize_use_unicode | lexy::visualize_use_symbols
+                                    | lexy::visualize_space});
                 std::puts("\", shape=box, style=filled];");
             }
             break;

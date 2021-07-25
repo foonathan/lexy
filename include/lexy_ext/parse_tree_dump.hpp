@@ -24,9 +24,9 @@ constexpr dump_parse_tree_label simple_parse_tree_dump = {"  ", "  ", "- ", "- "
 constexpr dump_parse_tree_label fancy_parse_tree_dump  = {"   ", "│  ", "└──", "├──"};
 
 template <typename Reader, typename TokenKind, typename MemoryResource>
-void dump_parse_tree(std::FILE*                                                 out,
-                     const lexy::parse_tree<Reader, TokenKind, MemoryResource>& tree,
-                     dump_parse_tree_label label = fancy_parse_tree_dump)
+[[deprecated("use `lexy_ext::visualize(file, tree)` instead")]] void dump_parse_tree(
+    std::FILE* out, const lexy::parse_tree<Reader, TokenKind, MemoryResource>& tree,
+    dump_parse_tree_label label = fancy_parse_tree_dump)
 {
     std::vector<bool> prefix_info;
 

@@ -31,6 +31,8 @@ Nevertheless, lexy defines some link:#infrastructure[infrastructure] types that 
   A parse tree.
 {{% docref "lexy::error" %}} and {{% docref "lexy::error_context" %}}::
   The parse errors.
+{{% docref "lexy::visualize" %}}::
+  Visualize the data structures.
 
 [#input]
 == Inputs and Encodings
