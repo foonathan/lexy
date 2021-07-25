@@ -3,6 +3,7 @@
 # found in the top-level directory of this distribution.
 
 set(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy)
+set(ext_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext)
 set(header_files
         ${include_dir}/_detail/ascii_table.hpp
         ${include_dir}/_detail/assert.hpp
@@ -118,6 +119,15 @@ set(header_files
         ${include_dir}/lexeme.hpp
         ${include_dir}/parse_tree.hpp
         ${include_dir}/token.hpp)
+set(ext_header_files
+        ${ext_include_dir}/cfile.hpp
+        ${ext_include_dir}/input_location.hpp
+        ${ext_include_dir}/parse_tree_algorithm.hpp
+        ${ext_include_dir}/parse_tree_doctest.hpp
+        ${ext_include_dir}/parse_tree_dump.hpp
+        ${ext_include_dir}/report_error.hpp
+        ${ext_include_dir}/shell.hpp
+        )
 
 # Base target for common options.
 add_library(_lexy_base INTERFACE)
@@ -174,8 +184,13 @@ add_library(foonathan::lexy::file ALIAS lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
 target_sources(lexy_file PRIVATE input/file.cpp)
 
+# Link to have extension headers.
+add_library(lexy_ext INTERFACE)
+add_library(foonathan::lexy::ext ALIAS lexy_ext)
+target_sources(lexy_ext INTERFACE ${ext_headers_files})
+
 # Umbrella target with all components.
 add_library(lexy INTERFACE)
 add_library(foonathan::lexy ALIAS lexy)
-target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file)
+target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::ext)
 
