@@ -50,6 +50,13 @@ struct root_p
 TEST_CASE("parse_tree::builder")
 {
     using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
+    SUBCASE("empty")
+    {
+        parse_tree tree;
+        CHECK(tree.empty());
+        CHECK(tree.size() == 0);
+    }
+
     SUBCASE("basic")
     {
         auto input = lexy::zstring_input("123(abc)321");
@@ -69,6 +76,8 @@ TEST_CASE("parse_tree::builder")
             return LEXY_MOV(builder).finish();
         }();
         CHECK(!tree.empty());
+        CHECK(tree.size() == 7);
+        CHECK(tree.depth() == 2);
 
         // clang-format off
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
@@ -86,6 +95,8 @@ TEST_CASE("parse_tree::builder")
     {
         auto tree = parse_tree::builder(root_p{}).finish();
         CHECK(!tree.empty());
+        CHECK(tree.size() == 1);
+        CHECK(tree.depth() == 0);
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{});
         CHECK(tree == expected);
@@ -103,6 +114,8 @@ TEST_CASE("parse_tree::builder")
             return LEXY_MOV(builder).finish();
         }();
         CHECK(!tree.empty());
+        CHECK(tree.size() == 4);
+        CHECK(tree.depth() == 1);
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::b, "(")
@@ -110,7 +123,7 @@ TEST_CASE("parse_tree::builder")
                             .token(token_kind::b, ")");
         CHECK(tree == expected);
     }
-    SUBCASE("linear")
+    SUBCASE("nested")
     {
         auto input = lexy::zstring_input("abc");
         auto tree  = [&] {
@@ -123,6 +136,8 @@ TEST_CASE("parse_tree::builder")
             return LEXY_MOV(builder).finish();
         }();
         CHECK(!tree.empty());
+        CHECK(tree.size() == 3);
+        CHECK(tree.depth() == 2);
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -146,6 +161,8 @@ TEST_CASE("parse_tree::builder")
             return LEXY_MOV(builder).finish();
         }();
         CHECK(!tree.empty());
+        CHECK(tree.size() == 4);
+        CHECK(tree.depth() == 1);
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "123")
@@ -156,7 +173,7 @@ TEST_CASE("parse_tree::builder")
     }
 
     constexpr auto many_count = 1024u;
-    SUBCASE("many linear productions")
+    SUBCASE("many shallow productions")
     {
         auto input = lexy::zstring_input("abc");
 
@@ -172,7 +189,10 @@ TEST_CASE("parse_tree::builder")
             }
 
             return LEXY_MOV(builder).finish();
-        }();
+        }(); // root -> (p_1 -> token), ..., (p_many_count -> token)
+        CHECK(!tree.empty());
+        CHECK(tree.size() == 2 * many_count + 1);
+        CHECK(tree.depth() == 2);
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});
@@ -203,8 +223,10 @@ TEST_CASE("parse_tree::builder")
             }
 
             return LEXY_MOV(builder).finish();
-        }();
+        }(); // root -> p_1 -> ... p_many_count -> token
         CHECK(!tree.empty());
+        CHECK(tree.size() == many_count + 2);
+        CHECK(tree.depth() == many_count + 1);
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});

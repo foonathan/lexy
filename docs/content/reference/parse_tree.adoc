@@ -35,6 +35,9 @@ namespace lexy
         //=== container interface ===//
         bool empty() const noexcept;
 
+        std::size_t size() const noexcept;
+        std::size_t depth() const noexcept;
+
         void clear() noexcept;
 
         //=== nodes ===//
@@ -184,11 +187,23 @@ This assumes that there is no gap between token nodes.
 ----
 bool empty() const noexcept; <1>
 
-void clear() noexcept;       <2>
+std::size_t size() const noexcept;  <2>
+std::size_t depth() const noexcept; <3>
+
+void clear() noexcept;              <4>
 ----
 <1> Returns `true` if the tree is empty, `false` otherwise.
     An empty tree does not have any nodes.
-<2> Clears the tree by removing all nodes, but without deallocating memory.
+<2> Returns the total number of nodes of the tree, including the root node.
+<3> Returns the maximum depth of all nodes in the tree,
+    which is the number of times you need to call `node.parent()` to reach the root.
+    The depth of an empty tree is not defined.
+<4> Clears the tree by removing all nodes, but without deallocating memory.
+
+An empty tree has `size() == 0` and undefined `depth()`.
+A tree that consists only of  the root node has `size() == 1` and `depth() == 0`.
+A shallow tree, where all nodes are children of the root node, has `depth() == 1`.
+A completely nested tree, where each node has exactly one child, has `depth() == size() - 1`.
 
 [#node_kind]
 === Nodes: `lexy::parse_tree::node_kind`

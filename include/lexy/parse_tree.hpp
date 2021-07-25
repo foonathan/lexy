@@ -356,12 +356,25 @@ public:
     class builder;
 
     constexpr parse_tree() : parse_tree(_detail::get_memory_resource<MemoryResource>()) {}
-    constexpr explicit parse_tree(MemoryResource* resource) : _buffer(resource), _root(nullptr) {}
+    constexpr explicit parse_tree(MemoryResource* resource)
+    : _buffer(resource), _root(nullptr), _size(0), _depth(0)
+    {}
 
     //=== container access ===//
     bool empty() const noexcept
     {
         return _root == nullptr;
+    }
+
+    std::size_t size() const noexcept
+    {
+        return _size;
+    }
+
+    std::size_t depth() const noexcept
+    {
+        LEXY_PRECONDITION(!empty());
+        return _depth;
     }
 
     void clear() noexcept
@@ -398,6 +411,8 @@ public:
 private:
     _detail::pt_buffer<MemoryResource>   _buffer;
     _detail::pt_node_production<Reader>* _root;
+    std::size_t                          _size;
+    std::size_t                          _depth;
 };
 
 template <typename Input, typename TokenKind = void,
@@ -414,11 +429,14 @@ public:
         // Empty the initial parse tree.
         _result._buffer.reset();
 
-        // Allocate a new root node and begin construction there.
+        // Allocate a new root node.
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur = marker(_result._root);
+        _result._size = 1;
+
+        // Begin construction at the root.
+        _cur = marker(_result._root, 0);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
@@ -428,12 +446,16 @@ public:
     {
         // The current production all tokens are appended to.
         _detail::pt_node_production<Reader>* prod = nullptr;
+        // The depth of the current production.
+        std::size_t depth = 0;
         // The last child of the current production.
         _detail::pt_node_ptr<Reader> last_child;
 
         marker() = default;
 
-        explicit marker(_detail::pt_node_production<Reader>* prod) : prod(prod) {}
+        explicit marker(_detail::pt_node_production<Reader>* prod, std::size_t depth)
+        : prod(prod), depth(depth)
+        {}
 
         template <typename T>
         void append(T* child)
@@ -471,11 +493,19 @@ public:
             }
         }
 
-        void finish()
+        void finish(std::size_t& size, std::size_t& max_depth)
         {
             if (last_child)
                 // The pointer of the last child needs to point back to prod.
                 last_child.base()->ptr.set_parent(prod);
+
+            // Update the size.
+            size += prod->child_count;
+
+            // And update the depth.
+            auto local_max_depth = prod->child_count > 0 ? depth + 1 : depth;
+            if (max_depth < local_max_depth)
+                max_depth = local_max_depth;
         }
     };
 
@@ -496,7 +526,7 @@ public:
 
         // Subsequent inertions are to the new node, so update marker and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = marker(node);
+        _cur     = marker(node, old.depth + 1);
         return old;
     }
 
@@ -533,7 +563,7 @@ public:
             return;
 
         // We're done with the current production.
-        _cur.finish();
+        _cur.finish(_result._size, _result._depth);
         // Append to previous production.
         m.append(_cur.prod);
         // Continue with the previous production.
@@ -555,7 +585,7 @@ public:
     parse_tree&& finish() &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
-        _cur.finish();
+        _cur.finish(_result._size, _result._depth);
         return LEXY_MOV(_result);
     }
 
