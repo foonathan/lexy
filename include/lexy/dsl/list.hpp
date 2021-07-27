@@ -141,6 +141,20 @@ template <>
 struct _sep_parser<void> : _list_sink
 {};
 
+template <typename Sep, typename NextParser>
+struct _report_trailing_sep
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, typename Reader::iterator sep_pos,
+                             Args&&... args)
+    {
+        // If trailing seperators are allowed, this does nothing.
+        // Otherwise, we report the error but can trivially recover.
+        Sep::report_trailing_error(context, reader, sep_pos);
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
+    }
+};
+
 // Loop to parse all remaining list items when we have a terminator.
 template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
           typename... PrevArgs>
@@ -170,6 +184,9 @@ struct _list_loop_term
         using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
         using item_parser = lexy::rule_parser<Item, _list_sink>;
         using sep_parser  = _sep_parser<Sep>;
+        using trailing_sep_parser
+            = lexy::rule_parser<Term,
+                                _report_trailing_sep<Sep, _list_finish<NextParser, PrevArgs...>>>;
         while (true)
         {
             switch (state)
@@ -250,13 +267,11 @@ struct _list_loop_term
             case state::separator_trailing_check:
                 if constexpr (!std::is_void_v<Sep>)
                 {
-                    if (auto result
-                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                    // Parse term, and report error about trailing separator (if necessary).
+                    if (auto result = trailing_sep_parser::try_parse(context, reader, sep_pos,
+                                                                     LEXY_FWD(args)..., sink);
                         result != lexy::rule_try_parse_result::backtracked)
                     {
-                        // If trailing seperators are allowed, this does nothing.
-                        // Otherwise, we report the error but can trivially recover.
-                        Sep::report_trailing_error(context, reader, sep_pos);
                         // We had the terminator, so the list is done.
                         return static_cast<bool>(result);
                     }

@@ -39,6 +39,7 @@ public:
         decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(handler_marker<Handler, Production> &&), ev,
                                            LEXY_FWD(args)...))>
     {
+        LEXY_ASSERT(_handler, "using already finished context");
         return _handler->on(LEXY_MOV(_marker), ev, LEXY_FWD(args)...);
     }
 
@@ -90,12 +91,15 @@ private:
         {
             _result.emplace(_handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...));
         }
+
+        _handler = nullptr; // invalidate
     }
 
     template <typename Iterator>
     constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
     {
         _handler->on(LEXY_MOV(_marker), ev, pos);
+        _handler = nullptr; // invalidate
     }
 
     Handler*                                                  _handler;
