@@ -24,6 +24,11 @@ public:
 
     constexpr lexeme() noexcept : _begin(), _end() {}
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
+    constexpr lexeme(iterator pos, std::size_t size) noexcept : _begin(pos), _end(pos)
+    {
+        for (auto i = 0u; i != size; ++i)
+            ++_end;
+    }
 
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
     : _begin(begin), _end(reader.cur())
