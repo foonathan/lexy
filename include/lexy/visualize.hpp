@@ -73,6 +73,24 @@ struct visualization_options
 //=== visualize_to ===//
 namespace lexy::_detail
 {
+template <typename Encoding>
+constexpr auto make_literal_lexeme(const typename Encoding::char_type* str)
+{
+    struct reader
+    {
+        using encoding         = Encoding;
+        using char_type        = typename Encoding::char_type;
+        using iterator         = const char_type*;
+        using canonical_reader = reader;
+    };
+
+    auto end = str;
+    while (*end)
+        ++end;
+
+    return lexy::lexeme<reader>(str, end);
+}
+
 template <typename OutIt>
 constexpr OutIt write_str(OutIt out, const char* str)
 {

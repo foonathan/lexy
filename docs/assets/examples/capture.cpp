@@ -1,6 +1,7 @@
 #include <string>
 
 #include <lexy/action/parse.hpp>
+#include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
 #include <lexy_ext/cfile.hpp>
 #include <lexy_ext/report_error.hpp>
