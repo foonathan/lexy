@@ -69,29 +69,39 @@ public:
         /// The entire line that contains the position.
         constexpr lexy::lexeme_for<Input> context() const
         {
+            return {_reader.cur(), _eol};
+        }
+
+        /// The newline after the line, if there is any.
+        constexpr lexy::lexeme_for<Input> newline() const
+        {
             auto reader = _reader;
-            auto begin  = reader.cur();
-
-            // Find the end of the line.
-            while (true)
-            {
-                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
-                    break;
-                else
-                    reader.bump();
-            }
-
-            auto end = reader.cur();
-            return lexy::lexeme_for<Input>(begin, end);
+            // Advance to EOl.
+            while (reader.cur() != _eol)
+                reader.bump();
+            // Bump newline.
+            lexy::engine_try_match<engine_line>(reader);
+            return {_eol, reader.cur()};
         }
 
     private:
         constexpr location(lexy::input_reader<Input> reader, std::size_t line, std::size_t column)
-        : _reader(LEXY_MOV(reader)), _line(line), _column(column)
-        {}
+        : _reader(LEXY_MOV(reader)), _eol(), _line(line), _column(column)
+        {
+            // Find EOL.
+            for (auto reader = _reader; true; reader.bump())
+            {
+                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
+                {
+                    _eol = reader.cur();
+                    break;
+                }
+            }
+        }
 
         // The reader starts at the beginning of the given line.
         lexy::input_reader<Input> _reader;
+        iterator                  _eol;
         std::size_t               _line, _column;
 
         friend input_location_finder;

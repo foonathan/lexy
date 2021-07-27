@@ -47,17 +47,20 @@ TEST_CASE("input_location_finder")
     CHECK(a.line_nr() == 1);
     CHECK(a.column_nr() == 4);
     CHECK(a.context() == str_context{"Line 1"});
+    CHECK(a.newline() == str_context{"\n"});
 
     auto b = finder.find(input.data() + 5, a);
     CHECK(b.line_nr() == 1);
     CHECK(b.column_nr() == 6);
     CHECK(b.context() == str_context{"Line 1"});
+    CHECK(b.newline() == str_context{"\n"});
 
     // Note: anchor is after, but still the same line.
     auto c = finder.find(input.data(), b);
     CHECK(c.line_nr() == 1);
     CHECK(c.column_nr() == 1);
     CHECK(c.context() == str_context{"Line 1"});
+    CHECK(c.newline() == str_context{"\n"});
 }
 
 TEST_CASE("find_input_location")
@@ -108,12 +111,14 @@ TEST_CASE("find_input_location")
         CHECK(last.line_nr() == 3);
         CHECK(last.column_nr() == 7);
         CHECK(last.context() == str_context{"Line 3"});
+        CHECK(last.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto end
             = lexy_ext::find_input_location(input, input.data() + input.size(), character, newline);
         CHECK(end.line_nr() == 4);
         CHECK(end.column_nr() == 1);
         CHECK(end.context().empty());
+        CHECK(end.newline().empty());
     }
     SUBCASE("no trailing newline")
     {
@@ -158,12 +163,14 @@ TEST_CASE("find_input_location")
         CHECK(last.line_nr() == 3);
         CHECK(last.column_nr() == 6);
         CHECK(last.context() == str_context{"Line 3"});
+        CHECK(last.newline().empty());
 
         TEST_CONSTEXPR auto end
             = lexy_ext::find_input_location(input, input.data() + input.size(), character, newline);
         CHECK(end.line_nr() == 3);
         CHECK(end.column_nr() == 7);
         CHECK(end.context() == str_context{"Line 3"});
+        CHECK(end.newline().empty());
     }
     SUBCASE("weird character")
     {
