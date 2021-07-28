@@ -16,7 +16,6 @@ template <typename Location>
 void _print_location(Location location)
 {
     std::fputs("     | \n", stderr);
-
     std::fprintf(stderr, "%2zd:%2zd| ", location.line_nr(), location.column_nr());
     for (auto c : location.context())
         std::fputc(c, stderr);

@@ -56,20 +56,6 @@ public:
 
 namespace lexy::_detail
 {
-template <typename I>
-constexpr auto range_size(I begin, I end) -> decltype(std::size_t(end - begin))
-{
-    return std::size_t(end - begin);
-}
-template <typename I, typename I2> // always worse match because two different params
-constexpr auto range_size(I begin, I2 end)
-{
-    std::size_t result = 0;
-    for (auto cur = begin; cur != end; ++cur)
-        ++result;
-    return result;
-}
-
 template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
 class range_reader
 {

@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/input/base.hpp>
 
@@ -24,11 +25,9 @@ public:
 
     constexpr lexeme() noexcept : _begin(), _end() {}
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
-    constexpr lexeme(iterator pos, std::size_t size) noexcept : _begin(pos), _end(pos)
-    {
-        for (auto i = 0u; i != size; ++i)
-            ++_end;
-    }
+    constexpr lexeme(iterator pos, std::size_t size) noexcept
+    : _begin(pos), _end(_detail::next(pos, size))
+    {}
 
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
     : _begin(begin), _end(reader.cur())
@@ -81,7 +80,7 @@ namespace lexy::_detail
 template <typename Reader>
 constexpr bool equal_lexemes(lexeme<Reader> lhs, lexeme<Reader> rhs)
 {
-    if constexpr (std::is_pointer_v<typename Reader::iterator>)
+    if constexpr (lexy::_detail::is_random_access_iterator<typename Reader::iterator>)
     {
         if (lhs.size() != rhs.size())
             return false;

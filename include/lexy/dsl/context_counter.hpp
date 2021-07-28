@@ -5,6 +5,7 @@
 #ifndef LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 #define LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/error.hpp>
 

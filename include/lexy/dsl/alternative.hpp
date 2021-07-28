@@ -6,6 +6,7 @@
 #define LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
 
 #include <lexy/_detail/detect.hpp>
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/failure.hpp>

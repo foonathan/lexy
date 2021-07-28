@@ -115,8 +115,9 @@ struct pt_node
 template <typename Reader>
 struct pt_node_token : pt_node<Reader>
 {
-    // If it's not a pointer, we store size instead of end.
-    static constexpr auto _optimize_end = std::is_pointer_v<typename Reader::iterator>;
+    // If it's random access, we store size instead of end.
+    static constexpr auto _optimize_end
+        = _detail::is_random_access_iterator<typename Reader::iterator>;
     using _end_t
         // If we can optimize it, we store the size as a uint32_t, otherwise the iterator.
         = std::conditional_t<_optimize_end, std::uint_least32_t, typename Reader::iterator>;

@@ -5,9 +5,90 @@
 #ifndef LEXY_DETAIL_ITERATOR_HPP_INCLUDED
 #define LEXY_DETAIL_ITERATOR_HPP_INCLUDED
 
+#include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/detect.hpp>
 #include <lexy/_detail/std.hpp>
 
+//=== iterator algorithms ===//
+namespace lexy::_detail
+{
+// Can't use std::is_base_of_v<std::random_access_iterator_tag, ...> without including <iterator>.
+template <typename Iterator>
+using _detect_random_access = decltype(LEXY_DECLVAL(Iterator) - LEXY_DECLVAL(Iterator));
+template <typename Iterator>
+constexpr auto is_random_access_iterator = is_detected<_detect_random_access, Iterator>;
+
+template <typename Iterator, typename Sentinel>
+constexpr std::size_t range_size(Iterator begin, Sentinel end)
+{
+    if constexpr (std::is_same_v<Iterator, Sentinel> && is_random_access_iterator<Iterator>)
+    {
+        return static_cast<std::size_t>(end - begin);
+    }
+    else
+    {
+        std::size_t result = 0;
+        for (auto cur = begin; cur != end; ++cur)
+            ++result;
+        return result;
+    }
+}
+
+template <typename Iterator>
+constexpr Iterator next(Iterator iter)
+{
+    return ++iter;
+}
+template <typename Iterator>
+constexpr Iterator next(Iterator iter, std::size_t n)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+    {
+        return iter + n;
+    }
+    else
+    {
+        for (auto i = 0u; i != n; ++i)
+            ++iter;
+        return iter;
+    }
+}
+
+// Used for assertions.
+template <typename Iterator>
+constexpr bool precedes(Iterator first, Iterator after)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+        return first <= after;
+    else
+        return true; // Don't know.
+}
+
+// Requires: begin <= end_a && begin <= end_b.
+// Returns min(end_a, end_b).
+template <typename Iterator>
+constexpr Iterator earlier_range_end(Iterator begin, Iterator end_a, Iterator end_b)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+    {
+        LEXY_PRECONDITION(begin <= end_a && begin <= end_b);
+        if (end_a <= end_b)
+            return end_a;
+        else
+            return end_b;
+    }
+    else
+    {
+        auto cur = begin;
+        while (cur != end_a && cur != end_b)
+            ++cur;
+        return cur;
+    }
+}
+} // namespace lexy::_detail
+
+//=== facade classes ===//
 namespace lexy::_detail
 {
 template <typename T>
