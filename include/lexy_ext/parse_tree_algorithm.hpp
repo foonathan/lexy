@@ -13,12 +13,13 @@ namespace lexy_ext
 /// Returns a range that contains only the token nodes that are descendants of the node.
 /// If the node is itself a token, returns a range that contains only the node itself.
 template <typename Reader, typename TokenKind, typename MemoryResource>
-auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&,
+auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&         tree,
             typename lexy::parse_tree<Reader, TokenKind, MemoryResource>::node node)
 {
-    using node_t = typename lexy::parse_tree<Reader, TokenKind, MemoryResource>::node;
-    using traverse_iterator =
-        typename lexy::parse_tree<Reader, TokenKind, MemoryResource>::traverse_range::iterator;
+    using tree_t            = lexy::parse_tree<Reader, TokenKind, MemoryResource>;
+    using node_t            = typename tree_t::node;
+    using traverse_range    = typename tree_t::traverse_range;
+    using traverse_iterator = typename traverse_range::iterator;
 
     class token_range
     {
@@ -60,8 +61,8 @@ auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&,
             }
 
         private:
-            explicit iterator(traverse_iterator cur, traverse_iterator end) noexcept
-            : _cur(cur), _end(end)
+            explicit iterator(const traverse_range& range) noexcept
+            : _cur(range.begin()), _end(range.end())
             {
                 // Advancing until initial token is found.
                 while (_cur != _end && _cur->event != lexy::traverse_event::leaf)
@@ -74,21 +75,7 @@ auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&,
             friend token_range;
         };
 
-        explicit token_range(node_t n) noexcept
-        {
-            if (n.kind().is_token())
-            {
-                auto begin = traverse_iterator(lexy::traverse_event::leaf, n);
-                auto end   = begin;
-                _begin     = iterator(begin, ++end);
-            }
-            else
-            {
-                auto begin = traverse_iterator(lexy::traverse_event::enter, n);
-                auto end   = traverse_iterator(lexy::traverse_event::exit, n);
-                _begin     = iterator(begin, end);
-            }
-        }
+        explicit token_range(const traverse_range& range) noexcept : _begin(range) {}
 
         bool empty() const noexcept
         {
@@ -109,7 +96,7 @@ auto tokens(const lexy::parse_tree<Reader, TokenKind, MemoryResource>&,
         iterator _begin;
     };
 
-    return token_range(node);
+    return token_range(tree.traverse(node));
 }
 
 template <typename Reader, typename TokenKind, typename MemoryResource>

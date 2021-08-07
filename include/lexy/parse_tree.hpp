@@ -944,14 +944,6 @@ public:
     {
     public:
         iterator() noexcept = default;
-        iterator(traverse_event ev, node n) noexcept
-        {
-            LEXY_PRECONDITION(!n.kind().is_token() || ev == traverse_event::leaf);
-            if (ev == traverse_event::exit)
-                _cur.set_parent(n._ptr.production());
-            else
-                _cur.set_sibling(n._ptr.base(), n._ptr.type());
-        }
 
         _value_type deref() const noexcept
         {
@@ -994,6 +986,8 @@ public:
 
     private:
         _detail::pt_node_ptr<Reader> _cur;
+
+        friend traverse_range;
     };
 
     bool empty() const noexcept
@@ -1017,16 +1011,17 @@ private:
     {
         if (n.kind().is_token())
         {
-            _begin = iterator(traverse_event::leaf, n);
-            _end   = _begin;
-            ++_end;
+            _begin._cur.set_sibling(n._ptr.token());
+            _end = _begin;
         }
         else
         {
-            _begin = iterator(traverse_event::enter, n);
-            _end   = iterator(traverse_event::exit, n);
-            ++_end;
+            _begin._cur.set_sibling(n._ptr.production());
+            _end._cur.set_parent(n._ptr.production());
         }
+
+        // Turn it into a half-open range.
+        ++_end;
     }
 
     iterator _begin, _end;

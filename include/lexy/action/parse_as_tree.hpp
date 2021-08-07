@@ -96,7 +96,7 @@ public:
     constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
     {
         if (--_depth == 0)
-            // Clear tree instead of finishing production.
+            // Clear tree instead of production.
             _tree->clear();
         else
             _builder->cancel_production(LEXY_MOV(m.builder));
