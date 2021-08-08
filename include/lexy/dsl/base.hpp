@@ -24,22 +24,43 @@ namespace lexy::parse_events
 struct _production_event
 {};
 
+/// Start of the given production.
+/// Arguments: position
+/// Returns: new marker
 template <typename Production>
 struct production_start : _production_event
 {};
+/// End of the given production.
+/// Arguments: position, values
+/// Returns: value produced  by production.
 template <typename Production>
 struct production_finish : _production_event
 {};
+/// Production is canceled.
+/// Arguments: position
 template <typename Production>
 struct production_cancel : _production_event
 {};
 
+/// A parse error occurrs.
+/// Arguments: error object
 struct error
 {};
 
+/// A token was consumed.
+/// Arguments: kind, begin, end
 struct token
 {};
+/// Beginning of a list.
+/// Arguments: position
+/// Returns sink.
 struct list
+{};
+
+/// The input backtracked from end to begin.
+/// Only meaningful for begin != end.
+/// Arguments: begin, end
+struct backtracked
 {};
 } // namespace lexy::parse_events
 
@@ -127,6 +148,18 @@ struct discard_parser
         return true;
     }
 };
+
+// Same as the other overload, but raises the event.
+template <typename Matcher, typename Context, typename Reader>
+constexpr bool engine_peek(Context& context, Reader reader)
+{
+    auto begin = reader.cur();
+    auto ec    = Matcher::match(reader);
+    auto end   = reader.cur();
+
+    context.on(parse_events::backtracked{}, begin, end);
+    return ec == typename Matcher::error_code{};
+}
 } // namespace lexy
 
 //=== whitespace ===//

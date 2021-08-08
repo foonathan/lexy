@@ -231,7 +231,10 @@ struct _escape_cap : rule_base
         {
             auto begin = reader.cur();
             if (!lexy::engine_try_match<Engine>(reader))
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
 
             return static_cast<lexy::rule_try_parse_result>(
                 NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::lexeme(reader, begin)));

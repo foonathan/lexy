@@ -36,7 +36,7 @@ struct _look : rule_base
             -> lexy::rule_try_parse_result
         {
             using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(reader))
+            if (!lexy::engine_peek<engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -48,7 +48,7 @@ struct _look : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(reader))
+            if (!lexy::engine_peek<engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());

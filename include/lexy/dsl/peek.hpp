@@ -43,7 +43,7 @@ struct _peek : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            if (!lexy::engine_peek<Engine>(reader))
+            if (!lexy::engine_peek<Engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -54,7 +54,7 @@ struct _peek : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (!lexy::engine_peek<Engine>(reader))
+            if (!lexy::engine_peek<Engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
@@ -81,7 +81,7 @@ struct _peekn : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            if (lexy::engine_peek<Engine>(reader))
+            if (lexy::engine_peek<Engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -95,8 +95,11 @@ struct _peekn : rule_base
             auto copy = reader;
             if (auto begin = copy.cur(); lexy::engine_try_match<Engine>(copy))
             {
+                auto end = copy.cur();
+                context.on(_ev::backtracked{}, begin, end);
+
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::make_error<Reader, tag>(begin, copy.cur());
+                auto err  = lexy::make_error<Reader, tag>(begin, end);
                 context.on(_ev::error{}, err);
             }
 

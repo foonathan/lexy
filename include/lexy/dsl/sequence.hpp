@@ -49,6 +49,7 @@ struct _seq_impl<H, T...>
             else if (result == lexy::rule_try_parse_result::backtracked)
             {
                 // Backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }

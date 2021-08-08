@@ -140,7 +140,10 @@ struct _id : rule_base
             [[maybe_unused]] auto saved_reader = reader;
             auto                  begin        = reader.cur();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
             auto end = reader.cur();
 
             // Check for reserved patterns, etc.

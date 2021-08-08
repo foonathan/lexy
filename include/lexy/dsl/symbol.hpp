@@ -251,6 +251,7 @@ struct _sym : rule_base
                 if (!idx || !rule_content.eof())
                 {
                     // Unknown symbol; backtrack.
+                    context.on(_ev::backtracked{}, save.cur(), reader.cur());
                     reader = LEXY_MOV(save);
                     return lexy::rule_try_parse_result::backtracked;
                 }
@@ -337,6 +338,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
             if (!idx || lexy::engine_peek<trailing_engine>(reader))
             {
                 // We didn't have a symbol, so backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
@@ -422,6 +424,7 @@ struct _sym<Table, void, Tag> : rule_base
             if (!idx)
             {
                 // We didn't have a symbol, so backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }

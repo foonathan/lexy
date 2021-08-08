@@ -52,7 +52,10 @@ struct token_base : _token_base
 
             auto begin = reader.cur();
             if (!lexy::engine_try_match<token_engine>(reader))
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
             auto end = reader.cur();
             context.on(_ev::token{}, Derived::token_kind(), begin, end);
 
