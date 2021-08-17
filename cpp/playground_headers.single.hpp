@@ -101,6 +101,7 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 
 #if LEXY_HAS_CHAR8_T
 
+#    define LEXY_CHAR_OF_u8 char8_t
 #    define LEXY_CHAR8_T char8_t
 #    define LEXY_CHAR8_STR(Str) u8##Str
 
@@ -129,6 +130,7 @@ struct _char8_str
 };
 } // namespace lexy
 
+#    define LEXY_CHAR_OF_u8 char
 #    define LEXY_CHAR8_T ::lexy::_char8_t
 #    define LEXY_CHAR8_STR(Str) (::lexy::_char8_str<LEXY_NTTP_STRING(u8##Str)>::get.data)
 
@@ -800,20 +802,6 @@ public:
 
 namespace lexy::_detail
 {
-template <typename I>
-constexpr auto range_size(I begin, I end) -> decltype(std::size_t(end - begin))
-{
-    return std::size_t(end - begin);
-}
-template <typename I, typename I2> // always worse match because two different params
-constexpr auto range_size(I begin, I2 end)
-{
-    std::size_t result = 0;
-    for (auto cur = begin; cur != end; ++cur)
-        ++result;
-    return result;
-}
-
 template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
 class range_reader
 {
@@ -1578,22 +1566,43 @@ namespace lexy::parse_events
 struct _production_event
 {};
 
+/// Start of the given production.
+/// Arguments: position
+/// Returns: new marker
 template <typename Production>
 struct production_start : _production_event
 {};
+/// End of the given production.
+/// Arguments: position, values
+/// Returns: value produced  by production.
 template <typename Production>
 struct production_finish : _production_event
 {};
+/// Production is canceled.
+/// Arguments: position
 template <typename Production>
 struct production_cancel : _production_event
 {};
 
+/// A parse error occurrs.
+/// Arguments: error object
 struct error
 {};
 
+/// A token was consumed.
+/// Arguments: kind, begin, end
 struct token
 {};
+/// Beginning of a list.
+/// Arguments: position
+/// Returns sink.
 struct list
+{};
+
+/// The input backtracked from end to begin.
+/// Only meaningful for begin != end.
+/// Arguments: begin, end
+struct backtracked
 {};
 } // namespace lexy::parse_events
 
@@ -1681,6 +1690,18 @@ struct discard_parser
         return true;
     }
 };
+
+// Same as the other overload, but raises the event.
+template <typename Matcher, typename Context, typename Reader>
+constexpr bool engine_peek(Context& context, Reader reader)
+{
+    auto begin = reader.cur();
+    auto ec    = Matcher::match(reader);
+    auto end   = reader.cur();
+
+    context.on(parse_events::backtracked{}, begin, end);
+    return ec == typename Matcher::error_code{};
+}
 } // namespace lexy
 
 //=== whitespace ===//
@@ -1734,10 +1755,11 @@ public:
     template <typename Event, typename... Args>
     constexpr auto on(Event ev, Args&&... args) -> std::enable_if_t<
         !std::is_base_of_v<parse_events::_production_event, Event>,
-        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(handler_marker<Handler, Production> &&), ev,
-                                           LEXY_FWD(args)...))>
+        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker<Handler, Production>&),
+                                           ev, LEXY_FWD(args)...))>
     {
-        return _handler->on(LEXY_MOV(_marker), ev, LEXY_FWD(args)...);
+        LEXY_ASSERT(_handler, "using already finished context");
+        return _handler->on(_marker, ev, LEXY_FWD(args)...);
     }
 
     //=== context variables ===//
@@ -1788,12 +1810,15 @@ private:
         {
             _result.emplace(_handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...));
         }
+
+        _handler = nullptr; // invalidate
     }
 
     template <typename Iterator>
     constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
     {
         _handler->on(LEXY_MOV(_marker), ev, pos);
+        _handler = nullptr; // invalidate
     }
 
     Handler*                                                  _handler;
@@ -2800,6 +2825,8 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 #define LEXY_DETAIL_ITERATOR_HPP_INCLUDED
 
 
+
+
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
@@ -2841,6 +2868,85 @@ struct bidirectional_iterator_tag;
 #endif // LEXY_DETAIL_STD_HPP_INCLUDED
 
 
+//=== iterator algorithms ===//
+namespace lexy::_detail
+{
+// Can't use std::is_base_of_v<std::random_access_iterator_tag, ...> without including <iterator>.
+template <typename Iterator>
+using _detect_random_access = decltype(LEXY_DECLVAL(Iterator) - LEXY_DECLVAL(Iterator));
+template <typename Iterator>
+constexpr auto is_random_access_iterator = is_detected<_detect_random_access, Iterator>;
+
+template <typename Iterator, typename Sentinel>
+constexpr std::size_t range_size(Iterator begin, Sentinel end)
+{
+    if constexpr (std::is_same_v<Iterator, Sentinel> && is_random_access_iterator<Iterator>)
+    {
+        return static_cast<std::size_t>(end - begin);
+    }
+    else
+    {
+        std::size_t result = 0;
+        for (auto cur = begin; cur != end; ++cur)
+            ++result;
+        return result;
+    }
+}
+
+template <typename Iterator>
+constexpr Iterator next(Iterator iter)
+{
+    return ++iter;
+}
+template <typename Iterator>
+constexpr Iterator next(Iterator iter, std::size_t n)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+    {
+        return iter + n;
+    }
+    else
+    {
+        for (auto i = 0u; i != n; ++i)
+            ++iter;
+        return iter;
+    }
+}
+
+// Used for assertions.
+template <typename Iterator>
+constexpr bool precedes(Iterator first, Iterator after)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+        return first <= after;
+    else
+        return true; // Don't know.
+}
+
+// Requires: begin <= end_a && begin <= end_b.
+// Returns min(end_a, end_b).
+template <typename Iterator>
+constexpr Iterator earlier_range_end(Iterator begin, Iterator end_a, Iterator end_b)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+    {
+        LEXY_PRECONDITION(begin <= end_a && begin <= end_b);
+        if (end_a <= end_b)
+            return end_a;
+        else
+            return end_b;
+    }
+    else
+    {
+        auto cur = begin;
+        while (cur != end_a && cur != end_b)
+            ++cur;
+        return cur;
+    }
+}
+} // namespace lexy::_detail
+
+//=== facade classes ===//
 namespace lexy::_detail
 {
 template <typename T>
@@ -3107,6 +3213,7 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
+
 namespace lexy
 {
 template <typename Reader>
@@ -3121,6 +3228,9 @@ public:
 
     constexpr lexeme() noexcept : _begin(), _end() {}
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
+    constexpr lexeme(iterator pos, std::size_t size) noexcept
+    : _begin(pos), _end(_detail::next(pos, size))
+    {}
 
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
     : _begin(begin), _end(reader.cur())
@@ -3173,7 +3283,7 @@ namespace lexy::_detail
 template <typename Reader>
 constexpr bool equal_lexemes(lexeme<Reader> lhs, lexeme<Reader> rhs)
 {
-    if constexpr (std::is_pointer_v<typename Reader::iterator>)
+    if constexpr (lexy::_detail::is_random_access_iterator<typename Reader::iterator>)
     {
         if (lhs.size() != rhs.size())
             return false;
@@ -3577,8 +3687,9 @@ struct pt_node
 template <typename Reader>
 struct pt_node_token : pt_node<Reader>
 {
-    // If it's not a pointer, we store size instead of end.
-    static constexpr auto _optimize_end = std::is_pointer_v<typename Reader::iterator>;
+    // If it's random access, we store size instead of end.
+    static constexpr auto _optimize_end
+        = _detail::is_random_access_iterator<typename Reader::iterator>;
     using _end_t
         // If we can optimize it, we store the size as a uint32_t, otherwise the iterator.
         = std::conditional_t<_optimize_end, std::uint_least32_t, typename Reader::iterator>;
@@ -3818,12 +3929,25 @@ public:
     class builder;
 
     constexpr parse_tree() : parse_tree(_detail::get_memory_resource<MemoryResource>()) {}
-    constexpr explicit parse_tree(MemoryResource* resource) : _buffer(resource), _root(nullptr) {}
+    constexpr explicit parse_tree(MemoryResource* resource)
+    : _buffer(resource), _root(nullptr), _size(0), _depth(0)
+    {}
 
     //=== container access ===//
     bool empty() const noexcept
     {
         return _root == nullptr;
+    }
+
+    std::size_t size() const noexcept
+    {
+        return _size;
+    }
+
+    std::size_t depth() const noexcept
+    {
+        LEXY_PRECONDITION(!empty());
+        return _depth;
     }
 
     void clear() noexcept
@@ -3860,6 +3984,8 @@ public:
 private:
     _detail::pt_buffer<MemoryResource>   _buffer;
     _detail::pt_node_production<Reader>* _root;
+    std::size_t                          _size;
+    std::size_t                          _depth;
 };
 
 template <typename Input, typename TokenKind = void,
@@ -3876,11 +4002,14 @@ public:
         // Empty the initial parse tree.
         _result._buffer.reset();
 
-        // Allocate a new root node and begin construction there.
+        // Allocate a new root node.
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _cur = marker(_result._root);
+        _result._size = 1;
+
+        // Begin construction at the root.
+        _cur = marker(_result._root, 0);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
@@ -3890,12 +4019,16 @@ public:
     {
         // The current production all tokens are appended to.
         _detail::pt_node_production<Reader>* prod = nullptr;
+        // The depth of the current production.
+        std::size_t depth = 0;
         // The last child of the current production.
         _detail::pt_node_ptr<Reader> last_child;
 
         marker() = default;
 
-        explicit marker(_detail::pt_node_production<Reader>* prod) : prod(prod) {}
+        explicit marker(_detail::pt_node_production<Reader>* prod, std::size_t depth)
+        : prod(prod), depth(depth)
+        {}
 
         template <typename T>
         void append(T* child)
@@ -3933,11 +4066,19 @@ public:
             }
         }
 
-        void finish()
+        void finish(std::size_t& size, std::size_t& max_depth)
         {
             if (last_child)
                 // The pointer of the last child needs to point back to prod.
                 last_child.base()->ptr.set_parent(prod);
+
+            // Update the size.
+            size += prod->child_count;
+
+            // And update the depth.
+            auto local_max_depth = prod->child_count > 0 ? depth + 1 : depth;
+            if (max_depth < local_max_depth)
+                max_depth = local_max_depth;
         }
     };
 
@@ -3958,7 +4099,7 @@ public:
 
         // Subsequent inertions are to the new node, so update marker and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = marker(node);
+        _cur     = marker(node, old.depth + 1);
         return old;
     }
 
@@ -3995,7 +4136,7 @@ public:
             return;
 
         // We're done with the current production.
-        _cur.finish();
+        _cur.finish(_result._size, _result._depth);
         // Append to previous production.
         m.append(_cur.prod);
         // Continue with the previous production.
@@ -4017,7 +4158,7 @@ public:
     parse_tree&& finish() &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
-        _cur.finish();
+        _cur.finish(_result._size, _result._depth);
         return LEXY_MOV(_result);
     }
 
@@ -4366,6 +4507,8 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::traverse_range
 {
 public:
+    using event = traverse_event;
+
     struct _value_type
     {
         traverse_event   event;
@@ -4376,14 +4519,6 @@ public:
     {
     public:
         iterator() noexcept = default;
-        iterator(traverse_event ev, node n) noexcept
-        {
-            LEXY_PRECONDITION(!n.kind().is_token() || ev == traverse_event::leaf);
-            if (ev == traverse_event::exit)
-                _cur.set_parent(n._ptr.production());
-            else
-                _cur.set_sibling(n._ptr.base(), n._ptr.type());
-        }
 
         _value_type deref() const noexcept
         {
@@ -4426,6 +4561,8 @@ public:
 
     private:
         _detail::pt_node_ptr<Reader> _cur;
+
+        friend traverse_range;
     };
 
     bool empty() const noexcept
@@ -4449,16 +4586,17 @@ private:
     {
         if (n.kind().is_token())
         {
-            _begin = iterator(traverse_event::leaf, n);
-            _end   = _begin;
-            ++_end;
+            _begin._cur.set_sibling(n._ptr.token());
+            _end = _begin;
         }
         else
         {
-            _begin = iterator(traverse_event::enter, n);
-            _end   = iterator(traverse_event::exit, n);
-            ++_end;
+            _begin._cur.set_sibling(n._ptr.production());
+            _end._cur.set_parent(n._ptr.production());
         }
+
+        // Turn it into a half-open range.
+        ++_end;
     }
 
     iterator _begin, _end;
@@ -4557,7 +4695,7 @@ public:
     constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
     {
         if (--_depth == 0)
-            // Clear tree instead of finishing production.
+            // Clear tree instead of production.
             _tree->clear();
         else
             _builder->cancel_production(LEXY_MOV(m.builder));
@@ -4593,15 +4731,1362 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_DSL_HPP_INCLUDED
-#define LEXY_DSL_HPP_INCLUDED
+#ifndef LEXY_ACTION_TRACE_HPP_INCLUDED
+#define LEXY_ACTION_TRACE_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
-#define LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
+#ifndef LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
+#define LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
+
+
+
+
+
+#if LEXY_HAS_NTTP // string NTTP implementation
+
+
+
+namespace lexy::_detail
+{
+template <std::size_t N, typename CharT>
+struct string_literal
+{
+    CharT string[N + 1];
+
+    using char_type = CharT;
+
+    LEXY_CONSTEVAL string_literal(CharT c) : string{c, CharT()} {}
+    LEXY_CONSTEVAL string_literal(const CharT* str) : string{}
+    {
+        for (auto i = 0u; i != N; ++i)
+            string[i] = str[i];
+    }
+
+    LEXY_CONSTEVAL auto size() const
+    {
+        return N;
+    }
+};
+template <std::size_t N, typename CharT>
+string_literal(const CharT (&)[N]) -> string_literal<N - 1, CharT>;
+template <typename CharT>
+string_literal(CharT) -> string_literal<1, CharT>;
+
+template <auto Str>
+struct type_string
+{
+    using char_type            = typename decltype(Str)::char_type;
+    static constexpr auto size = Str.size();
+
+    template <typename CharT, typename Seq>
+    struct _lazy;
+    template <typename CharT, std::size_t... I>
+    struct _lazy<CharT, index_sequence<I...>>
+    {
+        static inline constexpr CharT str[] = {CharT(Str.string[I])..., CharT()};
+    };
+
+    template <typename CharT = char_type>
+    static LEXY_CONSTEVAL auto get()
+    {
+        using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
+        return basic_string_view<CharT>(null_terminated{}, lazy::str, Str.size());
+    }
+};
+
+template <auto C>
+using type_char = type_string<string_literal<1, std::decay_t<decltype(C)>>(C)>;
+} // namespace lexy::_detail
+
+#    define LEXY_NTTP_STRING(Str) ::lexy::_detail::type_string<::lexy::_detail::string_literal(Str)>
+
+#else // string<Cs...> implementation
+
+namespace lexy::_detail
+{
+template <typename CharT, CharT... Cs>
+struct type_string
+{
+    using char_type            = CharT;
+    static constexpr auto size = sizeof...(Cs);
+
+    template <typename OtherCharT>
+    struct _lazy
+    {
+        static inline constexpr OtherCharT str[] = {OtherCharT(Cs)..., OtherCharT()};
+    };
+
+    template <typename OtherCharT = char_type>
+    static LEXY_CONSTEVAL auto get()
+    {
+        return basic_string_view<OtherCharT>(null_terminated{}, _lazy<OtherCharT>::str,
+                                             sizeof...(Cs));
+    }
+};
+
+template <auto C>
+using type_char = type_string<std::decay_t<decltype(C)>, C>;
+} // namespace lexy::_detail
+
+#    if defined(__GNUC__) // string<Cs...> literal implementation
+
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpedantic"
+#        ifdef __clang__
+#            pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#        endif
+
+template <typename CharT, CharT... Cs>
+constexpr ::lexy::_detail::type_string<CharT, Cs...> operator""_lexy_string_udl()
+{
+    return {};
+}
+
+#        define LEXY_NTTP_STRING(Str) decltype(Str##_lexy_string_udl)
+
+#        pragma GCC diagnostic pop
+
+#    else // string<Cs...> macro implementation
+
+namespace lexy::_detail
+{
+template <typename A, typename B>
+struct cat_;
+template <typename CharT, CharT... C1, CharT... C2>
+struct cat_<type_string<CharT, C1...>, type_string<CharT, C2...>>
+{
+    using type = type_string<CharT, C1..., C2...>;
+};
+template <typename A, typename B>
+using cat = typename cat_<A, B>::type;
+
+template <typename T, std::size_t Size, std::size_t MaxSize>
+struct check_size
+{
+    static_assert(Size <= MaxSize, "string out of range");
+    using type = T;
+};
+
+} // namespace lexy::_detail
+
+#        define LEXY_NTTP_STRING_LENGTH(Str) (sizeof(Str) / sizeof(Str[0]) - 1)
+
+// extract Ith character if not out of bounds
+#        define LEXY_NTTP_STRING1(Str, I)                                                          \
+            ::std::conditional_t<(I < LEXY_NTTP_STRING_LENGTH(Str)),                               \
+                                 ::lexy::_detail::type_string<                                     \
+                                     ::std::decay_t<decltype(Str[0])>,                             \
+                                     (I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,       \
+                                 ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>>>
+
+// recursively split the string in two
+#        define LEXY_NTTP_STRING2(Str, I)                                                          \
+            ::lexy::_detail::cat<LEXY_NTTP_STRING1(Str, I), LEXY_NTTP_STRING1(Str, I + 1)>
+#        define LEXY_NTTP_STRING4(Str, I)                                                          \
+            ::lexy::_detail::cat<LEXY_NTTP_STRING2(Str, I), LEXY_NTTP_STRING2(Str, I + 2)>
+#        define LEXY_NTTP_STRING8(Str, I)                                                          \
+            ::lexy::_detail::cat<LEXY_NTTP_STRING4(Str, I), LEXY_NTTP_STRING4(Str, I + 4)>
+#        define LEXY_NTTP_STRING16(Str, I)                                                         \
+            ::lexy::_detail::cat<LEXY_NTTP_STRING8(Str, I), LEXY_NTTP_STRING8(Str, I + 8)>
+#        define LEXY_NTTP_STRING32(Str, I)                                                         \
+            ::lexy::_detail::cat<LEXY_NTTP_STRING16(Str, I), LEXY_NTTP_STRING16(Str, I + 16)>
+
+// instantiate with overflow check
+#        define LEXY_NTTP_STRING(Str)                                                              \
+            ::lexy::_detail::check_size<LEXY_NTTP_STRING32(Str, 0), LEXY_NTTP_STRING_LENGTH(Str),  \
+                                        32>::type
+
+#    endif
+
+#endif
+
+#endif // LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
+
+
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_VISUALIZE_HPP_INCLUDED
+#define LEXY_VISUALIZE_HPP_INCLUDED
+
+#include <cstdio>
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_CODE_POINT_HPP_INCLUDED
+#define LEXY_CODE_POINT_HPP_INCLUDED
+
+#include <cstdint>
+
+
+
+namespace lexy
+{
+/// A unicode code point.
+class code_point
+{
+public:
+    constexpr code_point() noexcept : _value(0xFFFF'FFFF) {}
+    constexpr explicit code_point(char32_t value) noexcept : _value(value) {}
+
+    constexpr auto value() const noexcept
+    {
+        return _value;
+    }
+
+    //=== classification ===//
+    constexpr bool is_ascii() const noexcept
+    {
+        return _value <= 0x7F;
+    }
+    constexpr bool is_bmp() const noexcept
+    {
+        return _value <= 0xFFFF;
+    }
+    constexpr bool is_valid() const noexcept
+    {
+        return _value <= 0x10'FFFF;
+    }
+
+    constexpr bool is_control() const noexcept
+    {
+        return _value <= 0x1F || (0x7F <= _value && _value <= 0x9F);
+    }
+    constexpr bool is_surrogate() const noexcept
+    {
+        return 0xD800 <= _value && _value <= 0xDFFF;
+    }
+    constexpr bool is_private_use() const noexcept
+    {
+        return (0xE000 <= _value && _value <= 0xF8FF)
+               || (0x0F'0000 <= _value && _value <= 0x0F'FFFD)
+               || (0x10'0000 <= _value && _value <= 0x10'FFFD);
+    }
+    constexpr bool is_noncharacter() const noexcept
+    {
+        // Contiguous range of 32 non-characters.
+        if (0xFDD0 <= _value && _value <= 0xFDEF)
+            return true;
+
+        // Last two code points of every plane.
+        auto in_plane = _value & 0xFFFF;
+        return in_plane == 0xFFFE || in_plane == 0xFFFF;
+    }
+
+    constexpr bool is_scalar() const noexcept
+    {
+        return is_valid() && !is_surrogate();
+    }
+
+    friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept
+    {
+        return lhs._value == rhs._value;
+    }
+    friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept
+    {
+        return lhs._value != rhs._value;
+    }
+
+private:
+    char32_t _value;
+};
+} // namespace lexy
+
+#endif // LEXY_CODE_POINT_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
+#define LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
+
+
+
+
+
+namespace lexy
+{
+enum class _cp_error_code
+{
+    eof = 1,
+    leads_with_trailing,
+    missing_trailing,
+    surrogate,
+    overlong_sequence,
+    out_of_range,
+};
+
+/// Parses an ASCII code point.
+struct engine_cp_ascii : engine_matcher_base, engine_parser_base
+{
+    using error_code = _cp_error_code;
+
+    template <typename Reader>
+    static constexpr code_point parse(error_code& ec, Reader& reader)
+    {
+        static_assert(std::is_same_v<typename Reader::encoding, ascii_encoding>);
+
+        if (reader.eof())
+        {
+            ec = error_code::eof;
+            return code_point();
+        }
+
+        auto cur = reader.peek();
+        reader.bump();
+
+        auto cp = code_point(static_cast<char32_t>(cur));
+        if (!cp.is_ascii())
+            ec = error_code::out_of_range;
+        return cp;
+    }
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        error_code result{};
+        parse(result, reader);
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader&, error_code ec)
+    {
+        switch (ec)
+        {
+        case error_code::eof:
+            // We cannot recover after EOF.
+            return false;
+        case error_code::out_of_range:
+            // Invalid code unit, but already consumed.
+            return true;
+
+        case error_code::leads_with_trailing:
+        case error_code::missing_trailing:
+        case error_code::surrogate:
+        case error_code::overlong_sequence:
+            LEXY_ASSERT(false, "unreachable");
+        }
+        return false;
+    }
+};
+
+/// Matches a UTF-8 code point.
+struct engine_cp_utf8 : engine_matcher_base, engine_parser_base
+{
+    static constexpr auto payload_lead1 = 0b0111'1111;
+    static constexpr auto payload_lead2 = 0b0001'1111;
+    static constexpr auto payload_lead3 = 0b0000'1111;
+    static constexpr auto payload_lead4 = 0b0000'0111;
+    static constexpr auto payload_cont  = 0b0011'1111;
+
+    static constexpr auto pattern_lead1 = 0b0 << 7;
+    static constexpr auto pattern_lead2 = 0b110 << 5;
+    static constexpr auto pattern_lead3 = 0b1110 << 4;
+    static constexpr auto pattern_lead4 = 0b11110 << 3;
+    static constexpr auto pattern_cont  = 0b10 << 6;
+
+    using error_code = _cp_error_code;
+
+    template <typename Reader>
+    static constexpr code_point parse(error_code& ec, Reader& reader)
+    {
+        static_assert(std::is_same_v<typename Reader::encoding, utf8_encoding>);
+
+        auto first = reader.peek();
+        if ((first & ~payload_lead1) == pattern_lead1)
+        {
+            // ASCII character.
+            reader.bump();
+            return code_point(first);
+        }
+        else if ((first & ~payload_cont) == pattern_cont)
+        {
+            ec = error_code::leads_with_trailing;
+            return code_point();
+        }
+        else if ((first & ~payload_lead2) == pattern_lead2)
+        {
+            reader.bump();
+
+            auto second = reader.peek();
+            if ((second & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto result = char32_t(first & payload_lead2);
+            result <<= 6;
+            result |= char32_t(second & payload_cont);
+
+            // C0 and C1 are overlong ASCII.
+            if (first == 0xC0 || first == 0xC1)
+                ec = error_code::overlong_sequence;
+
+            return code_point(result);
+        }
+        else if ((first & ~payload_lead3) == pattern_lead3)
+        {
+            reader.bump();
+
+            auto second = reader.peek();
+            if ((second & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto third = reader.peek();
+            if ((third & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto result = char32_t(first & payload_lead3);
+            result <<= 6;
+            result |= char32_t(second & payload_cont);
+            result <<= 6;
+            result |= char32_t(third & payload_cont);
+
+            auto cp = code_point(result);
+            if (cp.is_surrogate())
+                ec = error_code::surrogate;
+            else if (first == 0xE0 && second < 0xA0)
+                ec = error_code::overlong_sequence;
+            return cp;
+        }
+        else if ((first & ~payload_lead4) == pattern_lead4)
+        {
+            reader.bump();
+
+            auto second = reader.peek();
+            if ((second & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto third = reader.peek();
+            if ((third & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto fourth = reader.peek();
+            if ((fourth & ~payload_cont) != pattern_cont)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            auto result = char32_t(first & payload_lead4);
+            result <<= 6;
+            result |= char32_t(second & payload_cont);
+            result <<= 6;
+            result |= char32_t(third & payload_cont);
+            result <<= 6;
+            result |= char32_t(fourth & payload_cont);
+
+            auto cp = code_point(result);
+            if (!cp.is_valid())
+                ec = error_code::out_of_range;
+            else if (first == 0xF0 && second < 0x90)
+                ec = error_code::overlong_sequence;
+            return cp;
+        }
+        else // FE or FF
+        {
+            ec = error_code::eof;
+            return code_point();
+        }
+    }
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        error_code result{};
+        parse(result, reader);
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code ec)
+    {
+        switch (ec)
+        {
+        case error_code::eof:
+            // We cannot recover after EOF.
+            return false;
+        case error_code::leads_with_trailing:
+            // Invalid code unit, consume to recover.
+            reader.bump();
+            return true;
+        case error_code::missing_trailing:
+        case error_code::surrogate:
+        case error_code::out_of_range:
+        case error_code::overlong_sequence:
+            // We've already consumed the invalid unit, recovered.
+            return true;
+        }
+
+        return false; // unreachable
+    }
+};
+
+/// Matches a UTF-16 code point.
+struct engine_cp_utf16 : engine_matcher_base, engine_parser_base
+{
+    static constexpr auto payload1 = 0b0000'0011'1111'1111;
+    static constexpr auto payload2 = payload1;
+
+    static constexpr auto pattern1 = 0b110110 << 10;
+    static constexpr auto pattern2 = 0b110111 << 10;
+
+    using error_code = _cp_error_code;
+
+    template <typename Reader>
+    static constexpr code_point parse(error_code& ec, Reader& reader)
+    {
+        static_assert(std::is_same_v<typename Reader::encoding, utf16_encoding>);
+
+        if (reader.eof())
+        {
+            ec = error_code::eof;
+            return code_point();
+        }
+
+        auto first = char16_t(reader.peek());
+        if ((first & ~payload1) == pattern1)
+        {
+            reader.bump();
+            if (reader.eof())
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+
+            auto second = char16_t(reader.peek());
+            if ((second & ~payload2) != pattern2)
+            {
+                ec = error_code::missing_trailing;
+                return code_point();
+            }
+            reader.bump();
+
+            // We've got a valid code point.
+            auto result = char32_t(first & payload1);
+            result <<= 10;
+            result |= char32_t(second & payload2);
+            result |= 0x10000;
+            return code_point(result);
+        }
+        else if ((first & ~payload2) == pattern2)
+        {
+            ec = error_code::leads_with_trailing;
+            return code_point();
+        }
+        else
+        {
+            // Single code unit code point; always valid.
+            reader.bump();
+            return code_point(first);
+        }
+    }
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        error_code result{};
+        parse(result, reader);
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code ec)
+    {
+        switch (ec)
+        {
+        case error_code::eof:
+            // We cannot recover after EOF.
+            return false;
+        case error_code::leads_with_trailing:
+            // Invalid code unit, consume to recover.
+            reader.bump();
+            return true;
+        case error_code::missing_trailing:
+            // We've already consumed the invalid unit, recovered.
+            return true;
+
+        case error_code::surrogate:
+        case error_code::overlong_sequence:
+        case error_code::out_of_range:
+            LEXY_ASSERT(false, "unreachable");
+        }
+        return false;
+    }
+};
+
+/// Matches a UTF-32 code point.
+struct engine_cp_utf32 : engine_matcher_base, engine_parser_base
+{
+    using error_code = _cp_error_code;
+
+    template <typename Reader>
+    static constexpr code_point parse(error_code& ec, Reader& reader)
+    {
+        static_assert(std::is_same_v<typename Reader::encoding, utf32_encoding>);
+
+        if (reader.eof())
+        {
+            ec = error_code::eof;
+            return code_point();
+        }
+
+        auto cur = reader.peek();
+        reader.bump();
+
+        auto cp = code_point(cur);
+        if (!cp.is_valid())
+            ec = error_code::out_of_range;
+        else if (cp.is_surrogate())
+            ec = error_code::surrogate;
+
+        return cp;
+    }
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        error_code result{};
+        parse(result, reader);
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader&, error_code ec)
+    {
+        switch (ec)
+        {
+        case error_code::eof:
+            // We cannot recover after EOF.
+            return false;
+        case error_code::surrogate:
+        case error_code::out_of_range:
+            // Invalid code unit, but already consumed.
+            return true;
+
+        case error_code::leads_with_trailing:
+        case error_code::missing_trailing:
+        case error_code::overlong_sequence:
+            LEXY_ASSERT(false, "unreachable");
+        }
+        return false;
+    }
+};
+
+/// Matches a code point according to the inputs encoding.
+struct engine_cp_auto : lexy::engine_matcher_base, lexy::engine_parser_base
+{
+    using error_code = _cp_error_code;
+
+    template <typename Reader>
+    static constexpr code_point parse(error_code& ec, Reader& reader)
+    {
+        using encoding = typename Reader::encoding;
+        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
+            return engine_cp_ascii::parse(ec, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
+            return engine_cp_utf8::parse(ec, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
+            return engine_cp_utf16::parse(ec, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
+            return engine_cp_utf32::parse(ec, reader);
+        else
+            static_assert(lexy::_detail::error<encoding>,
+                          "no code point defined for this encoding");
+    }
+
+    template <typename Reader>
+    static constexpr error_code match(Reader& reader)
+    {
+        error_code result{};
+
+        using encoding = typename Reader::encoding;
+        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
+            engine_cp_ascii::parse(result, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
+            engine_cp_utf8::parse(result, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
+            engine_cp_utf16::parse(result, reader);
+        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
+            engine_cp_utf32::parse(result, reader);
+        else
+            static_assert(lexy::_detail::error<encoding>,
+                          "no code point defined for this encoding");
+
+        return result;
+    }
+
+    template <typename Reader>
+    static constexpr bool recover(Reader& reader, error_code ec)
+    {
+        using encoding = typename Reader::encoding;
+        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
+            return engine_cp_ascii::recover(reader, ec);
+        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
+            return engine_cp_utf8::recover(reader, ec);
+        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
+            return engine_cp_utf16::recover(reader, ec);
+        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
+            return engine_cp_utf32::recover(reader, ec);
+        else
+            static_assert(lexy::_detail::error<encoding>,
+                          "no code point defined for this encoding");
+    }
+};
+} // namespace lexy
+
+#endif // LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
+#define LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
+
+
+
+
+
+namespace lexy
+{
+template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
+class range_input
+{
+public:
+    using encoding  = Encoding;
+    using char_type = typename encoding::char_type;
+
+    using iterator = Iterator;
+    using sentinel = Sentinel;
+
+    //=== constructors ===//
+    constexpr range_input() noexcept : _begin(), _end() {}
+
+    constexpr range_input(iterator begin, sentinel end) noexcept : _begin(begin), _end(end) {}
+
+    //=== access ===//
+    constexpr iterator begin() const noexcept
+    {
+        return _begin;
+    }
+
+    constexpr sentinel end() const noexcept
+    {
+        return _end;
+    }
+
+    //=== reader ===//
+    constexpr auto reader() const& noexcept
+    {
+        return _detail::range_reader<Encoding, Iterator, Sentinel>(_begin, _end);
+    }
+
+private:
+    Iterator                   _begin;
+    LEXY_EMPTY_MEMBER Sentinel _end;
+};
+
+template <typename Iterator, typename Sentinel>
+range_input(Iterator begin, Sentinel end)
+    -> range_input<deduce_encoding<std::decay_t<decltype(*begin)>>, Iterator, Sentinel>;
+} // namespace lexy
+
+#endif // LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
+
+
+
+//=== visualization_options ===//
+namespace lexy
+{
+enum visualization_flags
+{
+    visualize_default = 0,
+
+    /// Visualization can use unicode characters.
+    visualize_use_unicode = 1 << 0,
+    /// Visualization can use ANSI color escape sequences.
+    visualize_use_color = 1 << 1,
+    /// Visualization can use Unicode symbols e.g. for newline/space instead of the code point.
+    visualize_use_symbols = 1 << 2,
+
+    /// Visualization can use unicode, color and symbols.
+    visualize_fancy = visualize_use_unicode | visualize_use_color | visualize_use_symbols,
+
+    /// Visualize space ' ' as visible character/symbol.
+    visualize_space = 1 << 3,
+};
+
+constexpr visualization_flags operator|(visualization_flags lhs, visualization_flags rhs) noexcept
+{
+    return visualization_flags(int(lhs) | int(rhs));
+}
+
+/// Options that control visualization.
+struct visualization_options
+{
+    static constexpr auto max_tree_depth_limit = 32;
+
+    /// Boolean flags.
+    visualization_flags flags = visualize_default;
+    /// The maximal depth when visualizing a tree.
+    /// Must be <= max_tree_depth_limit.
+    unsigned max_tree_depth = max_tree_depth_limit;
+
+    constexpr bool is_set(visualization_flags f) const noexcept
+    {
+        return (flags & f) != 0;
+    }
+
+    constexpr visualization_options reset(visualization_flags f) const noexcept
+    {
+        auto copy  = *this;
+        copy.flags = visualization_flags(copy.flags & ~f);
+        return copy;
+    }
+
+    friend constexpr visualization_options operator|(visualization_options lhs,
+                                                     visualization_flags   rhs) noexcept
+    {
+        lhs.flags = lhs.flags | rhs;
+        return lhs;
+    }
+};
+} // namespace lexy
+
+//=== visualize_to ===//
+namespace lexy::_detail
+{
+template <typename Encoding>
+constexpr auto make_literal_lexeme(const typename Encoding::char_type* str)
+{
+    struct reader
+    {
+        using encoding         = Encoding;
+        using char_type        = typename Encoding::char_type;
+        using iterator         = const char_type*;
+        using canonical_reader = reader;
+    };
+
+    auto end = str;
+    while (*end)
+        ++end;
+
+    return lexy::lexeme<reader>(str, end);
+}
+
+template <typename OutIt>
+constexpr OutIt write_str(OutIt out, const char* str)
+{
+    while (*str)
+        *out++ = *str++;
+    return out;
+}
+template <typename OutIt>
+constexpr OutIt write_str(OutIt out, const LEXY_CHAR8_T* str)
+{
+    while (*str)
+        *out++ = static_cast<char>(*str++);
+    return out;
+}
+
+template <int N = 16, typename OutIt, typename... Args>
+constexpr OutIt write_format(OutIt out, const char* fmt, const Args&... args)
+{
+    char buffer[std::size_t(N + 1)];
+    auto count = std::snprintf(buffer, N, fmt, args...);
+    LEXY_ASSERT(count <= N, "buffer not big enough");
+
+    for (auto i = 0; i != count; ++i)
+        *out++ = buffer[i];
+    return out;
+}
+
+enum class color
+{
+    reset  = 0,
+    bold   = 1,
+    faint  = 2,
+    italic = 3,
+
+    black   = 30,
+    red     = 31,
+    green   = 32,
+    yellow  = 33,
+    blue    = 34,
+    magenta = 35,
+    cyan    = 36,
+    white   = 37,
+};
+
+template <color CodeHead, color... CodeTail, typename OutIt>
+constexpr OutIt write_color(OutIt out, visualization_options opts)
+{
+    if (!opts.is_set(visualize_use_color))
+        return out;
+
+    out = write_str(out, "\033[");
+
+    auto write_code = [](OutIt out, int code) {
+        if (code > 10)
+        {
+            *out++ = static_cast<char>((code / 10) + '0');
+            *out++ = static_cast<char>((code % 10) + '0');
+        }
+        else
+        {
+            *out++ = static_cast<char>(code + '0');
+        }
+        return out;
+    };
+    out = write_code(out, int(CodeHead));
+    ((*out++ = ';', write_code(out, int(CodeTail))), ...);
+
+    *out++ = 'm';
+    return out;
+}
+} // namespace lexy::_detail
+
+namespace lexy
+{
+template <typename OutputIt>
+OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options opts = {})
+{
+    auto write_special_char = [opts](OutputIt out, auto inner) {
+        out = _detail::write_color<_detail::color::cyan, _detail::color::faint>(out, opts);
+        if (opts.is_set(visualize_use_unicode))
+            out = _detail::write_str(out, u8"⟨");
+        else
+            out = _detail::write_str(out, "\\");
+
+        out = inner(out);
+
+        if (opts.is_set(visualize_use_unicode))
+            out = _detail::write_str(out, u8"⟩");
+        out = _detail::write_color<_detail::color::reset>(out, opts);
+        return out;
+    };
+
+    if (!cp.is_valid())
+    {
+        out = write_special_char(out, [opts](OutputIt out) {
+            if (opts.is_set(visualize_use_unicode))
+                return _detail::write_str(out, "U+????");
+            else
+                return _detail::write_str(out, "u????");
+        });
+        return out;
+    }
+    else if (cp.is_control())
+    {
+        auto c = static_cast<char>(cp.value());
+        switch (c)
+        {
+        case '\0':
+            out = write_special_char(out, [opts](OutputIt out) {
+                if (opts.is_set(visualize_use_unicode))
+                    return _detail::write_str(out, "NUL");
+                else
+                    return _detail::write_str(out, "0");
+            });
+            break;
+        case '\r':
+            out = write_special_char(out, [opts](OutputIt out) {
+                if (opts.is_set(visualize_use_unicode))
+                    return _detail::write_str(out, "CR");
+                else
+                    return _detail::write_str(out, "r");
+            });
+            break;
+
+        case '\n':
+            if (opts.is_set(visualize_use_symbols))
+            {
+                out = _detail::write_color<_detail::color::faint>(out, opts);
+                out = _detail::write_str(out, u8"⏎");
+                out = _detail::write_color<_detail::color::reset>(out, opts);
+            }
+            else if (opts.is_set(visualize_use_unicode))
+            {
+                out = write_special_char(out, [](OutputIt out) {
+                    return _detail::write_str(out, "LF");
+                });
+            }
+            else
+            {
+                out = write_special_char(out,
+                                         [](OutputIt out) { return _detail::write_str(out, "n"); });
+            }
+            break;
+        case '\t':
+            if (opts.is_set(visualize_use_symbols))
+            {
+                out = _detail::write_color<_detail::color::faint>(out, opts);
+                out = _detail::write_str(out, u8"⇨");
+                out = _detail::write_color<_detail::color::reset>(out, opts);
+            }
+            else if (opts.is_set(visualize_use_unicode))
+            {
+                out = write_special_char(out, [](OutputIt out) {
+                    return _detail::write_str(out, "HT");
+                });
+            }
+            else
+            {
+                out = write_special_char(out,
+                                         [](OutputIt out) { return _detail::write_str(out, "t"); });
+            }
+            break;
+
+        default:
+            out = write_special_char(out, [opts, c](OutputIt out) {
+                if (opts.is_set(visualize_use_unicode))
+                    return _detail::write_format(out, "U+%04X", c);
+                else
+                    return _detail::write_format(out, "u%04X", c);
+            });
+            break;
+        }
+        return out;
+    }
+    else if (cp.value() == ' ')
+    {
+        if (opts.is_set(visualize_space))
+        {
+            if (opts.is_set(visualize_use_symbols))
+            {
+                out = _detail::write_color<_detail::color::faint>(out, opts);
+                out = _detail::write_str(out, u8"␣");
+                out = _detail::write_color<_detail::color::reset>(out, opts);
+            }
+            else if (opts.is_set(visualize_use_unicode))
+            {
+                out = write_special_char(out, [](OutputIt out) {
+                    return _detail::write_str(out, "SP");
+                });
+            }
+            else
+            {
+                out = write_special_char(out, [](OutputIt out) {
+                    return _detail::write_str(out, "u0020");
+                });
+            }
+        }
+        else
+        {
+            *out++ = ' ';
+        }
+
+        return out;
+    }
+    else if (cp.value() == '\\')
+    {
+        if (!opts.is_set(visualize_use_unicode))
+            out = write_special_char(out,
+                                     [](OutputIt out) { return _detail::write_str(out, "\\"); });
+        else
+            *out++ = '\\'; // Doesn't need escaping if we can use unicode.
+        return out;
+    }
+    else if (cp.is_ascii())
+    {
+        // ASCII, non-control character, print as-is.
+        *out++ = static_cast<char>(cp.value());
+        return out;
+    }
+    else
+    {
+        out = write_special_char(out, [opts, cp](OutputIt out) {
+            auto c = static_cast<int>(cp.value());
+            if (opts.is_set(visualize_use_unicode))
+                return _detail::write_format(out, "U+%04X", c);
+            else if (cp.is_bmp())
+                return _detail::write_format(out, "u%04X", c);
+            else
+                return _detail::write_format(out, "U%08X", c);
+        });
+        return out;
+    }
+}
+
+template <typename OutputIt, typename Reader>
+OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
+                      [[maybe_unused]] visualization_options opts = {})
+{
+    using encoding = typename Reader::encoding;
+    if constexpr (std::is_same_v<encoding, lexy::ascii_encoding> //
+                  || std::is_same_v<encoding, lexy::default_encoding>)
+    {
+        for (char c : lexeme)
+        {
+            // If the character is in fact ASCII, visualize the code point.
+            // Otherwise, visualize an unknown code point.
+            if (lexy::_is_ascii(c))
+                out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
+            else
+                out = visualize_to(out, lexy::code_point(), opts);
+        }
+        return out;
+    }
+    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>     //
+                       || std::is_same_v<encoding, lexy::utf16_encoding> //
+                       || std::is_same_v<encoding, lexy::utf32_encoding>)
+    {
+        // Parse the individual code points, and write them out.
+        lexy::range_input<encoding, typename Reader::iterator> input(lexeme.begin(), lexeme.end());
+        auto                                                   reader = input.reader();
+        while (true)
+        {
+            lexy::engine_cp_auto::error_code ec{};
+            auto                             cp = lexy::engine_cp_auto::parse(ec, reader);
+            if (ec == lexy::engine_cp_auto::error_code::eof)
+                break;
+
+            out = visualize_to(out, cp, opts);
+        }
+        return out;
+    }
+    else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
+    {
+        // Write each byte.
+        for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
+        {
+            if (iter != lexeme.begin())
+                *out++ = ' ';
+            out = _detail::write_format(out, "%02X", *iter);
+        }
+        return out;
+    }
+    else
+    {
+        static_assert(lexy::_detail::error<encoding>, "unknown encoding");
+        return out;
+    }
+}
+
+template <typename OutputIt, typename Tree, typename = decltype(LEXY_DECLVAL(Tree&).traverse())>
+OutputIt visualize_to(OutputIt out, const Tree& tree, visualization_options opts = {})
+{
+    struct label_t
+    {
+        const LEXY_CHAR_OF_u8* space;
+        const LEXY_CHAR_OF_u8* line;
+        const LEXY_CHAR_OF_u8* end;
+        const LEXY_CHAR_OF_u8* branch;
+    };
+    auto label = opts.is_set(visualize_use_unicode) ? label_t{u8"   ", u8"│  ", u8"└──", u8"├──"}
+                                                    : label_t{u8"  ", u8"  ", u8"- ", u8"- "};
+
+    // True if the node currently opened at the depth is the last child of its parent,
+    // false otherwise.
+    bool is_last_child[visualization_options::max_tree_depth_limit] = {};
+    LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
+
+    // Writes the prefix using the last child information.
+    auto write_prefix
+        = [opts, label, &is_last_child](OutputIt out, std::size_t cur_depth, bool cur_is_last) {
+              if (cur_depth == 0)
+                  // Root node doesn't have a prefix.
+                  return out;
+
+              out = _detail::write_color<_detail::color::faint>(out, opts);
+
+              // We begin at depth 1, as depth 0 doesn't require a prefix.
+              for (auto i = 1u; i < cur_depth; ++i)
+                  if (is_last_child[i])
+                      // If the current node at that depth is the last child, we just indent.
+                      out = _detail::write_str(out, label.space);
+                  else
+                      // Otherwise, we need to carry the line.
+                      out = _detail::write_str(out, label.line);
+
+              // Print the final branching symbol for the current node.
+              if (cur_is_last)
+                  out = _detail::write_str(out, label.end);
+              else
+                  out = _detail::write_str(out, label.branch);
+
+              out = _detail::write_color<_detail::color::reset>(out, opts);
+              return out;
+          };
+
+    // Traverse and print the tree.
+    std::size_t cur_depth = 0;
+    for (auto [event, node] : tree.traverse())
+    {
+        auto last_child = node.is_last_child();
+
+        using event_t = typename decltype(tree.traverse())::event;
+        switch (event)
+        {
+        case event_t::enter:
+            if (cur_depth <= opts.max_tree_depth)
+            {
+                out = write_prefix(out, cur_depth, last_child);
+
+                out = _detail::write_color<_detail::color::bold>(out, opts);
+                out = _detail::write_str(out, node.kind().name());
+                out = _detail::write_color<_detail::color::reset>(out, opts);
+
+                if (cur_depth == opts.max_tree_depth)
+                {
+                    // Print an ellipsis instead of children.
+                    if (opts.is_set(visualize_use_unicode))
+                        out = _detail::write_str(out, u8": \u2026\n"); // …
+                    else
+                        out = _detail::write_str(out, ": ...\n");
+                }
+                else
+                {
+                    // Print a newline and prepare for children.
+                    out                      = _detail::write_str(out, ":\n");
+                    is_last_child[cur_depth] = last_child;
+                }
+            }
+            ++cur_depth;
+            break;
+
+        case event_t::exit:
+            --cur_depth;
+            break;
+
+        case event_t::leaf:
+            if (cur_depth <= opts.max_tree_depth)
+            {
+                out = write_prefix(out, cur_depth, last_child);
+
+                out = _detail::write_color<_detail::color::bold>(out, opts);
+                out = _detail::write_str(out, node.kind().name());
+                out = _detail::write_color<_detail::color::reset>(out, opts);
+
+                if (!node.lexeme().empty())
+                {
+                    out = _detail::write_str(out, ": ");
+                    out = visualize_to(out, node.lexeme(), opts | lexy::visualize_space);
+                }
+
+                out = _detail::write_str(out, "\n");
+            }
+            break;
+        }
+    }
+
+    return out;
+}
+} // namespace lexy
+
+//=== visualize ===//
+namespace lexy
+{
+struct cfile_output_iterator
+{
+    std::FILE* _file;
+
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    cfile_output_iterator& operator=(char c)
+    {
+        std::fputc(c, _file);
+        return *this;
+    }
+};
+
+/// Writes the visualization to the FILE.
+template <typename T>
+void visualize(std::FILE* file, const T& obj, visualization_options opts = {})
+{
+    visualize_to(cfile_output_iterator{file}, obj, opts);
+}
+} // namespace lexy
+
+//=== visualization_display_width ===//
+namespace lexy
+{
+template <typename T>
+std::size_t visualization_display_width(const T& obj, visualization_options opts = {})
+{
+    struct iterator
+    {
+        std::size_t width;
+
+        iterator& operator*() noexcept
+        {
+            return *this;
+        }
+        iterator& operator++(int) noexcept
+        {
+            return *this;
+        }
+
+        iterator& operator=(char c)
+        {
+            // We're having ASCII or UTF-8 characters.
+            // All unicode characters used occupy a single cell,
+            // so we just need to count all code units that are not continuation bytes.
+            auto value = static_cast<unsigned char>(c);
+            if ((value & 0b1100'0000) != 0b1000'0000)
+                ++width;
+            return *this;
+        }
+    };
+
+    // Disable usage of color, as they introduce additional characters that must nobe counted.
+    return visualize_to(iterator{0}, obj, opts.reset(visualize_use_color)).width;
+}
+} // namespace lexy
+
+#endif // LEXY_VISUALIZE_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
+#define LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
+#define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 
 
@@ -4735,7 +6220,10 @@ struct token_base : _token_base
 
             auto begin = reader.cur();
             if (!lexy::engine_try_match<token_engine>(reader))
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
             auto end = reader.cur();
             context.on(_ev::token{}, Derived::token_kind(), begin, end);
 
@@ -4872,38 +6360,6 @@ constexpr auto token(Rule)
 } // namespace lexyd
 
 #endif // LEXY_DSL_TOKEN_HPP_INCLUDED
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_ENGINE_FAILURE_HPP_INCLUDED
-#define LEXY_ENGINE_FAILURE_HPP_INCLUDED
-
-
-
-namespace lexy
-{
-/// Matches nothing, i.e. always fails without consuming anything.
-struct engine_failure : engine_matcher_base
-{
-    enum class error_code
-    {
-        error = 1,
-    };
-
-    template <typename Reader>
-    static constexpr error_code match(Reader&)
-    {
-        return error_code::error;
-    }
-};
-
-template <typename Reader>
-inline constexpr bool engine_can_succeed<engine_failure, Reader> = false;
-} // namespace lexy
-
-#endif // LEXY_ENGINE_FAILURE_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -5158,6 +6614,703 @@ inline constexpr bool engine_can_succeed<engine_trie<Trie>, Reader> = !Trie.empt
 } // namespace lexy
 
 #endif // LEXY_ENGINE_TRIE_HPP_INCLUDED
+
+
+
+namespace lexyd
+{
+struct _nl : token_base<_nl>
+{
+    static constexpr auto _trie
+        = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
+    using token_engine = lexy::engine_trie<_trie>;
+
+    template <typename Context, typename Reader>
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
+    {
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
+        context.on(_ev::error{}, err);
+    }
+};
+
+/// Matches a newline character.
+constexpr auto newline = _nl{};
+} // namespace lexyd
+
+namespace lexyd
+{
+struct _eol : token_base<_eol>
+{
+    struct token_engine : lexy::engine_matcher_base
+    {
+        using error_code = _nl::token_engine::error_code;
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (reader.eof())
+                return error_code();
+            else
+                return _nl::token_engine::match(reader);
+        }
+    };
+
+    static LEXY_CONSTEVAL auto token_kind()
+    {
+        return lexy::eol_token_kind;
+    }
+
+    template <typename Context, typename Reader>
+    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
+                                      typename Reader::iterator pos)
+    {
+        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
+        context.on(_ev::error{}, err);
+    }
+};
+
+/// Matches the end of line (EOF or newline).
+constexpr auto eol = _eol{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
+
+
+
+
+namespace lexy_ext
+{
+// Fake token that counts code units without verification.
+struct _unchecked_code_unit
+{
+    struct token_engine : lexy::engine_matcher_base
+    {
+        enum class error_code
+        {
+            invalid = 1,
+        };
+
+        template <typename Reader>
+        static constexpr error_code match(Reader& reader)
+        {
+            if (reader.eof())
+                return error_code::invalid;
+
+            reader.bump();
+            return error_code();
+        }
+    };
+};
+
+/// Converts positions (iterators) into locations (line/column nr).
+///
+/// The unit for line and column numbers can be customized.
+/// Every time the corresponding token matches, is the corresponding number increased.
+///
+/// See https://foonathan.net/2021/02/column/ for a discussion of potential units.
+/// Use e.g. `lexy::dsl::code_point` and `lexy::dsl::newline` to count code points.
+///
+/// By default, it counts code units and newlines.
+template <typename Input, typename TokenColumn = _unchecked_code_unit,
+          typename TokenLine = std::decay_t<decltype(lexy::dsl::newline)>>
+class input_location_finder
+{
+    using engine_column = typename TokenColumn::token_engine;
+    using engine_line   = typename TokenLine::token_engine;
+
+public:
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
+    /// The location in the input.
+    class location
+    {
+    public:
+        constexpr std::size_t line_nr() const noexcept
+        {
+            return _line;
+        }
+        constexpr std::size_t column_nr() const noexcept
+        {
+            return _column;
+        }
+
+        /// The entire line that contains the position.
+        constexpr lexy::lexeme_for<Input> context() const
+        {
+            return {_reader.cur(), _eol};
+        }
+
+        /// The newline after the line, if there is any.
+        constexpr lexy::lexeme_for<Input> newline() const
+        {
+            auto reader = _reader;
+            // Advance to EOl.
+            while (reader.cur() != _eol)
+                reader.bump();
+            // Bump newline.
+            lexy::engine_try_match<engine_line>(reader);
+            return {_eol, reader.cur()};
+        }
+
+    private:
+        constexpr location(lexy::input_reader<Input> reader, std::size_t line, std::size_t column)
+        : _reader(LEXY_MOV(reader)), _eol(), _line(line), _column(column)
+        {
+            // Find EOL.
+            for (auto reader = _reader; true; reader.bump())
+            {
+                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
+                {
+                    _eol = reader.cur();
+                    break;
+                }
+            }
+        }
+
+        // The reader starts at the beginning of the given line.
+        lexy::input_reader<Input> _reader;
+        iterator                  _eol;
+        std::size_t               _line, _column;
+
+        friend input_location_finder;
+    };
+
+    constexpr explicit input_location_finder(const Input& input) : _reader(input.reader()) {}
+    constexpr explicit input_location_finder(const Input& input, TokenColumn, TokenLine)
+    : _reader(input.reader())
+    {}
+
+    /// The starting location.
+    constexpr location beginning() const
+    {
+        return location(_reader, 1, 1);
+    }
+
+    /// Finds the given position, starting at the anchor location.
+    /// This is an optimization if you know the position is after the anchor.
+    constexpr location find(iterator pos, const location& anchor) const
+    {
+        auto reader = anchor._reader;
+
+        // We start at the given line in the initial column.
+        std::size_t cur_line   = anchor._line;
+        std::size_t cur_column = 1;
+        auto        line_start = reader;
+
+        // Find the given position.
+        while (true)
+        {
+            if (reader.cur() == pos)
+            {
+                // We found the position of the error.
+                break;
+            }
+            else if (lexy::engine_try_match<engine_line>(reader))
+            {
+                // We're at a new line.
+                ++cur_line;
+                cur_column = 1;
+                line_start = reader;
+            }
+            else if (lexy::engine_try_match<engine_column>(reader))
+            {
+                // Next column.
+                ++cur_column;
+            }
+            else if (reader.eof())
+            {
+                // We have an OOB error position.
+                LEXY_PRECONDITION(false);
+                break;
+            }
+            else
+            {
+                // Invalid column, just ignore it in the column count.
+                reader.bump();
+            }
+        }
+
+        // Return where we ended up.
+        return location(line_start, cur_line, cur_column);
+    }
+
+    /// Finds the location of the position.
+    constexpr location find(iterator pos) const
+    {
+        // We start at the beginning of the file with the search.
+        auto anchor = beginning();
+        return find(pos, anchor);
+    }
+
+private:
+    lexy::input_reader<Input> _reader;
+};
+
+/// Convenience function to find a single location.
+template <typename Input, typename TokenColumn, typename TokenLine>
+constexpr auto find_input_location(const Input&                                 input,
+                                   typename lexy::input_reader<Input>::iterator pos, TokenColumn,
+                                   TokenLine)
+{
+    return input_location_finder<Input, TokenColumn, TokenLine>(input).find(pos);
+}
+template <typename Input>
+constexpr auto find_input_location(const Input&                                 input,
+                                   typename lexy::input_reader<Input>::iterator pos)
+{
+    return input_location_finder<Input>(input).find(pos);
+}
+} // namespace lexy_ext
+
+#endif // LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
+ // implementation detail only
+
+//=== debug_event ===//
+namespace lexy::parse_events
+{
+/// Debug event was triggered.
+/// Arguments: pos, str
+struct debug_event
+{};
+} // namespace lexy::parse_events
+
+namespace lexyd
+{
+template <typename String>
+struct _debug
+{
+    template <typename NextParser>
+    struct parser
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            context.on(_ev::debug_event{}, reader.cur(), String::get().c_str());
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+};
+
+#if LEXY_HAS_NTTP
+template <lexy::_detail::string_literal Str>
+constexpr auto debug = _debug<lexy::_detail::type_string<Str>>{};
+#endif
+
+#define LEXY_DEBUG(Str)                                                                            \
+    ::lexyd::_debug<LEXY_NTTP_STRING(Str)> {}
+} // namespace lexyd
+
+//=== trace ====//
+namespace lexy
+{
+namespace _ev = lexy::parse_events;
+
+template <typename OutputIt, typename Input, typename TokenKind = void>
+class trace_handler
+{
+    using location_finder = lexy_ext::input_location_finder<Input>;
+    using location        = typename location_finder::location;
+
+    struct label_t
+    {
+        const LEXY_CHAR_OF_u8* line;
+        const LEXY_CHAR_OF_u8* event;
+        const LEXY_CHAR_OF_u8* finish_event;
+        const LEXY_CHAR_OF_u8* cancel_event;
+    };
+
+    label_t label() const
+    {
+        return _opts.is_set(visualize_use_unicode) ? label_t{u8"│  ", u8"├──", u8"┴", u8"└"}
+                                                   : label_t{u8"  ", u8"- ", u8"- finish", u8"-"};
+    }
+
+    enum class prefix
+    {
+        event,
+        cancel,
+        finish,
+    };
+
+    OutputIt write_prefix(OutputIt out, std::size_t cur_depth, const location& loc, prefix p) const
+    {
+        const auto l = label();
+
+        if (cur_depth > 0)
+            *out++ = '\n';
+
+        out = _detail::write_color<_detail::color::faint>(out, _opts);
+        out = _detail::write_format(out, "%2zu:%3zu", loc.line_nr(), loc.column_nr());
+        out = _detail::write_str(out, ": ");
+        out = _detail::write_color<_detail::color::reset>(out, _opts);
+
+        if (cur_depth > 0)
+        {
+            for (auto i = 0u; i != cur_depth - 1; ++i)
+                out = _detail::write_str(out, l.line);
+
+            switch (p)
+            {
+            case prefix::event:
+                out = _detail::write_str(out, l.event);
+                break;
+            case prefix::cancel:
+                out = _detail::write_str(out, l.cancel_event);
+                break;
+            case prefix::finish:
+                out = _detail::write_str(out, l.finish_event);
+                break;
+            }
+        }
+
+        return out;
+    }
+
+public:
+    explicit trace_handler(OutputIt out, const Input& input,
+                           visualization_options opts = {}) noexcept
+    : _out(out), _cur_depth(0), _locations(input), _anchor(_locations.beginning()), _opts(opts)
+    {
+        LEXY_PRECONDITION(_opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
+    }
+
+    //=== result ===//
+    template <typename Production>
+    using production_result = void;
+
+    template <typename Production>
+    OutputIt get_result_value() && noexcept
+    {
+        *_out++ = '\n';
+        return _out;
+    }
+    template <typename Production>
+    OutputIt get_result_empty() && noexcept
+    {
+        *_out++ = '\n';
+        return _out;
+    }
+
+    //=== events ===//
+    template <typename Production>
+    struct marker
+    {
+        // The beginning of the previous production.
+        // If the current production gets canceled, it needs to be restored.
+        location previous_anchor;
+    };
+
+    template <typename Production, typename Iterator>
+    marker<Production> on(_ev::production_start<Production>, Iterator pos)
+    {
+        const auto loc = _locations.find(pos, _anchor);
+
+        // All other events are after this point.
+        auto previous_anchor = _anchor;
+        _anchor              = loc;
+
+        if (_cur_depth <= _opts.max_tree_depth)
+        {
+            _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+            _out = _detail::write_color<_detail::color::bold>(_out, _opts);
+            _out = _detail::write_str(_out, lexy::production_name<Production>());
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            if (_cur_depth == _opts.max_tree_depth)
+            {
+                // Print an ellipsis instead of children.
+                if (_opts.is_set(visualize_use_unicode))
+                    _out = _detail::write_str(_out, u8": …");
+                else
+                    _out = _detail::write_str(_out, ": ...");
+            }
+            else
+            {
+                // Prepare for children.
+                _out = _detail::write_str(_out, ":");
+            }
+        }
+
+        ++_cur_depth;
+        _last_token.reset();
+
+        return {previous_anchor};
+    }
+
+    template <typename Production, typename Iterator>
+    auto on(marker<Production>, _ev::list, Iterator)
+    {
+        return lexy::noop.sink();
+    }
+
+    template <typename Production, typename TK, typename Iterator>
+    void on(const marker<Production>&, _ev::token, TK _kind, Iterator begin, Iterator end)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        const auto kind = lexy::token_kind<TokenKind>(_kind);
+        const auto loc  = _locations.find(begin, _anchor);
+
+        if (_last_token.merge(Production{}, kind))
+        {
+            _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end), _opts | visualize_space);
+        }
+        else
+        {
+            _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+            _out = _detail::write_color<_detail::color::bold>(_out, _opts);
+            _out = _detail::write_str(_out, kind.name());
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            if (begin != end)
+            {
+                _out = _detail::write_str(_out, ": ");
+                _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end),
+                                    _opts | visualize_space);
+            }
+        }
+
+        _last_token.update(kind);
+    }
+
+    template <typename Production, typename Reader, typename Tag>
+    void on(marker<Production>, _ev::error, const lexy::error<Reader, Tag>& error)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        const auto loc = _locations.find(error.position(), _anchor);
+
+        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+        _out = _detail::write_color<_detail::color::red, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "error");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_color<_detail::color::red>(_out, _opts);
+        _out = _detail::write_str(_out, ": ");
+
+        if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
+        {
+            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+
+            _out = _detail::write_str(_out, "expected '");
+            _out = visualize_to(_out, string, _opts);
+            _out = _detail::write_str(_out, "'");
+        }
+        else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
+        {
+            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+
+            _out = _detail::write_str(_out, "expected keyword '");
+            _out = visualize_to(_out, string, _opts);
+            _out = _detail::write_str(_out, "'");
+        }
+        else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
+        {
+            _out = _detail::write_str(_out, "expected '");
+            _out = _detail::write_str(_out, error.character_class());
+            _out = _detail::write_str(_out, "' character");
+        }
+        else
+        {
+            _out = _detail::write_str(_out, error.message());
+        }
+
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        // We can no longer merge tokens.
+        _last_token.reset();
+    }
+
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::backtracked, Iterator begin, Iterator end)
+    {
+        if (_cur_depth > _opts.max_tree_depth
+            // If we haven't actually consumed any characters, we didn't really backtrack;
+            // peeking at the next character is allowed.
+            || begin == end)
+            return;
+
+        const auto loc = _locations.find(begin, _anchor);
+
+        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "backtracked");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        if (begin != end)
+        {
+            _out = _detail::write_str(_out, ": ");
+            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+            _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end),
+                                _opts.reset(visualize_use_color) | visualize_space);
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+        }
+
+        // We can no longer merge tokens.
+        _last_token.reset();
+    }
+
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::debug_event, Iterator pos, const char* str)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        const auto loc = _locations.find(pos, _anchor);
+
+        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+        _out = _detail::write_color<_detail::color::blue, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "debug");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_color<_detail::color::blue>(_out, _opts);
+        _out = _detail::write_str(_out, ": ");
+        _out = _detail::write_str(_out, str);
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        // We can no longer merge tokens.
+        _last_token.reset();
+    }
+
+    template <typename Production, typename Iterator, typename... Args>
+    void on(marker<Production>&&, _ev::production_finish<Production>, Iterator pos, Args&&...)
+    {
+        const auto loc = _locations.find(pos, _anchor);
+
+        if (_cur_depth <= _opts.max_tree_depth)
+            _out = write_prefix(_out, _cur_depth, loc, prefix::finish);
+
+        --_cur_depth;
+    }
+    template <typename Production, typename Iterator>
+    void on(marker<Production>&& m, _ev::production_cancel<Production>, Iterator pos)
+    {
+        const auto loc = _locations.find(pos, _anchor);
+
+        if (_cur_depth <= _opts.max_tree_depth)
+        {
+            _out = write_prefix(_out, _cur_depth, loc, prefix::cancel);
+            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+            if (_opts.is_set(visualize_use_unicode))
+                _out = _detail::write_str(_out, u8"╳");
+            else
+                _out = _detail::write_str(_out, "x");
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+        }
+
+        --_cur_depth;
+
+        // Restore the anchor as we've backtracked.
+        _anchor = m.previous_anchor;
+    }
+
+private:
+    struct last_token_info
+    {
+        bool                        first_token;
+        lexy::token_kind<TokenKind> kind;
+
+        last_token_info() : first_token(true) {}
+
+        template <typename Production>
+        bool merge(Production, lexy::token_kind<TokenKind> new_kind) const
+        {
+            return lexy::is_token_production<Production> && !first_token && kind == new_kind;
+        }
+
+        void update(lexy::token_kind<TokenKind> new_kind)
+        {
+            first_token = false;
+            kind        = new_kind;
+        }
+
+        void reset()
+        {
+            first_token = true;
+        }
+    };
+
+    OutputIt _out;
+
+    std::size_t     _cur_depth;
+    last_token_info _last_token;
+
+    location_finder _locations;
+    location        _anchor;
+
+    visualization_options _opts;
+};
+
+template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>
+OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts = {})
+{
+    auto reader = input.reader();
+    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
+                                       reader);
+}
+
+template <typename Production, typename TokenKind = void, typename Input>
+void trace(std::FILE* file, const Input& input, visualization_options opts = {})
+{
+    trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, opts);
+}
+} // namespace lexy
+
+#endif // LEXY_ACTION_TRACE_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_HPP_INCLUDED
+#define LEXY_DSL_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
+#define LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
+
+
+
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_ENGINE_FAILURE_HPP_INCLUDED
+#define LEXY_ENGINE_FAILURE_HPP_INCLUDED
+
+
+
+namespace lexy
+{
+/// Matches nothing, i.e. always fails without consuming anything.
+struct engine_failure : engine_matcher_base
+{
+    enum class error_code
+    {
+        error = 1,
+    };
+
+    template <typename Reader>
+    static constexpr error_code match(Reader&)
+    {
+        return error_code::error;
+    }
+};
+
+template <typename Reader>
+inline constexpr bool engine_can_succeed<engine_failure, Reader> = false;
+} // namespace lexy
+
+#endif // LEXY_ENGINE_FAILURE_HPP_INCLUDED
+
 
 
 namespace lexy
@@ -5703,176 +7856,6 @@ constexpr auto dsl_ascii_table = [] {
 
 #endif // LEXY_DETAIL_ASCII_TABLE_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
-#define LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
-
-
-
-
-
-#if LEXY_HAS_NTTP // string NTTP implementation
-
-
-
-namespace lexy::_detail
-{
-template <std::size_t N, typename CharT>
-struct string_literal
-{
-    CharT string[N + 1];
-
-    using char_type = CharT;
-
-    LEXY_CONSTEVAL string_literal(CharT c) : string{c, CharT()} {}
-    LEXY_CONSTEVAL string_literal(const CharT* str) : string{}
-    {
-        for (auto i = 0u; i != N; ++i)
-            string[i] = str[i];
-    }
-
-    LEXY_CONSTEVAL auto size() const
-    {
-        return N;
-    }
-};
-template <std::size_t N, typename CharT>
-string_literal(const CharT (&)[N]) -> string_literal<N - 1, CharT>;
-template <typename CharT>
-string_literal(CharT) -> string_literal<1, CharT>;
-
-template <auto Str>
-struct type_string
-{
-    using char_type            = typename decltype(Str)::char_type;
-    static constexpr auto size = Str.size();
-
-    template <typename CharT, typename Seq>
-    struct _lazy;
-    template <typename CharT, std::size_t... I>
-    struct _lazy<CharT, index_sequence<I...>>
-    {
-        static inline constexpr CharT str[] = {CharT(Str.string[I])..., CharT()};
-    };
-
-    template <typename CharT = char_type>
-    static LEXY_CONSTEVAL auto get()
-    {
-        using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
-        return basic_string_view<CharT>(null_terminated{}, lazy::str, Str.size());
-    }
-};
-
-template <auto C>
-using type_char = type_string<string_literal<1, std::decay_t<decltype(C)>>(C)>;
-} // namespace lexy::_detail
-
-#    define LEXY_NTTP_STRING(Str) ::lexy::_detail::type_string<::lexy::_detail::string_literal(Str)>
-
-#else // string<Cs...> implementation
-
-namespace lexy::_detail
-{
-template <typename CharT, CharT... Cs>
-struct type_string
-{
-    using char_type            = CharT;
-    static constexpr auto size = sizeof...(Cs);
-
-    template <typename OtherCharT>
-    struct _lazy
-    {
-        static inline constexpr OtherCharT str[] = {OtherCharT(Cs)..., OtherCharT()};
-    };
-
-    template <typename OtherCharT = char_type>
-    static LEXY_CONSTEVAL auto get()
-    {
-        return basic_string_view<OtherCharT>(null_terminated{}, _lazy<OtherCharT>::str,
-                                             sizeof...(Cs));
-    }
-};
-
-template <auto C>
-using type_char = type_string<std::decay_t<decltype(C)>, C>;
-} // namespace lexy::_detail
-
-#    if defined(__GNUC__) // string<Cs...> literal implementation
-
-#        pragma GCC diagnostic push
-#        pragma GCC diagnostic ignored "-Wpedantic"
-#        ifdef __clang__
-#            pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
-#        endif
-
-template <typename CharT, CharT... Cs>
-constexpr ::lexy::_detail::type_string<CharT, Cs...> operator""_lexy_string_udl()
-{
-    return {};
-}
-
-#        define LEXY_NTTP_STRING(Str) decltype(Str##_lexy_string_udl)
-
-#        pragma GCC diagnostic pop
-
-#    else // string<Cs...> macro implementation
-
-namespace lexy::_detail
-{
-template <typename A, typename B>
-struct cat_;
-template <typename CharT, CharT... C1, CharT... C2>
-struct cat_<type_string<CharT, C1...>, type_string<CharT, C2...>>
-{
-    using type = type_string<CharT, C1..., C2...>;
-};
-template <typename A, typename B>
-using cat = typename cat_<A, B>::type;
-
-template <typename T, std::size_t Size, std::size_t MaxSize>
-struct check_size
-{
-    static_assert(Size <= MaxSize, "string out of range");
-    using type = T;
-};
-
-} // namespace lexy::_detail
-
-#        define LEXY_NTTP_STRING_LENGTH(Str) (sizeof(Str) / sizeof(Str[0]) - 1)
-
-// extract Ith character if not out of bounds
-#        define LEXY_NTTP_STRING1(Str, I)                                                          \
-            ::std::conditional_t<(I < LEXY_NTTP_STRING_LENGTH(Str)),                               \
-                                 ::lexy::_detail::type_string<                                     \
-                                     ::std::decay_t<decltype(Str[0])>,                             \
-                                     (I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,       \
-                                 ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>>>
-
-// recursively split the string in two
-#        define LEXY_NTTP_STRING2(Str, I)                                                          \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING1(Str, I), LEXY_NTTP_STRING1(Str, I + 1)>
-#        define LEXY_NTTP_STRING4(Str, I)                                                          \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING2(Str, I), LEXY_NTTP_STRING2(Str, I + 2)>
-#        define LEXY_NTTP_STRING8(Str, I)                                                          \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING4(Str, I), LEXY_NTTP_STRING4(Str, I + 4)>
-#        define LEXY_NTTP_STRING16(Str, I)                                                         \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING8(Str, I), LEXY_NTTP_STRING8(Str, I + 8)>
-#        define LEXY_NTTP_STRING32(Str, I)                                                         \
-            ::lexy::_detail::cat<LEXY_NTTP_STRING16(Str, I), LEXY_NTTP_STRING16(Str, I + 16)>
-
-// instantiate with overflow check
-#        define LEXY_NTTP_STRING(Str)                                                              \
-            ::lexy::_detail::check_size<LEXY_NTTP_STRING32(Str, 0), LEXY_NTTP_STRING_LENGTH(Str),  \
-                                        32>::type
-
-#    endif
-
-#endif
-
-#endif // LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
 
 
 
@@ -6431,6 +8414,7 @@ struct _seq_impl<H, T...>
             else if (result == lexy::rule_try_parse_result::backtracked)
             {
                 // Backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
@@ -8072,532 +10056,6 @@ constexpr auto capture(Rule)
 
 
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
-#define LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_CODE_POINT_HPP_INCLUDED
-#define LEXY_CODE_POINT_HPP_INCLUDED
-
-#include <cstdint>
-
-
-
-namespace lexy
-{
-/// A unicode code point.
-class code_point
-{
-public:
-    constexpr code_point() noexcept : _value(0xFFFF'FFFF) {}
-    constexpr explicit code_point(char32_t value) noexcept : _value(value) {}
-
-    constexpr auto value() const noexcept
-    {
-        return _value;
-    }
-
-    //=== classification ===//
-    constexpr bool is_valid() const noexcept
-    {
-        return _value <= 0x10'FFFF;
-    }
-    constexpr bool is_surrogate() const noexcept
-    {
-        return 0xD800 <= _value && _value <= 0xDFFF;
-    }
-    constexpr bool is_scalar() const noexcept
-    {
-        return is_valid() && !is_surrogate();
-    }
-
-    constexpr bool is_ascii() const noexcept
-    {
-        return _value <= 0x7F;
-    }
-    constexpr bool is_bmp() const noexcept
-    {
-        return _value <= 0xFFFF;
-    }
-
-    friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept
-    {
-        return lhs._value == rhs._value;
-    }
-    friend constexpr bool operator!=(code_point lhs, code_point rhs) noexcept
-    {
-        return lhs._value != rhs._value;
-    }
-
-private:
-    char32_t _value;
-};
-} // namespace lexy
-
-#endif // LEXY_CODE_POINT_HPP_INCLUDED
-
-
-
-namespace lexy
-{
-enum class _cp_error_code
-{
-    eof = 1,
-    leads_with_trailing,
-    missing_trailing,
-    surrogate,
-    overlong_sequence,
-    out_of_range,
-};
-
-/// Parses an ASCII code point.
-struct engine_cp_ascii : engine_matcher_base, engine_parser_base
-{
-    using error_code = _cp_error_code;
-
-    template <typename Reader>
-    static constexpr code_point parse(error_code& ec, Reader& reader)
-    {
-        static_assert(std::is_same_v<typename Reader::encoding, ascii_encoding>);
-
-        if (reader.eof())
-        {
-            ec = error_code::eof;
-            return code_point();
-        }
-
-        auto cur = reader.peek();
-        reader.bump();
-
-        auto cp = code_point(static_cast<char32_t>(cur));
-        if (!cp.is_ascii())
-            ec = error_code::out_of_range;
-        return cp;
-    }
-
-    template <typename Reader>
-    static constexpr error_code match(Reader& reader)
-    {
-        error_code result{};
-        parse(result, reader);
-        return result;
-    }
-
-    template <typename Reader>
-    static constexpr bool recover(Reader&, error_code ec)
-    {
-        switch (ec)
-        {
-        case error_code::eof:
-            // We cannot recover after EOF.
-            return false;
-        case error_code::out_of_range:
-            // Invalid code unit, but already consumed.
-            return true;
-
-        case error_code::leads_with_trailing:
-        case error_code::missing_trailing:
-        case error_code::surrogate:
-        case error_code::overlong_sequence:
-            LEXY_ASSERT(false, "unreachable");
-        }
-        return false;
-    }
-};
-
-/// Matches a UTF-8 code point.
-struct engine_cp_utf8 : engine_matcher_base, engine_parser_base
-{
-    static constexpr auto payload_lead1 = 0b0111'1111;
-    static constexpr auto payload_lead2 = 0b0001'1111;
-    static constexpr auto payload_lead3 = 0b0000'1111;
-    static constexpr auto payload_lead4 = 0b0000'0111;
-    static constexpr auto payload_cont  = 0b0011'1111;
-
-    static constexpr auto pattern_lead1 = 0b0 << 7;
-    static constexpr auto pattern_lead2 = 0b110 << 5;
-    static constexpr auto pattern_lead3 = 0b1110 << 4;
-    static constexpr auto pattern_lead4 = 0b11110 << 3;
-    static constexpr auto pattern_cont  = 0b10 << 6;
-
-    using error_code = _cp_error_code;
-
-    template <typename Reader>
-    static constexpr code_point parse(error_code& ec, Reader& reader)
-    {
-        static_assert(std::is_same_v<typename Reader::encoding, utf8_encoding>);
-
-        auto first = reader.peek();
-        if ((first & ~payload_lead1) == pattern_lead1)
-        {
-            // ASCII character.
-            reader.bump();
-            return code_point(first);
-        }
-        else if ((first & ~payload_cont) == pattern_cont)
-        {
-            ec = error_code::leads_with_trailing;
-            return code_point();
-        }
-        else if ((first & ~payload_lead2) == pattern_lead2)
-        {
-            reader.bump();
-
-            auto second = reader.peek();
-            if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto result = char32_t(first & payload_lead2);
-            result <<= 6;
-            result |= char32_t(second & payload_cont);
-
-            // C0 and C1 are overlong ASCII.
-            if (first == 0xC0 || first == 0xC1)
-                ec = error_code::overlong_sequence;
-
-            return code_point(result);
-        }
-        else if ((first & ~payload_lead3) == pattern_lead3)
-        {
-            reader.bump();
-
-            auto second = reader.peek();
-            if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto third = reader.peek();
-            if ((third & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto result = char32_t(first & payload_lead3);
-            result <<= 6;
-            result |= char32_t(second & payload_cont);
-            result <<= 6;
-            result |= char32_t(third & payload_cont);
-
-            auto cp = code_point(result);
-            if (cp.is_surrogate())
-                ec = error_code::surrogate;
-            else if (first == 0xE0 && second < 0xA0)
-                ec = error_code::overlong_sequence;
-            return cp;
-        }
-        else if ((first & ~payload_lead4) == pattern_lead4)
-        {
-            reader.bump();
-
-            auto second = reader.peek();
-            if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto third = reader.peek();
-            if ((third & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto fourth = reader.peek();
-            if ((fourth & ~payload_cont) != pattern_cont)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            auto result = char32_t(first & payload_lead4);
-            result <<= 6;
-            result |= char32_t(second & payload_cont);
-            result <<= 6;
-            result |= char32_t(third & payload_cont);
-            result <<= 6;
-            result |= char32_t(fourth & payload_cont);
-
-            auto cp = code_point(result);
-            if (!cp.is_valid())
-                ec = error_code::out_of_range;
-            else if (first == 0xF0 && second < 0x90)
-                ec = error_code::overlong_sequence;
-            return cp;
-        }
-        else // FE or FF
-        {
-            ec = error_code::eof;
-            return code_point();
-        }
-    }
-
-    template <typename Reader>
-    static constexpr error_code match(Reader& reader)
-    {
-        error_code result{};
-        parse(result, reader);
-        return result;
-    }
-
-    template <typename Reader>
-    static constexpr bool recover(Reader& reader, error_code ec)
-    {
-        switch (ec)
-        {
-        case error_code::eof:
-            // We cannot recover after EOF.
-            return false;
-        case error_code::leads_with_trailing:
-            // Invalid code unit, consume to recover.
-            reader.bump();
-            return true;
-        case error_code::missing_trailing:
-        case error_code::surrogate:
-        case error_code::out_of_range:
-        case error_code::overlong_sequence:
-            // We've already consumed the invalid unit, recovered.
-            return true;
-        }
-
-        return false; // unreachable
-    }
-};
-
-/// Matches a UTF-16 code point.
-struct engine_cp_utf16 : engine_matcher_base, engine_parser_base
-{
-    static constexpr auto payload1 = 0b0000'0011'1111'1111;
-    static constexpr auto payload2 = payload1;
-
-    static constexpr auto pattern1 = 0b110110 << 10;
-    static constexpr auto pattern2 = 0b110111 << 10;
-
-    using error_code = _cp_error_code;
-
-    template <typename Reader>
-    static constexpr code_point parse(error_code& ec, Reader& reader)
-    {
-        static_assert(std::is_same_v<typename Reader::encoding, utf16_encoding>);
-
-        if (reader.eof())
-        {
-            ec = error_code::eof;
-            return code_point();
-        }
-
-        auto first = char16_t(reader.peek());
-        if ((first & ~payload1) == pattern1)
-        {
-            reader.bump();
-            if (reader.eof())
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-
-            auto second = char16_t(reader.peek());
-            if ((second & ~payload2) != pattern2)
-            {
-                ec = error_code::missing_trailing;
-                return code_point();
-            }
-            reader.bump();
-
-            // We've got a valid code point.
-            auto result = char32_t(first & payload1);
-            result <<= 10;
-            result |= char32_t(second & payload2);
-            result |= 0x10000;
-            return code_point(result);
-        }
-        else if ((first & ~payload2) == pattern2)
-        {
-            ec = error_code::leads_with_trailing;
-            return code_point();
-        }
-        else
-        {
-            // Single code unit code point; always valid.
-            reader.bump();
-            return code_point(first);
-        }
-    }
-
-    template <typename Reader>
-    static constexpr error_code match(Reader& reader)
-    {
-        error_code result{};
-        parse(result, reader);
-        return result;
-    }
-
-    template <typename Reader>
-    static constexpr bool recover(Reader& reader, error_code ec)
-    {
-        switch (ec)
-        {
-        case error_code::eof:
-            // We cannot recover after EOF.
-            return false;
-        case error_code::leads_with_trailing:
-            // Invalid code unit, consume to recover.
-            reader.bump();
-            return true;
-        case error_code::missing_trailing:
-            // We've already consumed the invalid unit, recovered.
-            return true;
-
-        case error_code::surrogate:
-        case error_code::overlong_sequence:
-        case error_code::out_of_range:
-            LEXY_ASSERT(false, "unreachable");
-        }
-        return false;
-    }
-};
-
-/// Matches a UTF-32 code point.
-struct engine_cp_utf32 : engine_matcher_base, engine_parser_base
-{
-    using error_code = _cp_error_code;
-
-    template <typename Reader>
-    static constexpr code_point parse(error_code& ec, Reader& reader)
-    {
-        static_assert(std::is_same_v<typename Reader::encoding, utf32_encoding>);
-
-        if (reader.eof())
-        {
-            ec = error_code::eof;
-            return code_point();
-        }
-
-        auto cur = reader.peek();
-        reader.bump();
-
-        auto cp = code_point(cur);
-        if (!cp.is_valid())
-            ec = error_code::out_of_range;
-        else if (cp.is_surrogate())
-            ec = error_code::surrogate;
-
-        return cp;
-    }
-
-    template <typename Reader>
-    static constexpr error_code match(Reader& reader)
-    {
-        error_code result{};
-        parse(result, reader);
-        return result;
-    }
-
-    template <typename Reader>
-    static constexpr bool recover(Reader&, error_code ec)
-    {
-        switch (ec)
-        {
-        case error_code::eof:
-            // We cannot recover after EOF.
-            return false;
-        case error_code::surrogate:
-        case error_code::out_of_range:
-            // Invalid code unit, but already consumed.
-            return true;
-
-        case error_code::leads_with_trailing:
-        case error_code::missing_trailing:
-        case error_code::overlong_sequence:
-            LEXY_ASSERT(false, "unreachable");
-        }
-        return false;
-    }
-};
-
-/// Matches a code point according to the inputs encoding.
-struct engine_cp_auto : lexy::engine_matcher_base, lexy::engine_parser_base
-{
-    using error_code = _cp_error_code;
-
-    template <typename Reader>
-    static constexpr code_point parse(error_code& ec, Reader& reader)
-    {
-        using encoding = typename Reader::encoding;
-        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
-            return engine_cp_ascii::parse(ec, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
-            return engine_cp_utf8::parse(ec, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
-            return engine_cp_utf16::parse(ec, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
-            return engine_cp_utf32::parse(ec, reader);
-        else
-            static_assert(lexy::_detail::error<encoding>,
-                          "no code point defined for this encoding");
-    }
-
-    template <typename Reader>
-    static constexpr error_code match(Reader& reader)
-    {
-        error_code result{};
-
-        using encoding = typename Reader::encoding;
-        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
-            engine_cp_ascii::parse(result, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
-            engine_cp_utf8::parse(result, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
-            engine_cp_utf16::parse(result, reader);
-        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
-            engine_cp_utf32::parse(result, reader);
-        else
-            static_assert(lexy::_detail::error<encoding>,
-                          "no code point defined for this encoding");
-
-        return result;
-    }
-
-    template <typename Reader>
-    static constexpr bool recover(Reader& reader, error_code ec)
-    {
-        using encoding = typename Reader::encoding;
-        if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
-            return engine_cp_ascii::recover(reader, ec);
-        else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
-            return engine_cp_utf8::recover(reader, ec);
-        else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
-            return engine_cp_utf16::recover(reader, ec);
-        else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
-            return engine_cp_utf32::recover(reader, ec);
-        else
-            static_assert(lexy::_detail::error<encoding>,
-                          "no code point defined for this encoding");
-    }
-};
-} // namespace lexy
-
-#endif // LEXY_ENGINE_CODE_POINT_HPP_INCLUDED
 
 
 namespace lexyd
@@ -8886,6 +10344,7 @@ constexpr auto partial_combination(R... r)
 
 #ifndef LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 #define LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
+
 
 
 
@@ -9416,7 +10875,10 @@ struct _id : rule_base
             [[maybe_unused]] auto saved_reader = reader;
             auto                  begin        = reader.cur();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
             auto end = reader.cur();
 
             // Check for reserved patterns, etc.
@@ -10186,6 +11648,20 @@ template <>
 struct _sep_parser<void> : _list_sink
 {};
 
+template <typename Sep, typename NextParser>
+struct _report_trailing_sep
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, typename Reader::iterator sep_pos,
+                             Args&&... args)
+    {
+        // If trailing seperators are allowed, this does nothing.
+        // Otherwise, we report the error but can trivially recover.
+        Sep::report_trailing_error(context, reader, sep_pos);
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
+    }
+};
+
 // Loop to parse all remaining list items when we have a terminator.
 template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
           typename... PrevArgs>
@@ -10215,6 +11691,9 @@ struct _list_loop_term
         using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
         using item_parser = lexy::rule_parser<Item, _list_sink>;
         using sep_parser  = _sep_parser<Sep>;
+        using trailing_sep_parser
+            = lexy::rule_parser<Term,
+                                _report_trailing_sep<Sep, _list_finish<NextParser, PrevArgs...>>>;
         while (true)
         {
             switch (state)
@@ -10295,13 +11774,11 @@ struct _list_loop_term
             case state::separator_trailing_check:
                 if constexpr (!std::is_void_v<Sep>)
                 {
-                    if (auto result
-                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                    // Parse term, and report error about trailing separator (if necessary).
+                    if (auto result = trailing_sep_parser::try_parse(context, reader, sep_pos,
+                                                                     LEXY_FWD(args)..., sink);
                         result != lexy::rule_try_parse_result::backtracked)
                     {
-                        // If trailing seperators are allowed, this does nothing.
-                        // Otherwise, we report the error but can trivially recover.
-                        Sep::report_trailing_error(context, reader, sep_pos);
                         // We had the terminator, so the list is done.
                         return static_cast<bool>(result);
                     }
@@ -10826,6 +12303,7 @@ struct _sym : rule_base
                 if (!idx || !rule_content.eof())
                 {
                     // Unknown symbol; backtrack.
+                    context.on(_ev::backtracked{}, save.cur(), reader.cur());
                     reader = LEXY_MOV(save);
                     return lexy::rule_try_parse_result::backtracked;
                 }
@@ -10912,6 +12390,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
             if (!idx || lexy::engine_peek<trailing_engine>(reader))
             {
                 // We didn't have a symbol, so backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
@@ -10997,6 +12476,7 @@ struct _sym<Table, void, Tag> : rule_base
             if (!idx)
             {
                 // We didn't have a symbol, so backtrack.
+                context.on(_ev::backtracked{}, save.cur(), reader.cur());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
@@ -11407,7 +12887,10 @@ struct _escape_cap : rule_base
         {
             auto begin = reader.cur();
             if (!lexy::engine_try_match<Engine>(reader))
+            {
+                context.on(_ev::backtracked{}, begin, reader.cur());
                 return lexy::rule_try_parse_result::backtracked;
+            }
 
             return static_cast<lexy::rule_try_parse_result>(
                 NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::lexeme(reader, begin)));
@@ -13045,7 +14528,7 @@ struct _look : rule_base
             -> lexy::rule_try_parse_result
         {
             using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(reader))
+            if (!lexy::engine_peek<engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -13057,7 +14540,7 @@ struct _look : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(reader))
+            if (!lexy::engine_peek<engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
@@ -13301,77 +14784,6 @@ constexpr auto operator-(_minus<Token, E>, Except except)
 
 #endif // LEXY_DSL_MINUS_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
-#define LEXY_DSL_NEWLINE_HPP_INCLUDED
-
-
-
-
-
-
-
-namespace lexyd
-{
-struct _nl : token_base<_nl>
-{
-    static constexpr auto _trie
-        = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
-    using token_engine = lexy::engine_trie<_trie>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
-        context.on(_ev::error{}, err);
-    }
-};
-
-/// Matches a newline character.
-constexpr auto newline = _nl{};
-} // namespace lexyd
-
-namespace lexyd
-{
-struct _eol : token_base<_eol>
-{
-    struct token_engine : lexy::engine_matcher_base
-    {
-        using error_code = _nl::token_engine::error_code;
-
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
-        {
-            if (reader.eof())
-                return error_code();
-            else
-                return _nl::token_engine::match(reader);
-        }
-    };
-
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return lexy::eol_token_kind;
-    }
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
-        context.on(_ev::error{}, err);
-    }
-};
-
-/// Matches the end of line (EOF or newline).
-constexpr auto eol = _eol{};
-} // namespace lexyd
-
-#endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
@@ -13419,7 +14831,7 @@ struct _peek : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            if (!lexy::engine_peek<Engine>(reader))
+            if (!lexy::engine_peek<Engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -13430,7 +14842,7 @@ struct _peek : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (!lexy::engine_peek<Engine>(reader))
+            if (!lexy::engine_peek<Engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
                 auto err  = lexy::make_error<Reader, tag>(reader.cur());
@@ -13457,7 +14869,7 @@ struct _peekn : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            if (lexy::engine_peek<Engine>(reader))
+            if (lexy::engine_peek<Engine>(context, reader))
                 return lexy::rule_try_parse_result::backtracked;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...)
@@ -13471,8 +14883,11 @@ struct _peekn : rule_base
             auto copy = reader;
             if (auto begin = copy.cur(); lexy::engine_try_match<Engine>(copy))
             {
+                auto end = copy.cur();
+                context.on(_ev::backtracked{}, begin, end);
+
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::make_error<Reader, tag>(begin, copy.cur());
+                auto err  = lexy::make_error<Reader, tag>(begin, end);
                 context.on(_ev::error{}, err);
             }
 
@@ -14098,6 +15513,7 @@ constexpr auto until(Condition)
 
 
 #endif // LEXY_DSL_HPP_INCLUDED
+
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -14830,400 +16246,305 @@ auto read_file(std::FILE*      file,
 #define LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 
 #include <cstdio>
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
-#define LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
 
 
 
-#ifdef LEXY_IGNORE_DEPRECATED_SINK
-#    define LEXY_DEPRECATED_SINK
-#else
-// `dsl::sink<T>(fn)` has been replaced by `lexy::fold_inplace<T>({}, fn)`.
-// I'd put it into the deprecated message, but then GCC 7 doesn't like a std::enable_if in
-// _detail::tuple's constructor. Really: removing the deprecated message from here, which is
-// COMPLETELY UNRELATED CODE, fixes an SFINAE bug. I swear I'm not making this up.
-#    define LEXY_DEPRECATED_SINK [[deprecated]]
-#endif
 
-namespace lexy
+namespace lexy_ext::_detail
 {
-template <typename Fn>
-struct _fn_holder
+// Split the context of the location into three parts: the one before underlined, the underlined
+// one, and the one after. If underlined covers multiple lines, limit to the one of the context or
+// the newline afterwards.
+template <typename Location, typename Reader>
+auto split_context(const Location& location, const lexy::lexeme<Reader>& underlined)
 {
-    Fn fn;
-
-    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    struct result_t
     {
-        return _detail::invoke(fn, LEXY_FWD(args)...);
+        lexy::lexeme<Reader> before;
+        lexy::lexeme<Reader> underlined;
+        lexy::lexeme<Reader> after;
+    } result;
+
+    auto context  = location.context();
+    result.before = {context.begin(), underlined.begin()};
+
+    auto underlined_end = underlined.begin();
+    // Find either the end of the underline, or the end of the context.
+    while (underlined_end != underlined.end() && underlined_end != context.end())
+        ++underlined_end;
+
+    if (underlined.begin() == underlined_end)
+    {
+        // We actually want the newline, so include it.
+        auto newline = location.newline();
+        while (underlined_end != underlined.end() && underlined_end != newline.end())
+            ++underlined_end;
+
+        result.underlined = {underlined.begin(), underlined_end};
+        result.after      = {underlined_end, underlined_end}; // Nothing afterwards possible.
     }
-};
+    else
+    {
+        result.underlined = {underlined.begin(), underlined_end};
+        result.after      = {underlined_end, context.end()};
+    }
 
-template <typename Fn>
-using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
-} // namespace lexy
-
-namespace lexy
-{
-template <typename ReturnType, typename... Fns>
-struct _callback : _fn_as_base<Fns>...
-{
-    using return_type = ReturnType;
-
-    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
-
-    using _fn_as_base<Fns>::operator()...;
-};
-
-/// Creates a callback.
-template <typename ReturnType = void, typename... Fns>
-constexpr auto callback(Fns&&... fns)
-{
-    return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+    return result;
 }
 
-template <typename Sink>
-struct _cb_from_sink
+enum class annotation_kind
 {
-    Sink _sink;
-
-    using _cb         = lexy::sink_callback<Sink>;
-    using return_type = typename _cb::return_type;
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
-    {
-        auto cb = _sink.sink();
-        (cb(LEXY_FWD(args)), ...);
-        return LEXY_MOV(cb).finish();
-    }
+    primary,
+    secondary,
 };
 
-/// Creates a callback that forwards all arguments to the sink.
-template <typename Sink, typename = lexy::sink_callback<Sink>>
-constexpr auto callback(Sink&& sink)
+template <typename Input>
+struct error_writer
 {
-    return _cb_from_sink<std::decay_t<Sink>>{LEXY_FWD(sink)};
+    lexy::visualization_options opts;
+
+    const auto* column() const
+    {
+        if (opts.is_set(lexy::visualize_use_unicode))
+            return u8"│";
+        else
+            return u8"|";
+    }
+
+    const auto* underline(annotation_kind kind) const
+    {
+        switch (kind)
+        {
+        case annotation_kind::primary:
+            return "^";
+        case annotation_kind::secondary:
+            return "~";
+        }
+
+        return "";
+    }
+
+    //=== writers ===//
+    template <typename OutputIt, typename Writer>
+    OutputIt write_message(OutputIt out, const Writer& message)
+    {
+        using namespace lexy::_detail;
+
+        out    = write_color<color::red, color::bold>(out, opts);
+        out    = write_str(out, "error: ");
+        out    = write_color<color::reset>(out, opts);
+        out    = message(out, opts);
+        *out++ = '\n';
+
+        return out;
+    }
+
+    template <typename OutputIt>
+    OutputIt write_empty_annotation(OutputIt out) const
+    {
+        using namespace lexy::_detail;
+
+        out    = write_str(out, "     ");
+        out    = write_str(out, column());
+        *out++ = '\n';
+        return out;
+    }
+
+    template <typename OutputIt, typename Location, typename Writer>
+    OutputIt write_annotation(OutputIt out, annotation_kind kind, const Location& location,
+                              const lexy::lexeme_for<Input>& _underlined,
+                              const Writer&                  message) const
+    {
+        using namespace lexy::_detail;
+
+        auto colorize_underline = [&](OutputIt out) {
+            switch (kind)
+            {
+            case annotation_kind::primary:
+                return write_color<color::red, color::bold>(out, opts);
+            case annotation_kind::secondary:
+                return write_color<color::yellow>(out, opts);
+            }
+
+            return out;
+        };
+
+        auto [before, underlined, after] = split_context(location, _underlined);
+
+        //=== Line with file contents ===//
+        // Location column.
+        out    = write_format(out, "%4zd ", location.line_nr());
+        out    = write_str(out, column());
+        *out++ = ' ';
+
+        // Print before underlined normally.
+        out = lexy::visualize_to(out, before, opts);
+
+        // Print underlined colored.
+        out = colorize_underline(out);
+        out = lexy::visualize_to(out, underlined, opts.reset(lexy::visualize_use_color));
+        out = write_color<color::reset>(out, opts);
+
+        // Print after underlined normally.
+        out    = lexy::visualize_to(out, after, opts);
+        *out++ = '\n';
+
+        //==== Line with annotation ===//
+        // Initial column.
+        out    = write_str(out, "     ");
+        out    = write_str(out, column());
+        *out++ = ' ';
+
+        // Indent until the underline.
+        auto indent_count = lexy::visualization_display_width(before, opts);
+        for (auto i = 0u; i != indent_count; ++i)
+            *out++ = ' ';
+
+        // Colorize.
+        out = colorize_underline(out);
+
+        // Then underline.
+        auto underline_count = lexy::visualization_display_width(underlined, opts);
+        if (underline_count == 0)
+            underline_count = 1;
+        for (auto i = 0u; i != underline_count; ++i)
+            out = write_str(out, underline(kind));
+        *out++ = ' ';
+
+        // Print the message.
+        out    = message(out, opts.reset(lexy::visualize_use_color));
+        *out++ = '\n';
+
+        return write_color<color::reset>(out, opts);
+    }
+};
+} // namespace lexy_ext::_detail
+
+namespace lexy_ext::_detail
+{
+template <typename OutputIt, typename Production, typename Input, typename Reader, typename Tag>
+OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>& context,
+                     const lexy::error<Reader, Tag>& error, lexy::visualization_options opts)
+{
+    _detail::error_writer<Input> writer{opts};
+
+    // Convert the context location and error location into line/column information.
+    lexy_ext::input_location_finder finder(context.input());
+
+    auto context_location = finder.find(context.position());
+    auto location         = finder.find(error.position(), context_location);
+
+    // Write the main error headline.
+    out = writer.write_message(out, [&](OutputIt out, lexy::visualization_options) {
+        out = lexy::_detail::write_str(out, "while parsing ");
+        out = lexy::_detail::write_str(out, context.production());
+        return out;
+    });
+    out = writer.write_empty_annotation(out);
+
+    // Write an annotation for the context.
+    if (location.line_nr() != context_location.line_nr())
+    {
+        out = writer.write_annotation(out, annotation_kind::secondary, context_location,
+                                      {context.position(), 1},
+                                      [&](OutputIt out, lexy::visualization_options) {
+                                          return lexy::_detail::write_str(out, "beginning here");
+                                      });
+        out = writer.write_empty_annotation(out);
+    }
+
+    // Write the main annotation.
+    if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
+    {
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+
+        out = writer.write_annotation(out, annotation_kind::primary, location,
+                                      {error.position(), error.index() + 1},
+                                      [&](OutputIt out, lexy::visualization_options opts) {
+                                          out = lexy::_detail::write_str(out, "expected '");
+                                          out = lexy::visualize_to(out, string, opts);
+                                          out = lexy::_detail::write_str(out, "'");
+                                          return out;
+                                      });
+    }
+    else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
+    {
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+
+        out = writer.write_annotation(out, annotation_kind::primary, location,
+                                      {error.begin(), error.end()},
+                                      [&](OutputIt out, lexy::visualization_options opts) {
+                                          out = lexy::_detail::write_str(out, "expected keyword '");
+                                          out = lexy::visualize_to(out, string, opts);
+                                          out = lexy::_detail::write_str(out, "'");
+                                          return out;
+                                      });
+    }
+    else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
+    {
+        out = writer.write_annotation(out, annotation_kind::primary, location,
+                                      {error.position(), 1},
+                                      [&](OutputIt out, lexy::visualization_options) {
+                                          out = lexy::_detail::write_str(out, "expected '");
+                                          out = lexy::_detail::write_str(out,
+                                                                         error.character_class());
+                                          out = lexy::_detail::write_str(out, "' character");
+                                          return out;
+                                      });
+    }
+    else
+    {
+        auto underlined = [&] {
+            if (error.begin() == error.end())
+                return lexy::lexeme_for<Input>(error.position(), 1);
+            else
+                return lexy::lexeme_for<Input>(error.begin(), error.end());
+        }();
+
+        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
+                                      [&](OutputIt out, lexy::visualization_options) {
+                                          return lexy::_detail::write_str(out, error.message());
+                                      });
+    }
+
+    return out;
 }
+} // namespace lexy_ext::_detail
 
-template <typename T, typename Callback>
-class _sink_cb
+namespace lexy_ext
 {
-public:
-    using return_type = T;
-
-    constexpr explicit _sink_cb(Callback cb) : _value(), _cb(cb) {}
-
-    template <typename... Args>
-    constexpr void operator()(Args&&... args)
-    {
-        // We pass the value and other arguments to the internal callback.
-        _cb(_value, LEXY_FWD(args)...);
-    }
-
-    constexpr T&& finish() &&
-    {
-        return LEXY_MOV(_value);
-    }
-
-private:
-    T                          _value;
-    LEXY_EMPTY_MEMBER Callback _cb;
-};
-
-template <typename T, typename... Fns>
-class _sink
+struct _report_error
 {
-public:
-    constexpr explicit _sink(Fns... fns) : _cb(fns...) {}
+    struct _sink
+    {
+        std::size_t _count;
+
+        using return_type = std::size_t;
+
+        template <typename Production, typename Input, typename Reader, typename Tag>
+        void operator()(const lexy::error_context<Production, Input>& context,
+                        const lexy::error<Reader, Tag>&               error)
+        {
+            _detail::write_error(lexy::cfile_output_iterator{stderr}, context, error,
+                                 {lexy::visualize_fancy});
+            ++_count;
+        }
+
+        std::size_t finish() &&
+        {
+            std::fputs("\n", stderr);
+            return _count;
+        }
+    };
 
     constexpr auto sink() const
     {
-        return _sink_cb<T, _callback<void, Fns...>>(_cb);
+        return _sink{};
     }
-
-private:
-    LEXY_EMPTY_MEMBER _callback<void, Fns...> _cb;
 };
-
-/// Creates a sink callback.
-template <typename T, typename... Fns>
-LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
-{
-    return _sink<T, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
-}
-} // namespace lexy
-
-#endif // LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
-
-
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
-#define LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
-
-
-
-
-
-namespace lexy_ext
-{
-/// Converts positions (iterators) into locations (line/column nr).
-///
-/// The unit for line and column numbers can be customized.
-/// Every time the corresponding token matches, is the corresponding number increased.
-///
-/// See https://foonathan.net/2021/02/column/ for a discussion of potential units.
-/// Use e.g. `lexy::dsl::code_point` and `lexy::dsl::newline` to count code points.
-template <typename Input, typename TokenColumn, typename TokenLine>
-class input_location_finder
-{
-    using engine_column = typename TokenColumn::token_engine;
-    using engine_line   = typename TokenLine::token_engine;
-
-public:
-    using iterator = typename lexy::input_reader<Input>::iterator;
-
-    /// The location in the input.
-    class location
-    {
-    public:
-        constexpr std::size_t line_nr() const noexcept
-        {
-            return _line;
-        }
-        constexpr std::size_t column_nr() const noexcept
-        {
-            return _column;
-        }
-
-        /// The entire line that contains the position.
-        constexpr lexy::lexeme_for<Input> context() const
-        {
-            auto reader = _reader;
-            auto begin  = reader.cur();
-
-            // Find the end of the line.
-            while (true)
-            {
-                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
-                    break;
-                else
-                    reader.bump();
-            }
-
-            auto end = reader.cur();
-            return lexy::lexeme_for<Input>(begin, end);
-        }
-
-    private:
-        constexpr location(lexy::input_reader<Input> reader, std::size_t line, std::size_t column)
-        : _reader(LEXY_MOV(reader)), _line(line), _column(column)
-        {}
-
-        // The reader starts at the beginning of the given line.
-        lexy::input_reader<Input> _reader;
-        std::size_t               _line, _column;
-
-        friend input_location_finder;
-    };
-
-    constexpr explicit input_location_finder(const Input& input, TokenColumn, TokenLine)
-    : _reader(input.reader())
-    {}
-
-    /// Finds the given position, starting at the anchor location.
-    /// This is an optimization if you know the position is after the anchor.
-    constexpr location find(iterator pos, const location& anchor) const
-    {
-        auto reader = anchor._reader;
-
-        // We start at the given line in the initial column.
-        std::size_t cur_line   = anchor._line;
-        std::size_t cur_column = 1;
-        auto        line_start = reader;
-
-        // Find the given position.
-        while (true)
-        {
-            if (reader.cur() == pos)
-            {
-                // We found the position of the error.
-                break;
-            }
-            else if (lexy::engine_try_match<engine_line>(reader))
-            {
-                // We're at a new line.
-                ++cur_line;
-                cur_column = 1;
-                line_start = reader;
-            }
-            else if (lexy::engine_try_match<engine_column>(reader))
-            {
-                // Next column.
-                ++cur_column;
-            }
-            else if (reader.eof())
-            {
-                // We have an OOB error position.
-                LEXY_PRECONDITION(false);
-                break;
-            }
-            else
-            {
-                // Invalid column, just ignore it in the column count.
-                reader.bump();
-            }
-        }
-
-        // Return where we ended up.
-        return location(line_start, cur_line, cur_column);
-    }
-
-    /// Finds the location of the position.
-    constexpr location find(iterator pos) const
-    {
-        // We start at the beginning of the file with the search.
-        location anchor(_reader, 1, 1);
-        return find(pos, anchor);
-    }
-
-private:
-    lexy::input_reader<Input> _reader;
-};
-
-/// Convenience function to find a single location.
-template <typename Input, typename TokenColumn, typename TokenLine>
-constexpr auto find_input_location(const Input&                                 input,
-                                   typename lexy::input_reader<Input>::iterator pos,
-                                   TokenColumn column, TokenLine line)
-{
-    input_location_finder finder(input, column, line);
-    return finder.find(pos);
-}
-} // namespace lexy_ext
-
-#endif // LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
-
-
-namespace lexy_ext
-{
-template <typename Location>
-void _print_location(Location location)
-{
-    std::fputs("     | \n", stderr);
-
-    std::fprintf(stderr, "%2zd:%2zd| ", location.line_nr(), location.column_nr());
-    for (auto c : location.context())
-        std::fputc(c, stderr);
-    std::fputc('\n', stderr);
-}
-
-template <typename Location>
-void _print_message_indent(Location location)
-{
-    std::fputs("     | ", stderr);
-    for (auto i = 0u; i != location.column_nr() - 1; ++i)
-        std::fputc(' ', stderr);
-
-    // The next character printed will be under the error location of the column above.
-}
-
-// Print a generic error.
-template <typename Location, typename Reader, typename Tag>
-void _print_message(Location location, const lexy::error<Reader, Tag>& e)
-{
-    if (e.begin() == e.end())
-        std::fputc('^', stderr);
-    else
-    {
-        for (auto cur = e.begin(); cur != e.end(); ++cur)
-        {
-            if (cur == location.context().end())
-                break; // More than one line.
-            std::fputc('^', stderr);
-        }
-    }
-
-    std::fprintf(stderr, " %s", e.message());
-}
-
-// Print an expected_literal error.
-template <typename Location, typename Reader>
-void _print_message(Location, const lexy::error<Reader, lexy::expected_literal>& e)
-{
-    for (auto i = 0u; i != e.index(); ++i)
-        std::fputc('^', stderr);
-    std::fprintf(stderr, "^ expected '%s'", reinterpret_cast<const char*>(e.string()));
-}
-
-// Print an expected_keyword error.
-template <typename Location, typename Reader>
-void _print_message(Location, const lexy::error<Reader, lexy::expected_keyword>& e)
-{
-    if (e.begin() == e.end())
-        std::fputc('^', stderr);
-    else
-    {
-        for (auto cur = e.begin(); cur != e.end(); ++cur)
-            std::fputc('^', stderr);
-    }
-
-    std::fprintf(stderr, " expected keyword '%s'", reinterpret_cast<const char*>(e.string()));
-}
-
-// Print an expected_char_class error.
-template <typename Location, typename Reader>
-void _print_message(Location, const lexy::error<Reader, lexy::expected_char_class>& e)
-{
-    std::fprintf(stderr, "^ expected '%s' character", e.character_class());
-}
 
 // The error callback that prints to stderr.
-constexpr auto report_error = lexy::callback([](const auto& context, const auto& error) {
-    // Convert the context location and error location into line/column information.
-    lexy_ext::input_location_finder finder(context.input(), lexy::dsl::ascii::character,
-                                           lexy::dsl::newline);
-    auto                            context_location = finder.find(context.position());
-    auto                            location         = finder.find(error.position(),
-                                context_location); // error position is after context position
-
-    // Print the main error headline.
-    auto prod_name = context.production();
-    std::fflush(stdout);
-    std::fprintf(stderr, "error: while parsing %s\n", prod_name);
-
-    if (location.line_nr() != context_location.line_nr())
-    {
-        _print_location(context_location);
-        _print_message_indent(context_location);
-        std::fputs("^ beginning here\n", stderr);
-        _print_location(location);
-        _print_message_indent(location);
-    }
-    else
-    {
-        _print_location(location);
-        _print_message_indent(context_location);
-        for (auto i = context_location.column_nr(); i != location.column_nr(); ++i)
-            std::fputc('~', stderr);
-    }
-
-    _print_message(location, error);
-    std::fputs("\n------\n", stderr);
-});
+constexpr auto report_error = _report_error{};
 } // namespace lexy_ext
 
 #endif // LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
