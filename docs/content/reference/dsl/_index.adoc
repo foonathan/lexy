@@ -181,8 +181,6 @@ Parse tree::
   explicitly raise an error
 {{% docref "lexy::dsl::must" %}}::
   raise an error if a branch backtracks
-{{% docref "lexy::dsl::prevent" %}} and {{% docref "lexy::dsl::require" %}}::
-  perform lookahead and raise an error on failure
 {{% docref "lexy::dsl::try_" %}}::
   recover from a failed rule
 {{% docref "lexy::dsl::recover" %}}::

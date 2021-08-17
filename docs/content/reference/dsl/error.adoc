@@ -3,8 +3,6 @@ header: "lexy/dsl/error.hpp"
 entities:
   "lexy::dsl::error": error
   "lexy::dsl::must": must
-  "lexy::dsl::require": require
-  "lexy::dsl::prevent": prevent
 ---
 
 [.lead]
