@@ -41,7 +41,7 @@ constexpr visualization_flags operator|(visualization_flags lhs, visualization_f
 /// Options that control visualization.
 struct visualization_options
 {
-    static constexpr auto max_tree_depth_limit = 32;
+    static constexpr unsigned max_tree_depth_limit = 32;
 
     /// Boolean flags.
     visualization_flags flags = visualize_default;
