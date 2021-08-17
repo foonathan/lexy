@@ -21,17 +21,17 @@ Nevertheless, lexy defines some link:#infrastructure[infrastructure] types that 
 [#infrastructure]
 == Infrastructure
 
-{{% docref "lexy::code_point" %}}::
+{{% headerref "code_point" %}}::
   A Unicode code point.
-{{% docref "lexy::lexeme" %}}::
+{{% headerref "lexeme" %}}::
   A lexeme, i.e. a subrange of the input.
-{{% docref "lexy::token_kind" %}} and {{% docref "lexy::token" %}}::
+{{% headerref "token" %}}::
   Identify and store tokens, i.e. concrete realization of {{% token-rule %}}s.
-{{% docref "lexy::parse_tree" %}}::
+{{% headerref "parse_tree" %}}::
   A parse tree.
-{{% docref "lexy::error" %}} and {{% docref "lexy::error_context" %}}::
+{{% headerref "error" %}}::
   The parse errors.
-{{% docref "lexy::visualize" %}}::
+{{% headerref "visualize" %}}::
   Visualize the data structures.
 
 [#input]
@@ -52,7 +52,7 @@ An input defines the input that will be parsed by lexy.
 It has a corresponding {{% encoding %}} that controls, among other things, its character type and whether certain rules are available.
 The input itself is unchanging and it produces a reader which remembers the current position of the input during parsing.
 
-.The supported encodings:
+.The supported encodings of {{% headerref "encoding" %}}:
 {{% docref "lexy::default_encoding" %}}::
   An unknown single byte encoding.
 {{% docref "lexy::ascii_encoding" %}}::
@@ -63,15 +63,15 @@ The input itself is unchanging and it produces a reader which remembers the curr
   Bytes, not text.
 
 .The pre-defined inputs:
-{{% docref "lexy::range_input" %}}::
+{{% headerref "range_input" %}}::
   Use a generic iterator range as input.
-{{% docref "lexy::string_input" %}} and {{% docref "lexy::zstring_input" %}}::
+{{% headerref "string_input" %}}::
   Use a string as input.
-{{% docref "lexy::buffer" %}}::
+{{% headerref "buffer" %}}::
   Create a buffer that contains the input.
-{{% docref "lexy::read_file" %}}::
+{{% headerref "file" %}}::
   Use a file as input.
-{{% docref "lexy::argv_input" %}}::
+{{% headerref "argv_input" %}}::
   Use the command-line arguments as input.
 
 [#grammar]
@@ -93,11 +93,11 @@ Both of those are specified in a C++ DSL.
 The action {{% docref "lexy::parse" %}} also needs a `::value` member that controls the value produced by parsing the production.
 It is specified using callbacks, special function objects, and sinks.
 
-link:{{< ref "grammar" >}}[`lexy/grammar.hpp`]::
+{{% headerref "grammar" %}}::
   Type traits for defining and interacting with the grammar.
-link:{{< ref "dsl" >}}[`lexy/dsl.hpp`]::
+{{% headerref "dsl" %}}::
   The DSL for specifying parse rules.
-link:{{< ref "callback" >}}[`lexy/callback.hpp`]::
+{{% headerref "callback" %}}::
   The predefined callbacks and sinks for specifying the value.
 
 TIP: It is a recommended to put all the productions into a separate namespace.
@@ -107,14 +107,14 @@ TIP: It is a recommended to put all the productions into a separate namespace.
 
 Actions take a grammar and an input, and do something with the grammar on that input.
 
-{{% docref "lexy::match" %}}::
+{{% headerref "action/match" %}}::
   Matches a grammar on an input and return a `true`/`false` result.
-{{% docref "lexy::validate" %}}::
+{{% headerref "action/validate" %}}::
   Validates that a grammar matches on an input, and returns the errors if it does not.
-{{% docref "lexy::parse" %}}::
+{{% headerref "action/parse" %}}::
   Parses a grammar on an input and returns its value.
-{{% docref "lexy::parse_as_tree" %}}::
+{{% headerref "action/parse_as_tree" %}}::
   Parses a grammar on an input and returns the parse tree.
-{{% docref "lexy::trace" %}}::
+{{% headerref "action/trace" %}}::
   Traces parse events to visualize and debug the parsing process.
 
