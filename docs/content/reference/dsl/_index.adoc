@@ -240,11 +240,13 @@ Parse tree::
 ====
 
 [%collapsible]
-.Input specific rules
+.Input and action specific rules
 ====
 {{% docref "lexy::dsl::bom" %}} and {{% docref "lexy::dsl::encode" %}}::
   interpret bytes as text
 {{% docref "lexy::dsl::argv_separator" %}}::
-  match the argument separator of a `lexy::argv_input`
+  match the argument separator of a {{% docref "lexy::argv_input" %}}
+{{% docref "lexy::dsl::debug" %}}::
+  generate a debug event that is visualized by {{% docref "lexy::trace" %}}
 ====
 
