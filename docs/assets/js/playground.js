@@ -51,14 +51,14 @@ export async function preprocess_source(target, source, production)
     }
 }
 
-export async function compile_and_run(source, input)
+export async function compile_and_run(source, input, mode)
 {
     var body = {};
     body.source = source;
 
     body.options = {};
     body.options.userArguments = "-fno-color-diagnostics -std=c++20";
-    body.options.executeParameters = { args: [], stdin: input };
+    body.options.executeParameters = { args: [mode], stdin: input };
     body.options.compilerOptions = { executorRequest: true };
     body.options.filters = { execute: true };
     body.options.tools = [];
@@ -78,9 +78,17 @@ export async function compile_and_run(source, input)
 
     if (result.didExecute)
     {
-        var stdout = result.stdout.map(x => x.text).join("\n");
-        var stderr = result.stderr.map(x => x.text).join("\n");
-        return { success: true, stdout: stdout, stderr: stderr, code: result.code };
+        if (result.code == 3)
+        {
+            var message = result.stderr.map(x => x.text).join("\n");
+            return { success: false, message: message };
+        }
+        else
+        {
+            var stdout = result.stdout.map(x => x.text).join("\n");
+            var stderr = result.stderr.map(x => x.text).join("\n");
+            return { success: true, stdout: stdout, stderr: stderr, code: result.code };
+        }
     }
     else
     {
@@ -140,7 +148,7 @@ export async function load_example(url)
 export async function load_godbolt_url(id)
 {
     const response = await fetch(api + "shortlinkinfo/" + id);
-    if (!reponse.ok)
+    if (!response.ok)
         return { grammar: "", input: "", production: "" };
     const result = await response.json();
 

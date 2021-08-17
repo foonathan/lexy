@@ -26,6 +26,11 @@
         <label for="toolbar-production">Entry production:</label>
         <select id="toolbar-production"></select>
 
+        <select id="toolbar-mode">
+            <option value="tree" selected>Parse Tree</option>
+            <option value="trace">Trace</option>
+        </select>
+
         <button id="toolbar-run" type="button">Run</button>
         <button id="toolbar-godbolt" type="button">
             <img src="https://godbolt.org/favicon.ico" alt="CE logo" title="View on Compiler Explorer.">
@@ -44,9 +49,7 @@
 
 <section id="output">
     <div class="output-container" id="output-graph"></div>
-    <textarea class="output-container" id="output-text"
-        autocomplete=off readonly=true>
-    </textarea>
+    <div class="output-container" id="output-text"></div>
 </section>
 
 <section>
@@ -62,6 +65,7 @@
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
 <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/drudru/ansi_up@v5.0.1/ansi_up.js"></script>
 <script type="module">
 import * as playground from "{{ $playground.Permalink }}";
 
@@ -70,6 +74,7 @@ const toolbar_permalink  = document.getElementById("toolbar-permalink");
 const toolbar_vim        = document.getElementById("toolbar-vim");
 const toolbar_wrap       = document.getElementById("toolbar-wrap");
 const toolbar_production = document.getElementById("toolbar-production");
+const toolbar_mode       = document.getElementById("toolbar-mode");
 const toolbar_run        = document.getElementById("toolbar-run");
 const toolbar_godbolt    = document.getElementById("toolbar-godbolt");
 
@@ -138,9 +143,13 @@ async function load()
         result.production = storage.getItem('toolbar-production') || def.production;
     }
 
+    const mode = params.get('mode');
+    result.mode = mode || storage.getItem('toolbar-mode') || 'tree';
+
     editor_grammar.setValue(result.grammar, 1);
     editor_input.setValue(result.input, 1);
     update_toolbar_production(result.production);
+    toolbar_mode.value = result.mode;
 }
 
 function save()
@@ -155,6 +164,7 @@ function save()
     storage.setItem('editor-grammar', editor_grammar.getValue());
     storage.setItem('editor-input', editor_input.getValue());
     storage.setItem('toolbar-production', toolbar_production.value);
+    storage.setItem('toolbar-mode', toolbar_mode.value);
 }
 
 function toggle_vim()
@@ -179,33 +189,44 @@ async function run()
 
     const source = await playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
+    const mode = toolbar_mode.value;
 
-    const result = await playground.compile_and_run(source, input);
+    const result = await playground.compile_and_run(source, input, mode);
+    const ansi_up = new AnsiUp;
     if (result.success)
     {
-        if (result.code == 0) // no error
+        if (mode == 'tree')
         {
-            d3.select(output_graph).graphviz().renderDot(result.stdout);
-            output_text.style.display = "none";
-            output_graph.style.display = "block";
+            if (result.code == 0) // no error
+            {
+                d3.select(output_graph).graphviz().renderDot(result.stdout);
+                output_text.style.display = "none";
+                output_graph.style.display = "block";
+            }
+            else if (result.code == 1) // recovered error
+            {
+                d3.select(output_graph).graphviz().renderDot(result.stdout);
+                output_text.innerHTML = ansi_up.ansi_to_html(result.stderr);
+                output_text.style.display = "block";
+                output_graph.style.display = "block";
+            }
+            else  // fatal error
+            {
+                output_text.innerHTML = ansi_up.ansi_to_html(result.stderr);
+                output_text.style.display = "block";
+                output_graph.style.display = "none";
+            }
         }
-        else if (result.code == 1) // recovered error
+        else
         {
-            d3.select(output_graph).graphviz().renderDot(result.stdout);
-            output_text.value = result.stderr;
-            output_text.style.display = "block";
-            output_graph.style.display = "block";
-        }
-        else  // fatal error
-        {
-            output_text.value = result.stderr;
+            output_text.innerHTML = ansi_up.ansi_to_html(result.stdout);
             output_text.style.display = "block";
             output_graph.style.display = "none";
         }
     }
     else
     {
-        output_text.value = result.message;
+        output_text.innerHTML = ansi_up.ansi_to_html(result.message);
         output_text.style.display = "block";
         output_graph.style.display = "none";
     }
@@ -298,7 +319,7 @@ window.addEventListener('load', async() => {
 
         const url = await playground.get_godbolt_permalink(source, input);
         const id = url.substring(url.lastIndexOf('/') + 1);
-        window.history.replaceState({}, document.title, "{{ .Permalink }}?id=" + id);
+        window.history.replaceState({}, document.title, "{{ .Permalink }}?id=" + id + "&mode=" + toolbar_mode.value);
     });
     toolbar_vim.addEventListener('click', toggle_vim);
     toolbar_wrap.addEventListener('click', toggle_wrap);

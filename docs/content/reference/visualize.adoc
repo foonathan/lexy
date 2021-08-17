@@ -142,6 +142,8 @@ For {{% docref "lexy::byte_encoding" %}}, it writes the bytes as hexadecimal.
 To visualize a parse tree, it visualizes each node in a tree format.
 The maximal depth can be controlled by the options.
 
+NOTE: Use {{% docref "lexy::trace" %}} to visualize the parsing process itself.
+
 [#visualize]
 == Function `lexy::visualize`
 
@@ -163,7 +165,7 @@ namespace lexy
 [.lead]
 Visualizes a data structure by writing it to `file`.
 
-It uses `cfile_output_iterator`, which is an output iterator that repeatedly calls `std::fputc`.
+It uses `cfile_output_iterator`, which is an output iterator that repeatedly calls `std::fputc`, and then forwards to {{% docref "lexy::visualize_to" %}}.
 
 {{% godbolt-example "visualize" "Visualize a `lexy::parse_tree`" %}}
 

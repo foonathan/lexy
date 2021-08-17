@@ -6,7 +6,7 @@
 
 #include "verify.hpp"
 
-TEST_CASE("atom: argv_separator")
+TEST_CASE("argv_separator")
 {
     SUBCASE("non-argv_input")
     {

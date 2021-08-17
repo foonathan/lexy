@@ -30,6 +30,7 @@ foreach(file ${examples})
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${name}
         COMMAND ${CMAKE_COMMAND} -E echo "#include <lexy/dsl.hpp>"                                  >  "${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        COMMAND ${CMAKE_COMMAND} -E echo "#include <lexy/action/trace.hpp>"                         >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         COMMAND ${CMAKE_COMMAND} -E echo "namespace dsl = lexy::dsl;"                               >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         COMMAND ${CMAKE_COMMAND} -E echo "#line 1 \"${file}\""                                      >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         COMMAND ${CMAKE_COMMAND} -E cat "${file}"                                                   >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"

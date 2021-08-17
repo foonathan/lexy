@@ -36,11 +36,11 @@ public:
     template <typename Event, typename... Args>
     constexpr auto on(Event ev, Args&&... args) -> std::enable_if_t<
         !std::is_base_of_v<parse_events::_production_event, Event>,
-        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(handler_marker<Handler, Production> &&), ev,
-                                           LEXY_FWD(args)...))>
+        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker<Handler, Production>&),
+                                           ev, LEXY_FWD(args)...))>
     {
         LEXY_ASSERT(_handler, "using already finished context");
-        return _handler->on(LEXY_MOV(_marker), ev, LEXY_FWD(args)...);
+        return _handler->on(_marker, ev, LEXY_FWD(args)...);
     }
 
     //=== context variables ===//
