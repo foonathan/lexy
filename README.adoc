@@ -32,9 +32,9 @@ struct ipv4_address
 
     // How the matched output is being stored.
     static constexpr auto value
-        = lexy::fold<std::uint32_t>(0u, [](std::uint32_t result, std::uint8_t octet) {
-              return (result << 8) | octet;
-          });
+        = lexy::callback<std::uint32_t>([](std::uint8_t a, std::uint8_t b, std::uint8_t c, std::uint8_t d) {
+            return (a << 24) | (b << 16) | (c << 8) | d;
+        });
 };
 ----
 
@@ -67,8 +67,8 @@ Good error reporting::
   Custom error messages can be injected using the special `dsl::error`, `dsl::require` and `dsl::prevent` error.
   Write parse rules that detect common mistakes and issue appropriate diagnostics!
 
-Error recovery (experimental)::
-  Log an error, recover, and continue parsing!
+Error recovery::
+  Log an error, recover, and continue parsing! https://lexy.foonathan.net/playground/?example=recover[Try it online].
 
 Unicode support::
   You can parse UTF-8, UTF-16, or UTF-32.
@@ -78,6 +78,9 @@ Unicode support::
 
 Keyword and identifier parsing::
   Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss[Try it online].
+
+Tracing::
+  Figure out why the grammar isn't working the way you want it to. https://lexy.foonathan.net/playground/?example=trace&mode=trace[Try it online].
 
 Fully `constexpr` parsing::
   You want to parse a string literal at compile-time? You can do so.
@@ -93,11 +96,11 @@ Header-only core library::
 
 The following features are in various stages of development and will be added before the 1.0.0 release.
 
-Debug facility::
-  Figure out why the grammar isn't working the way you want it to.
-
 Operator parsing::
   Parse operators with different precedences using Pratt parsing.
+
+Byte parsing::
+  Rules for parsing `N` bytes, an Nbit BE/LE integer, and related utilities for binary formats.
 
 NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
 All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
