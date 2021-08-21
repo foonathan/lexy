@@ -42,3 +42,21 @@ jobs:
       working-directory: build/
       run: cmake --build .
 
+  benchmarks: # just to ensure that they are compiled
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Build Environment
+      run: cmake -E make_directory build
+    - name: Install ninja
+      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build
+
+    - name: Configure
+      working-directory: build/
+      run: cmake -GNinja $GITHUB_WORKSPACE -DLEXY_BUILD_BENCHMARKS=ON
+    - name: Build
+      working-directory: build/
+      run: cmake --build .
+
+
