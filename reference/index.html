@@ -74,27 +74,27 @@ Nevertheless, lexy defines some <a href=#infrastructure>infrastructure</a> types
 <div class=sectionbody>
 <div class=dlist>
 <dl>
-<dt class=hdlist1><a href=/reference/code_point/#code_point><code>lexy::code_point</code></a></dt>
+<dt class=hdlist1><a href=/reference/code_point/><code>lexy/code_point.hpp</code></a></dt>
 <dd>
 <p>A Unicode code point.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></dt>
+<dt class=hdlist1><a href=/reference/lexeme/><code>lexy/lexeme.hpp</code></a></dt>
 <dd>
 <p>A lexeme, i.e. a subrange of the input.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/token/#token_kind><code>lexy::token_kind</code></a> and <a href=/reference/token/#token><code>lexy::token</code></a></dt>
+<dt class=hdlist1><a href=/reference/token/><code>lexy/token.hpp</code></a></dt>
 <dd>
 <p>Identify and store tokens, i.e. concrete realization of <a href=/reference/dsl/token/#doc>token rule</a>s.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></dt>
+<dt class=hdlist1><a href=/reference/parse_tree/><code>lexy/parse_tree.hpp</code></a></dt>
 <dd>
 <p>A parse tree.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/error/#error><code>lexy::error</code></a> and <a href=/reference/error/#error_context><code>lexy::error_context</code></a></dt>
+<dt class=hdlist1><a href=/reference/error/><code>lexy/error.hpp</code></a></dt>
 <dd>
 <p>The parse errors.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/visualize/#visualize><code>lexy::visualize</code></a></dt>
+<dt class=hdlist1><a href=/reference/visualize/><code>lexy/visualize.hpp</code></a></dt>
 <dd>
 <p>Visualize the data structures.</p>
 </dd>
@@ -122,7 +122,7 @@ It has a corresponding <a href=/reference/encoding/#doc>encoding</a> that contro
 The input itself is unchanging and it produces a reader which remembers the current position of the input during parsing.</p>
 </div>
 <div class=dlist>
-<div class=title>The supported encodings:</div>
+<div class=title>The supported encodings of <a href=/reference/encoding/><code>lexy/encoding.hpp</code></a>:</div>
 <dl>
 <dt class=hdlist1><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></dt>
 <dd>
@@ -145,23 +145,23 @@ The input itself is unchanging and it produces a reader which remembers the curr
 <div class=dlist>
 <div class=title>The pre-defined inputs:</div>
 <dl>
-<dt class=hdlist1><a href=/reference/input/range_input/#range_input><code>lexy::range_input</code></a></dt>
+<dt class=hdlist1><a href=/reference/input/range_input/><code>lexy/range_input.hpp</code></a></dt>
 <dd>
 <p>Use a generic iterator range as input.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/input/string_input/#string_input><code>lexy::string_input</code></a> and <a href=/reference/input/string_input/#zstring_input><code>lexy::zstring_input</code></a></dt>
+<dt class=hdlist1><a href=/reference/input/string_input/><code>lexy/string_input.hpp</code></a></dt>
 <dd>
 <p>Use a string as input.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a></dt>
+<dt class=hdlist1><a href=/reference/input/buffer/><code>lexy/buffer.hpp</code></a></dt>
 <dd>
 <p>Create a buffer that contains the input.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/input/file/#read_file><code>lexy::read_file</code></a></dt>
+<dt class=hdlist1><a href=/reference/input/file/><code>lexy/file.hpp</code></a></dt>
 <dd>
 <p>Use a file as input.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/input/argv_input/#argv_input><code>lexy::argv_input</code></a></dt>
+<dt class=hdlist1><a href=/reference/input/argv_input/><code>lexy/argv_input.hpp</code></a></dt>
 <dd>
 <p>Use the command-line arguments as input.</p>
 </dd>
@@ -191,15 +191,15 @@ It is specified using callbacks, special function objects, and sinks.</p>
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1><a href=https://lexy.foonathan.net/reference/grammar/><code>lexy/grammar.hpp</code></a></dt>
+<dt class=hdlist1><a href=/reference/grammar/><code>lexy/grammar.hpp</code></a></dt>
 <dd>
 <p>Type traits for defining and interacting with the grammar.</p>
 </dd>
-<dt class=hdlist1><a href=https://lexy.foonathan.net/reference/dsl/><code>lexy/dsl.hpp</code></a></dt>
+<dt class=hdlist1><a href=/reference/dsl/><code>lexy/dsl.hpp</code></a></dt>
 <dd>
 <p>The DSL for specifying parse rules.</p>
 </dd>
-<dt class=hdlist1><a href=https://lexy.foonathan.net/reference/callback/><code>lexy/callback.hpp</code></a></dt>
+<dt class=hdlist1><a href=/reference/callback/><code>lexy/callback.hpp</code></a></dt>
 <dd>
 <p>The predefined callbacks and sinks for specifying the value.</p>
 </dd>
@@ -227,23 +227,23 @@ It is a recommended to put all the productions into a separate namespace.
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1><a href=/reference/action/match/#match><code>lexy::match</code></a></dt>
+<dt class=hdlist1><a href=/reference/action/match/><code>lexy/action/match.hpp</code></a></dt>
 <dd>
 <p>Matches a grammar on an input and return a <code>true</code>/<code>false</code> result.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/action/validate/#validate><code>lexy::validate</code></a></dt>
+<dt class=hdlist1><a href=/reference/action/validate/><code>lexy/action/validate.hpp</code></a></dt>
 <dd>
 <p>Validates that a grammar matches on an input, and returns the errors if it does not.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/action/parse/#parse><code>lexy::parse</code></a></dt>
+<dt class=hdlist1><a href=/reference/action/parse/><code>lexy/action/parse.hpp</code></a></dt>
 <dd>
 <p>Parses a grammar on an input and returns its value.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/action/parse_as_tree/#parse_as_tree><code>lexy::parse_as_tree</code></a></dt>
+<dt class=hdlist1><a href=/reference/action/parse_as_tree/><code>lexy/action/parse_as_tree.hpp</code></a></dt>
 <dd>
 <p>Parses a grammar on an input and returns the parse tree.</p>
 </dd>
-<dt class=hdlist1><a href=/reference/action/trace/#trace><code>lexy::trace</code></a></dt>
+<dt class=hdlist1><a href=/reference/action/trace/><code>lexy/action/trace.hpp</code></a></dt>
 <dd>
 <p>Traces parse events to visualize and debug the parsing process.</p>
 </dd>

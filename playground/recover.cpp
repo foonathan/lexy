@@ -23,14 +23,12 @@ struct production
 {
     static constexpr auto whitespace = dsl::ascii::space;
     static constexpr auto rule       = [] {
-        auto decl = dsl::p<function_decl> | dsl::p<type_decl> | dsl::break_;
+        auto decl = dsl::p<function_decl> | dsl::p<type_decl>;
 
         // We recovery from any errors by continuing with the next declaration.
         auto decl_recover = dsl::recover(dsl::p<function_decl>, dsl::p<type_decl>);
         auto try_decl     = dsl::try_(decl, decl_recover);
 
-        // Note: a real implementation couldn't use loop().
-        // If the decls produce values, list() has to be used instead.
-        return dsl::loop(try_decl);
+        return dsl::list(try_decl);
     }();
 };

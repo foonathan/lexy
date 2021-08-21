@@ -70,9 +70,9 @@ which gives you all the flexibility and control of a handwritten parser without 
 
     <span class=tok-c1>// How the matched output is being stored.</span>
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span>
-        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>fold</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-mi>0u</span><span class=tok-p>,</span> <span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>octet</span><span class=tok-p>)</span> <span class=tok-p>{</span>
-              <span class=tok-k>return</span> <span class=tok-p>(</span><span class=tok-n>result</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>8</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>octet</span><span class=tok-p>;</span>
-          <span class=tok-p>});</span>
+        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>a</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>b</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>c</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>d</span><span class=tok-p>)</span> <span class=tok-p>{</span>
+            <span class=tok-k>return</span> <span class=tok-p>(</span><span class=tok-n>a</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>24</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-p>(</span><span class=tok-n>b</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>16</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-p>(</span><span class=tok-n>c</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>8</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>d</span><span class=tok-p>;</span>
+        <span class=tok-p>});</span>
 <span class=tok-p>};</span></code></pre>
 </div>
 </div>
@@ -116,9 +116,9 @@ You can even evaluate the input on the fly, without storing anything.</p>
 Custom error messages can be injected using the special <code>dsl::error</code>, <code>dsl::require</code> and <code>dsl::prevent</code> error.
 Write parse rules that detect common mistakes and issue appropriate diagnostics!</p>
 </dd>
-<dt class=hdlist1>Error recovery (experimental)</dt>
+<dt class=hdlist1>Error recovery</dt>
 <dd>
-<p>Log an error, recover, and continue parsing!</p>
+<p>Log an error, recover, and continue parsing! <a href="https://lexy.foonathan.net/playground/?example=recover">Try it online</a>.</p>
 </dd>
 <dt class=hdlist1>Unicode support</dt>
 <dd>
@@ -130,6 +130,10 @@ You can do so out of the box.</p>
 <dt class=hdlist1>Keyword and identifier parsing</dt>
 <dd>
 <p>Reserve a set of keywords that won’t be matched as regular identifiers. <a href="https://lexy.foonathan.net/playground/?id=7boh7TGss">Try it online</a>.</p>
+</dd>
+<dt class=hdlist1>Tracing</dt>
+<dd>
+<p>Figure out why the grammar isn’t working the way you want it to. <a href="https://lexy.foonathan.net/playground/?example=trace&mode=trace">Try it online</a>.</p>
 </dd>
 <dt class=hdlist1>Fully <code>constexpr</code> parsing</dt>
 <dd>
@@ -156,13 +160,13 @@ Some input classes required <code>&lt;cstdio></code>.</p>
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Debug facility</dt>
-<dd>
-<p>Figure out why the grammar isn’t working the way you want it to.</p>
-</dd>
 <dt class=hdlist1>Operator parsing</dt>
 <dd>
 <p>Parse operators with different precedences using Pratt parsing.</p>
+</dd>
+<dt class=hdlist1>Byte parsing</dt>
+<dd>
+<p>Rules for parsing <code>N</code> bytes, an Nbit BE/LE integer, and related utilities for binary formats.</p>
 </dd>
 </dl>
 </div>
