@@ -34,7 +34,8 @@ foreach(file ${examples})
         COMMAND ${CMAKE_COMMAND} -E echo "namespace dsl = lexy::dsl;"                                  >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         COMMAND ${CMAKE_COMMAND} -E cat "${file}"                                                      >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
         COMMAND ${CMAKE_COMMAND} -E cat "${PROJECT_SOURCE_DIR}/docs/assets/cpp/playground_main.cpp"    >> "${CMAKE_CURRENT_BINARY_DIR}/${name}"
-        VERBATIM DEPENDS "${file}")
+        VERBATIM DEPENDS
+            "${file}" "${PROJECT_SOURCE_DIR}/docs/assets/cpp/playground_headers.hpp" "${PROJECT_SOURCE_DIR}/docs/assets/cpp/playground_main.cpp")
     target_sources(lexy_test_playground_examples PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/${name})
 endforeach()
 
