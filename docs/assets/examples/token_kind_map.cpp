@@ -1,7 +1,7 @@
 #include <lexy/action/parse_as_tree.hpp>
 #include <lexy/dsl.hpp>
+#include <lexy/input/file.hpp>
 #include <lexy/visualize.hpp>
-#include <lexy_ext/cfile.hpp>
 #include <lexy_ext/report_error.hpp>
 
 namespace dsl = lexy::dsl;
@@ -57,7 +57,7 @@ const char* token_kind_name(my_token_kind kind)
 
 int main()
 {
-    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
+    auto input = lexy::read_stdin<lexy::utf8_encoding>().buffer();
 
     // Need to specify the token kind we want here.
     lexy::parse_tree_for<decltype(input), my_token_kind> tree;

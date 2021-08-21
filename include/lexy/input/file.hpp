@@ -41,6 +41,9 @@ using file_callback = void (*)(void* user_data, const char* memory, std::size_t 
 //
 // Do not change ABI, especially with different build configurations!
 file_error read_file(const char* path, file_callback cb, void* user_data);
+
+// Same as above, but reads from stdin.
+file_error read_stdin(file_callback cb, void* user_data);
 } // namespace lexy::_detail
 
 namespace lexy
@@ -110,6 +113,25 @@ private:
     file_error                             _ec;
 };
 
+template <typename Encoding, encoding_endianness Endian, typename MemoryResource>
+struct _read_file_user_data
+{
+    lexy::buffer<Encoding, MemoryResource> buffer;
+    MemoryResource*                        resource;
+
+    _read_file_user_data(MemoryResource* resource) : buffer(resource), resource(resource) {}
+
+    static auto callback()
+    {
+        return [](void* _user_data, const char* memory, std::size_t size) {
+            auto user_data = static_cast<_read_file_user_data*>(_user_data);
+
+            user_data->buffer
+                = lexy::make_buffer_from_raw<Encoding, Endian>(memory, size, user_data->resource);
+        };
+    }
+};
+
 /// Reads the file at the specified path into a buffer.
 template <typename Encoding          = default_encoding,
           encoding_endianness Endian = encoding_endianness::bom,
@@ -118,24 +140,20 @@ auto read_file(const char*     path,
                MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     -> read_file_result<Encoding, MemoryResource>
 {
-    struct user_data_t
-    {
-        lexy::buffer<Encoding, MemoryResource> buffer;
-        MemoryResource*                        resource;
+    _read_file_user_data<Encoding, Endian, MemoryResource> user_data(resource);
+    auto error = _detail::read_file(path, user_data.callback(), &user_data);
+    return read_file_result(error, LEXY_MOV(user_data.buffer));
+}
 
-        user_data_t(MemoryResource* resource) : buffer(resource), resource(resource) {}
-    } user_data(resource);
-
-    auto error = _detail::read_file(
-        path,
-        [](void* _user_data, const char* memory, std::size_t size) {
-            auto user_data = static_cast<user_data_t*>(_user_data);
-
-            user_data->buffer
-                = lexy::make_buffer_from_raw<Encoding, Endian>(memory, size, user_data->resource);
-        },
-        &user_data);
-
+/// Reads stdin into a buffer.
+template <typename Encoding          = default_encoding,
+          encoding_endianness Endian = encoding_endianness::bom,
+          typename MemoryResource    = _detail::default_memory_resource>
+auto read_stdin(MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
+    -> read_file_result<Encoding, MemoryResource>
+{
+    _read_file_user_data<Encoding, Endian, MemoryResource> user_data(resource);
+    auto error = _detail::read_stdin(user_data.callback(), &user_data);
     return read_file_result(error, LEXY_MOV(user_data.buffer));
 }
 } // namespace lexy

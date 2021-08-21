@@ -30,7 +30,7 @@ struct print_quoted_iterator
 
 int main(int, char* argv[])
 {
-    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
+    auto input = lexy::read_stdin<lexy::utf8_encoding>().buffer();
 
     if (argv[1] == lexy::_detail::string_view("tree"))
     {

@@ -1,7 +1,7 @@
 #include <lexy/action/parse.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy_ext/cfile.hpp>
+#include <lexy/input/file.hpp>
 #include <lexy_ext/report_error.hpp>
 #include <string>
 
@@ -41,7 +41,7 @@ struct production
 
 int main()
 {
-    auto input  = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
+    auto input  = lexy::read_stdin<lexy::utf8_encoding>().buffer();
     auto result = lexy::parse<production>(input, lexy_ext::report_error);
     if (!result)
         return 1;

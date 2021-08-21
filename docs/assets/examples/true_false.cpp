@@ -1,7 +1,7 @@
 #include <lexy/action/parse.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy_ext/cfile.hpp>
+#include <lexy/input/file.hpp>
 #include <lexy_ext/report_error.hpp>
 
 namespace dsl = lexy::dsl;
@@ -30,7 +30,7 @@ struct boolean
 
 int main()
 {
-    auto input = lexy_ext::read_file<>(stdin).buffer();
+    auto input = lexy::read_stdin<>().buffer();
 
     auto result = lexy::parse<boolean>(input, lexy_ext::report_error);
     if (!result)

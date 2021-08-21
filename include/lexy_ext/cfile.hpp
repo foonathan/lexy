@@ -15,9 +15,10 @@ namespace lexy_ext
 template <typename Encoding                = lexy::default_encoding,
           lexy::encoding_endianness Endian = lexy::encoding_endianness::bom,
           typename MemoryResource          = lexy::_detail::default_memory_resource>
-auto read_file(std::FILE*      file,
-               MemoryResource* resource = lexy::_detail::get_memory_resource<MemoryResource>())
-    -> lexy::read_file_result<Encoding, MemoryResource>
+[[deprecated("use lexy::read_stdin() for reading stdin; lexy::read_file() for other files")]] auto
+    read_file(std::FILE*      file,
+              MemoryResource* resource = lexy::_detail::get_memory_resource<MemoryResource>())
+        -> lexy::read_file_result<Encoding, MemoryResource>
 {
     using result_type = lexy::read_file_result<Encoding, MemoryResource>;
 

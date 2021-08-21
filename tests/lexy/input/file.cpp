@@ -216,3 +216,134 @@ TEST_CASE("read_file")
     std::remove(test_file_name);
 }
 
+TEST_CASE("read_stdin")
+{
+    // Here, we'll reassociate stdin with our test file.
+    // This means that we'll permantently loose stdin, but that's okay -- unit tests don't need it.
+    auto write_stdin = [](const char* data) {
+        write_test_data(data);
+
+        auto result = std::freopen(test_file_name, "rb", stdin);
+        REQUIRE(result == stdin);
+    };
+
+    std::remove(test_file_name);
+
+    SUBCASE("empty")
+    {
+        write_stdin("");
+
+        auto result = lexy::read_stdin();
+        REQUIRE(result);
+
+        auto reader = result.buffer().reader();
+        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
+    }
+    SUBCASE("small")
+    {
+        write_stdin("abc");
+
+        auto result = lexy::read_stdin();
+        REQUIRE(result);
+
+        auto reader = result.buffer().reader();
+        CHECK(reader.peek() == 'a');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 'b');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 'c');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
+    }
+    SUBCASE("big")
+    {
+        {
+            auto file = std::fopen(test_file_name, "wb");
+            for (auto i = 0; i != 1024; ++i)
+                std::fputc('a', file);
+            for (auto i = 0; i != 1024; ++i)
+                std::fputc('b', file);
+            std::fclose(file);
+
+            auto result = std::freopen(test_file_name, "rb", stdin);
+            REQUIRE(result == stdin);
+        }
+
+        auto result = lexy::read_stdin();
+        REQUIRE(result);
+
+        auto reader = result.buffer().reader();
+        for (auto i = 0; i != 1024; ++i)
+        {
+            CHECK(reader.peek() == 'a');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        for (auto i = 0; i != 1024; ++i)
+        {
+            CHECK(reader.peek() == 'b');
+            CHECK(!reader.eof());
+            reader.bump();
+        }
+
+        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.eof());
+    }
+#if LEXY_HAS_RESOURCE
+    SUBCASE("custom encoding and resource")
+    {
+        write_stdin("abc");
+
+        auto result = lexy::read_stdin<lexy::ascii_encoding>(std::pmr::new_delete_resource());
+        REQUIRE(result);
+
+        auto reader = result.buffer().reader();
+        CHECK(reader.peek() == 'a');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 'b');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 'c');
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == lexy::ascii_encoding::eof());
+        CHECK(reader.eof());
+    }
+#endif
+    SUBCASE("custom encoding and byte order")
+    {
+        const unsigned char data[] = {0xFF, 0xFE, 0x11, 0x22, 0x33, 0x44, 0x00};
+        write_stdin(reinterpret_cast<const char*>(data));
+
+        auto result = lexy::read_stdin<lexy::utf16_encoding>();
+        REQUIRE(result);
+
+        auto reader = result.buffer().reader();
+        CHECK(reader.peek() == 0x2211);
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == 0x4433);
+        CHECK(!reader.eof());
+
+        reader.bump();
+        CHECK(reader.peek() == lexy::utf16_encoding::eof());
+        CHECK(reader.eof());
+    }
+
+    std::remove(test_file_name);
+}
+

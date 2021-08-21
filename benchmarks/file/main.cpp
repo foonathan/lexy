@@ -8,7 +8,6 @@
 #include <cstdio>
 #include <fstream>
 #include <lexy/input/file.hpp>
-#include <lexy_ext/cfile.hpp>
 
 std::size_t use_buffer(const lexy::buffer<>& buffer)
 {
@@ -25,13 +24,6 @@ std::size_t use_buffer(const lexy::buffer<>& buffer)
 std::size_t file_lexy(const char* path)
 {
     auto result = lexy::read_file(path);
-    return use_buffer(result.value());
-}
-std::size_t file_lexy_cfile(const char* path)
-{
-    auto file   = std::fopen(path, "rb");
-    auto result = lexy_ext::read_file(file);
-    std::fclose(file);
     return use_buffer(result.value());
 }
 
@@ -90,7 +82,6 @@ int main()
         auto benchmark = [&](auto f) { return [f] { return f(bm_file_path); }; };
 
         b.run("lexy", benchmark(file_lexy));
-        b.run("lexy_cfile", benchmark(file_lexy_cfile));
 
         b.run("cfile", benchmark(file_cfile));
         b.run("stream", benchmark(file_stream));

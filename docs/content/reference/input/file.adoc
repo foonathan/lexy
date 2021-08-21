@@ -1,13 +1,18 @@
 ---
 header: "lexy/input/file.hpp"
 entities:
-  "lexy::file_error": read_file
-  "lexy::read_file_result": read_file
+  "lexy::file_error": read_file_result
+  "lexy::read_file_result": read_file_result
   "lexy::read_file": read_file
+  "lexy::read_stdin": read_stdin
 ---
+:experimental:
 
-[#read_file]
-== Input `lexy::read_file`
+[.lead]
+Read from files or stdin.
+
+[#read_file_result]
+== Class `lexy::read_file_result`
 
 {{% interface %}}
 ----
@@ -36,6 +41,26 @@ namespace lexy
         lexy::buffer<Encoding, MemoryResource>&&      buffer() &&     noexcept;
     };
 
+}
+----
+
+[.lead]
+The result of reading a file or from stdin.
+
+It is a union of the error code `lexy::file_error` and {{% docref "lexy::buffer" %}}:
+
+* If it contains an error code, `operator bool()` returns `false`, `error()` returns the error code,
+  and `buffer()`.
+* If it contains a buffer, `operator bool()` returns `true`, `buffer()` returns the buffer,
+  and `error()` must not be called.
+
+[#read_file]
+== Input `lexy::read_file`
+
+{{% interface %}}
+----
+namespace lexy
+{
     template <_encoding_ Encoding          = default_encoding,
               encoding_endianness Endian = encoding_endianness::bom,
               typename MemoryResource>
@@ -48,19 +73,12 @@ namespace lexy
 [.lead]
 The function `read_file` reads the contents of the file and makes it available as an input.
 
-The result is an object of the class `lexy::read_file_result`.
-It is logically a union of the error code `lexy::file_error` and {{% docref "lexy::buffer" %}}:
-
-* If it contains an error code, `operator bool()` returns `false`, `error()` returns the error code,
-  and `buffer()`.
-* If it contains a buffer, `operator bool()` returns `true`, `buffer()` returns the buffer,
-  and `error()` must not be called.
-
 `read_file` tries to read the file at `path` into a buffer whose memory is allocated using the specified `resource`
 and whose contents are interpreted as code units of the {{% encoding %}} `Encoding` with the specified {{% docref "lexy::encoding_endianness" %}},
 as if {{% docref "lexy::make_buffer_from_raw" %}} is used.
-If this is successful, the returned result will contain the buffer.
-Otherwise, it will contain an error:
+If this is successful, the returned {{% docref "lexy::read_file_result" %}} will contain the {{% docref "lexy::buffer" %}}.
+
+Otherwise, it will contain a {{% docref "lexy::file_error" %}}:
 
 * `file_error::file_not_found` if the `path` did not resolve to a file,
 * `file_error::permission_denied` if the `path` resolved to a file that cannot be read by the process,
@@ -80,4 +98,37 @@ auto result = lexy::match<production>(file.buffer());
 …
 ----
 ====
+
+[#read_stdin]
+== Input `lexy::read_stdin`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_encoding_ Encoding          = default_encoding,
+              encoding_endianness Endian = encoding_endianness::bom,
+              typename MemoryResource>
+    auto read_stdin(MemoryResource* resource = _default-resource_)
+        -> read_file_result<Encoding, MemoryResource>;
+}
+----
+
+[.lead]
+The function `read_stdin` eagerly reads `stdin` and makes it available as an input.
+
+It will repeatedly read data from `stdin`, until EOF is reached.
+If `stdin` is a terminal, this will prompt the user for input until they've closed `stdin` by typing kbd:[Ctrl+D] on Linux or kbd:[Ctrl+Z] on Windows.
+
+The read data is interpreted as code units of the {{% encoding %}} `Encoding` with the specified {{% docref "lexy::encoding_endianness" %}},
+as if {{% docref "lexy::make_buffer_from_raw" %}} is used.
+If this is successful, the returned {{% docref "lexy::read_file_result" %}} will contain the {{% docref "lexy::buffer" %}},
+whose memory is allocated using the given `resource`.
+
+Otherwise, it will contain a {{% docref "lexy::file_error" %}}.
+The only error code used is `file_error::os_error`, if reading has failed.
+
+CAUTION: After a call to `read_stdin`, all further reads from `stdin` will fail.
+
+NOTE: If `stdin` is a terminal, `Encoding` and `Endian` must match the encoding used by the terminal.
 
