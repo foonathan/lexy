@@ -10,7 +10,7 @@ namespace dsl = lexy::dsl;
 
 //{
 // The type of a lexy::lexeme depends on the input.
-using file_lexeme = lexy::lexeme_for<lexy::read_file_result<>>;
+using lexeme = lexy::buffer_lexeme<>;
 
 struct production
 {
@@ -21,13 +21,13 @@ struct production
 
     // Same as `lexy::as_string<std::string>`.
     static constexpr auto value = lexy::callback<std::string>(
-        [](file_lexeme lex) { return std::string(lex.begin(), lex.end()); });
+        [](lexeme lex) { return std::string(lex.begin(), lex.end()); });
 };
 //}
 
 int main()
 {
-    auto input  = lexy_ext::read_file<>(stdin);
+    auto input  = lexy_ext::read_file<>(stdin).buffer();
     auto result = lexy::parse<production>(input, lexy_ext::report_error);
     if (!result)
         return 1;

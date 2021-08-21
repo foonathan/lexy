@@ -117,7 +117,7 @@ int main()
     if (!file)
     { … }
 
-    auto result = lexy::parse<grammar::config>(file, report_error_callback); <4>
+    auto result = lexy::parse<grammar::config>(file.buffer(), report_error_callback); <4>
     if (!result) <5>
     { … }
 
@@ -136,7 +136,7 @@ int main()
     We specify that the file uses UTF-8 as the input encoding.
     Reading a file can fail, so we need to handle that (not shown here).
 <4> Then we can parse our entry production using `lexy::parse`.
-    We give it our file input and a callback to invoke on errors (not shown here).
+    We give it the buffer of our file and a callback to invoke on errors (not shown here).
 <5> If parsing produced any errors, handle them somehow.
 <6> If parsing was able to give as a value (i.e. the input was either well-formed or lexy could recover from all errors that happened),
     use that value.

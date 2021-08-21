@@ -32,10 +32,8 @@ namespace lexy
 
         file_error error() const noexcept;
 
-        const char_type* data() const noexcept;
-        std::size_t      size() const noexcept;
-
-        _reader_ auto reader() const& noexcept;
+        const lexy::buffer<Encoding, MemoryResource>& buffer() const& noexcept;
+        lexy::buffer<Encoding, MemoryResource>&&      buffer() &&     noexcept;
     };
 
     template <_encoding_ Encoding          = default_encoding,
@@ -48,17 +46,15 @@ namespace lexy
 ----
 
 [.lead]
-The function `read_file` returns an input containing the contents of the file.
+The function `read_file` reads the contents of the file and makes it available as an input.
 
 The result is an object of the class `lexy::read_file_result`.
 It is logically a union of the error code `lexy::file_error` and {{% docref "lexy::buffer" %}}:
 
 * If it contains an error code, `operator bool()` returns `false`, `error()` returns the error code,
-  and `data()`, `size()`, and `reader()` must not be called.
-  It is thus not usable as an input.
-* If it contains a buffer, `operator bool()` returns `true`, `data()`, `size()` and `reader()` forward to the buffer,
+  and `buffer()`.
+* If it contains a buffer, `operator bool()` returns `true`, `buffer()` returns the buffer,
   and `error()` must not be called.
-  It is thus usable as an input and a rule cannot distinguish between it and {{% docref "lexy::buffer" %}}.
 
 `read_file` tries to read the file at `path` into a buffer whose memory is allocated using the specified `resource`
 and whose contents are interpreted as code units of the {{% encoding %}} `Encoding` with the specified {{% docref "lexy::encoding_endianness" %}},
@@ -75,12 +71,12 @@ Otherwise, it will contain an error:
 [source,cpp]
 ----
 // Read the file encoded in UTF-32.
-auto input = lexy::read_file<lexy::utf32_encoding>("input.txt");
-if (!input)
+auto file = lexy::read_file<lexy::utf32_encoding>("input.txt");
+if (!file)
     throw my_file_read_error_exception(result.error());
 
-// Use the file as input.
-auto result = lexy::match<production>(input);
+// Use the file's buffer as input.
+auto result = lexy::match<production>(file.buffer());
 …
 ----
 ====

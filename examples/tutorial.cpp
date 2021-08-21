@@ -158,7 +158,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto result = lexy::parse<grammar::config>(file, lexy_ext::report_error);
+    auto result = lexy::parse<grammar::config>(file.buffer(), lexy_ext::report_error);
 
     if (result.has_value())
     {

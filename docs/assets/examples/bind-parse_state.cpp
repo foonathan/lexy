@@ -33,7 +33,7 @@ struct production
 
 int main()
 {
-    auto input  = lexy_ext::read_file<>(stdin);
+    auto input  = lexy_ext::read_file<>(stdin).buffer();
     auto result = lexy::parse<production>(input, "foo", lexy_ext::report_error);
     if (!result)
         return 1;

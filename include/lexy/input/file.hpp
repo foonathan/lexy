@@ -10,6 +10,12 @@
 #include <lexy/input/base.hpp>
 #include <lexy/input/buffer.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_FILE
+#    define LEXY_DEPRECATED_FILE(Msg)
+#else
+#    define LEXY_DEPRECATED_FILE(Msg) [[deprecated(Msg)]]
+#endif
+
 namespace lexy
 {
 /// Errors that might occur while reading the file.
@@ -52,23 +58,35 @@ public:
         return _ec == file_error::_success;
     }
 
+    const lexy::buffer<Encoding, MemoryResource>& buffer() const& noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return _buffer;
+    }
+    lexy::buffer<Encoding, MemoryResource>&& buffer() && noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return LEXY_MOV(_buffer);
+    }
+
     file_error error() const noexcept
     {
         LEXY_PRECONDITION(!*this);
         return _ec;
     }
 
-    const char_type* data() const noexcept
+    LEXY_DEPRECATED_FILE("call `.buffer().data()`") const char_type* data() const noexcept
     {
         LEXY_PRECONDITION(*this);
         return _buffer.data();
     }
-    std::size_t size() const noexcept
+    LEXY_DEPRECATED_FILE("call `.buffer().data()`") std::size_t size() const noexcept
     {
         LEXY_PRECONDITION(*this);
         return _buffer.size();
     }
 
+    LEXY_DEPRECATED_FILE("`lexy::read_file_result`: call `.buffer()` to use it as an input")
     auto reader() const& noexcept
     {
         LEXY_PRECONDITION(*this);

@@ -216,7 +216,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto message = lexy::parse<grammar::message>(file, lexy_ext::report_error);
+    auto message = lexy::parse<grammar::message>(file.buffer(), lexy_ext::report_error);
     if (!message)
         return 2;
 

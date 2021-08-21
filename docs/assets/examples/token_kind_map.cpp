@@ -57,7 +57,7 @@ const char* token_kind_name(my_token_kind kind)
 
 int main()
 {
-    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin);
+    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
 
     // Need to specify the token kind we want here.
     lexy::parse_tree_for<decltype(input), my_token_kind> tree;

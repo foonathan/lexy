@@ -28,7 +28,7 @@ struct production
 //{
 int main()
 {
-    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin);
+    auto input = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
 
     lexy::parse_tree_for<decltype(input)> tree;
     auto result = lexy::parse_as_tree<production>(tree, input, lexy_ext::report_error);

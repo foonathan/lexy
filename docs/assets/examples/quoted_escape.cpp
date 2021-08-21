@@ -41,7 +41,7 @@ struct production
 
 int main()
 {
-    auto input  = lexy_ext::read_file<lexy::utf8_encoding>(stdin);
+    auto input  = lexy_ext::read_file<lexy::utf8_encoding>(stdin).buffer();
     auto result = lexy::parse<production>(input, lexy_ext::report_error);
     if (!result)
         return 1;

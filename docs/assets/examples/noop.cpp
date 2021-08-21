@@ -14,7 +14,7 @@ struct production
 //{
 int main()
 {
-    auto input = lexy_ext::read_file<>(stdin);
+    auto input = lexy_ext::read_file<>(stdin).buffer();
 
     // Parse the production, but ignore all errors.
     auto result = lexy::parse<production>(input, lexy::noop);

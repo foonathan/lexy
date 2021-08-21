@@ -43,7 +43,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         CHECK(reader.peek() == lexy::default_encoding::eof());
         CHECK(reader.eof());
     }
@@ -54,7 +54,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -84,7 +84,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -116,7 +116,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         for (auto i = 0; i != 10 * 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -148,7 +148,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         for (auto i = 0; i != 200 * 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
@@ -175,7 +175,7 @@ TEST_CASE("read_file")
                                                             std::pmr::new_delete_resource());
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         CHECK(reader.peek() == 'a');
         CHECK(!reader.eof());
 
@@ -200,7 +200,7 @@ TEST_CASE("read_file")
         auto result = lexy::read_file<lexy::utf16_encoding>(test_file_name);
         REQUIRE(result);
 
-        auto reader = result.reader();
+        auto reader = result.buffer().reader();
         CHECK(reader.peek() == 0x2211);
         CHECK(!reader.eof());
 
