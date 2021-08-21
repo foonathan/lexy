@@ -1,4 +1,6 @@
-#line 1 "playground.cpp"
+#ifndef LEXY_TEST
+#    line 1 "playground.cpp"
+#endif
 
 namespace
 {
