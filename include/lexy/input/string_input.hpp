@@ -50,7 +50,7 @@ public:
         }
         else
         {
-            static_assert(Encoding::template is_secondary_char_type<CharT>);
+            static_assert(Encoding::template is_secondary_char_type<CharT>());
             _data = reinterpret_cast<const char_type*>(view.data());
         }
     }

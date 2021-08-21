@@ -118,7 +118,7 @@ public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
     static_assert(
-        std::is_same_v<char_type, char> || Encoding::template is_secondary_char_type<char>,
+        std::is_same_v<char_type, char> || Encoding::template is_secondary_char_type<char>(),
         "invalid encoding for argv");
 
     //=== constructors ===//

@@ -37,8 +37,8 @@ TEST_CASE("encoding deduction")
 TEST_CASE("wchar_t encoding")
 {
     if constexpr (sizeof(wchar_t) == sizeof(char16_t))
-        CHECK(!!lexy::utf16_encoding::is_secondary_char_type<wchar_t>);
+        CHECK(lexy::utf16_encoding::is_secondary_char_type<wchar_t>());
     else if constexpr (sizeof(wchar_t) == sizeof(char32_t))
-        CHECK(!!lexy::utf32_encoding::is_secondary_char_type<wchar_t>);
+        CHECK(lexy::utf32_encoding::is_secondary_char_type<wchar_t>());
 }
 

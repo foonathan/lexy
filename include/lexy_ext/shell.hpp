@@ -263,19 +263,19 @@ public:
         }
 
         template <typename CharT,
-                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>()>>
         writer& operator()(const CharT* str, std::size_t length)
         {
             return operator()(reinterpret_cast<const char_type*>(str), length);
         }
         template <typename CharT,
-                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>()>>
         writer& operator()(const CharT* str)
         {
             return operator()(reinterpret_cast<const char_type*>(str));
         }
         template <typename CharT,
-                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>>>
+                  typename = std::enable_if_t<encoding::template is_secondary_char_type<CharT>()>>
         writer& operator()(CharT c)
         {
             return operator()(char_type(c));

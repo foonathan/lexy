@@ -111,7 +111,7 @@ using input_reader = decltype(LEXY_DECLVAL(Input).reader());
 template <typename Reader, typename CharT>
 constexpr bool char_type_compatible_with_reader
     = (std::is_same_v<CharT, typename Reader::char_type>)
-      || Reader::encoding::template is_secondary_char_type<CharT>;
+      || Reader::encoding::template is_secondary_char_type<CharT>();
 
 template <typename Reader>
 constexpr bool is_canonical_reader = std::is_same_v<typename Reader::canonical_reader, Reader>;

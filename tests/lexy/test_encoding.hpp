@@ -51,7 +51,10 @@ struct test_encoding
     };
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return false;
+    }
 
     static constexpr int_type eof()
     {

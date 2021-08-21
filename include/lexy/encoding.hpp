@@ -31,7 +31,10 @@ struct default_encoding
     using int_type  = int;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return false;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -59,7 +62,10 @@ struct ascii_encoding
     using int_type  = char;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return false;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -82,7 +88,10 @@ struct utf8_encoding
     using int_type  = LEXY_CHAR8_T;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return std::is_same_v<OtherCharType, char>;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -95,8 +104,6 @@ struct utf8_encoding
         return int_type(c);
     }
 };
-template <>
-constexpr bool utf8_encoding::is_secondary_char_type<char> = true;
 
 /// An encoding where the input is assumed to be valid UTF-16.
 struct utf16_encoding
@@ -105,7 +112,10 @@ struct utf16_encoding
     using int_type  = std::int_least32_t;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return sizeof(wchar_t) == sizeof(char16_t) && std::is_same_v<OtherCharType, wchar_t>;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -118,9 +128,6 @@ struct utf16_encoding
         return int_type(c);
     }
 };
-template <>
-constexpr bool utf16_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
-                                                                 == sizeof(char16_t);
 
 /// An encoding where the input is assumed to be valid UTF-32.
 struct utf32_encoding
@@ -129,7 +136,10 @@ struct utf32_encoding
     using int_type  = char32_t;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return sizeof(wchar_t) == sizeof(char32_t) && std::is_same_v<OtherCharType, wchar_t>;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -142,9 +152,6 @@ struct utf32_encoding
         return c;
     }
 };
-template <>
-constexpr bool utf32_encoding::is_secondary_char_type<wchar_t> = sizeof(wchar_t)
-                                                                 == sizeof(char32_t);
 
 /// An encoding where the input is just raw bytes, not characters.
 struct byte_encoding
@@ -153,7 +160,10 @@ struct byte_encoding
     using int_type  = int;
 
     template <typename OtherCharType>
-    static constexpr bool is_secondary_char_type = false;
+    static constexpr bool is_secondary_char_type()
+    {
+        return std::is_same_v<OtherCharType, char> || std::is_same_v<OtherCharType, std::byte>;
+    }
 
     static LEXY_CONSTEVAL int_type eof()
     {
@@ -165,10 +175,6 @@ struct byte_encoding
         return int_type(c);
     }
 };
-template <>
-constexpr bool byte_encoding::is_secondary_char_type<char> = true;
-template <>
-constexpr bool byte_encoding::is_secondary_char_type<std::byte> = true;
 } // namespace lexy
 
 //=== deduce_encoding ===//
@@ -229,11 +235,11 @@ namespace lexy
 template <typename Encoding, typename CharT>
 constexpr bool _is_compatible_char_type
     = std::is_same_v<typename Encoding::char_type,
-                     CharT> || Encoding::template is_secondary_char_type<CharT>;
+                     CharT> || Encoding::template is_secondary_char_type<CharT>();
 
 template <typename Encoding, typename CharT>
 using _require_secondary_char_type
-    = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>>;
+    = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>()>;
 
 template <typename CharT>
 constexpr bool _is_ascii(CharT c)
