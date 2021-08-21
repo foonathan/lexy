@@ -12,8 +12,8 @@
 std::size_t use_buffer(const lexy::buffer<>& buffer)
 {
     std::size_t sum = 0;
-    for (auto c : buffer)
-        sum += std::size_t(c);
+    for (auto ptr = buffer.data(); ptr != buffer.data() + buffer.size(); ++ptr)
+        sum += std::size_t(*ptr);
 
     if (sum % 2 == 0)
         return buffer.size();
@@ -24,7 +24,7 @@ std::size_t use_buffer(const lexy::buffer<>& buffer)
 std::size_t file_lexy(const char* path)
 {
     auto result = lexy::read_file(path);
-    return use_buffer(result.value());
+    return use_buffer(result.buffer());
 }
 
 std::size_t file_cfile(const char* path)

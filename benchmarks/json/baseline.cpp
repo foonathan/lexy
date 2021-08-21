@@ -4,7 +4,7 @@
 
 #include <lexy/input/file.hpp>
 
-bool json_baseline(const lexy::read_file_result<lexy::utf8_encoding>& input)
+bool json_baseline(const lexy::buffer<lexy::utf8_encoding>& input)
 {
     // Just do something with the input.
     std::size_t sum = 0;

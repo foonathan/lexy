@@ -31,7 +31,7 @@ set_target_properties(lexy_benchmark_json PROPERTIES OUTPUT_NAME "json")
 
 # Compare with PEGTL's json parser.
 message(STATUS "Fetching PEGTL")
-FetchContent_Declare(pegtl URL https://github.com/taocpp/PEGTL/archive/master.zip)
+FetchContent_Declare(pegtl URL https://github.com/taocpp/PEGTL/archive/main.zip)
 if(NOT pegtl_POPULATED)
     FetchContent_Populate(pegtl)
     add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR} EXCLUDE_FROM_ALL)

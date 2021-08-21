@@ -5,7 +5,7 @@
 #include <lexy/input/file.hpp>
 #include <nlohmann/json.hpp>
 
-bool json_nlohmann(const lexy::read_file_result<lexy::utf8_encoding>& input)
+bool json_nlohmann(const lexy::buffer<lexy::utf8_encoding>& input)
 {
     return nlohmann::json::accept(input.data(), input.data() + input.size());
 }

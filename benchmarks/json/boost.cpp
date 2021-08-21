@@ -97,7 +97,7 @@ class null_parser
 public:
     null_parser() : p_(parse_options()) {}
 
-    bool validate(const lexy::read_file_result<lexy::utf8_encoding>& input)
+    bool validate(const lexy::buffer<lexy::utf8_encoding>& input)
     {
         error_code ec;
         auto       n
@@ -108,7 +108,7 @@ public:
     }
 };
 
-bool json_boost(const lexy::read_file_result<lexy::utf8_encoding>& input)
+bool json_boost(const lexy::buffer<lexy::utf8_encoding>& input)
 {
     return null_parser().validate(input);
 }
