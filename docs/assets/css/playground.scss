@@ -61,9 +61,9 @@ nav#menu div.menu-container {
     .output-container {
         flex: 1;
         min-width: 30em;
-        min-height: 10em;
 
         border: 1px solid $gray-highlight-color;
+        padding: 2px 5px;
         margin: 5px;
     }
     #output-text {
