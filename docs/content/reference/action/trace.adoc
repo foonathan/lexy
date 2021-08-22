@@ -42,6 +42,8 @@ The events it reports are:
 * Whenever a token is parsed.
 * Whenever parsing needs to backtrack to an earlier position.
 * Whenever an error is encountered.
+* Whenever non-trivial error recovery starts, finishes or fails,
+  e.g. by a {{% docref "lexy::dsl::try_" %}} rule.
 * Whenever a {{% docref "lexy::dsl::debug" %}} rule is matched.
 
 For each event, the line and column information in the input is given.

@@ -62,6 +62,24 @@ struct list
 /// Arguments: begin, end
 struct backtracked
 {};
+
+/// Non-trivial error recovery started,
+/// i.e. it is currently discarding input.
+/// Arguments: position
+struct recovery_start
+{};
+
+/// Non-trivial error recovery succeeded.
+/// It will now continue with normal parsing.
+/// Arguments: position
+struct recovery_finish
+{};
+
+/// Non-trivial error recovery failed because it reaches the limit.
+/// It will now cancel until the next recovery point.
+/// Arguments: position
+struct recovery_cancel
+{};
 } // namespace lexy::parse_events
 
 namespace lexyd

@@ -32,6 +32,12 @@ struct number
     static constexpr auto rule = dsl::identifier(dsl::ascii::digit);
 };
 
+struct list
+{
+    static constexpr auto name = "list";
+    static constexpr auto rule = dsl::square_bracketed.list(dsl::p<number>, dsl::sep(dsl::comma));
+};
+
 struct object
 {
     static constexpr auto name = "object";
@@ -42,7 +48,8 @@ struct object
     };
 
     static constexpr auto rule
-        = dsl::p<alphabet> | dsl::p<id> | dsl::p<number> | dsl::try_(dsl::error<unexpected>);
+        = dsl::p<alphabet> | dsl::p<id> //
+          | dsl::p<number> | dsl::p<list> | dsl::try_(dsl::error<unexpected>);
 };
 
 struct production
@@ -124,6 +131,32 @@ TEST_CASE("trace")
  1: 10:   - finish
  1: 10: - finish
 )");
+        CHECK(trace("Hello [123, 456]", opts) == R"( 1:  1: production:
+ 1:  1: - token: Hello
+ 1:  6: - whitespace: \u0020
+ 1:  7: - debug: greeting
+ 1:  7: - object:
+ 1:  7:   - alphabet:
+ 1:  7:     -x
+ 1:  7:   - id:
+ 1:  7:     -x
+ 1:  7:   - number:
+ 1:  7:     -x
+ 1:  7:   - list:
+ 1:  7:     - token: [
+ 1:  8:     - number:
+ 1:  8:       - identifier: 123
+ 1: 11:       - finish
+ 1: 11:     - token: ,
+ 1: 12:     - whitespace: \u0020
+ 1: 13:     - number:
+ 1: 13:       - identifier: 456
+ 1: 16:       - finish
+ 1: 16:     - token: ]
+ 1: 17:     - finish
+ 1: 17:   - finish
+ 1: 17: - finish
+)");
 
         CHECK(trace("Hello", opts) == R"( 1:  1: production:
  1:  1: - token: Hello
@@ -134,6 +167,8 @@ TEST_CASE("trace")
  1:  6:   - id:
  1:  6:     -x
  1:  6:   - number:
+ 1:  6:     -x
+ 1:  6:   - list:
  1:  6:     -x
  1:  6:   - error: unexpected
  1:  6:   - finish
@@ -150,6 +185,61 @@ TEST_CASE("trace")
  1: 10:     -x
  1: 10:   -x
  1: 10: -x
+)");
+        CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
+ 1:  1: - token: Hello
+ 1:  6: - whitespace: \u0020
+ 1:  7: - debug: greeting
+ 1:  7: - object:
+ 1:  7:   - alphabet:
+ 1:  7:     -x
+ 1:  7:   - id:
+ 1:  7:     -x
+ 1:  7:   - number:
+ 1:  7:     -x
+ 1:  7:   - list:
+ 1:  7:     - token: [
+ 1:  8:     - number:
+ 1:  8:       - identifier: 123
+ 1: 11:       - finish
+ 1: 11:     - token: ,
+ 1: 12:     - whitespace: \u0020
+ 1: 13:     - number:
+ 1: 13:       - error: expected 'ASCII.digit' character
+ 1: 13:       -x
+ 1: 13:     - error recovery:
+ 1: 16:       - token: ]
+ 1: 17:       - finish
+ 1: 17:     - finish
+ 1: 17:   - finish
+ 1: 17: - finish
+)");
+        CHECK(trace("Hello [123, abc", opts) == R"( 1:  1: production:
+ 1:  1: - token: Hello
+ 1:  6: - whitespace: \u0020
+ 1:  7: - debug: greeting
+ 1:  7: - object:
+ 1:  7:   - alphabet:
+ 1:  7:     -x
+ 1:  7:   - id:
+ 1:  7:     -x
+ 1:  7:   - number:
+ 1:  7:     -x
+ 1:  7:   - list:
+ 1:  7:     - token: [
+ 1:  8:     - number:
+ 1:  8:       - identifier: 123
+ 1: 11:       - finish
+ 1: 11:     - token: ,
+ 1: 12:     - whitespace: \u0020
+ 1: 13:     - number:
+ 1: 13:       - error: expected 'ASCII.digit' character
+ 1: 13:       -x
+ 1: 13:     - error recovery:
+ 1: 16:       -x
+ 1: 16:     -x
+ 1: 16:   -x
+ 1: 16: -x
 )");
     }
     SUBCASE("unicode")
@@ -210,6 +300,32 @@ TEST_CASE("trace")
  1: 10: │  ┴
  1: 10: ┴
 )");
+        CHECK(trace("Hello [123, 456]", opts) == R"( 1:  1: production:
+ 1:  1: ├──token: Hello
+ 1:  6: ├──whitespace: ⟨SP⟩
+ 1:  7: ├──debug: greeting
+ 1:  7: ├──object:
+ 1:  7: │  ├──alphabet:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──id:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──number:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──list:
+ 1:  7: │  │  ├──token: [
+ 1:  8: │  │  ├──number:
+ 1:  8: │  │  │  ├──identifier: 123
+ 1: 11: │  │  │  ┴
+ 1: 11: │  │  ├──token: ,
+ 1: 12: │  │  ├──whitespace: ⟨SP⟩
+ 1: 13: │  │  ├──number:
+ 1: 13: │  │  │  ├──identifier: 456
+ 1: 16: │  │  │  ┴
+ 1: 16: │  │  ├──token: ]
+ 1: 17: │  │  ┴
+ 1: 17: │  ┴
+ 1: 17: ┴
+)");
 
         CHECK(trace("Hello", opts) == R"( 1:  1: production:
  1:  1: ├──token: Hello
@@ -220,6 +336,8 @@ TEST_CASE("trace")
  1:  6: │  ├──id:
  1:  6: │  │  └╳
  1:  6: │  ├──number:
+ 1:  6: │  │  └╳
+ 1:  6: │  ├──list:
  1:  6: │  │  └╳
  1:  6: │  ├──error: unexpected
  1:  6: │  ┴
@@ -236,6 +354,61 @@ TEST_CASE("trace")
  1: 10: │  │  └╳
  1: 10: │  └╳
  1: 10: └╳
+)");
+        CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
+ 1:  1: ├──token: Hello
+ 1:  6: ├──whitespace: ⟨SP⟩
+ 1:  7: ├──debug: greeting
+ 1:  7: ├──object:
+ 1:  7: │  ├──alphabet:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──id:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──number:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──list:
+ 1:  7: │  │  ├──token: [
+ 1:  8: │  │  ├──number:
+ 1:  8: │  │  │  ├──identifier: 123
+ 1: 11: │  │  │  ┴
+ 1: 11: │  │  ├──token: ,
+ 1: 12: │  │  ├──whitespace: ⟨SP⟩
+ 1: 13: │  │  ├──number:
+ 1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
+ 1: 13: │  │  │  └╳
+ 1: 13: │  │  ├──error recovery:
+ 1: 16: │  │  │  ├──token: ]
+ 1: 17: │  │  │  ┴
+ 1: 17: │  │  ┴
+ 1: 17: │  ┴
+ 1: 17: ┴
+)");
+        CHECK(trace("Hello [123, abc", opts) == R"( 1:  1: production:
+ 1:  1: ├──token: Hello
+ 1:  6: ├──whitespace: ⟨SP⟩
+ 1:  7: ├──debug: greeting
+ 1:  7: ├──object:
+ 1:  7: │  ├──alphabet:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──id:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──number:
+ 1:  7: │  │  └╳
+ 1:  7: │  ├──list:
+ 1:  7: │  │  ├──token: [
+ 1:  8: │  │  ├──number:
+ 1:  8: │  │  │  ├──identifier: 123
+ 1: 11: │  │  │  ┴
+ 1: 11: │  │  ├──token: ,
+ 1: 12: │  │  ├──whitespace: ⟨SP⟩
+ 1: 13: │  │  ├──number:
+ 1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
+ 1: 13: │  │  │  └╳
+ 1: 13: │  │  ├──error recovery:
+ 1: 16: │  │  │  └╳
+ 1: 16: │  │  └╳
+ 1: 16: │  └╳
+ 1: 16: └╳
 )");
     }
 
@@ -281,6 +454,7 @@ TEST_CASE("trace")
  1:  6:   - alphabet: ...
  1:  6:   - id: ...
  1:  6:   - number: ...
+ 1:  6:   - list: ...
  1:  6:   - error: unexpected
  1:  6:   - finish
  1:  6: - finish
@@ -293,6 +467,31 @@ TEST_CASE("trace")
  1:  7:   - alphabet: ...
  1: 10:   -x
  1: 10: -x
+)");
+
+        auto higher_limit           = opts;
+        higher_limit.max_tree_depth = 3;
+        CHECK(trace("Hello [123, abc]", higher_limit) == R"( 1:  1: production:
+ 1:  1: - token: Hello
+ 1:  6: - whitespace: \u0020
+ 1:  7: - debug: greeting
+ 1:  7: - object:
+ 1:  7:   - alphabet:
+ 1:  7:     -x
+ 1:  7:   - id:
+ 1:  7:     -x
+ 1:  7:   - number:
+ 1:  7:     -x
+ 1:  7:   - list:
+ 1:  7:     - token: [
+ 1:  8:     - number: ...
+ 1: 11:     - token: ,
+ 1: 12:     - whitespace: \u0020
+ 1: 13:     - number: ...
+ 1: 13:     - error recovery:...
+ 1: 17:     - finish
+ 1: 17:   - finish
+ 1: 17: - finish
 )");
     }
 }

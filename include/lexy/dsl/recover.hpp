@@ -157,6 +157,40 @@ constexpr auto recover(Branches...)
 
 namespace lexyd
 {
+// Performs the recovery part of a try rule.
+template <typename Recover, typename NextParser>
+struct _try_recovery
+{
+    struct _continuation
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& recovery_finished,
+                                 Args&&... args)
+        {
+            recovery_finished = true;
+            context.on(_ev::recovery_finish{}, reader.cur());
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    {
+        context.on(_ev::recovery_start{}, reader.cur());
+
+        auto recovery_finished = false;
+        auto result
+            = lexy::rule_parser<Recover, _continuation>::parse(context, reader, recovery_finished,
+                                                               LEXY_FWD(args)...);
+        if (!recovery_finished)
+            context.on(_ev::recovery_cancel{}, reader.cur());
+        return result;
+    }
+};
+template <typename NextParser>
+struct _try_recovery<void, NextParser> : NextParser
+{};
+
 template <typename Rule, typename Recover>
 struct _tryr : rule_base
 {
@@ -182,7 +216,7 @@ struct _tryr : rule_base
             -> lexy::rule_try_parse_result
         {
             auto rule_succeeded = false;
-            // Try parsing with special continuation that sets failed to false if reached.
+            // Try parsing with special continuation that sets rule_succeeded to false if reached.
             auto result
                 = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, rule_succeeded,
                                                                     LEXY_FWD(args)...);
@@ -197,15 +231,10 @@ struct _tryr : rule_base
             {
                 // Rule has failed, recover.
                 // Note that we already took the branch by definition, so we no longer backtrack.
-                if constexpr (std::is_void_v<Recover>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                               ? lexy::rule_try_parse_result::ok
-                               : lexy::rule_try_parse_result::canceled;
-                else
-                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
-                                                                         LEXY_FWD(args)...)
-                               ? lexy::rule_try_parse_result::ok
-                               : lexy::rule_try_parse_result::canceled;
+                // Rule has failed, recover.
+                return _try_recovery<Recover, NextParser>::parse(context, reader, LEXY_FWD(args)...)
+                           ? lexy::rule_try_parse_result::ok
+                           : lexy::rule_try_parse_result::canceled;
             }
         }
 
@@ -213,7 +242,7 @@ struct _tryr : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto rule_succeeded = false;
-            // Parse with special continuation that sets failed to false if reached.
+            // Parse with special continuation that sets rule_succeeded to false if reached.
             auto result
                 = lexy::rule_parser<Rule, _continuation>::parse(context, reader, rule_succeeded,
                                                                 LEXY_FWD(args)...);
@@ -226,11 +255,8 @@ struct _tryr : rule_base
             else
             {
                 // Rule has failed, recover.
-                if constexpr (std::is_void_v<Recover>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
-                else
-                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
-                                                                         LEXY_FWD(args)...);
+                return _try_recovery<Recover, NextParser>::parse(context, reader,
+                                                                 LEXY_FWD(args)...);
             }
         }
     };

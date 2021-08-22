@@ -155,6 +155,17 @@ struct _report_trailing_sep
     }
 };
 
+template <typename NextParser>
+struct _report_recovery_finish
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    {
+        context.on(_ev::recovery_finish{}, reader.cur());
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
+    }
+};
+
 // Loop to parse all remaining list items when we have a terminator.
 template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
           typename... PrevArgs>
@@ -180,13 +191,19 @@ struct _list_loop_term
         } state
             = state::terminator;
 
-        auto sep_pos      = reader.cur();
-        using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
         using item_parser = lexy::rule_parser<Item, _list_sink>;
-        using sep_parser  = _sep_parser<Sep>;
+
+        using sep_parser = _sep_parser<Sep>;
         using trailing_sep_parser
             = lexy::rule_parser<Term,
                                 _report_trailing_sep<Sep, _list_finish<NextParser, PrevArgs...>>>;
+
+        using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
+        using recovery_term_parser
+            = lexy::rule_parser<Term,
+                                _report_recovery_finish<_list_finish<NextParser, PrevArgs...>>>;
+
+        auto sep_pos = reader.cur();
         while (true)
         {
             switch (state)
@@ -291,6 +308,7 @@ struct _list_loop_term
                 break;
 
             case state::recovery:
+                context.on(_ev::recovery_start{}, reader.cur());
                 while (true)
                 {
                     // Recovery succeeds when we reach the next separator.
@@ -302,6 +320,7 @@ struct _list_loop_term
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the trailing separator check.
+                            context.on(_ev::recovery_finish{}, reader.cur());
                             state = state::separator_trailing_check;
                             break;
                         }
@@ -321,6 +340,7 @@ struct _list_loop_term
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the next terminator check.
+                            context.on(_ev::recovery_finish{}, reader.cur());
                             state = state::terminator;
                             break;
                         }
@@ -331,7 +351,7 @@ struct _list_loop_term
 
                     // Recovery succeeds when we reach the terminator.
                     if (auto result
-                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                        = recovery_term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
                         result != lexy::rule_try_parse_result::backtracked)
                     {
                         // We're now done with the entire list.
@@ -341,7 +361,10 @@ struct _list_loop_term
                     // Recovery fails when we reach the limit.
                     using limit = typename decltype(RecoveryLimit{}.get_limit())::token_engine;
                     if (lexy::engine_peek<limit>(reader))
+                    {
+                        context.on(_ev::recovery_cancel{}, reader.cur());
                         return false;
+                    }
 
                     // Consume one character and try again.
                     reader.bump();

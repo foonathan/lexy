@@ -380,6 +380,7 @@ struct _int : rule_base
             else
             {
                 // Recover.
+                context.on(_ev::recovery_start{}, reader.cur());
                 if constexpr (std::is_void_v<Sep>)
                 {
                     while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader))
@@ -391,6 +392,7 @@ struct _int : rule_base
                            || lexy::engine_try_match<typename Sep::token_engine>(reader))
                     {}
                 }
+                context.on(_ev::recovery_finish{}, reader.cur());
 
                 // Now try to convert this to an integer.
                 return _continuation::parse(context, reader, failed, begin, LEXY_FWD(args)...);

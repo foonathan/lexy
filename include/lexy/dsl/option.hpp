@@ -7,6 +7,7 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/recover.hpp>
 
 namespace lexy
 {
@@ -113,7 +114,7 @@ struct _optt : rule_base
             using parser = lexy::rule_parser<R, term_parser>;
             if (!parser::parse(context, reader, LEXY_FWD(args)...))
             {
-                using recovery = lexy::rule_parser<Recover, NextParser>;
+                using recovery = _try_recovery<Recover, NextParser>;
                 return recovery::parse(context, reader, LEXY_FWD(args)...);
             }
 

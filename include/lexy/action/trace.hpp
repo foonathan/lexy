@@ -103,6 +103,12 @@ class trace_handler
                 break;
             case prefix::cancel:
                 out = _detail::write_str(out, l.cancel_event);
+                out = _detail::write_color<_detail::color::yellow>(out, _opts);
+                if (_opts.is_set(visualize_use_unicode))
+                    out = _detail::write_str(out, u8"╳");
+                else
+                    out = _detail::write_str(out, "x");
+                out = _detail::write_color<_detail::color::reset>(out, _opts);
                 break;
             case prefix::finish:
                 out = _detail::write_str(out, l.finish_event);
@@ -300,6 +306,63 @@ public:
     }
 
     template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_start, Iterator pos)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        const auto loc = _locations.find(pos, _anchor);
+        _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
+        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "error recovery");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+        _out = _detail::write_str(_out, ":");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        if (_cur_depth == _opts.max_tree_depth)
+        {
+            // Print an ellipsis instead of children.
+            if (_opts.is_set(visualize_use_unicode))
+                _out = _detail::write_str(_out, u8"…");
+            else
+                _out = _detail::write_str(_out, "...");
+        }
+
+        // We can no longer merge tokens.
+        _last_token.reset();
+        // Treat it as an extra level.
+        ++_cur_depth;
+    }
+
+    template <typename Iterator>
+    void on_recovery_end(Iterator pos, bool success)
+    {
+        if (_cur_depth < _opts.max_tree_depth)
+        {
+            const auto loc = _locations.find(pos, _anchor);
+            _out = write_prefix(_out, _cur_depth, loc, success ? prefix::finish : prefix::cancel);
+
+            if (!success)
+            {}
+        }
+
+        _last_token.reset();
+        --_cur_depth;
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_finish, Iterator pos)
+    {
+        on_recovery_end(pos, true);
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_cancel, Iterator pos)
+    {
+        on_recovery_end(pos, false);
+    }
+
+    template <typename Production, typename Iterator>
     void on(const marker<Production>&, _ev::debug_event, Iterator pos, const char* str)
     {
         if (_cur_depth > _opts.max_tree_depth)
@@ -324,27 +387,21 @@ public:
     template <typename Production, typename Iterator, typename... Args>
     void on(marker<Production>&&, _ev::production_finish<Production>, Iterator pos, Args&&...)
     {
-        const auto loc = _locations.find(pos, _anchor);
-
         if (_cur_depth <= _opts.max_tree_depth)
-            _out = write_prefix(_out, _cur_depth, loc, prefix::finish);
+        {
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::finish);
+        }
 
         --_cur_depth;
     }
     template <typename Production, typename Iterator>
     void on(marker<Production>&& m, _ev::production_cancel<Production>, Iterator pos)
     {
-        const auto loc = _locations.find(pos, _anchor);
-
         if (_cur_depth <= _opts.max_tree_depth)
         {
-            _out = write_prefix(_out, _cur_depth, loc, prefix::cancel);
-            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
-            if (_opts.is_set(visualize_use_unicode))
-                _out = _detail::write_str(_out, u8"╳");
-            else
-                _out = _detail::write_str(_out, "x");
-            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::cancel);
         }
 
         --_cur_depth;
