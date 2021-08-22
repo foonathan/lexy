@@ -172,10 +172,8 @@ public:
             if (_cur_depth == _opts.max_tree_depth)
             {
                 // Print an ellipsis instead of children.
-                if (_opts.is_set(visualize_use_unicode))
-                    _out = _detail::write_str(_out, u8": …");
-                else
-                    _out = _detail::write_str(_out, ": ...");
+                _out = _detail::write_str(_out, ": ");
+                _out = _detail::write_ellipsis(_out, _opts);
             }
             else
             {
@@ -324,10 +322,8 @@ public:
         if (_cur_depth == _opts.max_tree_depth)
         {
             // Print an ellipsis instead of children.
-            if (_opts.is_set(visualize_use_unicode))
-                _out = _detail::write_str(_out, u8"…");
-            else
-                _out = _detail::write_str(_out, "...");
+            _out = _detail::write_str(_out, " ");
+            _out = _detail::write_ellipsis(_out, _opts);
         }
 
         // We can no longer merge tokens.

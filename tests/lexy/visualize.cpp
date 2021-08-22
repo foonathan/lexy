@@ -83,13 +83,17 @@ TEST_CASE("visualize code_point")
 
 TEST_CASE("visualize lexeme")
 {
-    auto visualize = [](auto encoding, const char* str) {
+    auto visualize = [](auto encoding, const char* str, unsigned char limit = 0) {
         auto input   = lexy::zstring_input<decltype(encoding)>(str);
         using lexeme = lexy::lexeme_for<decltype(input)>;
 
         std::string result;
+
+        lexy::visualization_options opts{};
+        opts.max_lexeme_width = limit;
         lexy::visualize_to(std::back_insert_iterator(result),
-                           lexeme(input.data(), input.data() + input.size()));
+                           lexeme(input.data(), input.data() + input.size()), opts);
+
         return result;
     };
 
@@ -100,18 +104,24 @@ TEST_CASE("visualize lexeme")
 
         char out_of_range[] = {'a', char(0xFF), 'c', '\0'};
         CHECK(visualize(lexy::default_encoding{}, out_of_range) == R"(a\u????c)");
+
+        CHECK(visualize(lexy::default_encoding{}, "abc", 2) == R"(ab...)");
     }
     SUBCASE("unicode encoding")
     {
         CHECK(visualize(lexy::utf8_encoding{}, "abc") == R"(abc)");
         CHECK(visualize(lexy::utf8_encoding{}, "\n\t\\") == R"(\n\t\\)");
         CHECK(visualize(lexy::utf8_encoding{}, "\u1234") == R"(\u1234)");
+
+        CHECK(visualize(lexy::utf8_encoding{}, "abc", 2) == R"(ab...)");
     }
     SUBCASE("byte encoding")
     {
         CHECK(visualize(lexy::byte_encoding{}, "abc") == R"(61 62 63)");
         CHECK(visualize(lexy::byte_encoding{}, "\n\t\\") == R"(0A 09 5C)");
         CHECK(visualize(lexy::byte_encoding{}, "\x11\x42") == R"(11 42)");
+
+        CHECK(visualize(lexy::byte_encoding{}, "abc", 2) == R"(61 62...)");
     }
 }
 

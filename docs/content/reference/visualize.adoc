@@ -71,10 +71,12 @@ namespace lexy
 {
     struct visualization_options
     {
-        static constexpr unsigned max_tree_depth_limit = 32;
+        static constexpr unsigned char max_tree_depth_limit = 32;
 
         visualization_flags flags = visualize_default;
-        unsigned max_tree_depth = max_tree_depth_limit;
+
+        unsigned char max_tree_depth   = max_tree_depth_limit;
+        unsigned char max_lexeme_width = 0;
 
         constexpr bool is_set(visualization_flags f) const noexcept;
 
@@ -96,6 +98,10 @@ It combines the {{% docref `lexy::visualization_flags` %}} with other options.
   When visualizing a {{% docref "lexy::parse_tree" %}}, stop visualization at this depth.
   Child nodes whose depth exceeds `max_tree_depth` are omitted, which is indicated by a symbol.
   It must be `<= max_tree_depth_limit`.
+`max_lexeme_width`::
+  When visualizing a {{% docref "lexy::lexeme" %}}, stop visualization after this many "characters".
+  Here a "character" depends on the encoding, e.g. for text based encodings, it is code points.
+  If it is `0`, an unlimited amount of characters is printed.
 
 [#visualize_to]
 == Function `lexy::visualize_to`
