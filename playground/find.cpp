@@ -25,7 +25,7 @@ struct production
     static constexpr auto rule       = [] {
         auto decl = dsl::p<function_decl> | dsl::p<type_decl>;
 
-        // We recovery from any errors by skipping until the next decl.
+        // We recover from any errors by skipping until the next decl.
         auto decl_recover = dsl::find(kw_function, kw_type);
         auto try_decl     = dsl::try_(decl, decl_recover);
 

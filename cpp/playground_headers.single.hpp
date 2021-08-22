@@ -1610,6 +1610,24 @@ struct list
 /// Arguments: begin, end
 struct backtracked
 {};
+
+/// Non-trivial error recovery started,
+/// i.e. it is currently discarding input.
+/// Arguments: position
+struct recovery_start
+{};
+
+/// Non-trivial error recovery succeeded.
+/// It will now continue with normal parsing.
+/// Arguments: position
+struct recovery_finish
+{};
+
+/// Non-trivial error recovery failed because it reaches the limit.
+/// It will now cancel until the next recovery point.
+/// Arguments: position
+struct recovery_cancel
+{};
 } // namespace lexy::parse_events
 
 namespace lexyd
@@ -6963,6 +6981,12 @@ class trace_handler
                 break;
             case prefix::cancel:
                 out = _detail::write_str(out, l.cancel_event);
+                out = _detail::write_color<_detail::color::yellow>(out, _opts);
+                if (_opts.is_set(visualize_use_unicode))
+                    out = _detail::write_str(out, u8"╳");
+                else
+                    out = _detail::write_str(out, "x");
+                out = _detail::write_color<_detail::color::reset>(out, _opts);
                 break;
             case prefix::finish:
                 out = _detail::write_str(out, l.finish_event);
@@ -7160,6 +7184,63 @@ public:
     }
 
     template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_start, Iterator pos)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        const auto loc = _locations.find(pos, _anchor);
+        _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
+        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "error recovery");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+        _out = _detail::write_str(_out, ":");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        if (_cur_depth == _opts.max_tree_depth)
+        {
+            // Print an ellipsis instead of children.
+            if (_opts.is_set(visualize_use_unicode))
+                _out = _detail::write_str(_out, u8"…");
+            else
+                _out = _detail::write_str(_out, "...");
+        }
+
+        // We can no longer merge tokens.
+        _last_token.reset();
+        // Treat it as an extra level.
+        ++_cur_depth;
+    }
+
+    template <typename Iterator>
+    void on_recovery_end(Iterator pos, bool success)
+    {
+        if (_cur_depth < _opts.max_tree_depth)
+        {
+            const auto loc = _locations.find(pos, _anchor);
+            _out = write_prefix(_out, _cur_depth, loc, success ? prefix::finish : prefix::cancel);
+
+            if (!success)
+            {}
+        }
+
+        _last_token.reset();
+        --_cur_depth;
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_finish, Iterator pos)
+    {
+        on_recovery_end(pos, true);
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, _ev::recovery_cancel, Iterator pos)
+    {
+        on_recovery_end(pos, false);
+    }
+
+    template <typename Production, typename Iterator>
     void on(const marker<Production>&, _ev::debug_event, Iterator pos, const char* str)
     {
         if (_cur_depth > _opts.max_tree_depth)
@@ -7184,27 +7265,21 @@ public:
     template <typename Production, typename Iterator, typename... Args>
     void on(marker<Production>&&, _ev::production_finish<Production>, Iterator pos, Args&&...)
     {
-        const auto loc = _locations.find(pos, _anchor);
-
         if (_cur_depth <= _opts.max_tree_depth)
-            _out = write_prefix(_out, _cur_depth, loc, prefix::finish);
+        {
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::finish);
+        }
 
         --_cur_depth;
     }
     template <typename Production, typename Iterator>
     void on(marker<Production>&& m, _ev::production_cancel<Production>, Iterator pos)
     {
-        const auto loc = _locations.find(pos, _anchor);
-
         if (_cur_depth <= _opts.max_tree_depth)
         {
-            _out = write_prefix(_out, _cur_depth, loc, prefix::cancel);
-            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
-            if (_opts.is_set(visualize_use_unicode))
-                _out = _detail::write_str(_out, u8"╳");
-            else
-                _out = _detail::write_str(_out, "x");
-            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::cancel);
         }
 
         --_cur_depth;
@@ -9251,6 +9326,40 @@ constexpr auto recover(Branches...)
 
 namespace lexyd
 {
+// Performs the recovery part of a try rule.
+template <typename Recover, typename NextParser>
+struct _try_recovery
+{
+    struct _continuation
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& recovery_finished,
+                                 Args&&... args)
+        {
+            recovery_finished = true;
+            context.on(_ev::recovery_finish{}, reader.cur());
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    {
+        context.on(_ev::recovery_start{}, reader.cur());
+
+        auto recovery_finished = false;
+        auto result
+            = lexy::rule_parser<Recover, _continuation>::parse(context, reader, recovery_finished,
+                                                               LEXY_FWD(args)...);
+        if (!recovery_finished)
+            context.on(_ev::recovery_cancel{}, reader.cur());
+        return result;
+    }
+};
+template <typename NextParser>
+struct _try_recovery<void, NextParser> : NextParser
+{};
+
 template <typename Rule, typename Recover>
 struct _tryr : rule_base
 {
@@ -9263,9 +9372,10 @@ struct _tryr : rule_base
         struct _continuation
         {
             template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed, Args&&... args)
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& rule_succeeded,
+                                     Args&&... args)
             {
-                failed = false;
+                rule_succeeded = true;
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         };
@@ -9274,39 +9384,38 @@ struct _tryr : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto failed = true;
-            // Try parsing with special continuation that sets failed to false if reached.
-            auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
-                                                                            LEXY_FWD(args)...);
-            if (!failed)
+            auto rule_succeeded = false;
+            // Try parsing with special continuation that sets rule_succeeded to false if reached.
+            auto result
+                = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, rule_succeeded,
+                                                                    LEXY_FWD(args)...);
+            if (rule_succeeded || result == lexy::rule_try_parse_result::backtracked)
             {
-                // If we didn't fail, don't do anything.
+                // Our rule has succeded or backtracked.
+                // In either case, it did not fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
                 return result;
             }
             else
             {
                 // Rule has failed, recover.
-                // Note that we already took the branch, so we no longer backtrack.
-                if constexpr (std::is_void_v<Recover>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                               ? lexy::rule_try_parse_result::ok
-                               : lexy::rule_try_parse_result::canceled;
-                else
-                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
-                                                                         LEXY_FWD(args)...)
-                               ? lexy::rule_try_parse_result::ok
-                               : lexy::rule_try_parse_result::canceled;
+                // Note that we already took the branch by definition, so we no longer backtrack.
+                // Rule has failed, recover.
+                return _try_recovery<Recover, NextParser>::parse(context, reader, LEXY_FWD(args)...)
+                           ? lexy::rule_try_parse_result::ok
+                           : lexy::rule_try_parse_result::canceled;
             }
         }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto failed = true;
-            // Parse with special continuation that sets failed to false if reached.
-            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
-                                                                        LEXY_FWD(args)...);
-            if (!failed)
+            auto rule_succeeded = false;
+            // Parse with special continuation that sets rule_succeeded to false if reached.
+            auto result
+                = lexy::rule_parser<Rule, _continuation>::parse(context, reader, rule_succeeded,
+                                                                LEXY_FWD(args)...);
+            if (rule_succeeded)
             {
                 // Rule didn't fail.
                 // It could be the case that some later rule has failed, but that's not our problem.
@@ -9315,11 +9424,8 @@ struct _tryr : rule_base
             else
             {
                 // Rule has failed, recover.
-                if constexpr (std::is_void_v<Recover>)
-                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
-                else
-                    return lexy::rule_parser<Recover, NextParser>::parse(context, reader,
-                                                                         LEXY_FWD(args)...);
+                return _try_recovery<Recover, NextParser>::parse(context, reader,
+                                                                 LEXY_FWD(args)...);
             }
         }
     };
@@ -11268,6 +11374,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 
 
+
 namespace lexy
 {
 // An optional type is something that has the following:
@@ -11373,7 +11480,7 @@ struct _optt : rule_base
             using parser = lexy::rule_parser<R, term_parser>;
             if (!parser::parse(context, reader, LEXY_FWD(args)...))
             {
-                using recovery = lexy::rule_parser<Recover, NextParser>;
+                using recovery = _try_recovery<Recover, NextParser>;
                 return recovery::parse(context, reader, LEXY_FWD(args)...);
             }
 
@@ -11668,6 +11775,17 @@ struct _report_trailing_sep
     }
 };
 
+template <typename NextParser>
+struct _report_recovery_finish
+{
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    {
+        context.on(_ev::recovery_finish{}, reader.cur());
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
+    }
+};
+
 // Loop to parse all remaining list items when we have a terminator.
 template <typename Term, typename Item, typename Sep, typename RecoveryLimit, typename NextParser,
           typename... PrevArgs>
@@ -11693,13 +11811,19 @@ struct _list_loop_term
         } state
             = state::terminator;
 
-        auto sep_pos      = reader.cur();
-        using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
         using item_parser = lexy::rule_parser<Item, _list_sink>;
-        using sep_parser  = _sep_parser<Sep>;
+
+        using sep_parser = _sep_parser<Sep>;
         using trailing_sep_parser
             = lexy::rule_parser<Term,
                                 _report_trailing_sep<Sep, _list_finish<NextParser, PrevArgs...>>>;
+
+        using term_parser = lexy::rule_parser<Term, _list_finish<NextParser, PrevArgs...>>;
+        using recovery_term_parser
+            = lexy::rule_parser<Term,
+                                _report_recovery_finish<_list_finish<NextParser, PrevArgs...>>>;
+
+        auto sep_pos = reader.cur();
         while (true)
         {
             switch (state)
@@ -11804,6 +11928,7 @@ struct _list_loop_term
                 break;
 
             case state::recovery:
+                context.on(_ev::recovery_start{}, reader.cur());
                 while (true)
                 {
                     // Recovery succeeds when we reach the next separator.
@@ -11815,6 +11940,7 @@ struct _list_loop_term
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the trailing separator check.
+                            context.on(_ev::recovery_finish{}, reader.cur());
                             state = state::separator_trailing_check;
                             break;
                         }
@@ -11834,6 +11960,7 @@ struct _list_loop_term
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the next terminator check.
+                            context.on(_ev::recovery_finish{}, reader.cur());
                             state = state::terminator;
                             break;
                         }
@@ -11844,7 +11971,7 @@ struct _list_loop_term
 
                     // Recovery succeeds when we reach the terminator.
                     if (auto result
-                        = term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
+                        = recovery_term_parser::try_parse(context, reader, LEXY_FWD(args)..., sink);
                         result != lexy::rule_try_parse_result::backtracked)
                     {
                         // We're now done with the entire list.
@@ -11854,7 +11981,10 @@ struct _list_loop_term
                     // Recovery fails when we reach the limit.
                     using limit = typename decltype(RecoveryLimit{}.get_limit())::token_engine;
                     if (lexy::engine_peek<limit>(reader))
+                    {
+                        context.on(_ev::recovery_cancel{}, reader.cur());
                         return false;
+                    }
 
                     // Consume one character and try again.
                     reader.bump();
@@ -14229,6 +14359,7 @@ struct _int : rule_base
             else
             {
                 // Recover.
+                context.on(_ev::recovery_start{}, reader.cur());
                 if constexpr (std::is_void_v<Sep>)
                 {
                     while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader))
@@ -14240,6 +14371,7 @@ struct _int : rule_base
                            || lexy::engine_try_match<typename Sep::token_engine>(reader))
                     {}
                 }
+                context.on(_ev::recovery_finish{}, reader.cur());
 
                 // Now try to convert this to an integer.
                 return _continuation::parse(context, reader, failed, begin, LEXY_FWD(args)...);

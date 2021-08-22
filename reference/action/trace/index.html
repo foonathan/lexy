@@ -99,6 +99,10 @@ It is not documented exactly and subject to change.</p>
 <p>Whenever an error is encountered.</p>
 </li>
 <li>
+<p>Whenever non-trivial error recovery starts, finishes or fails,
+e.g. by a <a href=/reference/dsl/recover/#try_><code>lexy::dsl::try_</code></a> rule.</p>
+</li>
+<li>
 <p>Whenever a <a href=/reference/action/trace/#debug><code>lexy::dsl::debug</code></a> rule is matched.</p>
 </li>
 </ul>
@@ -206,7 +210,7 @@ Use this instead of <code>debug&lt;Str></code> if you need to support them.</p>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></li><li><a href=/reference/visualize/#visualize_to><code>lexy::visualize_to</code></a></li></ul>
+<ul><li><a href=/reference/dsl/recover/#try_><code>lexy::dsl::try_</code></a></li><li><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></li><li><a href=/reference/visualize/#visualize_to><code>lexy::visualize_to</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
