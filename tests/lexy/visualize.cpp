@@ -12,72 +12,80 @@
 
 TEST_CASE("visualize code_point")
 {
-    auto visualize = [](lexy::code_point cp, lexy::visualization_flags flags) {
+    auto visualize = [](lexy::code_point cp, lexy::visualization_options opts) {
         std::string str;
-        lexy::visualize_to(std::back_insert_iterator(str), cp, {flags});
+        lexy::visualize_to(std::back_insert_iterator(str), cp, opts);
         return str;
     };
 
     SUBCASE("default")
     {
-        auto flags = lexy::visualize_default;
+        auto opts = lexy::visualization_options{};
 
-        CHECK(visualize(lexy::code_point(), flags) == R"(\u????)");
+        CHECK(visualize(lexy::code_point(), opts) == R"(\u????)");
 
-        CHECK(visualize(lexy::code_point('\0'), flags) == R"(\0)");
-        CHECK(visualize(lexy::code_point('\n'), flags) == R"(\n)");
-        CHECK(visualize(lexy::code_point('\r'), flags) == R"(\r)");
-        CHECK(visualize(lexy::code_point('\t'), flags) == R"(\t)");
-        CHECK(visualize(lexy::code_point('\x01'), flags) == R"(\u0001)");
-        CHECK(visualize(lexy::code_point('\x02'), flags) == R"(\u0002)");
-        CHECK(visualize(lexy::code_point('\x7F'), flags) == R"(\u007F)");
+        CHECK(visualize(lexy::code_point('\0'), opts) == R"(\0)");
+        CHECK(visualize(lexy::code_point('\n'), opts) == R"(\n)");
+        CHECK(visualize(lexy::code_point('\r'), opts) == R"(\r)");
+        CHECK(visualize(lexy::code_point('\t'), opts) == R"(\t)");
+        CHECK(visualize(lexy::code_point('\x01'), opts) == R"(\u0001)");
+        CHECK(visualize(lexy::code_point('\x02'), opts) == R"(\u0002)");
+        CHECK(visualize(lexy::code_point('\x7F'), opts) == R"(\u007F)");
 
-        CHECK(visualize(lexy::code_point(' '), flags) == R"( )");
-        CHECK(visualize(lexy::code_point(' '), flags | lexy::visualize_space) == R"(\u0020)");
+        CHECK(visualize(lexy::code_point(' '), opts) == R"( )");
+        CHECK(visualize(lexy::code_point(' '), opts | lexy::visualize_space) == R"(\u0020)");
 
-        CHECK(visualize(lexy::code_point('\\'), flags) == R"(\\)");
+        CHECK(visualize(lexy::code_point('\\'), opts) == R"(\\)");
 
-        CHECK(visualize(lexy::code_point('a'), flags) == R"(a)");
-        CHECK(visualize(lexy::code_point('B'), flags) == R"(B)");
+        CHECK(visualize(lexy::code_point('a'), opts) == R"(a)");
+        CHECK(visualize(lexy::code_point('B'), opts) == R"(B)");
 
-        CHECK(visualize(lexy::code_point(0x1234), flags) == R"(\u1234)");
-        CHECK(visualize(lexy::code_point(0x10'FFFF), flags) == R"(\U0010FFFF)");
+        CHECK(visualize(lexy::code_point(0x1234), opts) == R"(\u1234)");
+        CHECK(visualize(lexy::code_point(0x10'FFFF), opts) == R"(\U0010FFFF)");
     }
     SUBCASE("unicode")
     {
-        auto flags = lexy::visualize_use_unicode;
+        auto opts = lexy::visualization_options{lexy::visualize_use_unicode};
 
-        CHECK(visualize(lexy::code_point(), flags) == R"(⟨U+????⟩)");
+        CHECK(visualize(lexy::code_point(), opts) == R"(⟨U+????⟩)");
 
-        CHECK(visualize(lexy::code_point('\0'), flags) == R"(⟨NUL⟩)");
-        CHECK(visualize(lexy::code_point('\n'), flags) == R"(⟨LF⟩)");
-        CHECK(visualize(lexy::code_point('\r'), flags) == R"(⟨CR⟩)");
-        CHECK(visualize(lexy::code_point('\t'), flags) == R"(⟨HT⟩)");
-        CHECK(visualize(lexy::code_point('\x01'), flags) == R"(⟨U+0001⟩)");
-        CHECK(visualize(lexy::code_point('\x02'), flags) == R"(⟨U+0002⟩)");
-        CHECK(visualize(lexy::code_point('\x7F'), flags) == R"(⟨U+007F⟩)");
+        CHECK(visualize(lexy::code_point('\0'), opts) == R"(⟨NUL⟩)");
+        CHECK(visualize(lexy::code_point('\n'), opts) == R"(⟨LF⟩)");
+        CHECK(visualize(lexy::code_point('\r'), opts) == R"(⟨CR⟩)");
+        CHECK(visualize(lexy::code_point('\t'), opts) == R"(⟨HT⟩)");
+        CHECK(visualize(lexy::code_point('\x01'), opts) == R"(⟨U+0001⟩)");
+        CHECK(visualize(lexy::code_point('\x02'), opts) == R"(⟨U+0002⟩)");
+        CHECK(visualize(lexy::code_point('\x7F'), opts) == R"(⟨U+007F⟩)");
 
-        CHECK(visualize(lexy::code_point(' '), flags) == R"( )");
-        CHECK(visualize(lexy::code_point(' '), flags | lexy::visualize_space) == R"(⟨SP⟩)");
+        CHECK(visualize(lexy::code_point(' '), opts) == R"( )");
+        CHECK(visualize(lexy::code_point(' '), opts | lexy::visualize_space) == R"(⟨SP⟩)");
 
-        CHECK(visualize(lexy::code_point('\\'), flags) == R"(\)");
+        CHECK(visualize(lexy::code_point('\\'), opts) == R"(\)");
 
-        CHECK(visualize(lexy::code_point('a'), flags) == R"(a)");
-        CHECK(visualize(lexy::code_point('B'), flags) == R"(B)");
+        CHECK(visualize(lexy::code_point('a'), opts) == R"(a)");
+        CHECK(visualize(lexy::code_point('B'), opts) == R"(B)");
 
-        CHECK(visualize(lexy::code_point(0x1234), flags) == R"(⟨U+1234⟩)");
-        CHECK(visualize(lexy::code_point(0x10'FFFF), flags) == R"(⟨U+10FFFF⟩)");
+        CHECK(visualize(lexy::code_point(0x1234), opts) == R"(⟨U+1234⟩)");
+        CHECK(visualize(lexy::code_point(0x10'FFFF), opts) == R"(⟨U+10FFFF⟩)");
     }
 
     SUBCASE("symbols")
     {
-        auto flags = lexy::visualize_use_symbols;
+        auto opts = lexy::visualization_options{lexy::visualize_use_symbols};
 
-        CHECK(visualize(lexy::code_point('\n'), flags) == R"(⏎)");
-        CHECK(visualize(lexy::code_point('\t'), flags) == R"(⇨)");
+        CHECK(visualize(lexy::code_point('\n'), opts) == R"(⏎)");
+        CHECK(visualize(lexy::code_point('\t'), opts) == R"(⇨)");
 
-        CHECK(visualize(lexy::code_point(' '), flags) == R"( )");
-        CHECK(visualize(lexy::code_point(' '), flags | lexy::visualize_space) == R"(␣)");
+        CHECK(visualize(lexy::code_point(' '), opts) == R"( )");
+        CHECK(visualize(lexy::code_point(' '), opts | lexy::visualize_space) == R"(␣)");
+    }
+
+    SUBCASE("tab as spaces")
+    {
+        auto opts      = lexy::visualization_options{};
+        opts.tab_width = 4;
+
+        CHECK(visualize(lexy::code_point('\t'), opts) == R"(    )");
     }
 }
 

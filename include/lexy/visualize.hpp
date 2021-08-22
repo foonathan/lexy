@@ -52,6 +52,9 @@ struct visualization_options
     /// The maximal width when visualizing a lexeme.
     /// 0 means unlimited.
     unsigned char max_lexeme_width = 0;
+    /// How many spaces are printed for a tab character.
+    /// 0 means it is printed as escaped control character.
+    unsigned char tab_width = 0;
 
     constexpr bool is_set(visualization_flags f) const noexcept
     {
@@ -248,7 +251,14 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             }
             break;
         case '\t':
-            if (opts.is_set(visualize_use_symbols))
+            if (opts.tab_width > 0)
+            {
+                // We print that many space characters.
+                // This is recursion, but the recursive call does not recurse further.
+                for (auto i = 0u; i < opts.tab_width; ++i)
+                    out = visualize_to(out, lexy::code_point(' '), opts);
+            }
+            else if (opts.is_set(visualize_use_symbols))
             {
                 out = _detail::write_color<_detail::color::faint>(out, opts);
                 out = _detail::write_str(out, u8"⇨");
