@@ -10,6 +10,10 @@
 #include <lexy/input/base.hpp>
 #include <lexy/input/buffer.hpp>
 
+#ifdef LEXY_DISABLE_FILE
+#    error "lexy::read_file() and lexy::read_stdin() have been disabled"
+#endif
+
 #ifdef LEXY_IGNORE_DEPRECATED_FILE
 #    define LEXY_DEPRECATED_FILE(Msg)
 #else

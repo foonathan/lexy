@@ -122,6 +122,7 @@ set(header_files
         ${include_dir}/visualize.hpp
         )
 set(ext_header_files
+        ${ext_include_dir}/compiler_explorer.hpp
         ${ext_include_dir}/input_location.hpp
         ${ext_include_dir}/parse_tree_algorithm.hpp
         ${ext_include_dir}/parse_tree_doctest.hpp

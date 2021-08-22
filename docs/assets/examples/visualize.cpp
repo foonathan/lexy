@@ -1,7 +1,7 @@
 #include <lexy/action/parse_as_tree.hpp>
 #include <lexy/dsl.hpp>
-#include <lexy/input/file.hpp>
 #include <lexy/visualize.hpp>
+#include <lexy_ext/compiler_explorer.hpp>
 #include <lexy_ext/report_error.hpp>
 
 namespace dsl = lexy::dsl;
@@ -28,7 +28,7 @@ struct production
 //{
 int main()
 {
-    auto input = lexy::read_stdin<lexy::utf8_encoding>().buffer();
+    auto input = lexy_ext::compiler_explorer_input();
 
     lexy::parse_tree_for<decltype(input)> tree;
     auto result = lexy::parse_as_tree<production>(tree, input, lexy_ext::report_error);

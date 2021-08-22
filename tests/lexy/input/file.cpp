@@ -2,6 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#undef LEXY_DISABLE_FILE
 #include <lexy/input/file.hpp>
 
 #include <cstdio>

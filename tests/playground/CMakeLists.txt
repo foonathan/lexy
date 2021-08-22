@@ -15,6 +15,7 @@ target_link_libraries(lexy_test_godbolt PRIVATE lexy_test_base)
 # Compile-only godbolt example tests.
 add_library(lexy_test_godbolt_examples OBJECT)
 target_link_libraries(lexy_test_godbolt_examples PRIVATE lexy_test_base)
+target_compile_definitions(lexy_test_godbolt_examples PRIVATE LEXY_DISABLE_FILE)
 
 file(GLOB examples CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/assets/examples/*.cpp)
 target_sources(lexy_test_godbolt_examples PRIVATE ${examples})
