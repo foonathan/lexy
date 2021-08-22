@@ -178,7 +178,7 @@ Then we don’t convert it to a value and only log error messages if it is ill-f
     <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>file</span><span class=tok-p>)</span>
     <span class=tok-p>{</span> <span class=tok-err>…</span> <span class=tok-p>}</span>
 
-    <span class=tok-k>auto</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>parse</span><span class=tok-o>&lt;</span><span class=tok-n>grammar</span><span class=tok-o>::</span><span class=tok-n>config</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>file</span><span class=tok-p>,</span> <span class=tok-n>report_error_callback</span><span class=tok-p>);</span> <b class=conum>(4)</b>
+    <span class=tok-k>auto</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>parse</span><span class=tok-o>&lt;</span><span class=tok-n>grammar</span><span class=tok-o>::</span><span class=tok-n>config</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>file</span><span class=tok-p>.</span><span class=tok-n>buffer</span><span class=tok-p>(),</span> <span class=tok-n>report_error_callback</span><span class=tok-p>);</span> <b class=conum>(4)</b>
     <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>result</span><span class=tok-p>)</span> <b class=conum>(5)</b>
     <span class=tok-p>{</span> <span class=tok-err>…</span> <span class=tok-p>}</span>
 
@@ -207,7 +207,7 @@ Reading a file can fail, so we need to handle that (not shown here).</p>
 </li>
 <li>
 <p>Then we can parse our entry production using <code>lexy::parse</code>.
-We give it our file input and a callback to invoke on errors (not shown here).</p>
+We give it the buffer of our file and a callback to invoke on errors (not shown here).</p>
 </li>
 <li>
 <p>If parsing produced any errors, handle them somehow.</p>

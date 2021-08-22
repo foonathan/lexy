@@ -48,8 +48,11 @@ lexy/input/file.hpp — lexy
 </nav>
 </header>
 <section>
+<div class="paragraph lead">
+<p>Read from files or stdin.</p>
+</div>
 <div class=sect1>
-<h2 id=read_file>Input <code>lexy::read_file</code></h2>
+<h2 id=read_file_result>Class <code>lexy::read_file_result</code></h2>
 <div class=sectionbody>
 <div class=listingblock>
 <div class=title><code>lexy/input/file.hpp</code></div>
@@ -75,48 +78,61 @@ lexy/input/file.hpp — lexy
 
         <span class=tok-n>file_error</span> <span class=tok-nf>error</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
 
-        <span class=tok-k>const</span> <span class=tok-n>char_type</span><span class=tok-o><strong></strong></span><strong> <span class=tok-n>data</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span>      <span class=tok-n>size</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-
-        <span class=tok-n><em>reader</em></span> <span class=tok-k>auto</span> <span class=tok-n>reader</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-o>&amp;</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+        <span class=tok-k>const</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-p>,</span> <span class=tok-n>MemoryResource</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>buffer</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-o>&amp;</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+        <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-p>,</span> <span class=tok-n>MemoryResource</span><span class=tok-o>&gt;&amp;&amp;</span>      <span class=tok-n>buffer</span><span class=tok-p>()</span> <span class=tok-o>&amp;&amp;</span>     <span class=tok-k>noexcept</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span>          <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-p>,</span>
-              <span class=tok-n>encoding_endianness</span> <span class=tok-n>Endian</span> <span class=tok-o>=</span> <span class=tok-n>encoding_endianness</span><span class=tok-o>::</span><span class=tok-n>bom</span><span class=tok-p>,</span>
-              <span class=tok-k>typename</span> <span class=tok-nc>MemoryResource</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>auto</span> <span class=tok-n>read_file</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-kt>char</span><span class=tok-o></span></strong>     <span class=tok-n>path</span><span class=tok-p>,</span>
-                   <span class=tok-n>MemoryResource</span><span class=tok-o>*</span> <span class=tok-n>resource</span> <span class=tok-o>=</span> <span class=tok-n><em>default</em></span><em><span class=tok-o>-</span><span class=tok-n>resource</span></em><span class=tok-p>)</span>
-        <span class=tok-o>-&gt;</span> <span class=tok-n>read_file_result</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-p>,</span> <span class=tok-n>MemoryResource</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
-<p>The function <code>read_file</code> returns an input containing the contents of the file.</p>
+<p>The result of reading a file or from stdin.</p>
 </div>
 <div class=paragraph>
-<p>The result is an object of the class <code>lexy::read_file_result</code>.
-It is logically a union of the error code <code>lexy::file_error</code> and <a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a>:</p>
+<p>It is a union of the error code <code>lexy::file_error</code> and <a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a>:</p>
 </div>
 <div class=ulist>
 <ul>
 <li>
 <p>If it contains an error code, <code>operator bool()</code> returns <code>false</code>, <code>error()</code> returns the error code,
-and <code>data()</code>, <code>size()</code>, and <code>reader()</code> must not be called.
-It is thus not usable as an input.</p>
+and <code>buffer()</code>.</p>
 </li>
 <li>
-<p>If it contains a buffer, <code>operator bool()</code> returns <code>true</code>, <code>data()</code>, <code>size()</code> and <code>reader()</code> forward to the buffer,
-and <code>error()</code> must not be called.
-It is thus usable as an input and a rule cannot distinguish between it and <a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a>.</p>
+<p>If it contains a buffer, <code>operator bool()</code> returns <code>true</code>, <code>buffer()</code> returns the buffer,
+and <code>error()</code> must not be called.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=read_file>Input <code>lexy::read_file</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/input/file.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span>          <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-p>,</span>
+              <span class=tok-n>encoding_endianness</span> <span class=tok-n>Endian</span> <span class=tok-o>=</span> <span class=tok-n>encoding_endianness</span><span class=tok-o>::</span><span class=tok-n>bom</span><span class=tok-p>,</span>
+              <span class=tok-k>typename</span> <span class=tok-nc>MemoryResource</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>auto</span> <span class=tok-n>read_file</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-kt>char</span><span class=tok-o><strong></strong></span><strong>     <span class=tok-n>path</span><span class=tok-p>,</span>
+                   <span class=tok-n>MemoryResource</span><span class=tok-o></span></strong> <span class=tok-n>resource</span> <span class=tok-o>=</span> <span class=tok-n><em>default</em></span><em><span class=tok-o>-</span><span class=tok-n>resource</span></em><span class=tok-p>)</span>
+        <span class=tok-o>-&gt;</span> <span class=tok-n>read_file_result</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-p>,</span> <span class=tok-n>MemoryResource</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>The function <code>read_file</code> reads the contents of the file and makes it available as an input.</p>
 </div>
 <div class=paragraph>
 <p><code>read_file</code> tries to read the file at <code>path</code> into a buffer whose memory is allocated using the specified <code>resource</code>
 and whose contents are interpreted as code units of the <a href=/reference/encoding/#doc>encoding</a> <code>Encoding</code> with the specified <a href=/reference/encoding/#encoding_endianness><code>lexy::encoding_endianness</code></a>,
 as if <a href=/reference/input/buffer/#make_buffer_from_raw><code>lexy::make_buffer_from_raw</code></a> is used.
-If this is successful, the returned result will contain the buffer.
-Otherwise, it will contain an error:</p>
+If this is successful, the returned <a href=/reference/input/file/#read_file_result><code>lexy::read_file_result</code></a> will contain the <a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a>.</p>
+</div>
+<div class=paragraph>
+<p>Otherwise, it will contain a <a href=/reference/input/file/#read_file_result><code>lexy::file_error</code></a>:</p>
 </div>
 <div class=ulist>
 <ul>
@@ -137,16 +153,75 @@ Otherwise, it will contain an error:</p>
 <div class=listingblock>
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-c1>// Read the file encoded in UTF-32.</span>
-<span class=tok-k>auto</span> <span class=tok-n>input</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>read_file</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf32_encoding</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-s>&#34;input.txt&#34;</span><span class=tok-p>);</span>
-<span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>input</span><span class=tok-p>)</span>
+<span class=tok-k>auto</span> <span class=tok-n>file</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>read_file</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf32_encoding</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-s>&#34;input.txt&#34;</span><span class=tok-p>);</span>
+<span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>file</span><span class=tok-p>)</span>
     <span class=tok-k>throw</span> <span class=tok-n>my_file_read_error_exception</span><span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>.</span><span class=tok-n>error</span><span class=tok-p>());</span>
 
-<span class=tok-c1>// Use the file as input.</span>
-<span class=tok-k>auto</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>);</span>
+<span class=tok-c1>// Use the file&#39;s buffer as input.</span>
+<span class=tok-k>auto</span> <span class=tok-n>result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>file</span><span class=tok-p>.</span><span class=tok-n>buffer</span><span class=tok-p>());</span>
 <span class=tok-err>…</span></code></pre>
 </div>
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=read_stdin>Input <code>lexy::read_stdin</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/input/file.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span>          <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-p>,</span>
+              <span class=tok-n>encoding_endianness</span> <span class=tok-n>Endian</span> <span class=tok-o>=</span> <span class=tok-n>encoding_endianness</span><span class=tok-o>::</span><span class=tok-n>bom</span><span class=tok-p>,</span>
+              <span class=tok-k>typename</span> <span class=tok-nc>MemoryResource</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>auto</span> <span class=tok-n>read_stdin</span><span class=tok-p>(</span><span class=tok-n>MemoryResource</span><span class=tok-o>*</span> <span class=tok-n>resource</span> <span class=tok-o>=</span> <span class=tok-n><em>default</em></span><em><span class=tok-o>-</span><span class=tok-n>resource</span></em><span class=tok-p>)</span>
+        <span class=tok-o>-&gt;</span> <span class=tok-n>read_file_result</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-p>,</span> <span class=tok-n>MemoryResource</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>The function <code>read_stdin</code> eagerly reads <code>stdin</code> and makes it available as an input.</p>
+</div>
+<div class=paragraph>
+<p>It will repeatedly read data from <code>stdin</code>, until EOF is reached.
+If <code>stdin</code> is a terminal, this will prompt the user for input until they’ve closed <code>stdin</code> by typing <span class=keyseq><kbd>Ctrl</kbd>+<kbd>D</kbd></span> on Linux or <span class=keyseq><kbd>Ctrl</kbd>+<kbd>Z</kbd></span> on Windows.</p>
+</div>
+<div class=paragraph>
+<p>The read data is interpreted as code units of the <a href=/reference/encoding/#doc>encoding</a> <code>Encoding</code> with the specified <a href=/reference/encoding/#encoding_endianness><code>lexy::encoding_endianness</code></a>,
+as if <a href=/reference/input/buffer/#make_buffer_from_raw><code>lexy::make_buffer_from_raw</code></a> is used.
+If this is successful, the returned <a href=/reference/input/file/#read_file_result><code>lexy::read_file_result</code></a> will contain the <a href=/reference/input/buffer/#buffer><code>lexy::buffer</code></a>,
+whose memory is allocated using the given <code>resource</code>.</p>
+</div>
+<div class=paragraph>
+<p>Otherwise, it will contain a <a href=/reference/input/file/#read_file_result><code>lexy::file_error</code></a>.
+The only error code used is <code>file_error::os_error</code>, if reading has failed.</p>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Caution</div>
+</td>
+<td class=content>
+After a call to <code>read_stdin</code>, all further reads from <code>stdin</code> will fail.
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+If <code>stdin</code> is a terminal, <code>Encoding</code> and <code>Endian</code> must match the encoding used by the terminal.
+</td>
+</tr>
+</tbody></table>
 </div>
 </div>
 </div>
