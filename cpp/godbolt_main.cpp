@@ -1,12 +1,12 @@
 //=== main function ===//
 #include <lexy/action/parse_as_tree.hpp>
-#include <lexy/input/file.hpp>
 #include <lexy/visualize.hpp>
+#include <lexy_ext/compiler_explorer.hpp>
 #include <lexy_ext/report_error.hpp>
 
 int main()
 {
-    auto input = lexy::read_stdin<lexy::utf8_encoding>().buffer();
+    auto input = lexy_ext::compiler_explorer_input();
 
     lexy::parse_tree_for<decltype(input)> tree;
     auto                                  result

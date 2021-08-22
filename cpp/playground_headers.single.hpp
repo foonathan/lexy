@@ -15520,14 +15520,165 @@ constexpr auto until(Condition)
 
 #endif // LEXY_DSL_HPP_INCLUDED
 
+
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_INPUT_FILE_HPP_INCLUDED
-#define LEXY_INPUT_FILE_HPP_INCLUDED
+#ifndef LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
+#define LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
+
+#include <cstdio>
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
+#define LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
+
+#include <cstring>
 
 
+
+#include <new>
+
+namespace lexy::_detail
+{
+// Builds a buffer: it has a read are and a write area.
+// The characters in the read area are already valid and can be read.
+// The characters in the write area are not valid, but can be written too.
+template <typename T>
+class buffer_builder
+{
+    static_assert(std::is_trivial_v<T>);
+
+    static constexpr std::size_t total_size_bytes = 1024;
+    static constexpr std::size_t stack_buffer_size
+        = (total_size_bytes - 3 * sizeof(T*)) / sizeof(T);
+    static constexpr auto growth_factor = 2;
+
+public:
+    buffer_builder() noexcept : _data(_stack_buffer), _read_size(0), _write_size(stack_buffer_size)
+    {
+        static_assert(sizeof(*this) == total_size_bytes, "invalid buffer size calculation");
+    }
+
+    ~buffer_builder() noexcept
+    {
+        // Free memory if we allocated any.
+        if (_data != _stack_buffer)
+            ::operator delete(_data);
+    }
+
+    buffer_builder(const buffer_builder&) = delete;
+    buffer_builder& operator=(const buffer_builder&) = delete;
+
+    // The total capacity: read + write.
+    std::size_t capacity() const noexcept
+    {
+        return _read_size + _write_size;
+    }
+
+    // The read area.
+    const T* read_data() const noexcept
+    {
+        return _data;
+    }
+    std::size_t read_size() const noexcept
+    {
+        return _read_size;
+    }
+
+    // The write area.
+    T* write_data() noexcept
+    {
+        return _data + _read_size;
+    }
+    std::size_t write_size() const noexcept
+    {
+        return _write_size;
+    }
+
+    // Clears the read area.
+    void clear() noexcept
+    {
+        _write_size += _read_size;
+        _read_size = 0;
+    }
+
+    // Takes the first n characters of the write area and appends them to the read area.
+    void commit(std::size_t n) noexcept
+    {
+        LEXY_PRECONDITION(n <= _write_size);
+        _read_size += n;
+        _write_size -= n;
+    }
+
+    // Increases the write area, invalidates all pointers.
+    void grow()
+    {
+        const auto cur_cap = capacity();
+        const auto new_cap = growth_factor * cur_cap;
+
+        // Allocate new memory.
+        auto memory = static_cast<T*>(::operator new(new_cap * sizeof(T)));
+        // Copy the read area into the new memory.
+        std::memcpy(memory, _data, _read_size);
+
+        // Release the old memory, if there was any.
+        if (_data != _stack_buffer)
+            ::operator delete(_data);
+
+        // Update for the new area.
+        _data = memory;
+        // _read_size hasn't been changed
+        _write_size = new_cap - _read_size;
+    }
+
+    //=== iterator ===//
+    // Stable iterator over the memory.
+    class stable_iterator : public forward_iterator_base<stable_iterator, const T>
+    {
+    public:
+        constexpr stable_iterator() = default;
+
+        explicit constexpr stable_iterator(const _detail::buffer_builder<T>& buffer,
+                                           std::size_t                       idx) noexcept
+        : _buffer(&buffer), _idx(idx)
+        {}
+
+        constexpr const T& deref() const noexcept
+        {
+            LEXY_PRECONDITION(_idx != _buffer->read_size());
+            return _buffer->read_data()[_idx];
+        }
+
+        constexpr void increment() noexcept
+        {
+            LEXY_PRECONDITION(_idx != _buffer->read_size());
+            ++_idx;
+        }
+
+        constexpr bool equal(stable_iterator rhs) const noexcept
+        {
+            LEXY_PRECONDITION(_buffer == rhs._buffer);
+            return _idx == rhs._idx;
+        }
+
+    private:
+        const _detail::buffer_builder<T>* _buffer = nullptr;
+        std::size_t                       _idx    = 0;
+    };
+
+private:
+    T*          _data;
+    std::size_t _read_size;
+    std::size_t _write_size;
+    T           _stack_buffer[stack_buffer_size];
+};
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
 
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
@@ -15913,156 +16064,54 @@ using buffer_error_context = error_context<Production, buffer<Encoding, MemoryRe
 #endif // LEXY_INPUT_BUFFER_HPP_INCLUDED
 
 
-#ifdef LEXY_IGNORE_DEPRECATED_FILE
-#    define LEXY_DEPRECATED_FILE(Msg)
-#else
-#    define LEXY_DEPRECATED_FILE(Msg) [[deprecated(Msg)]]
-#endif
-
-namespace lexy
+namespace lexy_ext
 {
-/// Errors that might occur while reading the file.
-enum class file_error
+/// Input that uses Compiler Explorer's stdin.
+/// It consumes the entire stdin, which is then at EOF.
+lexy::buffer<lexy::utf8_encoding> compiler_explorer_input()
 {
-    _success,
-    /// An internal OS error, such as failure to read from the file.
-    os_error,
-    /// The file was not found.
-    file_not_found,
-    /// The file cannot be opened.
-    permission_denied,
-};
-} // namespace lexy
-
-namespace lexy::_detail
-{
-using file_callback = void (*)(void* user_data, const char* memory, std::size_t size);
-
-// Reads the entire contents of the specified file into memory.
-// On success, invokes the callback before freeing the memory.
-// On error, returns the error without invoking the callback.
-//
-// Do not change ABI, especially with different build configurations!
-file_error read_file(const char* path, file_callback cb, void* user_data);
-
-// Same as above, but reads from stdin.
-file_error read_stdin(file_callback cb, void* user_data);
-} // namespace lexy::_detail
-
-namespace lexy
-{
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
-class read_file_result
-{
-public:
-    using encoding  = Encoding;
-    using char_type = typename encoding::char_type;
-
-    explicit operator bool() const noexcept
+    // We can't use ftell() to get file size
+    // So instead use a conservative loop.
+    lexy::_detail::buffer_builder<char> builder;
+    while (true)
     {
-        return _ec == file_error::_success;
+        const auto buffer_size = builder.write_size();
+        LEXY_ASSERT(buffer_size > 0, "buffer empty?!");
+
+        // Read into the entire write area of the buffer from stdin,
+        // commiting what we've just read.
+        const auto read = std::fread(builder.write_data(), sizeof(char), buffer_size, stdin);
+        builder.commit(read);
+
+        // Check whether we have exhausted the file.
+        if (read < buffer_size)
+        {
+            // We should have reached the end.
+            LEXY_ASSERT(!std::ferror(stdin), "read error");
+            LEXY_ASSERT(std::feof(stdin), "why did fread() not read enough?");
+            break;
+        }
+
+        // We've filled the entire buffer and need more space.
+        // This grow might be unnecessary if we're just so happen to reach EOF with the next
+        // input, but checking this requires reading more input.
+        builder.grow();
     }
 
-    const lexy::buffer<Encoding, MemoryResource>& buffer() const& noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer;
-    }
-    lexy::buffer<Encoding, MemoryResource>&& buffer() && noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return LEXY_MOV(_buffer);
-    }
-
-    file_error error() const noexcept
-    {
-        LEXY_PRECONDITION(!*this);
-        return _ec;
-    }
-
-    LEXY_DEPRECATED_FILE("call `.buffer().data()`") const char_type* data() const noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.data();
-    }
-    LEXY_DEPRECATED_FILE("call `.buffer().data()`") std::size_t size() const noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.size();
-    }
-
-    LEXY_DEPRECATED_FILE("`lexy::read_file_result`: call `.buffer()` to use it as an input")
-    auto reader() const& noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.reader();
-    }
-
-public:
-    // Pretend these two don't exist.
-    explicit read_file_result(file_error                               ec,
-                              lexy::buffer<Encoding, MemoryResource>&& buffer) noexcept
-    : _buffer(LEXY_MOV(buffer)), _ec(ec)
-    {}
-    explicit read_file_result(file_error ec, MemoryResource* resource) noexcept
-    : _buffer(resource), _ec(ec)
-    {
-        LEXY_PRECONDITION(!*this);
-    }
-
-private:
-    lexy::buffer<Encoding, MemoryResource> _buffer;
-    file_error                             _ec;
-};
-
-template <typename Encoding, encoding_endianness Endian, typename MemoryResource>
-struct _read_file_user_data
-{
-    lexy::buffer<Encoding, MemoryResource> buffer;
-    MemoryResource*                        resource;
-
-    _read_file_user_data(MemoryResource* resource) : buffer(resource), resource(resource) {}
-
-    static auto callback()
-    {
-        return [](void* _user_data, const char* memory, std::size_t size) {
-            auto user_data = static_cast<_read_file_user_data*>(_user_data);
-
-            user_data->buffer
-                = lexy::make_buffer_from_raw<Encoding, Endian>(memory, size, user_data->resource);
-        };
-    }
-};
-
-/// Reads the file at the specified path into a buffer.
-template <typename Encoding          = default_encoding,
-          encoding_endianness Endian = encoding_endianness::bom,
-          typename MemoryResource    = _detail::default_memory_resource>
-auto read_file(const char*     path,
-               MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
-    -> read_file_result<Encoding, MemoryResource>
-{
-    _read_file_user_data<Encoding, Endian, MemoryResource> user_data(resource);
-    auto error = _detail::read_file(path, user_data.callback(), &user_data);
-    return read_file_result(error, LEXY_MOV(user_data.buffer));
+    return lexy::buffer<lexy::utf8_encoding>(builder.read_data(), builder.read_size());
 }
 
-/// Reads stdin into a buffer.
-template <typename Encoding          = default_encoding,
-          encoding_endianness Endian = encoding_endianness::bom,
-          typename MemoryResource    = _detail::default_memory_resource>
-auto read_stdin(MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
-    -> read_file_result<Encoding, MemoryResource>
-{
-    _read_file_user_data<Encoding, Endian, MemoryResource> user_data(resource);
-    auto error = _detail::read_stdin(user_data.callback(), &user_data);
-    return read_file_result(error, LEXY_MOV(user_data.buffer));
-}
-} // namespace lexy
+//=== convenience typedefs ===//
+using compiler_explorer_lexeme = lexy::buffer_lexeme<lexy::utf8_encoding>;
 
-#endif // LEXY_INPUT_FILE_HPP_INCLUDED
+template <typename Tag>
+using compiler_explorer_error = lexy::buffer_error<Tag, lexy::utf8_encoding>;
 
+template <typename Production>
+using compiler_explorer_error_context = lexy::buffer_error_context<Production, lexy::utf8_encoding>;
+} // namespace lexy_ext
+
+#endif // LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
