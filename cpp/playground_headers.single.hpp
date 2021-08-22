@@ -5578,13 +5578,20 @@ constexpr visualization_flags operator|(visualization_flags lhs, visualization_f
 /// Options that control visualization.
 struct visualization_options
 {
-    static constexpr unsigned max_tree_depth_limit = 32;
+    static constexpr unsigned char max_tree_depth_limit = 32;
 
     /// Boolean flags.
     visualization_flags flags = visualize_default;
+
     /// The maximal depth when visualizing a tree.
     /// Must be <= max_tree_depth_limit.
-    unsigned max_tree_depth = max_tree_depth_limit;
+    unsigned char max_tree_depth = max_tree_depth_limit;
+    /// The maximal width when visualizing a lexeme.
+    /// 0 means unlimited.
+    unsigned char max_lexeme_width = 0;
+    /// How many spaces are printed for a tab character.
+    /// 0 means it is printed as escaped control character.
+    unsigned char tab_width = 0;
 
     constexpr bool is_set(visualization_flags f) const noexcept
     {
@@ -5698,6 +5705,15 @@ constexpr OutIt write_color(OutIt out, visualization_options opts)
     *out++ = 'm';
     return out;
 }
+
+template <typename OutIt>
+constexpr OutIt write_ellipsis(OutIt out, visualization_options opts)
+{
+    if (opts.is_set(visualize_use_unicode))
+        return _detail::write_str(out, u8"…");
+    else
+        return _detail::write_str(out, "...");
+}
 } // namespace lexy::_detail
 
 namespace lexy
@@ -5772,7 +5788,14 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             }
             break;
         case '\t':
-            if (opts.is_set(visualize_use_symbols))
+            if (opts.tab_width > 0)
+            {
+                // We print that many space characters.
+                // This is recursion, but the recursive call does not recurse further.
+                for (auto i = 0u; i < opts.tab_width; ++i)
+                    out = visualize_to(out, lexy::code_point(' '), opts);
+            }
+            else if (opts.is_set(visualize_use_symbols))
             {
                 out = _detail::write_color<_detail::color::faint>(out, opts);
                 out = _detail::write_str(out, u8"⇨");
@@ -5866,10 +5889,15 @@ template <typename OutputIt, typename Reader>
 OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
                       [[maybe_unused]] visualization_options opts = {})
 {
+    // We need to ensure that we're not printing more "code points" than `opts.max_lexeme_width`,
+    // or unlimited if `opts.max_lexeme_width == 0`.
+    // The trick is to count and check for `count == opts.max_lexeme_width` after increment.
+
     using encoding = typename Reader::encoding;
     if constexpr (std::is_same_v<encoding, lexy::ascii_encoding> //
                   || std::is_same_v<encoding, lexy::default_encoding>)
     {
+        auto count = 0u;
         for (char c : lexeme)
         {
             // If the character is in fact ASCII, visualize the code point.
@@ -5878,6 +5906,13 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
                 out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
             else
                 out = visualize_to(out, lexy::code_point(), opts);
+
+            ++count;
+            if (count == opts.max_lexeme_width)
+            {
+                out = _detail::write_ellipsis(out, opts);
+                break;
+            }
         }
         return out;
     }
@@ -5888,6 +5923,8 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         // Parse the individual code points, and write them out.
         lexy::range_input<encoding, typename Reader::iterator> input(lexeme.begin(), lexeme.end());
         auto                                                   reader = input.reader();
+
+        auto count = 0u;
         while (true)
         {
             lexy::engine_cp_auto::error_code ec{};
@@ -5896,17 +5933,32 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
                 break;
 
             out = visualize_to(out, cp, opts);
+
+            ++count;
+            if (count == opts.max_lexeme_width)
+            {
+                out = _detail::write_ellipsis(out, opts);
+                break;
+            }
         }
         return out;
     }
     else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
     {
         // Write each byte.
+        auto count = 0u;
         for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
         {
             if (iter != lexeme.begin())
                 *out++ = ' ';
             out = _detail::write_format(out, "%02X", *iter);
+
+            ++count;
+            if (count == opts.max_lexeme_width)
+            {
+                out = _detail::write_ellipsis(out, opts);
+                break;
+            }
         }
         return out;
     }
@@ -5984,10 +6036,9 @@ OutputIt visualize_to(OutputIt out, const Tree& tree, visualization_options opts
                 if (cur_depth == opts.max_tree_depth)
                 {
                     // Print an ellipsis instead of children.
-                    if (opts.is_set(visualize_use_unicode))
-                        out = _detail::write_str(out, u8": \u2026\n"); // …
-                    else
-                        out = _detail::write_str(out, ": ...\n");
+                    out = _detail::write_str(out, ": ");
+                    out = _detail::write_ellipsis(out, opts);
+                    out = _detail::write_str(out, "\n");
                 }
                 else
                 {
@@ -7050,10 +7101,8 @@ public:
             if (_cur_depth == _opts.max_tree_depth)
             {
                 // Print an ellipsis instead of children.
-                if (_opts.is_set(visualize_use_unicode))
-                    _out = _detail::write_str(_out, u8": …");
-                else
-                    _out = _detail::write_str(_out, ": ...");
+                _out = _detail::write_str(_out, ": ");
+                _out = _detail::write_ellipsis(_out, _opts);
             }
             else
             {
@@ -7202,10 +7251,8 @@ public:
         if (_cur_depth == _opts.max_tree_depth)
         {
             // Print an ellipsis instead of children.
-            if (_opts.is_set(visualize_use_unicode))
-                _out = _detail::write_str(_out, u8"…");
-            else
-                _out = _detail::write_str(_out, "...");
+            _out = _detail::write_str(_out, " ");
+            _out = _detail::write_ellipsis(_out, _opts);
         }
 
         // We can no longer merge tokens.

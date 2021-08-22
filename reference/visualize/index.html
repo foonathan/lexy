@@ -139,10 +139,13 @@ use <code>visualize_use_unicode | visualize_use_symbols</code> for visualizing t
 <span class=tok-p>{</span>
     <span class=tok-k>struct</span> <span class=tok-nc>visualization_options</span>
     <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-kt>unsigned</span> <span class=tok-n>max_tree_depth_limit</span> <span class=tok-o>=</span> <span class=tok-mi>32</span><span class=tok-p>;</span>
+        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-kt>unsigned</span> <span class=tok-kt>char</span> <span class=tok-n>max_tree_depth_limit</span> <span class=tok-o>=</span> <span class=tok-mi>32</span><span class=tok-p>;</span>
 
         <span class=tok-n>visualization_flags</span> <span class=tok-n>flags</span> <span class=tok-o>=</span> <span class=tok-n>visualize_default</span><span class=tok-p>;</span>
-        <span class=tok-kt>unsigned</span> <span class=tok-n>max_tree_depth</span> <span class=tok-o>=</span> <span class=tok-n>max_tree_depth_limit</span><span class=tok-p>;</span>
+
+        <span class=tok-kt>unsigned</span> <span class=tok-kt>char</span> <span class=tok-n>max_tree_depth</span>   <span class=tok-o>=</span> <span class=tok-n>max_tree_depth_limit</span><span class=tok-p>;</span>
+        <span class=tok-kt>unsigned</span> <span class=tok-kt>char</span> <span class=tok-n>max_lexeme_width</span> <span class=tok-o>=</span> <span class=tok-mi>0</span><span class=tok-p>;</span>
+        <span class=tok-kt>unsigned</span> <span class=tok-kt>char</span> <span class=tok-n>tab_width</span>        <span class=tok-o>=</span> <span class=tok-mi>0</span><span class=tok-p>;</span>
 
         <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_set</span><span class=tok-p>(</span><span class=tok-n>visualization_flags</span> <span class=tok-n>f</span><span class=tok-p>)</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
 
@@ -168,6 +171,17 @@ use <code>visualize_use_unicode | visualize_use_symbols</code> for visualizing t
 <p>When visualizing a <a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a>, stop visualization at this depth.
 Child nodes whose depth exceeds <code>max_tree_depth</code> are omitted, which is indicated by a symbol.
 It must be <code>⇐ max_tree_depth_limit</code>.</p>
+</dd>
+<dt class=hdlist1><code>max_lexeme_width</code></dt>
+<dd>
+<p>When visualizing a <a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a>, stop visualization after this many "characters".
+Here a "character" depends on the encoding, e.g. for text based encodings, it is code points.
+If it is <code>0</code>, an unlimited amount of characters is printed.</p>
+</dd>
+<dt class=hdlist1><code>tab_width</code></dt>
+<dd>
+<p>How many spaces are printed for a tab character.
+If it is <code>0</code>, tabs are printed as escaped control characters (e.g. <code>\t</code>).</p>
 </dd>
 </dl>
 </div>
