@@ -33,14 +33,14 @@ jobs:
     - name: Create Build Environment
       run: cmake -E make_directory build
     - name: Install ninja and clang-tidy
-      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build clang-tidy
+      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build clang-tidy-12
 
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_CXX_CLANG_TIDY=clang-tidy-12
     - name: Build
       working-directory: build/
-      run: cmake --build .
+      run: cmake --build . --target lexy_test lexy_ext_test
 
   benchmarks: # just to ensure that they are compiled
     runs-on: ubuntu-latest
