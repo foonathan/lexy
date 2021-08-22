@@ -169,9 +169,10 @@ struct _tryr : rule_base
         struct _continuation
         {
             template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed, Args&&... args)
+            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& rule_succeeded,
+                                     Args&&... args)
             {
-                failed = false;
+                rule_succeeded = true;
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         };
@@ -180,19 +181,22 @@ struct _tryr : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto failed = true;
+            auto rule_succeeded = false;
             // Try parsing with special continuation that sets failed to false if reached.
-            auto result = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
-                                                                            LEXY_FWD(args)...);
-            if (!failed)
+            auto result
+                = lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, rule_succeeded,
+                                                                    LEXY_FWD(args)...);
+            if (rule_succeeded || result == lexy::rule_try_parse_result::backtracked)
             {
-                // If we didn't fail, don't do anything.
+                // Our rule has succeded or backtracked.
+                // In either case, it did not fail.
+                // It could be the case that some later rule has failed, but that's not our problem.
                 return result;
             }
             else
             {
                 // Rule has failed, recover.
-                // Note that we already took the branch, so we no longer backtrack.
+                // Note that we already took the branch by definition, so we no longer backtrack.
                 if constexpr (std::is_void_v<Recover>)
                     return NextParser::parse(context, reader, LEXY_FWD(args)...)
                                ? lexy::rule_try_parse_result::ok
@@ -208,11 +212,12 @@ struct _tryr : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto failed = true;
+            auto rule_succeeded = false;
             // Parse with special continuation that sets failed to false if reached.
-            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
-                                                                        LEXY_FWD(args)...);
-            if (!failed)
+            auto result
+                = lexy::rule_parser<Rule, _continuation>::parse(context, reader, rule_succeeded,
+                                                                LEXY_FWD(args)...);
+            if (rule_succeeded)
             {
                 // Rule didn't fail.
                 // It could be the case that some later rule has failed, but that's not our problem.
