@@ -162,7 +162,6 @@ public:
     {
     public:
         using encoding         = typename Prompt::encoding;
-        using char_type        = typename encoding::char_type;
         using iterator         = typename lexy::_detail::buffer_builder<char_type>::stable_iterator;
         using canonical_reader = input;
 

@@ -98,7 +98,7 @@ template <_reader_ Reader>
 class error<Reader, expected_literal>
 {
     using _iterator_  = typename Reader::iterator;
-    using _char_type_ = typename Reader::char_type;
+    using _char_type_ = typename Reader::encoding::char_type;
 
 public:
     constexpr explicit error(_iterator_ pos,
@@ -138,7 +138,7 @@ template <_reader_ Reader>
 class error<Reader, expected_keyword>
 {
     using _iterator_  = typename Reader::iterator;
-    using _char_type_ = typename Reader::char_type;
+    using _char_type_ = typename Reader::encoding::char_type;
 
 public:
     constexpr explicit error(_iterator_ begin, _iterator_ end,

@@ -86,8 +86,7 @@ constexpr auto make_literal_lexeme(const typename Encoding::char_type* str)
     struct reader
     {
         using encoding         = Encoding;
-        using char_type        = typename Encoding::char_type;
-        using iterator         = const char_type*;
+        using iterator         = const typename Encoding::char_type*;
         using canonical_reader = reader;
     };
 

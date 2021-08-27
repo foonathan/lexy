@@ -57,8 +57,9 @@ class error<Reader, expected_literal>
     static_assert(is_canonical_reader<Reader>);
 
 public:
-    constexpr explicit error(typename Reader::iterator pos, const typename Reader::char_type* str,
-                             std::size_t index) noexcept
+    constexpr explicit error(typename Reader::iterator                   pos,
+                             const typename Reader::encoding::char_type* str,
+                             std::size_t                                 index) noexcept
     : _pos(pos), _str(str), _idx(index)
     {}
 
@@ -67,7 +68,7 @@ public:
         return _pos;
     }
 
-    constexpr auto string() const noexcept -> const typename Reader::char_type*
+    constexpr auto string() const noexcept -> const typename Reader::encoding::char_type*
     {
         return _str;
     }
@@ -83,9 +84,9 @@ public:
     }
 
 private:
-    typename Reader::iterator         _pos;
-    const typename Reader::char_type* _str;
-    std::size_t                       _idx;
+    typename Reader::iterator                   _pos;
+    const typename Reader::encoding::char_type* _str;
+    std::size_t                                 _idx;
 };
 
 /// Expected the given keyword.
@@ -99,7 +100,7 @@ class error<Reader, expected_keyword>
 
 public:
     constexpr explicit error(typename Reader::iterator begin, typename Reader::iterator end,
-                             const typename Reader::char_type* str)
+                             const typename Reader::encoding::char_type* str)
     : _begin(begin), _end(end), _str(str)
     {}
 
@@ -117,15 +118,15 @@ public:
         return _end;
     }
 
-    constexpr auto string() const noexcept -> const typename Reader::char_type*
+    constexpr auto string() const noexcept -> const typename Reader::encoding::char_type*
     {
         return _str;
     }
 
 private:
-    typename Reader::iterator         _begin;
-    typename Reader::iterator         _end;
-    const typename Reader::char_type* _str;
+    typename Reader::iterator                   _begin;
+    typename Reader::iterator                   _end;
+    const typename Reader::encoding::char_type* _str;
 };
 
 /// Expected a character of the specified character class.

@@ -15,7 +15,6 @@ class Reader
 public:
     /// The encoding the input uses.
     using encoding = XXX_encoding;
-    using char_type = typename encoding::char_type;
 
     /// An iterator of char_type, not int_type.
     using iterator = ForwardIterator;
@@ -61,7 +60,6 @@ class range_reader
 {
 public:
     using encoding         = Encoding;
-    using char_type        = typename encoding::char_type;
     using iterator         = Iterator;
     using canonical_reader = range_reader<Encoding, Iterator, Sentinel>;
 
@@ -110,7 +108,7 @@ using input_reader = decltype(LEXY_DECLVAL(Input).reader());
 
 template <typename Reader, typename CharT>
 constexpr bool char_type_compatible_with_reader
-    = (std::is_same_v<CharT, typename Reader::char_type>)
+    = (std::is_same_v<CharT, typename Reader::encoding::char_type>)
       || Reader::encoding::template is_secondary_char_type<CharT>();
 
 template <typename Reader>

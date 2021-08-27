@@ -178,7 +178,6 @@ private:
     {
     public:
         using encoding         = Encoding;
-        using char_type        = typename encoding::char_type;
         using iterator         = const char_type*;
         using canonical_reader = _sentinel_reader;
 
