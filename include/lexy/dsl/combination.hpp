@@ -179,21 +179,6 @@ constexpr auto partial_combination(R...)
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};
 }
-
-template <typename Tag, typename... R>
-LEXY_DEPRECATED_ERROR(
-    "replace `combination<Tag>(r...)` by `combination(r...).duplicate_error<Tag>`")
-constexpr auto combination(R... r)
-{
-    return combination(r...).template duplicate_error<Tag>;
-}
-template <typename Tag, typename... R>
-LEXY_DEPRECATED_ERROR(
-    "replace `partial_combination<Tag>(r...)` by `partial_combination(r...).duplicate_error<Tag>`")
-constexpr auto partial_combination(R... r)
-{
-    return partial_combination(r...).template duplicate_error<Tag>;
-}
 } // namespace lexyd
 
 #endif // LEXY_DSL_COMBINATION_HPP_INCLUDED

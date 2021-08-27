@@ -12,12 +12,6 @@
 
 #define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
-#ifdef LEXY_IGNORE_DEPRECATED_ERROR
-#    define LEXY_DEPRECATED_ERROR(msg)
-#else
-#    define LEXY_DEPRECATED_ERROR(msg) [[deprecated(msg)]]
-#endif
-
 //=== parse_events ===//
 namespace lexy::parse_events
 {

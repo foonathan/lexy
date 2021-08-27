@@ -135,12 +135,6 @@ struct _toke : token_base<_toke<Tag, Token>>
     {
         return Token::token_kind();
     }
-
-    LEXY_DEPRECATED_ERROR("replace `token.error<Tag>()` by `token.error<Tag>`")
-    constexpr auto operator()() const
-    {
-        return *this;
-    }
 };
 } // namespace lexyd
 
