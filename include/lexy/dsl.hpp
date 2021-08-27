@@ -26,7 +26,6 @@
 #include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/lookahead.hpp>
@@ -44,13 +43,11 @@
 #include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>
-#include <lexy/dsl/switch.hpp>
 #include <lexy/dsl/symbol.hpp>
 #include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/times.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/dsl/until.hpp>
-#include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
 #endif // LEXY_DSL_HPP_INCLUDED

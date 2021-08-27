@@ -5,7 +5,6 @@
 #include <lexy/dsl/terminator.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/option.hpp>
 

@@ -64,7 +64,6 @@ set(header_files
         ${include_dir}/dsl/identifier.hpp
         ${include_dir}/dsl/if.hpp
         ${include_dir}/dsl/integer.hpp
-        ${include_dir}/dsl/label.hpp
         ${include_dir}/dsl/lookahead.hpp
         ${include_dir}/dsl/loop.hpp
         ${include_dir}/dsl/member.hpp
@@ -80,13 +79,11 @@ set(header_files
         ${include_dir}/dsl/separator.hpp
         ${include_dir}/dsl/sequence.hpp
         ${include_dir}/dsl/sign.hpp
-        ${include_dir}/dsl/switch.hpp
         ${include_dir}/dsl/symbol.hpp
         ${include_dir}/dsl/terminator.hpp
         ${include_dir}/dsl/times.hpp
         ${include_dir}/dsl/token.hpp
         ${include_dir}/dsl/until.hpp
-        ${include_dir}/dsl/value.hpp
         ${include_dir}/dsl/whitespace.hpp
 
         ${include_dir}/engine/any.hpp

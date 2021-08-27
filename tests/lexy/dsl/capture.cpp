@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/callback/string.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 TEST_CASE("dsl::capture()")

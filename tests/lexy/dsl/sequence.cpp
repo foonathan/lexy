@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/label.hpp>
 
 TEST_CASE("dsl::operator+")
 {

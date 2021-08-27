@@ -7,7 +7,6 @@
 #include "verify.hpp"
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/label.hpp>
 #include <lexy/dsl/production.hpp>
 
 namespace

@@ -14,15 +14,8 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/symbol.hpp>
-#include <lexy/dsl/value.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
-
-#ifdef LEXY_IGNORE_DEPRECATED_ESCAPE
-#    define LEXY_DEPRECATED_ESCAPE
-#else
-#    define LEXY_DEPRECATED_ESCAPE [[deprecated("`.lit[_c]()` has been replaced by `.symbol()`")]]
-#endif
 
 namespace lexy
 {
@@ -271,34 +264,6 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
     constexpr auto symbol() const
     {
         return this->rule(lexyd::symbol<Table>);
-    }
-
-#if LEXY_HAS_NTTP
-    /// Adds an escape rule that replaces the escaped string with the replacement.
-    template <lexy::_detail::string_literal Str, typename Value>
-    LEXY_DEPRECATED_ESCAPE constexpr auto lit(Value value) const
-    {
-        return rule(lexyd::lit<Str> >> value);
-    }
-    /// Adds an escape rule that replaces the escaped string with itself.
-    template <lexy::_detail::string_literal Str>
-    LEXY_DEPRECATED_ESCAPE constexpr auto lit() const
-    {
-        return lit<Str>(value_str<Str>);
-    }
-#endif
-
-    /// Adds an escape rule that replaces the escaped character with the replacement.
-    template <auto C, typename Value>
-    LEXY_DEPRECATED_ESCAPE constexpr auto lit_c(Value value) const
-    {
-        return rule(lexyd::lit_c<C> >> value);
-    }
-    /// Adds an escape rule that replaces the escape character with itself.
-    template <auto C>
-    LEXY_DEPRECATED_ESCAPE constexpr auto lit_c() const
-    {
-        return lit_c<C>(value_c<C>);
     }
 };
 
