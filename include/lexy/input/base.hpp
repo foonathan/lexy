@@ -35,6 +35,11 @@ public:
     /// auto end = reader.position();
     /// ```
     iterator position() const;
+
+    /// Sets the reader to a position.
+    /// It must be returned by a previous call to `position()` of this reader or a copy,
+    /// and can either backtrack the reader or move it forward.
+    void set_position(iterator new_pos);
 };
 
 /// An Input produces a reader.
@@ -74,6 +79,11 @@ public:
     constexpr iterator position() const noexcept
     {
         return _cur;
+    }
+
+    constexpr void set_position(iterator new_pos) noexcept
+    {
+        _cur = new_pos;
     }
 
 private:

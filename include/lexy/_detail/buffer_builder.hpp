@@ -134,6 +134,11 @@ public:
             return _idx == rhs._idx;
         }
 
+        constexpr std::size_t index() const noexcept
+        {
+            return _idx;
+        }
+
     private:
         const _detail::buffer_builder<T>* _buffer = nullptr;
         std::size_t                       _idx    = 0;

@@ -196,6 +196,11 @@ private:
             return _cur;
         }
 
+        void set_position(iterator new_pos) noexcept
+        {
+            _cur = new_pos;
+        }
+
     private:
         explicit _sentinel_reader(iterator begin) noexcept : _cur(begin) {}
 

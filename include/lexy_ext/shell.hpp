@@ -187,6 +187,11 @@ public:
             return iterator(_shell->_buffer, _idx);
         }
 
+        void set_position(iterator new_pos) noexcept
+        {
+            _idx = new_pos.index();
+        }
+
     private:
         explicit input(shell* s) : _shell(s), _idx(0)
         {
