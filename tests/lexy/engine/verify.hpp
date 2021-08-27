@@ -30,14 +30,14 @@ auto engine_matches(const CharT* str, std::size_t size = std::size_t(-1))
                                           : lexy::string_input<Encoding>(str, size);
     auto reader = input.reader();
 
-    auto begin  = reader.cur();
+    auto begin  = reader.position();
     auto result = Matcher::match(reader);
-    auto end    = reader.cur();
+    auto end    = reader.position();
     if (result == typename Matcher::error_code())
         return engine_match_result<Matcher>{result, std::size_t(end - begin), -1};
 
     auto recovered     = Matcher::recover(reader, result);
-    auto recovered_end = reader.cur();
+    auto recovered_end = reader.position();
     return engine_match_result<Matcher>{result, std::size_t(end - begin),
                                         recovered ? int(recovered_end - end) : -1};
 }
@@ -69,15 +69,15 @@ auto engine_parses(const CharT* str)
     auto reader = input.reader();
 
     typename Parser::error_code ec{};
-    auto                        begin  = reader.cur();
+    auto                        begin  = reader.position();
     auto                        result = Parser::parse(ec, reader);
-    auto                        end    = reader.cur();
+    auto                        end    = reader.position();
     if (ec == typename Parser::error_code())
         return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin),
                                                              -1};
 
     auto recovered     = Parser::recover(reader, ec);
-    auto recovered_end = reader.cur();
+    auto recovered_end = reader.position();
     return engine_parse_result<Parser, decltype(result)>{result, ec, std::size_t(end - begin),
                                                          recovered ? int(recovered_end - end) : -1};
 }

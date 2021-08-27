@@ -87,7 +87,7 @@ struct manual_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        auto begin = reader.cur();
+        auto begin = reader.position();
         if constexpr (lexy::is_token_rule<Rule>)
         {
             // Parsing a token repeatedly cannot fail, so we can optimize it using an engine.
@@ -102,7 +102,7 @@ struct manual_ws_parser
             if (!lexy::do_action<production>(LEXY_MOV(ws_handler), reader))
                 return false;
         }
-        auto end = reader.cur();
+        auto end = reader.position();
 
         // Add a whitespace token node.
         if (begin != end)

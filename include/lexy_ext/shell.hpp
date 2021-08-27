@@ -182,7 +182,7 @@ public:
             ++_idx;
         }
 
-        auto cur() const noexcept
+        auto position() const noexcept
         {
             return iterator(_shell->_buffer, _idx);
         }

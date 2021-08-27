@@ -90,7 +90,7 @@ struct _ctx_irem : rule_base
             // check for reserved identifier, because it must match the one we've succesfully parsed
             // earlier.
             using engine = typename decltype(Identifier{}.pattern())::token_engine;
-            auto begin   = reader.cur();
+            auto begin   = reader.position();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
                 return lexy::rule_try_parse_result::backtracked;
             auto lexeme = lexy::lexeme(reader, begin);
@@ -112,7 +112,7 @@ struct _ctx_irem : rule_base
             // Again, parse pattern only.
             using pattern = decltype(Identifier{}.pattern());
             using engine  = typename decltype(Identifier{}.pattern())::token_engine;
-            auto begin    = reader.cur();
+            auto begin    = reader.position();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
             {
                 pattern::token_error(context, reader, ec, begin);

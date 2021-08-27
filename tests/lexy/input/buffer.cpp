@@ -204,19 +204,19 @@ TEST_CASE("buffer")
         const lexy::buffer buffer(str, 3);
 
         auto reader = buffer.reader();
-        CHECK(reader.cur() == buffer.data());
+        CHECK(reader.position() == buffer.data());
         CHECK(reader.peek() == 'a');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 1);
+        CHECK(reader.position() == buffer.data() + 1);
         CHECK(reader.peek() == 'b');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 2);
+        CHECK(reader.position() == buffer.data() + 2);
         CHECK(reader.peek() == 'c');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 3);
+        CHECK(reader.position() == buffer.data() + 3);
         CHECK(reader.peek() == lexy::default_encoding::eof());
     }
     SUBCASE("reader, sentinel")
@@ -224,19 +224,19 @@ TEST_CASE("buffer")
         const lexy::buffer<lexy::ascii_encoding> buffer(str, 3);
 
         auto reader = buffer.reader();
-        CHECK(reader.cur() == buffer.data());
+        CHECK(reader.position() == buffer.data());
         CHECK(reader.peek() == 'a');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 1);
+        CHECK(reader.position() == buffer.data() + 1);
         CHECK(reader.peek() == 'b');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 2);
+        CHECK(reader.position() == buffer.data() + 2);
         CHECK(reader.peek() == 'c');
 
         reader.bump();
-        CHECK(reader.cur() == buffer.data() + 3);
+        CHECK(reader.position() == buffer.data() + 3);
         CHECK(reader.peek() == lexy::default_encoding::eof());
     }
 }

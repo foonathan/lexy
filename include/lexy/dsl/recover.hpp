@@ -168,7 +168,7 @@ struct _try_recovery
                                  Args&&... args)
         {
             recovery_finished = true;
-            context.on(_ev::recovery_finish{}, reader.cur());
+            context.on(_ev::recovery_finish{}, reader.position());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -176,14 +176,14 @@ struct _try_recovery
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        context.on(_ev::recovery_start{}, reader.cur());
+        context.on(_ev::recovery_start{}, reader.position());
 
         auto recovery_finished = false;
         auto result
             = lexy::rule_parser<Recover, _continuation>::parse(context, reader, recovery_finished,
                                                                LEXY_FWD(args)...);
         if (!recovery_finished)
-            context.on(_ev::recovery_cancel{}, reader.cur());
+            context.on(_ev::recovery_cancel{}, reader.position());
         return result;
     }
 };

@@ -102,7 +102,7 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto sink       = context.on(_ev::list{}, reader.cur());
+            auto sink       = context.on(_ev::list{}, reader.position());
             bool handled[N] = {};
             using state_t   = _comb_state<decltype(sink)>;
 
@@ -113,7 +113,7 @@ struct _comb : rule_base
             // Parse all iterations of the choice.
             for (auto count = 0; count < int(N); ++count)
             {
-                auto begin = reader.cur();
+                auto begin = reader.position();
 
                 using parser = lexy::rule_parser<_comb_choice, _comb_final>;
                 if (!parser::parse(comb_context, reader))
@@ -124,7 +124,7 @@ struct _comb : rule_base
                 if (handled[state.idx])
                 {
                     using tag = lexy::_detail::type_or<DuplicateError, lexy::combination_duplicate>;
-                    auto err  = lexy::error<Reader, tag>(begin, reader.cur());
+                    auto err  = lexy::error<Reader, tag>(begin, reader.position());
                     context.on(_ev::error{}, err);
                     // We can trivially recover, but need to do another iteration.
                     --count;

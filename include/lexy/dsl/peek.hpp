@@ -57,7 +57,7 @@ struct _peek : rule_base
             if (!lexy::engine_peek<Engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
-                auto err  = lexy::error<Reader, tag>(reader.cur());
+                auto err  = lexy::error<Reader, tag>(reader.position());
                 context.on(_ev::error{}, err);
             }
 
@@ -93,9 +93,9 @@ struct _peekn : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto copy = reader;
-            if (auto begin = copy.cur(); lexy::engine_try_match<Engine>(copy))
+            if (auto begin = copy.position(); lexy::engine_try_match<Engine>(copy))
             {
-                auto end = copy.cur();
+                auto end = copy.position();
                 context.on(_ev::backtracked{}, begin, end);
 
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;

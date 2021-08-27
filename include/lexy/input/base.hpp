@@ -29,12 +29,12 @@ public:
     /// Returns an iterator to the current character.
     /// The following code must produce a valid range:
     /// ```
-    /// auto begin = reader.cur();
+    /// auto begin = reader.position();
     /// reader.bump();
     /// ... // more bumps
-    /// auto end = reader.cur();
+    /// auto end = reader.position();
     /// ```
-    iterator cur() const;
+    iterator position() const;
 };
 
 /// An Input produces a reader.
@@ -71,7 +71,7 @@ public:
         ++_cur;
     }
 
-    constexpr iterator cur() const noexcept
+    constexpr iterator position() const noexcept
     {
         return _cur;
     }
@@ -96,8 +96,8 @@ constexpr bool char_type_compatible_with_reader
 template <typename Reader>
 constexpr auto partial_reader(Reader reader, typename Reader::iterator end)
 {
-    return _detail::range_reader<typename Reader::encoding, typename Reader::iterator>(reader.cur(),
-                                                                                       end);
+    using reader_t = _detail::range_reader<typename Reader::encoding, typename Reader::iterator>;
+    return reader_t(reader.position(), end);
 }
 } // namespace lexy
 

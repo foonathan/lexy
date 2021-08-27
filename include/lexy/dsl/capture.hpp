@@ -35,7 +35,7 @@ struct _cap : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto begin = reader.cur();
+            auto begin = reader.position();
 
             using continuation = _continuation<Args...>;
             return lexy::rule_parser<Rule, continuation>::try_parse(context, reader,
@@ -45,7 +45,7 @@ struct _cap : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto begin = reader.cur();
+            auto begin = reader.position();
 
             using continuation = _continuation<Args...>;
             return lexy::rule_parser<Rule, continuation>::parse(context, reader, LEXY_FWD(args)...,

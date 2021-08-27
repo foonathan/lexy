@@ -165,9 +165,9 @@ struct discard_parser
 template <typename Matcher, typename Context, typename Reader>
 constexpr bool engine_peek(Context& context, Reader reader)
 {
-    auto begin = reader.cur();
+    auto begin = reader.position();
     auto ec    = Matcher::match(reader);
-    auto end   = reader.cur();
+    auto end   = reader.position();
 
     context.on(parse_events::backtracked{}, begin, end);
     return ec == typename Matcher::error_code{};

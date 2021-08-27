@@ -127,7 +127,7 @@ struct final_parser
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
         using event = parse_events::production_finish<typename Context::production>;
-        LEXY_MOV(context.production_context()).on(event{}, reader.cur(), LEXY_FWD(args)...);
+        LEXY_MOV(context.production_context()).on(event{}, reader.position(), LEXY_FWD(args)...);
         return true;
     }
 };
@@ -176,7 +176,7 @@ struct production_parser
     {
         auto new_context
             = context.production_context().on(parse_events::production_start<Production>{},
-                                              reader.cur());
+                                              reader.position());
         if (parse_production<Production>(new_context, reader))
         {
             // Extract the value and continue.
@@ -185,7 +185,8 @@ struct production_parser
         else
         {
             // We had an error, cancel the production.
-            LEXY_MOV(new_context).on(parse_events::production_cancel<Production>{}, reader.cur());
+            LEXY_MOV(new_context)
+                .on(parse_events::production_cancel<Production>{}, reader.position());
             return false;
         }
     }
@@ -196,7 +197,7 @@ struct production_parser
     {
         auto new_context
             = context.production_context().on(parse_events::production_start<Production>{},
-                                              reader.cur());
+                                              reader.position());
         if (auto result = try_parse_production<Production>(new_context, reader);
             result == lexy::rule_try_parse_result::ok)
         {
@@ -208,7 +209,8 @@ struct production_parser
         else
         {
             // We had an error, cancel the production.
-            LEXY_MOV(new_context).on(parse_events::production_cancel<Production>{}, reader.cur());
+            LEXY_MOV(new_context)
+                .on(parse_events::production_cancel<Production>{}, reader.position());
             return result;
         }
     }
@@ -218,13 +220,13 @@ template <typename Production, typename Handler, typename Reader>
 constexpr auto action_impl(Handler& handler, Reader& reader)
     -> lazy_init<handler_production_result<Handler, Production>>
 {
-    parse_context<Handler, Production, Production> context(handler, reader.cur());
+    parse_context<Handler, Production, Production> context(handler, reader.position());
 
     if (!parse_production<Production>(context, reader))
     {
         // We had an error, cancel the production.
         LEXY_ASSERT(!context._result, "result must be empty on cancel");
-        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.cur());
+        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
     }
 
     return LEXY_MOV(context._result);

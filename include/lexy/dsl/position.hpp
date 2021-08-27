@@ -18,7 +18,7 @@ struct _pos : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto pos = reader.cur();
+            auto pos = reader.position();
             context.on(_ev::token{}, lexy::position_token_kind, pos, pos);
             return NextParser::parse(context, reader, LEXY_FWD(args)..., pos);
         }

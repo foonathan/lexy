@@ -69,7 +69,7 @@ struct _ctx_cpush : rule_base
             LEXY_DSL_FUNC bool parse(Context& context, Reader& reader,
                                      typename Reader::iterator begin, Args&&... args)
             {
-                auto end    = reader.cur();
+                auto end    = reader.position();
                 auto length = lexy::_detail::range_size(begin, end);
 
                 context.get(Id{}) += int(length) * Sign;
@@ -82,14 +82,14 @@ struct _ctx_cpush : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            return lexy::rule_parser<Rule, _cont>::try_parse(context, reader, reader.cur(),
+            return lexy::rule_parser<Rule, _cont>::try_parse(context, reader, reader.position(),
                                                              LEXY_FWD(args)...);
         }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return lexy::rule_parser<Rule, _cont>::parse(context, reader, reader.cur(),
+            return lexy::rule_parser<Rule, _cont>::parse(context, reader, reader.position(),
                                                          LEXY_FWD(args)...);
         }
     };
@@ -162,7 +162,7 @@ struct _ctx_ceq<H, T...> : rule_base
             auto value = context.get(H{});
             if (((value != context.get(T{})) || ...))
             {
-                auto err = lexy::error<Reader, lexy::unequal_counts>(reader.cur());
+                auto err = lexy::error<Reader, lexy::unequal_counts>(reader.position());
                 context.on(_ev::error{}, err);
                 // Trivially recover.
             }

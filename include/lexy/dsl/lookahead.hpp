@@ -51,7 +51,7 @@ struct _look : rule_base
             if (!lexy::engine_peek<engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
-                auto err  = lexy::error<Reader, tag>(reader.cur());
+                auto err  = lexy::error<Reader, tag>(reader.position());
                 context.on(_ev::error{}, err);
             }
 

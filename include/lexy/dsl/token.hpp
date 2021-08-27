@@ -50,13 +50,13 @@ struct token_base : _token_base
         {
             using token_engine = typename Derived::token_engine;
 
-            auto begin = reader.cur();
+            auto begin = reader.position();
             if (!lexy::engine_try_match<token_engine>(reader))
             {
-                context.on(_ev::backtracked{}, begin, reader.cur());
+                context.on(_ev::backtracked{}, begin, reader.position());
                 return lexy::rule_try_parse_result::backtracked;
             }
-            auto end = reader.cur();
+            auto end = reader.position();
             context.on(_ev::token{}, Derived::token_kind(), begin, end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -69,7 +69,7 @@ struct token_base : _token_base
         {
             using token_engine = typename Derived::token_engine;
 
-            auto position = reader.cur();
+            auto position = reader.position();
             if constexpr (lexy::engine_can_fail<token_engine, Reader>)
             {
                 if (auto ec = token_engine::match(reader);
@@ -83,7 +83,7 @@ struct token_base : _token_base
             {
                 token_engine::match(reader);
             }
-            context.on(_ev::token{}, Derived::token_kind(), position, reader.cur());
+            context.on(_ev::token{}, Derived::token_kind(), position, reader.position());
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...);
@@ -127,7 +127,7 @@ struct _toke : token_base<_toke<Tag, Token>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::error<Reader, Tag>(pos, reader.cur());
+        auto err = lexy::error<Reader, Tag>(pos, reader.position());
         context.on(_ev::error{}, err);
     }
 

@@ -87,7 +87,7 @@ TEST_CASE("as_string")
         auto input  = lexy::zstring_input("abc");
         auto reader = input.reader();
 
-        auto begin = reader.cur();
+        auto begin = reader.position();
         reader.bump();
         reader.bump();
         reader.bump();
@@ -98,7 +98,7 @@ TEST_CASE("as_string")
         auto input  = lexy::zstring_input<lexy::byte_encoding>("abc");
         auto reader = input.reader();
 
-        auto begin = reader.cur();
+        auto begin = reader.position();
         reader.bump();
         reader.bump();
         reader.bump();

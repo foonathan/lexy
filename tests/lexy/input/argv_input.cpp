@@ -155,7 +155,7 @@ TEST_CASE("argv_input")
     auto             reader = input.reader();
 
     CHECK(reader.peek() == 'a');
-    CHECK(reader.cur() == lexy::argv_begin(argc, argv));
+    CHECK(reader.position() == lexy::argv_begin(argc, argv));
 
     reader.bump();
     CHECK(reader.peek() == 'b');
@@ -174,6 +174,6 @@ TEST_CASE("argv_input")
 
     reader.bump();
     CHECK(reader.peek() == lexy::default_encoding::eof());
-    CHECK(reader.cur() == lexy::argv_end(argc, argv));
+    CHECK(reader.position() == lexy::argv_end(argc, argv));
 }
 

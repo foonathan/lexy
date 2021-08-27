@@ -191,7 +191,7 @@ private:
             ++_cur;
         }
 
-        iterator cur() const noexcept
+        iterator position() const noexcept
         {
             return _cur;
         }

@@ -41,7 +41,7 @@ struct engine_minus : lexy::engine_matcher_base
             return error_from_matcher(ec);
 
         // Then check whether Except matches on the same input.
-        if (auto partial = lexy::partial_reader(save, reader.cur());
+        if (auto partial = lexy::partial_reader(save, reader.position());
             lexy::engine_try_match<Except>(partial) && partial.peek() == Reader::encoding::eof())
             // They did, so we don't match.
             return error_code::minus_failure;

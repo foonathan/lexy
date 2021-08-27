@@ -339,7 +339,7 @@ struct _int : rule_base
                                      typename Reader::iterator begin, Args&&... args)
             {
                 failed   = false;
-                auto end = reader.cur();
+                auto end = reader.position();
 
                 auto result = typename IntParser::result_type(0);
                 if (!IntParser::parse(result, begin, end))
@@ -359,7 +359,7 @@ struct _int : rule_base
         {
             auto failed = true; // doesn't matter
             return lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
-                                                                     reader.cur(),
+                                                                     reader.position(),
                                                                      LEXY_FWD(args)...);
         }
 
@@ -367,7 +367,7 @@ struct _int : rule_base
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto failed = true;
-            auto begin  = reader.cur();
+            auto begin  = reader.position();
 
             // Parse the digits rule with the special continuation.
             auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
@@ -380,7 +380,7 @@ struct _int : rule_base
             else
             {
                 // Recover.
-                context.on(_ev::recovery_start{}, reader.cur());
+                context.on(_ev::recovery_start{}, reader.position());
                 if constexpr (std::is_void_v<Sep>)
                 {
                     while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader))
@@ -392,7 +392,7 @@ struct _int : rule_base
                            || lexy::engine_try_match<typename Sep::token_engine>(reader))
                     {}
                 }
-                context.on(_ev::recovery_finish{}, reader.cur());
+                context.on(_ev::recovery_finish{}, reader.position());
 
                 // Now try to convert this to an integer.
                 return _continuation::parse(context, reader, failed, begin, LEXY_FWD(args)...);

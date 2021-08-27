@@ -114,7 +114,7 @@ struct _id : rule_base
 
                 auto id_reader = lexy::partial_reader(saved_reader, end);
                 if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
-                    && id_reader.cur() == end)
+                    && id_reader.position() == end)
                 {
                     // We found a reserved identifier.
                     auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
@@ -138,13 +138,13 @@ struct _id : rule_base
 
             // Trie to parse the pattern.
             [[maybe_unused]] auto saved_reader = reader;
-            auto                  begin        = reader.cur();
+            auto                  begin        = reader.position();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
             {
-                context.on(_ev::backtracked{}, begin, reader.cur());
+                context.on(_ev::backtracked{}, begin, reader.position());
                 return lexy::rule_try_parse_result::backtracked;
             }
-            auto end = reader.cur();
+            auto end = reader.position();
 
             // Check for reserved patterns, etc.
             return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...)
@@ -160,13 +160,13 @@ struct _id : rule_base
 
             // Parse the pattern.
             [[maybe_unused]] auto saved_reader = reader;
-            auto                  begin        = reader.cur();
+            auto                  begin        = reader.position();
             if (auto ec = engine::match(reader); ec != typename engine::error_code())
             {
                 pattern::token_error(context, reader, ec, begin);
                 return false;
             }
-            auto end = reader.cur();
+            auto end = reader.position();
 
             // Check for reserved patterns, etc.
             return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...);
@@ -287,7 +287,7 @@ struct _kw : token_base<_kw<String, Id>>
 
         // Find the range of the identifier.
         auto begin = pos;
-        if (begin == reader.cur())
+        if (begin == reader.position())
         {
             // We failed at the first character, need to match the identifier as normal.
             using id_engine = typename decltype(Id{}.pattern())::token_engine;
@@ -299,7 +299,7 @@ struct _kw : token_base<_kw<String, Id>>
             using trailing_engine = typename decltype(Id{}.trailing_pattern())::token_engine;
             lexy::engine_while<trailing_engine>::match(reader);
         }
-        auto end = reader.cur();
+        auto end = reader.position();
 
         auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
         context.on(_ev::error{}, err);

@@ -13,7 +13,7 @@ TEST_CASE("partial_reader()")
     auto end   = input.data() + 2;
 
     auto partial = lexy::partial_reader(input.reader(), end);
-    CHECK(partial.cur() == input.data());
+    CHECK(partial.position() == input.data());
     CHECK(partial.peek() == 'a');
 
     partial.bump();

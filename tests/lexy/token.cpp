@@ -152,7 +152,7 @@ TEST_CASE("token")
     auto lexeme = [&] {
         auto reader = input.reader();
 
-        auto begin = reader.cur();
+        auto begin = reader.position();
         reader.bump();
         reader.bump();
         reader.bump();

@@ -69,7 +69,7 @@ public:
         /// The entire line that contains the position.
         constexpr lexy::lexeme_for<Input> context() const
         {
-            return {_reader.cur(), _eol};
+            return {_reader.position(), _eol};
         }
 
         /// The newline after the line, if there is any.
@@ -77,11 +77,11 @@ public:
         {
             auto reader = _reader;
             // Advance to EOl.
-            while (reader.cur() != _eol)
+            while (reader.position() != _eol)
                 reader.bump();
             // Bump newline.
             lexy::engine_try_match<engine_line>(reader);
-            return {_eol, reader.cur()};
+            return {_eol, reader.position()};
         }
 
     private:
@@ -94,7 +94,7 @@ public:
                 if (reader.peek() == decltype(reader)::encoding::eof()
                     || lexy::engine_peek<engine_line>(reader))
                 {
-                    _eol = reader.cur();
+                    _eol = reader.position();
                     break;
                 }
             }
@@ -133,7 +133,7 @@ public:
         // Find the given position.
         while (true)
         {
-            if (reader.cur() == pos)
+            if (reader.position() == pos)
             {
                 // We found the position of the error.
                 break;

@@ -215,7 +215,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
     {
         if (ec == token_engine::error_code::leading_zero)
         {
-            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.position());
             context.on(_ev::error{}, err);
         }
         else
@@ -259,7 +259,7 @@ struct _digits_t : token_base<_digits_t<Base>>
     {
         if (ec == token_engine::error_code::leading_zero)
         {
-            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.position());
             context.on(_ev::error{}, err);
         }
         else

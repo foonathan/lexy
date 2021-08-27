@@ -30,7 +30,7 @@ struct _until : token_base<_until<Condition>>
         // We don't pass the passed position, as this would be the beginning of until.
         // Instead we always use the current reader position (i.e. EOF) as that's where the
         // condition is missing.
-        Condition::token_error(context, reader, ec, reader.cur());
+        Condition::token_error(context, reader, ec, reader.position());
     }
 
     /// Also accepts EOF as the closing condition.

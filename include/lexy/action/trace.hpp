@@ -32,7 +32,7 @@ struct _debug
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::debug_event{}, reader.cur(), String::get().c_str());
+            context.on(_ev::debug_event{}, reader.position(), String::get().c_str());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };

@@ -65,7 +65,7 @@ struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>>
                 auto copy = reader;
                 if (!lexy::engine_try_match<decltype(engine)>(copy))
                     return false;
-                auto length = lexy::_detail::range_size(reader.cur(), copy.cur());
+                auto length = lexy::_detail::range_size(reader.position(), copy.position());
 
                 // Update previous maximum.
                 if (length > longest_match)

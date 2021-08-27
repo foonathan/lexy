@@ -50,7 +50,7 @@ struct _list_sink
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, lexy::_detail::lazy_init<Sink>& sink,
                              Args&&... args)
     {
-        auto& cb = sink.emplace(context.on(_ev::list{}, reader.cur()));
+        auto& cb = sink.emplace(context.on(_ev::list{}, reader.position()));
         if constexpr (sizeof...(Args) > 0)
             cb(LEXY_FWD(args)...);
         return true;
@@ -67,7 +67,7 @@ struct _list_loop
         while (true)
         {
             // Try parsing the separator.
-            auto sep_pos     = reader.cur();
+            auto sep_pos     = reader.position();
             using sep_parser = lexy::rule_parser<typename Sep::rule, _list_sink>;
             if (auto result = sep_parser::try_parse(context, reader, sink);
                 result == lexy::rule_try_parse_result::backtracked)
@@ -154,7 +154,7 @@ struct _report_recovery_finish
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        context.on(_ev::recovery_finish{}, reader.cur());
+        context.on(_ev::recovery_finish{}, reader.position());
         return NextParser::parse(context, reader, LEXY_FWD(args)...);
     }
 };
@@ -196,7 +196,7 @@ struct _list_loop_term
             = lexy::rule_parser<Term,
                                 _report_recovery_finish<_list_finish<NextParser, PrevArgs...>>>;
 
-        auto sep_pos = reader.cur();
+        auto sep_pos = reader.position();
         while (true)
         {
             switch (state)
@@ -215,7 +215,7 @@ struct _list_loop_term
             case state::separator:
                 if constexpr (!std::is_void_v<Sep>)
                 {
-                    sep_pos = reader.cur();
+                    sep_pos = reader.position();
 
                     if (sep_parser::parse(context, reader, sink))
                     {
@@ -223,7 +223,7 @@ struct _list_loop_term
                         state = state::separator_trailing_check;
                         break;
                     }
-                    else if (reader.cur() == sep_pos)
+                    else if (reader.position() == sep_pos)
                     {
                         // We didn't have a separator at all.
                         // Check whether we have an item instead (if that's possible).
@@ -301,19 +301,19 @@ struct _list_loop_term
                 break;
 
             case state::recovery:
-                context.on(_ev::recovery_start{}, reader.cur());
+                context.on(_ev::recovery_start{}, reader.position());
                 while (true)
                 {
                     // Recovery succeeds when we reach the next separator.
                     if constexpr (!std::is_void_v<Sep>)
                     {
-                        sep_pos = reader.cur();
+                        sep_pos = reader.position();
 
                         if (auto result = sep_parser::try_parse(context, reader, sink);
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the trailing separator check.
-                            context.on(_ev::recovery_finish{}, reader.cur());
+                            context.on(_ev::recovery_finish{}, reader.position());
                             state = state::separator_trailing_check;
                             break;
                         }
@@ -333,7 +333,7 @@ struct _list_loop_term
                             result == lexy::rule_try_parse_result::ok)
                         {
                             // Continue the list with the next terminator check.
-                            context.on(_ev::recovery_finish{}, reader.cur());
+                            context.on(_ev::recovery_finish{}, reader.position());
                             state = state::terminator;
                             break;
                         }
@@ -355,7 +355,7 @@ struct _list_loop_term
                     using limit = typename decltype(RecoveryLimit{}.get_limit())::token_engine;
                     if (lexy::engine_peek<limit>(reader))
                     {
-                        context.on(_ev::recovery_cancel{}, reader.cur());
+                        context.on(_ev::recovery_cancel{}, reader.position());
                         return false;
                     }
 
@@ -387,7 +387,7 @@ struct _lst : rule_base
             -> lexy::rule_try_parse_result
         {
             // We construct the sink lazily only if the branch is taken.
-            using sink_t = std::decay_t<decltype(context.on(_ev::list{}, reader.cur()))>;
+            using sink_t = std::decay_t<decltype(context.on(_ev::list{}, reader.position()))>;
             lexy::_detail::lazy_init<sink_t> sink;
 
             // Try parsing the initial item.
@@ -408,7 +408,7 @@ struct _lst : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.on(_ev::list{}, reader.cur());
+            auto sink = context.on(_ev::list{}, reader.position());
 
             // Parse the initial item.
             using item_parser = typename lexy::rule_parser<Item, _list_sink>;
@@ -459,7 +459,7 @@ struct _lstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.on(_ev::list{}, reader.cur());
+            auto sink = context.on(_ev::list{}, reader.position());
 
             // Parse initial item.
             using item_parser = typename lexy::rule_parser<Item, _list_sink>;
@@ -482,7 +482,7 @@ struct _olstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.on(_ev::list{}, reader.cur());
+            auto sink = context.on(_ev::list{}, reader.position());
 
             // Try parsing the terminator.
             using term_parser = lexy::rule_parser<Term, NextParser>;

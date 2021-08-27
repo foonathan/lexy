@@ -244,14 +244,14 @@ struct _sym : rule_base
             LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Reader save,
                                          Args&&... args) -> lexy::rule_try_parse_result
             {
-                auto rule_content = lexy::partial_reader(save, reader.cur());
+                auto rule_content = lexy::partial_reader(save, reader.position());
 
                 // We now re-parse what the rule has consumed.
                 auto idx = Table.try_parse(rule_content);
                 if (!idx || rule_content.peek() != Reader::encoding::eof())
                 {
                     // Unknown symbol; backtrack.
-                    context.on(_ev::backtracked{}, save.cur(), reader.cur());
+                    context.on(_ev::backtracked{}, save.position(), reader.position());
                     reader = LEXY_MOV(save);
                     return lexy::rule_try_parse_result::backtracked;
                 }
@@ -264,8 +264,8 @@ struct _sym : rule_base
             template <typename Context, typename Reader, typename... Args>
             LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&... args)
             {
-                auto begin  = save.cur();
-                auto end    = reader.cur();
+                auto begin  = save.position();
+                auto end    = reader.position();
                 auto result = try_parse(context, reader, save, LEXY_FWD(args)...);
                 if (result == lexy::rule_try_parse_result::backtracked)
                 {
@@ -338,14 +338,14 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
             if (!idx || lexy::engine_peek<trailing_engine>(reader))
             {
                 // We didn't have a symbol, so backtrack.
-                context.on(_ev::backtracked{}, save.cur(), reader.cur());
+                context.on(_ev::backtracked{}, save.position(), reader.position());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, _idp<L, T>::token_kind(), save.cur(), reader.cur());
+            context.on(_ev::token{}, _idp<L, T>::token_kind(), save.position(), reader.position());
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
                 continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
@@ -356,7 +356,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
         {
             using trailing_engine = typename T::token_engine;
 
-            auto begin = reader.cur();
+            auto begin = reader.position();
             auto idx   = Table.try_parse(reader);
             // We need a symbol and it must not be the prefix of an identifier.
             if (!idx || lexy::engine_peek<trailing_engine>(reader))
@@ -366,7 +366,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                 // Otherwise, we don't call `context.on(_ev::token{}, )` or have the same end as the
                 // non-optimized symbol parser.
 
-                if (begin == reader.cur())
+                if (begin == reader.position())
                 {
                     // We need to parse the entire identifier from scratch.
                     // The identifier pattern does not produce a value, so we can safely discard.
@@ -380,9 +380,9 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                     // We're having a prefix of a valid identifier.
                     // As an additional optimization, just need to parse the remaining characters.
                     lexy::engine_while<trailing_engine>::match(reader);
-                    context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, reader.cur());
+                    context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, reader.position());
                 }
-                auto end = reader.cur();
+                auto end = reader.position();
 
                 // Now we can report the erorr.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
@@ -390,7 +390,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                 context.on(_ev::error{}, err);
                 return false;
             }
-            auto end = reader.cur();
+            auto end = reader.position();
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
@@ -424,14 +424,15 @@ struct _sym<Table, void, Tag> : rule_base
             if (!idx)
             {
                 // We didn't have a symbol, so backtrack.
-                context.on(_ev::backtracked{}, save.cur(), reader.cur());
+                context.on(_ev::backtracked{}, save.position(), reader.position());
                 reader = LEXY_MOV(save);
                 return lexy::rule_try_parse_result::backtracked;
             }
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, lexy::identifier_token_kind, save.cur(), reader.cur());
+            context.on(_ev::token{}, lexy::identifier_token_kind, save.position(),
+                       reader.position());
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
                 continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
@@ -440,7 +441,7 @@ struct _sym<Table, void, Tag> : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto begin = reader.cur();
+            auto begin = reader.position();
             auto idx   = Table.try_parse(reader);
             if (!idx)
             {
@@ -450,7 +451,7 @@ struct _sym<Table, void, Tag> : rule_base
                 context.on(_ev::error{}, err);
                 return false;
             }
-            auto end = reader.cur();
+            auto end = reader.position();
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.

@@ -49,7 +49,7 @@ TEST_CASE("range_input")
     lexy::range_input<lexy::default_encoding, test_iterator, test_sentinel> input;
     CHECK(sizeof(input) == (LEXY_HAS_EMPTY_MEMBER ? sizeof(int) : 2 * sizeof(int)));
 
-    CHECK(input.reader().cur().count == 0);
+    CHECK(input.reader().position().count == 0);
     CHECK(input.reader().peek() == lexy::default_encoding::eof());
 
     input = lexy::range_input(test_iterator{3}, test_sentinel{});
@@ -57,19 +57,19 @@ TEST_CASE("range_input")
     CHECK(input.end() == test_iterator{0});
 
     auto reader = input.reader();
-    CHECK(reader.cur().count == 3);
+    CHECK(reader.position().count == 3);
     CHECK(reader.peek() == 'a');
 
     reader.bump();
-    CHECK(reader.cur().count == 2);
+    CHECK(reader.position().count == 2);
     CHECK(reader.peek() == 'a');
 
     reader.bump();
-    CHECK(reader.cur().count == 1);
+    CHECK(reader.position().count == 1);
     CHECK(reader.peek() == 'a');
 
     reader.bump();
-    CHECK(reader.cur().count == 0);
+    CHECK(reader.position().count == 0);
     CHECK(reader.peek() == lexy::default_encoding::eof());
 }
 

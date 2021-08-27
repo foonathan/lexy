@@ -28,7 +28,7 @@ public:
     {}
 
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
-    : _begin(begin), _end(reader.cur())
+    : _begin(begin), _end(reader.position())
     {}
 
     constexpr bool empty() const noexcept

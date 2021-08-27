@@ -37,23 +37,23 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
     using engine = typename Char::token_engine;
     if constexpr (lexy::engine_can_fail<engine, Reader>)
     {
-        auto content_begin = reader.cur();
+        auto content_begin = reader.position();
         if (auto ec = engine::match(reader); ec != typename engine::error_code())
         {
             Char::token_error(context, reader, ec, content_begin);
             // Repeat loop if we've recovered.
             return engine::recover(reader, ec);
         }
-        auto content_end = reader.cur();
+        auto content_end = reader.position();
 
         context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
     }
     else
     {
-        auto content_begin = reader.cur();
+        auto content_begin = reader.position();
         engine::match(reader);
-        auto content_end = reader.cur();
+        auto content_end = reader.position();
 
         context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
@@ -71,8 +71,8 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink      = context.on(_ev::list{}, reader.cur());
-            auto del_begin = reader.cur();
+            auto sink      = context.on(_ev::list{}, reader.position());
+            auto del_begin = reader.position();
 
             using close = lexy::rule_parser<Close, _list_finish<NextParser, Args...>>;
             while (true)
@@ -87,8 +87,8 @@ struct _del : rule_base
                 // Check for missing closing delimiter.
                 else if (lexy::engine_peek<typename Limit::token_engine>(reader))
                 {
-                    auto err
-                        = lexy::error<Reader, lexy::missing_delimiter>(del_begin, reader.cur());
+                    auto err = lexy::error<Reader, lexy::missing_delimiter>(del_begin,
+                                                                            reader.position());
                     context.on(_ev::error{}, err);
                     return false;
                 }
@@ -222,10 +222,10 @@ struct _escape_cap : rule_base
         LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
             -> lexy::rule_try_parse_result
         {
-            auto begin = reader.cur();
+            auto begin = reader.position();
             if (!lexy::engine_try_match<Engine>(reader))
             {
-                context.on(_ev::backtracked{}, begin, reader.cur());
+                context.on(_ev::backtracked{}, begin, reader.position());
                 return lexy::rule_try_parse_result::backtracked;
             }
 

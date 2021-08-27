@@ -23,13 +23,13 @@ struct _err : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&...)
         {
-            auto begin = reader.cur();
-            auto end   = reader.cur();
+            auto begin = reader.position();
+            auto end   = reader.position();
             if constexpr (!std::is_same_v<Token, void>)
             {
                 auto copy = reader;
                 Token::token_engine::match(copy);
-                end = copy.cur();
+                end = copy.position();
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);
