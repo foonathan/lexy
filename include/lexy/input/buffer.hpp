@@ -177,9 +177,8 @@ private:
     class _sentinel_reader
     {
     public:
-        using encoding         = Encoding;
-        using iterator         = const char_type*;
-        using canonical_reader = _sentinel_reader;
+        using encoding = Encoding;
+        using iterator = const char_type*;
 
         auto peek() const noexcept
         {

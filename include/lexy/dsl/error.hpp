@@ -32,7 +32,7 @@ struct _err : rule_base
                 end = copy.cur();
             }
 
-            auto err = lexy::make_error<Reader, Tag>(begin, end);
+            auto err = lexy::error<Reader, Tag>(begin, end);
             context.on(_ev::error{}, err);
             return false;
         }

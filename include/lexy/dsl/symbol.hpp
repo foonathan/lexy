@@ -271,7 +271,7 @@ struct _sym : rule_base
                 {
                     // Handle the error.
                     using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                    auto err  = lexy::make_error<Reader, tag>(begin, end);
+                    auto err  = lexy::error<Reader, tag>(begin, end);
                     context.on(_ev::error{}, err);
                     return false;
                 }
@@ -386,7 +386,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 
                 // Now we can report the erorr.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                auto err  = lexy::make_error<Reader, tag>(begin, end);
+                auto err  = lexy::error<Reader, tag>(begin, end);
                 context.on(_ev::error{}, err);
                 return false;
             }
@@ -446,7 +446,7 @@ struct _sym<Table, void, Tag> : rule_base
             {
                 // We didn't have a symbol.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                auto err  = lexy::make_error<Reader, tag>(begin);
+                auto err  = lexy::error<Reader, tag>(begin);
                 context.on(_ev::error{}, err);
                 return false;
             }

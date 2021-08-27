@@ -19,10 +19,6 @@ public:
     /// An iterator of char_type, not int_type.
     using iterator = ForwardIterator;
 
-    /// A reader with the same encoding and iterator that is used for reporting errors/lexemes.
-    /// If you're writing an Input, the Input's Reader is always canonical.
-    using canonical_reader = Reader;
-
     /// If the reader is at eof, returns Encoding::eof().
     /// Otherwise, returns Encoding::to_int_type(/* current character */).
     typename Encoding::int_type peek() const;
@@ -56,9 +52,8 @@ template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
 class range_reader
 {
 public:
-    using encoding         = Encoding;
-    using iterator         = Iterator;
-    using canonical_reader = range_reader<Encoding, Iterator, Sentinel>;
+    using encoding = Encoding;
+    using iterator = Iterator;
 
     constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {}
@@ -97,21 +92,12 @@ constexpr bool char_type_compatible_with_reader
     = (std::is_same_v<CharT, typename Reader::encoding::char_type>)
       || Reader::encoding::template is_secondary_char_type<CharT>();
 
-template <typename Reader>
-constexpr bool is_canonical_reader = std::is_same_v<typename Reader::canonical_reader, Reader>;
-
 /// Creates a reader that only reads until the given end.
 template <typename Reader>
 constexpr auto partial_reader(Reader reader, typename Reader::iterator end)
 {
-    struct partial_reader_t
-    : _detail::range_reader<typename Reader::encoding, typename Reader::iterator>
-    {
-        using canonical_reader = Reader;
-        using _detail::range_reader<typename Reader::encoding,
-                                    typename Reader::iterator>::range_reader;
-    };
-    return partial_reader_t(reader.cur(), end);
+    return _detail::range_reader<typename Reader::encoding, typename Reader::iterator>(reader.cur(),
+                                                                                       end);
 }
 } // namespace lexy
 

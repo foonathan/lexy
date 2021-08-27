@@ -64,13 +64,13 @@ struct _cp : token_base<_cp<Predicate>>
         if (ec == token_engine::error_code::invalid)
         {
             auto name = lexy::_detail::type_name<Predicate>();
-            auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
+            auto err  = lexy::error<Reader, lexy::expected_char_class>(pos, name);
             context.on(_ev::error{}, err);
         }
         else
         {
             auto name = _cp_name<typename Reader::encoding>();
-            auto err  = lexy::make_error<Reader, lexy::expected_char_class>(pos, name);
+            auto err  = lexy::error<Reader, lexy::expected_char_class>(pos, name);
             context.on(_ev::error{}, err);
         }
     }

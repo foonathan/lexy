@@ -191,7 +191,7 @@ struct _argvsep : token_base<_argvsep>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "argv-separator");
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "argv-separator");
         context.on(_ev::error{}, err);
     }
 };

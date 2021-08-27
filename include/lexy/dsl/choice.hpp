@@ -36,7 +36,7 @@ struct _chc_parser<NextParser>
     template <typename Context, typename Reader, typename... Args>
     LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&...)
     {
-        auto err = lexy::make_error<Reader, lexy::exhausted_choice>(reader.cur());
+        auto err = lexy::error<Reader, lexy::exhausted_choice>(reader.cur());
         context.on(_ev::error{}, err);
         return false;
     }

@@ -124,7 +124,7 @@ struct _ctx_irem : rule_base
             if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
-                auto err  = lexy::make_error<Reader, tag>(lexeme.begin(), lexeme.end());
+                auto err  = lexy::error<Reader, tag>(lexeme.begin(), lexeme.end());
                 context.on(_ev::error{}, err);
                 // We can trivially recover, as we still had a valid identifier.
             }

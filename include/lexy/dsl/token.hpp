@@ -127,7 +127,7 @@ struct _toke : token_base<_toke<Tag, Token>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, Tag>(pos, reader.cur());
+        auto err = lexy::error<Reader, Tag>(pos, reader.cur());
         context.on(_ev::error{}, err);
     }
 
@@ -169,7 +169,7 @@ struct _token : token_base<_token<Rule>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::missing_token>(pos);
+        auto err = lexy::error<Reader, lexy::missing_token>(pos);
         context.on(_ev::error{}, err);
     }
 };

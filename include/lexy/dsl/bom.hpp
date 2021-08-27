@@ -103,7 +103,7 @@ struct _bom : token_base<_bom<Encoding, Endianness>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, string::name);
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, string::name);
         context.on(_ev::error{}, err);
     }
 };

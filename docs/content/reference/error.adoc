@@ -6,7 +6,6 @@ entities:
   "lexy::expected_literal": expected_literal
   "lexy::expected_keyword": expected_keyword
   "lexy::expected_char_class": expected_char_class
-  "lexy::make_error": make_error
   "lexy::error_context": error_context
 ---
 
@@ -192,21 +191,6 @@ The error can be raised while trying to parse the character class with the human
 This happens in rules like {{% docref "lexy::dsl::ascii" %}} or {{% docref "lexy::dsl::digit" %}}.
 
 {{% playground-example "expected_char_class" "`dsl::digit` raises an expected char class error" %}}
-
-[#make_error]
-== Function `lexy::make_error`
-
-{{% interface %}}
-----
-namespace lexy
-{
-    template <_reader_ Reader, typename Tag, typename ... Args>
-    constexpr auto make_error(Args&&... args);
-}
-----
-
-[.lead]
-Construct `lexy::error<Reader, Tag>` by forwarding the arguments.
 
 [#error_context]
 == Class `lexy::error_context`

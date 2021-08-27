@@ -41,7 +41,7 @@ struct _sep
     LEXY_DSL_FUNC void report_trailing_error(Context&                  context, Reader&,
                                              typename Reader::iterator sep_pos)
     {
-        auto err = lexy::make_error<Reader, Tag>(sep_pos);
+        auto err = lexy::error<Reader, Tag>(sep_pos);
         context.on(_ev::error{}, err);
     }
 

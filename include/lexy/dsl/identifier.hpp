@@ -117,7 +117,7 @@ struct _id : rule_base
                     && id_reader.cur() == end)
                 {
                     // We found a reserved identifier.
-                    auto err = lexy::make_error<Reader, lexy::reserved_identifier>(begin, end);
+                    auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
                     context.on(_ev::error{}, err);
                     // But we can trivially recover, as we've still matched a well-formed
                     // identifier.
@@ -301,7 +301,7 @@ struct _kw : token_base<_kw<String, Id>>
         }
         auto end = reader.cur();
 
-        auto err = lexy::make_error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
+        auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
         context.on(_ev::error{}, err);
     }
 };

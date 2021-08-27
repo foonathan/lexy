@@ -159,7 +159,7 @@ struct _zero : token_base<_zero>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "digit.zero");
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "digit.zero");
         context.on(_ev::error{}, err);
     }
 };
@@ -177,7 +177,7 @@ struct _digit : token_base<_digit<Base>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
         context.on(_ev::error{}, err);
     }
 };
@@ -215,12 +215,12 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
     {
         if (ec == token_engine::error_code::leading_zero)
         {
-            auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
             context.on(_ev::error{}, err);
         }
         else
         {
-            auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
             context.on(_ev::error{}, err);
         }
     }
@@ -237,7 +237,7 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
         context.on(_ev::error{}, err);
     }
 
@@ -259,12 +259,12 @@ struct _digits_t : token_base<_digits_t<Base>>
     {
         if (ec == token_engine::error_code::leading_zero)
         {
-            auto err = lexy::make_error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
+            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.cur());
             context.on(_ev::error{}, err);
         }
         else
         {
-            auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
             context.on(_ev::error{}, err);
         }
     }
@@ -287,7 +287,7 @@ struct _digits : token_base<_digits<Base>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
         context.on(_ev::error{}, err);
     }
 
@@ -326,7 +326,7 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
         context.on(_ev::error{}, err);
     }
 };
@@ -343,7 +343,7 @@ struct _ndigits : token_base<_ndigits<N, Base>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, Base::name());
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
         context.on(_ev::error{}, err);
     }
 

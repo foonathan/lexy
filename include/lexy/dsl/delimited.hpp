@@ -87,8 +87,8 @@ struct _del : rule_base
                 // Check for missing closing delimiter.
                 else if (lexy::engine_peek<typename Limit::token_engine>(reader))
                 {
-                    auto err = lexy::make_error<Reader, lexy::missing_delimiter>(del_begin,
-                                                                                 reader.cur());
+                    auto err
+                        = lexy::error<Reader, lexy::missing_delimiter>(del_begin, reader.cur());
                     context.on(_ev::error{}, err);
                     return false;
                 }

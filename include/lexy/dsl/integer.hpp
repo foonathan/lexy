@@ -341,13 +341,13 @@ struct _int : rule_base
                 failed   = false;
                 auto end = reader.cur();
 
-                using tag        = lexy::_detail::type_or<Tag, lexy::integer_overflow>;
-                using error_type = lexy::error<typename Reader::canonical_reader, tag>;
-
                 auto result = typename IntParser::result_type(0);
                 if (!IntParser::parse(result, begin, end))
+                {
                     // Raise error but recover.
-                    context.on(_ev::error{}, error_type(begin, end));
+                    using tag = lexy::_detail::type_or<Tag, lexy::integer_overflow>;
+                    context.on(_ev::error{}, lexy::error<Reader, tag>(begin, end));
+                }
 
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
             }

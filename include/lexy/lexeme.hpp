@@ -16,8 +16,6 @@ namespace lexy
 template <typename Reader>
 class lexeme
 {
-    static_assert(is_canonical_reader<Reader>, "lexeme must take the canonical reader");
-
 public:
     using encoding  = typename Reader::encoding;
     using char_type = typename encoding::char_type;

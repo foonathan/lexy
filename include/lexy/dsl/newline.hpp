@@ -23,7 +23,7 @@ struct _nl : token_base<_nl>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "newline");
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "newline");
         context.on(_ev::error{}, err);
     }
 };
@@ -59,7 +59,7 @@ struct _eol : token_base<_eol>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOL");
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "EOL");
         context.on(_ev::error{}, err);
     }
 };

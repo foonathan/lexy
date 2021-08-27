@@ -123,7 +123,7 @@ struct _alt : token_base<_alt<Tokens...>>
                                       typename token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::exhausted_alternatives>(pos);
+        auto err = lexy::error<Reader, lexy::exhausted_alternatives>(pos);
         context.on(_ev::error{}, err);
     }
 };

@@ -25,7 +25,7 @@ struct _eof : token_base<_eof>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
     {
-        auto err = lexy::make_error<Reader, lexy::expected_char_class>(pos, "EOF");
+        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "EOF");
         context.on(_ev::error{}, err);
     }
 };

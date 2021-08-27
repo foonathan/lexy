@@ -57,7 +57,7 @@ struct _peek : rule_base
             if (!lexy::engine_peek<Engine>(context, reader))
             {
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
-                auto err  = lexy::make_error<Reader, tag>(reader.cur());
+                auto err  = lexy::error<Reader, tag>(reader.cur());
                 context.on(_ev::error{}, err);
             }
 
@@ -99,7 +99,7 @@ struct _peekn : rule_base
                 context.on(_ev::backtracked{}, begin, end);
 
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::make_error<Reader, tag>(begin, end);
+                auto err  = lexy::error<Reader, tag>(begin, end);
                 context.on(_ev::error{}, err);
             }
 
