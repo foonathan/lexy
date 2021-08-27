@@ -181,11 +181,6 @@ private:
         using iterator         = const char_type*;
         using canonical_reader = _sentinel_reader;
 
-        bool eof() const noexcept
-        {
-            return *_cur == encoding::eof();
-        }
-
         auto peek() const noexcept
         {
             // The last one will be EOF.

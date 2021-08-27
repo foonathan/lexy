@@ -248,7 +248,7 @@ struct _sym : rule_base
 
                 // We now re-parse what the rule has consumed.
                 auto idx = Table.try_parse(rule_content);
-                if (!idx || !rule_content.eof())
+                if (!idx || rule_content.peek() != Reader::encoding::eof())
                 {
                     // Unknown symbol; backtrack.
                     context.on(_ev::backtracked{}, save.cur(), reader.cur());

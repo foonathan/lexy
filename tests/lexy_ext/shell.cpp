@@ -88,19 +88,15 @@ TEST_CASE("shell")
     {
         auto input  = shell.prompt_for_input();
         auto reader = input.reader();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'a');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'b');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'c');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == '\n');
 
         CHECK(shell.get_prompt().max_lines == 2);
@@ -110,23 +106,18 @@ TEST_CASE("shell")
     {
         auto input  = shell.prompt_for_input();
         auto reader = input.reader();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'a');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'b');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'c');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == '\n');
 
         reader.bump();
-        CHECK(!reader.eof());
         CHECK(reader.peek() == 'a');
 
         CHECK(shell.get_prompt().max_lines == 0);
@@ -136,7 +127,7 @@ TEST_CASE("shell")
     {
         auto input  = shell.prompt_for_input();
         auto reader = input.reader();
-        CHECK(reader.eof());
+        CHECK(reader.peek() == lexy::default_encoding::eof());
     }
 }
 

@@ -6,7 +6,7 @@
 
 #include <doctest/doctest.h>
 
-TEST_CASE("read_stdin")
+TEST_CASE("compiler_explorer_input()")
 {
     constexpr auto test_file_name = "lexy_ext-compiler_explorer.test.delete-me";
 
@@ -30,7 +30,6 @@ TEST_CASE("read_stdin")
         auto input  = lexy_ext::compiler_explorer_input();
         auto reader = input.reader();
         CHECK(reader.peek() == lexy::utf8_encoding::eof());
-        CHECK(reader.eof());
     }
     SUBCASE("small")
     {
@@ -39,19 +38,15 @@ TEST_CASE("read_stdin")
         auto input  = lexy_ext::compiler_explorer_input();
         auto reader = input.reader();
         CHECK(reader.peek() == 'a');
-        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'b');
-        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == 'c');
-        CHECK(!reader.eof());
 
         reader.bump();
         CHECK(reader.peek() == lexy::utf8_encoding::eof());
-        CHECK(reader.eof());
     }
     SUBCASE("big")
     {
@@ -73,19 +68,16 @@ TEST_CASE("read_stdin")
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'a');
-            CHECK(!reader.eof());
             reader.bump();
         }
 
         for (auto i = 0; i != 1024; ++i)
         {
             CHECK(reader.peek() == 'b');
-            CHECK(!reader.eof());
             reader.bump();
         }
 
         CHECK(reader.peek() == lexy::utf8_encoding::eof());
-        CHECK(reader.eof());
     }
 
     std::remove(test_file_name);

@@ -19,7 +19,7 @@ struct engine_any : engine_matcher_base
     template <typename Reader>
     static constexpr error_code match(Reader& reader)
     {
-        while (!reader.eof())
+        while (reader.peek() != Reader::encoding::eof())
             reader.bump();
         return error_code();
     }

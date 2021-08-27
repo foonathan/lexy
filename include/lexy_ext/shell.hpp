@@ -170,29 +170,9 @@ public:
             return *this;
         }
 
-        bool eof() const
-        {
-            if (_idx != _shell->_buffer.read_size())
-                // We're still having characters in the read buffer.
-                return false;
-            else if (!_shell->_prompt.is_open())
-                // The prompt has been closed by the user.
-                return true;
-            else
-            {
-                // We've reached the end of the buffer, but the user might be willing to type
-                // another line.
-                _shell->_prompt.continuation_prompt();
-                auto did_append = _shell->append_next_line();
-                if (!did_append)
-                    _shell->_prompt.eof_prompt();
-                return !did_append;
-            }
-        }
-
         auto peek() const
         {
-            if (eof())
+            if (is_eof())
                 return encoding::eof();
             else
                 return encoding::to_int_type(_shell->_buffer.read_data()[_idx]);
@@ -215,6 +195,26 @@ public:
             _shell->_prompt.primary_prompt();
             if (!_shell->append_next_line())
                 _shell->_prompt.eof_prompt();
+        }
+
+        bool is_eof() const
+        {
+            if (_idx != _shell->_buffer.read_size())
+                // We're still having characters in the read buffer.
+                return false;
+            else if (!_shell->_prompt.is_open())
+                // The prompt has been closed by the user.
+                return true;
+            else
+            {
+                // We've reached the end of the buffer, but the user might be willing to type
+                // another line.
+                _shell->_prompt.continuation_prompt();
+                auto did_append = _shell->append_next_line();
+                if (!did_append)
+                    _shell->_prompt.eof_prompt();
+                return !did_append;
+            }
         }
 
         shell*      _shell;

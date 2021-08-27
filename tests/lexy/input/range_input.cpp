@@ -59,21 +59,17 @@ TEST_CASE("range_input")
     auto reader = input.reader();
     CHECK(reader.cur().count == 3);
     CHECK(reader.peek() == 'a');
-    CHECK(!reader.eof());
 
     reader.bump();
     CHECK(reader.cur().count == 2);
     CHECK(reader.peek() == 'a');
-    CHECK(!reader.eof());
 
     reader.bump();
     CHECK(reader.cur().count == 1);
     CHECK(reader.peek() == 'a');
-    CHECK(!reader.eof());
 
     reader.bump();
     CHECK(reader.cur().count == 0);
     CHECK(reader.peek() == lexy::default_encoding::eof());
-    CHECK(reader.eof());
 }
 

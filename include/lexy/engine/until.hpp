@@ -22,7 +22,7 @@ struct engine_until : engine_matcher_base
     {
         while (!engine_try_match<Condition>(reader))
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
             {
                 // This match fails but gives us an appropriate error code.
                 return Condition::match(reader);
@@ -53,7 +53,7 @@ struct engine_until_eof : engine_matcher_base
     {
         while (!engine_try_match<Condition>(reader))
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
                 break;
 
             reader.bump();

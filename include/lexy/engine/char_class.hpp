@@ -39,7 +39,7 @@ struct engine_char_range : engine_matcher_base
     static constexpr bool recover(Reader& reader, error_code)
     {
         // Consume bad character.
-        if (!reader.eof())
+        if (reader.peek() != Reader::encoding::eof())
             reader.bump();
         return true;
     }
@@ -117,7 +117,7 @@ struct engine_char_set : engine_matcher_base
     static constexpr bool recover(Reader& reader, error_code)
     {
         // Consume bad character.
-        if (!reader.eof())
+        if (reader.peek() != Reader::encoding::eof())
             reader.bump();
         return true;
     }
@@ -222,7 +222,7 @@ struct engine_ascii_table : engine_matcher_base
     static constexpr bool recover(Reader& reader, error_code)
     {
         // Consume bad character.
-        if (!reader.eof())
+        if (reader.peek() != Reader::encoding::eof())
             reader.bump();
         return true;
     }

@@ -23,9 +23,6 @@ public:
     /// If you're writing an Input, the Input's Reader is always canonical.
     using canonical_reader = Reader;
 
-    /// Checks whether the reader is at EOF.
-    bool eof() const;
-
     /// If the reader is at eof, returns Encoding::eof().
     /// Otherwise, returns Encoding::to_int_type(/* current character */).
     typename Encoding::int_type peek() const;
@@ -66,11 +63,6 @@ public:
     constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {}
 
-    constexpr bool eof() const noexcept
-    {
-        return _cur == _end;
-    }
-
     constexpr auto peek() const noexcept
     {
         if (_cur == _end)
@@ -87,12 +79,6 @@ public:
     constexpr iterator cur() const noexcept
     {
         return _cur;
-    }
-
-    constexpr void _make_eof() noexcept
-    {
-        static_assert(std::is_same_v<Iterator, Sentinel>);
-        _cur = _end;
     }
 
 private:

@@ -25,7 +25,7 @@ struct engine_find : engine_matcher_base
     {
         while (!engine_peek<Condition>(reader))
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
                 return error_code::not_found;
             else
                 reader.bump();
@@ -53,7 +53,7 @@ struct engine_find_before : engine_matcher_base
     {
         while (!engine_peek<Condition>(reader))
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
                 return error_code::not_found_eof;
             else if (engine_peek<Limit>(reader))
                 return error_code::not_found_limit;

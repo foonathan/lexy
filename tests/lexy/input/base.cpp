@@ -15,14 +15,11 @@ TEST_CASE("partial_reader()")
     auto partial = lexy::partial_reader(input.reader(), end);
     CHECK(partial.cur() == input.data());
     CHECK(partial.peek() == 'a');
-    CHECK(!partial.eof());
 
     partial.bump();
     CHECK(partial.peek() == 'b');
-    CHECK(!partial.eof());
 
     partial.bump();
     CHECK(partial.peek() == lexy::default_encoding::eof());
-    CHECK(partial.eof());
 }
 

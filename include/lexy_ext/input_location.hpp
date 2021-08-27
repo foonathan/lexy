@@ -25,7 +25,7 @@ struct _unchecked_code_unit
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
                 return error_code::invalid;
 
             reader.bump();
@@ -91,7 +91,8 @@ public:
             // Find EOL.
             for (auto reader = _reader; true; reader.bump())
             {
-                if (reader.eof() || lexy::engine_peek<engine_line>(reader))
+                if (reader.peek() == decltype(reader)::encoding::eof()
+                    || lexy::engine_peek<engine_line>(reader))
                 {
                     _eol = reader.cur();
                     break;
@@ -149,7 +150,7 @@ public:
                 // Next column.
                 ++cur_column;
             }
-            else if (reader.eof())
+            else if (reader.peek() == decltype(reader)::encoding::eof())
             {
                 // We have an OOB error position.
                 LEXY_PRECONDITION(false);

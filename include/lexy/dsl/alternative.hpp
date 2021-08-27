@@ -77,7 +77,7 @@ struct _alt_engine<_alt_impl<Lits...>, _alt_impl<Tokens...>>
                 success = true;
 
                 // We can exit early if we've reached EOF -- there can't be a longer match.
-                return copy.eof();
+                return copy.peek() == Reader::encoding::eof();
             };
 
             // Match each rule in some order.

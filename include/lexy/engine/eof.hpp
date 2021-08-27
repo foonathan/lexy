@@ -20,7 +20,7 @@ struct engine_eof : engine_matcher_base
     template <typename Reader>
     static constexpr error_code match(Reader& reader)
     {
-        return reader.eof() ? error_code() : error_code::error;
+        return reader.peek() == Reader::encoding::eof() ? error_code() : error_code::error;
     }
 };
 } // namespace lexy

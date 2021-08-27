@@ -43,7 +43,7 @@ struct _eol : token_base<_eol>
         template <typename Reader>
         static constexpr error_code match(Reader& reader)
         {
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
                 return error_code();
             else
                 return _nl::token_engine::match(reader);

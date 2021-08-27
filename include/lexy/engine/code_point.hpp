@@ -31,7 +31,7 @@ struct engine_cp_ascii : engine_matcher_base, engine_parser_base
     {
         static_assert(std::is_same_v<typename Reader::encoding, ascii_encoding>);
 
-        if (reader.eof())
+        if (reader.peek() == Reader::encoding::eof())
         {
             ec = error_code::eof;
             return code_point();
@@ -263,7 +263,7 @@ struct engine_cp_utf16 : engine_matcher_base, engine_parser_base
     {
         static_assert(std::is_same_v<typename Reader::encoding, utf16_encoding>);
 
-        if (reader.eof())
+        if (reader.peek() == Reader::encoding::eof())
         {
             ec = error_code::eof;
             return code_point();
@@ -273,7 +273,7 @@ struct engine_cp_utf16 : engine_matcher_base, engine_parser_base
         if ((first & ~payload1) == pattern1)
         {
             reader.bump();
-            if (reader.eof())
+            if (reader.peek() == Reader::encoding::eof())
             {
                 ec = error_code::missing_trailing;
                 return code_point();
@@ -350,7 +350,7 @@ struct engine_cp_utf32 : engine_matcher_base, engine_parser_base
     {
         static_assert(std::is_same_v<typename Reader::encoding, utf32_encoding>);
 
-        if (reader.eof())
+        if (reader.peek() == Reader::encoding::eof())
         {
             ec = error_code::eof;
             return code_point();
