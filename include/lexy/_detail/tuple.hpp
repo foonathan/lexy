@@ -35,17 +35,21 @@ template <std::size_t... Idx, typename... T>
 class _tuple<index_sequence<Idx...>, T...> : public _tuple_holder<Idx, T>...
 {
 public:
+    constexpr _tuple() = default;
+
     template <typename... Args>
-    constexpr _tuple(int, Args&&... args) : _tuple_holder<Idx, T>{LEXY_FWD(args)}...
+    constexpr _tuple(Args&&... args) : _tuple_holder<Idx, T>{LEXY_FWD(args)}...
     {}
 };
 
 template <typename... T>
 struct tuple : _tuple<index_sequence_for<T...>, T...>
 {
+    constexpr tuple() = default;
+
     template <typename... Args>
-    constexpr tuple(int, Args&&... args)
-    : _tuple<index_sequence_for<T...>, T...>(0, LEXY_FWD(args)...)
+    constexpr explicit tuple(Args&&... args)
+    : _tuple<index_sequence_for<T...>, T...>(LEXY_FWD(args)...)
     {}
 
     template <std::size_t N>
@@ -64,7 +68,7 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
         return LEXY_FWD(static_cast<const _tuple_holder<N, element_type<N>>&>(*this).value);
     }
 
-    constexpr auto index_sequence() const
+    static constexpr auto index_sequence()
     {
         return index_sequence_for<T...>{};
     }
@@ -72,7 +76,7 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
 template <>
 struct tuple<>
 {
-    constexpr tuple(int) {}
+    constexpr tuple() = default;
 
     static constexpr auto index_sequence()
     {
@@ -83,13 +87,13 @@ struct tuple<>
 template <typename... Args>
 constexpr auto make_tuple(Args&&... args)
 {
-    return tuple<std::decay_t<Args>...>(0, LEXY_FWD(args)...);
+    return tuple<std::decay_t<Args>...>(LEXY_FWD(args)...);
 }
 
 template <typename... Args>
 constexpr auto forward_as_tuple(Args&&... args)
 {
-    return tuple<Args&&...>(0, LEXY_FWD(args)...);
+    return tuple<Args&&...>(LEXY_FWD(args)...);
 }
 } // namespace lexy::_detail
 
