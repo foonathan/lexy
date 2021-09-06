@@ -25,26 +25,26 @@ auto split_context(const Location& location, const lexy::lexeme<Reader>& underli
         lexy::lexeme<Reader> after;
     } result;
 
-    auto context  = location.context();
-    result.before = {context.begin(), underlined.begin()};
-
-    auto underlined_end = underlined.begin();
-    // Find either the end of the underline, or the end of the context.
-    while (underlined_end != underlined.end() && underlined_end != context.end())
-        ++underlined_end;
-
-    if (underlined.begin() == underlined_end)
+    auto context = location.context();
+    if (underlined.begin() == context.end())
     {
-        // We actually want the newline, so include it.
+        // The underlined part begins at the newline.
+        // The end of the underlined part is either the end of the underline or the newline.
         auto newline = location.newline();
-        while (underlined_end != underlined.end() && underlined_end != newline.end())
-            ++underlined_end;
+        auto underlined_end
+            = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), newline.end());
 
+        result.before     = {context.begin(), underlined.begin()};
         result.underlined = {underlined.begin(), underlined_end};
-        result.after      = {underlined_end, underlined_end}; // Nothing afterwards possible.
+        result.after      = {underlined_end, underlined_end};
     }
     else
     {
+        // The end of the underlined part is either the end of the underline or the context.
+        auto underlined_end
+            = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), context.end());
+
+        result.before     = {context.begin(), underlined.begin()};
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, context.end()};
     }

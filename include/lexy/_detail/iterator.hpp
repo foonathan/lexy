@@ -68,7 +68,7 @@ constexpr bool precedes(Iterator first, Iterator after)
 // Requires: begin <= end_a && begin <= end_b.
 // Returns min(end_a, end_b).
 template <typename Iterator>
-constexpr Iterator earlier_range_end(Iterator begin, Iterator end_a, Iterator end_b)
+constexpr Iterator min_range_end(Iterator begin, Iterator end_a, Iterator end_b)
 {
     if constexpr (is_random_access_iterator<Iterator>)
     {
@@ -84,6 +84,35 @@ constexpr Iterator earlier_range_end(Iterator begin, Iterator end_a, Iterator en
         while (cur != end_a && cur != end_b)
             ++cur;
         return cur;
+    }
+}
+
+// Requires: begin <= end_a && begin <= end_b.
+// Returns max(end_a, end_b).
+template <typename Iterator>
+constexpr Iterator max_range_end(Iterator begin, Iterator end_a, Iterator end_b)
+{
+    if constexpr (is_random_access_iterator<Iterator>)
+    {
+        LEXY_PRECONDITION(begin <= end_a && begin <= end_b);
+        if (end_a <= end_b)
+            return end_b;
+        else
+            return end_a;
+    }
+    else
+    {
+        auto cur = begin;
+        while (true)
+        {
+            if (cur == end_a)
+                return end_b;
+            else if (cur == end_b)
+                return end_a;
+
+            ++cur;
+        }
+        return begin; // unreachable
     }
 }
 } // namespace lexy::_detail
