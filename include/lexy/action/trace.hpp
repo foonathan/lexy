@@ -24,13 +24,13 @@ struct debug_event
 namespace lexyd
 {
 template <typename String>
-struct _debug
+struct _debug : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.on(_ev::debug_event{}, reader.position(), String::get().c_str());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);

@@ -11,44 +11,30 @@
 
 namespace lexyd
 {
-template <std::size_t N, typename Rule>
-constexpr auto _gen_times(Rule rule)
-{
-    if constexpr (N == 1)
-        return rule;
-    else
-        return rule + _gen_times<N - 1>(rule);
-}
-template <std::size_t N, typename Rule, typename Sep>
-constexpr auto _gen_times(Rule rule, Sep)
-{
-    if constexpr (N == 1)
-        return rule + typename Sep::trailing_rule{};
-    else
-        return rule + typename Sep::rule{} + _gen_times<N - 1>(rule, Sep{});
-}
-
 template <std::size_t N, typename Rule, typename Sep>
 struct _times : rule_base
 {
+    template <std::size_t I = N>
     static constexpr auto _repeated_rule()
     {
-        if constexpr (std::is_same_v<Sep, void>)
-            return _gen_times<N>(Rule{});
+        if constexpr (I == 1)
+        {
+            if constexpr (std::is_same_v<Sep, void>)
+                return Rule{};
+            else
+                return Rule{} + typename Sep::trailing_rule{};
+        }
         else
-            return _gen_times<N>(Rule{}, Sep{});
+        {
+            if constexpr (std::is_same_v<Sep, void>)
+                return Rule{} + _repeated_rule<I - 1>();
+            else
+                return Rule{} + typename Sep::rule{} + _repeated_rule<I - 1>();
+        }
     }
 
     template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using rule = decltype(_repeated_rule());
-            return lexy::rule_parser<rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
+    using p = lexy::parser_for<decltype(_repeated_rule()), NextParser>;
 };
 
 /// Repeats the rule N times in sequence.

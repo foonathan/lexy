@@ -324,79 +324,109 @@ using _integer_parser
                          _unbounded_integer_parser<T, Base>>;
 
 template <typename Rule, typename Sep, typename IntParser, typename Tag>
-struct _int : rule_base
+struct _int : _copy_base<Rule>
 {
-    static constexpr auto is_branch               = Rule::is_branch;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
     template <typename NextParser>
-    struct parser
+    struct _pc
     {
-        struct _continuation
-        {
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, bool& failed,
-                                     typename Reader::iterator begin, Args&&... args)
-            {
-                failed   = false;
-                auto end = reader.position();
-
-                auto result = typename IntParser::result_type(0);
-                if (!IntParser::parse(result, begin, end))
-                {
-                    // Raise error but recover.
-                    using tag = lexy::_detail::type_or<Tag, lexy::integer_overflow>;
-                    context.on(_ev::error{}, lexy::error<Reader, tag>(begin, end));
-                }
-
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-            }
-        };
-
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
+                                           bool&                     continuation_reached,
+                                           typename Reader::iterator begin, Args&&... args)
         {
-            auto failed = true; // doesn't matter
-            return lexy::rule_parser<Rule, _continuation>::try_parse(context, reader, failed,
-                                                                     reader.position(),
-                                                                     LEXY_FWD(args)...);
+            continuation_reached = true;
+            auto end             = reader.position();
+
+            auto result = typename IntParser::result_type(0);
+            if (!IntParser::parse(result, begin, end))
+            {
+                // Raise error but recover.
+                using tag = lexy::_detail::type_or<Tag, lexy::integer_overflow>;
+                context.on(_ev::error{}, lexy::error<Reader, tag>(begin, end));
+            }
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
         }
 
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader,
+                                             typename Reader::iterator begin, Args&&... args)
         {
-            auto failed = true;
-            auto begin  = reader.position();
-
-            // Parse the digits rule with the special continuation.
-            auto result = lexy::rule_parser<Rule, _continuation>::parse(context, reader, failed,
-                                                                        begin, LEXY_FWD(args)...);
-            if (!failed)
+            // Recover.
+            context.on(_ev::recovery_start{}, begin);
+            if constexpr (std::is_void_v<Sep>)
             {
-                // Propagate result of following rules.
-                return result;
+                while (lexy::try_match_token(digit<typename IntParser::base>, reader))
+                {}
             }
             else
             {
-                // Recover.
-                context.on(_ev::recovery_start{}, reader.position());
-                if constexpr (std::is_void_v<Sep>)
-                {
-                    while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader))
-                    {}
-                }
-                else
-                {
-                    while (lexy::engine_try_match<typename IntParser::base::digit_set>(reader)
-                           || lexy::engine_try_match<typename Sep::token_engine>(reader))
-                    {}
-                }
-                context.on(_ev::recovery_finish{}, reader.position());
-
-                // Now try to convert this to an integer.
-                return _continuation::parse(context, reader, failed, begin, LEXY_FWD(args)...);
+                while (lexy::try_match_token(digit<typename IntParser::base>, reader)
+                       || lexy::try_match_token(Sep{}, reader))
+                {}
             }
+            context.on(_ev::recovery_finish{}, reader.position());
+
+            // And continue with the normal parsing.
+            auto dummy = false;
+            return parse(context, reader, dummy, begin, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename Context, typename Reader>
+    struct bp
+    {
+        lexy::branch_parser_for<Rule, Context, Reader> rule;
+
+        constexpr auto try_parse(const Context& context, const Reader& reader)
+        {
+            // Forward to the digit rule.
+            return rule.try_parse(context, reader);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+
+            // Forward to the digit rule, but remember the current reader position.
+            auto continuation_reached = false;
+            auto result
+                = rule.template finish<_pc<NextParser>>(context, reader, continuation_reached,
+                                                        begin, LEXY_FWD(args)...);
+            if (continuation_reached)
+                // We've reached the continuation, so this is the definitive result.
+                return result;
+
+            // We didn't reach the continuation, which means rule has failed before that.
+            // We then need to recover ourselves.
+            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
+            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using parser = lexy::parser_for<Rule, _pc<NextParser>>;
+
+            auto begin = reader.position();
+
+            // Forward to the digit rule, but remember the current reader position.
+            auto continuation_reached = false;
+            auto result
+                = parser::parse(context, reader, continuation_reached, begin, LEXY_FWD(args)...);
+            if (continuation_reached)
+                // We've reached the continuation, so this is the definitive result.
+                return result;
+
+            // We didn't reach the continuation, which means rule has failed before that.
+            // We then need to recover ourselves.
+            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
+            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
         }
     };
 };

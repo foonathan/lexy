@@ -34,7 +34,7 @@ Errors::
     Its range covers the partial input.
     The rule then fails.
   * All errors raised by matching `token`.
-    The rule fails if `token` has failed.
+    The rule then fails.
 Parse tree::
   Only a token node for `token` whose kind is determined by the minus rule; nothing for `except`.
 

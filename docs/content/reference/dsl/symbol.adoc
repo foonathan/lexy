@@ -235,7 +235,7 @@ Branch Parsing::
   However, instead of failing (for any reason), it backtracks without raising an error.
 Errors::
   * All errors raised by parsing `token` or `identifier.pattern()`.
-    The rule then fails if `token`/`identifier.pattern()` has failed.
+    The rule then fails, as recovery cannot produce a valid symbol.
   * `lexy::unknown_symbol`: if it could not produce a symbol;
     its range covers the entire partial input.
     The rule then fails.

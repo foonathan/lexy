@@ -32,8 +32,6 @@ TEST_CASE("dsl::operator/")
                     return 2;
                 else if (match == "def")
                     return 3;
-                else
-                    LEXY_VERIFY_CHECK(false);
                 return -1;
             }
 

@@ -52,20 +52,19 @@ TEST_CASE("argv_separator")
         lexy::argv_input input(argc, argv);
         auto             reader = input.reader();
 
-        using engine = decltype(lexy::dsl::argv_separator)::token_engine;
-        CHECK(!lexy::engine_try_match<engine>(reader));
+        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
         CHECK(reader.peek() == 'a');
         reader.bump();
 
-        CHECK(!lexy::engine_try_match<engine>(reader));
+        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
         CHECK(reader.peek() == 'b');
         reader.bump();
 
-        CHECK(!lexy::engine_try_match<engine>(reader));
+        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
         CHECK(reader.peek() == 'c');
         reader.bump();
 
-        CHECK(lexy::engine_try_match<engine>(reader));
+        CHECK(lexy::try_match_token(lexy::dsl::argv_separator, reader));
         CHECK(reader.peek() == 'd');
     }
 }

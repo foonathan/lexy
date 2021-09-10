@@ -13,7 +13,7 @@ namespace lexyd
 #define LEXY_PUNCT(Name, String)                                                                   \
     struct _##Name : ::lexyd::_lit<LEXY_NTTP_STRING(String)>                                       \
     {};                                                                                            \
-    inline constexpr auto(Name) = _##Name {}
+    inline constexpr auto Name = _##Name {}
 
 LEXY_PUNCT(period, ".");
 LEXY_PUNCT(comma, ",");

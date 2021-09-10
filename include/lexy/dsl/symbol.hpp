@@ -10,7 +10,6 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/engine/trie.hpp>
-#include <lexy/engine/while.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -229,81 +228,70 @@ template <typename Leading, typename Trailing, typename... Reserved>
 struct _id;
 
 template <const auto& Table, typename Token, typename Tag>
-struct _sym : rule_base
+struct _sym : branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        struct _continuation
+        lexy::token_parser_for<Token, Reader>             parser;
+        typename std::decay_t<decltype(Table)>::key_index symbol;
+
+        constexpr bool try_parse(Context&, const Reader& reader)
         {
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Reader save,
-                                         Args&&... args) -> lexy::rule_try_parse_result
-            {
-                auto rule_content = lexy::partial_reader(save, reader.position());
+            // Try and parse the token.
+            if (!parser.try_parse(reader))
+                return false;
 
-                // We now re-parse what the rule has consumed.
-                auto idx = Table.try_parse(rule_content);
-                if (!idx || rule_content.peek() != Reader::encoding::eof())
-                {
-                    // Unknown symbol; backtrack.
-                    context.on(_ev::backtracked{}, save.position(), reader.position());
-                    reader = LEXY_MOV(save);
-                    return lexy::rule_try_parse_result::backtracked;
-                }
+            // Check whether this is a symbol.
+            auto content = lexy::partial_reader(reader, parser.end);
+            symbol       = Table.try_parse(content);
 
-                // Succesfully parsed a symbol, produce value and continue.
-                return static_cast<lexy::rule_try_parse_result>(
-                    NextParser::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
-            }
+            // We need to consume everything.
+            if (content.position() != parser.end)
+                return false;
 
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Reader save, Args&&... args)
-            {
-                auto begin  = save.position();
-                auto end    = reader.position();
-                auto result = try_parse(context, reader, save, LEXY_FWD(args)...);
-                if (result == lexy::rule_try_parse_result::backtracked)
-                {
-                    // Handle the error.
-                    using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                    auto err  = lexy::error<Reader, tag>(begin, end);
-                    context.on(_ev::error{}, err);
-                    return false;
-                }
-                else
-                {
-                    // Propagate result of the NextParser.
-                    return static_cast<bool>(result);
-                }
-            }
-        };
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            auto save = reader;
-
-            // We can safely discard; token does not produce any values.
-            using token_parser = lexy::rule_parser<Token, lexy::discard_parser<Context>>;
-            auto result        = token_parser::try_parse(context, reader);
-            if (result != lexy::rule_try_parse_result::ok)
-                return result;
-
-            // Continue parsing with our special continuation.
-            return _continuation::try_parse(context, reader, save, LEXY_FWD(args)...);
+            // Only succeed if it is a symbol.
+            return static_cast<bool>(symbol);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            // Parse the token with our special continuation and remember the current reader.
-            return lexy::rule_parser<Token, _continuation>::parse(context, reader, Reader(reader),
-                                                                  LEXY_FWD(args)...);
+            // We need to consume and report the token.
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), parser.end);
+            reader.set_position(parser.end);
+
+            // And continue parsing with the symbol value after whitespace skipping.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+            if (!lexy::parser_for<Token, lexy::pattern_parser<Context>>::parse(context, reader))
+                return false;
+            auto end = reader.position();
+
+            // Check whether this is a symbol.
+            auto content = lexy::partial_reader(reader, begin, end);
+            auto symbol  = Table.try_parse(content);
+            if (!symbol || content.position() != end)
+            {
+                // Unknown symbol.
+                using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
+                auto err  = lexy::error<Reader, tag>(begin, end);
+                context.on(_ev::error{}, err);
+                return false;
+            }
+
+            // Continue parsing with the symbol value.
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
         }
     };
 
@@ -316,86 +304,77 @@ struct _sym : rule_base
 // every character against the char class), parse a symbol and check whether the next character
 // would continue the identifier. This is the same optimization that is done for keywords.
 template <const auto& Table, typename L, typename T, typename Tag>
-struct _sym<Table, _idp<L, T>, Tag> : rule_base
+struct _sym<Table, _idp<L, T>, Tag> : branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        typename std::decay_t<decltype(Table)>::key_index symbol;
+        typename Reader::iterator                         end;
+
+        constexpr bool try_parse(const Context&, Reader reader)
         {
-            using trailing_engine = typename T::token_engine;
+            // Try to parse a symbol.
+            symbol = Table.try_parse(reader);
+            if (!symbol)
+                return false;
+            end = reader.position();
 
-            // Try to parse the symbol.
-            auto save = reader;
-            auto idx  = Table.try_parse(reader);
-            // We need a symbol and it must not be the prefix of an identifier.
-            if (!idx || lexy::engine_peek<trailing_engine>(reader))
-            {
-                // We didn't have a symbol, so backtrack.
-                context.on(_ev::backtracked{}, save.position(), reader.position());
-                reader = LEXY_MOV(save);
-                return lexy::rule_try_parse_result::backtracked;
-            }
-
-            // We've succesfully matched a symbol.
-            // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, _idp<L, T>{}, save.position(), reader.position());
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return static_cast<lexy::rule_try_parse_result>(
-                continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
+            // We had a symbol, but it must not be the prefix of a valid identifier.
+            return !lexy::try_match_token(T{}, reader);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            using trailing_engine = typename T::token_engine;
+            // We need to consume and report the identifier pattern.
+            context.on(_ev::token{}, _idp<L, T>{}, reader.position(), end);
+            reader.set_position(end);
 
+            // And continue parsing with the symbol value after whitespace skipping.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
             auto begin = reader.position();
-            auto idx   = Table.try_parse(reader);
-            // We need a symbol and it must not be the prefix of an identifier.
-            if (!idx || lexy::engine_peek<trailing_engine>(reader))
+
+            // Try to parse a symbol that is not the prefix of an identifier.
+            auto symbol_reader = reader;
+            auto symbol        = Table.try_parse(symbol_reader);
+            if (!symbol || lexy::try_match_token(T{}, symbol_reader))
             {
-                // We didn't have a symbol.
-                // But before we can report the error, we need to parse an identifier.
-                // Otherwise, we don't call `context.on(_ev::token{}, )` or have the same end as the
-                // non-optimized symbol parser.
+                // Unknown symbol or not an identifier.
+                // Parse the identifier pattern normally, and see if that fails.
+                using id_parser = lexy::parser_for<_idp<L, T>, lexy::pattern_parser<Context>>;
+                if (!id_parser::parse(context, reader))
+                    // It did fail, so it reported an error and we're done here.
+                    return false;
 
-                if (begin == reader.position())
-                {
-                    // We need to parse the entire identifier from scratch.
-                    // The identifier pattern does not produce a value, so we can safely discard.
-                    using id_parser = lexy::rule_parser<_idp<L, T>, lexy::discard_parser<Context>>;
-                    if (!id_parser::parse(context, reader))
-                        // Didn't have an identifier, so different error.
-                        return false;
-                }
-                else
-                {
-                    // We're having a prefix of a valid identifier.
-                    // As an additional optimization, just need to parse the remaining characters.
-                    lexy::engine_while<trailing_engine>::match(reader);
-                    context.on(_ev::token{}, _idp<L, T>{}, begin, reader.position());
-                }
-                auto end = reader.position();
-
-                // Now we can report the erorr.
+                // We're having a valid identifier but unknown symbol.
                 using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                auto err  = lexy::error<Reader, tag>(begin, end);
+                auto err  = lexy::error<Reader, tag>(begin, reader.position());
                 context.on(_ev::error{}, err);
+
                 return false;
             }
-            auto end = reader.position();
+            else
+            {
+                // We need to consume and report the identifier pattern.
+                auto end = symbol_reader.position();
+                context.on(_ev::token{}, _idp<L, T>{}, begin, end);
+                reader.set_position(end);
 
-            // We've succesfully matched a symbol.
-            // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, _idp<L, T>{}, begin, end);
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
+                // And continue parsing with the symbol value after whitespace skipping.
+                using continuation = lexy::whitespace_parser<Context, NextParser>;
+                return continuation::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+            }
         }
     };
 
@@ -405,58 +384,53 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 };
 
 template <const auto& Table, typename Tag>
-struct _sym<Table, void, Tag> : rule_base
+struct _sym<Table, void, Tag> : branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            // Try to parse the symbol.
-            auto save = reader;
-            auto idx  = Table.try_parse(reader);
-            if (!idx)
-            {
-                // We didn't have a symbol, so backtrack.
-                context.on(_ev::backtracked{}, save.position(), reader.position());
-                reader = LEXY_MOV(save);
-                return lexy::rule_try_parse_result::backtracked;
-            }
+        typename std::decay_t<decltype(Table)>::key_index symbol;
+        typename Reader::iterator                         end;
 
-            // We've succesfully matched a symbol.
-            // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, lexy::identifier_token_kind, save.position(),
-                       reader.position());
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return static_cast<lexy::rule_try_parse_result>(
-                continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
+        constexpr bool try_parse(const Context&, Reader reader)
+        {
+            // Try to parse a symbol.
+            symbol = Table.try_parse(reader);
+            end    = reader.position();
+
+            // Only succeed if it is a symbol.
+            return static_cast<bool>(symbol);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            auto begin = reader.position();
-            auto idx   = Table.try_parse(reader);
-            if (!idx)
-            {
-                // We didn't have a symbol.
-                using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                auto err  = lexy::error<Reader, tag>(begin);
-                context.on(_ev::error{}, err);
-                return false;
-            }
-            auto end = reader.position();
+            // We need to consume and report the token.
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), end);
+            reader.set_position(end);
 
-            // We've succesfully matched a symbol.
-            // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
+            // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
+            return continuation::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            bp<Context, Reader> impl{};
+            if (impl.try_parse(context, reader))
+                return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+
+            // Unknown symbol.
+            using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
+            auto err  = lexy::error<Reader, tag>(reader.position());
+            context.on(_ev::error{}, err);
+
+            return false;
         }
     };
 

@@ -32,28 +32,37 @@ using make_member_ptr = member<_mem_ptr_fn<Ptr>>;
 namespace lexyd
 {
 template <typename Fn, typename Rule>
-struct _mem : rule_base
+struct _mem : _copy_base<Rule>
 {
-    static constexpr auto is_branch               = Rule::is_branch;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        lexy::branch_parser_for<Rule, Context, Reader> rule;
+
+        constexpr auto try_parse(Context& context, const Reader& reader)
         {
-            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader,
-                                                                  LEXY_FWD(args)...,
-                                                                  lexy::member<Fn>{});
+            // Forward to the rule.
+            return rule.try_parse(context, reader);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
-            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...,
-                                                              lexy::member<Fn>{});
+            // Forward to the rule, but add member tag.
+            return rule.template finish<NextParser>(context, reader, LEXY_FWD(args)...,
+                                                    lexy::member<Fn>{});
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            // Forward to the rule, but add member tag.
+            using parser = lexy::parser_for<Rule, NextParser>;
+            return parser::parse(context, reader, LEXY_FWD(args)..., lexy::member<Fn>{});
         }
     };
 };

@@ -7,21 +7,29 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/eof.hpp>
 
 namespace lexyd
 {
 struct _eof : token_base<_eof>
 {
-    using token_engine = lexy::engine_eof;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "EOF");
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(const Reader& reader)
+        {
+            end = reader.position();
+            return reader.peek() == Reader::encoding::eof();
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader&)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(this->end, "EOF");
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 /// Matches EOF.

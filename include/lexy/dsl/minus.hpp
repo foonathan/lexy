@@ -8,7 +8,6 @@
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/minus.hpp>
 
 namespace lexy
 {
@@ -27,24 +26,54 @@ namespace lexyd
 template <typename Token, typename Except>
 struct _minus : token_base<_minus<Token, Except>>
 {
-    using token_engine
-        = lexy::engine_minus<typename Token::token_engine, typename Except::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
+    template <typename Reader>
+    struct tp
     {
-        if (ec == token_engine::error_code::minus_failure)
+        lexy::token_parser_for<Token, Reader> token_parser;
+        typename Reader::iterator             end;
+        bool                                  minus_failure;
+
+        constexpr bool try_parse(const Reader& reader)
         {
-            auto err = lexy::error<Reader, lexy::minus_failure>(pos, reader.position());
-            context.on(_ev::error{}, err);
+            // Try to parse the token.
+            if (!token_parser.try_parse(reader))
+            {
+                // It didn't match, so we fail.
+                minus_failure = false;
+                return false;
+            }
+            // We already remember the end to have it during error reporting as well.
+            end = token_parser.end;
+
+            // Check whether Except matches on the same input and we're then at EOF.
+            if (auto partial = lexy::partial_reader(reader, token_parser.end);
+                lexy::try_match_token(Except{}, partial)
+                && partial.peek() == Reader::encoding::eof())
+            {
+                // Except did match, so we fail.
+                minus_failure = true;
+                return false;
+            }
+
+            // Success.
+            return true;
         }
-        else
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
         {
-            Token::token_error(context, reader, token_engine::error_to_matcher(ec), pos);
+            if (minus_failure)
+            {
+                auto err = lexy::error<Reader, lexy::minus_failure>(reader.position(), this->end);
+                context.on(_ev::error{}, err);
+            }
+            else
+            {
+                // Delegate error to the actual token.
+                token_parser.report_error(context, reader);
+            }
         }
-    }
+    };
 };
 
 /// Matches Token unless Except matches on the input Token matched.

@@ -207,10 +207,10 @@ TEST_CASE("dsl::try_")
         CHECK(abc == 3);
 
         auto ab = LEXY_VERIFY("ab");
-        CHECK(ab.value == 2);
+        CHECK(ab.value == 0);
         CHECK(ab.errors(-1));
         auto abd = LEXY_VERIFY("abd");
-        CHECK(abd.value == 2);
+        CHECK(abd.value == 0);
         CHECK(abd.errors(-1));
     }
     SUBCASE("recover")
@@ -304,8 +304,8 @@ TEST_CASE("dsl::try_")
         CHECK(abc_nl == 4);
 
         auto ab = LEXY_VERIFY("ab\n");
-        CHECK(ab.value == 3);
-        CHECK(ab.errors(-1));
+        CHECK(ab.value == -1);
+        CHECK(ab.errors(-1, -2));
         auto abd = LEXY_VERIFY("abd\n");
         CHECK(abd.value == -1);
         CHECK(abd.errors(-1, -2));

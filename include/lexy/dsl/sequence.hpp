@@ -15,15 +15,14 @@ template <>
 struct _seq_impl<>
 {
     template <typename NextParser>
-    struct parser : NextParser
-    {};
+    using p = NextParser;
 };
 template <typename H, typename... T>
 struct _seq_impl<H, T...>
 {
+    // We parse Head and then seq<Tail...>.
     template <typename NextParser>
-    struct parser : lexy::rule_parser<H, lexy::rule_parser<_seq_impl<T...>, NextParser>>
-    {};
+    using p = lexy::parser_for<H, lexy::parser_for<_seq_impl<T...>, NextParser>>;
 };
 
 template <typename... R>
@@ -32,7 +31,7 @@ struct _seq : rule_base
     static_assert(sizeof...(R) > 1);
 
     template <typename NextParser>
-    using parser = lexy::rule_parser<_seq_impl<R...>, NextParser>;
+    using p = lexy::parser_for<_seq_impl<R...>, NextParser>;
 };
 
 template <typename R, typename S>

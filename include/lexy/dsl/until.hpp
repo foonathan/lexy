@@ -7,31 +7,95 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/until.hpp>
 
 namespace lexyd
 {
 template <typename Condition>
-struct _until_eof : token_base<_until_eof<Condition>>
+struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
 {
-    using token_engine = lexy::engine_until_eof<typename Condition::token_engine>;
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr std::true_type try_parse(Reader reader)
+        {
+            while (true)
+            {
+                // Check whether we've reached the end of the input or the condition.
+                // Note that we're checking for EOF before the condition.
+                // This is a potential optimization: as we're accepting EOF anyway, we don't need to
+                // enter Condition's parsing logic.
+                if (reader.peek() == Reader::encoding::eof()
+                    || lexy::try_match_token(Condition{}, reader))
+                {
+                    // It did, so we're done.
+                    break;
+                }
+
+                // It did not match, consume one code unit and try again.
+                reader.bump();
+            }
+
+            end = reader.position();
+            return {};
+        }
+    };
 };
 
 template <typename Condition>
 struct _until : token_base<_until<Condition>>
 {
-    using token_engine = lexy::engine_until<typename Condition::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator)
+    template <typename Reader>
+    struct tp
     {
-        // We don't pass the passed position, as this would be the beginning of until.
-        // Instead we always use the current reader position (i.e. EOF) as that's where the
-        // condition is missing.
-        Condition::token_error(context, reader, ec, reader.position());
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            while (true)
+            {
+                // Try to parse the condition.
+                if (lexy::try_match_token(Condition{}, reader))
+                {
+                    // It did match, we're done at that end.
+                    end = reader.position();
+                    return true;
+                }
+
+                // Check whether we've reached the end of the input.
+                // We need to do it after checking for condition, as the condition might just accept
+                // EOF.
+                if (reader.peek() == Reader::encoding::eof())
+                {
+                    // It did, so we did not succeed.
+                    end = reader.position();
+                    return false;
+                }
+
+                // It did not match, consume one code unit and try again.
+                reader.bump();
+            }
+
+            return false; // unreachable
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            // We need to trigger the error `Condition` would.
+            // As such, we try parsing it, which will report an error.
+
+            reader.set_position(end);
+            LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
+                        "forgot to set end in try_parse()");
+
+            lexy::token_parser_for<Condition, Reader> parser{};
+            auto                                      result = parser.try_parse(reader);
+            LEXY_ASSERT(!result, "condition shouldn't have matched?!");
+            parser.report_error(context, reader);
+        }
+    };
 
     /// Also accepts EOF as the closing condition.
     constexpr auto or_eof() const

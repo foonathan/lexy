@@ -38,10 +38,10 @@ namespace lexyd
 struct _nullopt : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
@@ -57,20 +57,18 @@ template <typename Branch>
 struct _opt : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using branch_parser = lexy::rule_parser<Branch, NextParser>;
-
-            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::backtracked)
-                // Branch wasn't taken, continue anyway with nullopt.
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+            lexy::branch_parser_for<Branch, Context, Reader> branch{};
+            if (branch.try_parse(context, reader))
+                // We take the branch.
+                return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
             else
-                // Return true/false depending on result.
-                return static_cast<bool>(result);
+                // We don't take the branch and produce a nullopt.
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
         }
     };
 };
@@ -81,7 +79,7 @@ template <typename Rule>
 constexpr auto opt(Rule)
 {
     static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
-    if constexpr (Rule::is_unconditional_branch)
+    if constexpr (lexy::is_unconditional_branch_rule<Rule>)
         // Branch is always taken, so don't wrap in opt().
         return Rule{};
     else
@@ -91,34 +89,25 @@ constexpr auto opt(Rule)
 
 namespace lexyd
 {
-template <typename Term, typename R, typename Recover>
+template <typename Term, typename Rule>
 struct _optt : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Try to parse the terminator.
-            using term_parser = lexy::rule_parser<Term, NextParser>;
-            if (auto result
-                = term_parser::try_parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
-                result != lexy::rule_try_parse_result::backtracked)
-            {
-                // We had the terminator, and thus created the empty optional.
-                return static_cast<bool>(result);
-            }
+            lexy::branch_parser_for<Term, Context, Reader> term{};
+            if (term.try_parse(context, reader))
+                // We had the terminator, so produce nullopt.
+                return term.template finish<NextParser>(context, reader, LEXY_FWD(args)...,
+                                                        lexy::nullopt{});
 
-            // Parse the rule followed by the terminator.
-            using parser = lexy::rule_parser<R, term_parser>;
-            if (!parser::parse(context, reader, LEXY_FWD(args)...))
-            {
-                using recovery = _try_recovery<Recover, NextParser>;
-                return recovery::parse(context, reader, LEXY_FWD(args)...);
-            }
-
-            return true;
+            // We didn't have the terminator, so we parse the rule.
+            using parser = lexy::parser_for<Rule, NextParser>;
+            return parser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };

@@ -5,26 +5,58 @@
 #ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
-#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/trie.hpp>
+
+namespace lexy::_detail
+{
+template <typename Reader>
+constexpr bool match_newline(Reader& reader)
+{
+    using encoding = typename Reader::encoding;
+
+    if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+    {
+        reader.bump();
+        return true;
+    }
+    else if (reader.peek() == lexy::_char_to_int_type<encoding>('\r'))
+    {
+        reader.bump();
+        if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+        {
+            reader.bump();
+            return true;
+        }
+    }
+
+    return false;
+}
+} // namespace lexy::_detail
 
 namespace lexyd
 {
 struct _nl : token_base<_nl>
 {
-    static constexpr auto _trie
-        = lexy::trie<char, LEXY_NTTP_STRING("\n"), LEXY_NTTP_STRING("\r\n")>;
-    using token_engine = lexy::engine_trie<_trie>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "newline");
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            auto result = lexy::_detail::match_newline(reader);
+            end         = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "newline");
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 /// Matches a newline character.
@@ -35,27 +67,26 @@ namespace lexyd
 {
 struct _eol : token_base<_eol>
 {
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        using error_code = _nl::token_engine::error_code;
+        typename Reader::iterator end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
-            if (reader.peek() == Reader::encoding::eof())
-                return error_code();
-            else
-                return _nl::token_engine::match(reader);
+            auto result = (reader.peek() == Reader::encoding::eof())
+                          || lexy::_detail::match_newline(reader);
+            end = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "EOL");
+            context.on(_ev::error{}, err);
         }
     };
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "EOL");
-        context.on(_ev::error{}, err);
-    }
 };
 
 /// Matches the end of line (EOF or newline).

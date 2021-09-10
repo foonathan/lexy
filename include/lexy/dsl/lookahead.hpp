@@ -6,7 +6,6 @@
 #define LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/engine/find.hpp>
 #include <lexy/error.hpp>
 
 namespace lexy
@@ -24,35 +23,63 @@ struct lookahead_failure
 namespace lexyd
 {
 template <typename Needle, typename End, typename Tag>
-struct _look : rule_base
+struct _look : branch_base
 {
-    static constexpr auto is_branch = true;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        static constexpr bool try_parse(Context& context, Reader reader)
         {
-            using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(context, reader))
-                return lexy::rule_try_parse_result::backtracked;
+            auto begin = reader.position();
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
+            auto result = [&] {
+                while (true)
+                {
+                    // Try to match Needle.
+                    if (lexy::try_match_token(Needle{}, reader))
+                        // We found it.
+                        return true;
+                    // Check whether we've reached the End.
+                    else if (reader.peek() == Reader::encoding::eof()
+                             || lexy::try_match_token(End{}, reader))
+                        // We've failed.
+                        return false;
+                    else
+                        // Try again.
+                        reader.bump();
+                }
+
+                return false; // unreachable
+            }();
+
+            auto end = reader.position();
+
+            // Report that we've backtracked.
+            context.on(_ev::backtracked{}, begin, end);
+
+            return result;
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC static bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            using engine = lexy::engine_find_before<Needle, End>;
-            if (!lexy::engine_peek<engine>(context, reader))
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (!bp<Context, Reader>::try_parse(context, reader))
             {
+                // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
                 auto err  = lexy::error<Reader, tag>(reader.position());
                 context.on(_ev::error{}, err);
+                // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -69,7 +96,7 @@ template <typename Needle, typename End>
 constexpr auto lookahead(Needle, End)
 {
     static_assert(lexy::is_token_rule<Needle> && lexy::is_token_rule<End>);
-    return _look<typename Needle::token_engine, typename End::token_engine, void>{};
+    return _look<Needle, End, void>{};
 }
 } // namespace lexyd
 

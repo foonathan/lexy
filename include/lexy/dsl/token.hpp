@@ -28,60 +28,57 @@ struct _toke;
 template <auto Kind, typename Token>
 struct _tokk;
 
-template <typename Derived>
-struct token_base : _token_base
+template <typename Derived, typename BranchKind = branch_base>
+struct token_base : _token_base, BranchKind
 {
     using token_type = Derived;
 
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        lexy::token_parser_for<Derived, Reader> parser;
+
+        constexpr auto try_parse(const Context&, const Reader& reader)
         {
-            using token_engine = typename Derived::token_engine;
-
-            auto begin = reader.position();
-            if (!lexy::engine_try_match<token_engine>(reader))
-            {
-                context.on(_ev::backtracked{}, begin, reader.position());
-                return lexy::rule_try_parse_result::backtracked;
-            }
-            auto end = reader.position();
-            context.on(_ev::token{}, Derived{}, begin, end);
-
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return static_cast<lexy::rule_try_parse_result>(
-                continuation::parse(context, reader, LEXY_FWD(args)...));
+            return parser.try_parse(reader);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            using token_engine = typename Derived::token_engine;
+            context.on(_ev::token{}, Derived{}, reader.position(), parser.end);
+            reader.set_position(parser.end);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
+        }
+    };
 
-            auto position = reader.position();
-            if constexpr (lexy::engine_can_fail<token_engine, Reader>)
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::token_parser_for<Derived, Reader> parser{};
+
+            using try_parse_result = decltype(parser.try_parse(reader));
+            if constexpr (std::is_same_v<try_parse_result, std::true_type>)
             {
-                if (auto ec = token_engine::match(reader);
-                    ec != typename token_engine::error_code())
-                {
-                    Derived::token_error(context, reader, ec, position);
-                    return false;
-                }
+                parser.try_parse(reader);
             }
             else
             {
-                token_engine::match(reader);
+                if (!parser.try_parse(reader))
+                {
+                    parser.report_error(context, reader);
+                    return false;
+                }
             }
-            context.on(_ev::token{}, Derived{}, position, reader.position());
 
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return continuation::parse(context, reader, LEXY_FWD(args)...);
+            context.on(_ev::token{}, Derived{}, reader.position(), parser.end);
+            reader.set_position(parser.end);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
         }
     };
 
@@ -96,30 +93,53 @@ struct token_base : _token_base
 template <auto Kind, typename Token>
 struct _tokk : token_base<_tokk<Kind, Token>>
 {
-    using token_engine = typename Token::token_engine;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
+    template <typename Reader>
+    struct tp
     {
-        Token::token_error(context, reader, ec, pos);
-    }
+        lexy::token_parser_for<Token, Reader> token_parser;
+        typename Reader::iterator             end;
+
+        constexpr bool try_parse(const Reader& reader)
+        {
+            // Forward.
+            auto result = token_parser.try_parse(reader);
+            end         = token_parser.end;
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            token_parser.report_error(context, reader);
+        }
+    };
 };
 
 template <typename Tag, typename Token>
 struct _toke : token_base<_toke<Tag, Token>>
 {
-    using token_engine = typename Token::token_engine;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, Tag>(pos, reader.position());
-        context.on(_ev::error{}, err);
-    }
+        lexy::token_parser_for<Token, Reader> token_parser;
+        typename Reader::iterator             end;
+
+        constexpr bool try_parse(const Reader& reader)
+        {
+            // Forward.
+            auto result = token_parser.try_parse(reader);
+            end         = token_parser.end;
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            // Report a different error.
+            auto err = lexy::error<Reader, Tag>(reader.position(), end);
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 } // namespace lexyd
 
@@ -142,29 +162,26 @@ struct _token : token_base<_token<Rule>>
         static constexpr auto rule = Rule{};
     };
 
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        enum class error_code
-        {
-            error = 1,
-        };
+        typename Reader::iterator end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
-            return lexy::do_action<_production>(lexy::match_handler(), reader) ? error_code()
-                                                                               : error_code::error;
+            // We match a dummy production that only consists of the rule.
+            auto success = lexy::do_action<_production>(lexy::match_handler(), reader);
+            end          = reader.position();
+            return success;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err = lexy::error<Reader, lexy::missing_token>(reader.position());
+            context.on(_ev::error{}, err);
         }
     };
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        auto err = lexy::error<Reader, lexy::missing_token>(pos);
-        context.on(_ev::error{}, err);
-    }
 };
 
 /// Turns the arbitrary rule into a token by matching it without producing any values.

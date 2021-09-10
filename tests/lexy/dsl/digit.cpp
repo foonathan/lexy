@@ -14,11 +14,7 @@ void radix_match(Digits... digits)
     for (auto c = 0; c <= 255; ++c)
     {
         auto valid = ((c == digits) || ...);
-
-        const char str[]  = {char(c), '\0'};
-        auto       input  = lexy::zstring_input(str);
-        auto       reader = input.reader();
-        CHECK(lexy::engine_try_match<typename Radix::digit_set>(reader) == valid);
+        CHECK(Radix::template match<lexy::ascii_encoding>(char(c)) == valid);
 
         if (valid)
         {

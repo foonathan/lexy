@@ -34,10 +34,10 @@ template <typename Sign>
 struct _sign : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)..., Sign{});
         }

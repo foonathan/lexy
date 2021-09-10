@@ -182,9 +182,9 @@ TEST_CASE("trace")
  1:  7:   - alphabet:
  1:  7:     - backtracked: ab
  1:  7:     - error: expected 'abcd'
- 1: 10:     -x
- 1: 10:   -x
- 1: 10: -x
+ 1:  7:     -x
+ 1:  7:   -x
+ 1:  7: -x
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
  1:  1: - token: Hello
@@ -208,8 +208,8 @@ TEST_CASE("trace")
  1: 13:       - error: expected 'ASCII.digit' character
  1: 13:       -x
  1: 13:     - error recovery:
- 1: 16:       - token: ]
- 1: 17:       - finish
+ 1: 16:       - finish
+ 1: 16:     - token: ]
  1: 17:     - finish
  1: 17:   - finish
  1: 17: - finish
@@ -351,9 +351,9 @@ TEST_CASE("trace")
  1:  7: │  ├──alphabet:
  1:  7: │  │  ├──backtracked: ab
  1:  7: │  │  ├──error: expected 'abcd'
- 1: 10: │  │  └╳
- 1: 10: │  └╳
- 1: 10: └╳
+ 1:  7: │  │  └╳
+ 1:  7: │  └╳
+ 1:  7: └╳
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
  1:  1: ├──token: Hello
@@ -377,8 +377,8 @@ TEST_CASE("trace")
  1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
  1: 13: │  │  │  └╳
  1: 13: │  │  ├──error recovery:
- 1: 16: │  │  │  ├──token: ]
- 1: 17: │  │  │  ┴
+ 1: 16: │  │  │  ┴
+ 1: 16: │  │  ├──token: ]
  1: 17: │  │  ┴
  1: 17: │  ┴
  1: 17: ┴
@@ -465,8 +465,8 @@ TEST_CASE("trace")
  1:  7: - debug: greeting
  1:  7: - object:
  1:  7:   - alphabet: ...
- 1: 10:   -x
- 1: 10: -x
+ 1:  7:   -x
+ 1:  7: -x
 )");
 
         auto higher_limit           = opts;
@@ -489,6 +489,7 @@ TEST_CASE("trace")
  1: 12:     - whitespace: \u0020
  1: 13:     - number: ...
  1: 13:     - error recovery: ...
+ 1: 16:     - token: ]
  1: 17:     - finish
  1: 17:   - finish
  1: 17: - finish

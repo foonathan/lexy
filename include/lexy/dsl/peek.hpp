@@ -31,34 +31,48 @@ struct unexpected
 
 namespace lexyd
 {
-template <typename Engine, typename Tag>
-struct _peek : rule_base
+template <typename Rule, typename Tag>
+struct _peek : branch_base
 {
-    static constexpr auto is_branch = true;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        static constexpr bool try_parse(Context& context, Reader reader)
         {
-            if (!lexy::engine_peek<Engine>(context, reader))
-                return lexy::rule_try_parse_result::backtracked;
+            // We need to match the entire rule.
+            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser{};
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
+            auto begin  = reader.position();
+            auto result = parser.try_parse(reader);
+            auto end    = parser.end;
+
+            // Report that we've backtracked.
+            context.on(_ev::backtracked{}, begin, end);
+
+            return result;
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC static bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            if (!lexy::engine_peek<Engine>(context, reader))
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (!bp<Context, Reader>::try_parse(context, reader))
             {
+                // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
                 auto err  = lexy::error<Reader, tag>(reader.position());
                 context.on(_ev::error{}, err);
+
+                // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -66,41 +80,53 @@ struct _peek : rule_base
     };
 
     template <typename Error>
-    static constexpr _peek<Engine, Error> error = {};
+    static constexpr _peek<Rule, Error> error = {};
 };
 
-template <typename Engine, typename Tag>
-struct _peekn : rule_base
+template <typename Rule, typename Tag>
+struct _peekn : branch_base
 {
-    static constexpr auto is_branch = true;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
-        {
-            if (lexy::engine_peek<Engine>(context, reader))
-                return lexy::rule_try_parse_result::backtracked;
+        typename Reader::iterator end;
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
+        constexpr bool try_parse(Context& context, Reader reader)
+        {
+            // We must not match the rule.
+            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser{};
+
+            auto begin  = reader.position();
+            auto result = !parser.try_parse(reader);
+            end         = parser.end;
+
+            // Report that we've backtracked.
+            context.on(_ev::backtracked{}, begin, end);
+
+            return result;
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            auto copy = reader;
-            if (auto begin = copy.position(); lexy::engine_try_match<Engine>(copy))
-            {
-                auto end = copy.position();
-                context.on(_ev::backtracked{}, begin, end);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
 
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (bp<Context, Reader> impl{}; !impl.try_parse(context, reader))
+            {
+                // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::error<Reader, tag>(begin, end);
+                auto err  = lexy::error<Reader, tag>(reader.position(), impl.end);
                 context.on(_ev::error{}, err);
+
+                // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -108,25 +134,23 @@ struct _peekn : rule_base
     };
 
     template <typename Error>
-    static constexpr _peekn<Engine, Error> error = {};
+    static constexpr _peekn<Rule, Error> error = {};
 };
 
 /// Check if at this reader position, the rule would match, but don't actually consume any
 /// characters if it does.
 template <typename Rule>
-constexpr auto peek(Rule rule)
+constexpr auto peek(Rule)
 {
-    using token = decltype(token(rule));
-    return _peek<typename token::token_engine, void>{};
+    return _peek<Rule, void>{};
 }
 
 /// Check if at this reader position, the rule would not match, but don't actually consume any
 /// characters if it does.
 template <typename Rule>
-constexpr auto peek_not(Rule rule)
+constexpr auto peek_not(Rule)
 {
-    using token = decltype(token(rule));
-    return _peekn<typename token::token_engine, void>{};
+    return _peekn<Rule, void>{};
 }
 } // namespace lexyd
 

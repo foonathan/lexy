@@ -13,10 +13,10 @@ template <typename Id, bool InitialValue>
 struct _ctx_fcreate : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             static_assert(!Context::contains(Id{}));
             lexy::_detail::parse_context_var flag_ctx(context, Id{}, InitialValue);
@@ -29,10 +29,10 @@ template <typename Id, bool Value>
 struct _ctx_fset : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.get(Id{}) = Value;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -44,10 +44,10 @@ template <typename Id>
 struct _ctx_ftoggle : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.get(Id{}) = !context.get(Id{});
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -56,37 +56,35 @@ struct _ctx_ftoggle : rule_base
 };
 
 template <typename Id, bool Value>
-struct _ctx_fis : rule_base
+struct _ctx_fis : branch_base
 {
-    static constexpr auto is_branch = true;
-
-    template <typename NextParser>
-    struct parser : NextParser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        constexpr bool try_parse(const Context& context, const Reader&)
         {
-            if (context.get(Id{}) != Value)
-                return lexy::rule_try_parse_result::backtracked;
-
-            return NextParser::parse(context, reader, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
+            return context.get(Id{}) == Value;
         }
 
-        // inherit parse
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
     };
+
+    template <typename NextParser>
+    using p = NextParser;
 };
 
 template <typename Id>
 struct _ctx_fvalue : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)..., context.get(Id{}));
         }

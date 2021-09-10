@@ -12,24 +12,20 @@
 namespace lexyd
 {
 template <typename Tag, typename Token>
-struct _err : rule_base
+struct _err : unconditional_branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = true;
-
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&...)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&...)
         {
             auto begin = reader.position();
             auto end   = reader.position();
             if constexpr (!std::is_same_v<Token, void>)
             {
-                auto copy = reader;
-                Token::token_engine::match(copy);
-                end = copy.position();
+                lexy::try_match_token(Token{}, reader);
+                end = reader.position();
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);
@@ -37,6 +33,8 @@ struct _err : rule_base
             return false;
         }
     };
+    template <typename Context, typename Reader>
+    using bp = lexy::unconditional_branch_parser<_err, Context, Reader>;
 
     /// Adds a rule whose match will be part of the error location.
     template <typename Rule>
@@ -55,28 +53,31 @@ constexpr auto error = _err<Tag, void>{};
 namespace lexyd
 {
 template <typename Branch, typename Error>
-struct _must : rule_base
+struct _must : branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
     template <typename NextParser>
-    struct parser : lexy::rule_parser<Branch, NextParser>
+    struct p
     {
-        // inherit try_parse() from Branch
-
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using parser = lexy::rule_parser<Branch, NextParser>;
-            auto result  = parser::try_parse(context, reader, LEXY_FWD(args)...);
-            if (result != lexy::rule_try_parse_result::backtracked)
-                return static_cast<bool>(result);
-            else
-                return lexy::rule_parser<Error, NextParser>::parse(context, reader,
-                                                                   LEXY_FWD(args)...);
+            // Try and parse the branch.
+            lexy::branch_parser_for<Branch, Context, Reader> branch{};
+            if (branch.try_parse(context, reader))
+                return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+
+            // The branch wasn't taken, so we fail with the specific error by parsing Error.
+            auto result
+                = lexy::parser_for<Error, lexy::pattern_parser<Context>>::parse(context, reader);
+            LEXY_ASSERT(!result, "error must not recover");
+
+            return false;
         }
     };
+
+    // As a branch we parse it exactly the same.
+    template <typename Context, typename Reader>
+    using bp = lexy::branch_parser_for<Branch, Context, Reader>;
 };
 
 template <typename Branch>
@@ -103,7 +104,7 @@ template <typename Branch>
 constexpr auto must(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>);
-    static_assert(!Branch::is_unconditional_branch);
+    static_assert(!lexy::is_unconditional_branch_rule<Branch>);
     return _must_dsl<Branch>{};
 }
 } // namespace lexyd

@@ -7,13 +7,24 @@
 
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/any.hpp>
 
 namespace lexyd
 {
-struct _any : token_base<_any>
+struct _any : token_base<_any, unconditional_branch_base>
 {
-    using token_engine = lexy::engine_any;
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr std::true_type try_parse(Reader reader)
+        {
+            while (reader.peek() != Reader::encoding::eof())
+                reader.bump();
+            end = reader.position();
+            return {};
+        }
+    };
 };
 
 /// Matches anything and consumes all remaining characters.

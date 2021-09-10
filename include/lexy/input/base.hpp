@@ -108,12 +108,19 @@ constexpr bool char_type_compatible_with_reader
     = (std::is_same_v<CharT, typename Reader::encoding::char_type>)
       || Reader::encoding::template is_secondary_char_type<CharT>();
 
-/// Creates a reader that only reads until the given end.
 template <typename Reader>
-constexpr auto partial_reader(Reader reader, typename Reader::iterator end)
+constexpr auto partial_reader(const Reader&, typename Reader::iterator begin,
+                              typename Reader::iterator end)
 {
     using reader_t = _detail::range_reader<typename Reader::encoding, typename Reader::iterator>;
-    return reader_t(reader.position(), end);
+    return reader_t(begin, end);
+}
+
+/// Creates a reader that only reads until the given end.
+template <typename Reader>
+constexpr auto partial_reader(const Reader& reader, typename Reader::iterator end)
+{
+    return partial_reader(reader, reader.position(), end);
 }
 } // namespace lexy
 

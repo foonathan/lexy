@@ -82,18 +82,8 @@ set(tests
         dsl/until.cpp
         dsl/whitespace.cpp
 
-        engine/any.cpp
-        engine/char_class.cpp
-        engine/code_point.cpp
-        engine/digits.cpp
-        engine/eof.cpp
-        engine/failure.cpp
-        engine/find.cpp
         engine/literal.cpp
-        engine/minus.cpp
         engine/trie.cpp
-        engine/until.cpp
-        engine/while.cpp
 
         input/argv_input.cpp
         input/base.cpp

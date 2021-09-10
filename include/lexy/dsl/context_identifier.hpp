@@ -25,10 +25,10 @@ template <typename Id>
 struct _ctx_icreate : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             static_assert(!Context::contains(Id{}));
             lexy::_detail::parse_context_var identifier_ctx(context, Id{}, lexy::lexeme<Reader>());
@@ -38,101 +38,86 @@ struct _ctx_icreate : rule_base
 };
 
 template <typename Id, typename Identifier>
-struct _ctx_icap : rule_base
+struct _ctx_icap : branch_base
 {
-    static constexpr auto is_branch = true;
-
     template <typename NextParser>
-    struct parser
+    struct _pc
     {
-        template <typename... Args>
-        struct _cont
-        {
-            template <typename Context, typename Reader>
-            LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args,
-                                     lexy::lexeme<Reader> lexeme)
-            {
-                context.get(Id{}) = lexeme;
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., lexeme);
-            }
-        };
-
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return lexy::rule_parser<Identifier, _cont<Args...>>::try_parse(context, reader,
-                                                                            LEXY_FWD(args)...);
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return lexy::rule_parser<Identifier, _cont<Args...>>::parse(context, reader,
-                                                                        LEXY_FWD(args)...);
+            // The last argument will be a lexeme.
+            context.get(Id{}) = (args, ...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
+    template <typename Context, typename Reader>
+    using bp = lexy::continuation_branch_parser<Identifier, Context, Reader, _pc>;
+    template <typename NextParser>
+    using p = lexy::parser_for<Identifier, _pc<NextParser>>;
 };
 
 template <typename Id, typename Identifier, typename Tag>
-struct _ctx_irem : rule_base
+struct _ctx_irem : branch_base
 {
-    static constexpr auto is_branch = true;
+    // We only need the pattern:
+    // We don't want a value and don't need to check for reserved identifiers,
+    // as it needs to match a previously parsed identifier, which wasn't reserved.
+    using _pattern = decltype(Identifier{}.pattern());
 
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader>
+    struct bp
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        lexy::token_parser_for<_pattern, Reader> parser;
+
+        constexpr bool try_parse(Context& context, const Reader& reader)
         {
-            // Trie to parse the pattern of the identifier only: we don't need a value nor need to
-            // check for reserved identifier, because it must match the one we've succesfully parsed
-            // earlier.
-            using engine = typename decltype(Identifier{}.pattern())::token_engine;
-            auto begin   = reader.position();
-            if (auto ec = engine::match(reader); ec != typename engine::error_code())
-                return lexy::rule_try_parse_result::backtracked;
-            auto lexeme = lexy::lexeme(reader, begin);
+            // Parse the pattern.
+            if (!parser.try_parse(reader))
+                return false;
 
-            if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
-                return lexy::rule_try_parse_result::backtracked;
-
-            context.on(_ev::token{}, lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
-            // Don't produce a value.
-            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
-                                                                       LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
+            // The two lexemes need to be equal.
+            auto lexeme = lexy::lexeme<Reader>(reader.position(), parser.end);
+            return lexy::_detail::equal_lexemes(context.get(Id{}), lexeme);
         }
 
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            // Again, parse pattern only.
-            using pattern = decltype(Identifier{}.pattern());
-            using engine  = typename decltype(Identifier{}.pattern())::token_engine;
-            auto begin    = reader.position();
-            if (auto ec = engine::match(reader); ec != typename engine::error_code())
-            {
-                pattern::token_error(context, reader, ec, begin);
-                return false;
-            }
-            auto lexeme = lexy::lexeme(reader, begin);
+            // Finish parsing the token.
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), parser.end);
+            reader.set_position(parser.end);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
+        }
+    };
 
-            // Check that the identifier is the same.
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using parser = lexy::parser_for<_pattern, lexy::pattern_parser<Context>>;
+
+            // Parse the pattern.
+            auto begin = reader.position();
+            if (!parser::parse(context, reader))
+                // We don't recover.
+                return false;
+
+            auto lexeme = lexy::lexeme(reader, begin);
             if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
             {
+                // The lexemes weren't equal.
                 using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
                 auto err  = lexy::error<Reader, tag>(lexeme.begin(), lexeme.end());
                 context.on(_ev::error{}, err);
-                // We can trivially recover, as we still had a valid identifier.
+
+                // But we can trivially recover.
             }
 
-            context.on(_ev::token{}, lexy::identifier_token_kind, lexeme.begin(), lexeme.end());
-            // Don't produce a value.
-            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
-                                                                       LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 

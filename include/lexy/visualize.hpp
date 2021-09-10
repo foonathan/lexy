@@ -7,8 +7,7 @@
 
 #include <cstdio>
 #include <lexy/_detail/config.hpp>
-#include <lexy/code_point.hpp>
-#include <lexy/engine/code_point.hpp>
+#include <lexy/dsl/code_point.hpp>
 #include <lexy/input/range_input.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -388,9 +387,9 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         auto count = 0u;
         while (true)
         {
-            lexy::engine_cp_auto::error_code ec{};
-            auto                             cp = lexy::engine_cp_auto::parse(ec, reader);
-            if (ec == lexy::engine_cp_auto::error_code::eof)
+            auto ec = lexy::_detail::cp_error::success;
+            auto cp = lexy::_detail::parse_code_point(ec, reader);
+            if (ec == lexy::_detail::cp_error::eof)
                 break;
 
             out = visualize_to(out, cp, opts);

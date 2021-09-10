@@ -11,18 +11,20 @@
 namespace lexyd
 {
 template <typename Condition, typename... R>
-struct _br : rule_base
+struct _br : _copy_base<Condition>
 {
     static_assert(sizeof...(R) >= 0);
 
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = Condition::is_unconditional_branch;
-
-    // We simple connect Condition with R... and then NextParser.
-    // Condition has a try_parse() that will try to match Condition and then continue on with the
-    // continuation.
     template <typename NextParser>
-    using parser = lexy::rule_parser<Condition, lexy::rule_parser<_seq_impl<R...>, NextParser>>;
+    using _pc = lexy::parser_for<_seq_impl<R...>, NextParser>;
+
+    // We parse Condition and then seq<R...>.
+    // Condition's try_parse() checks the branch condition, which is what we want.
+    template <typename Context, typename Reader>
+    using bp = lexy::continuation_branch_parser<Condition, Context, Reader, _pc>;
+
+    template <typename NextParser>
+    using p = lexy::parser_for<_seq_impl<Condition, R...>, NextParser>;
 };
 
 //=== operator>> ===//
@@ -102,13 +104,13 @@ constexpr auto operator+(_br<C1, R...>, _br<C2, S...>)
 
 namespace lexyd
 {
-struct _else : rule_base
+struct _else : unconditional_branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = true;
-
     template <typename NextParser>
-    using parser = NextParser;
+    using p = NextParser;
+
+    template <typename Context, typename Reader>
+    using bp = lexy::unconditional_branch_parser<_else, Context, Reader>;
 };
 struct _else_dsl
 {

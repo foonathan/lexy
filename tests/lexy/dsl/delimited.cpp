@@ -5,6 +5,7 @@
 #include <lexy/dsl/delimited.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/list.hpp>
@@ -673,18 +674,41 @@ constexpr auto symbols = lexy::symbol_table<char>.map<'a'>('a');
 TEST_CASE("dsl::escape")
 {
     constexpr auto escape = lexy::dsl::escape(LEXY_LIT("$"));
+    constexpr auto delim  = [](auto e) { return lexy::dsl::single_quoted(lexy::dsl::any, e); };
+
     SUBCASE(".rule()")
     {
-        static constexpr auto rule = escape.rule(LEXY_LIT("abc") >> label<0>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        static constexpr auto rule = delim(escape.rule(LEXY_LIT("abc") >> label<0>));
 
         struct callback
         {
             const char* str;
 
+            LEXY_VERIFY_FN auto list()
+            {
+                struct b
+                {
+                    int result = -1;
+
+                    using return_type = int;
+
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input>) {}
+                    LEXY_VERIFY_FN void operator()(int i)
+                    {
+                        result = i;
+                    }
+
+                    LEXY_VERIFY_FN int finish() &&
+                    {
+                        return result;
+                    }
+                };
+                return b{};
+            }
+
             LEXY_VERIFY_FN int success(const char* cur, int i)
             {
-                LEXY_VERIFY_CHECK(cur == str + 4);
+                LEXY_VERIFY_CHECK(cur == str + 6);
                 return i;
             }
 
@@ -699,27 +723,50 @@ TEST_CASE("dsl::escape")
                 LEXY_VERIFY_CHECK(e.position() == str + 1);
                 return -2;
             }
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter>)
+            {
+                return -3;
+            }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto abc = LEXY_VERIFY("$abc");
+        auto abc = LEXY_VERIFY("'$abc'");
         CHECK(abc == 0);
 
-        auto invalid = LEXY_VERIFY("$ab");
-        CHECK(invalid == -2);
+        auto invalid = LEXY_VERIFY("'$ab'");
+        CHECK(invalid.value == -1);
+        CHECK(invalid.errors(-2, -3));
     }
     SUBCASE("multiple rules")
     {
-        static constexpr auto rule = escape.rule(LEXY_LIT("a") >> label<1>)
-                                         .rule(LEXY_LIT("b") >> label<2>)
-                                         .rule(lexy::dsl::else_ >> label<0>);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        static constexpr auto rule = delim(escape.rule(LEXY_LIT("a") >> label<1>)
+                                               .rule(LEXY_LIT("b") >> label<2>)
+                                               .rule(lexy::dsl::else_ >> label<0>));
 
         struct callback
         {
             const char* str;
+
+            LEXY_VERIFY_FN auto list()
+            {
+                struct b
+                {
+                    int result = -1;
+
+                    using return_type = int;
+
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input>) {}
+                    LEXY_VERIFY_FN void operator()(int i)
+                    {
+                        result = i;
+                    }
+
+                    LEXY_VERIFY_FN int finish() &&
+                    {
+                        return result;
+                    }
+                };
+                return b{};
+            }
 
             LEXY_VERIFY_FN int success(const char*, int i)
             {
@@ -732,70 +779,52 @@ TEST_CASE("dsl::escape")
                 LEXY_VERIFY_CHECK(e.character() == '$');
                 return -1;
             }
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter>)
+            {
+                return -3;
+            }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto a = LEXY_VERIFY("$a");
+        auto a = LEXY_VERIFY("'$a'");
         CHECK(a == 1);
-        auto b = LEXY_VERIFY("$b");
+        auto b = LEXY_VERIFY("'$b'");
         CHECK(b == 2);
 
-        auto invalid = LEXY_VERIFY("$c");
-        CHECK(invalid == 0);
+        auto invalid = LEXY_VERIFY("'$c'");
+        CHECK(invalid == -3);
     }
     SUBCASE(".capture()")
     {
-        static constexpr auto rule = escape.capture(lexy::dsl::ascii::character);
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
+        static constexpr auto rule = delim(escape.capture(lexy::dsl::ascii::character));
 
         struct callback
         {
             const char* str;
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
+            LEXY_VERIFY_FN auto list()
             {
-                LEXY_VERIFY_CHECK(cur == str + 2);
-                return *lex.begin();
+                struct b
+                {
+                    char result = 0;
+
+                    using return_type = char;
+
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input> lex)
+                    {
+                        result = *lex.begin();
+                    }
+
+                    LEXY_VERIFY_FN auto finish() &&
+                    {
+                        return result;
+                    }
+                };
+                return b{};
             }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character() == '$');
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str + 1);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto a = LEXY_VERIFY("$a");
-        CHECK(a == 'a');
-        auto b = LEXY_VERIFY("$b");
-        CHECK(b == 'b');
-
-        auto invalid = LEXY_VERIFY("$\xFF");
-        CHECK(invalid == -2);
-    }
-    SUBCASE(".symbol()")
-    {
-        static constexpr auto rule = escape.symbol<symbols>();
-        CHECK(lexy::is_branch_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
 
             LEXY_VERIFY_FN int success(const char* cur, char c)
             {
-                LEXY_VERIFY_CHECK(cur == str + 2);
+                LEXY_VERIFY_CHECK(cur == str + 4);
                 return c;
             }
 
@@ -807,19 +836,85 @@ TEST_CASE("dsl::escape")
             }
             LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
             {
-                LEXY_VERIFY_CHECK(e.position() == str + 1);
+                LEXY_VERIFY_CHECK(e.begin() == str + 1);
+                LEXY_VERIFY_CHECK(e.end() == str + 2);
                 return -2;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter>)
+            {
+                return -3;
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        auto a = LEXY_VERIFY("'$a'");
+        CHECK(a == 'a');
+        auto b = LEXY_VERIFY("'$b'");
+        CHECK(b == 'b');
 
-        auto a = LEXY_VERIFY("$a");
+        auto invalid = LEXY_VERIFY("'$\xFF'");
+        CHECK(invalid.value == -1);
+        CHECK(invalid.errors(-2, -3));
+    }
+    SUBCASE(".symbol()")
+    {
+        static constexpr auto rule = delim(escape.symbol<symbols>());
+
+        struct callback
+        {
+            const char* str;
+
+            LEXY_VERIFY_FN auto list()
+            {
+                struct b
+                {
+                    char result = 0;
+
+                    using return_type = char;
+
+                    LEXY_VERIFY_FN void operator()(lexy::lexeme_for<test_input>) {}
+                    LEXY_VERIFY_FN void operator()(char c)
+                    {
+                        result = c;
+                    }
+
+                    LEXY_VERIFY_FN auto finish() &&
+                    {
+                        return result;
+                    }
+                };
+                return b{};
+            }
+
+            LEXY_VERIFY_FN int success(const char* cur, char c)
+            {
+                LEXY_VERIFY_CHECK(cur == str + 4);
+                return c;
+            }
+
+            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
+            {
+                LEXY_VERIFY_CHECK(e.position() == str);
+                LEXY_VERIFY_CHECK(e.character() == '$');
+                return -1;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::invalid_escape_sequence> e)
+            {
+                LEXY_VERIFY_CHECK(e.begin() == str + 1);
+                LEXY_VERIFY_CHECK(e.end() == str + 2);
+                return -2;
+            }
+            LEXY_VERIFY_FN int error(test_error<lexy::missing_delimiter>)
+            {
+                return -3;
+            }
+        };
+
+        auto a = LEXY_VERIFY("'$a'");
         CHECK(a == 'a');
 
-        auto invalid = LEXY_VERIFY("$b");
-        CHECK(invalid == -2);
+        auto invalid = LEXY_VERIFY("'$b'");
+        CHECK(invalid.value == -1);
+        CHECK(invalid.errors(-2, -3));
     }
 }
 

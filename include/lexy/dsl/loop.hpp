@@ -10,24 +10,25 @@
 
 namespace lexyd
 {
-struct _break : rule_base
+struct _break : unconditional_branch_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = true;
-
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader&, Args&&...)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader&, Args&&...)
         {
             static_assert(sizeof...(Args) == 0, "looped rule must not add any values");
 
             // We set loop break on the member with the specified id.
             context.get(_break{}).loop_break = true;
+
             return true;
         }
     };
+
+    template <typename Context, typename Reader>
+    using bp = lexy::unconditional_branch_parser<_break, Context, Reader>;
 };
 
 /// Exits a loop().
@@ -40,10 +41,10 @@ template <typename Rule>
 struct _loop : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             struct flag
             {
@@ -53,8 +54,7 @@ struct _loop : rule_base
             lexy::_detail::parse_context_var loop_context(context, _break{}, flag{});
             while (!loop_context.get(_break{}).loop_break)
             {
-                using parser
-                    = lexy::rule_parser<Rule, lexy::discard_parser<decltype(loop_context)>>;
+                using parser = lexy::parser_for<Rule, lexy::pattern_parser<decltype(loop_context)>>;
                 if (!parser::parse(loop_context, reader))
                     return false;
             }
@@ -78,19 +78,15 @@ template <typename Branch>
 struct _whl : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            while (true)
+            lexy::branch_parser_for<Branch, Context, Reader> branch{};
+            while (branch.try_parse(context, reader))
             {
-                using branch_parser = lexy::rule_parser<Branch, lexy::discard_parser<Context>>;
-
-                auto result = branch_parser::try_parse(context, reader);
-                if (result == lexy::rule_try_parse_result::backtracked)
-                    break;
-                else if (result == lexy::rule_try_parse_result::canceled)
+                if (!branch.template finish<lexy::pattern_parser<Context>>(context, reader))
                     return false;
             }
 

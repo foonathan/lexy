@@ -91,21 +91,42 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 };
 
 template <typename Encoding, lexy::encoding_endianness Endianness>
-struct _bom : token_base<_bom<Encoding, Endianness>>
+struct _bom : token_base<_bom<Encoding, Endianness>,
+                         std::conditional_t<_bom_impl<Encoding, Endianness>::get().empty(),
+                                            unconditional_branch_base, branch_base>>
 {
     using string                = _bom_impl<Encoding, Endianness>;
     static constexpr auto _trie = lexy::linear_trie<string>;
 
-    using token_engine = lexy::engine_literal<_trie>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, string::name);
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr auto try_parse(Reader reader)
+        {
+            if constexpr (string::get().empty())
+            {
+                // No BOM for this encoding.
+                end = reader.position();
+                return std::true_type{};
+            }
+            else
+            {
+                auto result = lexy::engine_literal<_trie>::match(reader);
+                end         = reader.position();
+                return result == typename lexy::engine_literal<_trie>::error_code{};
+            }
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), string::name);
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 /// The BOM for that particular encoding.

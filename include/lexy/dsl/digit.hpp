@@ -9,8 +9,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/char_class.hpp>
-#include <lexy/engine/digits.hpp>
 
 //=== bases ===//
 namespace lexyd
@@ -24,10 +22,15 @@ struct binary
         return "digit.binary";
     }
 
-    using digit_set = lexy::engine_char_range<'0', '1'>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        return i == lexy::_char_to_int_type<Encoding>('0')
+               || i == lexy::_char_to_int_type<Encoding>('1');
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
@@ -42,10 +45,15 @@ struct octal
         return "digit.octal";
     }
 
-    using digit_set = lexy::engine_char_range<'0', '7'>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        return lexy::_char_to_int_type<Encoding>('0') <= i
+               && i <= lexy::_char_to_int_type<Encoding>('7');
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
@@ -60,11 +68,15 @@ struct decimal
         return "digit.decimal";
     }
 
-    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
-                                               lexy::_detail::ascii_table_digit>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        using namespace lexy::_detail;
+        return ascii_table.contains<Encoding, ascii_table_t::digit>(i);
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
@@ -79,11 +91,15 @@ struct hex_lower
         return "digit.hex-lower";
     }
 
-    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
-                                               lexy::_detail::ascii_table_hex_lower>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        using namespace lexy::_detail;
+        return ascii_table.contains<Encoding, ascii_table_t::hex_lower>(i);
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         if (c >= 'a')
             return static_cast<unsigned>(c) - 'a' + 10;
@@ -103,11 +119,15 @@ struct hex_upper
         return "digit.hex-upper";
     }
 
-    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
-                                               lexy::_detail::ascii_table_hex_upper>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        using namespace lexy::_detail;
+        return ascii_table.contains<Encoding, ascii_table_t::hex_upper>(i);
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         if (c >= 'A')
             return static_cast<unsigned>(c) - 'A' + 10;
@@ -127,12 +147,16 @@ struct hex
         return "digit.hex";
     }
 
-    using digit_set = lexy::engine_ascii_table<lexy::_detail::dsl_ascii_table,
-                                               lexy::_detail::ascii_table_hex_lower,
-                                               lexy::_detail::ascii_table_hex_upper>;
+    template <typename Encoding>
+    static constexpr bool match(typename Encoding::int_type i)
+    {
+        using namespace lexy::_detail;
+        return ascii_table.contains<Encoding, ascii_table_t::hex_lower, ascii_table_t::hex_upper>(
+            i);
+    }
 
     template <typename CharT>
-    LEXY_DSL_FUNC unsigned value(CharT c)
+    static constexpr unsigned value(CharT c)
     {
         if (c >= 'a')
             return static_cast<unsigned>(c) - 'a' + 10;
@@ -151,17 +175,29 @@ namespace lexyd
 {
 struct _zero : token_base<_zero>
 {
-    static constexpr auto _trie = lexy::linear_trie<LEXY_NTTP_STRING("0")>;
-    using token_engine          = lexy::engine_literal<_trie>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, "digit.zero");
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            if (reader.peek() != lexy::_char_to_int_type<typename Reader::encoding>('0'))
+                return false;
+
+            reader.bump();
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "digit.zero");
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 /// Matches the zero digit.
@@ -170,16 +206,29 @@ constexpr auto zero = _zero{};
 template <typename Base>
 struct _digit : token_base<_digit<Base>>
 {
-    using token_engine = typename Base::digit_set;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            if (!Base::template match<typename Reader::encoding>(reader.peek()))
+                return false;
+
+            reader.bump();
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 /// Matches a single digit.
@@ -204,42 +253,121 @@ namespace lexyd
 template <typename Base, typename Sep>
 struct _digits_st : token_base<_digits_st<Base, Sep>>
 {
-    using token_engine
-        = lexy::engine_digits_trimmed_sep<typename Base::digit_set, _zero::token_engine,
-                                          typename Sep::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
+    template <typename Reader>
+    struct tp
     {
-        if (ec == token_engine::error_code::leading_zero)
+        typename Reader::iterator end;
+        bool                      forbidden_leading_zero;
+
+        constexpr bool try_parse(Reader reader)
         {
-            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.position());
-            context.on(_ev::error{}, err);
+            // Check for a zero that is followed by a digit or separator.
+            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            {
+                reader.bump();
+                end = reader.position();
+
+                if (lexy::try_match_token(digit<Base>, reader)
+                    || lexy::try_match_token(Sep{}, reader))
+                {
+                    forbidden_leading_zero = true;
+                    return false;
+                }
+
+                // Just zero.
+                return true;
+            }
+            // Need at least one digit.
+            else if (!lexy::try_match_token(digit<Base>, reader))
+            {
+                forbidden_leading_zero = false;
+                return false;
+            }
+
+            // Might have following digits.
+            while (true)
+            {
+                if (lexy::try_match_token(Sep{}, reader))
+                {
+                    // Need a digit after a separator.
+                    if (!lexy::try_match_token(digit<Base>, reader))
+                    {
+                        forbidden_leading_zero = false;
+                        return false;
+                    }
+                }
+                else if (!lexy::try_match_token(digit<Base>, reader))
+                {
+                    // If we're not having a digit, we're done.
+                    break;
+                }
+            }
+
+            end = reader.position();
+            return true;
         }
-        else
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-            context.on(_ev::error{}, err);
+            if (forbidden_leading_zero)
+            {
+                auto err
+                    = lexy::error<Reader, lexy::forbidden_leading_zero>(reader.position(), end);
+                context.on(_ev::error{}, err);
+            }
+            else
+            {
+                auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
+                                                                          Base::name());
+                context.on(_ev::error{}, err);
+            }
         }
-    }
+    };
 };
 
 template <typename Base, typename Sep>
 struct _digits_s : token_base<_digits_s<Base, Sep>>
 {
-    using token_engine
-        = lexy::engine_digits_sep<typename Base::digit_set, typename Sep::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Need at least one digit.
+            if (!lexy::try_match_token(digit<Base>, reader))
+                return false;
+
+            // Might have following digits.
+            while (true)
+            {
+                if (lexy::try_match_token(Sep{}, reader))
+                {
+                    // Need a digit after a separator.
+                    if (!lexy::try_match_token(digit<Base>, reader))
+                        return false;
+                }
+                else if (!lexy::try_match_token(digit<Base>, reader))
+                {
+                    // If we're not having a digit, we're done.
+                    break;
+                }
+            }
+
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            context.on(_ev::error{}, err);
+        }
+    };
 
     constexpr auto no_leading_zero() const
     {
@@ -250,24 +378,62 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
 template <typename Base>
 struct _digits_t : token_base<_digits_t<Base>>
 {
-    using token_engine = lexy::engine_digits_trimmed<typename Base::digit_set, _zero::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader& reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
+    template <typename Reader>
+    struct tp
     {
-        if (ec == token_engine::error_code::leading_zero)
+        typename Reader::iterator end;
+        bool                      forbidden_leading_zero;
+
+        constexpr bool try_parse(Reader reader)
         {
-            auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(pos, reader.position());
-            context.on(_ev::error{}, err);
+            // Check for a zero that is followed by a digit.
+            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            {
+                reader.bump();
+                end = reader.position();
+
+                if (lexy::try_match_token(digit<Base>, reader))
+                {
+                    forbidden_leading_zero = true;
+                    return false;
+                }
+
+                // Just zero.
+                return true;
+            }
+
+            // Need at least one digit.
+            if (!lexy::try_match_token(digit<Base>, reader))
+            {
+                forbidden_leading_zero = false;
+                return false;
+            }
+
+            // Might have more than one digit afterwards.
+            while (lexy::try_match_token(digit<Base>, reader))
+            {}
+
+            end = reader.position();
+            return true;
         }
-        else
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-            context.on(_ev::error{}, err);
+            if (forbidden_leading_zero)
+            {
+                auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(reader.position(),
+                                                                             this->end);
+                context.on(_ev::error{}, err);
+            }
+            else
+            {
+                auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
+                                                                          Base::name());
+                context.on(_ev::error{}, err);
+            }
         }
-    }
+    };
 
     template <typename Token>
     constexpr auto sep(Token) const
@@ -280,16 +446,33 @@ struct _digits_t : token_base<_digits_t<Base>>
 template <typename Base>
 struct _digits : token_base<_digits<Base>>
 {
-    using token_engine = lexy::engine_digits<typename Base::digit_set>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader>
+    struct tp
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Need at least one digit.
+            if (!lexy::try_match_token(digit<Base>, reader))
+                return false;
+
+            // Might have more than one digit afterwards.
+            while (lexy::try_match_token(digit<Base>, reader))
+            {}
+
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            context.on(_ev::error{}, err);
+        }
+    };
 
     template <typename Token>
     constexpr auto sep(Token) const
@@ -318,17 +501,35 @@ namespace lexyd
 template <std::size_t N, typename Base, typename Sep>
 struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
 {
-    using token_engine
-        = lexy::engine_ndigits_sep<N, typename Base::digit_set, typename Sep::token_engine>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader, typename Indices = lexy::_detail::make_index_sequence<N - 1>>
+    struct tp;
+    template <typename Reader, std::size_t... Idx>
+    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Match the Base one time.
+            if (!lexy::try_match_token(digit<Base>, reader))
+                return false;
+
+            // Match each other digit after a separator.
+            auto success = (((void)Idx, lexy::try_match_token(Sep{}, reader),
+                             lexy::try_match_token(digit<Base>, reader))
+                            && ...);
+            end          = reader.position();
+            return success;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 template <std::size_t N, typename Base>
@@ -336,16 +537,29 @@ struct _ndigits : token_base<_ndigits<N, Base>>
 {
     static_assert(N > 1);
 
-    using token_engine = lexy::engine_ndigits<N, typename Base::digit_set>;
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, const Reader&,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
+    template <typename Reader, typename Indices = lexy::_detail::make_index_sequence<N>>
+    struct tp;
+    template <typename Reader, std::size_t... Idx>
+    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        auto err = lexy::error<Reader, lexy::expected_char_class>(pos, Base::name());
-        context.on(_ev::error{}, err);
-    }
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Match the Base N times.
+            auto success = (((void)Idx, lexy::try_match_token(digit<Base>, reader)) && ...);
+            end          = reader.position();
+            return success;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            context.on(_ev::error{}, err);
+        }
+    };
 
     template <typename Token>
     constexpr auto sep(Token) const

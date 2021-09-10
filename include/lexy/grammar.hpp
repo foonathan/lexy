@@ -11,63 +11,19 @@
 #include <lexy/_detail/type_name.hpp>
 
 //=== rule ===//
-#if 0
-struct Rule : rule_base
-{
-    static constexpr auto is_branch = false;
-    static constexpr auto is_unconditional_branch = false; // Only set to true if is_branch is also true.
-
-    template <typename NextParser>
-    struct parser
-    {
-        // Only if `is_branch == true` and `is_unconditional_branch == false`.
-        template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC rule_try_parse_result try_parse(Context& context, Reader& reader, Args&&... args)
-        {
-            if (/* check whether we would match without consuming */)
-            {
-                if (/* matched and consumed */)
-                {
-                    auto result = NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
-                    return static_cast<rule_try_parse_result>(result);
-                }
-                else
-                {
-                    context.error(/* error */);
-                    return rule_try_parse_result::canceled;
-                }
-            }
-            else
-            {
-                return rule_try_parse_result::backtracked;
-            }
-        }
-
-        template <typename Context, typename Reader, typename ... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            if (/* matched and consumed */)
-                return NextParser::parse(context, reader, LEXY_FWD(args)..., /* rule arguments */);
-            else
-            {
-                context.error(/* error */);
-                return false;
-            }
-        }
-    };
-};
-#endif
-
 // We use a shorthand namespace to decrease symbol size.
 namespace lexyd
 {
 struct rule_base
-{
-    static constexpr auto is_branch               = false;
-    static constexpr auto is_unconditional_branch = false;
-};
+{};
 
-struct _token_base : rule_base
+struct branch_base : rule_base
+{};
+
+struct unconditional_branch_base : branch_base
+{};
+
+struct _token_base
 {};
 } // namespace lexyd
 
@@ -77,16 +33,14 @@ namespace dsl = lexyd;
 
 template <typename T>
 constexpr bool is_rule = std::is_base_of_v<dsl::rule_base, T>;
-template <typename T>
-constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
-constexpr bool is_branch_rule = [] {
-    if constexpr (is_rule<T>)
-        return T::is_branch;
-    else
-        return false;
-}();
+constexpr bool is_branch_rule = std::is_base_of_v<dsl::branch_base, T>;
+template <typename T>
+constexpr bool is_unconditional_branch_rule = std::is_base_of_v<dsl::unconditional_branch_base, T>;
+
+template <typename T>
+constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
 } // namespace lexy
 
 //=== predefined_token_kind ===//

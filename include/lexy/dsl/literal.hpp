@@ -5,8 +5,8 @@
 #ifndef LEXY_DSL_LITERAL_HPP_INCLUDED
 #define LEXY_DSL_LITERAL_HPP_INCLUDED
 
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/_detail/nttp_string.hpp>
-#include <lexy/_detail/string_view.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/literal.hpp>
@@ -19,20 +19,31 @@ struct _lit : token_base<_lit<String>>
     using string = String;
 
     static constexpr auto _trie = lexy::linear_trie<String>;
-    using token_engine          = lexy::engine_literal<_trie>;
 
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context&                          context, const Reader&,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
+    template <typename Reader>
+    struct tp
     {
-        using reader_char_type = typename Reader::encoding::char_type;
-        constexpr auto string  = String::template get<reader_char_type>();
+        typename Reader::iterator end;
 
-        auto err = lexy::error<Reader, lexy::expected_literal>(pos, string.c_str(),
-                                                               token_engine::index_from_error(ec));
-        context.on(_ev::error{}, err);
-    }
+        constexpr bool try_parse(Reader reader)
+        {
+            auto result = lexy::engine_literal<_trie>::match(reader);
+            end         = reader.position();
+            return result == typename lexy::engine_literal<_trie>::error_code{};
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            using reader_char_type = typename Reader::encoding::char_type;
+            constexpr auto string  = String::template get<reader_char_type>();
+
+            auto begin = reader.position();
+            auto index = lexy::_detail::range_size(begin, this->end);
+            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, string.c_str(), index);
+            context.on(_ev::error{}, err);
+        }
+    };
 };
 
 template <auto C>

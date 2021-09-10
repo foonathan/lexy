@@ -7,12 +7,9 @@
 
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/eof.hpp>
-#include <lexy/dsl/error.hpp>
-#include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/symbol.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/lexeme.hpp>
@@ -31,93 +28,81 @@ struct missing_delimiter
 
 namespace lexyd
 {
-template <typename Char, typename Context, typename Reader, typename Sink>
-constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
-{
-    using engine = typename Char::token_engine;
-    if constexpr (lexy::engine_can_fail<engine, Reader>)
-    {
-        auto content_begin = reader.position();
-        if (auto ec = engine::match(reader); ec != typename engine::error_code())
-        {
-            Char::token_error(context, reader, ec, content_begin);
-            // Repeat loop if we've recovered.
-            return engine::recover(reader, ec);
-        }
-        auto content_end = reader.position();
-
-        context.on(_ev::token{}, Char{}, content_begin, content_end);
-        sink(lexy::lexeme<Reader>(content_begin, content_end));
-    }
-    else
-    {
-        auto content_begin = reader.position();
-        engine::match(reader);
-        auto content_end = reader.position();
-
-        context.on(_ev::token{}, Char{}, content_begin, content_end);
-        sink(lexy::lexeme<Reader>(content_begin, content_end));
-    }
-
-    return true;
-}
-
 template <typename Close, typename Char, typename Limit, typename... Escapes>
 struct _del : rule_base
 {
-    template <typename NextParser>
-    struct parser
+    template <typename CloseParser, typename Context, typename Reader, typename Sink>
+    static constexpr bool _loop(CloseParser& close, Context& context, Reader& reader, Sink& sink)
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        auto del_begin = reader.position();
+        while (!close.try_parse(context, reader))
         {
-            auto sink      = context.on(_ev::list{}, reader.position());
-            auto del_begin = reader.position();
-
-            using close = lexy::rule_parser<Close, _list_finish<NextParser, Args...>>;
-            while (true)
+            // Check for missing delimiter.
+            if (lexy::branch_parser_for<Limit, Context, Reader> limit{};
+                limit.try_parse(context, reader))
             {
-                // Try to finish parsing the production.
-                if (auto result = close::try_parse(context, reader, LEXY_FWD(args)..., sink);
-                    result != lexy::rule_try_parse_result::backtracked)
-                {
-                    // We had a closing delimiter, return that result.
-                    return static_cast<bool>(result);
-                }
-                // Check for missing closing delimiter.
-                else if (lexy::engine_peek<typename Limit::token_engine>(reader))
-                {
-                    auto err = lexy::error<Reader, lexy::missing_delimiter>(del_begin,
-                                                                            reader.position());
-                    context.on(_ev::error{}, err);
-                    return false;
-                }
-                // Try to parse the escape sequences.
-                else if (auto result = lexy::rule_try_parse_result::backtracked;
-                         // This tries to parse each escape in order until one doesn't backtrack.
-                         // Then enters the if.
-                         ((result = lexy::rule_parser<Escapes, _list_sink>::try_parse(context,
-                                                                                      reader, sink),
-                           result != lexy::rule_try_parse_result::backtracked)
-                          || ...))
-                {
-                    // If we just parsed an escape sequence, we just continue with the next
-                    // character.
-                    //
-                    // If we had an invalid escape sequence, we also just continue as if
-                    // nothing happened.
-                    // The leading escape character will be skipped, as well as any valid prefixes.
-                    // We could try and add them to the list, but it should be fine as-is.
-                }
-                // Parse the next character.
-                else
-                {
-                    if (!_del_parse_char<Char>(context, reader, sink))
-                        return false;
-                }
+                auto err
+                    = lexy::error<Reader, lexy::missing_delimiter>(del_begin, reader.position());
+                context.on(_ev::error{}, err);
+                return false;
             }
 
-            return false; // unreachable
+            // Check for escape sequences.
+            if ((Escapes::_try_parse(context, reader, sink) || ...))
+                // We had an escape sequence, so do nothing in this iteration.
+                continue;
+
+            // Parse the next character.
+            auto begin = reader.position();
+            if (lexy::parser_for<Char, lexy::pattern_parser<Context>>::parse(context, reader))
+            {
+                // Pass it to the sink.
+                sink(lexy::lexeme<Reader>(begin, reader.position()));
+            }
+            else
+            {
+                // Try to recover.
+                context.on(_ev::recovery_start{}, reader.position());
+
+                if (begin == reader.position())
+                {
+                    // Manually discard one code unit.
+                    LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+                                "EOF should be checked before calling this");
+                    reader.bump();
+                }
+
+                context.on(_ev::recovery_finish{}, reader.position());
+            }
+        }
+
+        return true;
+    }
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto sink = context.on(_ev::list{}, reader.position());
+
+            // Parse characters until we have the closing delimiter.
+            lexy::branch_parser_for<Close, Context, Reader> close{};
+            if (!_loop(close, context, reader, sink))
+                return false;
+
+            // We're done, finish the sink and then the closing delimiter.
+            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return close.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return close.template finish<NextParser>(context, reader, LEXY_FWD(args)...,
+                                                         LEXY_MOV(sink).finish());
+            }
         }
     };
 };
@@ -125,7 +110,7 @@ struct _del : rule_base
 struct _escape_base
 {};
 
-template <typename Open, typename Close, typename Limit>
+template <typename Open, typename Close, typename Limit = lexyd::_eof>
 struct _delim_dsl
 {
     /// Add tokens that will limit the delimited to detect a missing terminator.
@@ -166,7 +151,7 @@ template <typename Open, typename Close>
 constexpr auto delimited(Open, Close)
 {
     static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
-    return _delim_dsl<Open, Close, lexyd::_eof>{};
+    return _delim_dsl<Open, Close>{};
 }
 
 /// Parses everything between a paired delimiter.
@@ -174,7 +159,7 @@ template <typename Delim>
 constexpr auto delimited(Delim)
 {
     static_assert(lexy::is_branch_rule<Delim>);
-    return _delim_dsl<Delim, Delim, lexyd::_eof>{};
+    return _delim_dsl<Delim, Delim>{};
 }
 
 constexpr auto quoted        = delimited(LEXY_LIT("\""));
@@ -201,43 +186,51 @@ struct invalid_escape_sequence
 namespace lexyd
 {
 template <typename Escape, typename... Branches>
-constexpr auto _escape_rule(Branches... branches)
+struct _escape : _escape_base
 {
-    if constexpr (sizeof...(Branches) == 0)
-        return Escape{};
-    else
-        return Escape{} >> (branches | ... | error<lexy::invalid_escape_sequence>);
-}
-
-template <typename Engine>
-struct _escape_cap : rule_base
-{
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = false;
-
-    template <typename NextParser>
-    struct parser
+    template <typename Context, typename Reader, typename Sink>
+    static constexpr bool _try_parse(Context& context, Reader& reader, Sink& sink)
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        auto begin = reader.position();
+
+        // Check whether we're having the initial escape character.
+        lexy::branch_parser_for<Escape, Context, Reader> token{};
+        if (!token.try_parse(context, reader))
+            // No need to call backtrack(), it's a token.
+            return false;
+
+        // We do, so consume it.
+        // It's a token, so this can't fail.
+        token.template finish<lexy::pattern_parser<Context>>(context, reader);
+
+        // Try to parse the correct branch.
+        auto try_parse_branch = [&](auto branch) {
+            lexy::branch_parser_for<decltype(branch), Context, Reader> parser{};
+            if (!parser.try_parse(context, reader))
+                return false;
+
+            // This might fail, but we don't care:
+            // it will definitely consume the escape token, and everything that is a valid prefix.
+            // The remaining stuff is then just treated as part of the delimited.
+            parser.template finish<lexy::sink_parser>(context, reader, sink);
+            return true;
+        };
+        auto found = (try_parse_branch(Branches{}) || ...);
+
+        if constexpr ((lexy::is_unconditional_branch_rule<Branches> || ...))
         {
-            auto begin = reader.position();
-            if (!lexy::engine_try_match<Engine>(reader))
-            {
-                context.on(_ev::backtracked{}, begin, reader.position());
-                return lexy::rule_try_parse_result::backtracked;
-            }
-
-            return static_cast<lexy::rule_try_parse_result>(
-                NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::lexeme(reader, begin)));
+            LEXY_ASSERT(found, "there is an unconditional branch");
         }
-    };
-};
+        else if (!found)
+        {
+            // We haven't found any branch of the escape sequence.
+            auto err = lexy::error<Reader, lexy::invalid_escape_sequence>(begin, reader.position());
+            context.on(_ev::error{}, err);
+        }
 
-template <typename Escape, typename... Branches>
-struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
-{
+        return true;
+    }
+
     /// Adds a generic escape rule.
     template <typename Branch>
     constexpr auto rule(Branch) const
@@ -246,12 +239,12 @@ struct _escape : decltype(_escape_rule<Escape>(Branches{}...)), _escape_base
         return _escape<Escape, Branches..., Branch>{};
     }
 
-    /// Adds an escape rule that captures the token.
-    template <typename Token>
-    constexpr auto capture(Token) const
+    /// Adds an escape rule that captures the branch.
+    template <typename Branch>
+    constexpr auto capture(Branch branch) const
     {
-        static_assert(lexy::is_token_rule<Token>);
-        return this->rule(_escape_cap<typename Token::token_engine>{});
+        static_assert(lexy::is_branch_rule<Branch>);
+        return this->rule(lexy::dsl::capture(branch));
     }
 
     /// Adds an escape rule that parses the symbol.

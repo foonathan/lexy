@@ -51,7 +51,7 @@ public:
     }
 
     template <typename Id>
-    constexpr auto get(Id)
+    constexpr auto get(Id) const
     {
         static_assert(lexy::_detail::error<Id>, "context does not contain a variable with that id");
         return nullptr;
@@ -110,7 +110,7 @@ private:
     friend class parse_context;
 
     friend struct final_parser;
-    template <typename, typename>
+    template <typename>
     friend struct production_parser;
     template <typename P, typename H, typename Reader>
     friend constexpr auto action_impl(H& handler, Reader& reader)
@@ -124,7 +124,7 @@ namespace lexy::_detail
 struct final_parser
 {
     template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
         using event = parse_events::production_finish<typename Context::production>;
         LEXY_MOV(context.production_context()).on(event{}, reader.position(), LEXY_FWD(args)...);
@@ -132,87 +132,41 @@ struct final_parser
     }
 };
 
-template <typename Production, typename Context, typename Reader>
-constexpr bool parse_production(Context& context, Reader& reader)
-{
-    using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, final_parser>::parse(context, reader);
-}
-
-template <typename Production, typename Context, typename Reader>
-constexpr auto try_parse_production(Context& context, Reader& reader)
-{
-    using rule = lexy::production_rule<Production>;
-    return lexy::rule_parser<rule, final_parser>::try_parse(context, reader);
-}
-
-template <typename Production, typename NextParser>
+template <typename Production>
 struct production_parser
 {
-    struct _continuation
+    template <typename Context, typename Reader>
+    static constexpr auto get_sub_context(Context& context, const Reader& reader)
     {
-        template <typename Context, typename Reader, typename Handler, typename Root,
-                  typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader,
-                                 parse_context<Handler, Production, Root>& new_context,
-                                 Args&&... args)
-        {
-            // Might need to skip whitespace, according to the original context.
-            using continuation
-                = std::conditional_t<lexy::is_token_production<Production>,
-                                     lexy::whitespace_parser<Context, NextParser>, NextParser>;
+        return context.production_context().on(parse_events::production_start<Production>{},
+                                               reader.position());
+    }
+    template <typename Context, typename Reader>
+    using sub_context_t = decltype(get_sub_context(LEXY_DECLVAL(Context&), LEXY_DECLVAL(Reader)));
 
-            // Pass the produced value to the next parser.
-            using result_t = handler_production_result<Handler, Production>;
-            if constexpr (std::is_void_v<result_t>)
-                return continuation::parse(context, reader, LEXY_FWD(args)...);
-            else
-                return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                           LEXY_MOV(*new_context._result));
-        }
-    };
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+    template <typename SubContext, typename Reader>
+    static constexpr void cancel_sub_context(SubContext& sub_context, const Reader& reader)
     {
-        auto new_context
-            = context.production_context().on(parse_events::production_start<Production>{},
-                                              reader.position());
-        if (parse_production<Production>(new_context, reader))
-        {
-            // Extract the value and continue.
-            return _continuation::parse(context, reader, new_context, LEXY_FWD(args)...);
-        }
-        else
-        {
-            // We had an error, cancel the production.
-            LEXY_MOV(new_context)
-                .on(parse_events::production_cancel<Production>{}, reader.position());
-            return false;
-        }
+        LEXY_MOV(sub_context).on(parse_events::production_cancel<Production>{}, reader.position());
     }
 
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-        -> lexy::rule_try_parse_result
+    template <typename NextParser, typename Context, typename Reader, typename SubContext,
+              typename... Args>
+    LEXY_PARSER_FUNC static bool finish(Context& context, Reader& reader, SubContext& sub_context,
+                                        Args&&... args)
     {
-        auto new_context
-            = context.production_context().on(parse_events::production_start<Production>{},
-                                              reader.position());
-        if (auto result = try_parse_production<Production>(new_context, reader);
-            result == lexy::rule_try_parse_result::ok)
-        {
-            // Extract the value and continue.
-            return _continuation::parse(context, reader, new_context, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
-        }
+        // Might need to skip whitespace, according to the original context.
+        using continuation
+            = std::conditional_t<lexy::is_token_production<Production>,
+                                 lexy::whitespace_parser<Context, NextParser>, NextParser>;
+
+        // Pass the produced value to the next parser.
+        using result_t = handler_production_result<typename Context::handler, Production>;
+        if constexpr (std::is_void_v<result_t>)
+            return continuation::parse(context, reader, LEXY_FWD(args)...);
         else
-        {
-            // We had an error, cancel the production.
-            LEXY_MOV(new_context)
-                .on(parse_events::production_cancel<Production>{}, reader.position());
-            return result;
-        }
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       LEXY_MOV(*sub_context._result));
     }
 };
 
@@ -222,7 +176,8 @@ constexpr auto action_impl(Handler& handler, Reader& reader)
 {
     parse_context<Handler, Production, Production> context(handler, reader.position());
 
-    if (!parse_production<Production>(context, reader))
+    using parser = lexy::parser_for<lexy::production_rule<Production>, final_parser>;
+    if (!parser::parse(context, reader))
     {
         // We had an error, cancel the production.
         LEXY_ASSERT(!context._result, "result must be empty on cancel");

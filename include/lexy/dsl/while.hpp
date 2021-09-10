@@ -5,7 +5,7 @@
 #ifndef LEXY_DSL_WHILE_HPP_INCLUDED
 #define LEXY_DSL_WHILE_HPP_INCLUDED
 
-#warning "include <lexy/dsl/loop.hpp> instead"
+#error "include <lexy/dsl/loop.hpp> instead"
 #include <lexy/dsl/loop.hpp>
 
 #endif // LEXY_DSL_WHILE_HPP_INCLUDED

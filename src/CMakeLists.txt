@@ -85,19 +85,9 @@ set(header_files
         ${include_dir}/dsl/until.hpp
         ${include_dir}/dsl/whitespace.hpp
 
-        ${include_dir}/engine/any.hpp
         ${include_dir}/engine/base.hpp
-        ${include_dir}/engine/char_class.hpp
-        ${include_dir}/engine/code_point.hpp
-        ${include_dir}/engine/digits.hpp
-        ${include_dir}/engine/eof.hpp
-        ${include_dir}/engine/failure.hpp
-        ${include_dir}/engine/find.hpp
         ${include_dir}/engine/literal.hpp
-        ${include_dir}/engine/minus.hpp
         ${include_dir}/engine/trie.hpp
-        ${include_dir}/engine/until.hpp
-        ${include_dir}/engine/while.hpp
 
         ${include_dir}/input/argv_input.hpp
         ${include_dir}/input/base.hpp

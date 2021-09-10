@@ -9,11 +9,10 @@
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/find.hpp>
 #include <lexy/engine/literal.hpp>
-#include <lexy/engine/while.hpp>
 #include <lexy/lexeme.hpp>
 
 //=== identifier ===//
@@ -34,51 +33,67 @@ namespace lexyd
 template <typename Leading, typename Trailing>
 struct _idp : token_base<_idp<Leading, Trailing>>
 {
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        using error_code = typename Leading::token_engine::error_code;
+        lexy::token_parser_for<Leading, Reader> leading;
+        typename Reader::iterator               end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
-            if (auto ec = Leading::token_engine::match(reader); ec != error_code())
-                return ec;
+            // Need to match Leading character.
+            if (!leading.try_parse(reader))
+                return false;
+            reader.set_position(leading.end);
+            end = leading.end;
 
-            lexy::engine_while<typename Trailing::token_engine>::match(reader);
-            return error_code();
+            // Match zero or more trailing characters.
+            while (lexy::try_match_token(Trailing{}, reader))
+            {}
+
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            leading.report_error(context, reader);
         }
     };
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, Reader reader,
-                                      typename token_engine::error_code ec,
-                                      typename Reader::iterator         pos)
-    {
-        Leading::token_error(context, reader, ec, pos);
-    }
 };
 
-// Not a full token, we only need ::token_engine to make it work.
 template <typename R>
 struct _contains : token_base<_contains<R>>
 {
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        enum class error_code
-        {
-            not_found = 1,
-        };
+        typename Reader::iterator end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
-            using condition = typename decltype(lexyd::token(R{}))::token_engine;
-            if (!lexy::engine_try_match<lexy::engine_find<condition>>(reader))
-                return error_code::not_found;
+            while (true)
+            {
+                if (lexy::try_match_token(lexy::dsl::token(R{}), reader))
+                    // We've found it.
+                    break;
+                else if (reader.peek() == Reader::encoding::eof())
+                    // Haven't found it.
+                    return false;
+                else
+                    // Try again.
+                    reader.bump();
+            }
 
-            lexy::engine_any::match(reader);
-            return error_code();
+            // Consume everything else.
+            lexy::try_match_token(lexy::dsl::any, reader);
+
+            end = reader.position();
+            return true;
         }
+
+        // report_error() not actually needed.
     };
 };
 
@@ -86,86 +101,44 @@ template <typename String, typename Id>
 struct _kw;
 
 template <typename Leading, typename Trailing, typename... Reserved>
-struct _id : rule_base
+struct _id : branch_base
 {
-    static constexpr auto is_branch = true;
+    using _impl = _capt<_idp<Leading, Trailing>>;
 
     template <typename NextParser>
-    struct parser
+    struct _pc_impl
     {
-        template <typename Context, typename Reader, typename Iter, typename... Args>
-        LEXY_DSL_FUNC bool _parse_impl(Context& context, Reader& reader,
-                                       [[maybe_unused]] Reader saved_reader, Iter begin, Iter end,
-                                       Args&&... args)
-        {
-            // Create a node in the parse tree.
-            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
-
-            // Check that we're not creating a reserved identifier.
-            if constexpr (sizeof...(Reserved) > 0)
-            {
-                using reserved = decltype((Reserved{} / ...));
-
-                auto id_reader = lexy::partial_reader(saved_reader, end);
-                if (lexy::engine_try_match<typename reserved::token_engine>(id_reader)
-                    && id_reader.position() == end)
-                {
-                    // We found a reserved identifier.
-                    auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
-                    context.on(_ev::error{}, err);
-                    // But we can trivially recover, as we've still matched a well-formed
-                    // identifier.
-                }
-            }
-
-            // Skip whitespace and continue.
-            using continuation = lexy::whitespace_parser<Context, NextParser>;
-            return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       lexy::lexeme<Reader>(begin, end));
-        }
-
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader, Args&&... args)
-            -> lexy::rule_try_parse_result
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using engine = typename _idp<Leading, Trailing>::token_engine;
+            // Last argument is the captured lexeme.
+            auto lexeme = (args, ...);
 
-            // Trie to parse the pattern.
-            [[maybe_unused]] auto saved_reader = reader;
-            auto                  begin        = reader.position();
-            if (auto ec = engine::match(reader); ec != typename engine::error_code())
+            // Check whether we have a reserved identifier.
+            auto id_reader = lexy::partial_reader(reader, lexeme.begin(), lexeme.end());
+            if (lexy::try_match_token((Reserved{} / ...), id_reader)
+                && id_reader.position() == lexeme.end())
             {
-                context.on(_ev::backtracked{}, begin, reader.position());
-                return lexy::rule_try_parse_result::backtracked;
+                // We found a reserved identifier.
+                auto err
+                    = lexy::error<Reader, lexy::reserved_identifier>(lexeme.begin(), lexeme.end());
+                context.on(_ev::error{}, err);
+                // But we can trivially recover, as we've still matched a well-formed
+                // identifier.
             }
-            auto end = reader.position();
 
-            // Check for reserved patterns, etc.
-            return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...)
-                       ? lexy::rule_try_parse_result::ok
-                       : lexy::rule_try_parse_result::canceled;
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using pattern = _idp<Leading, Trailing>;
-            using engine  = typename pattern::token_engine;
-
-            // Parse the pattern.
-            [[maybe_unused]] auto saved_reader = reader;
-            auto                  begin        = reader.position();
-            if (auto ec = engine::match(reader); ec != typename engine::error_code())
-            {
-                pattern::token_error(context, reader, ec, begin);
-                return false;
-            }
-            auto end = reader.position();
-
-            // Check for reserved patterns, etc.
-            return _parse_impl(context, reader, saved_reader, begin, end, LEXY_FWD(args)...);
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
+
+    // If we don't have any reserved identifiers, we immediately continue with the next parser.
+    template <typename NextParser>
+    using _pc = std::conditional_t<sizeof...(Reserved) == 0, NextParser, _pc_impl<NextParser>>;
+
+    template <typename NextParser>
+    using p = lexy::parser_for<_impl, _pc<NextParser>>;
+    template <typename Context, typename Reader>
+    using bp = lexy::continuation_branch_parser<_impl, Context, Reader, _pc>;
 
     template <typename R>
     constexpr auto _make_reserve(R r) const
@@ -251,59 +224,38 @@ namespace lexyd
 template <typename String, typename Id>
 struct _kw : token_base<_kw<String, Id>>
 {
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        enum class error_code
-        {
-            error = 1,
-        };
+        typename Reader::iterator end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
-            // Try to match the keyword.
-            using literal_engine = typename _lit<String>::token_engine;
-            if (auto ec = literal_engine::match(reader);
-                ec != typename literal_engine::error_code())
-                return error_code::error;
+            // Need to match the literal.
+            if (!lexy::try_match_token(_lit<String>{}, reader))
+                return false;
+            end = reader.position();
 
             // To qualify as a keyword, and not just the prefix of an identifier,
             // we must not have a trailing identifier character.
-            using trailing_engine = typename decltype(Id{}.trailing_pattern())::token_engine;
-            if (lexy::engine_peek<trailing_engine>(reader))
-                return error_code::error;
+            return !lexy::try_match_token(Id{}.trailing_pattern(), reader);
+        }
 
-            return error_code();
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            using reader_char_type = typename Reader::encoding::char_type;
+            constexpr auto string  = String::template get<reader_char_type>();
+
+            // Match the entire identifier.
+            auto begin = reader.position();
+            lexy::try_match_token(Id{}.pattern(), reader);
+            auto end = reader.position();
+
+            auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
+            context.on(_ev::error{}, err);
         }
     };
-
-    template <typename Context, typename Reader>
-    static constexpr void token_error(Context& context, Reader reader,
-                                      typename token_engine::error_code,
-                                      typename Reader::iterator pos)
-    {
-        using reader_char_type = typename Reader::encoding::char_type;
-        constexpr auto string  = String::template get<reader_char_type>();
-
-        // Find the range of the identifier.
-        auto begin = pos;
-        if (begin == reader.position())
-        {
-            // We failed at the first character, need to match the identifier as normal.
-            using id_engine = typename decltype(Id{}.pattern())::token_engine;
-            lexy::engine_try_match<id_engine>(reader);
-        }
-        else
-        {
-            // We have already moved past the initial character, consume trailing only.
-            using trailing_engine = typename decltype(Id{}.trailing_pattern())::token_engine;
-            lexy::engine_while<trailing_engine>::match(reader);
-        }
-        auto end = reader.position();
-
-        auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, string.c_str());
-        context.on(_ev::error{}, err);
-    }
 };
 
 template <typename String, typename L, typename T, typename... R>

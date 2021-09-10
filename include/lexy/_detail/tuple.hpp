@@ -56,16 +56,16 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
     using element_type = typename _nth_type<N, T...>::type;
 
     template <std::size_t N>
-    constexpr decltype(auto) get() noexcept
+    constexpr auto get() noexcept -> element_type<N>&
     {
-        // NOLINTNEXTLINE: this is perfectly fine.
-        return LEXY_FWD(static_cast<_tuple_holder<N, element_type<N>>&>(*this).value);
+        // NOLINTNEXTLINE: this is fine.
+        return static_cast<_tuple_holder<N, element_type<N>>&>(*this).value;
     }
     template <std::size_t N>
-    constexpr decltype(auto) get() const noexcept
+    constexpr auto get() const noexcept -> const element_type<N>&
     {
-        // NOLINTNEXTLINE: this is perfectly fine.
-        return LEXY_FWD(static_cast<const _tuple_holder<N, element_type<N>>&>(*this).value);
+        // NOLINTNEXTLINE: this is fine.
+        return static_cast<const _tuple_holder<N, element_type<N>>&>(*this).value;
     }
 
     static constexpr auto index_sequence()

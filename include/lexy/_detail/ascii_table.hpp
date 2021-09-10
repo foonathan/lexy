@@ -5,99 +5,127 @@
 #ifndef LEXY_DETAIL_ASCII_TABLE_HPP_INCLUDED
 #define LEXY_DETAIL_ASCII_TABLE_HPP_INCLUDED
 
-#include <lexy/engine/char_class.hpp>
+#include <climits>
+#include <lexy/_detail/config.hpp>
+#include <lexy/input/base.hpp>
 
 namespace lexy::_detail
 {
-// The categories in the lookup table.
-enum ascii_table_categories
+class ascii_table_t
 {
-    ascii_table_control,
-    ascii_table_space,
-    ascii_table_alpha,
-    ascii_table_alpha_underscore,
-    ascii_table_digit, // 0-9 only
-    ascii_table_hex_lower,
-    ascii_table_hex_upper,
-    ascii_table_punct,
+public:
+    enum category
+    {
+        control,
+        space,
+        alpha,
+        alpha_underscore,
+        digit, // 0-9 only
+        hex_lower,
+        hex_upper,
+        punct,
 
-    _ascii_table_count,
+        _count,
+    };
+    static_assert(_count <= CHAR_BIT);
+
+    LEXY_CONSTEVAL ascii_table_t() : _table{}
+    {
+        for (char c = 0x00; c <= 0x1F; ++c)
+            insert(c, control);
+        insert(0x7F, control);
+
+        insert(' ', space);
+        insert('\t', space);
+        insert('\n', space);
+        insert('\r', space);
+        insert('\f', space);
+        insert('\v', space);
+
+        for (auto c = 'A'; c <= 'Z'; ++c)
+        {
+            insert(c, alpha);
+            insert(c, alpha_underscore);
+        }
+        for (auto c = 'a'; c <= 'z'; ++c)
+        {
+            insert(c, alpha);
+            insert(c, alpha_underscore);
+        }
+        insert('_', alpha_underscore);
+
+        for (auto c = '0'; c <= '9'; ++c)
+        {
+            insert(c, digit);
+            insert(c, hex_lower);
+            insert(c, hex_upper);
+        }
+        for (auto c = 'A'; c <= 'F'; ++c)
+            insert(c, hex_upper);
+        for (auto c = 'a'; c <= 'f'; ++c)
+            insert(c, hex_lower);
+
+        insert('!', punct);
+        insert('"', punct);
+        insert('#', punct);
+        insert('$', punct);
+        insert('%', punct);
+        insert('&', punct);
+        insert('\'', punct);
+        insert('(', punct);
+        insert(')', punct);
+        insert('*', punct);
+        insert('+', punct);
+        insert(',', punct);
+        insert('-', punct);
+        insert('.', punct);
+        insert('/', punct);
+        insert(':', punct);
+        insert(';', punct);
+        insert('<', punct);
+        insert('=', punct);
+        insert('>', punct);
+        insert('?', punct);
+        insert('@', punct);
+        insert('[', punct);
+        insert('\\', punct);
+        insert(']', punct);
+        insert('^', punct);
+        insert('_', punct);
+        insert('`', punct);
+        insert('{', punct);
+        insert('|', punct);
+        insert('}', punct);
+        insert('~', punct);
+    }
+
+    template <typename Encoding, category... Cats>
+    constexpr bool contains(typename Encoding::int_type i) const
+    {
+        constexpr auto mask = ((1 << Cats) | ...);
+
+        if (i < lexy::_char_to_int_type<Encoding>(0x00)
+            || lexy::_char_to_int_type<Encoding>(0x7F) < i)
+            return false;
+
+        // NOLINTNEXTLINE: We've checked that we're positive in the condition above.
+        auto index = static_cast<std::size_t>(i);
+        return (_table[index] & mask) != 0;
+    }
+
+private:
+    constexpr void insert(char c, category cat)
+    {
+        auto as_unsigned = static_cast<unsigned char>(c);
+        LEXY_PRECONDITION(as_unsigned <= 0x7F);
+
+        _table[as_unsigned] = static_cast<unsigned char>(_table[as_unsigned] | 1 << cat);
+    }
+
+    unsigned char _table[0x80];
 };
-static_assert(_ascii_table_count <= CHAR_BIT);
 
-// The actual table the lookup code uses.
-constexpr auto dsl_ascii_table = [] {
-    lexy::ascii_table<_ascii_table_count> result;
-
-    for (auto c = 0x00; c <= 0x1F; ++c)
-        result.insert(c, ascii_table_control);
-    result.insert(0x7F, ascii_table_control);
-
-    result.insert(' ', ascii_table_space);
-    result.insert('\t', ascii_table_space);
-    result.insert('\n', ascii_table_space);
-    result.insert('\r', ascii_table_space);
-    result.insert('\f', ascii_table_space);
-    result.insert('\v', ascii_table_space);
-
-    for (auto c = 'A'; c <= 'Z'; ++c)
-    {
-        result.insert(c, ascii_table_alpha);
-        result.insert(c, ascii_table_alpha_underscore);
-    }
-    for (auto c = 'a'; c <= 'z'; ++c)
-    {
-        result.insert(c, ascii_table_alpha);
-        result.insert(c, ascii_table_alpha_underscore);
-    }
-    result.insert('_', ascii_table_alpha_underscore);
-
-    for (auto c = '0'; c <= '9'; ++c)
-    {
-        result.insert(c, ascii_table_digit);
-        result.insert(c, ascii_table_hex_lower);
-        result.insert(c, ascii_table_hex_upper);
-    }
-    for (auto c = 'A'; c <= 'F'; ++c)
-        result.insert(c, ascii_table_hex_upper);
-    for (auto c = 'a'; c <= 'f'; ++c)
-        result.insert(c, ascii_table_hex_lower);
-
-    result.insert('!', ascii_table_punct);
-    result.insert('"', ascii_table_punct);
-    result.insert('#', ascii_table_punct);
-    result.insert('$', ascii_table_punct);
-    result.insert('%', ascii_table_punct);
-    result.insert('&', ascii_table_punct);
-    result.insert('\'', ascii_table_punct);
-    result.insert('(', ascii_table_punct);
-    result.insert(')', ascii_table_punct);
-    result.insert('*', ascii_table_punct);
-    result.insert('+', ascii_table_punct);
-    result.insert(',', ascii_table_punct);
-    result.insert('-', ascii_table_punct);
-    result.insert('.', ascii_table_punct);
-    result.insert('/', ascii_table_punct);
-    result.insert(':', ascii_table_punct);
-    result.insert(';', ascii_table_punct);
-    result.insert('<', ascii_table_punct);
-    result.insert('=', ascii_table_punct);
-    result.insert('>', ascii_table_punct);
-    result.insert('?', ascii_table_punct);
-    result.insert('@', ascii_table_punct);
-    result.insert('[', ascii_table_punct);
-    result.insert('\\', ascii_table_punct);
-    result.insert(']', ascii_table_punct);
-    result.insert('^', ascii_table_punct);
-    result.insert('_', ascii_table_punct);
-    result.insert('`', ascii_table_punct);
-    result.insert('{', ascii_table_punct);
-    result.insert('|', ascii_table_punct);
-    result.insert('}', ascii_table_punct);
-    result.insert('~', ascii_table_punct);
-
-    return result;
-}();
+inline constexpr ascii_table_t ascii_table = {};
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_ASCII_TABLE_HPP_INCLUDED

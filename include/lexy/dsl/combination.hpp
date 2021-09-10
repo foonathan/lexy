@@ -38,45 +38,25 @@ struct _comb_state
     bool loop_break = false;
 };
 
-// Final parser for one item in the combination.
-struct _comb_final
-{
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(Context& context, Reader&, std::size_t idx, Args&&... args)
-    {
-        auto& state = context.get(_break{});
-        state.idx   = idx;
-        if constexpr (sizeof...(Args) > 0)
-        {
-            if (!state.handled[idx])
-                // Only call the sink if it is not a duplicate.
-                state.sink(LEXY_FWD(args)...);
-        }
-        return true;
-    }
-};
-
-// Parser for one item in the combination.
-template <std::size_t Idx, typename Rule>
+// Final rule for one item in the combination.
+template <std::size_t Idx>
 struct _comb_it : rule_base
 {
-    static constexpr auto is_branch               = true;
-    static constexpr auto is_unconditional_branch = Rule::is_unconditional_branch;
-
     template <typename NextParser>
-    struct parser
+    struct p
     {
-        template <typename Context, typename Reader>
-        LEXY_DSL_FUNC auto try_parse(Context& context, Reader& reader)
-            -> lexy::rule_try_parse_result
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader&, Args&&... args)
         {
-            return lexy::rule_parser<Rule, NextParser>::try_parse(context, reader, Idx);
-        }
-
-        template <typename Context, typename Reader>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader)
-        {
-            return lexy::rule_parser<Rule, NextParser>::parse(context, reader, Idx);
+            auto& state = context.get(_break{});
+            state.idx   = Idx;
+            if constexpr (sizeof...(Args) > 0)
+            {
+                if (!state.handled[Idx])
+                    // Only call the sink if it is not a duplicate.
+                    state.sink(LEXY_FWD(args)...);
+            }
+            return true;
         }
     };
 };
@@ -88,17 +68,17 @@ struct _comb : rule_base
     static auto _comb_choice_(lexy::_detail::index_sequence<Idx...>)
     {
         if constexpr (std::is_void_v<ElseRule>)
-            return (_comb_it<Idx, R>{} | ...);
+            return ((R{} >> _comb_it<Idx>{}) | ...);
         else
-            return (_comb_it<Idx, R>{} | ... | ElseRule{});
+            return ((R{} >> _comb_it<Idx>{}) | ... | ElseRule{});
     }
     using _comb_choice = decltype(_comb_choice_(lexy::_detail::index_sequence_for<R...>{}));
 
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             constexpr auto N = sizeof...(R);
 
@@ -115,7 +95,7 @@ struct _comb : rule_base
             {
                 auto begin = reader.position();
 
-                using parser = lexy::rule_parser<_comb_choice, _comb_final>;
+                using parser = lexy::parser_for<_comb_choice, lexy::pattern_parser<Context>>;
                 if (!parser::parse(comb_context, reader))
                     return false;
                 else if (state.loop_break)
@@ -136,16 +116,8 @@ struct _comb : rule_base
             }
 
             // Obtain the final result and continue.
-            if constexpr (std::is_void_v<typename decltype(sink)::return_type>)
-            {
-                LEXY_MOV(sink).finish();
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            }
-            else
-            {
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(sink).finish());
-            }
+            return lexy::sink_finish_parser<NextParser>::parse(context, reader, sink,
+                                                               LEXY_FWD(args)...);
         }
     };
 
@@ -163,7 +135,7 @@ template <typename... R>
 constexpr auto combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
-    static_assert((!R::is_unconditional_branch && ...),
+    static_assert((!lexy::is_unconditional_branch_rule<R> && ...),
                   "combination() does not support unconditional branches");
     return _comb<void, void, R...>{};
 }
@@ -174,7 +146,7 @@ template <typename... R>
 constexpr auto partial_combination(R...)
 {
     static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
-    static_assert((!R::is_unconditional_branch && ...),
+    static_assert((!lexy::is_unconditional_branch_rule<R> && ...),
                   "partial_combination() does not support unconditional branches");
     // If the choice no longer matches, we just break.
     return _comb<void, decltype(break_), R...>{};

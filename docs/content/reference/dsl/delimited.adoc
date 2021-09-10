@@ -190,7 +190,7 @@ namespace lexy::dsl
     {
         constexpr _escape-dsl_ rule(_branch-rule_ auto r) const;
 
-        constexpr _escape-dsl_ capture(_token-rule_ auto t) const;
+        constexpr _escape-dsl_ capture(_branch-rule_ auto r) const;
 
         template <const _symbol_table_& SymbolTable>
         constexpr _escape-dsl_ symbol(_token-rule_ auto t) const;
@@ -218,7 +218,7 @@ Branch parsing::
 Errors::
   * All errors raised by each escape sequence.
     `escape` then fails but `delimited` recovers (see above).
-  * `lexy::invalid_escape_sequence`: if none of the escape sequences match; at the position of the `escape_char`.
+  * `lexy::invalid_escape_sequence`: if none of the escape sequences match; its range covers the `escape_char`.
     `escape` then fails but `delimited` recovers (see above).
 Values::
   All values produced by the selected escape sequence.
@@ -240,14 +240,14 @@ constexpr _escape-dsl_ rule(_branch-rule_ auto r) const;
 
 {{% interface %}}
 ----
-constexpr _escape-dsl_ capture(_token-rule_ auto t) const
+constexpr _escape-dsl_ capture(_branch-rule_ auto r) const
 {
-    return this->rule(lexy::dsl::capture(t));
+    return this->rule(lexy::dsl::capture(r));
 }
 ----
 
 [.lead]
-`.capture()` specifies an escape sequence that tries to parse the {{% token-rule %}} `t` and produces a {{% docref "lexy::lexeme" %}}.
+`.capture()` specifies an escape sequence that tries to parse the {{% branch-rule %}} `t` and produces a {{% docref "lexy::lexeme" %}}.
 
 It is equivalent to {{% docref "lexy::dsl::capture" %}}.
 

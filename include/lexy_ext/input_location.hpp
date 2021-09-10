@@ -15,21 +15,19 @@ namespace lexy_ext
 // Fake token that counts code units without verification.
 struct _unchecked_code_unit
 {
-    struct token_engine : lexy::engine_matcher_base
+    template <typename Reader>
+    struct tp
     {
-        enum class error_code
-        {
-            invalid = 1,
-        };
+        typename Reader::iterator end;
 
-        template <typename Reader>
-        static constexpr error_code match(Reader& reader)
+        constexpr bool try_parse(Reader reader)
         {
             if (reader.peek() == Reader::encoding::eof())
-                return error_code::invalid;
+                return false;
 
             reader.bump();
-            return error_code();
+            end = reader.position();
+            return true;
         }
     };
 };
@@ -47,9 +45,6 @@ template <typename Input, typename TokenColumn = _unchecked_code_unit,
           typename TokenLine = std::decay_t<decltype(lexy::dsl::newline)>>
 class input_location_finder
 {
-    using engine_column = typename TokenColumn::token_engine;
-    using engine_line   = typename TokenLine::token_engine;
-
 public:
     using iterator = typename lexy::input_reader<Input>::iterator;
 
@@ -80,7 +75,7 @@ public:
             while (reader.position() != _eol)
                 reader.bump();
             // Bump newline.
-            lexy::engine_try_match<engine_line>(reader);
+            lexy::try_match_token(TokenLine{}, reader);
             return {_eol, reader.position()};
         }
 
@@ -91,12 +86,10 @@ public:
             // Find EOL.
             for (auto reader = _reader; true; reader.bump())
             {
+                _eol = reader.position();
                 if (reader.peek() == decltype(reader)::encoding::eof()
-                    || lexy::engine_peek<engine_line>(reader))
-                {
-                    _eol = reader.position();
+                    || lexy::try_match_token(TokenLine{}, reader))
                     break;
-                }
             }
         }
 
@@ -138,14 +131,14 @@ public:
                 // We found the position of the error.
                 break;
             }
-            else if (lexy::engine_try_match<engine_line>(reader))
+            else if (lexy::try_match_token(TokenLine{}, reader))
             {
                 // We're at a new line.
                 ++cur_line;
                 cur_column = 1;
                 line_start = reader;
             }
-            else if (lexy::engine_try_match<engine_column>(reader))
+            else if (lexy::try_match_token(TokenColumn{}, reader))
             {
                 // Next column.
                 ++cur_column;

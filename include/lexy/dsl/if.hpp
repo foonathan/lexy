@@ -14,20 +14,18 @@ template <typename Branch>
 struct _if : rule_base
 {
     template <typename NextParser>
-    struct parser
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using branch_parser = lexy::rule_parser<Branch, NextParser>;
-
-            auto result = branch_parser::try_parse(context, reader, LEXY_FWD(args)...);
-            if (result == lexy::rule_try_parse_result::backtracked)
-                // Branch wasn't taken, continue anyway.
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            lexy::branch_parser_for<Branch, Context, Reader> branch{};
+            if (branch.try_parse(context, reader))
+                // We take the branch.
+                return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
             else
-                // Return true/false depending on result.
-                return static_cast<bool>(result);
+                // We don't take the branch.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -37,7 +35,7 @@ template <typename Branch>
 constexpr auto if_(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>, "if_() requires a branch condition");
-    if constexpr (Branch::is_unconditional_branch)
+    if constexpr (lexy::is_unconditional_branch_rule<Branch>)
         // Branch is always taken, so don't wrap in if_().
         return Branch{};
     else

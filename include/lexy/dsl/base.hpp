@@ -6,11 +6,9 @@
 #define LEXY_DSL_BASE_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
-#include <lexy/engine/base.hpp>
+#include <lexy/_detail/lazy_init.hpp>
 #include <lexy/grammar.hpp>
 #include <lexy/input/base.hpp>
-
-#define LEXY_DSL_FUNC LEXY_FORCE_INLINE static constexpr
 
 //=== parse_events ===//
 namespace lexy::parse_events
@@ -79,15 +77,33 @@ struct recovery_cancel
 namespace lexyd
 {
 namespace _ev = lexy::parse_events;
+
+// Does not copy token tags.
+template <typename Rule>
+auto _copy_base_impl()
+{
+    if constexpr (lexy::is_unconditional_branch_rule<Rule>)
+        return unconditional_branch_base{};
+    else if constexpr (lexy::is_branch_rule<Rule>)
+        return branch_base{};
+    else
+        return rule_base{};
 }
+template <typename Rule>
+using _copy_base = decltype(_copy_base_impl<Rule>());
+} // namespace lexyd
 
 //=== parse_context_var ===//
 namespace lexy::_detail
 {
-template <typename Parent, typename Id, typename T>
+template <typename Parent, typename Id, typename T = Id>
 class parse_context_var
 {
 public:
+    constexpr explicit parse_context_var(Parent& parent) : _parent(&parent), _value() {}
+    constexpr explicit parse_context_var(Parent& parent, T&& value)
+    : _parent(&parent), _value(LEXY_MOV(value))
+    {}
     constexpr explicit parse_context_var(Parent& parent, Id, T&& value)
     : _parent(&parent), _value(LEXY_MOV(value))
     {}
@@ -126,52 +142,113 @@ public:
         else
             return _parent->get(id);
     }
+    template <typename Id2>
+    constexpr const auto& get([[maybe_unused]] Id2 id) const
+    {
+        if constexpr (std::is_same_v<Id2, Id>)
+            return _value;
+        else
+            return _parent->get(id);
+    }
 
 private:
     Parent* _parent;
     T       _value;
 };
-
 } // namespace lexy::_detail
 
 //=== parser ===//
+#define LEXY_PARSER_FUNC LEXY_FORCE_INLINE constexpr
+
 namespace lexy
 {
 template <typename Rule, typename NextParser>
-using rule_parser = typename Rule::template parser<NextParser>;
+using parser_for = typename Rule::template p<NextParser>;
 
-enum class rule_try_parse_result
-{
-    ok          = int(true),
-    canceled    = int(false),
-    backtracked = 2,
-};
+template <typename BranchRule, typename Context, typename Reader>
+using branch_parser_for = typename BranchRule::template bp<Context, Reader>;
 
-/// A final parser that drops all arguments; creating an empty result.
-template <typename Context>
-struct discard_parser
+/// A branch parser that takes a branch unconditionally and forwards to the regular parser.
+template <typename Rule, typename Context, typename Reader>
+struct unconditional_branch_parser
 {
-    template <typename NewContext, typename Reader, typename... Args>
-    LEXY_DSL_FUNC bool parse(NewContext&, Reader&, Args&&...)
+    constexpr std::true_type try_parse(const Context&, const Reader&)
     {
-        static_assert(sizeof...(Args) == 0, "discarded rule must not produce any values");
-        static_assert(std::is_same_v<Context, NewContext>,
-                      "discarded rule cannot add state to the context");
-        return true;
+        return {};
+    }
+
+    template <typename NextParser, typename... Args>
+    LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+    {
+        return parser_for<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
     }
 };
 
-// Same as the other overload, but raises the event.
-template <typename Matcher, typename Context, typename Reader>
-constexpr bool engine_peek(Context& context, Reader reader)
+/// A branch parser that parses a branch rule but with a special continuation.
+template <typename BranchRule, typename Context, typename Reader,
+          template <typename> typename Continuation>
+struct continuation_branch_parser
 {
-    auto begin = reader.position();
-    auto ec    = Matcher::match(reader);
-    auto end   = reader.position();
+    branch_parser_for<BranchRule, Context, Reader> impl;
 
-    context.on(parse_events::backtracked{}, begin, end);
-    return ec == typename Matcher::error_code{};
-}
+    constexpr auto try_parse(Context& context, const Reader& reader)
+    {
+        return impl.try_parse(context, reader);
+    }
+
+    template <typename NextParser, typename... Args>
+    LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+    {
+        return impl.template finish<Continuation<NextParser>>(context, reader, LEXY_FWD(args)...);
+    }
+};
+
+/// A parser that does not support any arguments or context changes.
+template <typename Context>
+struct pattern_parser
+{
+    template <typename NewContext, typename Reader, typename... Args>
+    LEXY_PARSER_FUNC static std::true_type parse(NewContext&, Reader&, Args&&...)
+    {
+        // A rule is used inside a loop or similar situation, where it must not produce values, but
+        // it did.
+        static_assert(std::is_same_v<Context, NewContext>, "pattern rule must not change context");
+        static_assert(sizeof...(Args) == 0, "pattern rule must not produce any values");
+        return {};
+    }
+};
+
+/// A parser that forwards all arguments to a sink, which is the first argument.
+struct sink_parser
+{
+    template <typename Context, typename Reader, typename Sink, typename... Args>
+    LEXY_PARSER_FUNC static std::true_type parse(Context&, Reader&, Sink& sink, Args&&... args)
+    {
+        if constexpr (sizeof...(Args) > 0)
+            sink(LEXY_FWD(args)...);
+
+        return {};
+    }
+};
+
+/// A parser that finishes a sink and continues with the next one.
+template <typename NextParser>
+struct sink_finish_parser
+{
+    template <typename Context, typename Reader, typename Sink, typename... Args>
+    LEXY_PARSER_FUNC static auto parse(Context& context, Reader& reader, Sink& sink, Args&&... args)
+    {
+        if constexpr (std::is_same_v<typename Sink::return_type, void>)
+        {
+            LEXY_MOV(sink).finish();
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+        else
+        {
+            return NextParser::parse(context, reader, LEXY_FWD(args)..., LEXY_MOV(sink).finish());
+        }
+    }
+};
 } // namespace lexy
 
 //=== whitespace ===//
@@ -193,6 +270,40 @@ struct whitespace_parser : _detail::automatic_ws_parser<NextParser>
 template <typename Context, typename NextParser>
 struct whitespace_parser<Context, NextParser, void> : NextParser
 {};
+} // namespace lexy
+
+//=== token parser ===//
+namespace lexy
+{
+template <typename TokenRule, typename Reader>
+using token_parser_for = typename TokenRule::template tp<Reader>;
+
+template <typename TokenRule, typename Reader>
+LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
+{
+    lexy::token_parser_for<TokenRule, Reader> parser{};
+
+    using try_parse_result = decltype(parser.try_parse(reader));
+    if constexpr (std::is_same_v<try_parse_result, std::true_type>)
+    {
+        parser.try_parse(reader);
+        reader.set_position(parser.end);
+        return std::true_type{};
+    }
+    else if constexpr (std::is_same_v<try_parse_result, std::false_type>)
+    {
+        // try_parse() is pure and we don't want to advance the reader, so no need to call it.
+        return std::false_type{};
+    }
+    else
+    {
+        if (!parser.try_parse(reader))
+            return false;
+
+        reader.set_position(parser.end);
+        return true;
+    }
+}
 } // namespace lexy
 
 #endif // LEXY_DSL_BASE_HPP_INCLUDED

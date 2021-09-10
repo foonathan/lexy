@@ -14,7 +14,7 @@
 
 namespace lexyd
 {
-template <typename Terminator, typename R, typename Recover>
+template <typename Terminator, typename Rule>
 struct _optt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _lstt;
@@ -53,10 +53,10 @@ struct _term
 
     /// Matches opt(rule) followed by terminator.
     /// The rule does not require a condition.
-    template <typename R>
-    constexpr auto opt(R) const
+    template <typename Rule>
+    constexpr auto opt(Rule rule) const
     {
-        return _optt<Terminator, R, decltype(recovery_rule())>{};
+        return _optt<Terminator, decltype(this->try_(rule))>{};
     }
 
     /// Matches `list(r, sep)` followed by terminator.
@@ -77,12 +77,12 @@ struct _term
     template <typename R>
     constexpr auto opt_list(R) const
     {
-        return _olstt<Terminator, R, void, decltype(recovery_rule())>{};
+        return _optt<Terminator, _lstt<Terminator, R, void, decltype(recovery_rule())>>{};
     }
     template <typename R, typename S>
     constexpr auto opt_list(R, S) const
     {
-        return _olstt<Terminator, R, S, decltype(recovery_rule())>{};
+        return _optt<Terminator, _lstt<Terminator, R, S, decltype(recovery_rule())>>{};
     }
 
     //=== access ===//
