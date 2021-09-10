@@ -54,7 +54,7 @@ struct root_p
 
     static constexpr auto rule = [] {
         auto digits = lexy::dsl::digits<>.kind<token_kind::a>;
-        return digits + lexy::dsl::p<child_p> + digits;
+        return digits + lexy::dsl::p<child_p> + digits + lexy::dsl::eof;
     }();
 };
 } // namespace
@@ -88,7 +88,8 @@ TEST_CASE("parse_as_tree")
                 .token(token_kind::c, "abc")
                 .token(token_kind::b, ")")
                 .finish()
-            .token(token_kind::a, "321");
+            .token(token_kind::a, "321")
+            .token(lexy::eof_token_kind, "");
         // clang-format on
         CHECK(tree == expected);
     }
@@ -108,7 +109,8 @@ TEST_CASE("parse_as_tree")
                     .token(token_kind::b, "\"")
                     .finish()
                 .finish()
-            .token(token_kind::a, "321");
+            .token(token_kind::a, "321")
+            .token(lexy::eof_token_kind, "");
         // clang-format on
         CHECK(tree == expected);
     }
@@ -130,7 +132,8 @@ TEST_CASE("parse_as_tree")
                 .token(token_kind::b, ")")
                 .whitespace(" ")
                 .finish()
-            .token(token_kind::a, "321");
+            .token(token_kind::a, "321")
+            .token(lexy::eof_token_kind, "");
         // clang-format on
         CHECK(tree == expected);
     }

@@ -9,7 +9,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/trie.hpp>
-#include <lexy/token.hpp>
 
 namespace lexyd
 {
@@ -50,11 +49,6 @@ struct _eol : token_base<_eol>
         }
     };
 
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return lexy::eol_token_kind;
-    }
-
     template <typename Context, typename Reader>
     static constexpr void token_error(Context& context, const Reader&, token_engine::error_code,
                                       typename Reader::iterator pos)
@@ -67,6 +61,12 @@ struct _eol : token_base<_eol>
 /// Matches the end of line (EOF or newline).
 constexpr auto eol = _eol{};
 } // namespace lexyd
+
+namespace lexy
+{
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_eol> = lexy::eol_token_kind;
+}
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
 

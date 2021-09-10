@@ -11,7 +11,6 @@
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/engine/while.hpp>
-#include <lexy/token.hpp>
 
 //=== implementation ===//
 namespace lexy::_detail

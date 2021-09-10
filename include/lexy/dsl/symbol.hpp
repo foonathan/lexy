@@ -13,7 +13,6 @@
 #include <lexy/engine/while.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
-#include <lexy/token.hpp>
 
 namespace lexy
 {
@@ -345,7 +344,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, _idp<L, T>::token_kind(), save.position(), reader.position());
+            context.on(_ev::token{}, _idp<L, T>{}, save.position(), reader.position());
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
                 continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]));
@@ -380,7 +379,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
                     // We're having a prefix of a valid identifier.
                     // As an additional optimization, just need to parse the remaining characters.
                     lexy::engine_while<trailing_engine>::match(reader);
-                    context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, reader.position());
+                    context.on(_ev::token{}, _idp<L, T>{}, begin, reader.position());
                 }
                 auto end = reader.position();
 
@@ -394,7 +393,7 @@ struct _sym<Table, _idp<L, T>, Tag> : rule_base
 
             // We've succesfully matched a symbol.
             // Report its corresponding identifier token and produce the value.
-            context.on(_ev::token{}, _idp<L, T>::token_kind(), begin, end);
+            context.on(_ev::token{}, _idp<L, T>{}, begin, end);
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)..., Table[idx]);
         }

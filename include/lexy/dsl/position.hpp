@@ -6,7 +6,6 @@
 #define LEXY_DSL_POSITION_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/token.hpp>
 
 namespace lexyd
 {

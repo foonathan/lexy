@@ -49,6 +49,8 @@ Predefined token kinds for special token rules, as given in the table below.
 |===
 ====
 
+NOTE: The enumeration is actually defined in {{% headerref "lexy/grammar.hpp" %}}, but documented here for convenience.
+
 [#token_kind]
 == Class `lexy::token_kind`
 

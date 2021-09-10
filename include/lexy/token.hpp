@@ -16,41 +16,6 @@
 
 namespace lexy
 {
-enum predefined_token_kind : std::uint_least16_t
-{
-    unknown_token_kind              = UINT_LEAST16_MAX,
-    whitespace_token_kind           = UINT_LEAST16_MAX - 1,
-    position_token_kind             = UINT_LEAST16_MAX - 2,
-    eof_token_kind                  = UINT_LEAST16_MAX - 3,
-    eol_token_kind                  = UINT_LEAST16_MAX - 4,
-    identifier_token_kind           = UINT_LEAST16_MAX - 5,
-    _smallest_predefined_token_kind = identifier_token_kind,
-};
-
-constexpr const char* _kind_name(predefined_token_kind kind) noexcept
-{
-    switch (kind)
-    {
-    case unknown_token_kind:
-        return "token";
-    case whitespace_token_kind:
-        return "whitespace";
-    case position_token_kind:
-        return "position";
-    case eof_token_kind:
-        return "EOF";
-    case eol_token_kind:
-        return "eol";
-    case identifier_token_kind:
-        return "identifier";
-    }
-
-    return ""; // unreachable
-}
-} // namespace lexy
-
-namespace lexy
-{
 template <typename TokenKind, typename... Tokens>
 struct _tk_map
 {
@@ -135,6 +100,21 @@ class token_kind
                   "invalid type for TokenKind");
     using _underlying_type = lexy::_detail::type_or<TokenKind, int>;
 
+    template <typename T>
+    static constexpr bool _is_compatible_kind_type()
+    {
+        using type = std::remove_cv_t<T>;
+        if constexpr (std::is_same_v<type, lexy::predefined_token_kind>)
+            // Always compatible.
+            return true;
+        else if constexpr (std::is_void_v<TokenKind>)
+            // We neeed an integer for our token kind.
+            return std::is_integral_v<T>;
+        else
+            // We need the same enumeration type.
+            return std::is_same_v<type, TokenKind>;
+    }
+
 public:
     //=== constructors ===//
     /// Creates an unknown token kind.
@@ -156,11 +136,8 @@ public:
     constexpr token_kind(TokenRule) noexcept : token_kind()
     {
         // Look for internal mapping first.
-        auto token_rule_kind = TokenRule::token_kind();
-        if constexpr ((std::is_enum_v<TokenKind> //
-                       && std::is_same_v<decltype(token_rule_kind), TokenKind>)
-                      || (std::is_void_v<TokenKind> //
-                          && std::is_integral_v<decltype(token_rule_kind)>))
+        constexpr auto token_rule_kind = lexy::token_kind_of<TokenRule>;
+        if constexpr (_is_compatible_kind_type<decltype(token_rule_kind)>())
         {
             // The token has an associated kind of the same type.
             *this = token_kind(token_rule_kind);

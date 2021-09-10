@@ -15,7 +15,6 @@
 #include <lexy/engine/literal.hpp>
 #include <lexy/engine/while.hpp>
 #include <lexy/lexeme.hpp>
-#include <lexy/token.hpp>
 
 //=== identifier ===//
 namespace lexy
@@ -35,11 +34,6 @@ namespace lexyd
 template <typename Leading, typename Trailing>
 struct _idp : token_base<_idp<Leading, Trailing>>
 {
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return lexy::identifier_token_kind;
-    }
-
     struct token_engine : lexy::engine_matcher_base
     {
         using error_code = typename Leading::token_engine::error_code;
@@ -244,6 +238,12 @@ constexpr auto identifier(LeadingToken, TrailingToken)
     return _id<LeadingToken, TrailingToken>{};
 }
 } // namespace lexyd
+
+namespace lexy
+{
+template <typename Leading, typename Trailing>
+constexpr auto token_kind_of<lexy::dsl::_idp<Leading, Trailing>> = lexy::identifier_token_kind;
+}
 
 //=== keyword ===//
 namespace lexyd

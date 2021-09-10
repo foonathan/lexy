@@ -46,7 +46,7 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         }
         auto content_end = reader.position();
 
-        context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
+        context.on(_ev::token{}, Char{}, content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
     }
     else
@@ -55,7 +55,7 @@ constexpr auto _del_parse_char(Context& context, Reader& reader, Sink& sink)
         engine::match(reader);
         auto content_end = reader.position();
 
-        context.on(_ev::token{}, Char::token_kind(), content_begin, content_end);
+        context.on(_ev::token{}, Char{}, content_begin, content_end);
         sink(lexy::lexeme<Reader>(content_begin, content_end));
     }
 

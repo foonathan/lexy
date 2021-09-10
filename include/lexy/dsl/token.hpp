@@ -33,11 +33,6 @@ struct token_base : _token_base
 {
     using token_type = Derived;
 
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return Derived{};
-    }
-
     static constexpr auto is_branch               = true;
     static constexpr auto is_unconditional_branch = false;
 
@@ -57,7 +52,7 @@ struct token_base : _token_base
                 return lexy::rule_try_parse_result::backtracked;
             }
             auto end = reader.position();
-            context.on(_ev::token{}, Derived::token_kind(), begin, end);
+            context.on(_ev::token{}, Derived{}, begin, end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return static_cast<lexy::rule_try_parse_result>(
@@ -83,7 +78,7 @@ struct token_base : _token_base
             {
                 token_engine::match(reader);
             }
-            context.on(_ev::token{}, Derived::token_kind(), position, reader.position());
+            context.on(_ev::token{}, Derived{}, position, reader.position());
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...);
@@ -110,11 +105,6 @@ struct _tokk : token_base<_tokk<Kind, Token>>
     {
         Token::token_error(context, reader, ec, pos);
     }
-
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return Kind;
-    }
 };
 
 template <typename Tag, typename Token>
@@ -130,13 +120,16 @@ struct _toke : token_base<_toke<Tag, Token>>
         auto err = lexy::error<Reader, Tag>(pos, reader.position());
         context.on(_ev::error{}, err);
     }
-
-    static LEXY_CONSTEVAL auto token_kind()
-    {
-        return Token::token_kind();
-    }
 };
 } // namespace lexyd
+
+namespace lexy
+{
+template <auto Kind, typename Token>
+constexpr auto token_kind_of<lexy::dsl::_tokk<Kind, Token>> = Kind;
+template <typename Tag, typename Token>
+constexpr auto token_kind_of<lexy::dsl::_toke<Tag, Token>> = token_kind_of<Token>;
+} // namespace lexy
 
 //=== token rule ===//
 namespace lexyd
