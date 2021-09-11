@@ -6,6 +6,7 @@
 #define LEXY_INPUT_BASE_HPP_INCLUDED
 
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/iterator.hpp>
 #include <lexy/encoding.hpp>
 
 #if 0
@@ -61,7 +62,9 @@ public:
     using iterator = Iterator;
 
     constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
-    {}
+    {
+        LEXY_PRECONDITION(lexy::_detail::precedes(begin, end));
+    }
 
     constexpr auto peek() const noexcept
     {
@@ -73,6 +76,7 @@ public:
 
     constexpr void bump() noexcept
     {
+        LEXY_PRECONDITION(_cur != _end);
         ++_cur;
     }
 
@@ -83,6 +87,8 @@ public:
 
     constexpr void set_position(iterator new_pos) noexcept
     {
+        LEXY_PRECONDITION(new_pos != Iterator());
+        LEXY_PRECONDITION(lexy::_detail::precedes(_cur, _end));
         _cur = new_pos;
     }
 

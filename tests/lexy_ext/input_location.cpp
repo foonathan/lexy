@@ -25,8 +25,8 @@ struct str_context
 #if !defined(__clang__) && defined(_MSC_VER)
 // https://developercommunity2.visualstudio.com/t/GF--invalidates-end-iterators-for-const/1276953
 #    define TEST_CONSTEXPR
-#elif !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 8
-// GCC 7 doesn't like this one either and fails the test.
+#elif !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 10
+// GCC 9 doesn't like this one either and fails the test.
 #    define TEST_CONSTEXPR
 #else
 #    define TEST_CONSTEXPR constexpr

@@ -56,13 +56,13 @@ constexpr Iterator next(Iterator iter, std::size_t n)
 }
 
 // Used for assertions.
-template <typename Iterator>
-constexpr bool precedes(Iterator first, Iterator after)
+template <typename Iterator, typename Sentinel>
+constexpr bool precedes([[maybe_unused]] Iterator first, [[maybe_unused]] Sentinel after)
 {
-    if constexpr (is_random_access_iterator<Iterator>)
+    if constexpr (is_random_access_iterator<Iterator> && std::is_same_v<Iterator, Sentinel>)
         return first <= after;
     else
-        return true; // Don't know.
+        return true;
 }
 
 // Requires: begin <= end_a && begin <= end_b.

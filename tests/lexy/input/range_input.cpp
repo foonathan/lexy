@@ -25,21 +25,33 @@ struct test_iterator
         return *this;
     }
 
-    friend bool operator==(test_iterator lhs, test_iterator rhs)
+    [[maybe_unused]] friend bool operator==(test_iterator lhs, test_iterator rhs)
     {
         return lhs.count == rhs.count;
+    }
+    [[maybe_unused]] friend bool operator!=(test_iterator lhs, test_iterator rhs)
+    {
+        return lhs.count != rhs.count;
     }
 };
 
 struct test_sentinel
 {
-    friend bool operator==(test_iterator iter, test_sentinel)
+    [[maybe_unused]] friend bool operator==(test_iterator iter, test_sentinel)
     {
         return iter.count == 0;
     }
-    friend bool operator==(test_sentinel, test_iterator iter)
+    [[maybe_unused]] friend bool operator!=(test_iterator iter, test_sentinel)
+    {
+        return iter.count != 0;
+    }
+    [[maybe_unused]] friend bool operator==(test_sentinel, test_iterator iter)
     {
         return iter.count == 0;
+    }
+    [[maybe_unused]] friend bool operator!=(test_sentinel, test_iterator iter)
+    {
+        return iter.count != 0;
     }
 };
 } // namespace
