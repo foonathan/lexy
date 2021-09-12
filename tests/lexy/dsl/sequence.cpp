@@ -10,72 +10,41 @@
 
 TEST_CASE("dsl::operator+")
 {
-    SUBCASE("rule")
+    static constexpr auto rule = LEXY_LIT("a") + label<0> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    struct callback
     {
-        static constexpr auto rule
-            = LEXY_LIT("a") + label<0> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        const char* str;
 
-        struct callback
+        LEXY_VERIFY_FN int success(const char* cur, id<0>, lexy::lexeme_for<test_input> lex)
         {
-            const char* str;
+            LEXY_VERIFY_CHECK(str + 3 == cur);
+            LEXY_VERIFY_CHECK(*lex.begin() == 'c');
+            return 0;
+        }
 
-            LEXY_VERIFY_FN int success(const char* cur, id<0>, lexy::lexeme_for<test_input> lex)
-            {
-                LEXY_VERIFY_CHECK(str + 3 == cur);
-                LEXY_VERIFY_CHECK(*lex.begin() == 'c');
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                if (e.character() == 'a')
-                    return -1;
-                else if (e.character() == 'b')
-                    return -2;
-                else if (e.character() == 'c')
-                    return -3;
-                else
-                    return -4;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == -2);
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == -3);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
-    }
-    SUBCASE("branch")
-    {
-        static constexpr auto rule = if_(LEXY_LIT("a") + LEXY_LIT("b") + LEXY_LIT("c"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
         {
-            const char* str;
+            if (e.character() == 'a')
+                return -1;
+            else if (e.character() == 'b')
+                return -2;
+            else if (e.character() == 'c')
+                return -3;
+            else
+                return -4;
+        }
+    };
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-        };
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty == -1);
+    auto a = LEXY_VERIFY("a");
+    CHECK(a == -2);
+    auto ab = LEXY_VERIFY("ab");
+    CHECK(ab == -3);
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == 0);
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == 0);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 3);
-        auto abcd = LEXY_VERIFY("abcd");
-        CHECK(abcd == 3);
-    }
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc == 0);
 }
 

@@ -29,33 +29,3 @@ Values::
 
 {{% playground-example default "Sequence rule is used practically all the time" %}}
 
-[#sequence-token]
-== Branch rule `lexy::dsl::operator+` (tokens only)
-
-{{% interface %}}
-----
-namespace lexy::dsl
-{
-    struct _token-seq_ {}; // models _branch-rule_
-
-    constexpr _token-seq_ operator+(_token-rule_ auto lhs, _token-rule_ auto rhs);
-    constexpr _token-seq_ operator+(_token-seq_ lhs, _token-rule_ auto rhs);
-    constexpr _token-seq_ operator+(_token-rule_ auto lhs, _token-seq_ rhs);
-}
-----
-
-[.lead]
-A sequence rule that consists only of {{% token-rule %}}s is a {{% branch-rule %}}.
-
-Parsing::
-  Matches and consumes `lhs`, then matches and consumes `rhs`.
-Branch Parsing::
-  Tries to match and consume `lhs`, then tries to match and consume `rhs`.
-  If either of them fail to match, backtracks.
-  Otherwise, the branch is token.
-Errors::
-  All errors raised by the implicit whitespace skipping after the tokens.
-  The rule then fails without backtracking.
-Values::
-  None (tokens only).
-
