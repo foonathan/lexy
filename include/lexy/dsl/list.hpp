@@ -10,13 +10,6 @@
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/separator.hpp>
 
-#ifdef LEXY_IGNORE_DEPRECATED_OPT_LIST
-#    define LEXY_DEPRECATED_OPT_LIST
-#else
-#    define LEXY_DEPRECATED_OPT_LIST                                                               \
-        [[deprecated("`dsl::opt_list(...)` has been replaced by `dsl::opt(dsl::list(...))`")]]
-#endif
-
 namespace lexyd
 {
 // Final parser for the list.
@@ -452,52 +445,6 @@ constexpr auto list(Item, _tsep<Sep>)
     static_assert(lexy::is_branch_rule<Item>,
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
-}
-} // namespace lexyd
-
-namespace lexyd
-{
-template <typename Item, typename Sep>
-struct _olst : rule_base
-{
-    template <typename NextParser>
-    struct parser
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_DSL_FUNC bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            using list_parser = lexy::rule_parser<_lst<Item, Sep>, NextParser>;
-
-            // Try parsing the list.
-            if (auto result = list_parser::try_parse(context, reader, LEXY_FWD(args)...);
-                result != lexy::rule_try_parse_result::backtracked)
-            {
-                // We didn't backtrack, so its result is our result.
-                return static_cast<bool>(result);
-            }
-            else
-            {
-                // We don't have a list: construct a sink and immediately finish it.
-                auto sink = context.on(_ev::list{}, reader.cur());
-                return _list_finish<NextParser, Args...>::parse(context, reader, LEXY_FWD(args)...,
-                                                                sink);
-            }
-        }
-    };
-};
-
-/// Parses a list that might be empty.
-template <typename Item>
-LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item)
-{
-    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
-    return _olst<Item, void>{};
-}
-template <typename Item, typename Sep>
-LEXY_DEPRECATED_OPT_LIST constexpr auto opt_list(Item, Sep)
-{
-    static_assert(lexy::is_branch_rule<Item>, "opt_list() requires a branch condition");
-    return _olst<Item, Sep>{};
 }
 } // namespace lexyd
 
