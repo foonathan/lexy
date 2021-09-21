@@ -292,7 +292,8 @@ struct _report_error
 
         std::size_t finish() &&
         {
-            std::fputs("\n", stderr);
+            if (_count != 0)
+                std::fputs("\n", stderr);
             return _count;
         }
     };
