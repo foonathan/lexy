@@ -82,7 +82,6 @@ set(tests
         dsl/until.cpp
         dsl/whitespace.cpp
 
-        engine/literal.cpp
         engine/trie.cpp
 
         input/argv_input.cpp

@@ -11,7 +11,7 @@
 namespace lexyd
 {
 #define LEXY_PUNCT(Name, String)                                                                   \
-    struct _##Name : ::lexyd::_lit<LEXY_NTTP_STRING(String)>                                       \
+    struct _##Name : LEXY_NTTP_STRING(String)::apply<_lit>                                         \
     {};                                                                                            \
     inline constexpr auto Name = _##Name {}
 
@@ -37,6 +37,8 @@ LEXY_PUNCT(dollar_sign, "$");
 LEXY_PUNCT(at_sign, "@");
 LEXY_PUNCT(percent_sign, "%");
 LEXY_PUNCT(equal_sign, "=");
+
+#undef LEXY_PUNCT
 } // namespace lexyd
 
 #endif // LEXY_DSL_PUNCTUATOR_HPP_INCLUDED

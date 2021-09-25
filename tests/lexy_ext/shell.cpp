@@ -7,7 +7,6 @@
 #include <doctest/doctest.h>
 
 #include <lexy/_detail/nttp_string.hpp>
-#include <lexy/engine/literal.hpp>
 #include <lexy/engine/trie.hpp>
 
 namespace

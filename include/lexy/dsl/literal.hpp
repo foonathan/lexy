@@ -9,54 +9,69 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/literal.hpp>
 
 namespace lexyd
 {
-template <typename String>
-struct _lit : token_base<_lit<String>>
+template <auto... C>
+struct _lit
+: token_base<_lit<C...>,
+             std::conditional_t<sizeof...(C) == 0, unconditional_branch_base, branch_base>>
 {
-    using string = String;
-
-    static constexpr auto _trie = lexy::linear_trie<String>;
+    template <typename CharT>
+    struct string
+    {
+        static inline constexpr CharT str[] = {CharT(C)..., CharT()};
+    };
 
     template <typename Reader>
     struct tp
     {
         typename Reader::iterator end;
 
-        constexpr bool try_parse(Reader reader)
+        constexpr auto try_parse(Reader reader)
         {
-            auto result = lexy::engine_literal<_trie>::match(reader);
-            end         = reader.position();
-            return result == typename lexy::engine_literal<_trie>::error_code{};
+            if constexpr (sizeof...(C) == 0)
+            {
+                end = reader.position();
+                return std::true_type{};
+            }
+            else
+            {
+                auto result
+                    // Compare each code unit, bump on success, cancel on failure.
+                    = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(C)
+                            ? (reader.bump(), true)
+                            : false)
+                       && ...);
+                end = reader.position();
+                return result;
+            }
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            using reader_char_type = typename Reader::encoding::char_type;
-            constexpr auto string  = String::template get<reader_char_type>();
+            constexpr auto str = string<typename Reader::encoding::char_type>::str;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);
-            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, string.c_str(), index);
+            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index);
             context.on(_ev::error{}, err);
         }
     };
 };
 
 template <auto C>
-constexpr auto lit_c = _lit<lexy::_detail::type_char<C>>{};
+constexpr auto lit_c = _lit<C>{};
 
 #if LEXY_HAS_NTTP
 /// Matches the literal string.
 template <lexy::_detail::string_literal Str>
-constexpr auto lit = _lit<lexy::_detail::type_string<Str>>{};
+constexpr auto lit = typename lexy::_detail::type_string<Str>::template apply<_lit>{};
 #endif
 
 #define LEXY_LIT(Str)                                                                              \
-    ::lexyd::_lit<LEXY_NTTP_STRING(Str)> {}
+    LEXY_NTTP_STRING(Str)::apply<::lexyd::_lit> {}
 } // namespace lexyd
 
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED

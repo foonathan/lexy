@@ -39,24 +39,27 @@ string_literal(const CharT (&)[N]) -> string_literal<N - 1, CharT>;
 template <typename CharT>
 string_literal(CharT) -> string_literal<1, CharT>;
 
-template <auto Str>
-struct type_string
+template <auto Str, typename Indices = make_index_sequence<Str.size()>>
+struct type_string;
+template <auto Str, std::size_t... Idx>
+struct type_string<Str, index_sequence<Idx...>>
 {
     using char_type            = typename decltype(Str)::char_type;
     static constexpr auto size = Str.size();
 
-    template <typename CharT, typename Seq>
-    struct _lazy;
-    template <typename CharT, std::size_t... I>
-    struct _lazy<CharT, index_sequence<I...>>
+    template <template <auto... C> typename T>
+    using apply = T<Str.string[Idx]...>;
+
+    template <typename CharT>
+    struct _lazy
     {
-        static inline constexpr CharT str[] = {CharT(Str.string[I])..., CharT()};
+        static inline constexpr CharT str[] = {CharT(Str.string[Idx])..., CharT()};
     };
 
     template <typename CharT = char_type>
     static LEXY_CONSTEVAL auto get()
     {
-        using lazy = _lazy<CharT, make_index_sequence<Str.size()>>;
+        using lazy = _lazy<CharT>;
         return basic_string_view<CharT>(null_terminated{}, lazy::str, Str.size());
     }
 };
@@ -76,6 +79,9 @@ struct type_string
 {
     using char_type            = CharT;
     static constexpr auto size = sizeof...(Cs);
+
+    template <template <auto... C> typename T>
+    using apply = T<Cs...>;
 
     template <typename OtherCharT>
     struct _lazy

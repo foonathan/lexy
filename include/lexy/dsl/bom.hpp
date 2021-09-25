@@ -6,11 +6,15 @@
 #define LEXY_DSL_BOM_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
-#include <lexy/engine/literal.hpp>
 
 namespace lexyd
 {
+// TODO: make public
+template <unsigned char... C>
+using _bytes = _lit<C...>;
+
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom_impl
 {
@@ -19,111 +23,75 @@ struct _bom_impl
 
     static constexpr auto name = "";
 
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view<unsigned char>();
-    }
+    using literal     = _lit<>;
+    using branch_base = unconditional_branch_base;
 };
 template <lexy::encoding_endianness DontCare>
 struct _bom_impl<lexy::utf8_encoding, DontCare>
 {
     static constexpr auto name = "BOM.UTF-8";
 
-    static constexpr unsigned char value[] = {0xEF, 0xBB, 0xBF};
-    static constexpr auto          length  = 3u;
-
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view(value, length);
-    }
+    using literal     = _bytes<0xEF, 0xBB, 0xBF>;
+    using branch_base = lexyd::branch_base;
 };
 template <>
 struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-16-LE";
 
-    static constexpr unsigned char value[] = {0xFF, 0xFE};
-    static constexpr auto          length  = 2u;
-
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view(value, length);
-    }
+    using literal     = _bytes<0xFF, 0xFE>;
+    using branch_base = lexyd::branch_base;
 };
 template <>
 struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-16-BE";
 
-    static constexpr unsigned char value[] = {0xFE, 0xFF};
-    static constexpr auto          length  = 2u;
-
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view(value, length);
-    }
+    using literal     = _bytes<0xFE, 0xFF>;
+    using branch_base = lexyd::branch_base;
 };
 template <>
 struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-32-LE";
 
-    static constexpr unsigned char value[] = {0xFF, 0xFE, 0x00, 0x00};
-    static constexpr auto          length  = 4u;
-
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view(value, length);
-    }
+    using literal     = _bytes<0xFF, 0xFE, 0x00, 0x00>;
+    using branch_base = lexyd::branch_base;
 };
 template <>
 struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-32-BE";
 
-    static constexpr unsigned char value[] = {0x00, 0x00, 0xFE, 0xFF};
-    static constexpr auto          length  = 4u;
-
-    static constexpr auto get()
-    {
-        return lexy::_detail::basic_string_view(value, length);
-    }
+    using literal     = _bytes<0x00, 0x00, 0xFE, 0xFF>;
+    using branch_base = lexyd::branch_base;
 };
 
 template <typename Encoding, lexy::encoding_endianness Endianness>
-struct _bom : token_base<_bom<Encoding, Endianness>,
-                         std::conditional_t<_bom_impl<Encoding, Endianness>::get().empty(),
-                                            unconditional_branch_base, branch_base>>
+struct _bom
+: token_base<_bom<Encoding, Endianness>, typename _bom_impl<Encoding, Endianness>::branch_base>
 {
-    using string                = _bom_impl<Encoding, Endianness>;
-    static constexpr auto _trie = lexy::linear_trie<string>;
+    using _impl = _bom_impl<Encoding, Endianness>;
 
     template <typename Reader>
     struct tp
     {
         typename Reader::iterator end;
 
-        constexpr auto try_parse(Reader reader)
+        constexpr auto try_parse(const Reader& reader)
         {
-            if constexpr (string::get().empty())
-            {
-                // No BOM for this encoding.
-                end = reader.position();
-                return std::true_type{};
-            }
-            else
-            {
-                auto result = lexy::engine_literal<_trie>::match(reader);
-                end         = reader.position();
-                return result == typename lexy::engine_literal<_trie>::error_code{};
-            }
+            lexy::token_parser_for<typename _impl::literal, Reader> impl{};
+
+            auto result = impl.try_parse(reader);
+            end         = impl.end;
+            return result;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
             auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), string::name);
+                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), _impl::name);
             context.on(_ev::error{}, err);
         }
     };
