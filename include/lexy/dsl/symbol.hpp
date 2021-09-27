@@ -8,8 +8,8 @@
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/_detail/nttp_string.hpp>
+#include <lexy/_detail/trie.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/engine/trie.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -170,14 +170,12 @@ public:
     constexpr key_index try_parse(Reader& reader) const
     {
         static_assert(!empty(), "symbol table must not be empty");
-        using engine = lexy::engine_trie<_lazy::trie>;
 
-        typename engine::error_code ec{};
-        auto                        idx = engine::parse(ec, reader);
-        if (ec == typename engine::error_code())
-            return key_index(idx);
-        else
+        auto result = _detail::trie_parser<_trie::object, Reader>::parse(reader);
+        if (result == _trie::object.invalid_value)
             return key_index();
+        else
+            return key_index(result);
     }
 
     constexpr const T& operator[](key_index idx) const noexcept
@@ -187,9 +185,9 @@ public:
     }
 
 private:
-    struct _lazy
+    struct _trie
     {
-        static constexpr auto trie = lexy::trie<char_type, Strings...>;
+        static constexpr auto object = lexy::_detail::trie<char_type, Strings...>;
     };
 
     template <std::size_t... Idx, typename... Args>

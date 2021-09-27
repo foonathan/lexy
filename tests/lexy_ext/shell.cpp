@@ -7,7 +7,6 @@
 #include <doctest/doctest.h>
 
 #include <lexy/_detail/nttp_string.hpp>
-#include <lexy/engine/trie.hpp>
 
 namespace
 {
@@ -127,24 +126,5 @@ TEST_CASE("shell")
         auto reader = input.reader();
         CHECK(reader.peek() == lexy::default_encoding::eof());
     }
-}
-
-namespace
-{
-constexpr auto trie = lexy::trie<char, LEXY_NTTP_STRING("abc\n")>;
-}
-
-TEST_CASE("engine_trie and shell")
-{
-    lexy_ext::shell<test_prompt> shell(test_prompt(3));
-
-    auto input  = shell.prompt_for_input();
-    auto reader = input.reader();
-
-    using engine = lexy::engine_trie<trie>;
-    auto result  = engine::match(reader);
-    CHECK(result == engine::error_code());
-    CHECK(shell.get_prompt().max_lines == 2);
-    CHECK(shell.get_prompt().continuation_count == 0);
 }
 
