@@ -23,7 +23,7 @@ struct debug_event
 
 namespace lexyd
 {
-template <typename String>
+template <typename CharT, CharT... C>
 struct _debug : rule_base
 {
     template <typename NextParser>
@@ -32,7 +32,8 @@ struct _debug : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::debug_event{}, reader.position(), String::get().c_str());
+            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<>;
+            context.on(_ev::debug_event{}, reader.position(), str);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -40,11 +41,11 @@ struct _debug : rule_base
 
 #if LEXY_HAS_NTTP
 template <lexy::_detail::string_literal Str>
-constexpr auto debug = _debug<lexy::_detail::type_string<Str>>{};
+constexpr auto debug = lexy::_detail::to_type_string<_debug, Str>{};
 #endif
 
 #define LEXY_DEBUG(Str)                                                                            \
-    ::lexyd::_debug<LEXY_NTTP_STRING(Str)> {}
+    LEXY_NTTP_STRING(::lexyd::_debug, Str) {}
 } // namespace lexyd
 
 //=== trace ====//

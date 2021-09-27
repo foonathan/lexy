@@ -12,17 +12,11 @@
 
 namespace lexyd
 {
-template <auto... C>
+template <typename CharT, CharT... C>
 struct _lit
-: token_base<_lit<C...>,
+: token_base<_lit<CharT, C...>,
              std::conditional_t<sizeof...(C) == 0, unconditional_branch_base, branch_base>>
 {
-    template <typename CharT>
-    struct string
-    {
-        static inline constexpr CharT str[] = {CharT(C)..., CharT()};
-    };
-
     template <typename Reader>
     struct tp
     {
@@ -51,7 +45,8 @@ struct _lit
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            constexpr auto str = string<typename Reader::encoding::char_type>::str;
+            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<
+                typename Reader::encoding::char_type>;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);
@@ -62,16 +57,16 @@ struct _lit
 };
 
 template <auto C>
-constexpr auto lit_c = _lit<C>{};
+constexpr auto lit_c = _lit<std::decay_t<decltype(C)>, C>{};
 
 #if LEXY_HAS_NTTP
 /// Matches the literal string.
 template <lexy::_detail::string_literal Str>
-constexpr auto lit = typename lexy::_detail::type_string<Str>::template apply<_lit>{};
+constexpr auto lit = lexy::_detail::to_type_string<_lit, Str>{};
 #endif
 
 #define LEXY_LIT(Str)                                                                              \
-    LEXY_NTTP_STRING(Str)::apply<::lexyd::_lit> {}
+    LEXY_NTTP_STRING(::lexyd::_lit, Str) {}
 } // namespace lexyd
 
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED

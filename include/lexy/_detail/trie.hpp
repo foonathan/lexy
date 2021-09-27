@@ -88,7 +88,7 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // We can estimate the number of nodes in the trie by adding all strings together.
     // This is the worst case where the strings don't share any nodes.
     // The plus one comes from the additional root node.
-    constexpr auto node_count_upper_bound = (Strings::get().size() + ... + 1);
+    constexpr auto node_count_upper_bound = (Strings::size + ... + 1);
 
     // We cannot construct the `_trie` directly as we don't know how many transitions each node has.
     // So we use this temporary representation using an adjacency matrix.
@@ -139,7 +139,7 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // We build the trie by inserting all strings.
     constexpr auto builder = [] {
         builder_t builder;
-        (builder.insert(Idxs, Strings::get().data(), Strings::get().size()), ...);
+        (builder.insert(Idxs, Strings::template c_str<CharT>, Strings::size), ...);
         return builder;
     }();
 

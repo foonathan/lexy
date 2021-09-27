@@ -96,7 +96,7 @@ struct _contains : token_base<_contains<R>>
     };
 };
 
-template <typename Id, auto... C>
+template <typename Id, typename CharT, CharT... C>
 struct _kw;
 
 template <typename Leading, typename Trailing, typename... Reserved>
@@ -144,13 +144,13 @@ struct _id : branch_base
     {
         return lexyd::token(r);
     }
-    template <typename Id, auto... C>
-    constexpr auto _make_reserve(_kw<Id, C...>) const
+    template <typename Id, typename CharT, CharT... C>
+    constexpr auto _make_reserve(_kw<Id, CharT, C...>) const
     {
         static_assert(std::is_same_v<decltype(Id{}.pattern()), decltype(pattern())>,
                       "must not reserve keywords from another identifier");
         // We turn the keyword into a literal to be able to use a trie for matching.
-        return _lit<C...>{};
+        return _lit<CharT, C...>{};
     }
 
     //=== dsl ===//
@@ -220,8 +220,8 @@ constexpr auto token_kind_of<lexy::dsl::_idp<Leading, Trailing>> = lexy::identif
 //=== keyword ===//
 namespace lexyd
 {
-template <typename Id, auto... C>
-struct _kw : token_base<_kw<Id, C...>>
+template <typename Id, typename CharT, CharT... C>
+struct _kw : token_base<_kw<Id, CharT, C...>>
 {
     template <typename Reader>
     struct tp
@@ -231,7 +231,7 @@ struct _kw : token_base<_kw<Id, C...>>
         constexpr bool try_parse(Reader reader)
         {
             // Need to match the literal.
-            if (!lexy::try_match_token(_lit<C...>{}, reader))
+            if (!lexy::try_match_token(_lit<CharT, C...>{}, reader))
                 return false;
             end = reader.position();
 
@@ -243,8 +243,8 @@ struct _kw : token_base<_kw<Id, C...>>
         template <typename Context>
         constexpr void report_error(Context& context, Reader reader)
         {
-            constexpr auto str
-                = _lit<C...>::template string<typename Reader::encoding::char_type>::str;
+            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<
+                typename Reader::encoding::char_type>;
 
             // Match the entire identifier.
             auto begin = reader.position();
@@ -262,8 +262,8 @@ struct _keyword;
 template <typename L, typename T, typename... R>
 struct _keyword<_id<L, T, R...>>
 {
-    template <auto... C>
-    using get = _kw<_id<L, T>, C...>;
+    template <typename CharT, CharT... C>
+    using get = _kw<_id<L, T>, CharT, C...>;
 };
 
 #if LEXY_HAS_NTTP
@@ -271,13 +271,12 @@ struct _keyword<_id<L, T, R...>>
 template <lexy::_detail::string_literal Str, typename L, typename T, typename... R>
 constexpr auto keyword(_id<L, T, R...>)
 {
-    using str = lexy::_detail::type_string<Str>;
-    return typename str::template apply<_keyword<_id<L, T>>::template get>;
+    return lexy::_detail::to_type_string<_keyword<_id<L, T>>::template get, Str>{};
 }
 #endif
 
 #define LEXY_KEYWORD(Str, Id)                                                                      \
-    LEXY_NTTP_STRING(Str)::apply<::lexyd::_keyword<std::decay_t<decltype(Id)>>::template get> {}
+    LEXY_NTTP_STRING(::lexyd::_keyword<std::decay_t<decltype(Id)>>::template get, Str) {}
 } // namespace lexyd
 
 #endif // LEXY_DSL_IDENTIFIER_HPP_INCLUDED

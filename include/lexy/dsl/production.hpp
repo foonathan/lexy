@@ -18,10 +18,17 @@ constexpr auto inline_ = lexy::production_rule<Production>{};
 
 namespace lexyd
 {
-template <typename BranchParser, typename Context, typename Reader>
-constexpr bool _finish_production_branch(BranchParser& branch, Context& context, Reader& reader)
+template <typename Production, typename Context, typename Reader>
+/* not force inline */ constexpr bool _parse_production(Context& context, Reader& reader)
 {
-    return branch.finish(context, reader);
+    using parser = lexy::parser_for<lexy::production_rule<Production>, lexy::_detail::final_parser>;
+    return parser::parse(context, reader);
+}
+template <typename ProductionParser, typename Context, typename Reader>
+/* not force inline */ constexpr bool _finish_production(ProductionParser& parser, Context& context,
+                                                         Reader& reader)
+{
+    return parser.template finish<lexy::_detail::final_parser>(context, reader);
 }
 
 template <typename Production>
@@ -37,9 +44,7 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         {
             // Create a context for the production and parse the context there.
             auto sub_context = impl::get_sub_context(context, reader);
-            using parser
-                = lexy::parser_for<lexy::production_rule<Production>, lexy::_detail::final_parser>;
-            if (parser::parse(sub_context, reader))
+            if (_parse_production<Production>(sub_context, reader))
             {
                 // Extract value and continue.
                 return impl::template finish<NextParser>(context, reader, sub_context,
@@ -83,7 +88,7 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the production.
-            if (parser.template finish<lexy::_detail::final_parser>(*sub_context, reader))
+            if (_finish_production(parser, *sub_context, reader))
             {
                 // Continue parsing with the result.
                 return impl::template finish<NextParser>(context, reader, *sub_context,

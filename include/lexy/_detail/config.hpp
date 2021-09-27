@@ -50,7 +50,7 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 
 //=== NTTP ===//
 #ifndef LEXY_HAS_NTTP
-// See https://github.com/foonathan/lexy/issues/15.
+//   See https://github.com/foonathan/lexy/issues/15.
 #    if __cpp_nontype_template_parameter_class >= 201806 || __cpp_nontype_template_args >= 201911
 #        define LEXY_HAS_NTTP 1
 #    else
@@ -61,7 +61,7 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 //=== consteval ===//
 #ifndef LEXY_HAS_CONSTEVAL
 #    if defined(_MSC_VER) && !defined(__clang__)
-// Currently can't handle returning strings from consteval, check back later.
+//       Currently can't handle returning strings from consteval, check back later.
 #        define LEXY_HAS_CONSTEVAL 0
 #    elif __cpp_consteval
 #        define LEXY_HAS_CONSTEVAL 1
@@ -96,29 +96,12 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 namespace lexy
 {
 using _char8_t = unsigned char;
-
-template <typename String>
-struct _char8_str
-{
-    struct str
-    {
-        _char8_t data[String::get().size() + 1];
-
-        constexpr str() : data{}
-        {
-            auto i = 0;
-            for (auto c : String::get())
-                data[i++] = _char8_t(c);
-        }
-    };
-
-    static constexpr auto get = str{};
-};
 } // namespace lexy
 
 #    define LEXY_CHAR_OF_u8 char
 #    define LEXY_CHAR8_T ::lexy::_char8_t
-#    define LEXY_CHAR8_STR(Str) (::lexy::_char8_str<LEXY_NTTP_STRING(u8##Str)>::get.data)
+#    define LEXY_CHAR8_STR(Str)                                                                    \
+        LEXY_NTTP_STRING(::lexy::_detail::type_string, u8##Str)::c_str<LEXY_CHAR8_T>
 
 #endif
 

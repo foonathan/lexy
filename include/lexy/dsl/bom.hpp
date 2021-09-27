@@ -13,7 +13,7 @@ namespace lexyd
 {
 // TODO: make public
 template <unsigned char... C>
-using _bytes = _lit<C...>;
+using _bytes = _lit<unsigned char, C...>;
 
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom_impl
@@ -23,7 +23,7 @@ struct _bom_impl
 
     static constexpr auto name = "";
 
-    using literal     = _lit<>;
+    using literal     = _lit<unsigned char>;
     using branch_base = unconditional_branch_base;
 };
 template <lexy::encoding_endianness DontCare>

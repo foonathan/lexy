@@ -15,7 +15,7 @@
 
 namespace lexy
 {
-#define LEXY_SYMBOL(Str) LEXY_NTTP_STRING(Str)
+#define LEXY_SYMBOL(Str) LEXY_NTTP_STRING(::lexy::_detail::type_string, Str)
 
 template <typename T, typename... Strings>
 class _symbol_table
@@ -54,10 +54,10 @@ public:
     }
 
 #if LEXY_HAS_NTTP
-    template <lexy::_detail::string_literal SymbolString, typename... Args>
+    template <_detail::string_literal SymbolString, typename... Args>
     LEXY_CONSTEVAL auto map(Args&&... args) const
     {
-        return map<lexy::_detail::type_string<SymbolString>>(LEXY_FWD(args)...);
+        return map<_detail::to_type_string<_detail::type_string, SymbolString>>(LEXY_FWD(args)...);
     }
 #else
 #    if (defined(__clang__) && __clang_major__ <= 7)                                               \
@@ -68,7 +68,7 @@ public:
 #    endif
     LEXY_CONSTEVAL auto map(Args&&... args) const
     {
-        return map<lexy::_detail::type_char<C>>(LEXY_FWD(args)...);
+        return map<_detail::type_string<std::decay_t<decltype(C)>, C>>(LEXY_FWD(args)...);
     }
 #endif
 
@@ -99,7 +99,7 @@ public:
             else
             {
                 LEXY_PRECONDITION(_table);
-                constexpr const char_type* strings[] = {Strings::get().c_str()...};
+                constexpr const char_type* strings[] = {Strings::template c_str<char_type>...};
                 return value_type{strings[_idx], _table->_data[_idx]};
             }
         }
