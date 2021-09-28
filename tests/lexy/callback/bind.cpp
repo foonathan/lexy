@@ -125,4 +125,36 @@ TEST_CASE("bind_sink")
         cb(42);
         CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);
     }
+
+    SUBCASE("bound passes nullopt to underlying sink")
+    {
+        constexpr auto const expected = 12345;
+
+        struct sink_handles_nullopt
+        {
+            struct dummy_impl
+            {
+                void operator()(int) {}
+
+                auto finish() && -> int
+                {
+                    return 7;
+                }
+            };
+
+            constexpr auto operator()(lexy::nullopt&&) const
+            {
+                return expected;
+            }
+
+            constexpr auto sink(int)
+            {
+                return dummy_impl{};
+            }
+        };
+
+        constexpr auto bound = lexy::bind_sink(sink_handles_nullopt{}, 15);
+
+        CHECK(bound(lexy::nullopt{}) == expected);
+    }
 }

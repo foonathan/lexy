@@ -162,6 +162,7 @@ A call to `bound.sink()` results in a call to `sink.sink(args...)`, where no arg
 A call to `bound.sink(context)` results in a call to `sink.sink()` with the expanded arguments:
 If the argument is a placeholder, it is expanded as described there but note that there are no values, only a context parameter.
 Otherwise, the bound argument is forwarded as-is.
+Calls to `bound(...)` will be forwarded as-is onto `sink(...)`, allowing a bound sink to be used with rules like opt_list from {{% docref "lexy::dsl::terminator" %}}.
 
 {{% godbolt-example "bind_sink-parse_state" "Construct the list of integers with a custom allocator" %}}
 
