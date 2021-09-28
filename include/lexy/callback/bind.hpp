@@ -347,6 +347,12 @@ struct _bound_sink
     LEXY_EMPTY_MEMBER Sink _sink;
     LEXY_EMPTY_MEMBER _detail::tuple<BoundArgs...> _bound;
 
+    template <typename... Args>
+    constexpr auto operator()(Args... args) const -> decltype(_sink(LEXY_FWD(args)...))
+    {
+        return _sink(LEXY_FWD(args)...);
+    }
+
     template <bool Dummy = true,
               typename   = std::enable_if_t<(!_detail::is_placeholder<BoundArgs> && ... && Dummy)>>
     constexpr auto sink() const
