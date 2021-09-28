@@ -106,11 +106,23 @@ TEST_CASE("bind_sink")
         }
     };
 
-    constexpr auto bound = lexy::bind_sink(my_sink{}, lexy::parse_state, 3.14f);
+    SUBCASE("bound with context")
+    {
+        constexpr auto bound = lexy::bind_sink(my_sink{}, lexy::parse_state, 3.14f);
 
-    auto cb = bound.sink(2);
-    cb(11);
-    cb(42);
-    CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);
+        auto cb = bound.sink(2);
+        cb(11);
+        cb(42);
+        CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);
+    }
+
+    SUBCASE("bound without context")
+    {
+        constexpr auto bound = lexy::bind_sink(my_sink{}, 2, 3.14f);
+
+        auto cb = bound.sink();
+        cb(11);
+        cb(42);
+        CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);
+    }
 }
-
