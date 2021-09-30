@@ -335,7 +335,8 @@ However, <code>sink.sink()</code> is invoked by the bound arguments.
 A call to <code>bound.sink()</code> results in a call to <code>sink.sink(args…​)</code>, where no argument must be a placeholder.
 A call to <code>bound.sink(context)</code> results in a call to <code>sink.sink()</code> with the expanded arguments:
 If the argument is a placeholder, it is expanded as described there but note that there are no values, only a context parameter.
-Otherwise, the bound argument is forwarded as-is.</p>
+Otherwise, the bound argument is forwarded as-is.
+Calls to <code>bound(…​)</code> will be forwarded as-is onto <code>sink(…​)</code>, allowing a bound sink to be used with rules like <code>opt_list</code> from <a href=/reference/dsl/terminator/#terminator><code>lexy::dsl::terminator</code></a>.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 6. Construct the list of integers with a custom allocator</div>
@@ -383,7 +384,7 @@ The bound arguments must either be constants or <a href=/reference/callback/bind
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/option/#nullopt><code>lexy::nullopt</code></a></li></ul>
+<ul><li><a href=/reference/dsl/terminator/#terminator><code>lexy::dsl::terminator</code></a></li><li><a href=/reference/dsl/option/#nullopt><code>lexy::nullopt</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
