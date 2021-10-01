@@ -12,8 +12,50 @@
 
 namespace lexyd
 {
+// Indicates that this rule already generates the recovery events.
+struct _recovery_base : rule_base
+{};
+
+// Parses the rule but generates the appropriate recovery_start/finish/cancel events.
+template <typename Rule>
+struct _recovery_wrapper : _recovery_base
+{
+    template <typename NextParser>
+    struct p
+    {
+        struct _continuation
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
+                                               bool& recovery_finished, Args&&... args)
+            {
+                recovery_finished = true;
+                context.on(_ev::recovery_finish{}, reader.position());
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            context.on(_ev::recovery_start{}, reader.position());
+
+            auto recovery_finished = false;
+            auto result
+                = lexy::parser_for<Rule, _continuation>::parse(context, reader, recovery_finished,
+                                                               LEXY_FWD(args)...);
+            if (!recovery_finished)
+                context.on(_ev::recovery_cancel{}, reader.position());
+            return result;
+        }
+    };
+};
+} // namespace lexyd
+
+namespace lexyd
+{
 template <typename Token, typename Limit>
-struct _find : rule_base
+struct _find : _recovery_base
 {
     template <typename NextParser>
     struct p
@@ -21,19 +63,29 @@ struct _find : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            context.on(_ev::recovery_start{}, reader.position());
+
             while (true)
             {
                 if (lexy::token_parser_for<Token, Reader> token{}; token.try_parse(reader))
+                {
                     // We've found it.
                     break;
+                }
                 else if (lexy::try_match_token(get_limit(), reader))
+                {
                     // Haven't found it.
+                    context.on(_ev::recovery_cancel{}, reader.position());
                     return false;
+                }
                 else
+                {
                     // Try again.
                     reader.bump();
+                }
             }
 
+            context.on(_ev::recovery_finish{}, reader.position());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -74,7 +126,7 @@ constexpr auto find(Tokens... tokens)
 namespace lexyd
 {
 template <typename Limit, typename... R>
-struct _reco : rule_base
+struct _reco : _recovery_base
 {
     template <typename NextParser>
     struct p
@@ -82,20 +134,27 @@ struct _reco : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_parser_for<decltype((R{} | ...)), Context, Reader> recovery{};
+            context.on(_ev::recovery_start{}, reader.position());
 
             // Try to match one of the recovery rules.
+            lexy::branch_parser_for<decltype((R{} | ...)), Context, Reader> recovery{};
             while (!recovery.try_parse(context, reader))
             {
                 if (lexy::try_match_token(get_limit(), reader))
+                {
                     // We've failed to recover as we've reached the limit.
+                    context.on(_ev::recovery_cancel{}, reader.position());
                     return false;
+                }
                 else
+                {
                     // Try again.
                     reader.bump();
+                }
             }
 
             // Finish with the rule that matched.
+            context.on(_ev::recovery_finish{}, reader.position());
             return recovery.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -133,41 +192,6 @@ constexpr auto recover(Branches...)
 
 namespace lexyd
 {
-// Performs the recovery part of a try rule.
-// TODO: make this one public?
-template <typename Recover, typename NextParser>
-struct _try_recovery
-{
-    struct _continuation
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
-                                           bool& recovery_finished, Args&&... args)
-        {
-            recovery_finished = true;
-            context.on(_ev::recovery_finish{}, reader.position());
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename Context, typename Reader, typename... Args>
-    LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
-    {
-        context.on(_ev::recovery_start{}, reader.position());
-
-        auto recovery_finished = false;
-        auto result
-            = lexy::parser_for<Recover, _continuation>::parse(context, reader, recovery_finished,
-                                                              LEXY_FWD(args)...);
-        if (!recovery_finished)
-            context.on(_ev::recovery_cancel{}, reader.position());
-        return result;
-    }
-};
-template <typename NextParser>
-struct _try_recovery<void, NextParser> : NextParser
-{};
-
 template <typename Rule, typename Recover>
 struct _tryr : _copy_base<Rule>
 {
@@ -180,6 +204,19 @@ struct _tryr : _copy_base<Rule>
         {
             continuation_reached = true;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader, Args&&... args)
+        {
+            if constexpr (std::is_void_v<Recover>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else if constexpr (std::is_base_of_v<_recovery_base, Recover>)
+                return lexy::parser_for<Recover, NextParser>::parse(context, reader,
+                                                                    LEXY_FWD(args)...);
+            else
+                return lexy::parser_for<_recovery_wrapper<Recover>,
+                                        NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -208,7 +245,7 @@ struct _tryr : _copy_base<Rule>
 
             // We haven't reached the continuation, so need to recover.
             LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
-            return _try_recovery<Recover, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            return _pc<NextParser>::recover(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -229,7 +266,7 @@ struct _tryr : _copy_base<Rule>
 
             // We haven't reached the continuation, so need to recover.
             LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
-            return _try_recovery<Recover, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            return _pc<NextParser>::recover(context, reader, LEXY_FWD(args)...);
         }
     };
 };
