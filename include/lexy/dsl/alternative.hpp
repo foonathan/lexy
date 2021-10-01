@@ -84,6 +84,8 @@ struct _malt : token_base<_malt<Tokens...>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr auto try_parse([[maybe_unused]] const Reader& reader)
         {
             if constexpr (sizeof...(Tokens) == 0)
@@ -97,13 +99,12 @@ struct _malt : token_base<_malt<Tokens...>>
                         return;
 
                     // Update end to longest match.
-                    end    = lexy::_detail::max_range_end(reader.position(), this->end,
+                    end    = lexy::_detail::max_range_end(reader.position(), end,
                                                        local_reader.position());
                     result = true;
                 };
 
                 // Need to try everything.
-                end = reader.position();
                 (impl(Tokens{}, reader), ...);
                 return result;
             }
@@ -129,10 +130,12 @@ struct _alt : token_base<_alt<Tokens...>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(const Reader& reader)
         {
             lexy::token_parser_for<typename _builder::template other_tokens<_malt>, Reader>
-                manual_parser{};
+                manual_parser(reader);
 
             // We check the trie as a baseline.
             // This gives us a first end position.

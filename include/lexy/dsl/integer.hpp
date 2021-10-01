@@ -353,7 +353,8 @@ struct _int : _copy_base<Rule>
                                              typename Reader::iterator begin, Args&&... args)
         {
             // Recover.
-            context.on(_ev::recovery_start{}, begin);
+            auto recovery_begin = reader.position();
+            context.on(_ev::recovery_start{}, recovery_begin);
             if constexpr (std::is_void_v<Sep>)
             {
                 while (lexy::try_match_token(digit<typename IntParser::base>, reader))
@@ -365,7 +366,10 @@ struct _int : _copy_base<Rule>
                        || lexy::try_match_token(Sep{}, reader))
                 {}
             }
-            context.on(_ev::recovery_finish{}, reader.position());
+            auto end = reader.position();
+            if (recovery_begin != end)
+                context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, end);
+            context.on(_ev::recovery_finish{}, end);
 
             // And continue with the normal parsing.
             auto dummy = false;
@@ -378,7 +382,7 @@ struct _int : _copy_base<Rule>
     {
         lexy::branch_parser_for<Rule, Context, Reader> rule;
 
-        constexpr auto try_parse(const Context& context, const Reader& reader)
+        constexpr auto try_parse(Context& context, const Reader& reader)
         {
             // Forward to the digit rule.
             return rule.try_parse(context, reader);

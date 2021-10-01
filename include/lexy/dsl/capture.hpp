@@ -17,11 +17,14 @@ struct _capt : _copy_base<Token>
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::token_parser_for<Token, Reader> token;
+        typename Reader::iterator end;
 
         constexpr auto try_parse(Context&, const Reader& reader)
         {
-            return token.try_parse(reader);
+            lexy::token_parser_for<Token, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            end                                          = parser.end;
+            return result;
         }
 
         template <typename NextParser, typename... Args>
@@ -29,12 +32,12 @@ struct _capt : _copy_base<Token>
         {
             auto begin = reader.position();
 
-            context.on(_ev::token{}, Token{}, begin, token.end);
-            reader.set_position(token.end);
+            context.on(_ev::token{}, Token{}, begin, end);
+            reader.set_position(end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       lexy::lexeme<Reader>(begin, token.end));
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 
@@ -44,14 +47,14 @@ struct _capt : _copy_base<Token>
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            bp<Context, Reader> impl{};
-            if (!impl.try_parse(context, reader))
-            {
-                impl.token.report_error(context, reader);
+            auto begin = reader.position();
+            if (!Token::token_parse(context, reader))
                 return false;
-            }
+            auto end = reader.position();
 
-            return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 };

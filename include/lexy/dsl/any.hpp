@@ -17,6 +17,8 @@ struct _any : token_base<_any, unconditional_branch_base>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr std::true_type try_parse(Reader reader)
         {
             while (reader.peek() != Reader::encoding::eof())

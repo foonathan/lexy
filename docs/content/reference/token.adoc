@@ -22,6 +22,7 @@ namespace lexy
     enum predefined_token_kind
     {
         unknown_token_kind,
+        error_token_kind,
         whitespace_token_kind,
         position_token_kind,
         eof_token_kind,
@@ -41,6 +42,7 @@ Predefined token kinds for special token rules, as given in the table below.
 | Token Kind                    | Token Rule
 
 | `lexy::unknown_token_kind`    | all token rules by default
+| `lexy::error_token_kind`      | tokens produced during the "discard input" phase of error recovery, e.g. by {{% docref "lexy::dsl::find" %}} or {{% docref "lexy::dsl::recover" %}}
 | `lexy::whitespace_token_kind` | {{% docref "lexy::dsl::whitespace" %}} (not actually a token rule)
 | `lexy::position_token_kind`   | {{% docref "lexy::dsl::position" %}} (not actually a token rule)
 | `lexy::eof_token_kind`        | {{% docref "lexy::dsl::eof" %}}

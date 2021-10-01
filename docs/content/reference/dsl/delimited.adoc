@@ -128,7 +128,7 @@ Errors::
     Recovers by simply continuing with the next iteration of the loop at the position where `escape` has left of.
     Note that no value of `escape` is produced.
   * All errors raised by parsing `c`.
-    It can sometimes recover for simple tokens by simply discarding the bad character and continuing after it.
+    It can recover for by simply discarding the bad character and continuing after it.
     Otherwise, it fails.
 Values::
   It creates a sink of the current context.
@@ -139,6 +139,7 @@ Values::
 Parse tree::
   `delimited` does not have any special parse tree handling:
   it will create the nodes for `open()`, then the nodes for each `c` and `escape`, and the nodes for `close()`.
+  A character that is skipped during error recovery will create a token node whose {{% docref "lexy::predefined_token_kind" %}} is `lexy::error_token_kind`.
   If the current production inherits from {{% docref "lexy::token_production" %}},
   adjacent token nodes of the same kind (which includes the default kind) are merged.
 

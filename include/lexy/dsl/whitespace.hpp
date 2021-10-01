@@ -85,7 +85,8 @@ struct manual_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        auto begin = reader.position();
+        auto result = true;
+        auto begin  = reader.position();
         if constexpr (lexy::is_token_rule<Rule>)
         {
             // Parsing a token repeatedly cannot fail, so we can optimize it.
@@ -97,16 +98,28 @@ struct manual_ws_parser
             // Parse the rule using a special handler that only forwards errors.
             using production = ws_production<Rule>;
             whitespace_handler<Context> ws_handler{&context};
-            if (!lexy::do_action<production>(LEXY_MOV(ws_handler), reader))
-                return false;
+            result = lexy::do_action<production>(LEXY_MOV(ws_handler), reader);
         }
         auto end = reader.position();
 
-        // Add a whitespace token node.
-        if (begin != end)
-            context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
+        if (result)
+        {
+            // Add a whitespace token node.
+            if (begin != end)
+                context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
 
-        return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            // And continue.
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+        else
+        {
+            // Add an error token node.
+            if (begin != end)
+                context.on(lexy::parse_events::token{}, lexy::error_token_kind, begin, end);
+
+            // And cancel.
+            return false;
+        }
     }
 };
 template <typename NextParser>

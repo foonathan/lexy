@@ -208,6 +208,7 @@ TEST_CASE("trace")
  1: 13:       - error: expected 'ASCII.digit' character
  1: 13:       -x
  1: 13:     - error recovery:
+ 1: 13:       - error token: abc
  1: 16:       - finish
  1: 16:     - token: ]
  1: 17:     - finish
@@ -236,6 +237,7 @@ TEST_CASE("trace")
  1: 13:       - error: expected 'ASCII.digit' character
  1: 13:       -x
  1: 13:     - error recovery:
+ 1: 13:       - error token: abc
  1: 16:       -x
  1: 16:     -x
  1: 16:   -x
@@ -377,6 +379,7 @@ TEST_CASE("trace")
  1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
  1: 13: │  │  │  └╳
  1: 13: │  │  ├──error recovery:
+ 1: 13: │  │  │  ├──error token: abc
  1: 16: │  │  │  ┴
  1: 16: │  │  ├──token: ]
  1: 17: │  │  ┴
@@ -405,6 +408,7 @@ TEST_CASE("trace")
  1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
  1: 13: │  │  │  └╳
  1: 13: │  │  ├──error recovery:
+ 1: 13: │  │  │  ├──error token: abc
  1: 16: │  │  │  └╳
  1: 16: │  │  └╳
  1: 16: │  └╳

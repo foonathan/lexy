@@ -351,7 +351,10 @@ struct _lstt : rule_base
                     }
 
                     // Consume one code unit and try again.
+                    auto begin = reader.position();
                     reader.bump();
+                    auto end = reader.position();
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                 }
                 break;
             }

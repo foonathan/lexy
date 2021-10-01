@@ -291,10 +291,13 @@ struct _cp : token_base<_cp<Predicate>>
         typename Reader::iterator end;
         lexy::_detail::cp_error   ec;
 
+        constexpr explicit tp(const Reader& reader)
+        : end(reader.position()), ec(lexy::_detail::cp_error::success)
+        {}
+
         constexpr bool try_parse(Reader reader)
         {
             using lexy::_detail::cp_error;
-            ec = cp_error::success;
 
             // Parse one code point.
             [[maybe_unused]] auto cp = lexy::_detail::parse_code_point(ec, reader);

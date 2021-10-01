@@ -418,7 +418,11 @@ private:
         template <typename Production>
         bool merge(Production, lexy::token_kind<TokenKind> new_kind) const
         {
-            return lexy::is_token_production<Production> && !first_token && kind == new_kind;
+            if (first_token || kind != new_kind)
+                return false;
+
+            // We can merge inside a token production or if it's an error token.
+            return lexy::is_token_production<Production> || kind == lexy::error_token_kind;
         }
 
         void update(lexy::token_kind<TokenKind> new_kind)

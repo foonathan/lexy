@@ -18,6 +18,8 @@ struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr std::true_type try_parse(Reader reader)
         {
             while (true)
@@ -50,6 +52,8 @@ struct _until : token_base<_until<Condition>>
     struct tp
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -90,7 +94,7 @@ struct _until : token_base<_until<Condition>>
             LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
                         "forgot to set end in try_parse()");
 
-            lexy::token_parser_for<Condition, Reader> parser{};
+            lexy::token_parser_for<Condition, Reader> parser(reader);
             auto                                      result = parser.try_parse(reader);
             LEXY_ASSERT(!result, "condition shouldn't have matched?!");
             parser.report_error(context, reader);

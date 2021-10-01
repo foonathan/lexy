@@ -20,6 +20,8 @@ struct _unchecked_code_unit
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             if (reader.peek() == Reader::encoding::eof())

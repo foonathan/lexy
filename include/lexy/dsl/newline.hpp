@@ -43,6 +43,8 @@ struct _nl : token_base<_nl>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             auto result = lexy::_detail::match_newline(reader);
@@ -71,6 +73,8 @@ struct _eol : token_base<_eol>
     struct tp
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {

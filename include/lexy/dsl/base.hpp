@@ -256,7 +256,7 @@ namespace lexy::_detail
 {
 template <typename NextParser>
 struct automatic_ws_parser;
-}
+} // namespace lexy::_detail
 
 namespace lexy
 {
@@ -281,7 +281,7 @@ using token_parser_for = typename TokenRule::template tp<Reader>;
 template <typename TokenRule, typename Reader>
 LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
 {
-    lexy::token_parser_for<TokenRule, Reader> parser{};
+    lexy::token_parser_for<TokenRule, Reader> parser(reader);
 
     using try_parse_result = decltype(parser.try_parse(reader));
     if constexpr (std::is_same_v<try_parse_result, std::true_type>)

@@ -19,6 +19,8 @@ struct _ascii : token_base<Derived>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             if (!Derived::template ascii_match<typename Reader::encoding>(reader.peek()))

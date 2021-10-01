@@ -24,8 +24,9 @@ struct _err : unconditional_branch_base
             auto end   = reader.position();
             if constexpr (!std::is_same_v<Token, void>)
             {
-                lexy::try_match_token(Token{}, reader);
-                end = reader.position();
+                lexy::token_parser_for<decltype(lexyd::token(Rule{})), Reader> parser(reader);
+                parser.try_parse(reader);
+                end = parser.end;
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);

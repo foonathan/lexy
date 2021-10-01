@@ -96,6 +96,9 @@ Errors::
   None. It can fail, but does so without raising errors.
 Values::
   None.
+Parse tree::
+  A single token node whose range covers everything consumed before the token.
+  Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::error_token_kind`.
 
 If recovery is successful, the reader has been advanced to the position just before the first of the `tokens`.
 Parsing can then continue from this known state, e.g. from a statement separator.
@@ -133,6 +136,9 @@ Errors::
   * A failed recovery does not raise an error.
 Values::
   All values produced by the selected branch.
+Parse tree::
+  A single token node whose range covers everything consumed before the token.
+  Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::error_token_kind`.
 
 Unlike `find`, `recover` directly continues with one rule.
 If recovery has been successful, it has parsed the selected rule.

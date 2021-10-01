@@ -40,7 +40,7 @@ struct _peek : branch_base
         static constexpr bool try_parse(Context& context, Reader reader)
         {
             // We need to match the entire rule.
-            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser{};
+            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
 
             auto begin  = reader.position();
             auto result = parser.try_parse(reader);
@@ -94,7 +94,7 @@ struct _peekn : branch_base
         constexpr bool try_parse(Context& context, Reader reader)
         {
             // We must not match the rule.
-            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser{};
+            lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
 
             auto begin  = reader.position();
             auto result = !parser.try_parse(reader);

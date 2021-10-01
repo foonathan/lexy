@@ -49,11 +49,12 @@ namespace lexy
 enum predefined_token_kind : std::uint_least16_t
 {
     unknown_token_kind              = UINT_LEAST16_MAX,
-    whitespace_token_kind           = UINT_LEAST16_MAX - 1,
-    position_token_kind             = UINT_LEAST16_MAX - 2,
-    eof_token_kind                  = UINT_LEAST16_MAX - 3,
-    eol_token_kind                  = UINT_LEAST16_MAX - 4,
-    identifier_token_kind           = UINT_LEAST16_MAX - 5,
+    error_token_kind                = UINT_LEAST16_MAX - 1,
+    whitespace_token_kind           = UINT_LEAST16_MAX - 2,
+    position_token_kind             = UINT_LEAST16_MAX - 3,
+    eof_token_kind                  = UINT_LEAST16_MAX - 4,
+    eol_token_kind                  = UINT_LEAST16_MAX - 5,
+    identifier_token_kind           = UINT_LEAST16_MAX - 6,
     _smallest_predefined_token_kind = identifier_token_kind,
 };
 
@@ -63,6 +64,8 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     {
     case unknown_token_kind:
         return "token";
+    case error_token_kind:
+        return "error token";
     case whitespace_token_kind:
         return "whitespace";
     case position_token_kind:

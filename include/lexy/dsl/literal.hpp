@@ -22,6 +22,8 @@ struct _lit
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr auto try_parse(Reader reader)
         {
             if constexpr (sizeof...(C) == 0)

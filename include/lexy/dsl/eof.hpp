@@ -17,9 +17,10 @@ struct _eof : token_base<_eof>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(const Reader& reader)
         {
-            end = reader.position();
             return reader.peek() == Reader::encoding::eof();
         }
 

@@ -170,6 +170,8 @@ struct _argvsep : token_base<_argvsep>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr std::false_type try_parse(const Reader&)
         {
             return {};
@@ -187,6 +189,8 @@ struct _argvsep : token_base<_argvsep>
     struct tp<_argv_reader<Encoding>>
     {
         lexy::argv_iterator end;
+
+        constexpr explicit tp(const _argv_reader<Encoding>& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(_argv_reader<Encoding> reader)
         {

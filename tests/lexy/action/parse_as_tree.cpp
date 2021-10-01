@@ -43,7 +43,8 @@ struct child_p
 {
     static constexpr auto name = "child_p";
     static constexpr auto rule
-        = lexy::dsl::p<string_p> | lexy::dsl::parenthesized(LEXY_LIT("abc").kind<token_kind::c>);
+        = lexy::dsl::p<string_p> //
+          | lexy::dsl::parenthesized.try_(LEXY_LIT("abc").kind<token_kind::c>);
 };
 
 struct root_p
@@ -146,6 +147,27 @@ TEST_CASE("parse_as_tree")
         auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
         CHECK(!result);
         CHECK(tree.empty());
+    }
+    SUBCASE("recovered")
+    {
+        tree = parse_tree::builder(root_p{}).finish();
+        CHECK(!tree.empty());
+
+        auto input  = lexy::zstring_input("123(abxxx)321");
+        auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
+        CHECK(!result);
+        // clang-format off
+        auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
+            .token(token_kind::a, "123")
+            .production(child_p{})
+                .token(token_kind::b, "(")
+                .token(lexy::error_token_kind, "abxxx")
+                .token(token_kind::b, ")")
+                .finish()
+            .token(token_kind::a, "321")
+            .token(lexy::eof_token_kind, "");
+        // clang-format on
+        CHECK(tree == expected);
     }
 }
 

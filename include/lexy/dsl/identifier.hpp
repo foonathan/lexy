@@ -38,6 +38,8 @@ struct _idp : token_base<_idp<Leading, Trailing>>
         lexy::token_parser_for<Leading, Reader> leading;
         typename Reader::iterator               end;
 
+        constexpr explicit tp(const Reader& reader) : leading(reader), end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             // Need to match Leading character.
@@ -69,6 +71,8 @@ struct _contains : token_base<_contains<R>>
     struct tp
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -227,6 +231,8 @@ struct _kw : token_base<_kw<Id, CharT, C...>>
     struct tp
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {

@@ -70,6 +70,7 @@ struct _del : rule_base
                     LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
                                 "EOF should be checked before calling this");
                     reader.bump();
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, reader.position());
                 }
 
                 context.on(_ev::recovery_finish{}, reader.position());

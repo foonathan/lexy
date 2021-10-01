@@ -68,16 +68,18 @@ struct _ctx_irem : branch_base
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::token_parser_for<_pattern, Reader> parser;
+        typename Reader::iterator end;
 
         constexpr bool try_parse(Context& context, const Reader& reader)
         {
             // Parse the pattern.
+            lexy::token_parser_for<_pattern, Reader> parser(reader);
             if (!parser.try_parse(reader))
                 return false;
+            end = parser.end;
 
             // The two lexemes need to be equal.
-            auto lexeme = lexy::lexeme<Reader>(reader.position(), parser.end);
+            auto lexeme = lexy::lexeme<Reader>(reader.position(), end);
             return lexy::_detail::equal_lexemes(context.get(Id{}), lexeme);
         }
 
@@ -85,8 +87,8 @@ struct _ctx_irem : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish parsing the token.
-            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), parser.end);
-            reader.set_position(parser.end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), end);
+            reader.set_position(end);
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }

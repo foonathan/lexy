@@ -74,18 +74,11 @@ struct _bom
     using _impl = _bom_impl<Encoding, Endianness>;
 
     template <typename Reader>
-    struct tp
+    struct tp : lexy::token_parser_for<typename _impl::literal, Reader>
     {
-        typename Reader::iterator end;
-
-        constexpr auto try_parse(const Reader& reader)
-        {
-            lexy::token_parser_for<typename _impl::literal, Reader> impl{};
-
-            auto result = impl.try_parse(reader);
-            end         = impl.end;
-            return result;
-        }
+        constexpr explicit tp(const Reader& reader)
+        : lexy::token_parser_for<typename _impl::literal, Reader>(reader)
+        {}
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)

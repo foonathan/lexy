@@ -231,21 +231,23 @@ struct _sym : branch_base
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::token_parser_for<Token, Reader>             parser;
+        typename Reader::iterator                         end;
         typename std::decay_t<decltype(Table)>::key_index symbol;
 
         constexpr bool try_parse(Context&, const Reader& reader)
         {
             // Try and parse the token.
+            lexy::token_parser_for<Token, Reader> parser(reader);
             if (!parser.try_parse(reader))
                 return false;
+            end = parser.end;
 
             // Check whether this is a symbol.
-            auto content = lexy::partial_reader(reader, parser.end);
+            auto content = lexy::partial_reader(reader, end);
             symbol       = Table.try_parse(content);
 
             // We need to consume everything.
-            if (content.position() != parser.end)
+            if (content.position() != end)
                 return false;
 
             // Only succeed if it is a symbol.
@@ -256,8 +258,8 @@ struct _sym : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
-            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), parser.end);
-            reader.set_position(parser.end);
+            context.on(_ev::token{}, Token{}, reader.position(), end);
+            reader.set_position(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;

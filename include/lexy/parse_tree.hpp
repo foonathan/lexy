@@ -541,9 +541,12 @@ public:
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
         if (auto token = _cur.last_child.token();
-            _cur.prod->token_production && token && token->kind == kind)
+            // We merge subsequent token nodes with the same kind inside of a token production,
+            // or if the kind is error_token_kind.
+            token && token->kind == kind
+            && (_cur.prod->token_production || kind == lexy::error_token_kind))
         {
-            // We're having the same token again, merge with the previous one.
+            // No need to allocate a new node, just extend the previous node.
             token->update_end(end);
         }
         else

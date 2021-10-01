@@ -63,19 +63,23 @@ struct _find : _recovery_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::recovery_start{}, reader.position());
+            auto begin = reader.position();
+            context.on(_ev::recovery_start{}, begin);
 
             while (true)
             {
-                if (lexy::token_parser_for<Token, Reader> token{}; token.try_parse(reader))
+                if (lexy::token_parser_for<Token, Reader> token(reader); token.try_parse(reader))
                 {
                     // We've found it.
                     break;
                 }
-                else if (lexy::try_match_token(get_limit(), reader))
+                else if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
+                         limit.try_parse(reader))
                 {
-                    // Haven't found it.
-                    context.on(_ev::recovery_cancel{}, reader.position());
+                    // Haven't found it, recovery fails.
+                    auto end = reader.position();
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
                 else
@@ -85,7 +89,10 @@ struct _find : _recovery_base
                 }
             }
 
-            context.on(_ev::recovery_finish{}, reader.position());
+            auto end = reader.position();
+            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            context.on(_ev::recovery_finish{}, end);
+
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -134,16 +141,24 @@ struct _reco : _recovery_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::recovery_start{}, reader.position());
+            auto begin = reader.position();
+            context.on(_ev::recovery_start{}, begin);
 
             // Try to match one of the recovery rules.
             lexy::branch_parser_for<decltype((R{} | ...)), Context, Reader> recovery{};
             while (!recovery.try_parse(context, reader))
             {
+<<<<<<< HEAD
                 if (lexy::try_match_token(get_limit(), reader))
+=======
+                if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
+                    limit.try_parse(reader))
+>>>>>>> 0f1d4fc2 (tmp: token interface)
                 {
                     // We've failed to recover as we've reached the limit.
-                    context.on(_ev::recovery_cancel{}, reader.position());
+                    auto end = reader.position();
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
                 else
@@ -153,8 +168,11 @@ struct _reco : _recovery_base
                 }
             }
 
+            auto end = reader.position();
+            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            context.on(_ev::recovery_finish{}, end);
+
             // Finish with the rule that matched.
-            context.on(_ev::recovery_finish{}, reader.position());
             return recovery.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };

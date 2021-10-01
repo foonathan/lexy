@@ -180,6 +180,8 @@ struct _zero : token_base<_zero>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             if (reader.peek() != lexy::_char_to_int_type<typename Reader::encoding>('0'))
@@ -210,6 +212,8 @@ struct _digit : token_base<_digit<Base>>
     struct tp
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -258,6 +262,10 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
     {
         typename Reader::iterator end;
         bool                      forbidden_leading_zero;
+
+        constexpr explicit tp(const Reader& reader)
+        : end(reader.position()), forbidden_leading_zero(false)
+        {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -334,6 +342,8 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             // Need at least one digit.
@@ -383,6 +393,10 @@ struct _digits_t : token_base<_digits_t<Base>>
     {
         typename Reader::iterator end;
         bool                      forbidden_leading_zero;
+
+        constexpr explicit tp(const Reader& reader)
+        : end(reader.position()), forbidden_leading_zero(false)
+        {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -451,6 +465,8 @@ struct _digits : token_base<_digits<Base>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             // Need at least one digit.
@@ -508,6 +524,8 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             // Match the Base one time.
@@ -543,6 +561,8 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
         typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {

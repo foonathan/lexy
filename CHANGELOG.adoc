@@ -10,10 +10,8 @@ Until the first release is done, breaking changes -- but not new features -- are
   But as it turns out, it is in fact unimplementable and the current implementation was completely broken.
   Instead of `tok1 + tok2 >> rule1 | tok1 + tok3 >> rule2` use `tok1 >> (tok2 >> rule1 | tok3 >> rule2)`.
 * Removed `dsl::encode()`. The rule was completely broken in combination with `dsl::capture()` and rules built on top like `dsl::identifier()`.
-* *Behavior change*: `dsl::try_()` behaves differently when recovering from a branch.
-  Previously, when `dsl::try_(condition >> then)` is used and `condition` fails, it will have consumed part of `condition` and starts recovery there.
-  Now, it backtracks `condition`.
-  If `then` fails the behavior is unchanged and `condition` and the part of `then` already consumed is not backtracked.
+* *Behavior change*: error recovery now produces a new error token in the parse tree.
+  This ensures that the parse tree stays lossless even in the presence of errors.
 * *Potential pitfall*: `dsl::recover()` and `dsl::find()` now always raise the recovery events.
   If you're using them outside of `dsl::try_()`, this is not what you want, so don't do them - they're not meant for it.
 

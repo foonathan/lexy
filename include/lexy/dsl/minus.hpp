@@ -33,6 +33,10 @@ struct _minus : token_base<_minus<Token, Except>>
         typename Reader::iterator             end;
         bool                                  minus_failure;
 
+        constexpr explicit tp(const Reader& reader)
+        : token_parser(reader), end(reader.position()), minus_failure(false)
+        {}
+
         constexpr bool try_parse(const Reader& reader)
         {
             // Try to parse the token.

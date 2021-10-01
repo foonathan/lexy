@@ -36,22 +36,56 @@ struct token_base : _token_base, BranchKind
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::token_parser_for<Derived, Reader> parser;
+        typename Reader::iterator end;
 
         constexpr auto try_parse(const Context&, const Reader& reader)
         {
-            return parser.try_parse(reader);
+            lexy::token_parser_for<Derived, Reader> parser(reader);
+            auto                                    result = parser.try_parse(reader);
+            end                                            = parser.end;
+            return result;
         }
 
         template <typename NextParser, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::token{}, Derived{}, reader.position(), parser.end);
-            reader.set_position(parser.end);
+            context.on(_ev::token{}, Derived{}, reader.position(), end);
+            reader.set_position(end);
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
     };
+
+    template <typename Context, typename Reader>
+    LEXY_PARSER_FUNC static bool token_parse(Context& context, Reader& reader)
+    {
+        auto                                    begin = reader.position();
+        lexy::token_parser_for<Derived, Reader> parser(reader);
+
+        using try_parse_result = decltype(parser.try_parse(reader));
+        if constexpr (std::is_same_v<try_parse_result, std::true_type>)
+        {
+            parser.try_parse(reader);
+        }
+        else
+        {
+            if (!parser.try_parse(reader))
+            {
+                parser.report_error(context, reader);
+
+                if (begin != parser.end)
+                    context.on(_ev::token{}, lexy::error_token_kind, reader.position(), parser.end);
+                reader.set_position(parser.end);
+
+                return false;
+            }
+        }
+
+        context.on(_ev::token{}, Derived{}, begin, parser.end);
+        reader.set_position(parser.end);
+
+        return true;
+    }
 
     template <typename NextParser>
     struct p
@@ -59,26 +93,11 @@ struct token_base : _token_base, BranchKind
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::token_parser_for<Derived, Reader> parser{};
-
-            using try_parse_result = decltype(parser.try_parse(reader));
-            if constexpr (std::is_same_v<try_parse_result, std::true_type>)
-            {
-                parser.try_parse(reader);
-            }
+            if (!token_parse(context, reader))
+                return false;
             else
-            {
-                if (!parser.try_parse(reader))
-                {
-                    parser.report_error(context, reader);
-                    return false;
-                }
-            }
-
-            context.on(_ev::token{}, Derived{}, reader.position(), parser.end);
-            reader.set_position(parser.end);
-            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
-                                                                       LEXY_FWD(args)...);
+                return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                           LEXY_FWD(args)...);
         }
     };
 
@@ -119,24 +138,16 @@ template <typename Tag, typename Token>
 struct _toke : token_base<_toke<Tag, Token>>
 {
     template <typename Reader>
-    struct tp
+    struct tp : lexy::token_parser_for<Token, Reader>
     {
-        lexy::token_parser_for<Token, Reader> token_parser;
-        typename Reader::iterator             end;
-
-        constexpr bool try_parse(const Reader& reader)
-        {
-            // Forward.
-            auto result = token_parser.try_parse(reader);
-            end         = token_parser.end;
-            return result;
-        }
+        constexpr explicit tp(const Reader& reader) : lexy::token_parser_for<Token, Reader>(reader)
+        {}
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
             // Report a different error.
-            auto err = lexy::error<Reader, Tag>(reader.position(), end);
+            auto err = lexy::error<Reader, Tag>(reader.position(), this->end);
             context.on(_ev::error{}, err);
         }
     };
@@ -167,6 +178,8 @@ struct _token : token_base<_token<Rule>>
     {
         typename Reader::iterator end;
 
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
         constexpr bool try_parse(Reader reader)
         {
             // We match a dummy production that only consists of the rule.
@@ -178,7 +191,7 @@ struct _token : token_base<_token<Rule>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            auto err = lexy::error<Reader, lexy::missing_token>(reader.position());
+            auto err = lexy::error<Reader, lexy::missing_token>(reader.position(), end);
             context.on(_ev::error{}, err);
         }
     };
