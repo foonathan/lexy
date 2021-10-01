@@ -15,6 +15,8 @@ namespace lexy::_detail
 template <typename CharT, std::size_t NodeCount>
 struct _trie
 {
+    static_assert(NodeCount > 0);
+
     static auto _index_type()
     {
         // We need to store:
@@ -78,8 +80,8 @@ struct _trie
     index_type _node_transition_idx[NodeCount];
 
     // Shared array for all transitions.
-    index_type _transition_node[NodeCount == 0 ? 1 : NodeCount - 1];
-    CharT      _transition_char[NodeCount == 0 ? 1 : NodeCount - 1];
+    index_type _transition_node[NodeCount == 1 ? 1 : NodeCount - 1];
+    CharT      _transition_char[NodeCount == 1 ? 1 : NodeCount - 1];
 };
 
 template <typename CharT, typename... Strings, std::size_t... Idxs>
@@ -171,7 +173,7 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     return result;
 }
 
-/// A trie containing `Strings::get()` for every string.
+/// A trie containing the given strings.
 template <typename CharT, typename... Strings>
 constexpr auto trie
     = _make_trie<CharT, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
@@ -232,15 +234,21 @@ struct trie_parser
         }
     };
 
-    static constexpr std::size_t parse(Reader& reader)
+    static constexpr std::size_t parse([[maybe_unused]] Reader& reader)
     {
-        // We start parsing at the root node.
-        return handle_node<0>::parse(reader);
+        if constexpr (Trie.empty())
+            return Trie.invalid_value;
+        else
+            // We start parsing at the root node.
+            return handle_node<0>::parse(reader);
     }
 
-    static constexpr bool try_match(Reader& reader)
+    static constexpr auto try_match([[maybe_unused]] Reader& reader)
     {
-        return parse(reader) != Trie.invalid_value;
+        if constexpr (Trie.empty())
+            return std::false_type{};
+        else
+            return parse(reader) != Trie.invalid_value;
     }
 };
 } // namespace lexy::_detail
