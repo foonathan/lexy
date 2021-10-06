@@ -73,7 +73,7 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     case eof_token_kind:
         return "EOF";
     case eol_token_kind:
-        return "eol";
+        return "EOL";
     case identifier_token_kind:
         return "identifier";
     }

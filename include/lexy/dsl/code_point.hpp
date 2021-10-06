@@ -334,15 +334,15 @@ struct _cp : token_base<_cp<Predicate>>
                 constexpr auto name = [] {
                     using encoding = typename Reader::encoding;
                     if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
-                        return "ASCII.code_point";
+                        return "ASCII.code-point";
                     else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
-                        return "UTF-8.code_point";
+                        return "UTF-8.code-point";
                     else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
-                        return "UTF-16.code_point";
+                        return "UTF-16.code-point";
                     else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
-                        return "UTF-32.code_point";
+                        return "UTF-32.code-point";
                     else
-                        return "code_point";
+                        return "code-point";
                 }();
 
                 auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), name);
