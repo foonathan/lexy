@@ -48,7 +48,10 @@ struct _term
     template <typename Rule>
     constexpr auto try_(Rule rule) const
     {
-        return lexyd::try_(rule + terminator(), recovery_rule());
+        if constexpr (lexy::is_branch_rule<Rule>)
+            return lexyd::try_(rule >> terminator(), recovery_rule());
+        else
+            return lexyd::try_(rule + terminator(), recovery_rule());
     }
 
     /// Matches opt(rule) followed by terminator.

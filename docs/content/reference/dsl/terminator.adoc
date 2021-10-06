@@ -22,7 +22,8 @@ namespace lexy::dsl
         constexpr _rule_        auto operator()(_rule_ auto rule) const;
         constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const;
 
-        constexpr _rule_ auto try_(_rule_ auto rule) const;
+        constexpr _rule_        auto try_(_rule_ auto rule) const;
+        constexpr _branch-rule_ auto try_(_branch-rule_ auto rule) const;
 
         constexpr _rule_ auto opt(_rule_ auto rule) const;
 
@@ -116,7 +117,12 @@ It behaves entirely equivalent to `rule + terminator()` or `rule >> terminator()
 ----
 constexpr _rule_ auto try_(_rule_ auto rule) const
 {
-    rule lexy::dsl::try_(rule + terminator(), recovery_rule());
+    return lexy::dsl::try_(rule + terminator(), recovery_rule());
+}
+
+constexpr _branch-rule_ auto try_(_branch-rule_ auto rule) const
+{
+    return lexy::dsl::try_(rule >> terminator(), recovery_rule());
 }
 ----
 
