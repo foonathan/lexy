@@ -92,6 +92,12 @@ namespace lexy
 template <typename TokenKind>
 using _detect_token_kind_name = decltype(token_kind_name(TokenKind{}));
 
+template <typename TokenRule>
+constexpr auto _has_special_token_kind = [] {
+    using kind = std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>;
+    return !std::is_same_v<kind, lexy::predefined_token_kind> && std::is_enum_v<kind>;
+}();
+
 /// What sort of token it is.
 template <typename TokenKind = void>
 class token_kind
@@ -207,6 +213,8 @@ template <typename TokenKind, typename = std::enable_if_t<std::is_integral_v<Tok
 token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
+template <typename TokenRule, typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
+token_kind(TokenRule) -> token_kind<std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>>;
 } // namespace lexy
 
 namespace lexy
@@ -262,6 +270,10 @@ token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, void>;
 template <typename TokenKind, typename Reader,
           typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
+template <typename TokenRule, typename Reader,
+          typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
+token(TokenRule, lexy::lexeme<Reader>)
+    -> token<Reader, std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;
