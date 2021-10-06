@@ -79,10 +79,10 @@ If `must(rule).error<Tag>` is used, the associated error rule `e` is `lexy::dsl:
 Otherwise, if `must(rule).error<Tag>(capture)` is used, the associated error rule `e` is `lexy::dsl::error<Tag>(capture)`.
 
 Requires::
-  `rule` is a branch rule that can actually backtrack (e.g. not {{% docref "lexy::dsl::else_" %}}).
+  `rule` is a branch rule that is not unconditionally taken (e.g. not {{% docref "lexy::dsl::else_" %}}).
 Parsing::
-  Parses the {{% docref choice %}} `rule |  e`, where `e` is the associated error rule:
-  it tries to parse `rule` and raises a specific error if that fails.
+  Parses the {{% docref choice %}} `rule |  e`, where `e` is the associated error rule,
+  i.e. it tries to parse `rule` and raises a specific error if that fails.
 Branch parsing::
   Tries to parse `rule` and produces the same result.
 Errors::

@@ -4,40 +4,157 @@
 
 #include <lexy/dsl/punctuator.hpp>
 
-#include <doctest/doctest.h>
+#include "verify.hpp"
 
-namespace
+TEST_CASE("dsl::period")
 {
-template <typename Punct, typename Lit>
-constexpr bool is_punct(Punct, Lit)
-{
-    return std::is_base_of_v<Lit, Punct>;
+    constexpr auto rule = dsl::period;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'.'>));
 }
-} // namespace
 
-TEST_CASE("dsl punctuators")
+TEST_CASE("dsl::comma")
 {
-    CHECK(is_punct(lexy::dsl::period, LEXY_LIT(".")));
-    CHECK(is_punct(lexy::dsl::comma, LEXY_LIT(",")));
-    CHECK(is_punct(lexy::dsl::colon, LEXY_LIT(":")));
-    CHECK(is_punct(lexy::dsl::semicolon, LEXY_LIT(";")));
+    constexpr auto rule = dsl::comma;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    CHECK(is_punct(lexy::dsl::exclamation_mark, LEXY_LIT("!")));
-    CHECK(is_punct(lexy::dsl::question_mark, LEXY_LIT("?")));
+    CHECK(equivalent_rules(rule, dsl::lit_c<','>));
+}
 
-    CHECK(is_punct(lexy::dsl::hyphen, LEXY_LIT("-")));
-    CHECK(is_punct(lexy::dsl::slash, LEXY_LIT("/")));
-    CHECK(is_punct(lexy::dsl::backslash, LEXY_LIT("\\")));
-    CHECK(is_punct(lexy::dsl::apostrophe, LEXY_LIT("'")));
-    CHECK(is_punct(lexy::dsl::ampersand, LEXY_LIT("&")));
-    CHECK(is_punct(lexy::dsl::caret, LEXY_LIT("^")));
-    CHECK(is_punct(lexy::dsl::asterisk, LEXY_LIT("*")));
-    CHECK(is_punct(lexy::dsl::tilde, LEXY_LIT("~")));
+TEST_CASE("dsl::colon")
+{
+    constexpr auto rule = dsl::colon;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    CHECK(is_punct(lexy::dsl::hash_sign, LEXY_LIT("#")));
-    CHECK(is_punct(lexy::dsl::dollar_sign, LEXY_LIT("$")));
-    CHECK(is_punct(lexy::dsl::at_sign, LEXY_LIT("@")));
-    CHECK(is_punct(lexy::dsl::percent_sign, LEXY_LIT("%")));
-    CHECK(is_punct(lexy::dsl::equal_sign, LEXY_LIT("=")));
+    CHECK(equivalent_rules(rule, dsl::lit_c<':'>));
+}
+
+TEST_CASE("dsl::semicolon")
+{
+    constexpr auto rule = dsl::semicolon;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<';'>));
+}
+
+TEST_CASE("dsl::exclamation_mark")
+{
+    constexpr auto rule = dsl::exclamation_mark;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'!'>));
+}
+
+TEST_CASE("dsl::question_mark")
+{
+    constexpr auto rule = dsl::question_mark;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'?'>));
+}
+
+TEST_CASE("dsl::hyphen")
+{
+    constexpr auto rule = dsl::hyphen;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'-'>));
+}
+
+TEST_CASE("dsl::slash")
+{
+    constexpr auto rule = dsl::slash;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'/'>));
+}
+
+TEST_CASE("dsl::backslash")
+{
+    constexpr auto rule = dsl::backslash;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'\\'>));
+}
+
+TEST_CASE("dsl::apostrophe")
+{
+    constexpr auto rule = dsl::apostrophe;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'\''>));
+}
+
+TEST_CASE("dsl::ampersand")
+{
+    constexpr auto rule = dsl::ampersand;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'&'>));
+}
+
+TEST_CASE("dsl::caret")
+{
+    constexpr auto rule = dsl::caret;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'^'>));
+}
+
+TEST_CASE("dsl::asterisk")
+{
+    constexpr auto rule = dsl::asterisk;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'*'>));
+}
+
+TEST_CASE("dsl::tilde")
+{
+    constexpr auto rule = dsl::tilde;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'~'>));
+}
+
+TEST_CASE("dsl::hash_sign")
+{
+    constexpr auto rule = dsl::hash_sign;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'#'>));
+}
+
+TEST_CASE("dsl::dollar_sign")
+{
+    constexpr auto rule = dsl::dollar_sign;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'$'>));
+}
+
+TEST_CASE("dsl::at_sign")
+{
+    constexpr auto rule = dsl::at_sign;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'@'>));
+}
+
+TEST_CASE("dsl::percent_sign")
+{
+    constexpr auto rule = dsl::percent_sign;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'%'>));
+}
+
+TEST_CASE("dsl::equal_sign")
+{
+    constexpr auto rule = dsl::equal_sign;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'='>));
 }
 

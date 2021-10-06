@@ -5,160 +5,279 @@
 #include <lexy/dsl/context_counter.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
+#include <lexy/dsl/loop.hpp>
+#include <lexy/dsl/whitespace.hpp>
+
+namespace
+{
+struct with_whitespace
+{
+    static constexpr auto whitespace = LEXY_LIT(".");
+};
+} // namespace
 
 TEST_CASE("dsl::context_counter")
 {
-    static constexpr auto counter = lexy::dsl::context_counter<struct counter_id>;
+    constexpr auto counter = dsl::context_counter<struct id>;
 
-    struct callback
+    constexpr auto callback = lexy::callback<int>([](const char*) { return -11; },
+                                                  [](const char*, int value) { return value; });
+
+    SUBCASE(".create()")
     {
-        const char* str;
+        constexpr auto rule = counter.create() + counter.value();
 
-        LEXY_VERIFY_FN int success(const char*)
-        {
-            return -1;
-        }
-        LEXY_VERIFY_FN int success(const char*, int value)
-        {
-            return value;
-        }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
-        {
-            return -42;
-        }
-    };
-
-    SUBCASE("create - 0")
-    {
-        static constexpr auto rule = counter.create() + counter.value();
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("create - 42")
+    SUBCASE(".create<42>()")
     {
-        static constexpr auto rule = counter.create<42>() + counter.value();
+        constexpr auto rule = counter.create<42>() + counter.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 42);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 42);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 42);
+        CHECK(abc.trace == test_trace());
     }
 
-    SUBCASE("inc")
+    SUBCASE(".inc()")
     {
-        static constexpr auto rule
-            = counter.create() + counter.inc() + counter.inc() + counter.value();
+        constexpr auto rule = counter.create<11>() + counter.inc() + counter.inc() + counter.inc()
+                              + counter.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 2);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 14);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 14);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("dec")
+    SUBCASE(".dec()")
     {
-        static constexpr auto rule
-            = counter.create() + counter.dec() + counter.dec() + counter.value();
+        constexpr auto rule = counter.create<11>() + counter.dec() + counter.dec() + counter.dec()
+                              + counter.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result.success(-2));
-    }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 8);
+        CHECK(empty.trace == test_trace());
 
-    SUBCASE("push")
-    {
-        static constexpr auto rule
-            = counter.create() + counter.push(LEXY_LIT("abc")) + counter.value();
-
-        auto result = LEXY_VERIFY("abc");
-        CHECK(result == 3);
-    }
-    SUBCASE("pop")
-    {
-        static constexpr auto rule
-            = counter.create() + counter.pop(LEXY_LIT("abc")) + counter.value();
-
-        auto result = LEXY_VERIFY("abc");
-        CHECK(result.success(-3));
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 8);
+        CHECK(abc.trace == test_trace());
     }
 
-    SUBCASE("is_zero - true")
+    SUBCASE(".push()")
     {
-        static constexpr auto rule = counter.create() + if_(counter.is_zero() >> counter.value());
+        constexpr auto rule
+            = counter.create<11>() + counter.push(LEXY_LIT("abc")) + counter.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 14);
+        CHECK(abc.trace == test_trace().token("abc"));
+
+        struct production : test_production_for<decltype(rule)>, with_whitespace
+        {};
+
+        auto whitespace = LEXY_VERIFY_P(production, "abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 17);
+        CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
     }
-    SUBCASE("is_zero - false")
+    SUBCASE(".pop()")
     {
-        static constexpr auto rule
-            = counter.create<42>() + if_(counter.is_zero() >> counter.value());
+        constexpr auto rule = counter.create<11>() + counter.pop(LEXY_LIT("abc")) + counter.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result.success(-1));
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 8);
+        CHECK(abc.trace == test_trace().token("abc"));
+
+        struct production : test_production_for<decltype(rule)>, with_whitespace
+        {};
+
+        auto whitespace = LEXY_VERIFY_P(production, "abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 5);
+        CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
+    }
+
+    SUBCASE(".is<42>() true")
+    {
+        constexpr auto rule = counter.create<42>() + dsl::if_(counter.is<42>() >> counter.value());
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 42);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 42);
+        CHECK(abc.trace == test_trace());
+    }
+    SUBCASE(".is<42>() false")
+    {
+        constexpr auto rule = counter.create() + dsl::if_(counter.is<42>() >> counter.value());
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == -11);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == -11);
+        CHECK(abc.trace == test_trace());
+    }
+
+    SUBCASE(".is_zero()")
+    {
+        CHECK(equivalent_rules(counter.is_zero(), counter.is<0>()));
     }
 }
 
-TEST_CASE("dsl::equal_counts")
+TEST_CASE("dsl::equal_counts()")
 {
-    static constexpr auto counter_a = lexy::dsl::context_counter<struct id_a>;
-    static constexpr auto counter_b = lexy::dsl::context_counter<struct id_b>;
-    static constexpr auto counter_c = lexy::dsl::context_counter<struct id_c>;
-
-    struct callback
+    struct my_error
     {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char*)
+        static constexpr auto name()
         {
-            return -1;
-        }
-        LEXY_VERIFY_FN int success(const char*, int value)
-        {
-            return value;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::unequal_counts> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            return -1;
+            return "my error";
         }
     };
 
-    SUBCASE("equal")
-    {
-        static constexpr auto rule
-            = counter_a.create<11>() + counter_b.create<11>() + counter_c.create<11>()
-              + lexy::dsl::equal_counts(counter_a, counter_b, counter_c) + counter_a.value();
+    struct a_id
+    {};
+    struct b_id
+    {};
+    struct c_id
+    {};
+    constexpr auto setup = [] {
+        auto ac = dsl::context_counter<a_id>;
+        auto a  = ac.create() + ac.push(dsl::while_(dsl::lit_c<'a'>));
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 11);
+        auto bc = dsl::context_counter<b_id>;
+        auto b  = bc.create() + bc.push(dsl::while_(dsl::lit_c<'b'>));
+
+        auto cc = dsl::context_counter<c_id>;
+        auto c  = cc.create() + cc.push(dsl::while_(dsl::lit_c<'c'>));
+
+        return a + b + c;
+    }();
+
+    constexpr auto equal = dsl::equal_counts(dsl::context_counter<a_id>, dsl::context_counter<b_id>,
+                                             dsl::context_counter<c_id>);
+    CHECK(lexy::is_branch_rule<decltype(equal)>);
+
+    constexpr auto callback = token_callback;
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = setup + equal;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
+        auto aabbcc = LEXY_VERIFY("aabbcc");
+        CHECK(aabbcc.status == test_result::success);
+        CHECK(aabbcc.trace
+              == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
+
+        auto aabcc = LEXY_VERIFY("aabcc");
+        CHECK(aabcc.status == test_result::recovered_error);
+        CHECK(aabcc.trace
+              == test_trace()
+                     .token("a")
+                     .token("a")
+                     .token("b")
+                     .token("c")
+                     .token("c")
+                     .error(5, 5, "unequal counts"));
+        auto aabbccc = LEXY_VERIFY("aabbccc");
+        CHECK(aabbccc.status == test_result::recovered_error);
+        CHECK(aabbccc.trace
+              == test_trace()
+                     .token("a")
+                     .token("a")
+                     .token("b")
+                     .token("b")
+                     .token("c")
+                     .token("c")
+                     .token("c")
+                     .error(7, 7, "unequal counts"));
     }
-    SUBCASE("not equal")
+    SUBCASE("as branch")
     {
-        static constexpr auto rule
-            = counter_a.create<11>() + counter_b.create<42>() + counter_c.create<11>()
-              + lexy::dsl::equal_counts(counter_a, counter_b, counter_c) + counter_a.value();
+        constexpr auto rule = setup + dsl::must(equal).error<my_error>;
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result.value == 11);
-        CHECK(result.errors(-1));
-    }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
 
-    SUBCASE("equal branch")
-    {
-        static constexpr auto rule
-            = counter_a.create<11>() + counter_b.create<11>() + counter_c.create<11>()
-              + if_(lexy::dsl::equal_counts(counter_a, counter_b, counter_c) >> counter_a.value());
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
+        auto aabbcc = LEXY_VERIFY("aabbcc");
+        CHECK(aabbcc.status == test_result::success);
+        CHECK(aabbcc.trace
+              == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 11);
-    }
-    SUBCASE("not equal branch")
-    {
-        static constexpr auto rule
-            = counter_a.create<11>() + counter_b.create<42>() + counter_c.create<11>()
-              + if_(lexy::dsl::equal_counts(counter_a, counter_b, counter_c) >> counter_a.value());
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result.success(-1));
+        auto aabcc = LEXY_VERIFY("aabcc");
+        CHECK(aabcc.status == test_result::fatal_error);
+        CHECK(aabcc.trace
+              == test_trace()
+                     .token("a")
+                     .token("a")
+                     .token("b")
+                     .token("c")
+                     .token("c")
+                     .error(5, 5, "my error")
+                     .cancel());
+        auto aabbccc = LEXY_VERIFY("aabbccc");
+        CHECK(aabbccc.status == test_result::fatal_error);
+        CHECK(aabbccc.trace
+              == test_trace()
+                     .token("a")
+                     .token("a")
+                     .token("b")
+                     .token("b")
+                     .token("c")
+                     .token("c")
+                     .token("c")
+                     .error(7, 7, "my error")
+                     .cancel());
     }
 }
 

@@ -5,151 +5,198 @@
 #include <lexy/dsl/capture.hpp>
 
 #include "verify.hpp"
-#include <lexy/callback/string.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/recover.hpp>
+#include <lexy/dsl/whitespace.hpp>
+
+namespace
+{
+struct with_whitespace
+{
+    static constexpr auto whitespace = LEXY_LIT(".");
+};
+} // namespace
 
 TEST_CASE("dsl::capture()")
 {
-    SUBCASE("basic")
+    SUBCASE("token")
     {
-        static constexpr auto rule = capture(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = dsl::capture(LEXY_LIT("abc"));
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+        constexpr auto callback = [](const char* begin, lexy::string_lexeme<> lex) {
+            CHECK(lex.begin() == begin);
+            CHECK(lex.size() == 3);
+            CHECK(lex[0] == 'a');
+            CHECK(lex[1] == 'b');
+            CHECK(lex[2] == 'c');
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
-            {
-                LEXY_VERIFY_CHECK(lex.begin() == str);
-                LEXY_VERIFY_CHECK(lex.end() == cur);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
+            return 0;
         };
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace().token("abc"));
     }
-    SUBCASE("capture label")
+    SUBCASE("token with whitespace")
     {
-        static constexpr auto rule = capture(label<0>);
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = dsl::capture(LEXY_LIT("abc"));
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+        struct production : test_production_for<decltype(rule)>, with_whitespace
+        {};
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex, id<0>)
-            {
-                LEXY_VERIFY_CHECK(str == cur);
-                LEXY_VERIFY_CHECK(lex.empty());
-                return 0;
-            }
+        constexpr auto callback = [](const char* begin, lexy::string_lexeme<> lex) {
+            CHECK(lex.begin() == begin);
+            CHECK(lex.size() >= 3);
+            CHECK(lex[0] == 'a');
+            CHECK(lex[1] == 'b');
+            CHECK(lex[2] == 'c');
+
+            return 0;
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto string = LEXY_VERIFY("abc");
-        CHECK(string == 0);
+        auto abc = LEXY_VERIFY_P(production, "abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace().token("abc"));
+
+        auto abc_ws = LEXY_VERIFY_P(production, "abc...");
+        CHECK(abc_ws.status == test_result::success);
+        CHECK(abc_ws.value == 0);
+        CHECK(abc_ws.trace == test_trace().token("abc").whitespace("..."));
+    }
+
+    SUBCASE("rule")
+    {
+        constexpr auto rule
+            = dsl::capture(LEXY_LIT("a") + dsl::position + dsl::try_(LEXY_LIT("bc")));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        constexpr auto callback
+            = [](const char* begin, lexy::string_lexeme<> lex, const char* pos) {
+                  CHECK(lex.begin() == begin);
+                  CHECK(lex.size() >= 1);
+                  CHECK(lex[0] == 'a');
+                  if (lex.size() >= 2)
+                      CHECK(lex[1] == 'b');
+                  if (lex.size() >= 3)
+                      CHECK(lex[2] == 'c');
+
+                  CHECK(pos == begin + 1);
+
+                  return 0;
+              };
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.value == 0);
+        CHECK(ab.trace
+              == test_trace().token("a").position().expected_literal(1, "bc", 1).error_token("b"));
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace().token("a").position().token("bc"));
     }
     SUBCASE("directly nested")
     {
-        static constexpr auto rule = capture(capture(LEXY_LIT("abc")));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = dsl::capture(dsl::capture(LEXY_LIT("abc")));
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+        constexpr auto callback = [](const char* begin, lexy::string_lexeme<> lex_outer,
+                                     lexy::string_lexeme<> lex_inner) {
+            CHECK(lex_outer.begin() == begin);
+            CHECK(lex_outer.size() == 3);
+            CHECK(lex_outer[0] == 'a');
+            CHECK(lex_outer[1] == 'b');
+            CHECK(lex_outer[2] == 'c');
 
-            LEXY_VERIFY_FN int success(const char*, lexy::lexeme_for<test_input> outer,
-                                       lexy::lexeme_for<test_input> inner)
-            {
-                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "abc");
-                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
-                return 0;
-            }
+            CHECK(lex_inner.begin() == lex_outer.begin());
+            CHECK(lex_inner.end() == lex_outer.end());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
+            return 0;
         };
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace().token("abc"));
     }
     SUBCASE("indirectly nested")
     {
-        static constexpr auto rule
-            = capture(LEXY_LIT("(") + capture(LEXY_LIT("abc")) + LEXY_LIT(")"));
+        constexpr auto rule
+            = dsl::capture(LEXY_LIT("a") + dsl::capture(LEXY_LIT("b")) + LEXY_LIT("c"));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+        constexpr auto callback = [](const char* begin, lexy::string_lexeme<> lex_outer,
+                                     lexy::string_lexeme<> lex_inner) {
+            CHECK(lex_outer.begin() == begin);
+            CHECK(lex_outer.size() == 3);
+            CHECK(lex_outer[0] == 'a');
+            CHECK(lex_outer[1] == 'b');
+            CHECK(lex_outer[2] == 'c');
 
-            LEXY_VERIFY_FN int success(const char*, lexy::lexeme_for<test_input> outer,
-                                       lexy::lexeme_for<test_input> inner)
-            {
-                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(outer) == "(abc)");
-                LEXY_VERIFY_CHECK(lexy::as_string<lexy::_detail::string_view>(inner) == "abc");
-                return 0;
-            }
+            CHECK(lex_inner.begin() == lex_outer.begin() + 1);
+            CHECK(lex_inner.end() == lex_outer.end() - 1);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
-            {
-                return -1;
-            }
+            return 0;
         };
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
 
-        auto success = LEXY_VERIFY("(abc)");
-        CHECK(success == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
     }
-    SUBCASE("branch")
+
+    SUBCASE("as branch")
     {
-        static constexpr auto rule = if_(capture(LEXY_LIT("abc")));
+        constexpr auto rule = dsl::if_(dsl::capture(LEXY_LIT("abc")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+        constexpr auto callback
+            = lexy::callback<int>([](const char*) { return 0; },
+                                  [](const char* begin, lexy::string_lexeme<> lex) {
+                                      CHECK(lex.begin() == begin);
+                                      CHECK(lex.size() == 3);
+                                      CHECK(lex[0] == 'a');
+                                      CHECK(lex[1] == 'b');
+                                      CHECK(lex[2] == 'c');
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str);
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, lexy::lexeme_for<test_input> lex)
-            {
-                LEXY_VERIFY_CHECK(lex.begin() == str);
-                LEXY_VERIFY_CHECK(lex.end() == cur);
-                return 1;
-            }
-        };
+                                      return 1;
+                                  });
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 1);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc"));
     }
 }
 

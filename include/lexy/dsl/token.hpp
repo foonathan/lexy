@@ -113,25 +113,7 @@ template <auto Kind, typename Token>
 struct _tokk : token_base<_tokk<Kind, Token>>
 {
     template <typename Reader>
-    struct tp
-    {
-        lexy::token_parser_for<Token, Reader> token_parser;
-        typename Reader::iterator             end;
-
-        constexpr bool try_parse(const Reader& reader)
-        {
-            // Forward.
-            auto result = token_parser.try_parse(reader);
-            end         = token_parser.end;
-            return result;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            token_parser.report_error(context, reader);
-        }
-    };
+    using tp = lexy::token_parser_for<Token, Reader>;
 };
 
 template <typename Tag, typename Token>

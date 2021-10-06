@@ -71,9 +71,14 @@ public:
         return _c == nullptr || (*_c == '\0' && _arg[1] == nullptr);
     }
 
+#ifndef _MSC_VER
 private:
+    // MSVC is a bad compiler and should feel bad.
+    // Or at least fix their friend declarations.
+#endif
     constexpr explicit argv_iterator(char** argument, char* c) noexcept : _arg(argument), _c(c) {}
 
+private:
     char** _arg;
     char*  _c;
 

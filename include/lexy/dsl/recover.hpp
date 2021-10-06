@@ -78,7 +78,8 @@ struct _find : _recovery_base
                 {
                     // Haven't found it, recovery fails.
                     auto end = reader.position();
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    if (begin != end)
+                        context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                     context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
@@ -90,7 +91,8 @@ struct _find : _recovery_base
             }
 
             auto end = reader.position();
-            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            if (begin != end)
+                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
             context.on(_ev::recovery_finish{}, end);
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -148,16 +150,13 @@ struct _reco : _recovery_base
             lexy::branch_parser_for<decltype((R{} | ...)), Context, Reader> recovery{};
             while (!recovery.try_parse(context, reader))
             {
-<<<<<<< HEAD
-                if (lexy::try_match_token(get_limit(), reader))
-=======
                 if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
                     limit.try_parse(reader))
->>>>>>> 0f1d4fc2 (tmp: token interface)
                 {
                     // We've failed to recover as we've reached the limit.
                     auto end = reader.position();
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    if (begin != end)
+                        context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                     context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
@@ -169,7 +168,8 @@ struct _reco : _recovery_base
             }
 
             auto end = reader.position();
-            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            if (begin != end)
+                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
             context.on(_ev::recovery_finish{}, end);
 
             // Finish with the rule that matched.

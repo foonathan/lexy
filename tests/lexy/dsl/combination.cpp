@@ -5,389 +5,336 @@
 #include <lexy/dsl/combination.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/error.hpp>
+#include <lexy/dsl/position.hpp>
 
 TEST_CASE("dsl::combination()")
 {
-    SUBCASE("basic")
+    constexpr auto callback = [](const char*, std::size_t n) { return static_cast<int>(n); };
+
+    struct my_error
     {
-        static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
-                                     LEXY_LIT("c") >> label<1>);
+        static constexpr auto name()
+        {
+            return "my error";
+        }
+    };
+
+    auto make_trace = [](const char* first, const char* second, const char* third) {
+        return test_trace()
+            .token(first)
+            .token(first)
+            .position()
+            .token(second)
+            .token(second)
+            .position()
+            .token(third)
+            .token(third)
+            .position();
+    };
+
+    SUBCASE("default")
+    {
+        constexpr auto rule = dsl::combination(LEXY_LIT("a") >> LEXY_LIT("a") + dsl::position,
+                                               LEXY_LIT("b") >> LEXY_LIT("b") + dsl::position,
+                                               LEXY_LIT("c") >> LEXY_LIT("c") + dsl::position);
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN auto list()
-            {
-                struct b
-                {
-                    int count = 0;
-
-                    using return_type = int;
-
-                    LEXY_VERIFY_FN void operator()(id<0>)
-                    {
-                        ++count;
-                    }
-                    LEXY_VERIFY_FN void operator()(id<1>)
-                    {
-                        ++count;
-                    }
-
-                    LEXY_VERIFY_FN int finish() &&
-                    {
-                        return count;
-                    }
-                };
-                return b{};
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int count)
-            {
-                LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str >= 3);
-                return *str;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::combination_duplicate> e)
-            {
-                LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice>)
-            {
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted choice").cancel());
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 'a');
-        auto acb = LEXY_VERIFY("acb");
-        CHECK(acb == 'a');
-        auto bac = LEXY_VERIFY("bac");
-        CHECK(bac == 'b');
-        auto bca = LEXY_VERIFY("bca");
-        CHECK(bca == 'b');
-        auto cab = LEXY_VERIFY("cab");
-        CHECK(cab == 'c');
-        auto cba = LEXY_VERIFY("cba");
-        CHECK(cba == 'c');
+        auto abc = LEXY_VERIFY("aabbcc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 3);
+        CHECK(abc.trace == make_trace("a", "b", "c"));
+        auto acb = LEXY_VERIFY("aaccbb");
+        CHECK(acb.status == test_result::success);
+        CHECK(acb.value == 3);
+        CHECK(acb.trace == make_trace("a", "c", "b"));
+        auto bac = LEXY_VERIFY("bbaacc");
+        CHECK(bac.status == test_result::success);
+        CHECK(bac.value == 3);
+        CHECK(bac.trace == make_trace("b", "a", "c"));
+        auto bca = LEXY_VERIFY("bbccaa");
+        CHECK(bca.status == test_result::success);
+        CHECK(bca.value == 3);
+        CHECK(bca.trace == make_trace("b", "c", "a"));
+        auto cab = LEXY_VERIFY("ccaabb");
+        CHECK(cab.status == test_result::success);
+        CHECK(cab.value == 3);
+        CHECK(cab.trace == make_trace("c", "a", "b"));
+        auto cba = LEXY_VERIFY("ccbbaa");
+        CHECK(cba.status == test_result::success);
+        CHECK(cba.value == 3);
+        CHECK(cba.trace == make_trace("c", "b", "a"));
 
-        auto aab = LEXY_VERIFY("aab");
-        CHECK(aab.value == -1);
-        CHECK(aab.errors(-1, -2));
-        auto aba = LEXY_VERIFY("aba");
-        CHECK(aba.value == -1);
-        CHECK(aba.errors(-1, -2));
+        auto abca = LEXY_VERIFY("aabbccaa");
+        CHECK(abca.status == test_result::success);
+        CHECK(abca.value == 3);
+        CHECK(abca.trace == make_trace("a", "b", "c"));
 
-        auto aabc = LEXY_VERIFY("aabc");
-        CHECK(aabc.value == 'a');
-        CHECK(aabc.errors(-1));
-        auto cacab = LEXY_VERIFY("cacab");
-        CHECK(cacab.value == 'c');
-        CHECK(cacab.errors(-1, -1));
+        auto branch_error = LEXY_VERIFY("abbcc");
+        CHECK(branch_error.status == test_result::fatal_error);
+        CHECK(branch_error.trace == test_trace().token("a").expected_literal(1, "a", 0).cancel());
 
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == -2);
+        auto ab       = LEXY_VERIFY("aabb");
+        auto ab_trace = test_trace()
+                            .token("a")
+                            .token("a")
+                            .position()
+                            .token("b")
+                            .token("b")
+                            .position()
+                            .error(4, 4, "exhausted choice")
+                            .cancel();
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == ab_trace);
 
-        auto abca = LEXY_VERIFY("abca");
-        CHECK(abca == 'a');
+        auto aabc       = LEXY_VERIFY("aaaabbcc");
+        auto aabc_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(2, 4, "combination duplicate")
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(aabc.status == test_result::recovered_error);
+        CHECK(aabc.value == 3);
+        CHECK(aabc.trace == aabc_trace);
+        auto abac       = LEXY_VERIFY("aabbaacc");
+        auto abac_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(4, 6, "combination duplicate")
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(abac.status == test_result::recovered_error);
+        CHECK(abac.value == 3);
+        CHECK(abac.trace == abac_trace);
     }
-    SUBCASE(".duplicate_error")
+    SUBCASE("missing_error")
     {
-        static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
-                                     LEXY_LIT("c") >> label<1>)
-                  .duplicate_error<struct tag>;
+        constexpr auto rule = dsl::combination(LEXY_LIT("a") >> LEXY_LIT("a") + dsl::position,
+                                               LEXY_LIT("b") >> LEXY_LIT("b") + dsl::position,
+                                               LEXY_LIT("c") >> LEXY_LIT("c") + dsl::position)
+                                  .missing_error<my_error>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN auto list()
-            {
-                struct b
-                {
-                    int count = 0;
-
-                    using return_type = int;
-
-                    LEXY_VERIFY_FN void operator()(id<0>)
-                    {
-                        ++count;
-                    }
-                    LEXY_VERIFY_FN void operator()(id<1>)
-                    {
-                        ++count;
-                    }
-
-                    LEXY_VERIFY_FN int finish() &&
-                    {
-                        return count;
-                    }
-                };
-                return b{};
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int count)
-            {
-                LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str >= 3);
-                return *str;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice>)
-            {
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "my error").cancel());
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 'a');
-        auto acb = LEXY_VERIFY("acb");
-        CHECK(acb == 'a');
-        auto bac = LEXY_VERIFY("bac");
-        CHECK(bac == 'b');
-        auto bca = LEXY_VERIFY("bca");
-        CHECK(bca == 'b');
-        auto cab = LEXY_VERIFY("cab");
-        CHECK(cab == 'c');
-        auto cba = LEXY_VERIFY("cba");
-        CHECK(cba == 'c');
-
-        auto aab = LEXY_VERIFY("aab");
-        CHECK(aab.value == -1);
-        CHECK(aab.errors(-1, -2));
-        auto aba = LEXY_VERIFY("aba");
-        CHECK(aba.value == -1);
-        CHECK(aba.errors(-1, -2));
-
-        auto aabc = LEXY_VERIFY("aabc");
-        CHECK(aabc.value == 'a');
-        CHECK(aabc.errors(-1));
-        auto cacab = LEXY_VERIFY("cacab");
-        CHECK(cacab.value == 'c');
-        CHECK(cacab.errors(-1, -1));
-
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == -2);
-
-        auto abca = LEXY_VERIFY("abca");
-        CHECK(abca == 'a');
+        auto abc = LEXY_VERIFY("aabbcc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 3);
+        CHECK(abc.trace == make_trace("a", "b", "c"));
     }
-    SUBCASE(".missing_error")
+    SUBCASE("duplicate_error")
     {
-        static constexpr auto rule
-            = lexy::dsl::combination(LEXY_LIT("a"), LEXY_LIT("b") >> label<0>,
-                                     LEXY_LIT("c") >> label<1>)
-                  .missing_error<struct tag>;
+        constexpr auto rule = dsl::combination(LEXY_LIT("a") >> LEXY_LIT("a") + dsl::position,
+                                               LEXY_LIT("b") >> LEXY_LIT("b") + dsl::position,
+                                               LEXY_LIT("c") >> LEXY_LIT("c") + dsl::position)
+                                  .duplicate_error<my_error>;
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN auto list()
-            {
-                struct b
-                {
-                    int count = 0;
-
-                    using return_type = int;
-
-                    LEXY_VERIFY_FN void operator()(id<0>)
-                    {
-                        ++count;
-                    }
-                    LEXY_VERIFY_FN void operator()(id<1>)
-                    {
-                        ++count;
-                    }
-
-                    LEXY_VERIFY_FN int finish() &&
-                    {
-                        return count;
-                    }
-                };
-                return b{};
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int count)
-            {
-                LEXY_VERIFY_CHECK(count == 2);
-                LEXY_VERIFY_CHECK(cur - str >= 3);
-                return *str;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::combination_duplicate> e)
-            {
-                LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<tag>)
-            {
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted choice").cancel());
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 'a');
-        auto acb = LEXY_VERIFY("acb");
-        CHECK(acb == 'a');
-        auto bac = LEXY_VERIFY("bac");
-        CHECK(bac == 'b');
-        auto bca = LEXY_VERIFY("bca");
-        CHECK(bca == 'b');
-        auto cab = LEXY_VERIFY("cab");
-        CHECK(cab == 'c');
-        auto cba = LEXY_VERIFY("cba");
-        CHECK(cba == 'c');
+        auto abc = LEXY_VERIFY("aabbcc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 3);
+        CHECK(abc.trace == make_trace("a", "b", "c"));
 
-        auto aab = LEXY_VERIFY("aab");
-        CHECK(aab.value == -1);
-        CHECK(aab.errors(-1, -2));
-        auto aba = LEXY_VERIFY("aba");
-        CHECK(aba.value == -1);
-        CHECK(aba.errors(-1, -2));
-
-        auto aabc = LEXY_VERIFY("aabc");
-        CHECK(aabc.value == 'a');
-        CHECK(aabc.errors(-1));
-        auto cacab = LEXY_VERIFY("cacab");
-        CHECK(cacab.value == 'c');
-        CHECK(cacab.errors(-1, -1));
-
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == -2);
-
-        auto abca = LEXY_VERIFY("abca");
-        CHECK(abca == 'a');
+        auto aabc       = LEXY_VERIFY("aaaabbcc");
+        auto aabc_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(2, 4, "my error")
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(aabc.status == test_result::recovered_error);
+        CHECK(aabc.value == 3);
+        CHECK(aabc.trace == aabc_trace);
     }
 }
 
 TEST_CASE("dsl::partial_combination()")
 {
-    static constexpr auto rule
-        = lexy::dsl::partial_combination(LEXY_LIT("a") >> label<0>, LEXY_LIT("b") >> label<1>,
-                                         LEXY_LIT("c") >> label<2>);
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto callback = [](const char*, std::size_t n) { return static_cast<int>(n); };
 
-    struct callback
+    struct my_error
     {
-        const char* str;
-
-        LEXY_VERIFY_FN auto list()
+        static constexpr auto name()
         {
-            struct b
-            {
-                int count = 0;
-
-                using return_type = int;
-
-                LEXY_VERIFY_FN void operator()(id<0>)
-                {
-                    ++count;
-                }
-                LEXY_VERIFY_FN void operator()(id<1>)
-                {
-                    ++count;
-                }
-                LEXY_VERIFY_FN void operator()(id<2>)
-                {
-                    ++count;
-                }
-
-                LEXY_VERIFY_FN int finish() &&
-                {
-                    return count;
-                }
-            };
-            return b{};
-        }
-
-        LEXY_VERIFY_FN int success(const char* cur, int count)
-        {
-            LEXY_VERIFY_CHECK(cur - str >= count);
-            return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::combination_duplicate> e)
-        {
-            LEXY_VERIFY_CHECK(e.end() - e.begin() == 1);
-            return -1;
+            return "my error";
         }
     };
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    auto make_trace = [](const char* first, const char* second, const char* third) {
+        return test_trace()
+            .token(first)
+            .token(first)
+            .position()
+            .token(second)
+            .token(second)
+            .position()
+            .token(third)
+            .token(third)
+            .position();
+    };
 
-    auto a = LEXY_VERIFY("a");
-    CHECK(a == 1);
-    auto b = LEXY_VERIFY("b");
-    CHECK(b == 1);
-    auto c = LEXY_VERIFY("c");
-    CHECK(c == 1);
+    SUBCASE("default")
+    {
+        constexpr auto rule
+            = dsl::partial_combination(LEXY_LIT("a") >> LEXY_LIT("a") + dsl::position,
+                                       LEXY_LIT("b") >> LEXY_LIT("b") + dsl::position,
+                                       LEXY_LIT("c") >> LEXY_LIT("c") + dsl::position);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-    auto ab = LEXY_VERIFY("ab");
-    CHECK(ab == 2);
-    auto ba = LEXY_VERIFY("ba");
-    CHECK(ba == 2);
-    auto ac = LEXY_VERIFY("ac");
-    CHECK(ac == 2);
-    auto ca = LEXY_VERIFY("ca");
-    CHECK(ca == 2);
-    auto bc = LEXY_VERIFY("bc");
-    CHECK(bc == 2);
-    auto cb = LEXY_VERIFY("cb");
-    CHECK(cb == 2);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-    auto abc = LEXY_VERIFY("abc");
-    CHECK(abc == 3);
-    auto acb = LEXY_VERIFY("acb");
-    CHECK(acb == 3);
-    auto bac = LEXY_VERIFY("bac");
-    CHECK(bac == 3);
-    auto bca = LEXY_VERIFY("bca");
-    CHECK(bca == 3);
-    auto cab = LEXY_VERIFY("cab");
-    CHECK(cab == 3);
-    auto cba = LEXY_VERIFY("cba");
-    CHECK(cba == 3);
+        auto abc = LEXY_VERIFY("aabbcc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 3);
+        CHECK(abc.trace == make_trace("a", "b", "c"));
+        auto acb = LEXY_VERIFY("aaccbb");
+        CHECK(acb.status == test_result::success);
+        CHECK(acb.value == 3);
+        CHECK(acb.trace == make_trace("a", "c", "b"));
+        auto bac = LEXY_VERIFY("bbaacc");
+        CHECK(bac.status == test_result::success);
+        CHECK(bac.value == 3);
+        CHECK(bac.trace == make_trace("b", "a", "c"));
+        auto bca = LEXY_VERIFY("bbccaa");
+        CHECK(bca.status == test_result::success);
+        CHECK(bca.value == 3);
+        CHECK(bca.trace == make_trace("b", "c", "a"));
+        auto cab = LEXY_VERIFY("ccaabb");
+        CHECK(cab.status == test_result::success);
+        CHECK(cab.value == 3);
+        CHECK(cab.trace == make_trace("c", "a", "b"));
+        auto cba = LEXY_VERIFY("ccbbaa");
+        CHECK(cba.status == test_result::success);
+        CHECK(cba.value == 3);
+        CHECK(cba.trace == make_trace("c", "b", "a"));
 
-    auto aab = LEXY_VERIFY("aab");
-    CHECK(aab.value == 2);
-    CHECK(aab.errors(-1));
-    auto aba = LEXY_VERIFY("aba");
-    CHECK(aba.value == 2);
-    CHECK(aba.errors(-1));
+        auto abca = LEXY_VERIFY("aabbccaa");
+        CHECK(abca.status == test_result::success);
+        CHECK(abca.value == 3);
+        CHECK(abca.trace == make_trace("a", "b", "c"));
 
-    auto aabc = LEXY_VERIFY("aabc");
-    CHECK(aabc.value == 3);
-    CHECK(aabc.errors(-1));
-    auto cacab = LEXY_VERIFY("cacab");
-    CHECK(cacab.value == 3);
-    CHECK(cacab.errors(-1, -1));
+        auto branch_error = LEXY_VERIFY("abbcc");
+        CHECK(branch_error.status == test_result::fatal_error);
+        CHECK(branch_error.trace == test_trace().token("a").expected_literal(1, "a", 0).cancel());
 
-    auto abca = LEXY_VERIFY("abca");
-    CHECK(abca == 3);
+        auto ab = LEXY_VERIFY("aabb");
+        auto ab_trace
+            = test_trace().token("a").token("a").position().token("b").token("b").position();
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.value == 2);
+        CHECK(ab.trace == ab_trace);
+
+        auto aabc       = LEXY_VERIFY("aaaabbcc");
+        auto aabc_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(2, 4, "combination duplicate")
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(aabc.status == test_result::recovered_error);
+        CHECK(aabc.value == 3);
+        CHECK(aabc.trace == aabc_trace);
+        auto abac       = LEXY_VERIFY("aabbaacc");
+        auto abac_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(4, 6, "combination duplicate")
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(abac.status == test_result::recovered_error);
+        CHECK(abac.value == 3);
+        CHECK(abac.trace == abac_trace);
+    }
+    SUBCASE("duplicate_error")
+    {
+        constexpr auto rule
+            = dsl::partial_combination(LEXY_LIT("a") >> LEXY_LIT("a") + dsl::position,
+                                       LEXY_LIT("b") >> LEXY_LIT("b") + dsl::position,
+                                       LEXY_LIT("c") >> LEXY_LIT("c") + dsl::position)
+                  .duplicate_error<my_error>;
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("aabbcc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 3);
+        CHECK(abc.trace == make_trace("a", "b", "c"));
+
+        auto aabc       = LEXY_VERIFY("aaaabbcc");
+        auto aabc_trace = test_trace()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .token("a")
+                              .token("a")
+                              .position()
+                              .error(2, 4, "my error")
+                              .token("b")
+                              .token("b")
+                              .position()
+                              .token("c")
+                              .token("c")
+                              .position();
+        CHECK(aabc.status == test_result::recovered_error);
+        CHECK(aabc.value == 3);
+        CHECK(aabc.trace == aabc_trace);
+    }
 }
 

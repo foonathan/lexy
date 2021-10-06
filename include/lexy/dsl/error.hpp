@@ -11,7 +11,7 @@
 
 namespace lexyd
 {
-template <typename Tag, typename Token>
+template <typename Tag, typename Rule>
 struct _err : unconditional_branch_base
 {
     template <typename NextParser>
@@ -22,7 +22,7 @@ struct _err : unconditional_branch_base
         {
             auto begin = reader.position();
             auto end   = reader.position();
-            if constexpr (!std::is_same_v<Token, void>)
+            if constexpr (!std::is_same_v<Rule, void>)
             {
                 lexy::token_parser_for<decltype(lexyd::token(Rule{})), Reader> parser(reader);
                 parser.try_parse(reader);
@@ -38,11 +38,10 @@ struct _err : unconditional_branch_base
     using bp = lexy::unconditional_branch_parser<_err, Context, Reader>;
 
     /// Adds a rule whose match will be part of the error location.
-    template <typename Rule>
-    constexpr auto operator()(Rule rule) const
+    template <typename R>
+    constexpr auto operator()(R) const
     {
-        auto t = token(rule);
-        return _err<Tag, decltype(t)>{};
+        return _err<Tag, R>{};
     }
 };
 

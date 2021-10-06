@@ -7,9 +7,8 @@
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/identifier.hpp>
-#include <lexy/dsl/loop.hpp>
-#include <lexy/dsl/option.hpp>
-#include <lexy/dsl/token.hpp>
+#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 TEST_CASE("symbol_table")
 {
@@ -63,468 +62,358 @@ TEST_CASE("symbol_table")
 
 namespace
 {
+struct my_error
+{
+    static constexpr auto name()
+    {
+        return "my error";
+    }
+};
+
+struct with_whitespace
+{
+    static constexpr auto whitespace = LEXY_LIT(".");
+};
+
 constexpr auto symbols = lexy::symbol_table<int> //
-                             .map<'A'>(0)
-                             .map<'B'>(1)
-                             .map<'C'>(2)
-                             .map<LEXY_SYMBOL("Abc")>(3);
-}
+                             .map<'A'>(1)
+                             .map<'B'>(2)
+                             .map<'C'>(3)
+                             .map<LEXY_SYMBOL("Abc")>(4);
+
+constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                              [](const char*, int value) { return value; });
+} // namespace
 
 TEST_CASE("dsl::symbol")
 {
-    SUBCASE("basic")
+    constexpr auto symbol = lexy::dsl::symbol<symbols>;
+    CHECK(lexy::is_branch_rule<decltype(symbol)>);
+
+    SUBCASE("as rule")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::unknown_symbol> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+        constexpr auto rule = symbol;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "unknown symbol").cancel());
 
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
+        auto A = LEXY_VERIFY("A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
+        auto B = LEXY_VERIFY("B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("identifier", "B"));
+        auto C = LEXY_VERIFY("C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("identifier", "C"));
+        auto Abc = LEXY_VERIFY("Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("identifier", "Abc"));
 
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
+        auto Unknown = LEXY_VERIFY("Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(Unknown.trace == test_trace().error(0, 0, "unknown symbol").cancel());
 
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -1);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == 0);
+        auto Ab = LEXY_VERIFY("Ab");
+        CHECK(Ab.status == test_result::success);
+        CHECK(Ab.value == 1);
+        CHECK(Ab.trace == test_trace().token("identifier", "A"));
     }
-    SUBCASE("branch")
+    SUBCASE("as branch")
     {
-        static constexpr auto rule = opt(lexy::dsl::symbol<symbols>);
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
-            {
-                LEXY_VERIFY_CHECK(cur == str);
-                return 42;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
-        };
+        constexpr auto rule = dsl::if_(symbol);
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == 42);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
+        auto A = LEXY_VERIFY("A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
+        auto B = LEXY_VERIFY("B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("identifier", "B"));
+        auto C = LEXY_VERIFY("C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("identifier", "C"));
+        auto Abc = LEXY_VERIFY("Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("identifier", "Abc"));
 
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
+        auto Unknown = LEXY_VERIFY("Unknown");
+        CHECK(Unknown.status == test_result::success);
+        CHECK(Unknown.value == 0);
+        CHECK(Unknown.trace == test_trace());
 
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == 42);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == 42);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == 0);
+        auto Ab = LEXY_VERIFY("Ab");
+        CHECK(Ab.status == test_result::success);
+        CHECK(Ab.value == 1);
+        CHECK(Ab.trace == test_trace().token("identifier", "A"));
     }
 
     SUBCASE(".error")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>.error<struct tag>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+        constexpr auto rule = symbol.error<my_error>;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "my error").cancel());
 
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
+        auto A = LEXY_VERIFY("A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
 
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -1);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == 0);
+        auto Unknown = LEXY_VERIFY("Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(Unknown.trace == test_trace().error(0, 0, "my error").cancel());
     }
 }
 
 TEST_CASE("dsl::symbol(token)")
 {
-    constexpr auto id = token(identifier(lexy::dsl::ascii::upper, lexy::dsl::ascii::lower));
+    constexpr auto symbol = dsl::symbol<symbols>(dsl::token(dsl::identifier(dsl::ascii::alpha)));
+    CHECK(lexy::is_branch_rule<decltype(symbol)>);
 
-    SUBCASE("basic")
+    SUBCASE("as rule")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>(id);
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(symbol)>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "missing token").cancel());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::fatal_error);
+        CHECK(non_alpha.trace == test_trace().error(0, 0, "missing token").cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("A"));
+        auto B = LEXY_VERIFY_P(production, "B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("B"));
+        auto C = LEXY_VERIFY_P(production, "C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("C"));
+        auto Abc = LEXY_VERIFY_P(production, "Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("Abc"));
 
-            LEXY_VERIFY_FN int error(test_error<lexy::unknown_symbol> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(Unknown.trace
+              == test_trace().token("Unknown").error(0, 7, "unknown symbol").cancel());
 
-                auto end = str;
-                if ('A' <= *end && *end <= 'Z')
-                {
-                    ++end;
-                    while ('a' <= *end && *end <= 'z')
-                        ++end;
-                }
-                LEXY_VERIFY_CHECK(e.end() == end);
+        auto Ab = LEXY_VERIFY_P(production, "Ab");
+        CHECK(Ab.status == test_result::fatal_error);
+        CHECK(Ab.trace == test_trace().token("Ab").error(0, 2, "unknown symbol").cancel());
 
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::missing_token> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
-
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
-
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -2);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == -1);
+        auto whitespace = LEXY_VERIFY_P(production, "Abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 4);
+        CHECK(whitespace.trace == test_trace().token("Abc").whitespace("..."));
     }
-    SUBCASE("branch")
+    SUBCASE("as branch")
     {
-        static constexpr auto rule = opt(lexy::dsl::symbol<symbols>(id));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(dsl::if_(symbol))>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::success);
+        CHECK(non_alpha.value == 0);
+        CHECK(non_alpha.trace == test_trace());
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
-            {
-                LEXY_VERIFY_CHECK(cur == str);
-                return 42;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
-        };
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("A"));
+        auto B = LEXY_VERIFY_P(production, "B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("B"));
+        auto C = LEXY_VERIFY_P(production, "C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("C"));
+        auto Abc = LEXY_VERIFY_P(production, "Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("Abc"));
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 42);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::success);
+        CHECK(Unknown.trace == test_trace());
 
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
+        auto Ab = LEXY_VERIFY_P(production, "Ab");
+        CHECK(Ab.status == test_result::success);
+        CHECK(Ab.value == 0);
+        CHECK(Ab.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == 42);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == 42);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == 42);
+        auto whitespace = LEXY_VERIFY_P(production, "Abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 4);
+        CHECK(whitespace.trace == test_trace().token("Abc").whitespace("..."));
     }
 
     SUBCASE(".error")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>(id).error<struct tag>;
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(symbol.error<my_error>)>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "missing token").cancel());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::fatal_error);
+        CHECK(non_alpha.trace == test_trace().error(0, 0, "missing token").cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("A"));
 
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-
-                auto end = str;
-                if ('A' <= *end && *end <= 'Z')
-                {
-                    ++end;
-                    while ('a' <= *end && *end <= 'z')
-                        ++end;
-                }
-                LEXY_VERIFY_CHECK(e.end() == end);
-
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::missing_token> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
-
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -2);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == -1);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(Unknown.trace == test_trace().token("Unknown").error(0, 7, "my error").cancel());
     }
 }
 
 TEST_CASE("dsl::symbol(identifier)")
 {
-    constexpr auto id = identifier(lexy::dsl::ascii::upper, lexy::dsl::ascii::lower);
+    constexpr auto symbol = dsl::symbol<symbols>(dsl::identifier(dsl::ascii::alpha));
+    CHECK(lexy::is_branch_rule<decltype(symbol)>);
 
-    SUBCASE("basic")
+    SUBCASE("as rule")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>(id);
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(symbol)>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "ASCII.alpha").cancel());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::fatal_error);
+        CHECK(non_alpha.trace == test_trace().expected_char_class(0, "ASCII.alpha").cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
+        auto B = LEXY_VERIFY_P(production, "B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("identifier", "B"));
+        auto C = LEXY_VERIFY_P(production, "C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("identifier", "C"));
+        auto Abc = LEXY_VERIFY_P(production, "Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("identifier", "Abc"));
 
-            LEXY_VERIFY_FN int error(test_error<lexy::unknown_symbol> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(
+            Unknown.trace
+            == test_trace().token("identifier", "Unknown").error(0, 7, "unknown symbol").cancel());
 
-                auto end = str;
-                if ('A' <= *end && *end <= 'Z')
-                {
-                    ++end;
-                    while ('a' <= *end && *end <= 'z')
-                        ++end;
-                }
-                LEXY_VERIFY_CHECK(e.end() == end);
+        auto Ab = LEXY_VERIFY_P(production, "Ab");
+        CHECK(Ab.status == test_result::fatal_error);
+        CHECK(Ab.trace
+              == test_trace().token("identifier", "Ab").error(0, 2, "unknown symbol").cancel());
 
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
-
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
-
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -2);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == -1);
+        auto whitespace = LEXY_VERIFY_P(production, "Abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 4);
+        CHECK(whitespace.trace == test_trace().token("identifier", "Abc").whitespace("..."));
     }
-    SUBCASE("branch")
+    SUBCASE("as branch")
     {
-        static constexpr auto rule = opt(lexy::dsl::symbol<symbols>(id));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(dsl::if_(symbol))>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::success);
+        CHECK(non_alpha.value == 0);
+        CHECK(non_alpha.trace == test_trace());
 
-            LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
-            {
-                LEXY_VERIFY_CHECK(cur == str);
-                return 42;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                if (i == 3)
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
-        };
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
+        auto B = LEXY_VERIFY_P(production, "B");
+        CHECK(B.status == test_result::success);
+        CHECK(B.value == 2);
+        CHECK(B.trace == test_trace().token("identifier", "B"));
+        auto C = LEXY_VERIFY_P(production, "C");
+        CHECK(C.status == test_result::success);
+        CHECK(C.value == 3);
+        CHECK(C.trace == test_trace().token("identifier", "C"));
+        auto Abc = LEXY_VERIFY_P(production, "Abc");
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 4);
+        CHECK(Abc.trace == test_trace().token("identifier", "Abc"));
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 42);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::success);
+        CHECK(Unknown.trace == test_trace());
 
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-        auto c = LEXY_VERIFY("C");
-        CHECK(c == 2);
+        auto Ab = LEXY_VERIFY_P(production, "Ab");
+        CHECK(Ab.status == test_result::success);
+        CHECK(Ab.value == 0);
+        CHECK(Ab.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("Abc");
-        CHECK(abc == 3);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == 42);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == 42);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == 42);
+        auto whitespace = LEXY_VERIFY_P(production, "Abc...");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 4);
+        CHECK(whitespace.trace == test_trace().token("identifier", "Abc").whitespace("..."));
     }
 
     SUBCASE(".error")
     {
-        static constexpr auto rule = lexy::dsl::symbol<symbols>(id).error<struct tag>;
-        CHECK(lexy::is_rule<decltype(rule)>);
+        struct production : test_production_for<decltype(symbol.error<my_error>)>, with_whitespace
+        {};
 
-        struct callback
-        {
-            const char* str;
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "ASCII.alpha").cancel());
+        auto non_alpha = LEXY_VERIFY_P(production, "123");
+        CHECK(non_alpha.status == test_result::fatal_error);
+        CHECK(non_alpha.trace == test_trace().expected_char_class(0, "ASCII.alpha").cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur, int i)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 1);
-                return i;
-            }
+        auto A = LEXY_VERIFY_P(production, "A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
 
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-
-                auto end = str;
-                if ('A' <= *end && *end <= 'Z')
-                {
-                    ++end;
-                    while ('a' <= *end && *end <= 'z')
-                        ++end;
-                }
-                LEXY_VERIFY_CHECK(e.end() == end);
-
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -2);
-
-        auto a = LEXY_VERIFY("A");
-        CHECK(a == 0);
-        auto b = LEXY_VERIFY("B");
-        CHECK(b == 1);
-
-        auto unknown = LEXY_VERIFY("Unknown");
-        CHECK(unknown == -1);
-        auto non_alpha = LEXY_VERIFY("123");
-        CHECK(non_alpha == -2);
-        auto ab = LEXY_VERIFY("Ab");
-        CHECK(ab == -1);
+        auto Unknown = LEXY_VERIFY_P(production, "Unknown");
+        CHECK(Unknown.status == test_result::fatal_error);
+        CHECK(Unknown.trace
+              == test_trace().token("identifier", "Unknown").error(0, 7, "my error").cancel());
     }
 }
+

@@ -8,81 +8,83 @@
 
 TEST_CASE("dsl::newline")
 {
-    static constexpr auto rule = lexy::dsl::newline;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = lexy::dsl::newline;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str);
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("newline"));
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "newline").cancel());
 
-    auto nl = LEXY_VERIFY("\n");
-    CHECK(nl == 1);
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace == test_trace().expected_char_class(0, "newline").cancel());
 
-    auto cr = LEXY_VERIFY("\r");
-    CHECK(cr == -1);
-    auto cr_nl = LEXY_VERIFY("\r\n");
-    CHECK(cr_nl == 2);
+    auto n = LEXY_VERIFY("\n");
+    CHECK(n.status == test_result::success);
+    CHECK(n.trace == test_trace().token("\\n"));
+    auto rn = LEXY_VERIFY("\r\n");
+    CHECK(rn.status == test_result::success);
+    CHECK(rn.trace == test_trace().token("\\r\\n"));
 
-    auto extra_cr_nl = LEXY_VERIFY("\n\r\n");
-    CHECK(extra_cr_nl == 1);
-    auto extra_nl = LEXY_VERIFY("\r\n\n");
-    CHECK(extra_nl == 2);
+    auto r = LEXY_VERIFY("\r");
+    CHECK(r.status == test_result::fatal_error);
+    CHECK(r.trace == test_trace().expected_char_class(0, "newline").error_token("\\r").cancel());
+
+    auto nr = LEXY_VERIFY("\n\r");
+    CHECK(nr.status == test_result::success);
+    CHECK(nr.trace == test_trace().token("\\n"));
+    auto nn = LEXY_VERIFY("\n\n");
+    CHECK(nn.status == test_result::success);
+    CHECK(nn.trace == test_trace().token("\\n"));
+    auto nrn = LEXY_VERIFY("\n\r\n");
+    CHECK(nrn.status == test_result::success);
+    CHECK(nrn.trace == test_trace().token("\\n"));
+
+    auto utf16 = LEXY_VERIFY(u"\r\n");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("\\r\\n"));
 }
 
 TEST_CASE("dsl::eol")
 {
-    static constexpr auto rule = lexy::dsl::eol;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = lexy::dsl::eol;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str);
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOL"));
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.trace == test_trace().token("EOL", ""));
 
-    auto nl = LEXY_VERIFY("\n");
-    CHECK(nl == 1);
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace == test_trace().expected_char_class(0, "EOL").cancel());
 
-    auto cr = LEXY_VERIFY("\r");
-    CHECK(cr == -1);
-    auto cr_nl = LEXY_VERIFY("\r\n");
-    CHECK(cr_nl == 2);
+    auto n = LEXY_VERIFY("\n");
+    CHECK(n.status == test_result::success);
+    CHECK(n.trace == test_trace().token("EOL", "\\n"));
+    auto rn = LEXY_VERIFY("\r\n");
+    CHECK(rn.status == test_result::success);
+    CHECK(rn.trace == test_trace().token("EOL", "\\r\\n"));
 
-    auto extra_cr_nl = LEXY_VERIFY("\n\r\n");
-    CHECK(extra_cr_nl == 1);
-    auto extra_nl = LEXY_VERIFY("\r\n\n");
-    CHECK(extra_nl == 2);
+    auto r = LEXY_VERIFY("\r");
+    CHECK(r.status == test_result::fatal_error);
+    CHECK(r.trace == test_trace().expected_char_class(0, "EOL").error_token("\\r").cancel());
+
+    auto nr = LEXY_VERIFY("\n\r");
+    CHECK(nr.status == test_result::success);
+    CHECK(nr.trace == test_trace().token("EOL", "\\n"));
+    auto nn = LEXY_VERIFY("\n\n");
+    CHECK(nn.status == test_result::success);
+    CHECK(nn.trace == test_trace().token("EOL", "\\n"));
+    auto nrn = LEXY_VERIFY("\n\r\n");
+    CHECK(nrn.status == test_result::success);
+    CHECK(nrn.trace == test_trace().token("EOL", "\\n"));
+
+    auto utf16 = LEXY_VERIFY(u"\r\n");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("EOL", "\\r\\n"));
 }
 

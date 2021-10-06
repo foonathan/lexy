@@ -5,130 +5,204 @@
 #include <lexy/dsl/times.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
 
-TEST_CASE("times")
+TEST_CASE("dsl::times<N>(rule)")
 {
-    SUBCASE("no sep")
-    {
-        static constexpr auto rule = twice(LEXY_LIT("abc") + label<1>);
-        CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::times<3>(dsl::capture(LEXY_LIT("abc")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback = [](const char* begin, lexy::string_lexeme<> a,
+                                 lexy::string_lexeme<> b, lexy::string_lexeme<> c) {
+        CHECK(a.begin() == begin);
+        CHECK(a.size() == 3);
+        CHECK(a[0] == 'a');
+        CHECK(a[1] == 'b');
+        CHECK(a[2] == 'c');
 
-            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 6);
-                return 0;
-            }
+        CHECK(b.begin() == begin + 3);
+        CHECK(b.size() == 3);
+        CHECK(b[0] == 'a');
+        CHECK(b[1] == 'b');
+        CHECK(b[2] == 'c');
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-        };
+        CHECK(c.begin() == begin + 6);
+        CHECK(c.size() == 3);
+        CHECK(c[0] == 'a');
+        CHECK(c[1] == 'b');
+        CHECK(c[2] == 'c');
 
-        auto zero = LEXY_VERIFY("");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == -1);
+        return 0;
+    };
 
-        auto two = LEXY_VERIFY("abcabc");
-        CHECK(two == 0);
-    }
-    SUBCASE("sep")
-    {
-        static constexpr auto rule = twice(LEXY_LIT("abc") + label<1>, sep(LEXY_LIT(",")));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+    auto one = LEXY_VERIFY("abc");
+    CHECK(one.status == test_result::fatal_error);
+    CHECK(one.trace == test_trace().token("abc").expected_literal(3, "abc", 0).cancel());
+    auto two = LEXY_VERIFY("abcabc");
+    CHECK(two.status == test_result::fatal_error);
+    CHECK(two.trace
+          == test_trace().token("abc").token("abc").expected_literal(6, "abc", 0).cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto three = LEXY_VERIFY("abcabcabc");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("abc").token("abc").token("abc"));
+    auto four = LEXY_VERIFY("abcabcabcabc");
+    CHECK(four.status == test_result::success);
+    CHECK(four.trace == test_trace().token("abc").token("abc").token("abc"));
+}
 
-            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
-            {
-                LEXY_VERIFY_CHECK((cur - str == 7 || cur - str == 8));
-                return 0;
-            }
+TEST_CASE("dsl::times<N>(rule, dsl::sep())")
+{
+    constexpr auto rule = dsl::times<3>(dsl::capture(LEXY_LIT("abc")), dsl::sep(LEXY_LIT(",")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                if (e.string() == lexy::_detail::string_view("abc"))
-                    return -1;
-                else if (e.character() == ',')
-                    return -2;
-                else
-                    LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator>)
-            {
-                return -3;
-            }
-        };
+    constexpr auto callback = [](const char* begin, lexy::string_lexeme<> a,
+                                 lexy::string_lexeme<> b, lexy::string_lexeme<> c) {
+        CHECK(a.begin() == begin);
+        CHECK(a.size() == 3);
+        CHECK(a[0] == 'a');
+        CHECK(a[1] == 'b');
+        CHECK(a[2] == 'c');
 
-        auto zero = LEXY_VERIFY("");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == -2);
+        CHECK(b.begin() == begin + 4);
+        CHECK(b.size() == 3);
+        CHECK(b[0] == 'a');
+        CHECK(b[1] == 'b');
+        CHECK(b[2] == 'c');
 
-        auto two = LEXY_VERIFY("abc,abc");
-        CHECK(two == 0);
+        CHECK(c.begin() == begin + 8);
+        CHECK(c.size() == 3);
+        CHECK(c[0] == 'a');
+        CHECK(c[1] == 'b');
+        CHECK(c[2] == 'c');
 
-        auto no_sep = LEXY_VERIFY("abcabc");
-        CHECK(no_sep == -2);
+        return 0;
+    };
 
-        auto trailing_sep = LEXY_VERIFY("abc,abc,");
-        CHECK(trailing_sep.value == 0);
-        CHECK(trailing_sep.errors(-3));
-    }
-    SUBCASE("trailing_sep")
-    {
-        static constexpr auto rule = twice(LEXY_LIT("abc") + label<1>, trailing_sep(LEXY_LIT(",")));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto one = LEXY_VERIFY("abc");
+    CHECK(one.status == test_result::fatal_error);
+    CHECK(one.trace == test_trace().token("abc").expected_literal(3, ",", 0).cancel());
+    auto one_c = LEXY_VERIFY("abc,");
+    CHECK(one_c.status == test_result::fatal_error);
+    CHECK(one_c.trace
+          == test_trace().token("abc").token(",").expected_literal(4, "abc", 0).cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur, id<1>, id<1>)
-            {
-                if (cur - str == 7)
-                    return 0;
-                else if (cur - str == 8)
-                    return 1; // trailing sep
-                else
-                    LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
+    auto two = LEXY_VERIFY("abc,abc");
+    auto two_trace
+        = test_trace().token("abc").token(",").token("abc").expected_literal(7, ",", 0).cancel();
+    CHECK(two.status == test_result::fatal_error);
+    CHECK(two.trace == two_trace);
+    auto two_c       = LEXY_VERIFY("abc,abc,");
+    auto two_c_trace = test_trace()
+                           .token("abc")
+                           .token(",")
+                           .token("abc")
+                           .token(",")
+                           .expected_literal(8, "abc", 0)
+                           .cancel();
+    CHECK(two_c.status == test_result::fatal_error);
+    CHECK(two_c.trace == two_c_trace);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                if (e.string() == lexy::_detail::string_view("abc"))
-                    return -1;
-                else if (e.character() == ',')
-                    return -2;
-                else
-                    LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-        };
+    auto three = LEXY_VERIFY("abc,abc,abc");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("abc").token(",").token("abc").token(",").token("abc"));
 
-        auto zero = LEXY_VERIFY("");
-        CHECK(zero == -1);
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == -2);
+    auto three_c       = LEXY_VERIFY("abc,abc,abc,");
+    auto three_c_trace = test_trace()
+                             .token("abc")
+                             .token(",")
+                             .token("abc")
+                             .token(",")
+                             .token("abc")
+                             .token(",")
+                             .error(12, 12, "unexpected trailing separator");
+    CHECK(three_c.status == test_result::recovered_error);
+    CHECK(three_c.trace == three_c_trace);
+}
 
-        auto two = LEXY_VERIFY("abc,abc");
-        CHECK(two == 0);
+TEST_CASE("dsl::times<N>(rule, dsl::trailing_sep())")
+{
+    constexpr auto rule
+        = dsl::times<3>(dsl::capture(LEXY_LIT("abc")), dsl::trailing_sep(LEXY_LIT(",")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto no_sep = LEXY_VERIFY("abcabc");
-        CHECK(no_sep == -2);
+    constexpr auto callback = [](const char* begin, lexy::string_lexeme<> a,
+                                 lexy::string_lexeme<> b, lexy::string_lexeme<> c) {
+        CHECK(a.begin() == begin);
+        CHECK(a.size() == 3);
+        CHECK(a[0] == 'a');
+        CHECK(a[1] == 'b');
+        CHECK(a[2] == 'c');
 
-        auto trailing_sep = LEXY_VERIFY("abc,abc,");
-        CHECK(trailing_sep == 1);
-    }
+        CHECK(b.begin() == begin + 4);
+        CHECK(b.size() == 3);
+        CHECK(b[0] == 'a');
+        CHECK(b[1] == 'b');
+        CHECK(b[2] == 'c');
+
+        CHECK(c.begin() == begin + 8);
+        CHECK(c.size() == 3);
+        CHECK(c[0] == 'a');
+        CHECK(c[1] == 'b');
+        CHECK(c[2] == 'c');
+
+        return 0;
+    };
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+    auto one = LEXY_VERIFY("abc");
+    CHECK(one.status == test_result::fatal_error);
+    CHECK(one.trace == test_trace().token("abc").expected_literal(3, ",", 0).cancel());
+    auto one_c = LEXY_VERIFY("abc,");
+    CHECK(one_c.status == test_result::fatal_error);
+    CHECK(one_c.trace
+          == test_trace().token("abc").token(",").expected_literal(4, "abc", 0).cancel());
+
+    auto two = LEXY_VERIFY("abc,abc");
+    auto two_trace
+        = test_trace().token("abc").token(",").token("abc").expected_literal(7, ",", 0).cancel();
+    CHECK(two.status == test_result::fatal_error);
+    CHECK(two.trace == two_trace);
+    auto two_c       = LEXY_VERIFY("abc,abc,");
+    auto two_c_trace = test_trace()
+                           .token("abc")
+                           .token(",")
+                           .token("abc")
+                           .token(",")
+                           .expected_literal(8, "abc", 0)
+                           .cancel();
+    CHECK(two_c.status == test_result::fatal_error);
+    CHECK(two_c.trace == two_c_trace);
+
+    auto three = LEXY_VERIFY("abc,abc,abc");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("abc").token(",").token("abc").token(",").token("abc"));
+
+    auto three_c = LEXY_VERIFY("abc,abc,abc,");
+    auto three_c_trace
+        = test_trace().token("abc").token(",").token("abc").token(",").token("abc").token(",");
+    CHECK(three_c.status == test_result::success);
+    CHECK(three_c.trace == three_c_trace);
+}
+
+TEST_CASE("dsl::twice()")
+{
+    constexpr auto no_sep = dsl::twice(LEXY_LIT("abc"));
+    CHECK(lexy::is_rule<decltype(no_sep)>);
+    CHECK(equivalent_rules(no_sep, dsl::times<2>(LEXY_LIT("abc"))));
+
+    constexpr auto sep = dsl::twice(LEXY_LIT("abc"), dsl::sep(LEXY_LIT(",")));
+    CHECK(lexy::is_rule<decltype(no_sep)>);
+    CHECK(equivalent_rules(sep, dsl::times<2>(LEXY_LIT("abc"), dsl::sep(LEXY_LIT(",")))));
 }
 

@@ -7,557 +7,187 @@
 #include "verify.hpp"
 #include <cctype>
 
-TEST_CASE("dsl::ascii::*")
+namespace
 {
-    SUBCASE("control")
+constexpr auto callback = token_callback;
+
+template <typename Rule, typename Predicate>
+void test(const char* name, Rule rule, Predicate pred)
+{
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, name).cancel());
+
+    auto non_ascii = LEXY_VERIFY("\x80");
+    CHECK(non_ascii.status == test_result::fatal_error);
+    CHECK(non_ascii.trace == test_trace().expected_char_class(0, name).cancel());
+
+    for (auto c = 0; c <= 127; ++c)
     {
-        static constexpr auto rule = lexy::dsl::ascii::control;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+        const char input[] = {char(c), char(c)};
+        auto       cp      = lexy::code_point(static_cast<char32_t>(c));
 
-        struct callback
+        auto result = verify(rule, lexy::string_input(input, 2), callback);
+        if (pred(c))
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.control"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
+            CHECK(result.status == test_result::success);
+            CHECK(result.trace == test_trace().token(doctest::toString(cp).c_str()));
+        }
+        else
         {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::iscntrl(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
+            CHECK(result.status == test_result::fatal_error);
+            CHECK(result.trace == test_trace().expected_char_class(0, name).cancel());
         }
     }
-    SUBCASE("blank")
+
+    auto utf16 = LEXY_VERIFY(u"A");
+    if (pred('A'))
     {
-        static constexpr auto rule = lexy::dsl::ascii::blank;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.blank"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isblank(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
+        CHECK(utf16.status == test_result::success);
+        CHECK(utf16.trace == test_trace().token("A"));
     }
-    SUBCASE("newline")
+    else
     {
-        static constexpr auto rule = lexy::dsl::ascii::newline;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.newline"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = (c == '\n' || c == '\r') ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
+        CHECK(utf16.status == test_result::fatal_error);
+        CHECK(utf16.trace == test_trace().expected_char_class(0, name).cancel());
     }
-    SUBCASE("other_space")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::other_space;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.other-space"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = (c == '\f' || c == '\v') ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("space")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::space;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.space"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isspace(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("lower")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::lower;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.lower"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::islower(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("upper")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::upper;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.upper"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isupper(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("alpha")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::alpha;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.alpha"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isalpha(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("alpha_underscore")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::alpha_underscore;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.alpha-underscore"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isalpha(c) != 0 || c == '_' ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("digit")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::digit;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.digit"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isdigit(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("alpha_digit")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::alpha_digit;
-        CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::ascii::alnum)>);
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.alpha-digit"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isalnum(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("alpha_digit_underscore")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::alpha_digit_underscore;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.alpha-digit-underscore"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isalnum(c) != 0 || c == '_' ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("punct")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::punct;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.punct"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::ispunct(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("graph")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::graph;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.graph"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isgraph(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("print")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::print;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII.print"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[]  = {char(c), char(c)};
-            auto       result = std::isprint(c) != 0 ? 0 : -1;
-            CHECK(verify<callback>(rule, str, 2) == result);
-        }
-    }
-    SUBCASE("character")
-    {
-        static constexpr auto rule = lexy::dsl::ascii::character;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("ASCII"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        for (auto c = 0; c <= 127; ++c)
-        {
-            const char str[] = {char(c), char(c)};
-            CHECK(verify<callback>(rule, str, 2) == 0);
-        }
-    }
+}
+} // namespace
+
+TEST_CASE("dsl::ascii::control")
+{
+    constexpr auto rule = dsl::ascii::control;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.control", rule, [](int c) { return std::iscntrl(c); });
+}
+
+TEST_CASE("dsl::ascii::blank")
+{
+    constexpr auto rule = dsl::ascii::blank;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.blank", rule, [](int c) { return std::isblank(c); });
+}
+
+TEST_CASE("dsl::ascii::newline")
+{
+    constexpr auto rule = dsl::ascii::newline;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.newline", rule, [](int c) { return c == '\n' || c == '\r'; });
+}
+
+TEST_CASE("dsl::ascii::other_space")
+{
+    constexpr auto rule = dsl::ascii::other_space;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.other-space", rule, [](int c) { return c == '\v' || c == '\f'; });
+}
+
+TEST_CASE("dsl::ascii::space")
+{
+    constexpr auto rule = dsl::ascii::space;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.space", rule, [](int c) { return std::isspace(c); });
+}
+
+TEST_CASE("dsl::ascii::digit")
+{
+    constexpr auto rule = dsl::ascii::digit;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.digit", rule, [](int c) { return std::isdigit(c); });
+}
+
+TEST_CASE("dsl::ascii::lower")
+{
+    constexpr auto rule = dsl::ascii::lower;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.lower", rule, [](int c) { return std::islower(c); });
+}
+
+TEST_CASE("dsl::ascii::upper")
+{
+    constexpr auto rule = dsl::ascii::upper;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.upper", rule, [](int c) { return std::isupper(c); });
+}
+
+TEST_CASE("dsl::ascii::alpha")
+{
+    constexpr auto rule = dsl::ascii::alpha;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.alpha", rule, [](int c) { return std::isalpha(c); });
+}
+
+TEST_CASE("dsl::ascii::alpha_underscore")
+{
+    constexpr auto rule = dsl::ascii::alpha_underscore;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.alpha-underscore", rule, [](int c) { return (std::isalpha(c) != 0) || c == '_'; });
+}
+
+TEST_CASE("dsl::ascii::alpha_digit")
+{
+    constexpr auto rule = dsl::ascii::alpha_digit;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.alpha-digit", rule, [](int c) { return std::isalnum(c); });
+}
+
+TEST_CASE("dsl::ascii::alpha_digit_underscore")
+{
+    constexpr auto rule = dsl::ascii::alpha_digit_underscore;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.alpha-digit-underscore", rule,
+         [](int c) { return (std::isalnum(c) != 0) || c == '_'; });
+}
+
+TEST_CASE("dsl::ascii::alnum")
+{
+    constexpr auto rule = dsl::ascii::alnum;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::ascii::alpha_digit));
+}
+
+TEST_CASE("dsl::ascii::punct")
+{
+    constexpr auto rule = dsl::ascii::punct;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.punct", rule, [](int c) { return std::ispunct(c); });
+}
+
+TEST_CASE("dsl::ascii::graph")
+{
+    constexpr auto rule = dsl::ascii::graph;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.graph", rule, [](int c) { return std::isgraph(c); });
+}
+
+TEST_CASE("dsl::ascii::print")
+{
+    constexpr auto rule = dsl::ascii::print;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.print", rule, [](int c) { return std::isprint(c); });
+}
+
+TEST_CASE("dsl::ascii::character")
+{
+    constexpr auto rule = dsl::ascii::character;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII", rule, [](int c) { return 0x00 <= c && c <= 0x7F; });
 }
 

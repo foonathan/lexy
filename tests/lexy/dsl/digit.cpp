@@ -37,7 +37,7 @@ TEST_CASE("dsl::binary")
     CHECK(radix::name() == lexy::_detail::string_view("digit.binary"));
 
     for (auto digit = 0; digit < 2; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
 
     radix_match<radix>('0', '1');
 }
@@ -49,7 +49,7 @@ TEST_CASE("dsl::octal")
     CHECK(radix::name() == lexy::_detail::string_view("digit.octal"));
 
     for (auto digit = 0; digit < 8; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7');
 }
@@ -61,7 +61,7 @@ TEST_CASE("dsl::decimal")
     CHECK(radix::name() == lexy::_detail::string_view("digit.decimal"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
 }
@@ -73,9 +73,9 @@ TEST_CASE("dsl::hex_lower")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex-lower"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value(test_encoding::char_type('a' + digit)) == 10 + digit);
+        CHECK(radix::value('a' + digit) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
                        'f');
@@ -88,9 +88,9 @@ TEST_CASE("dsl::hex_upper")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex-upper"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value(test_encoding::char_type('A' + digit)) == 10 + digit);
+        CHECK(radix::value('A' + digit) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
                        'F');
@@ -103,11 +103,11 @@ TEST_CASE("dsl::hex")
     CHECK(radix::name() == lexy::_detail::string_view("digit.hex"));
 
     for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value(test_encoding::char_type('0' + digit)) == digit);
+        CHECK(radix::value('0' + digit) == digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value(test_encoding::char_type('A' + digit)) == 10 + digit);
+        CHECK(radix::value('A' + digit) == 10 + digit);
     for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value(test_encoding::char_type('a' + digit)) == 10 + digit);
+        CHECK(radix::value('a' + digit) == 10 + digit);
 
     radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
                        'f', 'A', 'B', 'C', 'D', 'E', 'F');
@@ -115,352 +115,297 @@ TEST_CASE("dsl::hex")
 
 TEST_CASE("dsl::zero")
 {
-    static constexpr auto rule = lexy::dsl::zero;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::zero;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(cur == str + 1);
-            return 0;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("digit.zero"));
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.zero").cancel());
 
     auto zero = LEXY_VERIFY("0");
-    CHECK(zero == 0);
-    auto zero_zero = LEXY_VERIFY("00");
-    CHECK(zero_zero == 0);
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
+    auto zerozero = LEXY_VERIFY("00");
+    CHECK(zerozero.status == test_result::success);
+    CHECK(zerozero.trace == test_trace().token("0"));
 
     auto nine = LEXY_VERIFY("9");
-    CHECK(nine == -1);
+    CHECK(nine.status == test_result::fatal_error);
+    CHECK(nine.trace == test_trace().expected_char_class(0, "digit.zero").cancel());
+
+    auto utf16 = LEXY_VERIFY(u"0");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("0"));
 }
 
 TEST_CASE("dsl::digit")
 {
-    static constexpr auto rule = lexy::dsl::digit<lexy::dsl::octal>;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    // Exhaustive tests of base done above.
+    constexpr auto rule = dsl::digit<dsl::octal>;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(cur == str + 1);
-            return *str - '0';
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("digit.octal"));
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.octal").cancel());
 
     auto zero = LEXY_VERIFY("0");
-    CHECK(zero == 0);
-
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
     auto six = LEXY_VERIFY("6");
-    CHECK(six == 6);
-
-    auto three_seven = LEXY_VERIFY("37");
-    CHECK(three_seven == 3);
+    CHECK(six.status == test_result::success);
+    CHECK(six.trace == test_trace().token("6"));
 
     auto nine = LEXY_VERIFY("9");
-    CHECK(nine == -1);
+    CHECK(nine.status == test_result::fatal_error);
+    CHECK(nine.trace == test_trace().expected_char_class(0, "digit.octal").cancel());
+
+    auto three_seven = LEXY_VERIFY("37");
+    CHECK(three_seven.status == test_result::success);
+    CHECK(three_seven.trace == test_trace().token("3"));
+
+    auto utf16 = LEXY_VERIFY(u"0");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("0"));
 }
 
-TEST_CASE("dsl::digits")
+TEST_CASE("dsl::digits<>")
 {
-    SUBCASE("basic")
-    {
-        static constexpr auto rule = lexy::dsl::digits<>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    constexpr auto rule = dsl::digits<>;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback = token_callback;
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-        };
+    auto zero = LEXY_VERIFY("0");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
+    auto six = LEXY_VERIFY("6");
+    CHECK(six.status == test_result::success);
+    CHECK(six.trace == test_trace().token("6"));
+    auto three_seven = LEXY_VERIFY("37");
+    CHECK(three_seven.status == test_result::success);
+    CHECK(three_seven.trace == test_trace().token("37"));
+    auto one_two_three = LEXY_VERIFY("123");
+    CHECK(one_two_three.status == test_result::success);
+    CHECK(one_two_three.trace == test_trace().token("123"));
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+    auto zero_zero_seven = LEXY_VERIFY("007");
+    CHECK(zero_zero_seven.status == test_result::success);
+    CHECK(zero_zero_seven.trace == test_trace().token("007"));
 
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == 1);
+    auto utf16 = LEXY_VERIFY(u"11");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("11"));
+}
 
-        auto one = LEXY_VERIFY("1");
-        CHECK(one == 1);
+TEST_CASE("dsl::digits<>.no_leading_zero()")
+{
+    constexpr auto rule = dsl::digits<>.no_leading_zero();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        auto one_zero_one = LEXY_VERIFY("101");
-        CHECK(one_zero_one == 3);
+    constexpr auto callback = token_callback;
 
-        auto zero_zero_seven = LEXY_VERIFY("007");
-        CHECK(zero_zero_seven == 3);
-    }
-    SUBCASE("no leading zero")
-    {
-        static constexpr auto rule = lexy::dsl::digits<>.no_leading_zero();
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto zero = LEXY_VERIFY("0");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
+    auto six = LEXY_VERIFY("6");
+    CHECK(six.status == test_result::success);
+    CHECK(six.trace == test_trace().token("6"));
+    auto three_seven = LEXY_VERIFY("37");
+    CHECK(three_seven.status == test_result::success);
+    CHECK(three_seven.trace == test_trace().token("37"));
+    auto one_two_three = LEXY_VERIFY("123");
+    CHECK(one_two_three.status == test_result::success);
+    CHECK(one_two_three.trace == test_trace().token("123"));
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    auto zero_zero_seven = LEXY_VERIFY("007");
+    CHECK(zero_zero_seven.status == test_result::fatal_error);
+    CHECK(zero_zero_seven.trace
+          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == str + 1);
-                return -2;
-            }
-        };
+    auto utf16 = LEXY_VERIFY(u"11");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("11"));
+}
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+TEST_CASE("dsl::digits<>.sep()")
+{
+    constexpr auto rule = dsl::digits<>.sep(LEXY_LIT("_"));
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == 1);
+    constexpr auto callback = token_callback;
 
-        auto one = LEXY_VERIFY("1");
-        CHECK(one == 1);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-        auto one_zero_one = LEXY_VERIFY("101");
-        CHECK(one_zero_one == 3);
+    auto zero = LEXY_VERIFY("0");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
+    auto six = LEXY_VERIFY("6");
+    CHECK(six.status == test_result::success);
+    CHECK(six.trace == test_trace().token("6"));
+    auto three_seven = LEXY_VERIFY("37");
+    CHECK(three_seven.status == test_result::success);
+    CHECK(three_seven.trace == test_trace().token("37"));
+    auto one_two_three = LEXY_VERIFY("123");
+    CHECK(one_two_three.status == test_result::success);
+    CHECK(one_two_three.trace == test_trace().token("123"));
 
-        auto zero_zero_seven = LEXY_VERIFY("007");
-        CHECK(zero_zero_seven == -2);
-    }
-    SUBCASE("sep")
-    {
-        static constexpr auto rule = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick);
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    auto zero_zero_seven = LEXY_VERIFY("007");
+    CHECK(zero_zero_seven.status == test_result::success);
+    CHECK(zero_zero_seven.trace == test_trace().token("007"));
 
-        struct callback
-        {
-            const char* str;
+    auto with_sep = LEXY_VERIFY("1_2_3");
+    CHECK(with_sep.status == test_result::success);
+    CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    auto leading_sep = LEXY_VERIFY("_1");
+    CHECK(leading_sep.status == test_result::fatal_error);
+    CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
+    auto trailing_sep = LEXY_VERIFY("1_");
+    CHECK(trailing_sep.status == test_result::fatal_error);
+    CHECK(trailing_sep.trace
+          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-        };
+    auto utf16 = LEXY_VERIFY(u"11");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("11"));
+}
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+TEST_CASE("dsl::digits<>.sep().no_leading_zero")
+{
+    constexpr auto rule = dsl::digits<>.sep(LEXY_LIT("_")).no_leading_zero();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+    CHECK(equivalent_rules(rule, dsl::digits<>.no_leading_zero().sep(LEXY_LIT("_"))));
 
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == 1);
+    constexpr auto callback = token_callback;
 
-        auto one = LEXY_VERIFY("1");
-        CHECK(one == 1);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-        auto one_zero_one = LEXY_VERIFY("1'01");
-        CHECK(one_zero_one == 4);
+    auto zero = LEXY_VERIFY("0");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("0"));
+    auto six = LEXY_VERIFY("6");
+    CHECK(six.status == test_result::success);
+    CHECK(six.trace == test_trace().token("6"));
+    auto three_seven = LEXY_VERIFY("37");
+    CHECK(three_seven.status == test_result::success);
+    CHECK(three_seven.trace == test_trace().token("37"));
+    auto one_two_three = LEXY_VERIFY("123");
+    CHECK(one_two_three.status == test_result::success);
+    CHECK(one_two_three.trace == test_trace().token("123"));
 
-        auto zero_zero_seven = LEXY_VERIFY("00'7");
-        CHECK(zero_zero_seven == 4);
+    auto zero_zero_seven = LEXY_VERIFY("007");
+    CHECK(zero_zero_seven.status == test_result::fatal_error);
+    CHECK(zero_zero_seven.trace
+          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
+    auto zero_sep_zero_seven = LEXY_VERIFY("0_07");
+    CHECK(zero_sep_zero_seven.status == test_result::fatal_error);
+    CHECK(zero_sep_zero_seven.trace
+          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
 
-        auto leading_tick = LEXY_VERIFY("'0");
-        CHECK(leading_tick == -1);
-        auto trailing_tick = LEXY_VERIFY("0'");
-        CHECK(trailing_tick == -1);
-    }
-    SUBCASE("sep + no leading zero")
-    {
-        static constexpr auto rule
-            = lexy::dsl::digits<>.sep(lexy::dsl::digit_sep_tick).no_leading_zero();
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    auto with_sep = LEXY_VERIFY("1_2_3");
+    CHECK(with_sep.status == test_result::success);
+    CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
-        constexpr auto equivalent
-            = lexy::dsl::digits<>.no_leading_zero().sep(lexy::dsl::digit_sep_tick);
-        CHECK(std::is_same_v<decltype(rule), decltype(equivalent)>);
+    auto leading_sep = LEXY_VERIFY("_1");
+    CHECK(leading_sep.status == test_result::fatal_error);
+    CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
+    auto trailing_sep = LEXY_VERIFY("1_");
+    CHECK(trailing_sep.status == test_result::fatal_error);
+    CHECK(trailing_sep.trace
+          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto utf16 = LEXY_VERIFY(u"11");
+    CHECK(utf16.status == test_result::success);
+    CHECK(utf16.trace == test_trace().token("11"));
+}
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::forbidden_leading_zero> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == str + 1);
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == 1);
-
-        auto one = LEXY_VERIFY("1");
-        CHECK(one == 1);
-
-        auto one_zero_one = LEXY_VERIFY("1'01");
-        CHECK(one_zero_one == 4);
-
-        auto zero_zero_seven = LEXY_VERIFY("00'7");
-        CHECK(zero_zero_seven == -2);
-
-        auto leading_tick = LEXY_VERIFY("'0");
-        CHECK(leading_tick == -1);
-        auto trailing_tick = LEXY_VERIFY("0'");
-        CHECK(trailing_tick == -2);
-
-        auto zero_tick_one = LEXY_VERIFY("0'1");
-        CHECK(zero_tick_one == -2);
-    }
+TEST_CASE("digit separators")
+{
+    CHECK(equivalent_rules(dsl::digit_sep_tick, LEXY_LIT("'")));
+    CHECK(equivalent_rules(dsl::digit_sep_underscore, LEXY_LIT("_")));
 }
 
 TEST_CASE("dsl::n_digits")
 {
-    SUBCASE("basic")
-    {
-        static constexpr auto rule = lexy::dsl::n_digits<3>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    constexpr auto rule = dsl::n_digits<3>;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback = token_callback;
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-        };
+    auto one = LEXY_VERIFY("1");
+    CHECK(one.status == test_result::fatal_error);
+    CHECK(one.trace
+          == test_trace().expected_char_class(1, "digit.decimal").error_token("1").cancel());
+    auto two = LEXY_VERIFY("12");
+    CHECK(two.status == test_result::fatal_error);
+    CHECK(two.trace
+          == test_trace().expected_char_class(2, "digit.decimal").error_token("12").cancel());
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == -1);
+    auto three = LEXY_VERIFY("123");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("123"));
+    auto four = LEXY_VERIFY("1234");
+    CHECK(four.status == test_result::success);
+    CHECK(four.trace == test_trace().token("123"));
+}
 
-        auto one_zero_one = LEXY_VERIFY("101");
-        CHECK(one_zero_one == 3);
+TEST_CASE("dsl::n_digits.sep()")
+{
+    constexpr auto rule = dsl::n_digits<3>.sep(LEXY_LIT("_"));
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        auto zero_zero_seven = LEXY_VERIFY("007");
-        CHECK(zero_zero_seven == 3);
+    constexpr auto callback = token_callback;
 
-        auto four_digits = LEXY_VERIFY("1234");
-        CHECK(four_digits == 3);
-    }
-    SUBCASE("sep")
-    {
-        static constexpr auto rule = lexy::dsl::n_digits<3>.sep(lexy::dsl::digit_sep_tick);
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto one = LEXY_VERIFY("1");
+    CHECK(one.status == test_result::fatal_error);
+    CHECK(one.trace
+          == test_trace().expected_char_class(1, "digit.decimal").error_token("1").cancel());
+    auto two = LEXY_VERIFY("12");
+    CHECK(two.status == test_result::fatal_error);
+    CHECK(two.trace
+          == test_trace().expected_char_class(2, "digit.decimal").error_token("12").cancel());
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    auto three = LEXY_VERIFY("123");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("123"));
+    auto four = LEXY_VERIFY("1234");
+    CHECK(four.status == test_result::success);
+    CHECK(four.trace == test_trace().token("123"));
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("digit.decimal"));
-                return -1;
-            }
-        };
+    auto with_sep = LEXY_VERIFY("1_2_3");
+    CHECK(with_sep.status == test_result::success);
+    CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-        auto zero = LEXY_VERIFY("0");
-        CHECK(zero == -1);
-
-        auto one_zero_one = LEXY_VERIFY("1'01");
-        CHECK(one_zero_one == 4);
-
-        auto zero_zero_seven = LEXY_VERIFY("00'7");
-        CHECK(zero_zero_seven == 4);
-
-        auto leading_tick = LEXY_VERIFY("'0");
-        CHECK(leading_tick == -1);
-        auto trailing_tick = LEXY_VERIFY("123'");
-        CHECK(trailing_tick == 3);
-
-        auto four_digits = LEXY_VERIFY("1'2'3'4");
-        CHECK(four_digits == 5);
-    }
+    auto leading_sep = LEXY_VERIFY("_1");
+    CHECK(leading_sep.status == test_result::fatal_error);
+    CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
+    auto trailing_sep = LEXY_VERIFY("1_");
+    CHECK(trailing_sep.status == test_result::fatal_error);
+    CHECK(trailing_sep.trace
+          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
 }
 

@@ -115,6 +115,9 @@ To enable whitespace skipping inside a token production, put all logic into a ch
 Inside the child production, whitespace is skipped again, as seen by the `inner_inner` production.
 =====
 
+CAUTION: If a non-root production has a `::whitespace` member, this defines whitespace only for this current production.
+Any child productions will not consider this rule, as the algorithm only considers the current production and the root production.
+
 TIP: Use `whitespace` to skip optional whitespace at the beginning of the input.
 
 TIP: Use {{% docref "lexy::dsl::ascii::space" %}} to skip all ASCII whitespace characters.

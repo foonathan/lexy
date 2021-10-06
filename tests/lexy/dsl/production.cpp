@@ -5,347 +5,357 @@
 #include <lexy/dsl/production.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/recover.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
-namespace p_basic
+namespace
 {
-struct prod
+struct with_whitespace
 {
-    static constexpr auto rule = LEXY_LIT("abc") + label<0>;
+    static constexpr auto whitespace = LEXY_LIT(".");
 };
-} // namespace p_basic
-
-namespace p_token
-{
-struct prod
-{
-    static constexpr auto rule = LEXY_LIT("abc");
-};
-} // namespace p_token
-
-namespace p_branch
-{
-struct prod
-{
-    static constexpr auto rule = LEXY_LIT("abc") >> label<0>;
-};
-} // namespace p_branch
-
-namespace p_branch_branch
-{
-struct prod
-{
-    static constexpr auto rule = lexy::dsl::p<p_branch::prod>;
-};
-} // namespace p_branch_branch
+} // namespace
 
 TEST_CASE("dsl::inline_")
 {
-    using namespace p_basic;
-    static constexpr auto rule = lexy::dsl::inline_<prod>;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    struct production : production_for<decltype(LEXY_LIT("abc"))>
+    {};
 
-    struct callback
-    {
-        const char* str;
+    constexpr auto rule = dsl::inline_<production>;
+    CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        LEXY_VERIFY_FN int success(const char* cur, id<0>)
-        {
-            LEXY_VERIFY_CHECK(cur - str == 3);
-            return 0;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-            return -1;
-        }
-    };
-
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
-
-    auto abc = LEXY_VERIFY("abc");
-    CHECK(abc == 0);
+    CHECK(equivalent_rules(rule, LEXY_LIT("abc")));
 }
 
 TEST_CASE("dsl::p")
 {
-    SUBCASE("basic")
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; }, [](const char*, auto) { return 1; });
+
+    SUBCASE("as rule")
     {
-        using namespace p_basic;
-        static constexpr auto rule = lexy::dsl::p<prod>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        struct production : production_for<decltype(dsl::capture(LEXY_LIT("a")) + dsl::position
+                                                    + dsl::try_(LEXY_LIT("bc")))>
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(prod, id<0>)
+            static constexpr auto name()
             {
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, int result)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 3);
-                LEXY_VERIFY_CHECK(result == 0);
-                return result;
-            }
-
-            LEXY_VERIFY_FN int error(prod, test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
+                return "production";
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        constexpr auto rule = dsl::p<production>;
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
+        auto empty = LEXY_VERIFY("");
+        auto empty_trace
+            = test_trace().production("production").expected_literal(0, "a", 0).cancel().cancel();
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == empty_trace);
+
+        auto a       = LEXY_VERIFY("a");
+        auto a_trace = test_trace()
+                           .production("production")
+                           .token("a")
+                           .position()
+                           .expected_literal(1, "bc", 0);
+        CHECK(a.status == test_result::recovered_error);
+        CHECK(a.value == 1);
+        CHECK(a.trace == a_trace);
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .production("production")
+                            .token("a")
+                            .position()
+                            .expected_literal(1, "bc", 1)
+                            .error_token("b");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.value == 1);
+        CHECK(ab.trace == ab_trace);
+
+        auto abc       = LEXY_VERIFY("abc");
+        auto abc_trace = test_trace().production("production").token("a").position().token("bc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == abc_trace);
     }
-    SUBCASE("token")
+    SUBCASE("as branch")
     {
-        using namespace p_token;
-        static constexpr auto rule = lexy::dsl::p<prod>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        struct production : production_for<decltype(dsl::capture(LEXY_LIT("a"))
+                                                    >> dsl::position + dsl::try_(LEXY_LIT("bc")))>
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(prod)
+            static constexpr auto name()
             {
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, int result)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 3);
-                LEXY_VERIFY_CHECK(result == 0);
-                return result;
-            }
-
-            LEXY_VERIFY_FN int error(prod, test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
+                return "production";
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        constexpr auto rule = dsl::if_(dsl::p<production>);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
+        auto empty       = LEXY_VERIFY("");
+        auto empty_trace = test_trace().production("production").cancel();
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == empty_trace);
+
+        auto a       = LEXY_VERIFY("a");
+        auto a_trace = test_trace()
+                           .production("production")
+                           .token("a")
+                           .position()
+                           .expected_literal(1, "bc", 0);
+        CHECK(a.status == test_result::recovered_error);
+        CHECK(a.value == 1);
+        CHECK(a.trace == a_trace);
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .production("production")
+                            .token("a")
+                            .position()
+                            .expected_literal(1, "bc", 1)
+                            .error_token("b");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.value == 1);
+        CHECK(ab.trace == ab_trace);
+
+        auto abc       = LEXY_VERIFY("abc");
+        auto abc_trace = test_trace().production("production").token("a").position().token("bc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == abc_trace);
     }
-    SUBCASE("branch")
+    SUBCASE("as nested branch")
     {
-        using namespace p_branch;
-        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> label<1>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        struct production : production_for<decltype(dsl::capture(LEXY_LIT("a"))
+                                                    >> dsl::position + dsl::try_(LEXY_LIT("bc")))>
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(prod, id<0>)
+            static constexpr auto name()
             {
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int result)
-            {
-                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "abc");
-                LEXY_VERIFY_CHECK(result == 0);
-                return result;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, id<1>)
-            {
-                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
-                return 1;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
+                return "production";
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        struct nested : production_for<decltype(dsl::p<production>)>
+        {
+            static constexpr auto name()
+            {
+                return "nested";
+            }
+        };
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
-        auto def = LEXY_VERIFY("def");
-        CHECK(def == 1);
+        constexpr auto rule = dsl::if_(dsl::p<nested>);
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        auto empty_trace
+            = test_trace().production("nested").production("production").cancel().cancel();
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == empty_trace);
+
+        auto a       = LEXY_VERIFY("a");
+        auto a_trace = test_trace()
+                           .production("nested")
+                           .production("production")
+                           .token("a")
+                           .position()
+                           .expected_literal(1, "bc", 0);
+        CHECK(a.status == test_result::recovered_error);
+        CHECK(a.value == 1);
+        CHECK(a.trace == a_trace);
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .production("nested")
+                            .production("production")
+                            .token("a")
+                            .position()
+                            .expected_literal(1, "bc", 1)
+                            .error_token("b");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.value == 1);
+        CHECK(ab.trace == ab_trace);
+
+        auto abc       = LEXY_VERIFY("abc");
+        auto abc_trace = test_trace()
+                             .production("nested")
+                             .production("production")
+                             .token("a")
+                             .position()
+                             .token("bc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == abc_trace);
     }
-    SUBCASE("branch in branch")
+
+    SUBCASE("token production")
     {
-        using namespace p_branch_branch;
-        static constexpr auto rule = lexy::dsl::p<prod> | LEXY_LIT("def") >> label<1>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        struct inner : production_for<decltype(LEXY_LIT("ab") + LEXY_LIT("c"))>,
+                       lexy::token_production
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(p_branch::prod, id<0>)
+            static constexpr auto name()
             {
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(prod, int i)
-            {
-                return i;
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int result)
-            {
-                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "abc");
-                LEXY_VERIFY_CHECK(result == 0);
-                return result;
-            }
-            LEXY_VERIFY_FN int success(const char* cur, id<1>)
-            {
-                LEXY_VERIFY_CHECK(lexy::_detail::string_view(str, cur) == "def");
-                return 1;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
+                return "inner";
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        struct production : test_production_for<decltype(dsl::p<inner>)>, with_whitespace
+        {};
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
-        auto def = LEXY_VERIFY("def");
-        CHECK(def == 1);
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+
+        auto abc = LEXY_VERIFY_P(production, "abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().production("inner").token("ab").token("c"));
+
+        auto leading_ws = LEXY_VERIFY_P(production, "..abc");
+        CHECK(leading_ws.status == test_result::fatal_error);
+        CHECK(leading_ws.trace
+              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+        auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
+        CHECK(inner_ws.status == test_result::fatal_error);
+        CHECK(inner_ws.trace
+              == test_trace()
+                     .production("inner")
+                     .token("ab")
+                     .expected_literal(2, "c", 0)
+                     .cancel()
+                     .cancel());
+        auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
+        CHECK(trailing_ws.status == test_result::success);
+        CHECK(trailing_ws.trace
+              == test_trace().production("inner").token("ab").token("c").finish().whitespace(".."));
     }
 }
 
-namespace recurse_indirect
-{
-struct outer;
-struct inner
-{
-    static constexpr auto rule = lexy::dsl::recurse<outer>;
-};
-
-struct outer
-{
-    static constexpr auto rule = if_(LEXY_LIT("a") >> lexy::dsl::p<inner>);
-};
-} // namespace recurse_indirect
-
-namespace recurse_right
-{
-struct prod
-{
-    static constexpr auto rule = if_(LEXY_LIT("a") >> lexy::dsl::recurse<prod>);
-};
-} // namespace recurse_right
-
 TEST_CASE("dsl::recurse")
 {
+    constexpr auto rec = dsl::recurse<struct test>;
+    CHECK(lexy::is_rule<decltype(rec)>);
+
+    SUBCASE("direct recursion")
+    {
+        struct production
+        : test_production_for<decltype(dsl::if_(LEXY_LIT("a") >> dsl::recurse<production>))>
+        {};
+
+        constexpr auto callback
+            = lexy::callback<int>([](const char*) { return 0; },
+                                  [](const char*, int count) { return count + 1; });
+
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto one       = LEXY_VERIFY_P(production, "a");
+        auto one_trace = test_trace().token("a").production("test_production");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+
+        auto two       = LEXY_VERIFY_P(production, "aa");
+        auto two_trace = test_trace(one_trace).token("a").production("test_production");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+
+        auto three       = LEXY_VERIFY_P(production, "aaa");
+        auto three_trace = test_trace(two_trace).token("a").production("test_production");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
+    }
     SUBCASE("indirect recursion")
     {
-        using namespace recurse_indirect;
-        static constexpr auto rule = lexy::dsl::p<outer>;
-
-        struct callback
+        struct production;
+        struct inner : production_for<decltype(dsl::recurse<production>)>
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(inner, int outer_result)
+            static constexpr auto name()
             {
-                return outer_result + 1;
-            }
-            LEXY_VERIFY_FN int success(outer)
-            {
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(outer, int inner_result)
-            {
-                return inner_result;
-            }
-            LEXY_VERIFY_FN int success(const char*, int result)
-            {
-                return result;
-            }
-
-            int error(inner, int)
-            {
-                LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-            int error(outer, int)
-            {
-                LEXY_VERIFY_CHECK(false);
-                return -1;
+                return "inner";
             }
         };
+        struct production : test_production_for<decltype(dsl::if_(LEXY_LIT("a") >> dsl::p<inner>))>
+        {};
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, inner) { return 1; });
 
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
-        auto aa = LEXY_VERIFY("aa");
-        CHECK(aa == 2);
-        auto aaa = LEXY_VERIFY("aaa");
-        CHECK(aaa == 3);
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto one       = LEXY_VERIFY_P(production, "a");
+        auto one_trace = test_trace().token("a").production("inner").production("test_production");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+
+        auto two = LEXY_VERIFY_P(production, "aa");
+        auto two_trace
+            = test_trace(one_trace).token("a").production("inner").production("test_production");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 1);
+        CHECK(two.trace == two_trace);
+
+        auto three = LEXY_VERIFY_P(production, "aaa");
+        auto three_trace
+            = test_trace(two_trace).token("a").production("inner").production("test_production");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 1);
+        CHECK(three.trace == three_trace);
     }
-    SUBCASE("right recursion")
+
+    SUBCASE("token production")
     {
-        using namespace recurse_right;
-        static constexpr auto rule = lexy::dsl::p<prod>;
-
-        struct callback
+        struct inner : production_for<decltype(LEXY_LIT("ab") + LEXY_LIT("c"))>,
+                       lexy::token_production
         {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(prod)
+            static constexpr auto name()
             {
-                return 0;
-            }
-            LEXY_VERIFY_FN int success(prod, int result)
-            {
-                return result + 1;
-            }
-            LEXY_VERIFY_FN int success(const char*, int result)
-            {
-                return result;
-            }
-
-            int error(prod, int)
-            {
-                LEXY_VERIFY_CHECK(false);
-                return -1;
-            }
-            int error(int)
-            {
-                LEXY_VERIFY_CHECK(false);
-                return -1;
+                return "inner";
             }
         };
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        // Not actually using recursive, but the whitespace behavior should be the same.
+        struct production : test_production_for<decltype(dsl::recurse<inner>)>, with_whitespace
+        {};
 
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
-        auto aa = LEXY_VERIFY("aa");
-        CHECK(aa == 2);
-        auto aaa = LEXY_VERIFY("aaa");
-        CHECK(aaa == 3);
+        constexpr auto callback = [](const char*, inner) { return 0; };
+
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+
+        auto abc = LEXY_VERIFY_P(production, "abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().production("inner").token("ab").token("c"));
+
+        auto leading_ws = LEXY_VERIFY_P(production, "..abc");
+        CHECK(leading_ws.status == test_result::fatal_error);
+        CHECK(leading_ws.trace
+              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+        auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
+        CHECK(inner_ws.status == test_result::fatal_error);
+        CHECK(inner_ws.trace
+              == test_trace()
+                     .production("inner")
+                     .token("ab")
+                     .expected_literal(2, "c", 0)
+                     .cancel()
+                     .cancel());
+        auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
+        CHECK(trailing_ws.status == test_result::success);
+        CHECK(trailing_ws.trace
+              == test_trace().production("inner").token("ab").token("c").finish().whitespace(".."));
     }
 }
 

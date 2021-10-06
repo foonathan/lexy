@@ -6,66 +6,36 @@
 
 #include "verify.hpp"
 
-TEST_CASE("argv_separator")
+TEST_CASE("dsl::argv_separator")
 {
-    SUBCASE("non-argv_input")
-    {
-        static constexpr auto rule = lexy::dsl::argv_separator;
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
+    constexpr auto rule = dsl::argv_separator;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback = token_callback;
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str);
-                return 0;
-            }
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "argv-separator").cancel());
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("argv-separator"));
-                return -1;
-            }
-        };
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace == test_trace().expected_char_class(0, "argv-separator").cancel());
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+    static constexpr char* argv[]     = {const_cast<char*>("IGNORED"), const_cast<char*>("abc"),
+                                     const_cast<char*>("de"), const_cast<char*>("f"), nullptr};
+    constexpr auto         argv_begin = lexy::argv_begin(4, const_cast<char**>(argv));
+    constexpr auto         argv_end   = lexy::argv_end(4, const_cast<char**>(argv));
 
-        auto non_empty = LEXY_VERIFY("abc");
-        CHECK(non_empty == -1);
-    }
-    SUBCASE("argv_input")
-    {
-        char program[] = "IGNORED";
-        char first[]   = "abc";
-        char second[]  = "de";
-        char third[]   = "f";
+    auto argv_at_arg = LEXY_VERIFY(lexy::argv_input(argv_begin, argv_end));
+    CHECK(argv_at_arg.status == test_result::fatal_error);
+    CHECK(argv_at_arg.trace == test_trace().expected_char_class(0, "argv-separator").cancel());
 
-        char* argv[] = {program, first, second, third, nullptr};
-        int   argc   = 4;
+    auto argv_in_arg = LEXY_VERIFY(lexy::argv_input(lexy::_detail::next(argv_begin, 2), argv_end));
+    CHECK(argv_at_arg.status == test_result::fatal_error);
+    CHECK(argv_in_arg.trace == test_trace().expected_char_class(0, "argv-separator").cancel());
 
-        lexy::argv_input input(argc, argv);
-        auto             reader = input.reader();
-
-        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
-        CHECK(reader.peek() == 'a');
-        reader.bump();
-
-        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
-        CHECK(reader.peek() == 'b');
-        reader.bump();
-
-        CHECK(!lexy::try_match_token(lexy::dsl::argv_separator, reader));
-        CHECK(reader.peek() == 'c');
-        reader.bump();
-
-        CHECK(lexy::try_match_token(lexy::dsl::argv_separator, reader));
-        CHECK(reader.peek() == 'd');
-    }
+    auto argv_sep = LEXY_VERIFY(lexy::argv_input(lexy::_detail::next(argv_begin, 3), argv_end));
+    CHECK(argv_sep.status == test_result::success);
+    CHECK(argv_sep.trace == test_trace().token("\\0"));
 }
 

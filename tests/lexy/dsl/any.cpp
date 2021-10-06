@@ -8,24 +8,21 @@
 
 TEST_CASE("dsl::any")
 {
-    static constexpr auto rule = lexy::dsl::any;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = lexy::dsl::any;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str);
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.trace == test_trace().token(""));
 
-    auto non_empty = LEXY_VERIFY("abc");
-    CHECK(non_empty == 3);
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.trace == test_trace().token("abc"));
+
+    auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '1', '2', '3');
+    CHECK(invalid_utf8.status == test_result::success);
+    CHECK(invalid_utf8.trace == test_trace().token("abc_\\u????_123"));
 }
 

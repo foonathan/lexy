@@ -12,7 +12,7 @@
 namespace lexy
 {
 // An optional type is something that has the following:
-// * a default constructors: this means we can actually construct it from our `nullopt`
+// * a default constructor: this means we can actually construct it from our `nullopt`
 // * a dereference operator: this means that it actually contains something else
 // * a contextual conversion to bool: this means that it might be "false" (i.e. empty)
 //

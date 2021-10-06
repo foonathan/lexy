@@ -8,44 +8,94 @@
 
 TEST_CASE("dsl::lit")
 {
-    static constexpr auto rule = LEXY_LIT("abc");
-    CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(lexy::is_token_rule<decltype(rule)>);
+    constexpr auto callback = token_callback;
+
+    SUBCASE("ASCII")
+    {
+        constexpr auto rule = LEXY_LIT("abc");
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
-    CHECK(std::is_same_v<decltype(rule), decltype(lexy::dsl::lit<"abc">)>);
+        CHECK(equivalent_rules(rule, dsl::lit<"abc">));
 #endif
 
-    struct callback
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
+        auto abcd = LEXY_VERIFY("abcd");
+        CHECK(abcd.status == test_result::success);
+        CHECK(abcd.trace == test_trace().token("abc"));
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+        auto ad = LEXY_VERIFY("ad");
+        CHECK(ad.status == test_result::fatal_error);
+        CHECK(ad.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+        auto abd = LEXY_VERIFY("abd");
+        CHECK(abd.status == test_result::fatal_error);
+        CHECK(abd.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+
+        auto ABC = LEXY_VERIFY("ABC");
+        CHECK(ABC.status == test_result::fatal_error);
+        CHECK(ABC.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto utf16 = LEXY_VERIFY(u"abc");
+        CHECK(utf16.status == test_result::success);
+        CHECK(utf16.trace == test_trace().token("abc"));
+    }
+    SUBCASE("UTF-16, but only in ASCII")
     {
-        const char* str;
+        constexpr auto rule = LEXY_LIT(u"abc");
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(str + 3 == cur);
-            return 0;
-        }
+#if LEXY_HAS_NTTP
+        CHECK(equivalent_rules(rule, dsl::lit<u"abc">));
+#endif
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-            LEXY_VERIFY_CHECK(e.string()[e.index()] == e.character());
-            return -int(e.index()) - 1;
-        }
-    };
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
 
-    auto a = LEXY_VERIFY("a");
-    CHECK(a == -2);
-    auto ab = LEXY_VERIFY("ab");
-    CHECK(ab == -3);
+        auto utf16 = LEXY_VERIFY(u"abc");
+        CHECK(utf16.status == test_result::success);
+        CHECK(utf16.trace == test_trace().token("abc"));
+    }
+    SUBCASE("UTF-16, non ASCII")
+    {
+        constexpr auto rule = LEXY_LIT(u"äöü");
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    auto abc = LEXY_VERIFY("abc");
-    CHECK(abc == 0);
-    auto abcd = LEXY_VERIFY("abcd");
-    CHECK(abcd == 0);
+#if LEXY_HAS_NTTP
+        CHECK(equivalent_rules(rule, dsl::lit<u"äöü">));
+#endif
+
+        auto empty = LEXY_VERIFY(u"");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "\\u00E4\\u00F6\\u00FC", 0).cancel());
+
+        auto umlaute = LEXY_VERIFY(u"äöü");
+        CHECK(umlaute.status == test_result::success);
+        CHECK(umlaute.trace == test_trace().token("\\u00E4\\u00F6\\u00FC"));
+    }
+}
+
+TEST_CASE("dsl::lit_c")
+{
+    constexpr auto rule = dsl::lit_c<'a'>;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+    CHECK(equivalent_rules(rule, LEXY_LIT("a")));
 }
 

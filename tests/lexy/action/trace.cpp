@@ -182,9 +182,10 @@ TEST_CASE("trace")
  1:  7:   - alphabet:
  1:  7:     - backtracked: ab
  1:  7:     - error: expected 'abcd'
- 1:  7:     -x
- 1:  7:   -x
- 1:  7: -x
+ 1:  7:     - error token: abc
+ 1: 10:     -x
+ 1: 10:   -x
+ 1: 10: -x
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
  1:  1: - token: Hello
@@ -353,9 +354,10 @@ TEST_CASE("trace")
  1:  7: │  ├──alphabet:
  1:  7: │  │  ├──backtracked: ab
  1:  7: │  │  ├──error: expected 'abcd'
- 1:  7: │  │  └╳
- 1:  7: │  └╳
- 1:  7: └╳
+ 1:  7: │  │  ├──error token: abc
+ 1: 10: │  │  └╳
+ 1: 10: │  └╳
+ 1: 10: └╳
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
  1:  1: ├──token: Hello
@@ -469,8 +471,8 @@ TEST_CASE("trace")
  1:  7: - debug: greeting
  1:  7: - object:
  1:  7:   - alphabet: ...
- 1:  7:   -x
- 1:  7: -x
+ 1: 10:   -x
+ 1: 10: -x
 )");
 
         auto higher_limit           = opts;

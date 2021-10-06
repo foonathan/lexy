@@ -18,11 +18,8 @@ struct _break : unconditional_branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader&, Args&&...)
         {
-            static_assert(sizeof...(Args) == 0, "looped rule must not add any values");
-
             // We set loop break on the member with the specified id.
             context.get(_break{}).loop_break = true;
-
             return true;
         }
     };

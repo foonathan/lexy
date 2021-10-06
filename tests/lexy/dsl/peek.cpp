@@ -6,186 +6,137 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/if.hpp>
+#include <lexy/dsl/position.hpp>
 
 TEST_CASE("dsl::peek()")
 {
-    SUBCASE("parsing")
+    struct my_error
     {
-        static constexpr auto rule = peek(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        static constexpr auto name()
         {
-            const char* str;
+            return "my error";
+        }
+    };
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    constexpr auto condition = dsl::peek(LEXY_LIT("a") + dsl::position + LEXY_LIT("b"));
+    CHECK(lexy::is_branch_rule<decltype(condition)>);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::peek_failure> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+    constexpr auto callback = token_callback;
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = condition;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.value == 0);
-        CHECK(empty.errors(-1));
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
-    }
-    SUBCASE("branch parsing")
-    {
-        static constexpr auto rule = if_(peek(LEXY_LIT("abc")) >> LEXY_LIT("a"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal>)
-            {
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        CHECK(empty.status == test_result::recovered_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "peek failure"));
 
         auto a = LEXY_VERIFY("a");
-        CHECK(a == 0);
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 1);
+        CHECK(a.status == test_result::recovered_error);
+        CHECK(a.trace == test_trace().backtracked("a").error(0, 0, "peek failure"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.trace == test_trace().backtracked("ab"));
     }
-
-    SUBCASE(".error")
+    SUBCASE("as rule with .error")
     {
-        static constexpr auto rule = peek(LEXY_LIT("abc")).error<struct tag>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
+        constexpr auto rule = condition.error<my_error>;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.value == 0);
-        CHECK(empty.errors(-1));
+        CHECK(empty.status == test_result::recovered_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "my error"));
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::recovered_error);
+        CHECK(a.trace == test_trace().backtracked("a").error(0, 0, "my error"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.trace == test_trace().backtracked("ab"));
+    }
+
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(condition >> LEXY_LIT("a"));
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().backtracked("a"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.trace == test_trace().backtracked("ab").token("a"));
     }
 }
 
 TEST_CASE("dsl::peek_not()")
 {
-    SUBCASE("parsing")
+    struct my_error
     {
-        static constexpr auto rule = peek_not(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
+        static constexpr auto name()
         {
-            const char* str;
+            return "my error";
+        }
+    };
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+    constexpr auto condition = dsl::peek_not(LEXY_LIT("a") + dsl::position + LEXY_LIT("b"));
+    CHECK(lexy::is_branch_rule<decltype(condition)>);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::unexpected> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == str + 3);
-                return -1;
-            }
-        };
+    constexpr auto callback = token_callback;
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = condition;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc.value == 0);
-        CHECK(abc.errors(-1));
-    }
-    SUBCASE("branch parsing")
-    {
-        static constexpr auto rule = if_(peek_not(LEXY_LIT("abc")) >> LEXY_LIT("a"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.character() == 'a');
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
 
         auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().backtracked("a"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.trace == test_trace().backtracked("ab").error(0, 2, "unexpected"));
     }
-
-    SUBCASE(".error")
+    SUBCASE("as rule with .error")
     {
-        static constexpr auto rule = peek_not(LEXY_LIT("abc")).error<struct tag>;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<tag> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == str + 3);
-                return -1;
-            }
-        };
+        constexpr auto rule = condition.error<my_error>;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc.value == 0);
-        CHECK(abc.errors(-1));
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().backtracked("a"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::recovered_error);
+        CHECK(ab.trace == test_trace().backtracked("ab").error(0, 2, "my error"));
+    }
+
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(condition >> LEXY_LIT("a"));
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().backtracked("a").token("a"));
+
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.trace == test_trace().backtracked("ab"));
     }
 }
 

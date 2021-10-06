@@ -4,5 +4,5 @@
 
 #include <lexy/dsl/base.hpp>
 
-// Just test that it compiles.
+// Just to test that the header compiles.
 

@@ -5,363 +5,459 @@
 #include <lexy/dsl/recover.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/loop.hpp>
-#include <lexy/dsl/newline.hpp>
+#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/peek.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/until.hpp>
 
-TEST_CASE("dsl::find")
+TEST_CASE("dsl::find()")
 {
-    SUBCASE("no limit")
+    constexpr auto rule = dsl::find(LEXY_LIT("!"), LEXY_LIT("."), LEXY_LIT(";"));
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(equivalent_rules(rule, dsl::find(LEXY_LIT("!") / LEXY_LIT(".") / LEXY_LIT(";"))));
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().recovery().cancel().cancel());
+
+    auto zero = LEXY_VERIFY("!");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().recovery().finish());
+
+    auto one = LEXY_VERIFY("a!");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().recovery().error_token("a").finish());
+    auto two = LEXY_VERIFY("ab.");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().recovery().error_token("ab").finish());
+    auto three = LEXY_VERIFY("abc;");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().recovery().error_token("abc").finish());
+
+    auto multiple = LEXY_VERIFY("abc;.!");
+    CHECK(multiple.status == test_result::success);
+    CHECK(multiple.trace == test_trace().recovery().error_token("abc").finish());
+
+    auto unterminated = LEXY_VERIFY("abc");
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+}
+
+TEST_CASE("dsl::find().limit()")
+{
+    constexpr auto rule
+        = dsl::find(LEXY_LIT("!"), LEXY_LIT(".")).limit(LEXY_LIT(";"), LEXY_LIT(","));
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(equivalent_rules(rule, dsl::find(LEXY_LIT("!") / LEXY_LIT("."))
+                                     .limit(LEXY_LIT(";") / LEXY_LIT(","))));
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().recovery().cancel().cancel());
+
+    auto zero = LEXY_VERIFY("!");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().recovery().finish());
+
+    auto one = LEXY_VERIFY("a!");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().recovery().error_token("a").finish());
+    auto two = LEXY_VERIFY("ab.");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().recovery().error_token("ab").finish());
+    auto three = LEXY_VERIFY("abc!");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().recovery().error_token("abc").finish());
+
+    auto multiple = LEXY_VERIFY("abc!.");
+    CHECK(multiple.status == test_result::success);
+    CHECK(multiple.trace == test_trace().recovery().error_token("abc").finish());
+
+    auto unterminated = LEXY_VERIFY("abc");
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+
+    auto limited = LEXY_VERIFY("abc;def");
+    CHECK(limited.status == test_result::fatal_error);
+    CHECK(limited.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+}
+
+TEST_CASE("dsl::recover()")
+{
+    constexpr auto rule = dsl::recover(LEXY_LIT("!"), LEXY_LIT("."), LEXY_LIT(";"));
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().recovery().cancel().cancel());
+
+    auto zero = LEXY_VERIFY("!");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().recovery().finish().token("!"));
+
+    auto one = LEXY_VERIFY("a!");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().recovery().error_token("a").finish().token("!"));
+    auto two = LEXY_VERIFY("ab.");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().recovery().error_token("ab").finish().token("."));
+    auto three = LEXY_VERIFY("abc;");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().recovery().error_token("abc").finish().token(";"));
+
+    auto multiple = LEXY_VERIFY("abc;.!");
+    CHECK(multiple.status == test_result::success);
+    CHECK(multiple.trace == test_trace().recovery().error_token("abc").finish().token(";"));
+
+    auto unterminated = LEXY_VERIFY("abc");
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+}
+
+TEST_CASE("dsl::recover().limit()")
+{
+    constexpr auto rule
+        = dsl::recover(LEXY_LIT("!"), LEXY_LIT(".")).limit(LEXY_LIT(";"), LEXY_LIT(","));
+    CHECK(lexy::is_rule<decltype(rule)>);
+    CHECK(equivalent_rules(rule, dsl::recover(LEXY_LIT("!"), LEXY_LIT("."))
+                                     .limit(LEXY_LIT(";") / LEXY_LIT(","))));
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().recovery().cancel().cancel());
+
+    auto zero = LEXY_VERIFY("!");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().recovery().finish().token("!"));
+
+    auto one = LEXY_VERIFY("a!");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().recovery().error_token("a").finish().token("!"));
+    auto two = LEXY_VERIFY("ab.");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().recovery().error_token("ab").finish().token("."));
+    auto three = LEXY_VERIFY("abc!");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().recovery().error_token("abc").finish().token("!"));
+
+    auto multiple = LEXY_VERIFY("abc!.");
+    CHECK(multiple.status == test_result::success);
+    CHECK(multiple.trace == test_trace().recovery().error_token("abc").finish().token("!"));
+
+    auto unterminated = LEXY_VERIFY("abc");
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+
+    auto limited = LEXY_VERIFY("abc;def");
+    CHECK(limited.status == test_result::fatal_error);
+    CHECK(limited.trace == test_trace().recovery().error_token("abc").cancel().cancel());
+}
+
+TEST_CASE("dsl::try_(rule)")
+{
+    SUBCASE("token")
     {
-        static constexpr auto rule = lexy::dsl::find(lexy::dsl::ascii::space, LEXY_LIT("!"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto try_ = dsl::try_(LEXY_LIT("abc"));
+        constexpr auto rule = try_ + LEXY_LIT("!");
+        CHECK(lexy::is_branch_rule<decltype(try_)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-        };
+        constexpr auto callback = token_callback;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(!empty.recovered);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "abc", 0).expected_literal(0, "!", 0).cancel());
 
-        auto space0 = LEXY_VERIFY(" ");
-        CHECK(space0 == 0);
-        auto space1 = LEXY_VERIFY("- ");
-        CHECK(space1 == 1);
-        auto space2 = LEXY_VERIFY("-- ");
-        CHECK(space2 == 2);
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace
+              == test_trace()
+                     .expected_literal(0, "abc", 1)
+                     .error_token("a")
+                     .expected_literal(1, "!", 0)
+                     .cancel());
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace
+              == test_trace()
+                     .expected_literal(0, "abc", 2)
+                     .error_token("ab")
+                     .expected_literal(2, "!", 0)
+                     .cancel());
 
-        auto excl0 = LEXY_VERIFY("!");
-        CHECK(excl0 == 0);
-        auto excl1 = LEXY_VERIFY("-!");
-        CHECK(excl1 == 1);
-        auto excl2 = LEXY_VERIFY("--!");
-        CHECK(excl2 == 2);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == test_trace().token("abc").expected_literal(3, "!", 0).cancel());
 
-        auto space_then_excl = LEXY_VERIFY("- !");
-        CHECK(space_then_excl == 1);
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.trace == test_trace().token("abc").token("!"));
 
-        auto missing = LEXY_VERIFY("abc");
-        CHECK(!missing.recovered);
+        auto mark = LEXY_VERIFY("!");
+        CHECK(mark.status == test_result::recovered_error);
+        CHECK(mark.trace == test_trace().expected_literal(0, "abc", 0).token("!"));
+
+        auto ab_mark = LEXY_VERIFY("ab!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.trace
+              == test_trace().expected_literal(0, "abc", 2).error_token("ab").token("!"));
     }
-    SUBCASE("limit")
+    SUBCASE("rule")
     {
-        static constexpr auto rule
-            = lexy::dsl::find(lexy::dsl::ascii::space, LEXY_LIT("!")).limit(LEXY_LIT("$"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto try_ = dsl::try_(LEXY_LIT("ab") + dsl::position + LEXY_LIT("c"));
+        constexpr auto rule = try_ + LEXY_LIT("!");
+        CHECK(lexy::is_rule<decltype(try_)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-        };
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, const char*) { return 1; });
 
         auto empty = LEXY_VERIFY("");
-        CHECK(!empty.recovered);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).expected_literal(0, "!", 0).cancel());
 
-        auto space0 = LEXY_VERIFY(" ");
-        CHECK(space0 == 0);
-        auto space1 = LEXY_VERIFY("- ");
-        CHECK(space1 == 1);
-        auto space2 = LEXY_VERIFY("-- ");
-        CHECK(space2 == 2);
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace
+              == test_trace()
+                     .expected_literal(0, "ab", 1)
+                     .error_token("a")
+                     .expected_literal(1, "!", 0)
+                     .cancel());
 
-        auto excl0 = LEXY_VERIFY("!");
-        CHECK(excl0 == 0);
-        auto excl1 = LEXY_VERIFY("-!");
-        CHECK(excl1 == 1);
-        auto excl2 = LEXY_VERIFY("--!");
-        CHECK(excl2 == 2);
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .token("ab")
+                            .position()
+                            .expected_literal(2, "c", 0)
+                            .expected_literal(2, "!", 0)
+                            .cancel();
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == ab_trace);
 
-        auto space_then_excl = LEXY_VERIFY("- !");
-        CHECK(space_then_excl == 1);
+        auto abc = LEXY_VERIFY("abc");
+        auto abc_trace
+            = test_trace().token("ab").position().token("c").expected_literal(3, "!", 0).cancel();
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == abc_trace);
 
-        auto missing = LEXY_VERIFY("abc");
-        CHECK(!missing.recovered);
-        auto limited = LEXY_VERIFY("--$!");
-        CHECK(!limited.recovered);
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("ab").position().token("c").token("!"));
+
+        auto mark = LEXY_VERIFY("!");
+        CHECK(mark.status == test_result::recovered_error);
+        CHECK(mark.value == 0);
+        CHECK(mark.trace == test_trace().expected_literal(0, "ab", 0).token("!"));
+
+        auto ab_mark = LEXY_VERIFY("ab!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.value == 0);
+        CHECK(ab_mark.trace
+              == test_trace().token("ab").position().expected_literal(2, "c", 0).token("!"));
+    }
+
+    SUBCASE("as branch")
+    {
+        constexpr auto try_ = dsl::try_(LEXY_LIT("ab") >> dsl::position + LEXY_LIT("c"));
+        constexpr auto rule = dsl::if_(try_) + LEXY_LIT("!");
+        CHECK(lexy::is_branch_rule<decltype(try_)>);
+
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, const char*) { return 1; });
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "!", 0).cancel());
+
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace == test_trace().expected_literal(0, "!", 0).cancel());
+
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .token("ab")
+                            .position()
+                            .expected_literal(2, "c", 0)
+                            .expected_literal(2, "!", 0)
+                            .cancel();
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == ab_trace);
+
+        auto abc = LEXY_VERIFY("abc");
+        auto abc_trace
+            = test_trace().token("ab").position().token("c").expected_literal(3, "!", 0).cancel();
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == abc_trace);
+
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("ab").position().token("c").token("!"));
+
+        auto mark = LEXY_VERIFY("!");
+        CHECK(mark.status == test_result::success);
+        CHECK(mark.value == 0);
+        CHECK(mark.trace == test_trace().token("!"));
+
+        auto ab_mark = LEXY_VERIFY("ab!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.value == 0);
+        CHECK(ab_mark.trace
+              == test_trace().token("ab").position().expected_literal(2, "c", 0).token("!"));
     }
 }
 
-TEST_CASE("dsl::recover_")
+TEST_CASE("dsl::try_(rule, recover)")
 {
-    SUBCASE("no limit")
+    SUBCASE("recover using find")
     {
-        static constexpr auto rule = lexy::dsl::recover(lexy::dsl::ascii::space, LEXY_LIT("!"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto try_
+            = dsl::try_(LEXY_LIT("ab") + dsl::position + LEXY_LIT("c"), dsl::find(LEXY_LIT("!")));
+        constexpr auto rule = try_ + LEXY_LIT("!");
+        CHECK(lexy::is_rule<decltype(try_)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-        };
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, const char*) { return 1; });
 
         auto empty = LEXY_VERIFY("");
-        CHECK(!empty.recovered);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
-        auto space0 = LEXY_VERIFY(" ");
-        CHECK(space0 == 1);
-        auto space1 = LEXY_VERIFY("- ");
-        CHECK(space1 == 2);
-        auto space2 = LEXY_VERIFY("-- ");
-        CHECK(space2 == 3);
+        auto a       = LEXY_VERIFY("a");
+        auto a_trace = test_trace()
+                           .expected_literal(0, "ab", 1)
+                           .error_token("a")
+                           .recovery()
+                           .cancel()
+                           .cancel();
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace == a_trace);
 
-        auto excl0 = LEXY_VERIFY("!");
-        CHECK(excl0 == 1);
-        auto excl1 = LEXY_VERIFY("-!");
-        CHECK(excl1 == 2);
-        auto excl2 = LEXY_VERIFY("--!");
-        CHECK(excl2 == 3);
-
-        auto space_then_excl = LEXY_VERIFY("- !");
-        CHECK(space_then_excl == 2);
-
-        auto missing = LEXY_VERIFY("abc");
-        CHECK(!missing.recovered);
-    }
-    SUBCASE("limit")
-    {
-        static constexpr auto rule
-            = lexy::dsl::recover(lexy::dsl::ascii::space, LEXY_LIT("!")).limit(LEXY_LIT("$"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(!empty.recovered);
-
-        auto space0 = LEXY_VERIFY(" ");
-        CHECK(space0 == 1);
-        auto space1 = LEXY_VERIFY("- ");
-        CHECK(space1 == 2);
-        auto space2 = LEXY_VERIFY("-- ");
-        CHECK(space2 == 3);
-
-        auto excl0 = LEXY_VERIFY("!");
-        CHECK(excl0 == 1);
-        auto excl1 = LEXY_VERIFY("-!");
-        CHECK(excl1 == 2);
-        auto excl2 = LEXY_VERIFY("--!");
-        CHECK(excl2 == 3);
-
-        auto space_then_excl = LEXY_VERIFY("- !");
-        CHECK(space_then_excl == 2);
-
-        auto missing = LEXY_VERIFY("abc");
-        CHECK(!missing.recovered);
-        auto limited = LEXY_VERIFY("--$!");
-        CHECK(!limited.recovered);
-    }
-}
-
-TEST_CASE("dsl::try_")
-{
-    SUBCASE("catch")
-    {
-        static constexpr auto rule = lexy::dsl::try_(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty.value == 0);
-        CHECK(empty.errors(-1));
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .token("ab")
+                            .position()
+                            .expected_literal(2, "c", 0)
+                            .recovery()
+                            .cancel()
+                            .cancel();
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == ab_trace);
 
         auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 3);
+        auto abc_trace
+            = test_trace().token("ab").position().token("c").expected_literal(3, "!", 0).cancel();
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == abc_trace);
 
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab.value == 0);
-        CHECK(ab.errors(-1));
-        auto abd = LEXY_VERIFY("abd");
-        CHECK(abd.value == 0);
-        CHECK(abd.errors(-1));
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("ab").position().token("c").token("!"));
+
+        auto mark = LEXY_VERIFY("!");
+        CHECK(mark.status == test_result::recovered_error);
+        CHECK(mark.value == 0);
+        CHECK(mark.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().finish().token("!"));
+
+        auto ab_mark       = LEXY_VERIFY("ab!");
+        auto ab_mark_trace = test_trace()
+                                 .token("ab")
+                                 .position()
+                                 .expected_literal(2, "c", 0)
+                                 .recovery()
+                                 .finish()
+                                 .token("!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.value == 0);
+        CHECK(ab_mark.trace == ab_mark_trace);
     }
-    SUBCASE("recover")
+    SUBCASE("recover using custom rule")
     {
-        static constexpr auto rule
-            = lexy::dsl::try_(LEXY_LIT("abc"),
-                              lexy::dsl::recover(lexy::dsl::ascii::space, LEXY_LIT("!")));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto my_find = dsl::until(dsl::token(dsl::peek(LEXY_LIT("!"))));
 
-        struct callback
-        {
-            const char* str;
+        constexpr auto try_ = dsl::try_(LEXY_LIT("ab") + dsl::position + LEXY_LIT("c"), my_find);
+        constexpr auto rule = try_ + LEXY_LIT("!");
+        CHECK(lexy::is_rule<decltype(try_)>);
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, const char*) { return 1; });
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-        };
+        auto empty       = LEXY_VERIFY("");
+        auto empty_trace = test_trace()
+                               .expected_literal(0, "ab", 0)
+                               .recovery()
+                               .error(0, 0, "missing token")
+                               .cancel()
+                               .cancel();
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == empty_trace);
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        auto a       = LEXY_VERIFY("a");
+        auto a_trace = test_trace()
+                           .expected_literal(0, "ab", 1)
+                           .error_token("a")
+                           .recovery()
+                           .error(1, 1, "missing token")
+                           .cancel()
+                           .cancel();
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace == a_trace);
+
+        auto ab       = LEXY_VERIFY("ab");
+        auto ab_trace = test_trace()
+                            .token("ab")
+                            .position()
+                            .expected_literal(2, "c", 0)
+                            .recovery()
+                            .error(2, 2, "missing token")
+                            .cancel()
+                            .cancel();
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == ab_trace);
 
         auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 3);
+        auto abc_trace
+            = test_trace().token("ab").position().token("c").expected_literal(3, "!", 0).cancel();
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == abc_trace);
 
-        auto recover_space0 = LEXY_VERIFY("ab ");
-        CHECK(recover_space0.value == 3);
-        CHECK(recover_space0.errors(-1));
-        auto recover_space1 = LEXY_VERIFY("ab- ");
-        CHECK(recover_space1.value == 4);
-        CHECK(recover_space1.errors(-1));
-        auto recover_space2 = LEXY_VERIFY("ab-- ");
-        CHECK(recover_space2.value == 5);
-        CHECK(recover_space2.errors(-1));
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("ab").position().token("c").token("!"));
 
-        auto recover_excl0 = LEXY_VERIFY("ab!");
-        CHECK(recover_excl0.value == 3);
-        CHECK(recover_excl0.errors(-1));
-        auto recover_excl1 = LEXY_VERIFY("ab-!");
-        CHECK(recover_excl1.value == 4);
-        CHECK(recover_excl1.errors(-1));
-        auto recover_excl2 = LEXY_VERIFY("ab--!");
-        CHECK(recover_excl2.value == 5);
-        CHECK(recover_excl2.errors(-1));
+        auto mark = LEXY_VERIFY("!");
+        CHECK(mark.status == test_result::recovered_error);
+        CHECK(mark.value == 0);
+        CHECK(
+            mark.trace
+            == test_trace().expected_literal(0, "ab", 0).recovery().token("").finish().token("!"));
 
-        auto recover_failed = LEXY_VERIFY("ab---");
-        CHECK(recover_failed == -1);
-    }
-
-    SUBCASE("rule in sequence with try")
-    {
-        static constexpr auto rule = lexy::dsl::try_(LEXY_LIT("abc")) + lexy::dsl::newline;
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-            {
-                LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("newline"));
-                return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty.value == -1);
-        CHECK(empty.errors(-1, -2));
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == -2);
-        auto abc_nl = LEXY_VERIFY("abc\n");
-        CHECK(abc_nl == 4);
-
-        auto ab = LEXY_VERIFY("ab\n");
-        CHECK(ab.value == -1);
-        CHECK(ab.errors(-1, -2));
-        auto abd = LEXY_VERIFY("abd\n");
-        CHECK(abd.value == -1);
-        CHECK(abd.errors(-1, -2));
-    }
-
-    SUBCASE("branch")
-    {
-        static constexpr auto rule
-            = lexy::dsl::while_(lexy::dsl::try_(LEXY_LIT("abc") >> LEXY_LIT("!")));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("!"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == 0);
-        auto abd = LEXY_VERIFY("abd");
-        CHECK(abd == 0);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc.value == 3);
-        CHECK(abc.errors(-1));
-
-        auto one = LEXY_VERIFY("abc!");
-        CHECK(one == 4);
-        auto two = LEXY_VERIFY("abc!abc!");
-        CHECK(two == 8);
-        auto three = LEXY_VERIFY("abc!abc!abc!");
-        CHECK(three == 12);
-
-        auto recover_first = LEXY_VERIFY("abcabc!abc!");
-        CHECK(recover_first.value == 11);
-        CHECK(recover_first.errors(-1));
-        auto recover_second = LEXY_VERIFY("abc!abcabc!");
-        CHECK(recover_second.value == 11);
-        CHECK(recover_second.errors(-1));
-
-        auto recover_all = LEXY_VERIFY("abcabcabc");
-        CHECK(recover_all.value == 9);
-        CHECK(recover_all.errors(-1, -1, -1));
+        auto ab_mark       = LEXY_VERIFY("ab!");
+        auto ab_mark_trace = test_trace()
+                                 .token("ab")
+                                 .position()
+                                 .expected_literal(2, "c", 0)
+                                 .recovery()
+                                 .token("")
+                                 .finish()
+                                 .token("!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.value == 0);
+        CHECK(ab_mark.trace == ab_mark_trace);
     }
 }
 

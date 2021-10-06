@@ -35,6 +35,7 @@ set(tests
         callback/object.cpp
         callback/string.cpp
 
+        dsl/verify.hpp
         dsl/alternative.cpp
         dsl/any.cpp
         dsl/argv_input.cpp
@@ -52,16 +53,15 @@ set(tests
         dsl/context_identifier.cpp
         dsl/delimited.cpp
         dsl/digit.cpp
-        dsl/encode.cpp
         dsl/eof.cpp
         dsl/error.cpp
-        dsl/identifier.cpp
-        dsl/if.cpp
-        dsl/integer.cpp
         dsl/list.cpp
         dsl/literal.cpp
         dsl/lookahead.cpp
         dsl/loop.cpp
+        dsl/identifier.cpp
+        dsl/if.cpp
+        dsl/integer.cpp
         dsl/member.cpp
         dsl/minus.cpp
         dsl/newline.cpp
@@ -72,13 +72,14 @@ set(tests
         dsl/punctuator.cpp
         dsl/recover.cpp
         dsl/return.cpp
-        dsl/separator.cpp
         dsl/sequence.cpp
+        dsl/separator.cpp
         dsl/sign.cpp
         dsl/symbol.cpp
         dsl/terminator.cpp
-        dsl/times.cpp
+        dsl/trace.cpp
         dsl/token.cpp
+        dsl/times.cpp
         dsl/until.cpp
         dsl/whitespace.cpp
 

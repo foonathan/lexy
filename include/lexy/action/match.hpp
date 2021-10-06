@@ -30,7 +30,6 @@ public:
     constexpr bool get_result_empty() && noexcept
     {
         // Parsing could not recover from an error, return false.
-        LEXY_ASSERT(_failed, "parsing failed without logging an error?!");
         return false;
     }
 

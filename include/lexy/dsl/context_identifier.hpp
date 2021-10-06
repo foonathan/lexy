@@ -6,6 +6,7 @@
 #define LEXY_DSL_CONTEXT_IDENTIFIER_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/identifier.hpp>
 
 namespace lexy
@@ -97,29 +98,34 @@ struct _ctx_irem : branch_base
     template <typename NextParser>
     struct p
     {
+        template <typename... PrevArgs>
+        struct _cont
+        {
+            template <typename Context, typename Reader>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, PrevArgs&&... args,
+                                               lexy::lexeme<Reader> lexeme)
+            {
+                if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
+                {
+                    // The lexemes weren't equal.
+                    using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
+                    auto err  = lexy::error<Reader, tag>(lexeme.begin(), lexeme.end());
+                    context.on(_ev::error{}, err);
+
+                    // But we can trivially recover.
+                }
+
+                // Continue parsing with the symbol value.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using parser = lexy::parser_for<_pattern, lexy::pattern_parser<Context>>;
-
-            // Parse the pattern.
-            auto begin = reader.position();
-            if (!parser::parse(context, reader))
-                // We don't recover.
-                return false;
-
-            auto lexeme = lexy::lexeme(reader, begin);
-            if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
-            {
-                // The lexemes weren't equal.
-                using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
-                auto err  = lexy::error<Reader, tag>(lexeme.begin(), lexeme.end());
-                context.on(_ev::error{}, err);
-
-                // But we can trivially recover.
-            }
-
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            // Capture the pattern and continue with special continuation.
+            return lexy::parser_for<_capt<_pattern>, _cont<Args...>>::parse(context, reader,
+                                                                            LEXY_FWD(args)...);
         }
     };
 

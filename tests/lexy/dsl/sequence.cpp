@@ -6,45 +6,80 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/capture.hpp>
-#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/recover.hpp>
 
 TEST_CASE("dsl::operator+")
 {
-    static constexpr auto rule = LEXY_LIT("a") + label<0> + LEXY_LIT("b") + capture(LEXY_LIT("c"));
+    constexpr auto rule = dsl::lit_c<'a'> + dsl::position + dsl::try_(LEXY_LIT("bc"))
+                          + dsl::capture(LEXY_LIT("de"));
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
+    constexpr auto callback = [](const char* begin, const char* pos, lexy::string_lexeme<> lexeme) {
+        CHECK(pos == begin + 1);
 
-        LEXY_VERIFY_FN int success(const char* cur, id<0>, lexy::lexeme_for<test_input> lex)
-        {
-            LEXY_VERIFY_CHECK(str + 3 == cur);
-            LEXY_VERIFY_CHECK(*lex.begin() == 'c');
-            return 0;
-        }
+        CHECK(lexeme.begin() <= begin + 4);
+        CHECK(lexeme.size() == 2);
+        CHECK(lexeme[0] == 'd');
+        CHECK(lexeme[1] == 'e');
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            if (e.character() == 'a')
-                return -1;
-            else if (e.character() == 'b')
-                return -2;
-            else if (e.character() == 'c')
-                return -3;
-            else
-                return -4;
-        }
+        return 0;
     };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
-    auto a = LEXY_VERIFY("a");
-    CHECK(a == -2);
-    auto ab = LEXY_VERIFY("ab");
-    CHECK(ab == -3);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
+
+    auto a       = LEXY_VERIFY("a");
+    auto a_trace = test_trace()
+                       .token("a")
+                       .position()
+                       .expected_literal(1, "bc", 0)
+                       .expected_literal(1, "de", 0)
+                       .cancel();
+    CHECK(a.status == test_result::fatal_error);
+    CHECK(a.trace == a_trace);
+
+    auto ab       = LEXY_VERIFY("ab");
+    auto ab_trace = test_trace()
+                        .token("a")
+                        .position()
+                        .expected_literal(1, "bc", 1)
+                        .error_token("b")
+                        .expected_literal(2, "de", 0)
+                        .cancel();
+    CHECK(ab.status == test_result::fatal_error);
+    CHECK(ab.trace == ab_trace);
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc == 0);
+    auto abc_trace
+        = test_trace().token("a").position().token("bc").expected_literal(3, "de", 0).cancel();
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace == abc_trace);
+
+    auto abcd       = LEXY_VERIFY("abcd");
+    auto abcd_trace = test_trace()
+                          .token("a")
+                          .position()
+                          .token("bc")
+                          .expected_literal(3, "de", 1)
+                          .error_token("d")
+                          .cancel();
+    CHECK(abcd.status == test_result::fatal_error);
+    CHECK(abcd.trace == abcd_trace);
+
+    auto abcde       = LEXY_VERIFY("abcde");
+    auto abcde_trace = test_trace().token("a").position().token("bc").token("de");
+    CHECK(abcde.status == test_result::success);
+    CHECK(abcde.trace == abcde_trace);
+    auto abcdef       = LEXY_VERIFY("abcdef");
+    auto abcdef_trace = test_trace().token("a").position().token("bc").token("de");
+    CHECK(abcdef.status == test_result::success);
+    CHECK(abcdef.trace == abcdef_trace);
+
+    auto ade       = LEXY_VERIFY("ade");
+    auto ade_trace = test_trace().token("a").position().expected_literal(1, "bc", 0).token("de");
+    CHECK(ade.status == test_result::recovered_error);
+    CHECK(ade.trace == ade_trace);
 }
 

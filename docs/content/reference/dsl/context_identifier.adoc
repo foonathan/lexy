@@ -109,6 +109,9 @@ Requires::
   i.e. `.create()` has been parsed earlier.
 Parsing::
   Parses `identifier` and checks it against the one stored in the variable.
+Branch parsing::
+  Parses `identifier` and backtracks when that fails.
+  Also backtracks when the new identifier does not match the old one.
 Errors::
   * All errors raised by parsing `identifier`.
     The rule then fails if `identifier` has failed.

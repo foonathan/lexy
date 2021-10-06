@@ -5,120 +5,86 @@
 #include <lexy/dsl/sign.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/eof.hpp>
 
 TEST_CASE("dsl::plus_sign")
 {
-    static constexpr auto rule = lexy::dsl::plus_sign + lexy::dsl::eof;
+    constexpr auto rule = dsl::plus_sign;
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char*)
-        {
-            return 0;
-        }
-        LEXY_VERIFY_FN int success(const char*, lexy::plus_sign sign)
-        {
-            return sign;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return -2;
-        }
-    };
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                  [](const char*, lexy::plus_sign s) {
+                                                      CHECK(s == +1);
+                                                      return 1;
+                                                  });
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(0));
-    auto plus = LEXY_VERIFY("+");
-    CHECK(plus.success(+1));
-    auto minus = LEXY_VERIFY("-");
-    CHECK(minus.fatal(-2));
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
 
-    auto other = LEXY_VERIFY("a");
-    CHECK(other.fatal(-2));
+    auto plus = LEXY_VERIFY("+");
+    CHECK(plus.status == test_result::success);
+    CHECK(plus.value == 1);
+    CHECK(plus.trace == test_trace().token("+"));
+    auto minus = LEXY_VERIFY("-");
+    CHECK(minus.status == test_result::success);
+    CHECK(minus.value == 0);
+    CHECK(minus.trace == test_trace());
 }
 
 TEST_CASE("dsl::minus_sign")
 {
-    static constexpr auto rule = lexy::dsl::minus_sign + lexy::dsl::eof;
+    constexpr auto rule = dsl::minus_sign;
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char*)
-        {
-            return 0;
-        }
-        LEXY_VERIFY_FN int success(const char*, lexy::minus_sign sign)
-        {
-            return sign;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return -2;
-        }
-    };
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                  [](const char*, lexy::minus_sign s) {
+                                                      CHECK(s == -1);
+                                                      return 1;
+                                                  });
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(0));
-    auto plus = LEXY_VERIFY("+");
-    CHECK(plus.fatal(-2));
-    auto minus = LEXY_VERIFY("-");
-    CHECK(minus.success(-1));
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
 
-    auto other = LEXY_VERIFY("a");
-    CHECK(other.fatal(-2));
+    auto plus = LEXY_VERIFY("+");
+    CHECK(plus.status == test_result::success);
+    CHECK(plus.value == 0);
+    CHECK(plus.trace == test_trace());
+    auto minus = LEXY_VERIFY("-");
+    CHECK(minus.status == test_result::success);
+    CHECK(minus.value == 1);
+    CHECK(minus.trace == test_trace().token("-"));
 }
 
 TEST_CASE("dsl::sign")
 {
-    static constexpr auto rule = lexy::dsl::sign + lexy::dsl::eof;
+    constexpr auto rule = dsl::sign;
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(*cur == '\0');
-            return 0;
-        }
-        LEXY_VERIFY_FN int success(const char* cur, lexy::plus_sign sign)
-        {
-            LEXY_VERIFY_CHECK(*cur == '\0');
-            return sign;
-        }
-        LEXY_VERIFY_FN int success(const char* cur, lexy::minus_sign sign)
-        {
-            LEXY_VERIFY_CHECK(*cur == '\0');
-            return sign;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return -2;
-        }
-    };
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                  [](const char*, lexy::plus_sign s) {
+                                                      CHECK(s == +1);
+                                                      return 1;
+                                                  },
+                                                  [](const char*, lexy::minus_sign s) {
+                                                      CHECK(s == -1);
+                                                      return 2;
+                                                  });
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.success(0));
-    auto plus = LEXY_VERIFY("+");
-    CHECK(plus.success(+1));
-    auto minus = LEXY_VERIFY("-");
-    CHECK(minus.success(-1));
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
 
-    auto other = LEXY_VERIFY("a");
-    CHECK(other.fatal(-2));
+    auto plus = LEXY_VERIFY("+");
+    CHECK(plus.status == test_result::success);
+    CHECK(plus.value == 1);
+    CHECK(plus.trace == test_trace().token("+"));
+    auto minus = LEXY_VERIFY("-");
+    CHECK(minus.status == test_result::success);
+    CHECK(minus.value == 2);
+    CHECK(minus.trace == test_trace().token("-"));
 }
 

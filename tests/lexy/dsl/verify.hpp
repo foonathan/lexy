@@ -2,143 +2,345 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef TEST_DSL_VERIFY_HPP_INCLUDED
-#define TEST_DSL_VERIFY_HPP_INCLUDED
+#ifndef TESTS_LEXY_DSL_VERIFY_HPP_INCLUDED
+#define TESTS_LEXY_DSL_VERIFY_HPP_INCLUDED
 
 #include <doctest/doctest.h>
+#include <lexy/action/base.hpp>
 #include <lexy/action/match.hpp>
-#include <lexy/dsl/base.hpp>
+#include <lexy/callback/adapter.hpp>
+#include <lexy/callback/fold.hpp>
+#include <lexy/dsl/any.hpp>
+#include <lexy/input/string_input.hpp>
+#include <lexy/token.hpp>
+#include <lexy/visualize.hpp>
+
+#if (defined(__GNUC__) && !defined(__clang__) && __GNUC__ == 7)                                    \
+    || (!defined(__clang__) && defined(_MSC_VER))
+// GCC 7 and MSVC are too buggy.
+#    define LEXY_DISABLE_CONSTEXPR_TESTS
+#endif
+
+//=== conveniences ===//
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/sequence.hpp>
-#include <lexy/lexeme.hpp>
 
-#include "../test_encoding.hpp"
+namespace lexy_test
+{}
 
-#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ == 7
-// GCC 7 doesn't liker pointer subtraction in constexpr code between constexpr strings.
-// This creates bogus test failures. At runtime everything is ok, so just disable constexpr tests
-// for GCC 7.
-#    define LEXY_DISABLE_CONSTEXPR_TESTS
-#elif !defined(__clang__) && defined(_MSC_VER)
-// MSVC is just too bugy
-#    define LEXY_DISABLE_CONSTEXPR_TESTS
-#endif
+using namespace lexy_test;
 
-#ifdef LEXY_DISABLE_CONSTEXPR_TESTS
-#    define LEXY_VERIFY_CALL(...) __VA_ARGS__
-#    define LEXY_VERIFY_FN
-#    define LEXY_VERIFY_CHECK(...) CHECK(__VA_ARGS__)
-#else
+namespace dsl = lexy::dsl;
 
-#    define LEXY_VERIFY_CALL(...)                                                                  \
-        [] {                                                                                       \
-            constexpr auto result = __VA_ARGS__;                                                   \
-            return result;                                                                         \
-        }()
-
-#    define LEXY_VERIFY_FN constexpr
-
-[[noreturn]] inline bool constexpr_check_failure()
+//=== doctest toString ===//
+namespace doctest
 {
-    throw 0;
-}
-
-#    define LEXY_VERIFY_CHECK(...) ((__VA_ARGS__) ? true : constexpr_check_failure())
-
-#endif
-
-#define LEXY_VERIFY(...) LEXY_VERIFY_CALL(verify<callback>(rule, __VA_ARGS__))
-#define LEXY_VERIFY_ENCODING(Encoding, ...)                                                        \
-    LEXY_VERIFY_CALL(verify<callback, Encoding>(rule, __VA_ARGS__))
-#define LEXY_VERIFY_PRODUCTION(Production, ...)                                                    \
-    LEXY_VERIFY_CALL(verify<callback, test_encoding, Production>(rule, __VA_ARGS__))
-
-template <typename Tag>
-using test_error = lexy::error_for<test_input, Tag>;
-
-inline constexpr auto test_error_count = 4;
-
-struct test_result
+struct _append_iterator
 {
-    bool     recovered;
-    int      value;
-    unsigned error_count;
-    int      error_code[test_error_count];
+    doctest::String* _result;
 
-    constexpr test_result() : recovered(false), value(-1), error_count(0), error_code() {}
-
-    constexpr bool success(int i) const
+    auto operator*() const noexcept
     {
-        return recovered && value == i && error_count == 0;
+        return *this;
     }
-    constexpr bool fatal(int i) const
+    auto operator++(int) const noexcept
     {
-        return !recovered && error_count == 1 && error_code[0] == i;
+        return *this;
     }
 
-    template <typename... T>
-    constexpr bool errors(T... c) const
+    _append_iterator& operator=(char c)
     {
-        if (error_count != sizeof...(c))
-            return false;
-
-        auto i = 0;
-        return ((error_code[i++] == c) && ...);
-    }
-
-    // Simple comparison can be decomposed by doctest.
-    constexpr bool operator==(int i) const
-    {
-        if (i >= 0)
-            return success(i);
-        else
-            return fatal(i);
-    }
-
-    friend doctest::String toString(test_result result)
-    {
-        doctest::String str;
-        if (result.recovered)
-            str += doctest::toString(result.value);
-        else
-            str += "error";
-
-        if (result.error_count > 0)
-        {
-            str += ": ";
-            for (auto i = 0u; i != result.error_count; ++i)
-                str += doctest::toString(result.error_code[i]) + " ";
-        }
-        return str;
+        *_result += doctest::String(&c, 1);
+        return *this;
     }
 };
 
+template <>
+struct StringMaker<lexy::code_point>
+{
+    static String convert(lexy::code_point cp)
+    {
+        doctest::String result;
+        lexy::visualize_to(_append_iterator{&result}, cp,
+                           lexy::visualization_options{lexy::visualize_space});
+        return result;
+    }
+};
+
+template <typename Reader>
+struct StringMaker<lexy::lexeme<Reader>>
+{
+    static String convert(lexy::lexeme<Reader> lex)
+    {
+        doctest::String result;
+        lexy::visualize_to(_append_iterator{&result}, lex,
+                           lexy::visualization_options{lexy::visualize_space});
+        return result;
+    }
+};
+} // namespace doctest
+
+//=== rule equivalence ===//
+namespace lexy_test
+{
+template <typename RuleA, typename RuleB>
+constexpr bool equivalent_rules(RuleA, RuleB)
+{
+    return std::is_same_v<
+               RuleA, RuleB> || std::is_base_of_v<RuleA, RuleB> || std::is_base_of_v<RuleB, RuleA>;
+}
+} // namespace lexy_test
+
+//=== verify ===//
+namespace lexy::parse_events
+{
+struct debug_event;
+}
+
+namespace lexy_test
+{
 struct test_production
+{
+    static constexpr auto name = "test_production";
+};
+
+template <typename Rule>
+struct production_for
+{
+    static constexpr auto rule = Rule{};
+};
+template <typename Rule>
+struct test_production_for : production_for<Rule>, test_production
 {};
 
-template <typename Callback, typename CharT, typename Root>
+template <typename Production>
+constexpr auto is_test_production = std::is_base_of_v<test_production, Production>;
+
+class test_trace
+{
+public:
+    explicit test_trace(std::nullptr_t) : _level(0)
+    {
+        _trace += "\n";
+    }
+
+    test_trace() : test_trace(nullptr)
+    {
+        production("test_production");
+    }
+
+    test_trace& production(const char* name)
+    {
+        prefix();
+        _trace += name;
+        _trace += ":\n";
+
+        ++_level;
+
+        return *this;
+    }
+    test_trace& recovery()
+    {
+        return production("error recovery");
+    }
+
+    test_trace& token(const char* kind, const char* spelling)
+    {
+        prefix();
+
+        _trace += kind;
+        _trace += ": ";
+        _trace += spelling;
+        _trace += "\n";
+
+        return *this;
+    }
+    test_trace& token(const char* spelling)
+    {
+        return token("token", spelling);
+    }
+    test_trace& whitespace(const char* spelling)
+    {
+        return token("whitespace", spelling);
+    }
+    test_trace& error_token(const char* spelling)
+    {
+        return token("error token", spelling);
+    }
+    test_trace& eof()
+    {
+        return token("EOF", "");
+    }
+    test_trace& position()
+    {
+        return token("position", "");
+    }
+
+    test_trace& backtracked(const char* spelling)
+    {
+        return token("backtracked", spelling);
+    }
+
+    test_trace& debug(const char* message)
+    {
+        return token("debug", message);
+    }
+
+    test_trace& error(std::size_t begin, std::size_t end, const char* message)
+    {
+        prefix();
+
+        _trace += "error: ";
+        _trace += message;
+
+        _trace += " @";
+        _trace += doctest::toString(begin);
+        _trace += "-";
+        _trace += doctest::toString(end);
+
+        _trace += "\n";
+
+        return *this;
+    }
+    test_trace& expected_literal(std::size_t pos, const char* literal, std::size_t index)
+    {
+        prefix();
+
+        _trace += "error: expected '";
+        _trace += literal;
+        _trace += "'";
+
+        _trace += " @";
+        _trace += doctest::toString(pos);
+        _trace += "-";
+        _trace += doctest::toString(pos + index);
+
+        _trace += "\n";
+
+        return *this;
+    }
+    test_trace& expected_keyword(std::size_t begin, std::size_t end, const char* keyword)
+    {
+        prefix();
+
+        _trace += "error: expected keyword '";
+        _trace += keyword;
+        _trace += "'";
+
+        _trace += " @";
+        _trace += doctest::toString(begin);
+        _trace += "-";
+        _trace += doctest::toString(end);
+
+        _trace += "\n";
+
+        return *this;
+    }
+    test_trace& expected_char_class(std::size_t pos, const char* c)
+    {
+        prefix();
+
+        _trace += "error: expected '";
+        _trace += c;
+        _trace += "' character";
+
+        _trace += " @";
+        _trace += doctest::toString(pos);
+
+        _trace += "\n";
+
+        return *this;
+    }
+
+    test_trace& finish()
+    {
+        --_level;
+
+        return *this;
+    }
+    test_trace& cancel()
+    {
+        prefix();
+        _trace += "cancel\n";
+        --_level;
+
+        return *this;
+    }
+
+    friend doctest::String toString(const test_trace& self)
+    {
+        return self._trace + doctest::String("\n         ");
+    }
+
+    friend bool operator==(const test_trace& lhs, const test_trace& rhs)
+    {
+        return lhs._trace == rhs._trace;
+    }
+
+private:
+    void prefix()
+    {
+        // First indent to align output regardless of level.
+        _trace += "            ";
+
+        // Then indent child nodes.
+        if (_level > 0)
+        {
+            for (auto i = 0; i != _level - 1; ++i)
+                _trace += "  ";
+            _trace += "- ";
+        }
+    }
+
+    doctest::String _trace;
+    int             _level;
+};
+
+struct test_result
+{
+    enum
+    {
+        success,
+        recovered_error,
+        fatal_error,
+    } status;
+
+    int        value;
+    test_trace trace;
+};
+
+template <typename Input, typename Callback>
 struct test_handler
 {
-    const CharT* str;
-    test_result  result;
-
-    constexpr test_handler(const CharT* str) : str(str) {}
+public:
+    test_handler(const Input& input, Callback cb)
+    : _trace(nullptr), _cb(cb), _had_error(false), _begin(input.reader().position()),
+      _last_token(_begin)
+    {}
 
     //=== result ===//
     template <typename Production>
-    using production_result = int;
+    using production_result = std::conditional_t<is_test_production<Production>, int, Production>;
 
     template <typename Production>
-    constexpr test_result get_result_value(int value) && noexcept
+    auto get_result_value(Production) && noexcept
     {
-        result.recovered = true;
-        result.value     = value;
-        return result;
+        return Production{};
     }
     template <typename Production>
-    constexpr test_result get_result_empty() && noexcept
+    auto get_result_value(int value) && noexcept
     {
-        return result;
+        static_assert(is_test_production<Production>);
+        return test_result{_had_error ? test_result::recovered_error : test_result::success, value,
+                           LEXY_MOV(_trace)};
+    }
+    template <typename Production>
+    auto get_result_empty() && noexcept
+    {
+        if constexpr (is_test_production<Production>)
+            return test_result{test_result::fatal_error, -1, LEXY_MOV(_trace)};
+        else
+            return Production{};
     }
 
     //=== events ===//
@@ -147,83 +349,236 @@ struct test_handler
     {};
 
     template <typename Production, typename Iterator>
-    constexpr marker<Production> on(lexy::parse_events::production_start<Production>, Iterator)
+    auto on(marker<Production>, lexy::parse_events::list, Iterator)
     {
-        return {};
+        return lexy::count.sink();
     }
 
     template <typename Production, typename Iterator>
-    constexpr auto on(marker<Production>, lexy::parse_events::list, Iterator)
+    marker<Production> on(lexy::parse_events::production_start<Production>, Iterator pos)
     {
-        return Callback{str}.list();
-    }
+        CHECK(_last_token == pos);
 
-    template <typename Production, typename Error>
-    LEXY_VERIFY_FN void on(marker<Production>, lexy::parse_events::error, Error&& error)
-    {
-        LEXY_VERIFY_CHECK(result.error_count
-                          < test_error_count); // Multiple errors shouldn't happen here.
-        if constexpr (std::is_same_v<Production, Root>)
-            result.error_code[result.error_count++] = Callback{str}.error(LEXY_FWD(error));
-        else
-            result.error_code[result.error_count++]
-                = Callback{str}.error(Production{}, LEXY_FWD(error));
+        _trace.production(lexy::production_name<Production>());
+        return {};
     }
-
     template <typename Production, typename Iterator, typename... Args>
-    constexpr int on(marker<Production>&&, lexy::parse_events::production_finish<Production>,
-                     [[maybe_unused]] Iterator pos, Args&&... args)
+    auto on(marker<Production>&&, lexy::parse_events::production_finish<Production>, Iterator pos,
+            [[maybe_unused]] Args&&... args)
     {
-        if constexpr (std::is_same_v<Production, Root>)
-            return Callback{str}.success(pos, LEXY_FWD(args)...);
+        CHECK(_last_token == pos);
+
+        _trace.finish();
+
+        if constexpr (is_test_production<Production>)
+            return _cb(_begin, LEXY_FWD(args)...);
         else
-            return Callback{str}.success(Production{}, LEXY_FWD(args)...);
+            return Production{};
+    }
+    template <typename Production, typename Iterator>
+    void on(marker<Production>&&, lexy::parse_events::production_cancel<Production>, Iterator pos)
+    {
+        CHECK(_last_token == pos);
+
+        _trace.cancel();
     }
 
-    template <typename... Args>
-    constexpr void on(const Args&...)
-    {}
+    template <typename Production, typename TK, typename Iterator>
+    void on(const marker<Production>&, lexy::parse_events::token, TK _kind, Iterator begin,
+            Iterator end)
+    {
+        auto kind = lexy::token_kind(_kind);
+
+        auto lex      = lexy::lexeme_for<Input>(begin, end);
+        auto spelling = doctest::toString(lex);
+
+        _trace.token(kind.name(), spelling.c_str());
+
+        CHECK(_last_token == begin);
+        _last_token = end;
+    }
+
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, lexy::parse_events::backtracked, Iterator begin,
+            Iterator end)
+    {
+        CHECK(_last_token == begin);
+
+        if (begin != end)
+        {
+            auto lex      = lexy::lexeme_for<Input>(begin, end);
+            auto spelling = doctest::toString(lex);
+
+            _trace.backtracked(spelling.c_str());
+        }
+    }
+
+    template <typename Production, typename Reader, typename Tag>
+    void on(marker<Production>, lexy::parse_events::error, const lexy::error<Reader, Tag>& error)
+    {
+        auto begin = lexy::_detail::range_size(_begin, error.begin());
+        auto end   = lexy::_detail::range_size(_begin, error.end());
+        _trace.error(begin, end, error.message());
+
+        _had_error = true;
+    }
+    template <typename Production, typename Reader>
+    void on(marker<Production>, lexy::parse_events::error,
+            const lexy::error<Reader, lexy::expected_literal>& error)
+    {
+        auto pos    = lexy::_detail::range_size(_begin, error.position());
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        _trace.expected_literal(pos, doctest::toString(string).c_str(), error.index());
+
+        _had_error = true;
+    }
+    template <typename Production, typename Reader>
+    void on(marker<Production>, lexy::parse_events::error,
+            const lexy::error<Reader, lexy::expected_keyword>& error)
+    {
+        auto begin  = lexy::_detail::range_size(_begin, error.begin());
+        auto end    = lexy::_detail::range_size(_begin, error.end());
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        _trace.expected_keyword(begin, end, doctest::toString(string).c_str());
+
+        _had_error = true;
+    }
+    template <typename Production, typename Reader>
+    void on(marker<Production>, lexy::parse_events::error,
+            const lexy::error<Reader, lexy::expected_char_class>& error)
+    {
+        auto pos = lexy::_detail::range_size(_begin, error.position());
+        _trace.expected_char_class(pos, error.character_class());
+
+        _had_error = true;
+    }
+
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, lexy::parse_events::recovery_start, Iterator pos)
+    {
+        CHECK(_last_token == pos);
+        _trace.recovery();
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, lexy::parse_events::recovery_finish, Iterator pos)
+    {
+        CHECK(_last_token == pos);
+        _trace.finish();
+    }
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, lexy::parse_events::recovery_cancel, Iterator pos)
+    {
+        CHECK(_last_token == pos);
+        _trace.cancel();
+    }
+
+    template <typename Production, typename Iterator>
+    void on(const marker<Production>&, const lexy::parse_events::debug_event&, Iterator pos,
+            const char* str)
+    {
+        CHECK(_last_token == pos);
+        _trace.token("debug", str);
+    }
+
+private:
+    test_trace _trace;
+
+    Callback _cb;
+    bool     _had_error;
+
+    typename lexy::input_reader<Input>::iterator _begin, _last_token;
 };
 
-template <typename Base, typename Rule>
-struct _verify_production : Base
+constexpr auto token_callback = [](auto) { return 0; };
+
+template <typename Production, typename Input, typename Callback>
+test_result verify(const Input& input, Callback cb)
 {
-    static constexpr auto rule = Rule{};
-};
+    INFO(lexy::lexeme_for<Input>(input.reader().position(), [&] {
+        auto                                                         reader = input.reader();
+        lexy::token_parser_for<decltype(dsl::any), decltype(reader)> parser(reader);
+        parser.try_parse(reader);
+        return parser.end;
+    }()));
 
-template <typename Callback, typename Encoding = test_encoding,
-          typename Production = test_production, typename CharT, typename Rule>
-LEXY_VERIFY_FN test_result verify(Rule, const CharT* str, std::size_t size = std::size_t(-1))
-{
-    auto input = size == std::size_t(-1) ? lexy::zstring_input<Encoding>(str)
-                                         : lexy::string_input<Encoding>(str, size);
-
-    using production = _verify_production<Production, Rule>;
-    using handler_t  = test_handler<Callback, CharT, production>;
-
-    auto reader = input.reader();
-    return lexy::do_action<production>(handler_t{str}, reader);
+    test_handler<Input, Callback> handler(input, cb);
+    auto                          reader = input.reader();
+    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
 }
 
-template <int Id>
-using id = std::integral_constant<int, Id>;
-
-template <int Id>
-struct _label : lexy::dsl::rule_base
+template <typename Rule, typename Input, typename Callback>
+test_result verify(Rule, const Input& input, Callback cb)
 {
-    template <typename NextParser>
-    struct p
+    return verify<test_production_for<Rule>>(input, cb);
+}
+
+template <typename Input, typename = lexy::input_reader<Input>>
+constexpr auto _get_input(const Input& input)
+{
+    return input;
+}
+template <typename CharT>
+constexpr auto _get_input(const CharT* str)
+{
+    return lexy::zstring_input(str);
+}
+template <typename CharT>
+constexpr auto _get_input(const CharT* str, std::size_t length)
+{
+    return lexy::string_input(str, length);
+}
+template <typename Encoding, typename CharT>
+constexpr auto _get_input(Encoding, const CharT* str)
+{
+    return lexy::zstring_input<Encoding>(str);
+}
+template <typename Encoding, typename... CharT, typename = std::enable_if_t<(sizeof...(CharT) > 1)>>
+constexpr auto _get_input(Encoding, CharT... cs)
+{
+    using char_type = typename Encoding::char_type;
+
+    struct input
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        char_type array[sizeof...(CharT)];
+
+        constexpr input(CharT... c) : array{char_type(c)...} {}
+
+        input(const input&) = delete;
+        input& operator=(const input&) = delete;
+
+        constexpr auto reader() const&
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., id<Id>{});
+            using reader_t = lexy::_detail::range_reader<Encoding, const char_type*>;
+            return reader_t(array, array + sizeof...(CharT));
         }
     };
-};
 
-template <int Id>
-constexpr auto label = _label<Id>{};
+    return input(cs...);
+}
+} // namespace lexy_test
 
-#endif // TEST_DSL_VERIFY_HPP_INCLUDED
+#ifndef LEXY_DISABLE_CONSTEXPR_TESTS
+
+#    define LEXY_VERIFY_P(Prod, ...)                                                               \
+        [&] {                                                                                      \
+            constexpr auto _input   = lexy_test::_get_input(__VA_ARGS__);                          \
+            constexpr auto _matches = lexy::match<Prod>(_input);                                   \
+                                                                                                   \
+            auto _result = lexy_test::verify<Prod>(_input, callback);                              \
+            if (_matches)                                                                          \
+                CHECK(_result.status == lexy_test::test_result::success);                          \
+            else if (_matches)                                                                     \
+                CHECK(_result.status != lexy_test::test_result::success);                          \
+            return _result;                                                                        \
+        }()
+#else
+
+#    define LEXY_VERIFY_P(Prod, ...)                                                               \
+        lexy_test::verify<Prod>(lexy_test::_get_input(__VA_ARGS__), callback)
+
+#endif
+
+#define LEXY_VERIFY(...) LEXY_VERIFY_P(lexy_test::test_production_for<decltype(rule)>, __VA_ARGS__)
+
+#endif // TESTS_LEXY_DSL_VERIFY_HPP_INCLUDED
 

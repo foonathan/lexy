@@ -10,130 +10,81 @@
 
 TEST_CASE("dsl::operator-")
 {
+    constexpr auto token    = dsl::until(dsl::lit_c<'!'>);
+    constexpr auto callback = token_callback;
+
     SUBCASE("basic")
     {
-        static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("aa!");
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = token - LEXY_LIT("aa!");
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == lexy::_detail::string_view(str).end());
-                LEXY_VERIFY_CHECK(e.character() == '!');
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::minus_failure> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "!", 0).cancel());
+
         auto zero = LEXY_VERIFY("!");
-        CHECK(zero == 1);
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.trace == test_trace().token("!"));
+        auto one = LEXY_VERIFY("a!");
+        CHECK(one.status == test_result::success);
+        CHECK(one.trace == test_trace().token("a!"));
+        auto three = LEXY_VERIFY("aaa!");
+        CHECK(three.status == test_result::success);
+        CHECK(three.trace == test_trace().token("aaa!"));
 
-        auto a = LEXY_VERIFY("a!");
-        CHECK(a == 2);
-        auto aaa = LEXY_VERIFY("aaa!");
-        CHECK(aaa == 4);
-
-        auto aa = LEXY_VERIFY("aa!");
-        CHECK(aa == -2);
+        auto two = LEXY_VERIFY("aa!");
+        CHECK(two.status == test_result::fatal_error);
+        CHECK(two.trace == test_trace().error(0, 3, "minus failure").error_token("aa!").cancel());
     }
-    SUBCASE("sequence")
+    SUBCASE("prefix")
     {
-        static constexpr auto rule = until(LEXY_LIT("!")) - LEXY_LIT("a!") - LEXY_LIT("aa!");
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = token - dsl::lit_c<'b'>;
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == lexy::_detail::string_view(str).end());
-                LEXY_VERIFY_CHECK(e.character() == '!');
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::minus_failure> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "!", 0).cancel());
+
         auto zero = LEXY_VERIFY("!");
-        CHECK(zero == 1);
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.trace == test_trace().token("!"));
 
         auto a = LEXY_VERIFY("a!");
-        CHECK(a == -2);
-        auto aa = LEXY_VERIFY("aa!");
-        CHECK(aa == -2);
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().token("a!"));
 
-        auto aaa = LEXY_VERIFY("aaa!");
-        CHECK(aaa == 4);
+        // The except rule needs to match everything.
+        auto b = LEXY_VERIFY("b!");
+        CHECK(b.status == test_result::success);
+        CHECK(b.trace == test_trace().token("b!"));
     }
     SUBCASE("any")
     {
-        static constexpr auto rule = until(LEXY_LIT("!")) - lexy::dsl::any;
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = token - dsl::token(dsl::lit_c<'b'> + dsl::any);
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == lexy::_detail::string_view(str).end());
-                LEXY_VERIFY_CHECK(e.character() == '!');
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::minus_failure> e)
-            {
-                LEXY_VERIFY_CHECK(e.begin() == str);
-                LEXY_VERIFY_CHECK(e.end() == lexy::_detail::string_view(str).end());
-                return -2;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "!", 0).cancel());
+
         auto zero = LEXY_VERIFY("!");
-        CHECK(zero == -2);
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.trace == test_trace().token("!"));
 
         auto a = LEXY_VERIFY("a!");
-        CHECK(a == -2);
-        auto aa = LEXY_VERIFY("aa!");
-        CHECK(aa == -2);
-        auto aaa = LEXY_VERIFY("aaa!");
-        CHECK(aaa == -2);
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().token("a!"));
+
+        auto b = LEXY_VERIFY("b!");
+        CHECK(b.status == test_result::fatal_error);
+        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+    }
+    SUBCASE("multiple subtractions")
+    {
+        constexpr auto rule = token - LEXY_LIT("a!") - LEXY_LIT("b!");
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+
+        CHECK(equivalent_rules(rule, token - LEXY_LIT("a!") / LEXY_LIT("b!")));
     }
 }
 

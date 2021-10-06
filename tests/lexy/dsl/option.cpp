@@ -5,66 +5,98 @@
 #include <lexy/dsl/option.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
+#include <optional>
+
+namespace
+{
+template <typename T>
+constexpr auto is_optional_like = lexy::_detail::is_detected<lexy::_detect_optional_like, T>;
+}
+
+TEST_CASE("lexy::nullopt")
+{
+    CHECK(is_optional_like<std::optional<int>>);
+    CHECK(!std::optional<int>(lexy::nullopt{}).has_value());
+
+    CHECK(is_optional_like<int*>);
+    CHECK(static_cast<int*>(lexy::nullopt{}) == nullptr);
+
+    CHECK(!is_optional_like<int>);
+}
 
 TEST_CASE("dsl::nullopt")
 {
-    static constexpr auto rule = lexy::dsl::nullopt;
+    constexpr auto rule = dsl::nullopt;
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
-        {
-            LEXY_VERIFY_CHECK(cur == str);
-            return 0;
-        }
-    };
+    constexpr auto callback = [](const char*, lexy::nullopt) { return 0; };
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
 
-    auto string = LEXY_VERIFY("abc");
-    CHECK(string == 0);
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.value == 0);
+    CHECK(abc.trace == test_trace());
 }
 
 TEST_CASE("dsl::opt()")
 {
-    static constexpr auto rule = opt(LEXY_LIT("a") >> LEXY_LIT("bc") + label<1>);
+    constexpr auto rule = dsl::opt(dsl::capture(LEXY_LIT("ab")) >> dsl::capture(LEXY_LIT("cd")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
+    constexpr auto callback //
+        = lexy::callback<int>([](const char*, lexy::nullopt) { return 0; },
+                              [](const char* begin, lexy::string_lexeme<> ab,
+                                 lexy::string_lexeme<> cd) {
+                                  CHECK(ab.size() == 2);
+                                  CHECK(ab.begin() == begin);
+                                  CHECK(ab[0] == 'a');
+                                  CHECK(ab[1] == 'b');
 
-        LEXY_VERIFY_FN int success(const char* cur, lexy::nullopt)
-        {
-            LEXY_VERIFY_CHECK(cur == str);
-            return 0;
-        }
-        LEXY_VERIFY_FN int success(const char* cur, int i)
-        {
-            LEXY_VERIFY_CHECK(cur - str == 3);
-            return i;
-        }
+                                  CHECK(cd.size() == 2);
+                                  CHECK(cd.begin() == begin + 2);
+                                  CHECK(cd[0] == 'c');
+                                  CHECK(cd[1] == 'd');
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("bc"));
-            return -1;
-        }
-    };
+                                  return 1;
+                              });
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
+    auto a = LEXY_VERIFY("a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.value == 0);
+    CHECK(a.trace == test_trace());
 
-    auto success = LEXY_VERIFY("abc");
-    CHECK(success == 1);
+    auto ab = LEXY_VERIFY("ab");
+    CHECK(ab.status == test_result::fatal_error);
+    CHECK(ab.trace == test_trace().token("ab").expected_literal(2, "cd", 0).cancel());
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace
+          == test_trace().token("ab").expected_literal(2, "cd", 1).error_token("c").cancel());
 
-    auto condition = LEXY_VERIFY("a");
-    CHECK(condition == -1);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
+    auto abcd = LEXY_VERIFY("abcd");
+    CHECK(abcd.status == test_result::success);
+    CHECK(abcd.value == 1);
+    CHECK(abcd.trace == test_trace().token("ab").token("cd"));
+    auto abcde = LEXY_VERIFY("abcde");
+    CHECK(abcde.status == test_result::success);
+    CHECK(abcde.value == 1);
+    CHECK(abcde.trace == test_trace().token("ab").token("cd"));
+}
+
+TEST_CASE("dsl::opt(unconditional)")
+{
+    constexpr auto rule = dsl::opt(dsl::else_ >> dsl::capture(LEXY_LIT("cd")));
+    CHECK(lexy::is_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::else_ >> dsl::capture(LEXY_LIT("cd"))));
 }
 

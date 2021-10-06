@@ -5,72 +5,71 @@
 #include <lexy/dsl/until.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/peek.hpp>
 
 TEST_CASE("dsl::until()")
 {
-    static constexpr auto rule = until(LEXY_LIT("!"));
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::until(LEXY_LIT("!"));
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str);
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == lexy::_detail::string_view(str).end());
-            LEXY_VERIFY_CHECK(e.character() == '!');
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "!", 0).cancel());
 
     auto zero = LEXY_VERIFY("!");
-    CHECK(zero == 1);
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("!"));
     auto one = LEXY_VERIFY("a!");
-    CHECK(one == 2);
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().token("a!"));
     auto two = LEXY_VERIFY("ab!");
-    CHECK(two == 3);
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().token("ab!"));
+    auto three = LEXY_VERIFY("abc!");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("abc!"));
 
     auto unterminated = LEXY_VERIFY("abc");
-    CHECK(unterminated == -1);
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace
+          == test_trace().expected_literal(3, "!", 0).error_token("abc").cancel());
+
+    auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
+    CHECK(invalid_utf8.status == test_result::success);
+    CHECK(invalid_utf8.trace == test_trace().token("abc\\u???\?!"));
 }
 
 TEST_CASE("dsl::until().or_eof()")
 {
-    static constexpr auto rule = until(LEXY_LIT("!")).or_eof();
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::until(LEXY_LIT("!")).or_eof();
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str);
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.trace == test_trace().token(""));
 
     auto zero = LEXY_VERIFY("!");
-    CHECK(zero == 1);
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("!"));
     auto one = LEXY_VERIFY("a!");
-    CHECK(one == 2);
-    auto two = LEXY_VERIFY("xy!");
-    CHECK(two == 3);
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().token("a!"));
+    auto two = LEXY_VERIFY("ab!");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().token("ab!"));
+    auto three = LEXY_VERIFY("abc!");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace == test_trace().token("abc!"));
 
     auto unterminated = LEXY_VERIFY("abc");
-    CHECK(unterminated == 3);
+    CHECK(unterminated.status == test_result::success);
+    CHECK(unterminated.trace == test_trace().token("abc"));
+
+    auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
+    CHECK(invalid_utf8.status == test_result::success);
+    CHECK(invalid_utf8.trace == test_trace().token("abc\\u???\?!"));
 }
 

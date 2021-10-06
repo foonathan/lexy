@@ -8,32 +8,22 @@
 
 TEST_CASE("dsl::eof")
 {
-    static constexpr auto rule = lexy::dsl::eof;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = lexy::dsl::eof;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            LEXY_VERIFY_CHECK(cur == str);
-            return 0;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_char_class> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.character_class() == lexy::_detail::string_view("EOF"));
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == 0);
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.trace == test_trace().eof());
 
-    auto non_empty = LEXY_VERIFY("abc");
-    CHECK(non_empty == -1);
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace == test_trace().expected_char_class(0, "EOF").cancel());
+
+    // 0xFF is the EOF marker for UTF-8 input.
+    auto invalid_UTF8 = LEXY_VERIFY(lexy::utf8_encoding{}, 0xFF, 'a', 'b', 'c');
+    CHECK(invalid_UTF8.status == test_result::success);
+    CHECK(invalid_UTF8.trace == test_trace().eof());
 }
 

@@ -5,76 +5,62 @@
 #include <lexy/dsl/if.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
 
 TEST_CASE("dsl::if_()")
 {
-    SUBCASE("token")
-    {
-        static constexpr auto rule = if_(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::if_(dsl::capture(LEXY_LIT("ab")) >> dsl::capture(LEXY_LIT("cd")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback //
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char* begin, lexy::string_lexeme<> ab,
+                                 lexy::string_lexeme<> cd) {
+                                  CHECK(ab.size() == 2);
+                                  CHECK(ab.begin() == begin);
+                                  CHECK(ab[0] == 'a');
+                                  CHECK(ab[1] == 'b');
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                if (cur == str)
-                    return 0;
-                else
-                {
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                    return 1;
-                }
-            }
-        };
+                                  CHECK(cd.size() == 2);
+                                  CHECK(cd.begin() == begin + 2);
+                                  CHECK(cd[0] == 'c');
+                                  CHECK(cd[1] == 'd');
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+                                  return 1;
+                              });
 
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 1);
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.value == 0);
+    CHECK(empty.trace == test_trace());
+    auto a = LEXY_VERIFY("a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.value == 0);
+    CHECK(a.trace == test_trace());
 
-        auto partial = LEXY_VERIFY("ab");
-        CHECK(partial == 0);
-    }
-    SUBCASE("branch")
-    {
-        static constexpr auto rule = if_(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    auto ab = LEXY_VERIFY("ab");
+    CHECK(ab.status == test_result::fatal_error);
+    CHECK(ab.trace == test_trace().token("ab").expected_literal(2, "cd", 0).cancel());
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::fatal_error);
+    CHECK(abc.trace
+          == test_trace().token("ab").expected_literal(2, "cd", 1).error_token("c").cancel());
 
-        struct callback
-        {
-            const char* str;
+    auto abcd = LEXY_VERIFY("abcd");
+    CHECK(abcd.status == test_result::success);
+    CHECK(abcd.value == 1);
+    CHECK(abcd.trace == test_trace().token("ab").token("cd"));
+    auto abcde = LEXY_VERIFY("abcde");
+    CHECK(abcde.status == test_result::success);
+    CHECK(abcde.value == 1);
+    CHECK(abcde.trace == test_trace().token("ab").token("cd"));
+}
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                if (cur == str)
-                    return 0;
-                else
-                {
-                    LEXY_VERIFY_CHECK(cur - str == 3);
-                    return 1;
-                }
-            }
+TEST_CASE("dsl::if_(unconditional)")
+{
+    constexpr auto rule = dsl::if_(dsl::else_ >> dsl::capture(LEXY_LIT("cd")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("bc"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-
-        auto success = LEXY_VERIFY("abc");
-        CHECK(success == 1);
-
-        auto condition = LEXY_VERIFY("a");
-        CHECK(condition == -1);
-        auto partial = LEXY_VERIFY("ab");
-        CHECK(partial == -1);
-    }
+    CHECK(equivalent_rules(rule, dsl::else_ >> dsl::capture(LEXY_LIT("cd"))));
 }
 

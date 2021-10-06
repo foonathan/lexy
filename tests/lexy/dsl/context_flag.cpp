@@ -5,113 +5,184 @@
 #include <lexy/dsl/context_flag.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/branch.hpp>
-#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/if.hpp>
 
 TEST_CASE("dsl::context_flag")
 {
-    struct error;
+    constexpr auto flag = dsl::context_flag<struct id>;
 
-    static constexpr auto flag = lexy::dsl::context_flag<struct flag_id>;
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 2; },
+                                                  [](const char*, bool value) { return value; });
 
-    struct callback
+    SUBCASE(".create()")
     {
-        const char* str;
+        constexpr auto rule = flag.create() + flag.value();
 
-        LEXY_VERIFY_FN int success(const char* cur, bool value)
-        {
-            LEXY_VERIFY_CHECK(str == cur);
-            return static_cast<int>(value);
-        }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        LEXY_VERIFY_FN int error(test_error<error> error)
-        {
-            LEXY_VERIFY_CHECK(error.position() == str);
-            return -1;
-        }
-    };
-
-    SUBCASE("create - false")
-    {
-        static constexpr auto rule = flag.create() + flag.value();
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("create - true")
+    SUBCASE(".create<true>()")
     {
-        static constexpr auto rule = flag.create<true>() + flag.value();
+        constexpr auto rule = flag.create<true>() + flag.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 1);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace());
     }
 
-    SUBCASE("set")
+    SUBCASE(".set() false flag")
     {
-        static constexpr auto rule = flag.create() + flag.set() + flag.value();
+        constexpr auto rule = flag.create() + flag.set() + flag.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 1);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("reset")
+    SUBCASE(".set() true flag")
     {
-        static constexpr auto rule = flag.create<true>() + flag.reset() + flag.value();
+        constexpr auto rule = flag.create<true>() + flag.set() + flag.value();
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 1);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace());
+    }
+    SUBCASE(".reset() false flag")
+    {
+        constexpr auto rule = flag.create() + flag.reset() + flag.value();
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
+    }
+    SUBCASE(".reset() true flag")
+    {
+        constexpr auto rule = flag.create<true>() + flag.reset() + flag.value();
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
+    }
+    SUBCASE(".toggle() false flag")
+    {
+        constexpr auto rule = flag.create() + flag.toggle() + flag.value();
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 1);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace());
+    }
+    SUBCASE(".toggle() true flag")
+    {
+        constexpr auto rule = flag.create<true>() + flag.toggle() + flag.value();
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
     }
 
-    SUBCASE("toggle - on")
+    SUBCASE(".is_set() false flag")
     {
-        static constexpr auto rule = flag.create() + flag.toggle() + flag.value();
+        constexpr auto rule = flag.create() + dsl::if_(flag.is_set() >> flag.value());
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 2);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 2);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("toggle - off")
+    SUBCASE(".is_set() true flag")
     {
-        static constexpr auto rule = flag.create<true>() + flag.toggle() + flag.value();
+        constexpr auto rule = flag.create<true>() + dsl::if_(flag.is_set() >> flag.value());
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 1);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace());
     }
-
-    SUBCASE("is_set - true")
+    SUBCASE(".is_reset() false flag")
     {
-        static constexpr auto rule
-            = flag.create<true>() + (flag.is_set() >> flag.reset() | lexy::dsl::else_ >> flag.set())
-              + flag.value();
+        constexpr auto rule = flag.create() + dsl::if_(flag.is_reset() >> flag.value());
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 0);
+        CHECK(abc.trace == test_trace());
     }
-    SUBCASE("is_set - false")
+    SUBCASE(".is_reset() true flag")
     {
-        static constexpr auto rule
-            = flag.create<false>()
-              + (flag.is_set() >> flag.reset() | lexy::dsl::else_ >> flag.set()) + flag.value();
+        constexpr auto rule = flag.create<true>() + dsl::if_(flag.is_reset() >> flag.value());
 
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
-    }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 2);
+        CHECK(empty.trace == test_trace());
 
-    SUBCASE("is_reset - true")
-    {
-        static constexpr auto rule
-            = flag.create<false>()
-              + (flag.is_reset() >> flag.set() | lexy::dsl::else_ >> flag.reset()) + flag.value();
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 1);
-    }
-    SUBCASE("is_reset - false")
-    {
-        static constexpr auto rule
-            = flag.create<true>()
-              + (flag.is_reset() >> flag.set() | lexy::dsl::else_ >> flag.reset()) + flag.value();
-
-        auto result = LEXY_VERIFY("");
-        CHECK(result == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 2);
+        CHECK(abc.trace == test_trace());
     }
 }
 

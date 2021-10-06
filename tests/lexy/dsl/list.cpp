@@ -5,283 +5,384 @@
 #include <lexy/dsl/list.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/capture.hpp>
-#include <lexy/dsl/sequence.hpp>
+#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/recover.hpp>
 
-TEST_CASE("dsl::list()")
+TEST_CASE("dsl::list(branch)")
 {
-    static LEXY_VERIFY_FN auto rule = list(LEXY_LIT("ab") >> lexy::dsl::lit_c<'c'> + label<0>);
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto list = dsl::list(LEXY_LIT("a") >> dsl::position + dsl::try_(LEXY_LIT("bc")));
+    CHECK(lexy::is_branch_rule<decltype(list)>);
 
-    struct callback
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char*, std::size_t n) { return static_cast<int>(n); });
+
+    SUBCASE("as rule")
     {
-        const char* str;
-
-        LEXY_VERIFY_FN auto list()
-        {
-            struct b
-            {
-                int count = 0;
-
-                using return_type = int;
-
-                LEXY_VERIFY_FN void operator()(id<0>)
-                {
-                    ++count;
-                }
-
-                LEXY_VERIFY_FN int finish() &&
-                {
-                    return count;
-                }
-            };
-            return b{};
-        }
-
-        LEXY_VERIFY_FN int success(const char* cur, int count)
-        {
-            LEXY_VERIFY_CHECK(cur - str == 3 * count);
-            return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            if (e.position() == str)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("ab"));
-                return -1;
-            }
-            else
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("c"));
-                return -2;
-            }
-        }
-    };
-
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
-
-    auto one = LEXY_VERIFY("abc");
-    CHECK(one == 1);
-    auto two = LEXY_VERIFY("abcabc");
-    CHECK(two == 2);
-    auto three = LEXY_VERIFY("abcabcabc");
-    CHECK(three == 3);
-
-    auto condition_partial = LEXY_VERIFY("a");
-    CHECK(condition_partial == -1);
-    auto one_condition_partial = LEXY_VERIFY("abca");
-    CHECK(one_condition_partial == 1);
-
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -2);
-    auto one_partial = LEXY_VERIFY("abcab");
-    CHECK(one_partial == -2);
-}
-
-TEST_CASE("dsl::list() sep")
-{
-    SUBCASE("cannot check for trailing sep")
-    {
-        static constexpr auto rule = list(label<0> + LEXY_LIT("abc"), sep(LEXY_LIT(",")));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN auto list()
-            {
-                struct b
-                {
-                    int count = 0;
-
-                    using return_type = int;
-
-                    LEXY_VERIFY_FN void operator()(id<0>)
-                    {
-                        ++count;
-                    }
-
-                    LEXY_VERIFY_FN int finish() &&
-                    {
-                        return count;
-                    }
-                };
-                return b{};
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int count)
-            {
-                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
-                return count;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-        };
+        constexpr auto rule = list;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
 
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abc,abc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("abc,abc,abc");
-        CHECK(three == 3);
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abcabc");
+        auto two_trace = test_trace(one_trace).token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abcabcabc");
+        auto three_trace = test_trace(two_trace).token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
 
-        auto partial = LEXY_VERIFY("ab");
-        CHECK(partial == -1);
-        auto one_partial = LEXY_VERIFY("abc,ab");
-        CHECK(one_partial == -1);
-
-        auto no_sep = LEXY_VERIFY("abcabc");
-        CHECK(no_sep == 1);
-
-        auto trailing = LEXY_VERIFY("abc,");
-        CHECK(trailing == -1);
+        auto recover       = LEXY_VERIFY("aabc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
     }
-    SUBCASE("can check for trailing sep")
+    SUBCASE("as branch")
     {
-        static constexpr auto rule = list(LEXY_LIT("abc") >> label<0>, sep(LEXY_LIT(",")));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN auto list()
-            {
-                struct b
-                {
-                    int count = 0;
-
-                    using return_type = int;
-
-                    LEXY_VERIFY_FN void operator()(id<0>)
-                    {
-                        ++count;
-                    }
-
-                    LEXY_VERIFY_FN int finish() &&
-                    {
-                        return count;
-                    }
-                };
-                return b{};
-            }
-
-            LEXY_VERIFY_FN int success(const char* cur, int count)
-            {
-                if (cur[-1] == ',')
-                    LEXY_VERIFY_CHECK(cur - str == 4 * count);
-                else
-                    LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
-                return count;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-            LEXY_VERIFY_FN int error(test_error<lexy::unexpected_trailing_separator> e)
-            {
-                LEXY_VERIFY_CHECK(*e.begin() == ',');
-                return -2;
-            }
-        };
+        constexpr auto rule = dsl::if_(list);
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-        auto partial = LEXY_VERIFY("ab");
-        CHECK(partial == -1);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abc,abc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("abc,abc,abc");
-        CHECK(three == 3);
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abcabc");
+        auto two_trace = test_trace(one_trace).token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abcabcabc");
+        auto three_trace = test_trace(two_trace).token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
 
-        auto no_sep = LEXY_VERIFY("abcabc");
-        CHECK(no_sep == 1);
-
-        auto trailing = LEXY_VERIFY("abc,");
-        CHECK(trailing.value == 1);
-        CHECK(trailing.errors(-2));
+        auto recover       = LEXY_VERIFY("aabc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
     }
 }
 
-TEST_CASE("dsl::list() trailing_sep")
+TEST_CASE("dsl::list(rule, sep)")
 {
-    static constexpr auto rule = list(LEXY_LIT("abc") >> label<0>, trailing_sep(LEXY_LIT(",")));
+    constexpr auto rule = dsl::list(LEXY_LIT("a") + dsl::position + dsl::try_(LEXY_LIT("bc")),
+                                    dsl::sep(LEXY_LIT(",")));
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN auto list()
-        {
-            struct b
-            {
-                int count = 0;
-
-                using return_type = int;
-
-                LEXY_VERIFY_FN void operator()(id<0>)
-                {
-                    ++count;
-                }
-
-                LEXY_VERIFY_FN int finish() &&
-                {
-                    return count;
-                }
-            };
-            return b{};
-        }
-
-        LEXY_VERIFY_FN int success(const char* cur, int count)
-        {
-            if (cur[-1] == ',')
-                LEXY_VERIFY_CHECK(cur - str == 4 * count);
-            else
-                LEXY_VERIFY_CHECK(cur - str == 4 * count - 1);
-            return count;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.position() == str);
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-            return -1;
-        }
-    };
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char*, std::size_t n) { return static_cast<int>(n); });
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
-    auto partial = LEXY_VERIFY("ab");
-    CHECK(partial == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
 
-    auto one = LEXY_VERIFY("abc");
-    CHECK(one == 1);
-    auto two = LEXY_VERIFY("abc,abc");
-    CHECK(two == 2);
-    auto three = LEXY_VERIFY("abc,abc,abc");
-    CHECK(three == 3);
+    auto one       = LEXY_VERIFY("abc");
+    auto one_trace = test_trace().token("a").position().token("bc");
+    CHECK(one.status == test_result::success);
+    CHECK(one.value == 1);
+    CHECK(one.trace == one_trace);
+    auto two       = LEXY_VERIFY("abc,abc");
+    auto two_trace = test_trace(one_trace).token(",").token("a").position().token("bc");
+    CHECK(two.status == test_result::success);
+    CHECK(two.value == 2);
+    CHECK(two.trace == two_trace);
+    auto three       = LEXY_VERIFY("abc,abc,abc");
+    auto three_trace = test_trace(two_trace).token(",").token("a").position().token("bc");
+    CHECK(three.status == test_result::success);
+    CHECK(three.value == 3);
+    CHECK(three.trace == three_trace);
 
-    auto no_sep = LEXY_VERIFY("abcabc");
-    CHECK(no_sep == 1);
+    auto recover       = LEXY_VERIFY("a,abc");
+    auto recover_trace = test_trace()
+                             .token("a")
+                             .position()
+                             .expected_literal(1, "bc", 0)
+                             .token(",")
+                             .token("a")
+                             .position()
+                             .token("bc");
+    CHECK(recover.status == test_result::recovered_error);
+    CHECK(recover.value == 2);
+    CHECK(recover.trace == recover_trace);
 
-    auto trailing = LEXY_VERIFY("abc,");
-    CHECK(trailing == 1);
+    auto missing_sep       = LEXY_VERIFY("abcabc");
+    auto missing_sep_trace = test_trace().token("a").position().token("bc");
+    CHECK(missing_sep.status == test_result::success);
+    CHECK(missing_sep.value == 1);
+    CHECK(missing_sep.trace == missing_sep_trace);
+
+    auto trailing_sep       = LEXY_VERIFY("abc,");
+    auto trailing_sep_trace = test_trace()
+                                  .token("a")
+                                  .position()
+                                  .token("bc")
+                                  .token(",")
+                                  .expected_literal(4, "a", 0)
+                                  .cancel();
+    CHECK(trailing_sep.status == test_result::fatal_error);
+    CHECK(trailing_sep.trace == trailing_sep_trace);
+}
+
+TEST_CASE("dsl::list(branch, sep)")
+{
+    constexpr auto list = dsl::list(LEXY_LIT("a") >> dsl::position + dsl::try_(LEXY_LIT("bc")),
+                                    dsl::sep(LEXY_LIT(",")));
+    CHECK(lexy::is_branch_rule<decltype(list)>);
+
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char*, std::size_t n) { return static_cast<int>(n); });
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = list;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
+
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abc,abc");
+        auto two_trace = test_trace(one_trace).token(",").token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abc,abc,abc");
+        auto three_trace = test_trace(two_trace).token(",").token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
+
+        auto recover       = LEXY_VERIFY("a,abc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token(",")
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
+
+        auto missing_sep       = LEXY_VERIFY("abcabc");
+        auto missing_sep_trace = test_trace().token("a").position().token("bc");
+        CHECK(missing_sep.status == test_result::success);
+        CHECK(missing_sep.value == 1);
+        CHECK(missing_sep.trace == missing_sep_trace);
+
+        auto trailing_sep       = LEXY_VERIFY("abc,");
+        auto trailing_sep_trace = test_trace()
+                                      .token("a")
+                                      .position()
+                                      .token("bc")
+                                      .token(",")
+                                      .error(3, 3, "unexpected trailing separator");
+        CHECK(trailing_sep.status == test_result::recovered_error);
+        CHECK(trailing_sep.value == 1);
+        CHECK(trailing_sep.trace == trailing_sep_trace);
+    }
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(list);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abc,abc");
+        auto two_trace = test_trace(one_trace).token(",").token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abc,abc,abc");
+        auto three_trace = test_trace(two_trace).token(",").token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
+
+        auto recover       = LEXY_VERIFY("a,abc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token(",")
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
+
+        auto missing_sep       = LEXY_VERIFY("abcabc");
+        auto missing_sep_trace = test_trace().token("a").position().token("bc");
+        CHECK(missing_sep.status == test_result::success);
+        CHECK(missing_sep.value == 1);
+        CHECK(missing_sep.trace == missing_sep_trace);
+
+        auto trailing_sep       = LEXY_VERIFY("abc,");
+        auto trailing_sep_trace = test_trace()
+                                      .token("a")
+                                      .position()
+                                      .token("bc")
+                                      .token(",")
+                                      .error(3, 3, "unexpected trailing separator");
+        CHECK(trailing_sep.status == test_result::recovered_error);
+        CHECK(trailing_sep.value == 1);
+        CHECK(trailing_sep.trace == trailing_sep_trace);
+    }
+}
+
+TEST_CASE("dsl::list(branch, trailing_sep)")
+{
+    constexpr auto list = dsl::list(LEXY_LIT("a") >> dsl::position + dsl::try_(LEXY_LIT("bc")),
+                                    dsl::trailing_sep(LEXY_LIT(",")));
+    CHECK(lexy::is_branch_rule<decltype(list)>);
+
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char*, std::size_t n) { return static_cast<int>(n); });
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = list;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a", 0).cancel());
+
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abc,abc");
+        auto two_trace = test_trace(one_trace).token(",").token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abc,abc,abc");
+        auto three_trace = test_trace(two_trace).token(",").token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
+
+        auto recover       = LEXY_VERIFY("a,abc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token(",")
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
+
+        auto missing_sep       = LEXY_VERIFY("abcabc");
+        auto missing_sep_trace = test_trace().token("a").position().token("bc");
+        CHECK(missing_sep.status == test_result::success);
+        CHECK(missing_sep.value == 1);
+        CHECK(missing_sep.trace == missing_sep_trace);
+
+        auto trailing_sep       = LEXY_VERIFY("abc,");
+        auto trailing_sep_trace = test_trace().token("a").position().token("bc").token(",");
+        CHECK(trailing_sep.status == test_result::success);
+        CHECK(trailing_sep.value == 1);
+        CHECK(trailing_sep.trace == trailing_sep_trace);
+    }
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(list);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto one       = LEXY_VERIFY("abc");
+        auto one_trace = test_trace().token("a").position().token("bc");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+        auto two       = LEXY_VERIFY("abc,abc");
+        auto two_trace = test_trace(one_trace).token(",").token("a").position().token("bc");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == two_trace);
+        auto three       = LEXY_VERIFY("abc,abc,abc");
+        auto three_trace = test_trace(two_trace).token(",").token("a").position().token("bc");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == three_trace);
+
+        auto recover       = LEXY_VERIFY("a,abc");
+        auto recover_trace = test_trace()
+                                 .token("a")
+                                 .position()
+                                 .expected_literal(1, "bc", 0)
+                                 .token(",")
+                                 .token("a")
+                                 .position()
+                                 .token("bc");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 2);
+        CHECK(recover.trace == recover_trace);
+
+        auto missing_sep       = LEXY_VERIFY("abcabc");
+        auto missing_sep_trace = test_trace().token("a").position().token("bc");
+        CHECK(missing_sep.status == test_result::success);
+        CHECK(missing_sep.value == 1);
+        CHECK(missing_sep.trace == missing_sep_trace);
+
+        auto trailing_sep       = LEXY_VERIFY("abc,");
+        auto trailing_sep_trace = test_trace().token("a").position().token("bc").token(",");
+        CHECK(trailing_sep.status == test_result::success);
+        CHECK(trailing_sep.value == 1);
+        CHECK(trailing_sep.trace == trailing_sep_trace);
+    }
 }
 

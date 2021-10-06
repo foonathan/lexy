@@ -5,74 +5,147 @@
 #include <lexy/dsl/branch.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/position.hpp>
+#include <lexy/dsl/recover.hpp>
 
 TEST_CASE("dsl::operator>>")
 {
-    static constexpr auto rule = LEXY_LIT("a") >> label<0>;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto branch
+        = dsl::capture(LEXY_LIT("abc")) >> dsl::position + dsl::try_(LEXY_LIT("!"));
+    CHECK(lexy::is_branch_rule<decltype(branch)>);
 
-    struct callback
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return 0; },
+                              [](const char* begin, lexy::string_lexeme<> lex, const char* pos) {
+                                  CHECK(lex.begin() == begin);
+                                  CHECK(lex.size() == 3);
+                                  CHECK(lex[0] == 'a');
+                                  CHECK(lex[1] == 'b');
+                                  CHECK(lex[2] == 'c');
+
+                                  CHECK(pos == begin + 3);
+
+                                  return 1;
+                              });
+
+    SUBCASE("as rule")
     {
-        const char* str;
+        constexpr auto rule = branch;
 
-        LEXY_VERIFY_FN int success(const char* cur, id<0>)
-        {
-            LEXY_VERIFY_CHECK(str + 1 == cur);
-            return 0;
-        }
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
 
-        LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-        {
-            LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("a"));
-            return -1;
-        }
-    };
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::recovered_error);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc").position().expected_literal(3, "!", 0));
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("abc").position().token("!"));
+    }
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(branch);
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+        auto ab = LEXY_VERIFY("ab");
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.value == 0);
+        CHECK(ab.trace == test_trace());
 
-    auto success = LEXY_VERIFY("a");
-    CHECK(success == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::recovered_error);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc").position().expected_literal(3, "!", 0));
+        auto abc_mark = LEXY_VERIFY("abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.value == 1);
+        CHECK(abc_mark.trace == test_trace().token("abc").position().token("!"));
+    }
 }
 
-TEST_CASE("dsl::_br operator+")
+TEST_CASE("dsl::operator+ and dsl::operator>> combinations")
 {
-    constexpr auto branch = LEXY_LIT("condition") >> LEXY_LIT("then");
+    SUBCASE("nested operator>>")
+    {
+        constexpr auto rule = LEXY_LIT("a") >> LEXY_LIT("b") >> LEXY_LIT("c");
+        CHECK(equivalent_rules(rule, LEXY_LIT("a") >> LEXY_LIT("b") + LEXY_LIT("c")));
+    }
 
     SUBCASE("rule + branch")
     {
-        constexpr auto result     = LEXY_LIT("prefix") + branch;
-        constexpr auto equivalent = LEXY_LIT("prefix") + LEXY_LIT("condition") + LEXY_LIT("then");
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        constexpr auto rule = LEXY_LIT("a") + (LEXY_LIT("b") >> LEXY_LIT("c"));
+        CHECK(equivalent_rules(rule, LEXY_LIT("a") + LEXY_LIT("b") + LEXY_LIT("c")));
     }
     SUBCASE("sequence + branch")
     {
-        constexpr auto result = LEXY_LIT("a") + LEXY_LIT("b") + branch;
-        constexpr auto equivalent
-            = LEXY_LIT("a") + LEXY_LIT("b") + LEXY_LIT("condition") + LEXY_LIT("then");
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        constexpr auto rule = (LEXY_LIT("a") + LEXY_LIT("b")) + (LEXY_LIT("c") >> LEXY_LIT("d"));
+        CHECK(equivalent_rules(rule, //
+                               LEXY_LIT("a") + LEXY_LIT("b") + LEXY_LIT("c") + LEXY_LIT("d")));
     }
 
     SUBCASE("branch + rule")
     {
-        constexpr auto result     = branch + LEXY_LIT("suffix");
-        constexpr auto equivalent = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("suffix");
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        constexpr auto rule = (LEXY_LIT("a") >> LEXY_LIT("b")) + LEXY_LIT("c");
+        CHECK(equivalent_rules(rule, LEXY_LIT("a") >> LEXY_LIT("b") + LEXY_LIT("c")));
     }
     SUBCASE("branch + sequence")
     {
-        constexpr auto result = branch + LEXY_LIT("a") + LEXY_LIT("b");
-        constexpr auto equivalent
-            = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("a") + LEXY_LIT("b");
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        constexpr auto rule = (LEXY_LIT("a") >> LEXY_LIT("b")) + (LEXY_LIT("c") + LEXY_LIT("d"));
+        CHECK(equivalent_rules(rule, //
+                               LEXY_LIT("a") >> LEXY_LIT("b") + LEXY_LIT("c") + LEXY_LIT("d")));
     }
 
     SUBCASE("branch + branch")
     {
-        constexpr auto result = branch + branch;
-        constexpr auto equivalent
-            = LEXY_LIT("condition") >> LEXY_LIT("then") + LEXY_LIT("condition") + LEXY_LIT("then");
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+        constexpr auto rule = (LEXY_LIT("a") >> LEXY_LIT("b")) + (LEXY_LIT("c") >> LEXY_LIT("d"));
+        CHECK(equivalent_rules(rule, //
+                               LEXY_LIT("a") >> LEXY_LIT("b") + LEXY_LIT("c") + LEXY_LIT("d")));
+    }
+}
+
+TEST_CASE("dsl::else_")
+{
+    constexpr auto branch = dsl::else_ >> LEXY_LIT("abc");
+    CHECK(!lexy::is_rule<decltype(dsl::else_)>);
+    CHECK(lexy::is_unconditional_branch_rule<decltype(branch)>);
+
+    constexpr auto callback = token_callback;
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = branch;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
+    }
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = branch | LEXY_LIT("123");
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
     }
 }
 

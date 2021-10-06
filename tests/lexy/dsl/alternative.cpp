@@ -6,142 +6,119 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/loop.hpp>
+#include <lexy/dsl/identifier.hpp>
 
 TEST_CASE("dsl::operator/")
 {
+    constexpr auto callback = token_callback;
+
     SUBCASE("literals only")
     {
-        static constexpr auto rule
-            = LEXY_LIT("abc") / LEXY_LIT("a") / LEXY_LIT("ab") / LEXY_LIT("def");
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = LEXY_LIT("a") / LEXY_LIT("ab") / LEXY_LIT("abc") / LEXY_LIT("def");
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                if (match == "abc")
-                    return 0;
-                else if (match == "a")
-                    return 1;
-                else if (match == "ab")
-                    return 2;
-                else if (match == "def")
-                    return 3;
-                return -1;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_alternatives> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 0);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
 
         auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().token("a"));
         auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == 2);
-
+        CHECK(ab.status == test_result::success);
+        CHECK(ab.trace == test_trace().token("ab"));
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
         auto def = LEXY_VERIFY("def");
-        CHECK(def == 3);
+        CHECK(def.status == test_result::success);
+        CHECK(def.trace == test_trace().token("def"));
+
+        auto aa = LEXY_VERIFY("a");
+        CHECK(aa.status == test_result::success);
+        CHECK(aa.trace == test_trace().token("a"));
+
+        auto ABC = LEXY_VERIFY("ABC");
+        CHECK(ABC.status == test_result::fatal_error);
+        CHECK(ABC.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
     }
     SUBCASE("non-literals only")
     {
-        static constexpr auto rule = lexy::dsl::ascii::alnum
-                                     / token(while_one(lexy::dsl::lit_c<'a'>))
-                                     / token(while_one(lexy::dsl::ascii::alpha));
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = dsl::ascii::alnum / dsl::identifier(dsl::ascii::lower).pattern()
+                              / dsl::token(dsl::ascii::upper + dsl::ascii::upper);
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                return int(match.size());
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_alternatives> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
-        auto aa = LEXY_VERIFY("aa");
-        CHECK(aa == 2);
-        auto aaa = LEXY_VERIFY("aaa");
-        CHECK(aaa == 3);
-
-        auto aabbcc = LEXY_VERIFY("aabbcc");
-        CHECK(aabbcc == 6);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
 
         auto digit = LEXY_VERIFY("1");
-        CHECK(digit == 1);
+        CHECK(digit.status == test_result::success);
+        CHECK(digit.trace == test_trace().token("1"));
+        auto lower = LEXY_VERIFY("a");
+        CHECK(lower.status == test_result::success);
+        CHECK(lower.trace == test_trace().token("a"));
+        auto upper = LEXY_VERIFY("A");
+        CHECK(upper.status == test_result::success);
+        CHECK(upper.trace == test_trace().token("A"));
+
+        auto three_lower = LEXY_VERIFY("abc");
+        CHECK(three_lower.status == test_result::success);
+        CHECK(three_lower.trace == test_trace().token("abc"));
+        auto two_upper = LEXY_VERIFY("XY");
+        CHECK(two_upper.status == test_result::success);
+        CHECK(two_upper.trace == test_trace().token("XY"));
+
+        auto two_digit = LEXY_VERIFY("11");
+        CHECK(two_digit.status == test_result::success);
+        CHECK(two_digit.trace == test_trace().token("1"));
+        auto three_upper = LEXY_VERIFY("XYZ");
+        CHECK(three_upper.status == test_result::success);
+        CHECK(three_upper.trace == test_trace().token("XY"));
     }
     SUBCASE("mixed")
     {
-        static constexpr auto rule = LEXY_LIT("abc") / lexy::dsl::ascii::digit
-                                     / token(while_one(lexy::dsl::lit_c<'a'>)) / LEXY_LIT("ab")
-                                     / LEXY_LIT("def");
-        CHECK(lexy::is_rule<decltype(rule)>);
+        constexpr auto rule = LEXY_LIT("12") / dsl::ascii::alnum
+                              / dsl::identifier(dsl::ascii::lower).pattern() / LEXY_LIT("abc")
+                              / dsl::token(dsl::ascii::upper + dsl::ascii::upper) / LEXY_LIT("123");
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                auto match = lexy::_detail::string_view(str, cur);
-                return int(match.size());
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::exhausted_alternatives> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                return -1;
-            }
-        };
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
 
+        auto digit = LEXY_VERIFY("1");
+        CHECK(digit.status == test_result::success);
+        CHECK(digit.trace == test_trace().token("1"));
+        auto lower = LEXY_VERIFY("a");
+        CHECK(lower.status == test_result::success);
+        CHECK(lower.trace == test_trace().token("a"));
+        auto upper = LEXY_VERIFY("A");
+        CHECK(upper.status == test_result::success);
+        CHECK(upper.trace == test_trace().token("A"));
+        auto one_two = LEXY_VERIFY("12");
+        CHECK(one_two.status == test_result::success);
+        CHECK(one_two.trace == test_trace().token("12"));
+        auto one_two_three = LEXY_VERIFY("123");
+        CHECK(one_two_three.status == test_result::success);
+        CHECK(one_two_three.trace == test_trace().token("123"));
         auto abc = LEXY_VERIFY("abc");
-        CHECK(abc == 3);
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().token("abc"));
 
-        auto a = LEXY_VERIFY("a");
-        CHECK(a == 1);
-        auto aa = LEXY_VERIFY("aa");
-        CHECK(aa == 2);
-        auto aaa = LEXY_VERIFY("aaa");
-        CHECK(aaa == 3);
-        auto ab = LEXY_VERIFY("ab");
-        CHECK(ab == 2);
+        auto four_lower = LEXY_VERIFY("abcd");
+        CHECK(four_lower.status == test_result::success);
+        CHECK(four_lower.trace == test_trace().token("abcd"));
+        auto two_upper = LEXY_VERIFY("XY");
+        CHECK(two_upper.status == test_result::success);
+        CHECK(two_upper.trace == test_trace().token("XY"));
 
-        auto def = LEXY_VERIFY("def");
-        CHECK(def == 3);
-
-        auto digit = LEXY_VERIFY("4");
-        CHECK(digit == 1);
+        auto two_digit = LEXY_VERIFY("11");
+        CHECK(two_digit.status == test_result::success);
+        CHECK(two_digit.trace == test_trace().token("1"));
+        auto three_upper = LEXY_VERIFY("XYZ");
+        CHECK(three_upper.status == test_result::success);
+        CHECK(three_upper.trace == test_trace().token("XY"));
     }
 }
 

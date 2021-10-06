@@ -203,23 +203,19 @@ struct _lstt : rule_base
                         if constexpr (lexy::is_branch_rule<Item>)
                         {
                             lexy::branch_parser_for<Item, Context, Reader> item{};
-                            if (!item.try_parse(context, reader))
+                            if (item.try_parse(context, reader)
+                                && item.template finish<lexy::sink_parser>(context, reader, sink))
+                            {
+                                // Continue after an item has been parsed.
+                                state = state::terminator;
+                                break;
+                            }
+                            else
                             {
                                 // Not an item, recover.
                                 state = state::recovery;
                                 break;
                             }
-
-                            if (!item.template finish<lexy::sink_parser>(context, reader, sink))
-                            {
-                                // Failed item, recover.
-                                state = state::recovery;
-                                break;
-                            }
-
-                            // Continue after an item has been parsed.
-                            state = state::terminator;
-                            break;
                         }
                         else
                         {
@@ -292,18 +288,21 @@ struct _lstt : rule_base
                         sep_pos = reader.position();
 
                         lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
-                        if (sep.try_parse(context, reader)
-                            && sep.template finish<lexy::sink_parser>(context, reader, sink))
+                        if (sep.try_parse(context, reader))
                         {
-                            // Continue the list with the trailing separator check.
                             context.on(_ev::recovery_finish{}, reader.position());
-                            state = state::separator_trailing_check;
-                            break;
-                        }
-                        else
-                        {
-                            // Need to continue recovering.
-                            // This might include recovery of an additional separator error.
+                            if (sep.template finish<lexy::sink_parser>(context, reader, sink))
+                            {
+                                // Continue the list with the trailing separator check.
+                                state = state::separator_trailing_check;
+                                break;
+                            }
+                            else
+                            {
+                                // Need to recover from this.
+                                state = state::recovery;
+                                break;
+                            }
                         }
                     }
                     // When we don't have a separator, but the item is a branch, we also succeed
@@ -315,18 +314,21 @@ struct _lstt : rule_base
                     else if constexpr (lexy::is_branch_rule<Item>)
                     {
                         lexy::branch_parser_for<Item, Context, Reader> item{};
-                        if (item.try_parse(context, reader)
-                            && item.template finish<lexy::sink_parser>(context, reader, sink))
+                        if (item.try_parse(context, reader))
                         {
-                            // Continue the list with the next terminator check.
                             context.on(_ev::recovery_finish{}, reader.position());
-                            state = state::terminator;
-                            break;
-                        }
-                        else
-                        {
-                            // Need to continue recovering.
-                            // This might include recovery of an additional item error.
+                            if (item.template finish<lexy::sink_parser>(context, reader, sink))
+                            {
+                                // Continue the list with the next terminator check.
+                                state = state::terminator;
+                                break;
+                            }
+                            else
+                            {
+                                // Need to recover from this.
+                                state = state::recovery;
+                                break;
+                            }
                         }
                     }
 
@@ -383,8 +385,16 @@ struct _lstt : rule_base
                 return false;
 
             // At this point, we just need to finish parsing the terminator.
-            return term.template finish<lexy::sink_finish_parser<NextParser>>(context, reader, sink,
-                                                                              LEXY_FWD(args)...);
+            if constexpr (std::is_same_v<typename decltype(sink)::return_type, void>)
+            {
+                LEXY_MOV(sink).finish();
+                return term.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                return term.template finish<NextParser>(context, reader, LEXY_FWD(args)...,
+                                                        LEXY_MOV(sink).finish());
+            }
         }
     };
 };

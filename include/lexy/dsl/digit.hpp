@@ -288,6 +288,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
             // Need at least one digit.
             else if (!lexy::try_match_token(digit<Base>, reader))
             {
+                end                    = reader.position();
                 forbidden_leading_zero = false;
                 return false;
             }
@@ -300,6 +301,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
                     // Need a digit after a separator.
                     if (!lexy::try_match_token(digit<Base>, reader))
                     {
+                        end                    = reader.position();
                         forbidden_leading_zero = false;
                         return false;
                     }
@@ -326,8 +328,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
             }
             else
             {
-                auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
-                                                                          Base::name());
+                auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
                 context.on(_ev::error{}, err);
             }
         }
@@ -348,7 +349,10 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
         {
             // Need at least one digit.
             if (!lexy::try_match_token(digit<Base>, reader))
+            {
+                end = reader.position();
                 return false;
+            }
 
             // Might have following digits.
             while (true)
@@ -357,7 +361,10 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
                 {
                     // Need a digit after a separator.
                     if (!lexy::try_match_token(digit<Base>, reader))
+                    {
+                        end = reader.position();
                         return false;
+                    }
                 }
                 else if (!lexy::try_match_token(digit<Base>, reader))
                 {
@@ -371,10 +378,9 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
         }
 
         template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
+        constexpr void report_error(Context& context, const Reader&)
         {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
             context.on(_ev::error{}, err);
         }
     };
@@ -530,7 +536,10 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
         {
             // Match the Base one time.
             if (!lexy::try_match_token(digit<Base>, reader))
+            {
+                end = reader.position();
                 return false;
+            }
 
             // Match each other digit after a separator.
             auto success = (((void)Idx, lexy::try_match_token(Sep{}, reader),
@@ -541,10 +550,9 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
         }
 
         template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
+        constexpr void report_error(Context& context, const Reader&)
         {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
             context.on(_ev::error{}, err);
         }
     };
@@ -573,10 +581,9 @@ struct _ndigits : token_base<_ndigits<N, Base>>
         }
 
         template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
+        constexpr void report_error(Context& context, const Reader&)
         {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
             context.on(_ev::error{}, err);
         }
     };

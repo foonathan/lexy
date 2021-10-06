@@ -5,66 +5,80 @@
 #include <lexy/dsl/member.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/if.hpp>
+#include <lexy/dsl/position.hpp>
 
 namespace
 {
-struct test_type
+template <typename Fn, typename Obj, typename T>
+void apply(lexy::member<Fn>, Obj& obj, T t)
 {
-    int member;
-};
-
-struct member_macro_callback
-{
-    const char* str;
-
-    template <typename Fn>
-    LEXY_VERIFY_FN int success(const char* cur, lexy::member<Fn>)
-    {
-        LEXY_VERIFY_CHECK(cur == str + 3);
-
-        test_type tt{};
-        Fn()(tt, 42);
-        LEXY_VERIFY_CHECK(tt.member == 42);
-
-        return 0;
-    }
-
-    LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-    {
-        LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-        return -1;
-    }
-};
+    Fn()(obj, t);
+}
 } // namespace
 
 TEST_CASE("dsl::member")
 {
+    struct test_type
+    {
+        int member;
+    };
+
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                  [](const char*, auto member, const char*) {
+                                                      test_type test{};
+                                                      apply(member, test, 42);
+                                                      CHECK(test.member == 42);
+
+                                                      return 1;
+                                                  });
+
     SUBCASE("non-macro")
     {
-        static constexpr auto rule = lexy::dsl::member<& test_type::member> = LEXY_LIT("abc");
+        constexpr auto rule = (dsl::member<& test_type::member> = LEXY_LIT("abc")) + dsl::position;
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        using callback = member_macro_callback;
-
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto string = LEXY_VERIFY("abc");
-        CHECK(string == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc").position());
     }
     SUBCASE("macro")
     {
-        static constexpr auto rule = LEXY_MEM(member) = LEXY_LIT("abc");
+        // Note: not constexpr in C++17 due to the use of reinterpret_cast in stateless lambda.
+        constexpr auto member = LEXY_MEM(member) = LEXY_LIT("abc");
+        constexpr auto rule                      = member + dsl::position;
         CHECK(lexy::is_rule<decltype(rule)>);
 
-        using callback = member_macro_callback;
+        auto empty = verify(rule, lexy::zstring_input(""), callback);
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+
+        auto abc = verify(rule, lexy::zstring_input("abc"), callback);
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc").position());
+    }
+
+    SUBCASE("as branch")
+    {
+        constexpr auto rule
+            = dsl::if_(dsl::member<& test_type::member> = LEXY_LIT("abc") >> dsl::position);
+        CHECK(lexy::is_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
 
-        // Not constexpr in C++17 due to the use of reinterpret_cast in stateless lambda.
-        auto string = verify<callback>(rule, "abc");
-        CHECK(string == 0);
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.value == 1);
+        CHECK(abc.trace == test_trace().token("abc").position());
     }
 }
 

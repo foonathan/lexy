@@ -5,162 +5,105 @@
 #include <lexy/dsl/loop.hpp>
 
 #include "verify.hpp"
-#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/choice.hpp>
+#include <lexy/dsl/recover.hpp>
 
 TEST_CASE("dsl::loop()")
 {
-    static constexpr auto rule = loop(LEXY_LIT("a") | LEXY_LIT("!") >> lexy::dsl::break_);
+    constexpr auto rule
+        = dsl::loop(LEXY_LIT("a") >> dsl::try_(LEXY_LIT("bc")) | LEXY_LIT("!") >> dsl::break_);
     CHECK(lexy::is_rule<decltype(rule)>);
 
-    struct callback
-    {
-        const char* str;
-
-        LEXY_VERIFY_FN int success(const char* cur)
-        {
-            return int(cur - str) - 1;
-        }
-
-        LEXY_VERIFY_FN int error(test_error<lexy::exhausted_choice>)
-        {
-            return -1;
-        }
-    };
+    constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty == -1);
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().error(0, 0, "exhausted choice").cancel());
 
-    auto one = LEXY_VERIFY("a!");
-    CHECK(one == 1);
-    auto two = LEXY_VERIFY("aa!");
-    CHECK(two == 2);
-    auto three = LEXY_VERIFY("aaa!");
-    CHECK(three == 3);
+    auto zero = LEXY_VERIFY("!");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.trace == test_trace().token("!"));
+    auto one = LEXY_VERIFY("abc!");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().token("a").token("bc").token("!"));
+    auto two = LEXY_VERIFY("abcabc!");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().token("a").token("bc").token("a").token("bc").token("!"));
 
-    auto unterminated = LEXY_VERIFY("aaa");
-    CHECK(unterminated == -1);
+    auto recover = LEXY_VERIFY("aabc!");
+    auto recover_trace
+        = test_trace().token("a").expected_literal(1, "bc", 0).token("a").token("bc").token("!");
+    CHECK(recover.status == test_result::recovered_error);
+    CHECK(recover.trace == recover_trace);
+
+    auto unterminated       = LEXY_VERIFY("abcabc");
+    auto unterminated_trace = test_trace()
+                                  .token("a")
+                                  .token("bc")
+                                  .token("a")
+                                  .token("bc")
+                                  .error(6, 6, "exhausted choice")
+                                  .cancel();
+    CHECK(unterminated.status == test_result::fatal_error);
+    CHECK(unterminated.trace == unterminated_trace);
 }
 
 TEST_CASE("dsl::while_()")
 {
-    SUBCASE("token")
-    {
-        static constexpr auto rule = while_(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::while_(LEXY_LIT("a") >> dsl::try_(LEXY_LIT("bc")));
+    CHECK(lexy::is_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
+    constexpr auto callback = token_callback;
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
-                return int(cur - str) / 3;
-            }
-        };
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::success);
+    CHECK(empty.trace == test_trace());
 
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
+    auto one = LEXY_VERIFY("abc");
+    CHECK(one.status == test_result::success);
+    CHECK(one.trace == test_trace().token("a").token("bc"));
+    auto two = LEXY_VERIFY("abcabc");
+    CHECK(two.status == test_result::success);
+    CHECK(two.trace == test_trace().token("a").token("bc").token("a").token("bc"));
+    auto three = LEXY_VERIFY("abcabcabc");
+    CHECK(three.status == test_result::success);
+    CHECK(three.trace
+          == test_trace().token("a").token("bc").token("a").token("bc").token("a").token("bc"));
 
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abcabc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("abcabcabc");
-        CHECK(three == 3);
-
-        auto partial = LEXY_VERIFY("abcab");
-        CHECK(partial == 1);
-    }
-    SUBCASE("branch")
-    {
-        static constexpr auto rule = while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
-                return int(cur - str) / 3;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("bc"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == 0);
-
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abcabc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("abcabcabc");
-        CHECK(three == 3);
-
-        auto partial = LEXY_VERIFY("abcab");
-        CHECK(partial == -1);
-    }
+    auto recovered = LEXY_VERIFY("aabc");
+    CHECK(recovered.status == test_result::recovered_error);
+    CHECK(recovered.trace
+          == test_trace().token("a").expected_literal(1, "bc", 0).token("a").token("bc"));
 }
 
 TEST_CASE("dsl::while_one()")
 {
-    SUBCASE("token")
-    {
-        static constexpr auto rule = while_one(LEXY_LIT("abc"));
-        CHECK(lexy::is_rule<decltype(rule)>);
+    constexpr auto rule = dsl::while_one(LEXY_LIT("a") >> LEXY_LIT("bc"));
+    CHECK(lexy::is_branch_rule<decltype(rule)>);
 
-        struct callback
-        {
-            const char* str;
-
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK((cur - str) % 3 == 0);
-                return int(cur - str) / 3;
-            }
-
-            LEXY_VERIFY_FN int error(test_error<lexy::expected_literal> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.string() == lexy::_detail::string_view("abc"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty == -1);
-
-        auto one = LEXY_VERIFY("abc");
-        CHECK(one == 1);
-        auto two = LEXY_VERIFY("abcabc");
-        CHECK(two == 2);
-        auto three = LEXY_VERIFY("abcabcabc");
-        CHECK(three == 3);
-
-        auto partial = LEXY_VERIFY("abcab");
-        CHECK(partial == 1);
-    }
-    SUBCASE("branch")
-    {
-        constexpr auto result = while_one(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        constexpr auto equivalent
-            = LEXY_LIT("a") >> LEXY_LIT("bc") + while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
-        CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
-    }
+    constexpr auto equivalent
+        = LEXY_LIT("a") >> LEXY_LIT("bc") + dsl::while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+    CHECK(equivalent_rules(rule, equivalent));
 }
 
 TEST_CASE("dsl::do_while()")
 {
-    constexpr auto result     = do_while(LEXY_LIT("a"), LEXY_LIT("b"));
-    constexpr auto equivalent = LEXY_LIT("a") >> while_(LEXY_LIT("b") >> LEXY_LIT("a"));
-    CHECK(std::is_same_v<decltype(result), decltype(equivalent)>);
+    SUBCASE("branch")
+    {
+        constexpr auto rule = dsl::do_while(LEXY_LIT("bc"), LEXY_LIT("a"));
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+        constexpr auto equivalent = LEXY_LIT("bc") >> dsl::while_(LEXY_LIT("a") >> LEXY_LIT("bc"));
+        CHECK(equivalent_rules(rule, equivalent));
+    }
+    SUBCASE("non-branch")
+    {
+        constexpr auto rule = dsl::do_while(dsl::while_(LEXY_LIT("bc")), LEXY_LIT("a"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        constexpr auto equivalent = dsl::while_(LEXY_LIT("bc"))
+                                    + dsl::while_(LEXY_LIT("a") >> dsl::while_(LEXY_LIT("bc")));
+        CHECK(equivalent_rules(rule, equivalent));
+    }
 }
 

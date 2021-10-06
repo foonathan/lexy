@@ -10,6 +10,7 @@
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/_detail/trie.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/capture.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -270,28 +271,36 @@ struct _sym : branch_base
     template <typename NextParser>
     struct p
     {
+        template <typename... PrevArgs>
+        struct _cont
+        {
+            template <typename Context, typename Reader>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, PrevArgs&&... args,
+                                               lexy::lexeme<Reader> lexeme)
+            {
+                // Check whether the captured lexeme is a symbol.
+                auto content = lexy::partial_reader(reader, lexeme.begin(), lexeme.end());
+                auto symbol  = Table.try_parse(content);
+                if (!symbol || content.position() != lexeme.end())
+                {
+                    // Unknown symbol.
+                    using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
+                    auto err  = lexy::error<Reader, tag>(lexeme.begin(), lexeme.end());
+                    context.on(_ev::error{}, err);
+                    return false;
+                }
+
+                // Continue parsing with the symbol value.
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+            }
+        };
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto begin = reader.position();
-            if (!lexy::parser_for<Token, lexy::pattern_parser<Context>>::parse(context, reader))
-                return false;
-            auto end = reader.position();
-
-            // Check whether this is a symbol.
-            auto content = lexy::partial_reader(reader, begin, end);
-            auto symbol  = Table.try_parse(content);
-            if (!symbol || content.position() != end)
-            {
-                // Unknown symbol.
-                using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;
-                auto err  = lexy::error<Reader, tag>(begin, end);
-                context.on(_ev::error{}, err);
-                return false;
-            }
-
-            // Continue parsing with the symbol value.
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., Table[symbol]);
+            // Capture the token and continue with special continuation.
+            return lexy::parser_for<_capt<Token>, _cont<Args...>>::parse(context, reader,
+                                                                         LEXY_FWD(args)...);
         }
     };
 

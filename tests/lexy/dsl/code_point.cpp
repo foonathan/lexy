@@ -387,164 +387,64 @@ TEST_CASE("UTF-32 code point parsing")
 
 TEST_CASE("dsl::code_point")
 {
-    static constexpr auto rule = lexy::dsl::code_point;
-    CHECK(lexy::is_rule<decltype(rule)>);
+    // Only basic sanity checks needed, the actual parsing code is tested extensively above.
+    constexpr auto rule = lexy::dsl::code_point;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
-    // Only basic sanity checks needed, the actual parsinge code is tested extensively above.
+    constexpr auto callback = token_callback;
 
-    SUBCASE("ASCII")
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto ascii = LEXY_VERIFY(u"a");
+    CHECK(ascii.status == test_result::success);
+    CHECK(ascii.trace == test_trace().token("a"));
+
+    auto bmp = LEXY_VERIFY(u"ä");
+    CHECK(bmp.status == test_result::success);
+    CHECK(bmp.trace == test_trace().token("\\u00E4"));
+
+    auto emoji = LEXY_VERIFY(u"🙂");
+    CHECK(emoji.status == test_result::success);
+    CHECK(emoji.trace == test_trace().token("\\U0001F642"));
+}
+
+TEST_CASE("dsl::code_point.if_()")
+{
+    struct predicate
     {
-        struct callback
+        static constexpr auto name()
         {
-            const char* str;
+            return "predicate";
+        }
 
-            LEXY_VERIFY_FN int success(const char* cur)
-            {
-                LEXY_VERIFY_CHECK(cur == str + 1);
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(
-                lexy::string_error<lexy::expected_char_class, lexy::ascii_encoding> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("ASCII.code_point"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "");
-        CHECK(empty == -1);
-
-        auto cp = LEXY_VERIFY_ENCODING(lexy::ascii_encoding, "a");
-        CHECK(cp == 0);
-    }
-    SUBCASE("UTF-8")
-    {
-        struct callback
+        constexpr bool operator()(lexy::code_point cp) const
         {
-            const LEXY_CHAR8_T* str;
+            return cp.is_ascii();
+        }
+    };
 
-            LEXY_VERIFY_FN int success(const LEXY_CHAR8_T* cur)
-            {
-                return int(cur - str);
-            }
+    constexpr auto rule = lexy::dsl::code_point.if_<predicate>();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
 
-            LEXY_VERIFY_FN int error(
-                lexy::string_error<lexy::expected_char_class, lexy::utf8_encoding> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("UTF-8.code_point"));
-                return -1;
-            }
-        };
+    constexpr auto callback = token_callback;
 
-        auto empty = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR(""));
-        CHECK(empty == -1);
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
 
-        auto cp = LEXY_VERIFY_ENCODING(lexy::utf8_encoding, LEXY_CHAR8_STR("ä"));
-        CHECK(cp == 2);
-    }
-    SUBCASE("UTF-16")
-    {
-        struct callback
-        {
-            const char16_t* str;
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
 
-            LEXY_VERIFY_FN int success(const char16_t* cur)
-            {
-                return int(cur - str);
-            }
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
 
-            LEXY_VERIFY_FN int error(
-                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("UTF-16.code_point"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
-        CHECK(empty == -1);
-
-        auto cp = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
-        CHECK(cp == 1);
-    }
-    SUBCASE("UTF-32")
-    {
-        struct callback
-        {
-            const char32_t* str;
-
-            LEXY_VERIFY_FN int success(const char32_t* cur)
-            {
-                return int(cur - str);
-            }
-
-            LEXY_VERIFY_FN int error(
-                lexy::string_error<lexy::expected_char_class, lexy::utf32_encoding> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                LEXY_VERIFY_CHECK(e.character_class()
-                                  == lexy::_detail::string_view("UTF-32.code_point"));
-                return -1;
-            }
-        };
-
-        auto empty = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"");
-        CHECK(empty == -1);
-
-        auto cp = LEXY_VERIFY_ENCODING(lexy::utf32_encoding, U"ä");
-        CHECK(cp == 1);
-    }
-
-    SUBCASE(".if_()")
-    {
-        struct predicate
-        {
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return cp.is_ascii();
-            }
-        };
-
-        static constexpr auto rule = lexy::dsl::code_point.if_<predicate>();
-        CHECK(lexy::is_rule<decltype(rule)>);
-        CHECK(lexy::is_token_rule<decltype(rule)>);
-
-        struct callback
-        {
-            const char16_t* str;
-
-            LEXY_VERIFY_FN int success(const char16_t*)
-            {
-                return 0;
-            }
-
-            LEXY_VERIFY_FN int error(
-                lexy::string_error<lexy::expected_char_class, lexy::utf16_encoding> e)
-            {
-                LEXY_VERIFY_CHECK(e.position() == str);
-                if (e.character_class() == lexy::_detail::string_view("UTF-16.code_point"))
-                    return -1;
-                else
-                    return -2;
-            }
-        };
-
-        auto empty = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"");
-        CHECK(empty == -1);
-
-        auto ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"a");
-        CHECK(ascii == 0);
-
-        auto non_ascii = LEXY_VERIFY_ENCODING(lexy::utf16_encoding, u"ä");
-        CHECK(non_ascii == -2);
-    }
+    auto bmp = LEXY_VERIFY(u"ä");
+    CHECK(bmp.status == test_result::fatal_error);
+    CHECK(bmp.trace
+          == test_trace().expected_char_class(0, "predicate").error_token("\\u00E4").cancel());
 }
 

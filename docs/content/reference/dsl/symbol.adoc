@@ -209,7 +209,7 @@ Parse tree::
   A single token node covering the symbol.
   Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::identifier_token_kind`, which cannot be overridden.
 
-NOTE: This version behaves like the other version if parsed a non-deterministic token rule that always consumes as much input as is necessary to match the symbol.
+NOTE: This version behaves like the other version if passed a non-deterministic token rule that always consumes as much input as is necessary to match the symbol.
 
 === Version with argument
 
