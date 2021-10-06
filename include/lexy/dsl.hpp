@@ -20,7 +20,6 @@
 #include <lexy/dsl/context_identifier.hpp>
 #include <lexy/dsl/delimited.hpp>
 #include <lexy/dsl/digit.hpp>
-#include <lexy/dsl/encode.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/error.hpp>
 #include <lexy/dsl/identifier.hpp>

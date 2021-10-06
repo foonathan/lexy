@@ -9,6 +9,7 @@ Until the first release is done, breaking changes -- but not new features -- are
   It was already removed once as it was unimplementable due to automatic whitespace skipping, but then re-implemented later on.
   But as it turns out, it is in fact unimplementable and the current implementation was completely broken.
   Instead of `tok1 + tok2 >> rule1 | tok1 + tok3 >> rule2` use `tok1 >> (tok2 >> rule1 | tok3 >> rule2)`.
+* Removed `dsl::encode()`. The rule was completely broken in combination with `dsl::capture()` and rules built on top like `dsl::identifier()`.
 
 == 2021-08-22
 
