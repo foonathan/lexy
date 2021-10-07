@@ -40,19 +40,6 @@ TEST_CASE("_detail::lazy_init")
         CHECK(*emplaced == "aaaaa");
         CHECK(emplaced->size() == 5);
 
-        SUBCASE("copy constructor from empty")
-        {
-            auto copy = empty; // NOLINT
-            CHECK(!copy);
-        }
-        SUBCASE("copy constructor from emplaced")
-        {
-            auto copy = emplaced;
-            CHECK(copy);
-            CHECK(*copy == "aaaaa");
-            CHECK(copy->size() == 5);
-        }
-
         SUBCASE("move constructor from empty")
         {
             auto copy = LEXY_MOV(empty);
@@ -64,41 +51,6 @@ TEST_CASE("_detail::lazy_init")
             CHECK(copy);
             CHECK(*copy == "aaaaa");
             CHECK(copy->size() == 5);
-        }
-
-        SUBCASE("copy assignment from empty to empty")
-        {
-            lazy_init assigned;
-
-            assigned = empty;
-            CHECK(!assigned);
-        }
-        SUBCASE("copy assignment from emplaced to empty")
-        {
-            lazy_init assigned;
-
-            assigned = emplaced;
-            CHECK(assigned);
-            CHECK(*assigned == "aaaaa");
-            CHECK(assigned->size() == 5);
-        }
-        SUBCASE("copy assignment from empty to emplaced")
-        {
-            lazy_init assigned;
-            assigned.emplace(3u, 'b');
-
-            assigned = empty;
-            CHECK(!assigned);
-        }
-        SUBCASE("copy assignment from emplaced to emplaced")
-        {
-            lazy_init assigned;
-            assigned.emplace(3u, 'b');
-
-            assigned = emplaced;
-            CHECK(assigned);
-            CHECK(*assigned == "aaaaa");
-            CHECK(assigned->size() == 5);
         }
 
         SUBCASE("move assignment from empty to empty")
