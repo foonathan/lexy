@@ -28,8 +28,7 @@ Its _integer type_ `::int_type` is an integer type which can store any valid cha
 If this is the same type as the primary character type, some optimizations are possible.
 
 Some {{% docref "rule" %}}s require a certain encoding.
-For example, {{% docref "lexy::dsl::code_point" %}} does not work with {{% docref "lexy::default_encoding" %}},
-and {{% docref "lexy::dsl::encode" %}} requires single-byte encodings like {{% docref "lexy::byte_encoding" %}}.
+For example, {{% docref "lexy::dsl::code_point" %}} does not work with {{% docref "lexy::default_encoding" %}}.
 
 [#encoding]
 == Supported encodings
@@ -140,8 +139,7 @@ Defines the endianness of a multi-byte encoding when necessary.
 
 In memory, UTF-16 and UTF-32 can be either encoded in big or little endian.
 If raw bytes need to be interpreted as code units in those encodings,
-as is necessary by {{% docref "lexy::dsl::encode" %}} or `lexy::read_file`,
-the desired endianness can be specified using `encoding_endianness`.
+as is necessary by `lexy::read_file`, the desired endianness can be specified using `encoding_endianness`.
 
 `little`::
   The input is stored in little endian. For single-byte encodings, this has no effect.
@@ -154,5 +152,5 @@ the desired endianness can be specified using `encoding_endianness`.
   If no BOM is present, it defaults to big endian.
 
 {{% docref "lexy::make_buffer_from_raw" %}} and {{% docref "lexy::read_file" %}} use this enum to handle the endianness of the raw memory,
-and the rule {{% docref "lexy::dsl::encode" %}} uses it to dynamically convert bytes to code units.
+and the rule {{% docref "lexy::dsl::bom" %}} uses it to specify a given BOM.
 

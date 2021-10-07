@@ -51,5 +51,3 @@ As such, the rule is best used in contexts where automatic whitespace skipping i
 
 NOTE: When using `lexy::read_file()` as input, BOM has been taken care of by default.
 
-NOTE: Use {{% docref "lexy::dsl::encode" %}} to react to multiple different BOMs and handle encoding changes.
-
