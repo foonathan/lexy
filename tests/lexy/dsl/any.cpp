@@ -23,6 +23,6 @@ TEST_CASE("dsl::any")
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '1', '2', '3');
     CHECK(invalid_utf8.status == test_result::success);
-    CHECK(invalid_utf8.trace == test_trace().token("abc_\\u????_123"));
+    CHECK(invalid_utf8.trace == test_trace().token("abc\\x80123"));
 }
 

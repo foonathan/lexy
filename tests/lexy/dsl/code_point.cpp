@@ -28,18 +28,16 @@ constexpr parse_result parse_cp(const typename Encoding::char_type* str)
     auto input  = lexy::zstring_input<Encoding>(str);
     auto reader = input.reader();
 
-    auto ec = cp_error::success;
-    auto cp = lexy::_detail::parse_code_point(ec, reader);
+    auto result = lexy::_detail::parse_code_point(reader);
 
-    if (ec != cp_error::success)
+    if (result.error != cp_error::success)
     {
-        auto recovered_reader = input.reader();
-        lexy::_detail::recover_code_point(recovered_reader, reader.position(), ec);
-        return {std::size_t(recovered_reader.position() - input.data()), ec, cp};
+        lexy::_detail::recover_code_point(reader, result);
+        return {std::size_t(reader.position() - input.data()), result.error, result.cp};
     }
     else
     {
-        return {std::size_t(reader.position() - input.data()), ec, cp};
+        return {std::size_t(result.end - input.data()), result.error, result.cp};
     }
 }
 } // namespace

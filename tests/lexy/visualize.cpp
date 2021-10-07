@@ -91,7 +91,7 @@ TEST_CASE("visualize code_point")
 
 TEST_CASE("visualize lexeme")
 {
-    auto visualize = [](auto encoding, const char* str, unsigned char limit = 0) {
+    auto visualize = [](auto encoding, const auto* str, unsigned char limit = 0) {
         auto input   = lexy::zstring_input<decltype(encoding)>(str);
         using lexeme = lexy::lexeme_for<decltype(input)>;
 
@@ -111,7 +111,7 @@ TEST_CASE("visualize lexeme")
         CHECK(visualize(lexy::default_encoding{}, "\n\t\\") == R"(\n\t\\)");
 
         char out_of_range[] = {'a', char(0xFF), 'c', '\0'};
-        CHECK(visualize(lexy::default_encoding{}, out_of_range) == R"(a\u????c)");
+        CHECK(visualize(lexy::default_encoding{}, out_of_range) == R"(a\xFFc)");
 
         CHECK(visualize(lexy::default_encoding{}, "abc", 2) == R"(ab...)");
     }
@@ -120,6 +120,17 @@ TEST_CASE("visualize lexeme")
         CHECK(visualize(lexy::utf8_encoding{}, "abc") == R"(abc)");
         CHECK(visualize(lexy::utf8_encoding{}, "\n\t\\") == R"(\n\t\\)");
         CHECK(visualize(lexy::utf8_encoding{}, "\u1234") == R"(\u1234)");
+        CHECK(visualize(lexy::utf8_encoding{}, "\xC0\xA0") == R"(\xC0\xA0)");
+
+        CHECK(visualize(lexy::utf16_encoding{}, u"abc") == R"(abc)");
+        CHECK(visualize(lexy::utf16_encoding{}, u"\n\t\\") == R"(\n\t\\)");
+        CHECK(visualize(lexy::utf16_encoding{}, u"\u1234") == R"(\u1234)");
+        CHECK(visualize(lexy::utf16_encoding{}, u"\xD811") == R"(\xD8\x11)");
+
+        CHECK(visualize(lexy::utf32_encoding{}, U"abc") == R"(abc)");
+        CHECK(visualize(lexy::utf32_encoding{}, U"\n\t\\") == R"(\n\t\\)");
+        CHECK(visualize(lexy::utf32_encoding{}, U"\u1234") == R"(\u1234)");
+        CHECK(visualize(lexy::utf32_encoding{}, U"\x1100FF") == R"(\x11\x00\xFF)");
 
         CHECK(visualize(lexy::utf8_encoding{}, "abc", 2) == R"(ab...)");
     }
@@ -208,7 +219,7 @@ TEST_CASE("visualize parse_tree")
 - child_p:
   - child_p:
     - b: (
-    - c: abc\u0020\n\u????
+    - c: abc\u0020\n\x84
     - b: )
 - child_p:
   - a: 321
@@ -223,7 +234,7 @@ TEST_CASE("visualize parse_tree")
 ├──child_p:
 │  └──child_p:
 │     ├──b: (
-│     ├──c: abc⟨SP⟩⟨LF⟩⟨U+????⟩
+│     ├──c: abc⟨SP⟩⟨LF⟩⟨0x84⟩
 │     └──b: )
 ├──child_p:
 │  └──a: 321

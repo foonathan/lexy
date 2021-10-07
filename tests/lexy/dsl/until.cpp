@@ -37,7 +37,7 @@ TEST_CASE("dsl::until()")
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
     CHECK(invalid_utf8.status == test_result::success);
-    CHECK(invalid_utf8.trace == test_trace().token("abc\\u???\?!"));
+    CHECK(invalid_utf8.trace == test_trace().token("abc\\x80!"));
 }
 
 TEST_CASE("dsl::until().or_eof()")
@@ -70,6 +70,6 @@ TEST_CASE("dsl::until().or_eof()")
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
     CHECK(invalid_utf8.status == test_result::success);
-    CHECK(invalid_utf8.trace == test_trace().token("abc\\u???\?!"));
+    CHECK(invalid_utf8.trace == test_trace().token("abc\\x80!"));
 }
 

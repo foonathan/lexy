@@ -174,6 +174,23 @@ constexpr OutIt write_ellipsis(OutIt out, visualization_options opts)
     else
         return _detail::write_str(out, "...");
 }
+
+template <typename OutIt, typename Fn>
+constexpr OutIt write_special_char(OutIt out, visualization_options opts, Fn inner)
+{
+    out = _detail::write_color<_detail::color::cyan, _detail::color::faint>(out, opts);
+    if (opts.is_set(visualize_use_unicode))
+        out = _detail::write_str(out, u8"⟨");
+    else
+        out = _detail::write_str(out, "\\");
+
+    out = inner(out);
+
+    if (opts.is_set(visualize_use_unicode))
+        out = _detail::write_str(out, u8"⟩");
+    out = _detail::write_color<_detail::color::reset>(out, opts);
+    return out;
+}
 } // namespace lexy::_detail
 
 namespace lexy
@@ -181,24 +198,9 @@ namespace lexy
 template <typename OutputIt>
 OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options opts = {})
 {
-    auto write_special_char = [opts](OutputIt out, auto inner) {
-        out = _detail::write_color<_detail::color::cyan, _detail::color::faint>(out, opts);
-        if (opts.is_set(visualize_use_unicode))
-            out = _detail::write_str(out, u8"⟨");
-        else
-            out = _detail::write_str(out, "\\");
-
-        out = inner(out);
-
-        if (opts.is_set(visualize_use_unicode))
-            out = _detail::write_str(out, u8"⟩");
-        out = _detail::write_color<_detail::color::reset>(out, opts);
-        return out;
-    };
-
     if (!cp.is_valid())
     {
-        out = write_special_char(out, [opts](OutputIt out) {
+        out = _detail::write_special_char(out, opts, [opts](OutputIt out) {
             if (opts.is_set(visualize_use_unicode))
                 return _detail::write_str(out, "U+????");
             else
@@ -212,7 +214,7 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
         switch (c)
         {
         case '\0':
-            out = write_special_char(out, [opts](OutputIt out) {
+            out = _detail::write_special_char(out, opts, [opts](OutputIt out) {
                 if (opts.is_set(visualize_use_unicode))
                     return _detail::write_str(out, "NUL");
                 else
@@ -220,7 +222,7 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             });
             break;
         case '\r':
-            out = write_special_char(out, [opts](OutputIt out) {
+            out = _detail::write_special_char(out, opts, [opts](OutputIt out) {
                 if (opts.is_set(visualize_use_unicode))
                     return _detail::write_str(out, "CR");
                 else
@@ -237,14 +239,15 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             }
             else if (opts.is_set(visualize_use_unicode))
             {
-                out = write_special_char(out, [](OutputIt out) {
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
                     return _detail::write_str(out, "LF");
                 });
             }
             else
             {
-                out = write_special_char(out,
-                                         [](OutputIt out) { return _detail::write_str(out, "n"); });
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
+                    return _detail::write_str(out, "n");
+                });
             }
             break;
         case '\t':
@@ -263,19 +266,20 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             }
             else if (opts.is_set(visualize_use_unicode))
             {
-                out = write_special_char(out, [](OutputIt out) {
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
                     return _detail::write_str(out, "HT");
                 });
             }
             else
             {
-                out = write_special_char(out,
-                                         [](OutputIt out) { return _detail::write_str(out, "t"); });
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
+                    return _detail::write_str(out, "t");
+                });
             }
             break;
 
         default:
-            out = write_special_char(out, [opts, c](OutputIt out) {
+            out = _detail::write_special_char(out, opts, [opts, c](OutputIt out) {
                 if (opts.is_set(visualize_use_unicode))
                     return _detail::write_format(out, "U+%04X", c);
                 else
@@ -297,13 +301,13 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
             }
             else if (opts.is_set(visualize_use_unicode))
             {
-                out = write_special_char(out, [](OutputIt out) {
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
                     return _detail::write_str(out, "SP");
                 });
             }
             else
             {
-                out = write_special_char(out, [](OutputIt out) {
+                out = _detail::write_special_char(out, opts, [](OutputIt out) {
                     return _detail::write_str(out, "u0020");
                 });
             }
@@ -318,8 +322,9 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
     else if (cp.value() == '\\')
     {
         if (!opts.is_set(visualize_use_unicode))
-            out = write_special_char(out,
-                                     [](OutputIt out) { return _detail::write_str(out, "\\"); });
+            out = _detail::write_special_char(out, opts, [](OutputIt out) {
+                return _detail::write_str(out, "\\");
+            });
         else
             *out++ = '\\'; // Doesn't need escaping if we can use unicode.
         return out;
@@ -332,7 +337,7 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
     }
     else
     {
-        out = write_special_char(out, [opts, cp](OutputIt out) {
+        out = _detail::write_special_char(out, opts, [opts, cp](OutputIt out) {
             auto c = static_cast<int>(cp.value());
             if (opts.is_set(visualize_use_unicode))
                 return _detail::write_format(out, "U+%04X", c);
@@ -353,6 +358,15 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
     // or unlimited if `opts.max_lexeme_width == 0`.
     // The trick is to count and check for `count == opts.max_lexeme_width` after increment.
 
+    [[maybe_unused]] auto write_escaped_byte = [opts](OutputIt out, unsigned char byte) {
+        return _detail::write_special_char(out, opts, [opts, byte](OutputIt out) {
+            if (opts.is_set(visualize_use_unicode))
+                return _detail::write_format(out, "0x%02X", byte);
+            else
+                return _detail::write_format(out, "x%02X", byte);
+        });
+    };
+
     using encoding = typename Reader::encoding;
     if constexpr (std::is_same_v<encoding, lexy::ascii_encoding> //
                   || std::is_same_v<encoding, lexy::default_encoding>)
@@ -361,11 +375,11 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         for (char c : lexeme)
         {
             // If the character is in fact ASCII, visualize the code point.
-            // Otherwise, visualize an unknown code point.
+            // Otherwise, visualize as byte.
             if (lexy::_is_ascii(c))
                 out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
             else
-                out = visualize_to(out, lexy::code_point(), opts);
+                out = write_escaped_byte(out, static_cast<unsigned char>(c));
 
             ++count;
             if (count == opts.max_lexeme_width)
@@ -387,12 +401,58 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         auto count = 0u;
         while (true)
         {
-            auto ec = lexy::_detail::cp_error::success;
-            auto cp = lexy::_detail::parse_code_point(ec, reader);
-            if (ec == lexy::_detail::cp_error::eof)
+            if (auto result = lexy::_detail::parse_code_point(reader);
+                result.error == lexy::_detail::cp_error::eof)
+            {
+                // No more code points in the lexeme, finish.
                 break;
+            }
+            else if (result.error == lexy::_detail::cp_error::success)
+            {
+                // Consume and visualize.
+                reader.set_position(result.end);
+                out = visualize_to(out, result.cp, opts);
+            }
+            else
+            {
+                // Recover from the failed code point.
+                auto begin = reader.position();
+                lexy::_detail::recover_code_point(reader, result);
+                auto end = reader.position();
 
-            out = visualize_to(out, cp, opts);
+                // Visualize each skipped code unit as byte.
+                for (auto cur = begin; cur != end; ++cur)
+                {
+                    if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
+                    {
+                        out = write_escaped_byte(out, static_cast<unsigned char>(*cur & 0xFF));
+                    }
+                    else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
+                    {
+                        auto first  = static_cast<unsigned char>((*cur >> 8) & 0xFF);
+                        auto second = static_cast<unsigned char>(*cur & 0xFF);
+
+                        if (first != 0)
+                            out = write_escaped_byte(out, first);
+                        out = write_escaped_byte(out, second);
+                    }
+                    else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
+                    {
+                        auto first  = static_cast<unsigned char>((*cur >> 24) & 0xFF);
+                        auto second = static_cast<unsigned char>((*cur >> 16) & 0xFF);
+                        auto third  = static_cast<unsigned char>((*cur >> 8) & 0xFF);
+                        auto fourth = static_cast<unsigned char>(*cur & 0xFF);
+
+                        if (first != 0)
+                            out = write_escaped_byte(out, first);
+                        if (first != 0 || second != 0)
+                            out = write_escaped_byte(out, second);
+                        if (first != 0 || second != 0 || third != 0)
+                            out = write_escaped_byte(out, third);
+                        out = write_escaped_byte(out, fourth);
+                    }
+                }
+            }
 
             ++count;
             if (count == opts.max_lexeme_width)

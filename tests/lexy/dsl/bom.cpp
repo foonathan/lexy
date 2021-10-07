@@ -35,7 +35,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xEF, 0xBB, 0xBF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\u????\u????\u????)"));
+        CHECK(bom.trace == test_trace().token(R"(\xEF\xBB\xBF)"));
     }
 
     SUBCASE("UTF-16, little")
@@ -49,7 +49,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFF, 0xFE);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\u????\u????)"));
+        CHECK(bom.trace == test_trace().token(R"(\xFF\xFE)"));
     }
     SUBCASE("UTF-16, big")
     {
@@ -62,7 +62,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\u????\u????)"));
+        CHECK(bom.trace == test_trace().token(R"(\xFE\xFF)"));
     }
 
     SUBCASE("UTF-32, little")
@@ -76,7 +76,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFF, 0xFE, 0x00, 0x00);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\u????\u????\0\0)"));
+        CHECK(bom.trace == test_trace().token(R"(\xFF\xFE\0\0)"));
     }
     SUBCASE("UTF-32, big")
     {
@@ -89,7 +89,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0x00, 0x00, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\0\0\u????\u????)"));
+        CHECK(bom.trace == test_trace().token(R"(\0\0\xFE\xFF)"));
     }
 }
 

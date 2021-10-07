@@ -24,23 +24,29 @@ enum class cp_error
 };
 
 template <typename Reader>
-constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
+struct cp_result
+{
+    lexy::code_point          cp;
+    cp_error                  error;
+    typename Reader::iterator end;
+};
+
+template <typename Reader>
+constexpr cp_result<Reader> parse_code_point(Reader reader)
 {
     if constexpr (std::is_same_v<typename Reader::encoding, lexy::ascii_encoding>)
     {
         if (reader.peek() == Reader::encoding::eof())
-        {
-            ec = cp_error::eof;
-            return {};
-        }
+            return {{}, cp_error::eof, reader.position()};
 
         auto cur = reader.peek();
         reader.bump();
 
         auto cp = lexy::code_point(static_cast<char32_t>(cur));
-        if (!cp.is_ascii())
-            ec = cp_error::out_of_range;
-        return cp;
+        if (cp.is_ascii())
+            return {cp, cp_error::success, reader.position()};
+        else
+            return {cp, cp_error::out_of_range, reader.position()};
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding>)
     {
@@ -61,12 +67,11 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
         {
             // ASCII character.
             reader.bump();
-            return lexy::code_point(first);
+            return {lexy::code_point(first), cp_error::success, reader.position()};
         }
         else if ((first & ~payload_cont) == pattern_cont)
         {
-            ec = cp_error::leads_with_trailing;
-            return {};
+            return {{}, cp_error::leads_with_trailing, reader.position()};
         }
         else if ((first & ~payload_lead2) == pattern_lead2)
         {
@@ -74,10 +79,7 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             auto second = reader.peek();
             if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead2);
@@ -86,9 +88,9 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             // C0 and C1 are overlong ASCII.
             if (first == 0xC0 || first == 0xC1)
-                ec = cp_error::overlong_sequence;
-
-            return lexy::code_point(result);
+                return {lexy::code_point(result), cp_error::overlong_sequence, reader.position()};
+            else
+                return {lexy::code_point(result), cp_error::success, reader.position()};
         }
         else if ((first & ~payload_lead3) == pattern_lead3)
         {
@@ -96,18 +98,12 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             auto second = reader.peek();
             if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto third = reader.peek();
             if ((third & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead3);
@@ -118,10 +114,11 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             auto cp = lexy::code_point(result);
             if (cp.is_surrogate())
-                ec = cp_error::surrogate;
+                return {cp, cp_error::surrogate, reader.position()};
             else if (first == 0xE0 && second < 0xA0)
-                ec = cp_error::overlong_sequence;
-            return cp;
+                return {cp, cp_error::overlong_sequence, reader.position()};
+            else
+                return {cp, cp_error::success, reader.position()};
         }
         else if ((first & ~payload_lead4) == pattern_lead4)
         {
@@ -129,26 +126,17 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             auto second = reader.peek();
             if ((second & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto third = reader.peek();
             if ((third & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto fourth = reader.peek();
             if ((fourth & ~payload_cont) != pattern_cont)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead4);
@@ -161,15 +149,15 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 
             auto cp = lexy::code_point(result);
             if (!cp.is_valid())
-                ec = cp_error::out_of_range;
+                return {cp, cp_error::out_of_range, reader.position()};
             else if (first == 0xF0 && second < 0x90)
-                ec = cp_error::overlong_sequence;
-            return cp;
+                return {cp, cp_error::overlong_sequence, reader.position()};
+            else
+                return {cp, cp_error::success, reader.position()};
         }
         else // FE or FF
         {
-            ec = cp_error::eof;
-            return {};
+            return {{}, cp_error::eof, reader.position()};
         }
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf16_encoding>)
@@ -181,27 +169,18 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
         constexpr auto pattern2 = 0b110111 << 10;
 
         if (reader.peek() == Reader::encoding::eof())
-        {
-            ec = cp_error::eof;
-            return {};
-        }
+            return {{}, cp_error::eof, reader.position()};
 
         auto first = char16_t(reader.peek());
         if ((first & ~payload1) == pattern1)
         {
             reader.bump();
             if (reader.peek() == Reader::encoding::eof())
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
 
             auto second = char16_t(reader.peek());
             if ((second & ~payload2) != pattern2)
-            {
-                ec = cp_error::missing_trailing;
-                return {};
-            }
+                return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
             // We've got a valid code point.
@@ -209,38 +188,34 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
             result <<= 10;
             result |= char32_t(second & payload2);
             result |= 0x10000;
-            return lexy::code_point(result);
+            return {lexy::code_point(result), cp_error::success, reader.position()};
         }
         else if ((first & ~payload2) == pattern2)
         {
-            ec = cp_error::leads_with_trailing;
-            return {};
+            return {{}, cp_error::leads_with_trailing, reader.position()};
         }
         else
         {
             // Single code unit code point; always valid.
             reader.bump();
-            return lexy::code_point(first);
+            return {lexy::code_point(first), cp_error::success, reader.position()};
         }
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf32_encoding>)
     {
         if (reader.peek() == Reader::encoding::eof())
-        {
-            ec = cp_error::eof;
-            return {};
-        }
+            return {{}, cp_error::eof, reader.position()};
 
         auto cur = reader.peek();
         reader.bump();
 
         auto cp = lexy::code_point(cur);
         if (!cp.is_valid())
-            ec = cp_error::out_of_range;
+            return {cp, cp_error::out_of_range, reader.position()};
         else if (cp.is_surrogate())
-            ec = cp_error::surrogate;
-
-        return cp;
+            return {cp, cp_error::surrogate, reader.position()};
+        else
+            return {cp, cp_error::success, reader.position()};
     }
     else
     {
@@ -251,9 +226,9 @@ constexpr lexy::code_point parse_code_point(cp_error& ec, Reader& reader)
 }
 
 template <typename Reader>
-constexpr void recover_code_point(Reader& reader, typename Reader::iterator end, cp_error ec)
+constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
 {
-    switch (ec)
+    switch (result.error)
     {
     case cp_error::success:
         LEXY_PRECONDITION(false);
@@ -264,7 +239,7 @@ constexpr void recover_code_point(Reader& reader, typename Reader::iterator end,
 
     case cp_error::leads_with_trailing:
         // Invalid code unit, consume to recover.
-        LEXY_PRECONDITION(end == reader.position());
+        LEXY_PRECONDITION(result.end == reader.position());
         reader.bump();
         break;
 
@@ -274,7 +249,7 @@ constexpr void recover_code_point(Reader& reader, typename Reader::iterator end,
     case cp_error::overlong_sequence:
     case cp_error::predicate_failure:
         // Consume all the invalid code units to recover.
-        reader.set_position(end);
+        reader.set_position(result.end);
         break;
     }
 }
@@ -300,15 +275,17 @@ struct _cp : token_base<_cp<Predicate>>
             using lexy::_detail::cp_error;
 
             // Parse one code point.
-            [[maybe_unused]] auto cp = lexy::_detail::parse_code_point(ec, reader);
-            end                      = reader.position();
+            auto result = lexy::_detail::parse_code_point(reader);
+            end         = result.end;
+            ec          = result.error;
+
             if (ec != cp_error::success)
                 return false;
 
             // Check whether it matches the predicate.
             if constexpr (!std::is_void_v<Predicate>)
             {
-                if (!Predicate()(cp))
+                if (!Predicate()(result.cp))
                 {
                     ec = cp_error::predicate_failure;
                     return false;
