@@ -241,7 +241,7 @@ Note that no value of <code>escape</code> is produced.</p>
 </li>
 <li>
 <p>All errors raised by parsing <code>c</code>.
-It can sometimes recover for simple tokens by simply discarding the bad character and continuing after it.
+It can recover for by simply discarding the bad character and continuing after it.
 Otherwise, it fails.</p>
 </li>
 </ul>
@@ -259,6 +259,7 @@ The rule then produces all values of <code>open()</code>, the final value of the
 <dd>
 <p><code>delimited</code> does not have any special parse tree handling:
 it will create the nodes for <code>open()</code>, then the nodes for each <code>c</code> and <code>escape</code>, and the nodes for <code>close()</code>.
+A character that is skipped during error recovery will create a token node whose <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.
 If the current production inherits from <a href=/reference/grammar/#token_production><code>lexy::token_production</code></a>,
 adjacent token nodes of the same kind (which includes the default kind) are merged.</p>
 </dd>
@@ -401,7 +402,7 @@ but the terminology is common else where.
     <span class=tok-p>{</span>
         <span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>rule</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>r</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>t</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>r</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol_table</em></span><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>t</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
@@ -441,7 +442,7 @@ like a <a href=/reference/dsl/choice/#choice><code>choice</code></a> would.</p>
 <code>escape</code> then fails but <code>delimited</code> recovers (see above).</p>
 </li>
 <li>
-<p><code>lexy::invalid_escape_sequence</code>: if none of the escape sequences match; at the position of the <code>escape_char</code>.
+<p><code>lexy::invalid_escape_sequence</code>: if none of the escape sequences match; its range covers the <code>escape_char</code>.
 <code>escape</code> then fails but <code>delimited</code> recovers (see above).</p>
 </li>
 </ul>
@@ -510,14 +511,14 @@ like a <a href=/reference/dsl/choice/#choice><code>choice</code></a> would.</p>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/delimited.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>t</span><span class=tok-p>)</span> <span class=tok-k>const</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>escape</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>r</span><span class=tok-p>)</span> <span class=tok-k>const</span>
 <span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-k>this</span><span class=tok-o>-&gt;</span><span class=tok-n>rule</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n>t</span><span class=tok-p>));</span>
+    <span class=tok-k>return</span> <span class=tok-k>this</span><span class=tok-o>-&gt;</span><span class=tok-n>rule</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n>r</span><span class=tok-p>));</span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>.capture()</code> specifies an escape sequence that tries to parse the <a href=/reference/dsl/token/#doc>token rule</a> <code>t</code> and produces a <a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a>.</p>
+<p><code>.capture()</code> specifies an escape sequence that tries to parse the <a href=/reference/dsl/branch/#doc>branch rule</a> <code>t</code> and produces a <a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a>.</p>
 </div>
 <div class=paragraph>
 <p>It is equivalent to <a href=/reference/dsl/capture/#capture><code>lexy::dsl::capture</code></a>.</p>
@@ -584,7 +585,7 @@ They don’t actually define any escape sequences, just the initial character.
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/capture/#capture><code>lexy::dsl::capture</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/capture/#capture><code>lexy::dsl::capture</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

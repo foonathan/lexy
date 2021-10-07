@@ -359,6 +359,19 @@ Inside the child production, whitespace is skipped again, as seen by the <code>i
 </tr>
 </tbody></table>
 </div>
+<div class="admonitionblock caution">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Caution</div>
+</td>
+<td class=content>
+If a non-root production has a <code>::whitespace</code> member, this defines whitespace only for this current production.
+Any child productions will not consider this rule, as the algorithm only considers the current production and the root production.
+</td>
+</tr>
+</tbody></table>
+</div>
 <div class="admonitionblock tip">
 <table>
 <tbody><tr>

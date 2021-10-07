@@ -210,12 +210,12 @@ Otherwise, if <code>must(rule).error&lt;Tag>(capture)</code> is used, the associ
 <dl>
 <dt class=hdlist1>Requires</dt>
 <dd>
-<p><code>rule</code> is a branch rule that can actually backtrack (e.g. not <a href=/reference/dsl/branch/#else_><code>lexy::dsl::else_</code></a>).</p>
+<p><code>rule</code> is a branch rule that is not unconditionally taken (e.g. not <a href=/reference/dsl/branch/#else_><code>lexy::dsl::else_</code></a>).</p>
 </dd>
 <dt class=hdlist1>Parsing</dt>
 <dd>
-<p>Parses the <a href=/reference/dsl/choice/#choice><code>choice</code></a> <code>rule | e</code>, where <code>e</code> is the associated error rule:
-it tries to parse <code>rule</code> and raises a specific error if that fails.</p>
+<p>Parses the <a href=/reference/dsl/choice/#choice><code>choice</code></a> <code>rule | e</code>, where <code>e</code> is the associated error rule,
+i.e. it tries to parse <code>rule</code> and raises a specific error if that fails.</p>
 </dd>
 <dt class=hdlist1>Branch parsing</dt>
 <dd>

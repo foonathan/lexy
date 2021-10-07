@@ -66,8 +66,7 @@ If this is the same type as the primary character type, some optimizations are p
 </div>
 <div class=paragraph>
 <p>Some <a href=/reference/dsl/#doc><code>rule</code></a>s require a certain encoding.
-For example, <a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a> does not work with <a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a>,
-and <a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a> requires single-byte encodings like <a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a>.</p>
+For example, <a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a> does not work with <a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a>.</p>
 </div>
 <div class=sect1>
 <h2 id=encoding>Supported encodings</h2>
@@ -271,8 +270,7 @@ If <code>CharT</code> is not listed there, the alias is ill-formed.</p>
 <div class=paragraph>
 <p>In memory, UTF-16 and UTF-32 can be either encoded in big or little endian.
 If raw bytes need to be interpreted as code units in those encodings,
-as is necessary by <a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a> or <code>lexy::read_file</code>,
-the desired endianness can be specified using <code>encoding_endianness</code>.</p>
+as is necessary by <code>lexy::read_file</code>, the desired endianness can be specified using <code>encoding_endianness</code>.</p>
 </div>
 <div class=dlist>
 <dl>
@@ -295,13 +293,13 @@ If no BOM is present, it defaults to big endian.</p>
 </div>
 <div class=paragraph>
 <p><a href=/reference/input/buffer/#make_buffer_from_raw><code>lexy::make_buffer_from_raw</code></a> and <a href=/reference/input/file/#read_file><code>lexy::read_file</code></a> use this enum to handle the endianness of the raw memory,
-and the rule <a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a> uses it to dynamically convert bytes to code units.</p>
+and the rule <a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a> uses it to specify a given BOM.</p>
 </div>
 </div>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a></li><li><a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a></li><li><a href=/reference/input/buffer/#make_buffer_from_raw><code>lexy::make_buffer_from_raw</code></a></li><li><a href=/reference/input/file/#read_file><code>lexy::read_file</code></a></li><li><a href=/reference/dsl/#doc><code>rule</code></a></li></ul>
+<ul><li><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></li><li><a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a></li><li><a href=/reference/input/buffer/#make_buffer_from_raw><code>lexy::make_buffer_from_raw</code></a></li><li><a href=/reference/input/file/#read_file><code>lexy::read_file</code></a></li><li><a href=/reference/dsl/#doc><code>rule</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

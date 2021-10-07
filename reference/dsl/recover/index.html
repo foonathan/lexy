@@ -208,6 +208,11 @@ if they were specified.</p>
 <dd>
 <p>None.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>A single token node whose range covers everything consumed before the token.
+Its <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class=paragraph>
@@ -307,6 +312,11 @@ The rule fails if the selected branch fails.</p>
 <dd>
 <p>All values produced by the selected branch.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>A single token node whose range covers everything consumed before the token.
+Its <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class=paragraph>
@@ -362,7 +372,7 @@ If recovery fails, no additional error is raised but parsing is canceled, to try
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

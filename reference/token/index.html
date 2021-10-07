@@ -62,6 +62,7 @@ lexy/token.hpp — lexy
     <span class=tok-k>enum</span> <span class=tok-nc>predefined_token_kind</span>
     <span class=tok-p>{</span>
         <span class=tok-n>unknown_token_kind</span><span class=tok-p>,</span>
+        <span class=tok-n>error_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>whitespace_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>position_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>eof_token_kind</span><span class=tok-p>,</span>
@@ -92,6 +93,10 @@ lexy/token.hpp — lexy
 <td class="tableblock halign-left valign-top"><p class=tableblock>all token rules by default</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::error_token_kind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class=tableblock>tokens produced during the "discard input" phase of error recovery, e.g. by <a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a> or <a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::whitespace_token_kind</code></p></td>
 <td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a> (not actually a token rule)</p></td>
 </tr>
@@ -115,6 +120,18 @@ lexy/token.hpp — lexy
 </table>
 </div>
 </details>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+The enumeration is actually defined in <a href=/reference/grammar/><code>lexy/grammar.hpp.hpp</code></a>, but documented here for convenience.
+</td>
+</tr>
+</tbody></table>
+</div>
 </div>
 </div>
 <div class=sect1>
@@ -479,7 +496,7 @@ while the former is the concrete realization of the rule (e.g. the number <code>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/newline/#eol><code>lexy::dsl::eol</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/position/#position><code>lexy::dsl::position</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/token/#doc><code>token-rule</code></a></li></ul>
+<ul><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/newline/#eol><code>lexy::dsl::eol</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/position/#position><code>lexy::dsl::position</code></a></li><li><a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/token/#doc><code>token-rule</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

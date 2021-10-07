@@ -179,23 +179,11 @@ When using <code>lexy::read_file()</code> as input, BOM has been taken care of b
 </tr>
 </tbody></table>
 </div>
-<div class="admonitionblock note">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Note</div>
-</td>
-<td class=content>
-Use <a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a> to react to multiple different BOMs and handle encoding changes.
-</td>
-</tr>
-</tbody></table>
-</div>
 </div>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/dsl/encode/#encode><code>lexy::dsl::encode</code></a></li><li><a href=/reference/encoding/#encoding_endianness><code>lexy::encoding_endianness</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding_endianness><code>lexy::encoding_endianness</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

@@ -185,7 +185,7 @@ This can be overridden by <code>Tag::name()</code> or <code>Tag::name</code>.</p
 <span class=tok-k>class</span> <span class=tok-nc>error</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-n>expected_literal</span><span class=tok-o>&gt;</span>
 <span class=tok-p>{</span>
     <span class=tok-k>using</span> <span class=tok-n><em>iterator</em></span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
-    <span class=tok-k>using</span> <span class=tok-n><em>char_type</em></span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
+    <span class=tok-k>using</span> <span class=tok-n><em>char_type</em></span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
 
 <span class=tok-k>public</span><span class=tok-o>:</span>
     <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>iterator</em></span> <span class=tok-n>pos</span><span class=tok-p>,</span>
@@ -240,7 +240,7 @@ If the remaining input contained fewer code units than <code>string()</code>, <c
 <span class=tok-k>class</span> <span class=tok-nc>error</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-n>expected_keyword</span><span class=tok-o>&gt;</span>
 <span class=tok-p>{</span>
     <span class=tok-k>using</span> <span class=tok-n><em>iterator</em></span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
-    <span class=tok-k>using</span> <span class=tok-n><em>char_type</em></span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
+    <span class=tok-k>using</span> <span class=tok-n><em>char_type</em></span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
 
 <span class=tok-k>public</span><span class=tok-o>:</span>
     <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>iterator</em></span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n><em>iterator</em></span> <span class=tok-n>end</span><span class=tok-p>,</span>
@@ -331,24 +331,6 @@ This happens in rules like <a href=/reference/dsl/ascii/#doc><code>lexy::dsl::as
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class=sect1>
-<h2 id=make_error>Function <code>lexy::make_error</code></h2>
-<div class=sectionbody>
-<div class=listingblock>
-<div class=title><code>lexy/error.hpp</code></div>
-<div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>reader</em></span> <span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>make_error</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
-</div>
-</div>
-<div class="paragraph lead">
-<p>Construct <code>lexy::error&lt;Reader, Tag></code> by forwarding the arguments.</p>
 </div>
 </div>
 </div>
