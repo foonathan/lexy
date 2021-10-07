@@ -6,18 +6,40 @@
 #define LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
 
 #include <cstdio>
+#include <lexy/_detail/assert.hpp>
 #include <lexy/error.hpp>
 #include <lexy/visualize.hpp>
 #include <lexy_ext/input_location.hpp>
 
 namespace lexy_ext::_detail
 {
+// Advances the iterator to the beginning of the next code point.
+template <typename Encoding, typename Iterator>
+constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
+{
+    auto is_cp_boundary = []([[maybe_unused]] auto c) {
+        if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+            return (c & 0b1100'0000) != (0b10 << 6);
+        else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
+            return (c & 0b1111'1100'0000'0000) != (0b110111 << 10);
+        else
+            // This encoding doesn't have continuation code units, so everything is a boundary.
+            return std::true_type{};
+    };
+
+    while (cur != end && !is_cp_boundary(*cur))
+        ++cur;
+    return cur;
+}
+
 // Split the context of the location into three parts: the one before underlined, the underlined
 // one, and the one after. If underlined covers multiple lines, limit to the one of the context or
 // the newline afterwards.
 template <typename Location, typename Reader>
-auto split_context(const Location& location, const lexy::lexeme<Reader>& underlined)
+constexpr auto split_context(const Location& location, const lexy::lexeme<Reader>& underlined)
 {
+    using encoding = typename Reader::encoding;
+
     struct result_t
     {
         lexy::lexeme<Reader> before;
@@ -26,24 +48,37 @@ auto split_context(const Location& location, const lexy::lexeme<Reader>& underli
     } result;
 
     auto context = location.context();
+
     if (underlined.begin() == context.end())
     {
         // The underlined part begins at the newline.
-        // The end of the underlined part is either the end of the underline or the newline.
         auto newline = location.newline();
+        LEXY_PRECONDITION(newline.begin() == underlined.begin());
+
+        // The end of the underlined part is either the end of the underline or the newline.
+        // Due to the nature of newlines, we don't need to advance to the next code point boundary.
         auto underlined_end
             = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), newline.end());
 
+        // Note that we do not advance the beginning of the underlined part to the next code point
+        // boundary: if the error occurs inside a code point, this should be visible.
         result.before     = {context.begin(), underlined.begin()};
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, underlined_end};
     }
     else
     {
-        // The end of the underlined part is either the end of the underline or the context.
+        // The end of the underlined part is either the end of the underline or the end of the
+        // context...
         auto underlined_end
             = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), context.end());
+        // ... advanced to the next code point boundary.
+        // This ensures that something like `dsl::ascii::alpha` does not split a non-ASCII code
+        // point.
+        underlined_end = find_cp_boundary<encoding>(underlined_end, context.end());
 
+        // Note that we do not advance the beginning of the underlined part to the next code point
+        // boundary: if the error occurs inside a code point, this should be visible.
         result.before     = {context.begin(), underlined.begin()};
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, context.end()};

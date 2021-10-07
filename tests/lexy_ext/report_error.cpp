@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 #include <iterator>
+#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/input/string_input.hpp>
 #include <string>
 
@@ -124,10 +125,22 @@ TEST_CASE("_detail::write_error")
     }
     SUBCASE("escaped characters")
     {
-        auto input = lexy::zstring_input<lexy::utf8_encoding>(u8"hel\u1234lo");
+        auto input = lexy::zstring_input<lexy::utf8_encoding>(LEXY_CHAR8_STR("hel\u1234lo"));
 
         auto context = lexy::error_context(production{}, input, input.data());
         lexy::string_error<error_tag, lexy::utf8_encoding> error(input.data(), input.data() + 6);
+        CHECK(write(context, error) == R"*(error: while parsing production
+     |
+   1 | hel\u1234lo
+     | ^^^^^^^^^ error tag
+)*");
+    }
+    SUBCASE("split unicode code point")
+    {
+        auto input = lexy::zstring_input<lexy::utf8_encoding>(LEXY_CHAR8_STR("hel\u1234lo"));
+
+        auto context = lexy::error_context(production{}, input, input.data());
+        lexy::string_error<error_tag, lexy::utf8_encoding> error(input.data(), input.data() + 5);
         CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hel\u1234lo
