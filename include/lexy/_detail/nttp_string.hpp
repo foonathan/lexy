@@ -104,7 +104,8 @@ struct cat_<type_string<CharT, C1...>, type_string<CharT, C2...>>
 template <typename A, typename B>
 using cat = typename cat_<A, B>::type;
 
-template <template <auto...> typename T, typename TypeString, std::size_t Size, std::size_t MaxSize>
+template <template <typename CharT, CharT...> typename T, typename TypeString, std::size_t Size,
+          std::size_t MaxSize>
 struct macro_type_string
 {
     static_assert(Size <= MaxSize, "string out of range");
