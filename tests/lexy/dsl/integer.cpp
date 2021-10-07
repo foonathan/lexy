@@ -79,132 +79,129 @@ TEST_CASE("_digit_count")
     }
 }
 
+namespace
+{
+template <typename Parser>
+auto parse_int(Parser, const char* str)
+{
+    struct result_type
+    {
+        typename Parser::result_type value;
+        bool                         success;
+
+        bool operator==(int v) const
+        {
+            return success && value == typename Parser::result_type(v);
+        }
+    } result = {};
+
+    result.success = Parser::parse(result.value, str, str + std::strlen(str));
+    return result;
+}
+} // namespace
+
 TEST_CASE("_integer_parser")
 {
-    auto parse = [](auto _parser, const char* str) {
-        using parser = decltype(_parser);
-
-        struct result_type
-        {
-            typename parser::result_type value;
-            bool                         success;
-
-            bool operator==(int v) const
-            {
-                return success && value == typename parser::result_type(v);
-            }
-        } result = {};
-
-        result.success = parser::parse(result.value, str, str + std::strlen(str));
-        return result;
-    };
-
     SUBCASE("base 10, uint8_t")
     {
         constexpr auto parser = dsl::_integer_parser<std::uint8_t, dsl::decimal, false>{};
 
         for (auto i = 0; i < 256; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
         for (auto i = 256; i < 512; ++i)
         {
-            auto result = parse(parser, std::to_string(i).c_str());
+            auto result = parse_int(parser, std::to_string(i).c_str());
             CHECK(!result.success);
             CHECK(result.value == i / 10);
         }
 
-        CHECK(parse(parser, "000000000000") == 0);
-        CHECK(parse(parser, "000000000000255") == 255);
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, "000000000000255") == 255);
 
-#if 0 // TODO
-        auto overflow_zeroes = parse(parser, "000000000000256");
+        auto overflow_zeroes = parse_int(parser, "000000000000256");
         CHECK(!overflow_zeroes.success);
         CHECK(overflow_zeroes.value == 25);
-#endif
 
-        CHECK(parse(parser, "1'2'3") == 123);
-        CHECK(parse(parser, "0'0'0'0'0'0'1'2'3") == 123);
+        CHECK(parse_int(parser, "1'2'3") == 123);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3") == 123);
     }
     SUBCASE("base 10, int8_t")
     {
         constexpr auto parser = dsl::_integer_parser<std::int8_t, dsl::decimal, false>{};
 
         for (auto i = 0; i < 128; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
         for (auto i = 128; i < 512; ++i)
         {
-            auto result = parse(parser, std::to_string(i).c_str());
+            auto result = parse_int(parser, std::to_string(i).c_str());
             CHECK(!result.success);
             CHECK(result.value == i / 10);
         }
 
-        CHECK(parse(parser, "000000000000") == 0);
-        CHECK(parse(parser, "000000000000127") == 127);
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, "000000000000127") == 127);
 
-#if 0 // TODO
-        auto overflow_zeroes = parse(parser, "000000000000128");
+        auto overflow_zeroes = parse_int(parser, "000000000000128");
         CHECK(!overflow_zeroes.success);
         CHECK(overflow_zeroes.value == 12);
-#endif
 
-        CHECK(parse(parser, "1'2'3") == 123);
-        CHECK(parse(parser, "0'0'0'0'0'0'1'2'3") == 123);
+        CHECK(parse_int(parser, "1'2'3") == 123);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3") == 123);
     }
     SUBCASE("base 10, uint16_t")
     {
         constexpr auto parser = dsl::_integer_parser<std::uint16_t, dsl::decimal, false>{};
 
         for (auto i = 0; i < 256; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
         for (auto i = 0; i < 256; ++i)
         {
             auto value = i * i;
-            CHECK(parse(parser, std::to_string(value).c_str()) == value);
+            CHECK(parse_int(parser, std::to_string(value).c_str()) == value);
         }
         for (auto i = 0; i < 256; ++i)
         {
             auto value = 65535 - i;
-            CHECK(parse(parser, std::to_string(value).c_str()) == value);
+            CHECK(parse_int(parser, std::to_string(value).c_str()) == value);
         }
 
-        CHECK(parse(parser, "000000000000") == 0);
-        CHECK(parse(parser, "00000000000065535") == 65535);
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, "00000000000065535") == 65535);
 
-#if 0 // TODO
-        auto overflow_zeroes = parse(parser, "00000000000065536");
+        auto overflow_zeroes = parse_int(parser, "00000000000065536");
         CHECK(!overflow_zeroes.success);
         CHECK(overflow_zeroes.value == 6553);
-#endif
 
-        CHECK(parse(parser, "1'2'3'4'5") == 12345);
-        CHECK(parse(parser, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
+        CHECK(parse_int(parser, "1'2'3'4'5") == 12345);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
     }
     SUBCASE("base 10, int")
     {
         constexpr auto parser = dsl::_integer_parser<int, dsl::decimal, false>{};
 
         for (auto i = 0; i < 256; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
         for (auto i = 0; i < 256; ++i)
         {
             auto value = i * i;
-            CHECK(parse(parser, std::to_string(value).c_str()) == value);
+            CHECK(parse_int(parser, std::to_string(value).c_str()) == value);
         }
         for (auto i = 0; i < 256; ++i)
         {
             auto value = INT_MAX - i;
-            CHECK(parse(parser, std::to_string(value).c_str()) == value);
+            CHECK(parse_int(parser, std::to_string(value).c_str()) == value);
         }
 
-        CHECK(parse(parser, "000000000000") == 0);
-        CHECK(parse(parser, ("000000000000" + std::to_string(INT_MAX)).c_str()) == INT_MAX);
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, ("000000000000" + std::to_string(INT_MAX)).c_str()) == INT_MAX);
 
         auto overflow_zeroes
-            = parse(parser, ("000000000000" + std::to_string(INT_MAX + 1ll)).c_str());
+            = parse_int(parser, ("000000000000" + std::to_string(INT_MAX + 1ll)).c_str());
         CHECK(!overflow_zeroes.success);
         CHECK(overflow_zeroes.value == INT_MAX / 10 * 10);
 
-        CHECK(parse(parser, "1'2'3'4'5") == 12345);
-        CHECK(parse(parser, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
+        CHECK(parse_int(parser, "1'2'3'4'5") == 12345);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3'4'5") == 12345);
     }
     SUBCASE("base 10, unbounded")
     {
@@ -212,16 +209,16 @@ TEST_CASE("_integer_parser")
             = dsl::_integer_parser<lexy::unbounded<std::uint8_t>, dsl::decimal, false>{};
 
         for (auto i = 0; i < 256; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
         for (auto i = 256; i < 512; ++i)
-            CHECK(parse(parser, std::to_string(i).c_str()) == i - 256);
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i - 256);
 
-        CHECK(parse(parser, "000000000000") == 0);
-        CHECK(parse(parser, "000000000000255") == 255);
-        CHECK(parse(parser, "000000000000256") == 0);
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, "000000000000255") == 255);
+        CHECK(parse_int(parser, "000000000000256") == 0);
 
-        CHECK(parse(parser, "1'2'3") == 123);
-        CHECK(parse(parser, "0'0'0'0'0'0'1'2'3") == 123);
+        CHECK(parse_int(parser, "1'2'3") == 123);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3") == 123);
     }
 
     SUBCASE("base 16, uint8_t")
@@ -234,33 +231,31 @@ TEST_CASE("_integer_parser")
             INFO(i);
 
             std::sprintf(buffer, "%x", i);
-            CHECK(parse(parser, buffer) == i);
+            CHECK(parse_int(parser, buffer) == i);
             std::sprintf(buffer, "%X", i);
-            CHECK(parse(parser, buffer) == i);
+            CHECK(parse_int(parser, buffer) == i);
         }
         for (auto i = 128; i < 256; ++i)
         {
             INFO(i);
 
             std::sprintf(buffer, "%x", i);
-            CHECK(parse(parser, buffer) == i);
+            CHECK(parse_int(parser, buffer) == i);
             std::sprintf(buffer, "%X", i);
-            CHECK(parse(parser, buffer) == i);
+            CHECK(parse_int(parser, buffer) == i);
         }
 
-        CHECK(parse(parser, "Aa") == 0xAA);
+        CHECK(parse_int(parser, "Aa") == 0xAA);
 
-        CHECK(parse(parser, "0000") == 0);
-        CHECK(parse(parser, "00FF") == 0xFF);
+        CHECK(parse_int(parser, "0000") == 0);
+        CHECK(parse_int(parser, "00FF") == 0xFF);
 
-#if 0 // TODO
-        auto overflow_zeroes = parse(parser, "0100");
+        auto overflow_zeroes = parse_int(parser, "0100");
         CHECK(!overflow_zeroes.success);
         CHECK(overflow_zeroes.value == 0x10);
-#endif
 
-        CHECK(parse(parser, "0'0'F'F") == 255);
-        CHECK(parse(parser, "0'0'F'F") == 255);
+        CHECK(parse_int(parser, "0'0'F'F") == 255);
+        CHECK(parse_int(parser, "0'0'F'F") == 255);
     }
 }
 
