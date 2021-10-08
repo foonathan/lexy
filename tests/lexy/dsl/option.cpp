@@ -12,12 +12,25 @@ namespace
 {
 template <typename T>
 constexpr auto is_optional_like = lexy::_detail::is_detected<lexy::_detect_optional_like, T>;
-}
+} // namespace
 
 TEST_CASE("lexy::nullopt")
 {
     CHECK(is_optional_like<std::optional<int>>);
     CHECK(!std::optional<int>(lexy::nullopt{}).has_value());
+
+#if defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    // This code triggers GCC conversion warning as this isn't something we actually want,
+    // but there is no way of fixing it.
+    CHECK(is_optional_like<std::optional<std::optional<int>>>);
+    CHECK(std::optional<std::optional<int>>(lexy::nullopt{}).has_value());
+    CHECK(!std::optional<std::optional<int>>(lexy::nullopt{})->has_value());
+#if defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#endif
 
     CHECK(is_optional_like<int*>);
     CHECK(static_cast<int*>(lexy::nullopt{}) == nullptr);
