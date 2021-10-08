@@ -111,6 +111,18 @@ TEST_CASE("_detail::write_error")
      |      ^^ error tag
 )*");
     }
+    SUBCASE("error inside newline")
+    {
+        auto input = lexy::zstring_input("hello\r\nworld");
+
+        auto context = lexy::error_context(production{}, input, input.data());
+        lexy::string_error<error_tag> error(input.data() + 6);
+        CHECK(write(context, error) == R"*(error: while parsing production
+     |
+   1 | hello\r\n
+     |        ^^ error tag
+)*");
+    }
     SUBCASE("error at eof")
     {
         auto input = lexy::zstring_input("hello");

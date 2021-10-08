@@ -38,7 +38,8 @@ constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
 template <typename Location, typename Reader>
 constexpr auto split_context(const Location& location, const lexy::lexeme<Reader>& underlined)
 {
-    using encoding = typename Reader::encoding;
+    using encoding     = typename Reader::encoding;
+    const auto context = location.context();
 
     struct result_t
     {
@@ -47,22 +48,27 @@ constexpr auto split_context(const Location& location, const lexy::lexeme<Reader
         lexy::lexeme<Reader> after;
     } result;
 
-    auto context = location.context();
+    // The before part starts at the context and continues until the beginning of the underline.
+    // We do not advance the beginning of the underline to the next code point boundary:
+    // If the error occurs inside a code point, this should be visible.
+    result.before = {context.begin(), underlined.begin()};
 
-    if (underlined.begin() == context.end())
+    // Check whether we have underlined.begin() > context.end().
+    auto underline_after_end
+        = lexy::_detail::min_range_end(context.begin(), underlined.begin(), context.end())
+          == context.end();
+    if (underline_after_end)
     {
-        // The underlined part begins at the newline.
+        // The underlined part is inside the newline.
         auto newline = location.newline();
-        LEXY_PRECONDITION(newline.begin() == underlined.begin());
+        LEXY_PRECONDITION(lexy::_detail::precedes(newline.begin(), underlined.begin()));
 
         // The end of the underlined part is either the end of the underline or the newline.
         // Due to the nature of newlines, we don't need to advance to the next code point boundary.
         auto underlined_end
             = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), newline.end());
 
-        // Note that we do not advance the beginning of the underlined part to the next code point
-        // boundary: if the error occurs inside a code point, this should be visible.
-        result.before     = {context.begin(), underlined.begin()};
+        // Use the trimmed underline, and nothing comes after it.
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, underlined_end};
     }
@@ -77,9 +83,7 @@ constexpr auto split_context(const Location& location, const lexy::lexeme<Reader
         // point.
         underlined_end = find_cp_boundary<encoding>(underlined_end, context.end());
 
-        // Note that we do not advance the beginning of the underlined part to the next code point
-        // boundary: if the error occurs inside a code point, this should be visible.
-        result.before     = {context.begin(), underlined.begin()};
+        // Use the trimmed underline, everything that remains (if any) is part of the context.
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, context.end()};
     }
