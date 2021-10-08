@@ -10,24 +10,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          # List: https://github.com/conan-io/conan-docker-tools
-          - gcc11
-          - gcc7
-          - clang11
-          - clang60
+        image: ["gcc:7", "gcc:11", "clang:6", "clang:13"]
 
     runs-on: ubuntu-latest
     container:
-      image: conanio/${{matrix.image}}
-      options: --user root
+      image: ghcr.io/foonathan/${{matrix.image}}
 
     steps:
     - uses: actions/checkout@v2
     - name: Create Build Environment
       run: cmake -E make_directory build
-    - name: Install ninja
-      run: type ninja || apt-get -qq update && apt-get install -y ninja-build
 
     - name: Configure
       working-directory: build/
