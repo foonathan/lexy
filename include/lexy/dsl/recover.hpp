@@ -210,8 +210,8 @@ constexpr auto recover(Branches...)
 
 namespace lexyd
 {
-template <typename Rule, typename Recover>
-struct _tryr : _copy_base<Rule>
+template <typename Terminator, typename Rule, typename Recover>
+struct _tryt : _copy_base<Rule>
 {
     template <typename NextParser>
     struct _pc
@@ -221,7 +221,13 @@ struct _tryr : _copy_base<Rule>
                                            bool& continuation_reached, Args&&... args)
         {
             continuation_reached = true;
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+
+            // We need to parse the terminator on success as well, if we have one.
+            if constexpr (std::is_void_v<Terminator>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else
+                return lexy::parser_for<Terminator, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
         }
 
         template <typename Context, typename Reader, typename... Args>
@@ -288,6 +294,10 @@ struct _tryr : _copy_base<Rule>
         }
     };
 };
+
+template <typename Rule, typename Recover>
+struct _tryr : _tryt<void, Rule, Recover>
+{};
 
 /// Parses Rule, if that fails, continues immediately.
 template <typename Rule>
