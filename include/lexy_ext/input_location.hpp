@@ -133,15 +133,47 @@ public:
                 // We found the position of the error.
                 break;
             }
-            else if (lexy::try_match_token(TokenLine{}, reader))
+            else if (lexy::token_parser_for<TokenLine, decltype(reader)> nl(reader);
+                     nl.try_parse(reader))
             {
+                LEXY_ASSERT(reader.position() != nl.end, "TokenLine must consume input");
+                reader.bump();
+
+                // Check whether our location points inside the newline.
+                auto found = false;
+                while (reader.position() != nl.end)
+                {
+                    found |= reader.position() == pos;
+                    reader.bump();
+                }
+
+                // We pretend the location is at the beginning of the newline.
+                if (found)
+                    break;
+
                 // We're at a new line.
                 ++cur_line;
                 cur_column = 1;
                 line_start = reader;
             }
-            else if (lexy::try_match_token(TokenColumn{}, reader))
+            else if (lexy::token_parser_for<TokenColumn, decltype(reader)> column(reader);
+                     column.try_parse(reader))
             {
+                LEXY_ASSERT(reader.position() != column.end, "TokenColumn must consume input");
+                reader.bump();
+
+                // Check whether our location points inside a column.
+                auto found = false;
+                while (reader.position() != column.end)
+                {
+                    found |= reader.position() == pos;
+                    reader.bump();
+                }
+
+                // We pretend the location is at the beginning of the column.
+                if (found)
+                    break;
+
                 // Next column.
                 ++cur_column;
             }

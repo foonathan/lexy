@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/newline.hpp>
 #include <lexy/input/string_input.hpp>
 
 namespace
@@ -66,7 +67,7 @@ TEST_CASE("input_location_finder")
 TEST_CASE("find_input_location")
 {
     constexpr auto character = lexy::dsl::ascii::character;
-    constexpr auto newline   = lexy::dsl::ascii::newline;
+    constexpr auto newline   = lexy::dsl::newline;
 
     SUBCASE("basic")
     {
@@ -79,24 +80,28 @@ TEST_CASE("find_input_location")
         CHECK(first_1.line_nr() == 1);
         CHECK(first_1.column_nr() == 1);
         CHECK(first_1.context() == str_context{"Line 1"});
+        CHECK(first_1.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto first_2
             = lexy_ext::find_input_location(input, input.data() + 4, character, newline);
         CHECK(first_2.line_nr() == 1);
         CHECK(first_2.column_nr() == 5);
         CHECK(first_2.context() == str_context{"Line 1"});
+        CHECK(first_2.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto second
             = lexy_ext::find_input_location(input, input.data() + 10, character, newline);
         CHECK(second.line_nr() == 2);
         CHECK(second.column_nr() == 4);
         CHECK(second.context() == str_context{"Line 2"});
+        CHECK(second.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto third
             = lexy_ext::find_input_location(input, input.data() + 17, character, newline);
         CHECK(third.line_nr() == 3);
         CHECK(third.column_nr() == 4);
         CHECK(third.context() == str_context{"Line 3"});
+        CHECK(third.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto nl
             = lexy_ext::find_input_location(input, input.data() + 6, character, newline);
@@ -104,6 +109,7 @@ TEST_CASE("find_input_location")
         CHECK(nl.line_nr() == 1);
         CHECK(nl.column_nr() == 7);
         CHECK(nl.context() == str_context{"Line 1"});
+        CHECK(nl.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto last
             = lexy_ext::find_input_location(input, input.data() + input.size() - 1, character,
@@ -111,6 +117,7 @@ TEST_CASE("find_input_location")
         CHECK(last.line_nr() == 3);
         CHECK(last.column_nr() == 7);
         CHECK(last.context() == str_context{"Line 3"});
+        CHECK(last.newline() == str_context{"\n"});
         CHECK(last.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto end
@@ -131,24 +138,14 @@ TEST_CASE("find_input_location")
         CHECK(first_1.line_nr() == 1);
         CHECK(first_1.column_nr() == 1);
         CHECK(first_1.context() == str_context{"Line 1"});
+        CHECK(first_1.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto first_2
             = lexy_ext::find_input_location(input, input.data() + 4, character, newline);
         CHECK(first_2.line_nr() == 1);
         CHECK(first_2.column_nr() == 5);
         CHECK(first_2.context() == str_context{"Line 1"});
-
-        TEST_CONSTEXPR auto second
-            = lexy_ext::find_input_location(input, input.data() + 10, character, newline);
-        CHECK(second.line_nr() == 2);
-        CHECK(second.column_nr() == 4);
-        CHECK(second.context() == str_context{"Line 2"});
-
-        TEST_CONSTEXPR auto third
-            = lexy_ext::find_input_location(input, input.data() + 17, character, newline);
-        CHECK(third.line_nr() == 3);
-        CHECK(third.column_nr() == 4);
-        CHECK(third.context() == str_context{"Line 3"});
+        CHECK(first_2.newline() == str_context{"\n"});
 
         TEST_CONSTEXPR auto nl
             = lexy_ext::find_input_location(input, input.data() + 6, character, newline);
@@ -156,6 +153,21 @@ TEST_CASE("find_input_location")
         CHECK(nl.line_nr() == 1);
         CHECK(nl.column_nr() == 7);
         CHECK(nl.context() == str_context{"Line 1"});
+        CHECK(nl.newline() == str_context{"\n"});
+
+        TEST_CONSTEXPR auto second
+            = lexy_ext::find_input_location(input, input.data() + 10, character, newline);
+        CHECK(second.line_nr() == 2);
+        CHECK(second.column_nr() == 4);
+        CHECK(second.context() == str_context{"Line 2"});
+        CHECK(second.newline() == str_context{"\n"});
+
+        TEST_CONSTEXPR auto third
+            = lexy_ext::find_input_location(input, input.data() + 17, character, newline);
+        CHECK(third.line_nr() == 3);
+        CHECK(third.column_nr() == 4);
+        CHECK(third.context() == str_context{"Line 3"});
+        CHECK(third.newline().empty());
 
         TEST_CONSTEXPR auto last
             = lexy_ext::find_input_location(input, input.data() + input.size() - 1, character,
@@ -195,6 +207,39 @@ TEST_CASE("find_input_location")
         CHECK(after.line_nr() == 1);
         CHECK(after.column_nr() == 4);
         CHECK(after.context().size() == 5);
+    }
+    SUBCASE("inside newline")
+    {
+        TEST_CONSTEXPR auto input = lexy::zstring_input("Line 1\r\n"
+                                                        "Line 2\n");
+
+        TEST_CONSTEXPR auto before
+            = lexy_ext::find_input_location(input, input.data() + 4, character, newline);
+        CHECK(before.line_nr() == 1);
+        CHECK(before.column_nr() == 5);
+        CHECK(before.context() == str_context{"Line 1"});
+        CHECK(before.newline() == str_context{"\r\n"});
+
+        TEST_CONSTEXPR auto nl
+            = lexy_ext::find_input_location(input, input.data() + 6, character, newline);
+        CHECK(nl.line_nr() == 1);
+        CHECK(nl.column_nr() == 7);
+        CHECK(nl.context() == str_context{"Line 1"});
+        CHECK(nl.newline() == str_context{"\r\n"});
+
+        TEST_CONSTEXPR auto inside_nl
+            = lexy_ext::find_input_location(input, input.data() + 7, character, newline);
+        CHECK(inside_nl.line_nr() == 1);
+        CHECK(inside_nl.column_nr() == 7);
+        CHECK(inside_nl.context() == str_context{"Line 1"});
+        CHECK(inside_nl.newline() == str_context{"\r\n"});
+
+        TEST_CONSTEXPR auto after
+            = lexy_ext::find_input_location(input, input.data() + 10, character, newline);
+        CHECK(after.line_nr() == 2);
+        CHECK(after.column_nr() == 3);
+        CHECK(after.context() == str_context{"Line 2"});
+        CHECK(after.newline() == str_context{"\n"});
     }
 
     SUBCASE("weird character, default")
