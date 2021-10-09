@@ -27,13 +27,9 @@ TEST_CASE("dsl::terminator()")
         constexpr auto rule = term(dsl::position);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(equivalent_rules(rule, dsl::position + term.terminator()));
-
-        constexpr auto branch = term(LEXY_LIT("abc"));
-        CHECK(lexy::is_branch_rule<decltype(branch)>);
-        CHECK(equivalent_rules(branch, LEXY_LIT("abc") >> term.terminator()));
     }
 
-    SUBCASE(".try_() as rule")
+    SUBCASE(".try_()")
     {
         constexpr auto rule = term.limit(dsl::lit_c<';'>).try_(LEXY_LIT("abc") + dsl::position);
         CHECK(lexy::is_rule<decltype(rule)>);
@@ -106,55 +102,6 @@ TEST_CASE("dsl::terminator()")
                      .recovery()
                      .error_token("de")
                      .cancel()
-                     .cancel());
-    }
-    SUBCASE(".try_() as branch")
-    {
-        constexpr auto rule = dsl::if_(
-            term.limit(dsl::lit_c<';'>).try_(LEXY_LIT("a") >> LEXY_LIT("bc") + dsl::position));
-        CHECK(lexy::is_rule<decltype(rule)>);
-
-        constexpr auto callback
-            = lexy::callback<int>([](const char*) { return 0; },
-                                  [](const char*, const char*) { return 1; },
-                                  [](const char*, const char*, const char*) { return 2; });
-
-        auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::success);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace());
-
-        auto null = LEXY_VERIFY("!!!");
-        CHECK(null.status == test_result::success);
-        CHECK(null.value == 0);
-        CHECK(null.trace == test_trace());
-
-        auto abc = LEXY_VERIFY("abc!!!");
-        CHECK(abc.status == test_result::success);
-        CHECK(abc.value == 2);
-        CHECK(abc.trace == test_trace().token("a").token("bc").position().token("!!!").position());
-
-        auto ab = LEXY_VERIFY("ab!!!");
-        CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.value == 1);
-        CHECK(ab.trace
-              == test_trace()
-                     .token("a")
-                     .expected_literal(1, "bc", 1)
-                     .error_token("b")
-                     .recovery()
-                     .finish()
-                     .token("!!!")
-                     .position());
-
-        auto unterminated = LEXY_VERIFY("abc");
-        CHECK(unterminated.status == test_result::fatal_error);
-        CHECK(unterminated.trace
-              == test_trace()
-                     .token("a")
-                     .token("bc")
-                     .position()
-                     .expected_literal(3, "!!!", 0)
                      .cancel());
     }
 

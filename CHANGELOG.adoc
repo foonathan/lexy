@@ -3,6 +3,11 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-10-09
+
+Terminator rules are no longer branch rules; this behavior was somewhat confusing.
+If you need branch rules, you can manually write the equivalent rules.
+
 == 2021-10-07
 
 * Removed branch functionality of token sequence (again).

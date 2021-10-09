@@ -38,10 +38,7 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-            return rule >> terminator();
-        else
-            return rule + terminator();
+        return rule + terminator();
     }
 
     /// Matches rule followed by the terminator, recovering on error.

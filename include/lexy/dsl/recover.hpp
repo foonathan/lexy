@@ -211,7 +211,7 @@ constexpr auto recover(Branches...)
 namespace lexyd
 {
 template <typename Terminator, typename Rule, typename Recover>
-struct _tryt : _copy_base<Rule>
+struct _tryt : rule_base
 {
     template <typename NextParser>
     struct _pc
@@ -244,35 +244,6 @@ struct _tryt : _copy_base<Rule>
         }
     };
 
-    template <typename Context, typename Reader>
-    struct bp
-    {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
-
-        constexpr auto try_parse(Context& context, const Reader& reader)
-        {
-            // Forward branching behavior.
-            return rule.try_parse(context, reader);
-        }
-
-        template <typename NextParser, typename... Args>
-        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
-        {
-            // Finish the rule and check whether it reached the continuation.
-            auto continuation_reached = false;
-            auto result
-                = rule.template finish<_pc<NextParser>>(context, reader, continuation_reached,
-                                                        LEXY_FWD(args)...);
-            if (continuation_reached)
-                // Whatever happened, it is not our problem as we've reached the continuation.
-                return result;
-
-            // We haven't reached the continuation, so need to recover.
-            LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
-            return _pc<NextParser>::recover(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
     template <typename NextParser>
     struct p
     {
@@ -296,8 +267,43 @@ struct _tryt : _copy_base<Rule>
 };
 
 template <typename Rule, typename Recover>
-struct _tryr : _tryt<void, Rule, Recover>
-{};
+struct _tryr : _copy_base<Rule>
+{
+    using impl = _tryt<void, Rule, Recover>;
+
+    template <typename Context, typename Reader>
+    struct bp
+    {
+        lexy::branch_parser_for<Rule, Context, Reader> rule;
+
+        constexpr auto try_parse(Context& context, const Reader& reader)
+        {
+            // Forward branching behavior.
+            return rule.try_parse(context, reader);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            // Finish the rule and check whether it reached the continuation.
+            using continuation        = typename impl::template _pc<NextParser>;
+            auto continuation_reached = false;
+            auto result = rule.template finish<continuation>(context, reader, continuation_reached,
+                                                             LEXY_FWD(args)...);
+            if (continuation_reached)
+                // Whatever happened, it is not our problem as we've reached the continuation.
+                return result;
+
+            // We haven't reached the continuation, so need to recover.
+            LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
+            return continuation::recover(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p : lexy::parser_for<impl, NextParser>
+    {};
+};
 
 /// Parses Rule, if that fails, continues immediately.
 template <typename Rule>
