@@ -179,11 +179,18 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
-        CHECK(zero.status == test_result::fatal_error);
-        CHECK(zero.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(zero.status == test_result::recovered_error);
+        CHECK(zero.trace
+              == test_trace()
+                     .expected_literal(0, "ab", 0)
+                     .recovery()
+                     .finish()
+                     .token("!!!")
+                     .position());
         auto one = LEXY_VERIFY("abc!!!");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
@@ -273,11 +280,18 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
-        CHECK(zero.status == test_result::fatal_error);
-        CHECK(zero.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(zero.status == test_result::recovered_error);
+        CHECK(zero.trace
+              == test_trace()
+                     .expected_literal(0, "ab", 0)
+                     .recovery()
+                     .finish()
+                     .token("!!!")
+                     .position());
         auto one = LEXY_VERIFY("abc!!!");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
@@ -356,11 +370,18 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
-        CHECK(zero.status == test_result::fatal_error);
-        CHECK(zero.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(zero.status == test_result::recovered_error);
+        CHECK(zero.trace
+              == test_trace()
+                     .expected_literal(0, "ab", 0)
+                     .recovery()
+                     .finish()
+                     .token("!!!")
+                     .position());
         auto one = LEXY_VERIFY("abc!!!");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
@@ -544,11 +565,18 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
-        CHECK(zero.status == test_result::fatal_error);
-        CHECK(zero.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(zero.status == test_result::recovered_error);
+        CHECK(zero.trace
+              == test_trace()
+                     .expected_literal(0, "ab", 0)
+                     .recovery()
+                     .finish()
+                     .token("!!!")
+                     .position());
         auto one = LEXY_VERIFY("abc!!!");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
@@ -735,7 +763,8 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto trailing = LEXY_VERIFY("abc,,abc,,!!!");
         CHECK(trailing.status == test_result::success);
@@ -769,7 +798,8 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
         CHECK(zero.status == test_result::success);
@@ -792,6 +822,19 @@ TEST_CASE("dsl::terminator()")
                      .token("c")
                      .token("!!!")
                      .position());
+
+        auto recover = LEXY_VERIFY("abd!!!");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 0);
+        CHECK(recover.trace
+              == test_trace()
+                     .token("ab")
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .error_token("d")
+                     .finish()
+                     .token("!!!")
+                     .position());
     }
     SUBCASE(".opt_list(rule, sep)")
     {
@@ -808,7 +851,8 @@ TEST_CASE("dsl::terminator()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_literal(0, "ab", 0).cancel());
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().cancel().cancel());
 
         auto zero = LEXY_VERIFY("!!!");
         CHECK(zero.status == test_result::success);
@@ -831,6 +875,19 @@ TEST_CASE("dsl::terminator()")
                      .token(",")
                      .token("ab")
                      .token("c")
+                     .token("!!!")
+                     .position());
+
+        auto recover = LEXY_VERIFY("abd!!!");
+        CHECK(recover.status == test_result::recovered_error);
+        CHECK(recover.value == 0);
+        CHECK(recover.trace
+              == test_trace()
+                     .token("ab")
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .error_token("d")
+                     .finish()
                      .token("!!!")
                      .position());
     }

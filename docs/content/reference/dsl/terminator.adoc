@@ -162,7 +162,7 @@ constexpr _rule_ auto list(_rule_ auto item, _separator_ auto sep) const;
 `.list()` returns a rule that parses a non-empty list of `item`, optionally separated by `sep`, followed by the terminator.
 
 Parsing::
-  It first parses `item` once.
+  It first parses `item` once, recovers if necessary.
   Then it enters the main loop of parsing the rest of the list.
   1. It first tries to parse `terminator()`.
      If that succeeds, finishes parsing.
