@@ -21,7 +21,7 @@ struct _lst : _copy_base<Item>
         while (true)
         {
             // Parse a separator if necessary.
-            [[maybe_unused]] auto sep_pos = reader.position();
+            [[maybe_unused]] auto sep_begin = reader.position();
             if constexpr (!std::is_void_v<Sep>)
             {
                 lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
@@ -32,6 +32,7 @@ struct _lst : _copy_base<Item>
                 if (!sep.template finish<lexy::sink_parser>(context, reader, sink))
                     return false;
             }
+            [[maybe_unused]] auto sep_end = reader.position();
 
             // Parse the next item.
             if constexpr (lexy::is_branch_rule<Item>)
@@ -43,7 +44,7 @@ struct _lst : _copy_base<Item>
                     // We don't have a next item, exit the loop.
                     // If necessary, we report a trailing separator.
                     if constexpr (!std::is_void_v<Sep>)
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_begin, sep_end);
                     break;
                 }
 
@@ -252,7 +253,7 @@ struct _lstt : rule_base
                     {
                         // We had the terminator, so the list is done.
                         // Report a trailing separator error if necessary.
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_pos, reader.position());
                         return true;
                     }
                     else

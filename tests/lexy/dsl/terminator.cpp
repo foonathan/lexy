@@ -462,7 +462,7 @@ TEST_CASE("dsl::terminator()")
                      .token("c")
                      .token(",")
                      .token(",")
-                     .error(8, 8, "unexpected trailing separator")
+                     .error(8, 10, "unexpected trailing separator")
                      .token("!!!")
                      .position());
 
@@ -650,7 +650,7 @@ TEST_CASE("dsl::terminator()")
                      .token("c")
                      .token(",")
                      .token(",")
-                     .error(8, 8, "unexpected trailing separator")
+                     .error(8, 10, "unexpected trailing separator")
                      .token("!!!")
                      .position());
 

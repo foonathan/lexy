@@ -213,7 +213,7 @@ TEST_CASE("dsl::list(branch, sep)")
                                       .position()
                                       .token("bc")
                                       .token(",")
-                                      .error(3, 3, "unexpected trailing separator");
+                                      .error(3, 4, "unexpected trailing separator");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
         CHECK(trailing_sep.trace == trailing_sep_trace);
@@ -268,7 +268,7 @@ TEST_CASE("dsl::list(branch, sep)")
                                       .position()
                                       .token("bc")
                                       .token(",")
-                                      .error(3, 3, "unexpected trailing separator");
+                                      .error(3, 4, "unexpected trailing separator");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
         CHECK(trailing_sep.trace == trailing_sep_trace);

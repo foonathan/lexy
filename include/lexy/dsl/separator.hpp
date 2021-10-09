@@ -39,9 +39,10 @@ struct _sep
 
     template <typename Context, typename Reader>
     static constexpr void report_trailing_error(Context&                  context, Reader&,
-                                                typename Reader::iterator sep_pos)
+                                                typename Reader::iterator sep_begin,
+                                                typename Reader::iterator sep_end)
     {
-        auto err = lexy::error<Reader, Tag>(sep_pos);
+        auto err = lexy::error<Reader, Tag>(sep_begin, sep_end);
         context.on(_ev::error{}, err);
     }
 
@@ -65,7 +66,8 @@ struct _tsep
     using trailing_rule = decltype(lexyd::if_(Branch{}));
 
     template <typename Context, typename Reader>
-    static constexpr void report_trailing_error(Context&, Reader&, typename Reader::iterator)
+    static constexpr void report_trailing_error(Context&, Reader&, typename Reader::iterator,
+                                                typename Reader::iterator)
     {}
 };
 
