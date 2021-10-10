@@ -248,10 +248,9 @@ TEST_CASE("dsl::identifier(leading, trailing)")
         CHECK(Ab.trace == test_trace().token("identifier", "Ab"));
 
         auto Abc = LEXY_VERIFY("Abc");
-        CHECK(Abc.status == test_result::recovered_error);
-        CHECK(Abc.value == 1);
-        CHECK(Abc.trace
-              == test_trace().token("identifier", "Abc").error(0, 3, "reserved identifier"));
+        CHECK(Abc.status == test_result::success);
+        CHECK(Abc.value == 0);
+        CHECK(Abc.trace == test_trace());
     }
 }
 
