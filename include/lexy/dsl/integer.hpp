@@ -323,20 +323,17 @@ using _integer_parser
     = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
                          _unbounded_integer_parser<T, Base>>;
 
-template <typename Rule, typename Sep, typename IntParser, typename Tag>
-struct _int : _copy_base<Rule>
+template <typename Token, typename IntParser, typename Tag>
+struct _int : _copy_base<Token>
 {
     template <typename NextParser>
     struct _pc
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
-                                           bool&                     continuation_reached,
-                                           typename Reader::iterator begin, Args&&... args)
+                                           typename Reader::iterator begin,
+                                           typename Reader::iterator end, Args&&... args)
         {
-            continuation_reached = true;
-            auto end             = reader.position();
-
             auto result = typename IntParser::result_type(0);
             if (!IntParser::parse(result, begin, end))
             {
@@ -345,67 +342,33 @@ struct _int : _copy_base<Rule>
                 context.on(_ev::error{}, lexy::error<Reader, tag>(begin, end));
             }
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader,
-                                             typename Reader::iterator begin, Args&&... args)
-        {
-            // Recover.
-            auto recovery_begin = reader.position();
-            context.on(_ev::recovery_start{}, recovery_begin);
-            if constexpr (std::is_void_v<Sep>)
-            {
-                while (lexy::try_match_token(digit<typename IntParser::base>, reader))
-                {}
-            }
-            else
-            {
-                while (lexy::try_match_token(digit<typename IntParser::base>, reader)
-                       || lexy::try_match_token(Sep{}, reader))
-                {}
-            }
-            auto end = reader.position();
-            if (recovery_begin != end)
-                context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, end);
-            context.on(_ev::recovery_finish{}, end);
-
-            // And continue with the normal parsing.
-            auto dummy = false;
-            return parse(context, reader, dummy, begin, LEXY_FWD(args)...);
+            // Need to skip whitespace now as well.
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)..., result);
         }
     };
 
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        typename Reader::iterator end;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        constexpr auto try_parse(Context&, const Reader& reader)
         {
-            // Forward to the digit rule.
-            return rule.try_parse(context, reader);
+            lexy::token_parser_for<Token, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            end                                          = parser.end;
+            return result;
         }
 
         template <typename NextParser, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
+            context.on(_ev::token{}, Token{}, begin, end);
+            reader.set_position(end);
 
-            // Forward to the digit rule, but remember the current reader position.
-            auto continuation_reached = false;
-            auto result
-                = rule.template finish<_pc<NextParser>>(context, reader, continuation_reached,
-                                                        begin, LEXY_FWD(args)...);
-            if (continuation_reached)
-                // We've reached the continuation, so this is the definitive result.
-                return result;
-
-            // We didn't reach the continuation, which means rule has failed before that.
-            // We then need to recover ourselves.
-            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
-            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
         }
     };
 
@@ -415,57 +378,60 @@ struct _int : _copy_base<Rule>
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using parser = lexy::parser_for<Rule, _pc<NextParser>>;
-
             auto begin = reader.position();
+            if (!Token::token_parse(context, reader))
+            {
+                auto recovery_begin = reader.position();
+                context.on(_ev::recovery_start{}, recovery_begin);
 
-            // Forward to the digit rule, but remember the current reader position.
-            auto continuation_reached = false;
-            auto result
-                = parser::parse(context, reader, continuation_reached, begin, LEXY_FWD(args)...);
-            if (continuation_reached)
-                // We've reached the continuation, so this is the definitive result.
-                return result;
+                // To recover we try and skip additional digits.
+                while (lexy::try_match_token(digit<typename IntParser::base>, reader))
+                {}
 
-            // We didn't reach the continuation, which means rule has failed before that.
-            // We then need to recover ourselves.
-            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
-            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
+                auto recovery_end = reader.position();
+                if (recovery_begin != recovery_end)
+                    context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, recovery_end);
+                context.on(_ev::recovery_finish{}, recovery_end);
+            }
+            auto end = reader.position();
+
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
         }
     };
 };
 
 /// Parses the digits matched by the rule into an integer type.
-template <typename T, typename Base, typename Rule>
-constexpr auto integer(Rule)
+template <typename T, typename Base, typename Digits>
+constexpr auto integer(Digits)
 {
+    static_assert(lexy::is_token_rule<Digits>);
     using parser = _integer_parser<T, Base, false>;
-    return _int<Rule, void, parser, void>{};
+    return _int<Digits, parser, void>{};
 }
 
 template <typename T, typename Base>
 constexpr auto integer(_digits<Base>)
 {
     using parser = _integer_parser<T, Base, true>;
-    return _int<_digits<Base>, void, parser, void>{};
+    return _int<_digits<Base>, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_s<Base, Sep>)
 {
     using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_s<Base, Sep>, Sep, parser, void>{};
+    return _int<_digits_s<Base, Sep>, parser, void>{};
 }
 template <typename T, typename Base>
 constexpr auto integer(_digits_t<Base>)
 {
     using parser = _integer_parser<T, Base, true>;
-    return _int<_digits_t<Base>, void, parser, void>{};
+    return _int<_digits_t<Base>, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_st<Base, Sep>)
 {
     using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_st<Base, Sep>, Sep, parser, void>{};
+    return _int<_digits_st<Base, Sep>, parser, void>{};
 }
 
 template <typename T, typename Base, std::size_t N>
@@ -474,7 +440,7 @@ constexpr auto integer(_ndigits<N, Base>)
     using type
         = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
     using parser = _integer_parser<type, Base, true>;
-    return _int<_ndigits<N, Base>, void, parser, void>{};
+    return _int<_ndigits<N, Base>, parser, void>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
 constexpr auto integer(_ndigits_s<N, Base, Sep>)
@@ -482,7 +448,7 @@ constexpr auto integer(_ndigits_s<N, Base, Sep>)
     using type
         = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
     using parser = _integer_parser<type, Base, false>;
-    return _int<_ndigits_s<N, Base, Sep>, Sep, parser, void>{};
+    return _int<_ndigits_s<N, Base, Sep>, parser, void>{};
 }
 } // namespace lexyd
 
@@ -505,7 +471,7 @@ constexpr auto code_point_id = [] {
     using type   = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
                                     lexy::code_point, lexy::unbounded<lexy::code_point>>;
     using parser = _integer_parser<type, Base, true>;
-    return _int<_ndigits<N, Base>, void, parser, lexy::invalid_code_point>{};
+    return _int<_ndigits<N, Base>, parser, lexy::invalid_code_point>{};
 }();
 } // namespace lexyd
 
