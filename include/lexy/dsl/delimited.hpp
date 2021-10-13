@@ -53,20 +53,19 @@ struct _del : rule_base
                 continue;
 
             // Parse the next character.
-            auto begin = reader.position();
-            if (lexy::parser_for<Char, lexy::pattern_parser<Context>>::parse(context, reader))
+            if (auto begin = reader.position(); Char::token_parse(context, reader))
             {
                 // Pass it to the sink.
                 sink(lexy::lexeme<Reader>(begin, reader.position()));
             }
             else
             {
-                // Try to recover.
+                // Recover from it; this is always possible,.
                 context.on(_ev::recovery_start{}, reader.position());
 
                 if (begin == reader.position())
                 {
-                    // Manually discard one code unit.
+                    // The character didn't consume anything, so we manually discard one code unit.
                     LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
                                 "EOF should be checked before calling this");
                     reader.bump();
