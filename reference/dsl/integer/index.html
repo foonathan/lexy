@@ -159,9 +159,7 @@ e.g. because you’re parsing two hexadecimal digits as an <code>unsigned char</
 <span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
 <span class=tok-p>{</span>
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Base</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>digits</span><span class=tok-p>);</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Base</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>digits</span><span class=tok-p>);</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>digits</span><span class=tok-p>);</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
     <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em>  <span class=tok-n>digits</span><span class=tok-p>);</span>
@@ -171,7 +169,7 @@ e.g. because you’re parsing two hexadecimal digits as an <code>unsigned char</
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>integer</code> is a rule and usually a <a href=/reference/dsl/branch/#doc>branch rule</a> that parses a sequence of digits as an integer.</p>
+<p><code>integer</code> is a <a href=/reference/dsl/branch/#doc>branch rule</a> that parses a sequence of digits as an integer.</p>
 </div>
 <div class=dlist>
 <dl>

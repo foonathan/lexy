@@ -108,7 +108,8 @@ Then verifies that the lexeme formed from <code>.pattern()</code> (excluding any
 <dt class=hdlist1>Branch parsing</dt>
 <dd>
 <p>Tries to match and consume the token <code>.pattern()</code> (see below), backtracking if that fails.
-Otherwise it checks for reserved identifiers but does not backtrack when one is encountered.</p>
+Otherwise it checks for reserved identifiers and backtracks if it was reserved.
+As such, branch parsing only raises errors due to the implicit whitespace skipping.</p>
 </dd>
 <dt class=hdlist1>Errors</dt>
 <dd>

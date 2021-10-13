@@ -8967,8 +8967,8 @@ constexpr auto recover(Branches...)
 
 namespace lexyd
 {
-template <typename Rule, typename Recover>
-struct _tryr : _copy_base<Rule>
+template <typename Terminator, typename Rule, typename Recover>
+struct _tryt : rule_base
 {
     template <typename NextParser>
     struct _pc
@@ -8978,7 +8978,13 @@ struct _tryr : _copy_base<Rule>
                                            bool& continuation_reached, Args&&... args)
         {
             continuation_reached = true;
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+
+            // We need to parse the terminator on success as well, if we have one.
+            if constexpr (std::is_void_v<Terminator>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else
+                return lexy::parser_for<Terminator, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
         }
 
         template <typename Context, typename Reader, typename... Args>
@@ -8992,35 +8998,6 @@ struct _tryr : _copy_base<Rule>
             else
                 return lexy::parser_for<_recovery_wrapper<Recover>,
                                         NextParser>::parse(context, reader, LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename Context, typename Reader>
-    struct bp
-    {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
-
-        constexpr auto try_parse(Context& context, const Reader& reader)
-        {
-            // Forward branching behavior.
-            return rule.try_parse(context, reader);
-        }
-
-        template <typename NextParser, typename... Args>
-        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
-        {
-            // Finish the rule and check whether it reached the continuation.
-            auto continuation_reached = false;
-            auto result
-                = rule.template finish<_pc<NextParser>>(context, reader, continuation_reached,
-                                                        LEXY_FWD(args)...);
-            if (continuation_reached)
-                // Whatever happened, it is not our problem as we've reached the continuation.
-                return result;
-
-            // We haven't reached the continuation, so need to recover.
-            LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
-            return _pc<NextParser>::recover(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -9044,6 +9021,45 @@ struct _tryr : _copy_base<Rule>
             return _pc<NextParser>::recover(context, reader, LEXY_FWD(args)...);
         }
     };
+};
+
+template <typename Rule, typename Recover>
+struct _tryr : _copy_base<Rule>
+{
+    using impl = _tryt<void, Rule, Recover>;
+
+    template <typename Context, typename Reader>
+    struct bp
+    {
+        lexy::branch_parser_for<Rule, Context, Reader> rule;
+
+        constexpr auto try_parse(Context& context, const Reader& reader)
+        {
+            // Forward branching behavior.
+            return rule.try_parse(context, reader);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            // Finish the rule and check whether it reached the continuation.
+            using continuation        = typename impl::template _pc<NextParser>;
+            auto continuation_reached = false;
+            auto result = rule.template finish<continuation>(context, reader, continuation_reached,
+                                                             LEXY_FWD(args)...);
+            if (continuation_reached)
+                // Whatever happened, it is not our problem as we've reached the continuation.
+                return result;
+
+            // We haven't reached the continuation, so need to recover.
+            LEXY_ASSERT(!result, "we've failed without reaching the continuation?!");
+            return continuation::recover(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p : lexy::parser_for<impl, NextParser>
+    {};
 };
 
 /// Parses Rule, if that fails, continues immediately.
@@ -9520,54 +9536,48 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-            return rule >> terminator();
-        else
-            return rule + terminator();
+        return rule + terminator();
     }
 
     /// Matches rule followed by the terminator, recovering on error.
     template <typename Rule>
-    constexpr auto try_(Rule rule) const
+    constexpr auto try_(Rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-            return lexyd::try_(rule >> terminator(), recovery_rule());
-        else
-            return lexyd::try_(rule + terminator(), recovery_rule());
+        return _tryt<Terminator, Rule, decltype(recovery_rule())>{};
     }
 
     /// Matches opt(rule) followed by terminator.
     /// The rule does not require a condition.
     template <typename Rule>
-    constexpr auto opt(Rule rule) const
+    constexpr auto opt(Rule) const
     {
-        return _optt<Terminator, decltype(this->try_(rule))>{};
+        return _optt<Terminator, _tryt<Terminator, Rule, decltype(recovery_rule())>>{};
     }
 
-    /// Matches `list(r, sep)` followed by terminator.
+    /// Matches `list(rule, sep)` followed by terminator.
     /// The rule does not require a condition.
-    template <typename R>
-    constexpr auto list(R) const
+    template <typename Rule>
+    constexpr auto list(Rule) const
     {
-        return _lstt<Terminator, R, void, decltype(recovery_rule())>{};
+        return _lstt<Terminator, Rule, void, decltype(recovery_rule())>{};
     }
-    template <typename R, typename Sep>
-    constexpr auto list(R, Sep) const
+    template <typename Rule, typename Sep>
+    constexpr auto list(Rule, Sep) const
     {
-        return _lstt<Terminator, R, Sep, decltype(recovery_rule())>{};
+        return _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>{};
     }
 
-    /// Matches `opt_list(r, sep)` followed by terminator.
+    /// Matches `opt_list(rule, sep)` followed by terminator.
     /// The rule does not require a condition.
-    template <typename R>
-    constexpr auto opt_list(R) const
+    template <typename Rule>
+    constexpr auto opt_list(Rule) const
     {
-        return _optt<Terminator, _lstt<Terminator, R, void, decltype(recovery_rule())>>{};
+        return _optt<Terminator, _lstt<Terminator, Rule, void, decltype(recovery_rule())>>{};
     }
-    template <typename R, typename S>
-    constexpr auto opt_list(R, S) const
+    template <typename Rule, typename S>
+    constexpr auto opt_list(Rule, S) const
     {
-        return _optt<Terminator, _lstt<Terminator, R, S, decltype(recovery_rule())>>{};
+        return _optt<Terminator, _lstt<Terminator, Rule, S, decltype(recovery_rule())>>{};
     }
 
     //=== access ===//
@@ -10495,42 +10505,86 @@ struct _kw;
 template <typename Leading, typename Trailing, typename... Reserved>
 struct _id : branch_base
 {
-    using _impl = _capt<_idp<Leading, Trailing>>;
+    template <typename Reader>
+    constexpr static auto _is_reserved(const Reader& reader, typename Reader::iterator begin,
+                                       typename Reader::iterator end)
+    {
+        if constexpr (sizeof...(Reserved) == 0)
+        {
+            (void)reader;
+            (void)begin;
+            (void)end;
+
+            // No reserved patterns, never reserved.
+            return std::false_type{};
+        }
+        else
+        {
+            auto id_reader = lexy::partial_reader(reader, begin, end);
+            // Need to match any of the reserved tokens.
+            return lexy::try_match_token((Reserved{} / ...), id_reader)
+                   // And fully match it.
+                   && id_reader.position() == end;
+        }
+    }
 
     template <typename NextParser>
-    struct _pc_impl
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Last argument is the captured lexeme.
-            auto lexeme = (args, ...);
+            // Parse the pattern; this does not consume whitespace, so the range is accurate.
+            auto begin = reader.position();
+            if (!pattern().token_parse(context, reader))
+                return false;
+            auto end = reader.position();
 
-            // Check whether we have a reserved identifier.
-            auto id_reader = lexy::partial_reader(reader, lexeme.begin(), lexeme.end());
-            if (lexy::try_match_token((Reserved{} / ...), id_reader)
-                && id_reader.position() == lexeme.end())
+            // Check for a reserved identifier.
+            if (_is_reserved(reader, begin, end))
             {
-                // We found a reserved identifier.
-                auto err
-                    = lexy::error<Reader, lexy::reserved_identifier>(lexeme.begin(), lexeme.end());
+                // It is reserved, report an error but trivially recover.
+                auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
                 context.on(_ev::error{}, err);
-                // But we can trivially recover, as we've still matched a well-formed
-                // identifier.
             }
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            // Skip whitespace and continue with the value.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 
-    // If we don't have any reserved identifiers, we immediately continue with the next parser.
-    template <typename NextParser>
-    using _pc = std::conditional_t<sizeof...(Reserved) == 0, NextParser, _pc_impl<NextParser>>;
-
-    template <typename NextParser>
-    using p = lexy::parser_for<_impl, _pc<NextParser>>;
     template <typename Context, typename Reader>
-    using bp = lexy::continuation_branch_parser<_impl, Context, Reader, _pc>;
+    struct bp
+    {
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Context&, const Reader& reader)
+        {
+            // Parse the pattern.
+            lexy::token_parser_for<decltype(pattern()), Reader> parser(reader);
+            if (!parser.try_parse(reader))
+                return false;
+            end = parser.end;
+
+            // We only succeed if it's not a reserved identifier.
+            return !_is_reserved(reader, reader.position(), end);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+
+            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
+            reader.set_position(end);
+
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
+        }
+    };
 
     template <typename R>
     constexpr auto _make_reserve(R r) const
@@ -10570,7 +10624,7 @@ struct _id : branch_base
     }
 
     /// Matches every identifier, ignoring reserved ones.
-    constexpr auto pattern() const
+    static constexpr auto pattern()
     {
         return _idp<Leading, Trailing>{};
     }
@@ -11365,20 +11419,19 @@ struct _del : rule_base
                 continue;
 
             // Parse the next character.
-            auto begin = reader.position();
-            if (lexy::parser_for<Char, lexy::pattern_parser<Context>>::parse(context, reader))
+            if (auto begin = reader.position(); Char::token_parse(context, reader))
             {
                 // Pass it to the sink.
                 sink(lexy::lexeme<Reader>(begin, reader.position()));
             }
             else
             {
-                // Try to recover.
+                // Recover from it; this is always possible,.
                 context.on(_ev::recovery_start{}, reader.position());
 
                 if (begin == reader.position())
                 {
-                    // Manually discard one code unit.
+                    // The character didn't consume anything, so we manually discard one code unit.
                     LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
                                 "EOF should be checked before calling this");
                     reader.bump();
@@ -12569,20 +12622,17 @@ using _integer_parser
     = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
                          _unbounded_integer_parser<T, Base>>;
 
-template <typename Rule, typename Sep, typename IntParser, typename Tag>
-struct _int : _copy_base<Rule>
+template <typename Token, typename IntParser, typename Tag>
+struct _int : _copy_base<Token>
 {
     template <typename NextParser>
     struct _pc
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
-                                           bool&                     continuation_reached,
-                                           typename Reader::iterator begin, Args&&... args)
+                                           typename Reader::iterator begin,
+                                           typename Reader::iterator end, Args&&... args)
         {
-            continuation_reached = true;
-            auto end             = reader.position();
-
             auto result = typename IntParser::result_type(0);
             if (!IntParser::parse(result, begin, end))
             {
@@ -12591,67 +12641,33 @@ struct _int : _copy_base<Rule>
                 context.on(_ev::error{}, lexy::error<Reader, tag>(begin, end));
             }
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., result);
-        }
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader,
-                                             typename Reader::iterator begin, Args&&... args)
-        {
-            // Recover.
-            auto recovery_begin = reader.position();
-            context.on(_ev::recovery_start{}, recovery_begin);
-            if constexpr (std::is_void_v<Sep>)
-            {
-                while (lexy::try_match_token(digit<typename IntParser::base>, reader))
-                {}
-            }
-            else
-            {
-                while (lexy::try_match_token(digit<typename IntParser::base>, reader)
-                       || lexy::try_match_token(Sep{}, reader))
-                {}
-            }
-            auto end = reader.position();
-            if (recovery_begin != end)
-                context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, end);
-            context.on(_ev::recovery_finish{}, end);
-
-            // And continue with the normal parsing.
-            auto dummy = false;
-            return parse(context, reader, dummy, begin, LEXY_FWD(args)...);
+            // Need to skip whitespace now as well.
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)..., result);
         }
     };
 
     template <typename Context, typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        typename Reader::iterator end;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        constexpr auto try_parse(Context&, const Reader& reader)
         {
-            // Forward to the digit rule.
-            return rule.try_parse(context, reader);
+            lexy::token_parser_for<Token, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            end                                          = parser.end;
+            return result;
         }
 
         template <typename NextParser, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
+            context.on(_ev::token{}, Token{}, begin, end);
+            reader.set_position(end);
 
-            // Forward to the digit rule, but remember the current reader position.
-            auto continuation_reached = false;
-            auto result
-                = rule.template finish<_pc<NextParser>>(context, reader, continuation_reached,
-                                                        begin, LEXY_FWD(args)...);
-            if (continuation_reached)
-                // We've reached the continuation, so this is the definitive result.
-                return result;
-
-            // We didn't reach the continuation, which means rule has failed before that.
-            // We then need to recover ourselves.
-            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
-            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
         }
     };
 
@@ -12661,57 +12677,60 @@ struct _int : _copy_base<Rule>
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            using parser = lexy::parser_for<Rule, _pc<NextParser>>;
-
             auto begin = reader.position();
+            if (!Token::token_parse(context, reader))
+            {
+                auto recovery_begin = reader.position();
+                context.on(_ev::recovery_start{}, recovery_begin);
 
-            // Forward to the digit rule, but remember the current reader position.
-            auto continuation_reached = false;
-            auto result
-                = parser::parse(context, reader, continuation_reached, begin, LEXY_FWD(args)...);
-            if (continuation_reached)
-                // We've reached the continuation, so this is the definitive result.
-                return result;
+                // To recover we try and skip additional digits.
+                while (lexy::try_match_token(digit<typename IntParser::base>, reader))
+                {}
 
-            // We didn't reach the continuation, which means rule has failed before that.
-            // We then need to recover ourselves.
-            LEXY_ASSERT(result == false, "rule has succeded but not called the continuation?!");
-            return _pc<NextParser>::recover(context, reader, begin, LEXY_FWD(args)...);
+                auto recovery_end = reader.position();
+                if (recovery_begin != recovery_end)
+                    context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, recovery_end);
+                context.on(_ev::recovery_finish{}, recovery_end);
+            }
+            auto end = reader.position();
+
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
         }
     };
 };
 
 /// Parses the digits matched by the rule into an integer type.
-template <typename T, typename Base, typename Rule>
-constexpr auto integer(Rule)
+template <typename T, typename Base, typename Digits>
+constexpr auto integer(Digits)
 {
+    static_assert(lexy::is_token_rule<Digits>);
     using parser = _integer_parser<T, Base, false>;
-    return _int<Rule, void, parser, void>{};
+    return _int<Digits, parser, void>{};
 }
 
 template <typename T, typename Base>
 constexpr auto integer(_digits<Base>)
 {
     using parser = _integer_parser<T, Base, true>;
-    return _int<_digits<Base>, void, parser, void>{};
+    return _int<_digits<Base>, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_s<Base, Sep>)
 {
     using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_s<Base, Sep>, Sep, parser, void>{};
+    return _int<_digits_s<Base, Sep>, parser, void>{};
 }
 template <typename T, typename Base>
 constexpr auto integer(_digits_t<Base>)
 {
     using parser = _integer_parser<T, Base, true>;
-    return _int<_digits_t<Base>, void, parser, void>{};
+    return _int<_digits_t<Base>, parser, void>{};
 }
 template <typename T, typename Base, typename Sep>
 constexpr auto integer(_digits_st<Base, Sep>)
 {
     using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_st<Base, Sep>, Sep, parser, void>{};
+    return _int<_digits_st<Base, Sep>, parser, void>{};
 }
 
 template <typename T, typename Base, std::size_t N>
@@ -12720,7 +12739,7 @@ constexpr auto integer(_ndigits<N, Base>)
     using type
         = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
     using parser = _integer_parser<type, Base, true>;
-    return _int<_ndigits<N, Base>, void, parser, void>{};
+    return _int<_ndigits<N, Base>, parser, void>{};
 }
 template <typename T, typename Base, std::size_t N, typename Sep>
 constexpr auto integer(_ndigits_s<N, Base, Sep>)
@@ -12728,7 +12747,7 @@ constexpr auto integer(_ndigits_s<N, Base, Sep>)
     using type
         = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
     using parser = _integer_parser<type, Base, false>;
-    return _int<_ndigits_s<N, Base, Sep>, Sep, parser, void>{};
+    return _int<_ndigits_s<N, Base, Sep>, parser, void>{};
 }
 } // namespace lexyd
 
@@ -12751,7 +12770,7 @@ constexpr auto code_point_id = [] {
     using type   = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
                                     lexy::code_point, lexy::unbounded<lexy::code_point>>;
     using parser = _integer_parser<type, Base, true>;
-    return _int<_ndigits<N, Base>, void, parser, lexy::invalid_code_point>{};
+    return _int<_ndigits<N, Base>, parser, lexy::invalid_code_point>{};
 }();
 } // namespace lexyd
 
@@ -12924,9 +12943,10 @@ struct _sep
 
     template <typename Context, typename Reader>
     static constexpr void report_trailing_error(Context&                  context, Reader&,
-                                                typename Reader::iterator sep_pos)
+                                                typename Reader::iterator sep_begin,
+                                                typename Reader::iterator sep_end)
     {
-        auto err = lexy::error<Reader, Tag>(sep_pos);
+        auto err = lexy::error<Reader, Tag>(sep_begin, sep_end);
         context.on(_ev::error{}, err);
     }
 
@@ -12950,7 +12970,8 @@ struct _tsep
     using trailing_rule = decltype(lexyd::if_(Branch{}));
 
     template <typename Context, typename Reader>
-    static constexpr void report_trailing_error(Context&, Reader&, typename Reader::iterator)
+    static constexpr void report_trailing_error(Context&, Reader&, typename Reader::iterator,
+                                                typename Reader::iterator)
     {}
 };
 
@@ -12984,7 +13005,7 @@ struct _lst : _copy_base<Item>
         while (true)
         {
             // Parse a separator if necessary.
-            [[maybe_unused]] auto sep_pos = reader.position();
+            [[maybe_unused]] auto sep_begin = reader.position();
             if constexpr (!std::is_void_v<Sep>)
             {
                 lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
@@ -12995,6 +13016,7 @@ struct _lst : _copy_base<Item>
                 if (!sep.template finish<lexy::sink_parser>(context, reader, sink))
                     return false;
             }
+            [[maybe_unused]] auto sep_end = reader.position();
 
             // Parse the next item.
             if constexpr (lexy::is_branch_rule<Item>)
@@ -13006,7 +13028,7 @@ struct _lst : _copy_base<Item>
                     // We don't have a next item, exit the loop.
                     // If necessary, we report a trailing separator.
                     if constexpr (!std::is_void_v<Sep>)
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_begin, sep_end);
                     break;
                 }
 
@@ -13111,42 +13133,44 @@ namespace lexyd
 template <typename Term, typename Item, typename Sep, typename Recover>
 struct _lstt : rule_base
 {
-    template <typename TermParser, typename Context, typename Reader, typename Sink>
-    static constexpr bool _loop(TermParser& term, Context& context, Reader& reader, Sink& sink)
+    // We're using an enum together with a switch to compensate a lack of goto in constexpr.
+    // The simple state machine goes as follows on well-formed input:
+    // terminator -> separator -> separator_trailing_check -> item -> terminator -> ... ->
+    // done
+    //
+    // The interesting case is error recovery.
+    // There we skip over characters until we either found the terminator, separator or
+    // item. We then set the enum to jump to the appropriate state of the state machine.
+    enum class _state
     {
-        // We're using an enum together with a switch to compensate a lack of goto in constexpr.
-        // The simple state machine goes as follows on well-formed input:
-        // terminator -> separator -> separator_trailing_check -> item -> terminator -> ... ->
-        // done
-        //
-        // The interesting case is error recovery.
-        // There we skip over characters until we either found the terminator, separator or
-        // item. We then set the enum to jump to the appropriate state of the state machine.
-        enum class state
-        {
-            terminator,
-            separator,
-            separator_trailing_check,
-            item,
-            recovery,
-        } state
-            = state::terminator;
+        terminator,
+        separator,
+        separator_trailing_check,
+        item,
+        recovery,
+    };
+
+    template <typename TermParser, typename Context, typename Reader, typename Sink>
+    static constexpr bool _loop(_state initial_state, TermParser& term, Context& context,
+                                Reader& reader, Sink& sink)
+    {
+        auto state = initial_state;
 
         [[maybe_unused]] auto sep_pos = reader.position();
         while (true)
         {
             switch (state)
             {
-            case state::terminator:
+            case _state::terminator:
                 if (term.try_parse(context, reader))
                     // We had the terminator, so the list is done.
                     return true;
 
                 // Parse the following list separator next.
-                state = state::separator;
+                state = _state::separator;
                 break;
 
-            case state::separator:
+            case _state::separator:
                 if constexpr (!std::is_void_v<Sep>)
                 {
                     sep_pos = reader.position();
@@ -13155,7 +13179,7 @@ struct _lstt : rule_base
                                                                                        sink))
                     {
                         // Check for a trailing separator next.
-                        state = state::separator_trailing_check;
+                        state = _state::separator_trailing_check;
                         break;
                     }
                     else if (sep_pos == reader.position())
@@ -13170,13 +13194,13 @@ struct _lstt : rule_base
                                 && item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue after an item has been parsed.
-                                state = state::terminator;
+                                state = _state::terminator;
                                 break;
                             }
                             else
                             {
                                 // Not an item, recover.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -13184,7 +13208,7 @@ struct _lstt : rule_base
                         {
                             // We cannot try and parse an item.
                             // To avoid generating wrong errors, immediately recover.
-                            state = state::recovery;
+                            state = _state::recovery;
                             break;
                         }
                     }
@@ -13195,18 +13219,18 @@ struct _lstt : rule_base
                         // already consumed input. (If we ignore the case where the item and
                         // separator share a common prefix, we know it wasn't the start of an
                         // item so can't just pretend that there is one).
-                        state = state::recovery;
+                        state = _state::recovery;
                         break;
                     }
                 }
                 else
                 {
                     // List doesn't have a separator; immediately parse item next.
-                    state = state::item;
+                    state = _state::item;
                     break;
                 }
 
-            case state::separator_trailing_check:
+            case _state::separator_trailing_check:
                 if constexpr (!std::is_void_v<Sep>)
                 {
                     // We need to check whether we're having a trailing separator by checking
@@ -13215,33 +13239,33 @@ struct _lstt : rule_base
                     {
                         // We had the terminator, so the list is done.
                         // Report a trailing separator error if necessary.
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_pos, reader.position());
                         return true;
                     }
                     else
                     {
                         // We didn't have a separator, parse item next.
-                        state = state::item;
+                        state = _state::item;
                         break;
                     }
                 }
                 break;
 
-            case state::item:
+            case _state::item:
                 if (lexy::parser_for<Item, lexy::sink_parser>::parse(context, reader, sink))
                 {
                     // Loop back.
-                    state = state::terminator;
+                    state = _state::terminator;
                     break;
                 }
                 else
                 {
                     // Recover from missing item.
-                    state = state::recovery;
+                    state = _state::recovery;
                     break;
                 }
 
-            case state::recovery:
+            case _state::recovery:
                 context.on(_ev::recovery_start{}, reader.position());
                 while (true)
                 {
@@ -13257,13 +13281,13 @@ struct _lstt : rule_base
                             if (sep.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the trailing separator check.
-                                state = state::separator_trailing_check;
+                                state = _state::separator_trailing_check;
                                 break;
                             }
                             else
                             {
                                 // Need to recover from this.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -13283,13 +13307,13 @@ struct _lstt : rule_base
                             if (item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the next terminator check.
-                                state = state::terminator;
+                                state = _state::terminator;
                                 break;
                             }
                             else
                             {
                                 // Need to recover from this.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -13334,17 +13358,15 @@ struct _lstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            lexy::branch_parser_for<Term, Context, Reader> term{};
             auto sink = context.on(_ev::list{}, reader.position());
 
             // Parse initial item.
             using item_parser = lexy::parser_for<Item, lexy::sink_parser>;
-            if (!item_parser::parse(context, reader, sink))
-                return false;
-
-            lexy::branch_parser_for<Term, Context, Reader> term{};
+            auto result       = item_parser::parse(context, reader, sink);
 
             // Parse the remaining items.
-            if (!_loop(term, context, reader, sink))
+            if (!_loop(result ? _state::terminator : _state::recovery, term, context, reader, sink))
                 return false;
 
             // At this point, we just need to finish parsing the terminator.

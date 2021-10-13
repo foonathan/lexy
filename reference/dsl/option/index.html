@@ -187,6 +187,22 @@ for a more complete version number parser.
 </div>
 </div>
 </div>
+<div class="admonitionblock caution">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Caution</div>
+</td>
+<td class=content>
+If <code>lexy::nullopt</code> is combined with a type that has a constructor accepting <code>lexy::nullopt</code> (e.g. because it is templated),
+it will use that constructor instead of the default constructor.
+For example, <code>std::optional&lt;std::optional&lt;int>>(lexy::nullopt{})</code> will contain a default-constructed <code>std::optional&lt;int></code>,
+and is not empty itself.
+This is not the same behavior as <code>std::optional&lt;std::optional&lt;int>>(std::nullopt{})</code>, which will create a <code>std::optional&lt;std::optional&lt;int>></code> containing nothing.
+</td>
+</tr>
+</tbody></table>
+</div>
 </div>
 </div>
 <div class=sect1>

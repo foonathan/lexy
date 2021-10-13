@@ -65,10 +65,7 @@ lexy/dsl/terminator.hpp — lexy
 
         <span class=tok-c1>//=== rules ===//</span>
         <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-
         <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
         <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>opt</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
 
@@ -187,10 +184,6 @@ Recovery fails when it reaches EOF or one of the limits, if any have been specif
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
 <span class=tok-p>{</span>
     <span class=tok-k>return</span> <span class=tok-n>rule</span> <span class=tok-o>+</span> <span class=tok-n>terminator</span><span class=tok-p>();</span>
-<span class=tok-p>}</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-n>rule</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>terminator</span><span class=tok-p>();</span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
@@ -198,7 +191,7 @@ Recovery fails when it reaches EOF or one of the limits, if any have been specif
 <p><code>.operator()</code> returns a rule that parses <code>rule</code>, then parses the terminator.</p>
 </div>
 <div class=paragraph>
-<p>It behaves entirely equivalent to <code>rule + terminator()</code> or <code>rule >> terminator()</code>.</p>
+<p>It behaves entirely equivalent to <code>rule + terminator()</code>.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 2. Parse a statement</div>
@@ -223,15 +216,7 @@ Recovery fails when it reaches EOF or one of the limits, if any have been specif
 <div class=listingblock>
 <div class=title><code>lexy/dsl/terminator.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n>rule</span> <span class=tok-o>+</span> <span class=tok-n>terminator</span><span class=tok-p>(),</span> <span class=tok-n>recovery_rule</span><span class=tok-p>());</span>
-<span class=tok-p>}</span>
-
-<span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n>rule</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>terminator</span><span class=tok-p>(),</span> <span class=tok-n>recovery_rule</span><span class=tok-p>());</span>
-<span class=tok-p>}</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>try_</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -358,7 +343,7 @@ It does not recover from a failed <code>terminator()</code>.</p>
 <dl>
 <dt class=hdlist1>Parsing</dt>
 <dd>
-<p>It first parses <code>item</code> once.
+<p>It first parses <code>item</code> once, recovers if necessary.
 Then it enters the main loop of parsing the rest of the list.</p>
 <div class="olist arabic">
 <ol class=arabic>
