@@ -28,25 +28,18 @@ struct whitespace_handler
 {
     Context* parent;
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr bool get_result_value() && noexcept
-    {
-        return true;
-    }
-    template <typename Production>
-    constexpr bool get_result_empty() && noexcept
-    {
-        return false;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
-    {};
+    {
+        constexpr void get_value() && {}
+    };
+
+    template <typename Production>
+    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return parse_result;
+    }
 
     template <typename Rule, typename Iterator>
     constexpr auto on(parse_events::production_start<ws_production<Rule>>, Iterator)

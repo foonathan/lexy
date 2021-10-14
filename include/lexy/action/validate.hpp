@@ -129,27 +129,20 @@ public:
     : _sink(_get_error_sink(callback)), _input(&input)
     {}
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr auto get_result_value() && noexcept
-    {
-        return validate_result<ErrorCallback>(true, LEXY_MOV(_sink).finish());
-    }
-    template <typename Production>
-    constexpr auto get_result_empty() && noexcept
-    {
-        return validate_result<ErrorCallback>(false, LEXY_MOV(_sink).finish());
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
     {
         iterator position; // beginning of the production
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr auto get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return validate_result<ErrorCallback>(parse_result, LEXY_MOV(_sink).finish());
+    }
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)

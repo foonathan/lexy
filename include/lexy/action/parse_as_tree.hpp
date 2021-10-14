@@ -26,28 +26,21 @@ public:
         return LEXY_MOV(_validate).get_result(did_recover);
     }
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr auto get_result_value() && noexcept
-    {
-        return LEXY_MOV(_validate).template get_result_value<Production>();
-    }
-    template <typename Production>
-    constexpr auto get_result_empty() && noexcept
-    {
-        return LEXY_MOV(_validate).template get_result_empty<Production>();
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
     {
         typename Tree::builder::marker                                                builder;
         typename lexy::validate_handler<Input, Callback>::template marker<Production> validate;
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr auto get_action_result(bool parse_result, marker<Production>&& m) &&
+    {
+        return LEXY_MOV(_validate).get_action_result(parse_result, LEXY_MOV(m.validate));
+    }
 
     template <typename Production>
     constexpr auto on(parse_events::production_start<Production>, iterator pos)
@@ -83,7 +76,7 @@ public:
     }
 
     template <typename Production, typename... Args>
-    constexpr void on(marker<Production>&& m, parse_events::production_finish<Production>, iterator,
+    constexpr void on(marker<Production>& m, parse_events::production_finish<Production>, iterator,
                       Args&&...)
     {
         if (--_depth == 0)
@@ -93,7 +86,7 @@ public:
             _builder->finish_production(LEXY_MOV(m.builder));
     }
     template <typename Production>
-    constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
+    constexpr void on(marker<Production>& m, parse_events::production_cancel<Production>, iterator)
     {
         if (--_depth == 0)
             // Clear tree instead of production.

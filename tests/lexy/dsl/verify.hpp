@@ -318,35 +318,32 @@ public:
       _last_token(_begin)
     {}
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = std::conditional_t<is_test_production<Production>, int, Production>;
-
-    template <typename Production>
-    auto get_result_value(Production) && noexcept
-    {
-        return Production{};
-    }
-    template <typename Production>
-    auto get_result_value(int value) && noexcept
-    {
-        static_assert(is_test_production<Production>);
-        return test_result{_had_error ? test_result::recovered_error : test_result::success, value,
-                           LEXY_MOV(_trace)};
-    }
-    template <typename Production>
-    auto get_result_empty() && noexcept
-    {
-        if constexpr (is_test_production<Production>)
-            return test_result{test_result::fatal_error, -1, LEXY_MOV(_trace)};
-        else
-            return Production{};
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
-    {};
+    {
+        int _value;
+
+        auto get_value() &&
+        {
+            if constexpr (is_test_production<Production>)
+                return _value;
+            else
+                return Production{};
+        }
+    };
+
+    template <typename Production>
+    constexpr auto get_action_result(bool parse_result, marker<Production>&& m) &&
+    {
+        static_assert(is_test_production<Production>);
+
+        if (parse_result)
+            return test_result{_had_error ? test_result::recovered_error : test_result::success,
+                               m._value, LEXY_MOV(_trace)};
+        else
+            return test_result{test_result::fatal_error, -1, LEXY_MOV(_trace)};
+    }
 
     template <typename Production, typename Iterator>
     auto on(marker<Production>, lexy::parse_events::list, Iterator)
@@ -363,7 +360,7 @@ public:
         return {};
     }
     template <typename Production, typename Iterator, typename... Args>
-    auto on(marker<Production>&&, lexy::parse_events::production_finish<Production>, Iterator pos,
+    void on(marker<Production>& m, lexy::parse_events::production_finish<Production>, Iterator pos,
             [[maybe_unused]] Args&&... args)
     {
         CHECK(_last_token == pos);
@@ -371,12 +368,10 @@ public:
         _trace.finish();
 
         if constexpr (is_test_production<Production>)
-            return _cb(_begin, LEXY_FWD(args)...);
-        else
-            return Production{};
+            m._value = _cb(_begin, LEXY_FWD(args)...);
     }
     template <typename Production, typename Iterator>
-    void on(marker<Production>&&, lexy::parse_events::production_cancel<Production>, Iterator pos)
+    void on(marker<Production>, lexy::parse_events::production_cancel<Production>, Iterator pos)
     {
         CHECK(_last_token == pos);
 

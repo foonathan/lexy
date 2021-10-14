@@ -11,13 +11,19 @@
 #include <lexy/grammar.hpp>
 
 //=== parse_context ===//
+namespace lexy
+{
+template <typename Production, typename Handler, typename Reader>
+constexpr auto do_action(Handler&& handler, Reader& reader);
+}
+
 namespace lexy::_detail
 {
 template <typename Handler, typename Production>
-using handler_production_result = typename Handler::template production_result<Production>;
-
-template <typename Handler, typename Production>
 using handler_marker = typename Handler::template marker<Production>;
+
+template <typename Production, typename Handler, typename Reader>
+constexpr auto do_action(Handler&& handler, Reader& reader);
 
 template <typename Handler, typename Production, typename RootProduction>
 class parse_context
@@ -81,30 +87,19 @@ private:
     constexpr void on(parse_events::production_finish<Production> ev, Iterator end,
                       Args&&... args) &&
     {
-        using result_t = handler_production_result<Handler, Production>;
-        if constexpr (std::is_void_v<result_t>)
-        {
-            _handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...);
-            _result.emplace();
-        }
-        else
-        {
-            _result.emplace(_handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...));
-        }
-
+        _handler->on(_marker, ev, end, LEXY_FWD(args)...);
         _handler = nullptr; // invalidate
     }
 
     template <typename Iterator>
     constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
     {
-        _handler->on(LEXY_MOV(_marker), ev, pos);
+        _handler->on(_marker, ev, pos);
         _handler = nullptr; // invalidate
     }
 
-    Handler*                                                  _handler;
-    handler_marker<Handler, Production>                       _marker;
-    lazy_init<handler_production_result<Handler, Production>> _result;
+    Handler*                            _handler;
+    handler_marker<Handler, Production> _marker;
 
     template <typename, typename, typename>
     friend class parse_context;
@@ -113,8 +108,7 @@ private:
     template <typename>
     friend struct production_parser;
     template <typename P, typename H, typename Reader>
-    friend constexpr auto action_impl(H& handler, Reader& reader)
-        -> lazy_init<handler_production_result<H, P>>;
+    friend constexpr auto lexy::do_action(H&& handler, Reader& reader);
 };
 } // namespace lexy::_detail
 
@@ -161,31 +155,14 @@ struct production_parser
                                  lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
         // Pass the produced value to the next parser.
-        using result_t = handler_production_result<typename Context::handler, Production>;
+        using result_t = decltype(LEXY_MOV(sub_context._marker).get_value());
         if constexpr (std::is_void_v<result_t>)
             return continuation::parse(context, reader, LEXY_FWD(args)...);
         else
             return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       LEXY_MOV(*sub_context._result));
+                                       LEXY_MOV(sub_context._marker).get_value());
     }
 };
-
-template <typename Production, typename Handler, typename Reader>
-constexpr auto action_impl(Handler& handler, Reader& reader)
-    -> lazy_init<handler_production_result<Handler, Production>>
-{
-    parse_context<Handler, Production, Production> context(handler, reader.position());
-
-    using parser = lexy::parser_for<lexy::production_rule<Production>, final_parser>;
-    if (!parser::parse(context, reader))
-    {
-        // We had an error, cancel the production.
-        LEXY_ASSERT(!context._result, "result must be empty on cancel");
-        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
-    }
-
-    return LEXY_MOV(context._result);
-}
 } // namespace lexy::_detail
 
 namespace lexy
@@ -194,18 +171,18 @@ template <typename Production, typename Handler, typename Reader>
 constexpr auto do_action(Handler&& handler, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
-    auto result = _detail::action_impl<Production>(handler, reader);
-    if (result)
+
+    _detail::parse_context<Handler, Production, Production> context(handler, reader.position());
+
+    using parser = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
+    if (parser::parse(context, reader))
     {
-        using result_t = _detail::handler_production_result<Handler, Production>;
-        if constexpr (std::is_void_v<result_t>)
-            return LEXY_MOV(handler).template get_result_value<Production>();
-        else
-            return LEXY_MOV(handler).template get_result_value<Production>(LEXY_MOV(*result));
+        return LEXY_MOV(handler).get_action_result(true, LEXY_MOV(context._marker));
     }
     else
     {
-        return LEXY_MOV(handler).template get_result_empty<Production>();
+        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
+        return LEXY_MOV(handler).get_action_result(false, LEXY_MOV(context._marker));
     }
 }
 } // namespace lexy

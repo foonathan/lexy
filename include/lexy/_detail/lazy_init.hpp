@@ -111,6 +111,12 @@ public:
         return this->_value;
     }
 
+    template <typename Fn, typename... Args>
+    constexpr T& emplace_result(Fn&& fn, Args&&... args)
+    {
+        return emplace(LEXY_FWD(fn)(LEXY_FWD(args)...));
+    }
+
     constexpr explicit operator bool() const noexcept
     {
         return this->_init;
@@ -166,6 +172,11 @@ public:
     {
         LEXY_PRECONDITION(!*this);
         _init = true;
+    }
+    template <typename Fn, typename... Args>
+    constexpr void emplace_result(Fn&& fn, Args&&... args)
+    {
+        LEXY_FWD(fn)(LEXY_FWD(args)...);
     }
 
     constexpr explicit operator bool() const noexcept

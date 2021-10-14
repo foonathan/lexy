@@ -128,23 +128,6 @@ public:
         LEXY_PRECONDITION(_opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
     }
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    OutputIt get_result_value() && noexcept
-    {
-        *_out++ = '\n';
-        return _out;
-    }
-    template <typename Production>
-    OutputIt get_result_empty() && noexcept
-    {
-        *_out++ = '\n';
-        return _out;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
@@ -152,7 +135,16 @@ public:
         // The beginning of the previous production.
         // If the current production gets canceled, it needs to be restored.
         location previous_anchor;
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr OutputIt get_action_result(bool, marker<Production>&&) &&
+    {
+        *_out++ = '\n';
+        return _out;
+    }
 
     template <typename Production, typename Iterator>
     marker<Production> on(_ev::production_start<Production>, Iterator pos)
@@ -190,7 +182,7 @@ public:
     }
 
     template <typename Production, typename Iterator>
-    auto on(marker<Production>, _ev::list, Iterator)
+    auto on(const marker<Production>&, _ev::list, Iterator)
     {
         return lexy::noop.sink();
     }
@@ -227,7 +219,7 @@ public:
     }
 
     template <typename Production, typename Reader, typename Tag>
-    void on(marker<Production>, _ev::error, const lexy::error<Reader, Tag>& error)
+    void on(const marker<Production>&, _ev::error, const lexy::error<Reader, Tag>& error)
     {
         if (_cur_depth > _opts.max_tree_depth)
             return;
@@ -382,7 +374,7 @@ public:
     }
 
     template <typename Production, typename Iterator, typename... Args>
-    void on(marker<Production>&&, _ev::production_finish<Production>, Iterator pos, Args&&...)
+    void on(marker<Production>&, _ev::production_finish<Production>, Iterator pos, Args&&...)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {
@@ -393,7 +385,7 @@ public:
         --_cur_depth;
     }
     template <typename Production, typename Iterator>
-    void on(marker<Production>&& m, _ev::production_cancel<Production>, Iterator pos)
+    void on(marker<Production>& m, _ev::production_cancel<Production>, Iterator pos)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {

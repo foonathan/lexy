@@ -15,28 +15,18 @@ class match_handler
 public:
     constexpr match_handler() : _failed(false) {}
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr bool get_result_value() && noexcept
-    {
-        // Parsing succeeded or parsing recovered from an error.
-        // Return true, if we had an error, false otherwise.
-        return !_failed;
-    }
-    template <typename Production>
-    constexpr bool get_result_empty() && noexcept
-    {
-        // Parsing could not recover from an error, return false.
-        return false;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
-    {};
+    {
+        constexpr void get_value() && {}
+    };
+
+    template <typename Production>
+    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return parse_result && !_failed;
+    }
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator)

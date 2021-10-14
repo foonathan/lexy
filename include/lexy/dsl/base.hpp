@@ -24,7 +24,6 @@ struct production_start : _production_event
 {};
 /// End of the given production.
 /// Arguments: position, values
-/// Returns: value produced  by production.
 template <typename Production>
 struct production_finish : _production_event
 {};
