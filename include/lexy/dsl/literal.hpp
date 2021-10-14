@@ -61,6 +61,9 @@ struct _lit
 template <auto C>
 constexpr auto lit_c = _lit<std::decay_t<decltype(C)>, C>{};
 
+template <unsigned char... C>
+constexpr auto lit_b = _lit<unsigned char, C...>{};
+
 #if LEXY_HAS_NTTP
 /// Matches the literal string.
 template <lexy::_detail::string_literal Str>

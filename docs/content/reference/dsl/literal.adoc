@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::lit": lit
   "LEXY_LIT": lit
   "lexy::dsl::lit_c": lit_c
+  "lexy::dsl::lit_b": lit_b
 ---
 
 [.lead]
@@ -72,4 +73,29 @@ namespace lexy::dsl
 The same restrictions on character type apply.
 
 TIP: Literals that match common {{% docref punctuators %}} are pre-defined.
+
+[#lit_b]
+== Token rule `lexy::dsl::lit_b`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <unsigned char ... C>
+    constexpr _token-rule_ auto lit_b;
+}
+----
+
+[.lead]
+`lit_b<C...>` matches a sequence of bytes.
+
+Requires::
+  The {{% encoding %}} must be a single-byte encoding, such as {{% docref "lexy::default_encoding" %}} or {{% docref "lexy::byte_encoding" %}}.
+Matching::
+  Matches and consumes the exact sequence of bytes.
+Errors::
+  {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
+  Its `.string()` is the string of the bytes converted to the correct character type, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
+
+TIP: Use {{% docref "lexy::dsl::bom" %}} to match a byte-order mark.
 
