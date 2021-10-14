@@ -158,13 +158,18 @@ Bind parameters of the `.sink()` member function.
 
 It returns a sink whose `sink()` member function forwards to `sink` and returns the same sink callback.
 However, `sink.sink()` is invoked by the bound arguments.
+
 A call to `bound.sink()` results in a call to `sink.sink(args...)`, where no argument must be a placeholder.
 A call to `bound.sink(context)` results in a call to `sink.sink()` with the expanded arguments:
 If the argument is a placeholder, it is expanded as described there but note that there are no values, only a context parameter.
 Otherwise, the bound argument is forwarded as-is.
-Calls to `bound(...)` will be forwarded as-is onto `sink(...)`, allowing a bound sink to be used with rules like `opt_list` from {{% docref "lexy::dsl::terminator" %}}.
+
+A call to `bound(...)` will be forwarded as-is onto `sink(...)`, allowing a bound sink to be used with rules like `opt_list` from {{% docref "lexy::dsl::terminator" %}}.
 
 {{% godbolt-example "bind_sink-parse_state" "Construct the list of integers with a custom allocator" %}}
+
+TIP: Specifically for passing allocators to {{% docref "lexy::as_list" %}} or {{% docref "lexy::as_collection" %}}, use its `.allocator()` function instead.
+This also uses the allocator if used as a callback.
 
 NOTE: The bound arguments must either be constants or {{% docref "lexy::parse_state" %}}; other placeholder make no sense as the call does not have any values.
 

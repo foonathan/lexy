@@ -26,9 +26,7 @@ struct production
 
     static constexpr auto value
         // Pass the allocator to the sink.
-        // Note: this is the same as the `.allocator(&state::allocator)`.
-        = lexy::bind_sink(lexy::as_list<std::vector<int>>,
-                          lexy::parse_state.map(&state::allocator));
+        = lexy::as_list<std::vector<int>>.allocator(&state::allocator);
 };
 //}
 

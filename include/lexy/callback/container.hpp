@@ -17,8 +17,83 @@ template <typename Container>
 constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
 
 template <typename Container>
+struct _list_sink
+{
+    Container _result;
+
+    using return_type = Container;
+
+    template <typename C = Container, typename U>
+    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
+    {
+        return _result.push_back(LEXY_FWD(obj));
+    }
+
+    template <typename C = Container, typename... Args>
+    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
+    {
+        return _result.emplace_back(LEXY_FWD(args)...);
+    }
+
+    Container&& finish() &&
+    {
+        return LEXY_MOV(_result);
+    }
+};
+
+template <typename Container, typename AllocFn>
+struct _list_alloc
+{
+    AllocFn _alloc;
+
+    using return_type = Container;
+
+    template <typename Context>
+    struct _with_context
+    {
+        const Context& _context;
+        const AllocFn& _alloc;
+
+        constexpr Container operator()(Container&& container) const
+        {
+            return LEXY_MOV(container);
+        }
+        constexpr Container operator()(nullopt&&) const
+        {
+            return Container(_detail::invoke(_alloc, _context));
+        }
+
+        template <typename... Args>
+        constexpr auto operator()(Args&&... args) const
+            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                     LEXY_DECLVAL(Container))>
+        {
+            Container result(_detail::invoke(_alloc, _context));
+            if constexpr (_has_reserve<Container>)
+                result.reserve(sizeof...(args));
+            (result.emplace_back(LEXY_FWD(args)), ...);
+            return result;
+        }
+    };
+
+    template <typename Context>
+    constexpr auto operator[](const Context& context) const
+    {
+        return _with_context<Context>{context, _alloc};
+    }
+
+    template <typename Context>
+    constexpr auto sink(const Context& context) const
+    {
+        return _list_sink<Container>{Container(_detail::invoke(_alloc, context))};
+    }
+};
+
+template <typename Container>
 struct _list
 {
+    using return_type = Container;
+
     constexpr Container operator()(Container&& container) const
     {
         return LEXY_MOV(container);
@@ -36,12 +111,7 @@ struct _list
         Container result;
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace_back() for efficiency (or something),
-        // but SFINAE check for push_back(), as we don't want arbitrary conversions
-        // (and also emplace_back() isn't constrained).
         (result.emplace_back(LEXY_FWD(args)), ...);
-
         return result;
     }
     template <typename C = Container, typename... Args>
@@ -51,46 +121,28 @@ struct _list
         Container result(allocator);
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // See above.
         (result.emplace_back(LEXY_FWD(args)), ...);
-
         return result;
     }
 
-    struct _sink
-    {
-        Container _result;
-
-        using return_type = Container;
-
-        template <typename C = Container, typename U>
-        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
-        {
-            return _result.push_back(LEXY_FWD(obj));
-        }
-
-        template <typename C = Container, typename... Args>
-        auto operator()(Args&&... args)
-            -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
-        {
-            return _result.emplace_back(LEXY_FWD(args)...);
-        }
-
-        Container&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
     constexpr auto sink() const
     {
-        return _sink{Container()};
+        return _list_sink<Container>{Container()};
     }
     template <typename C = Container>
     constexpr auto sink(const typename C::allocator_type& allocator) const
     {
-        return _sink{Container(allocator)};
+        return _list_sink<Container>{Container(allocator)};
+    }
+
+    template <typename AllocFn>
+    constexpr auto allocator(AllocFn alloc_fn) const
+    {
+        return _list_alloc<Container, AllocFn>{alloc_fn};
+    }
+    constexpr auto allocator() const
+    {
+        return allocator([](const auto& alloc) { return alloc; });
     }
 };
 
@@ -98,10 +150,88 @@ struct _list
 /// It repeatedly calls `push_back()` and `emplace_back()`.
 template <typename Container>
 constexpr auto as_list = _list<Container>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Container>
+struct _collection_sink
+{
+    Container _result;
+
+    using return_type = Container;
+
+    template <typename C = Container, typename U>
+    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
+    {
+        return _result.insert(LEXY_FWD(obj));
+    }
+
+    template <typename C = Container, typename... Args>
+    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
+    {
+        return _result.emplace(LEXY_FWD(args)...);
+    }
+
+    Container&& finish() &&
+    {
+        return LEXY_MOV(_result);
+    }
+};
+
+template <typename Container, typename AllocFn>
+struct _collection_alloc
+{
+    AllocFn _alloc;
+
+    using return_type = Container;
+
+    template <typename Context>
+    struct _with_context
+    {
+        const Context& _context;
+        const AllocFn& _alloc;
+
+        constexpr Container operator()(Container&& container) const
+        {
+            return LEXY_MOV(container);
+        }
+        constexpr Container operator()(nullopt&&) const
+        {
+            return Container(_detail::invoke(_alloc, _context));
+        }
+
+        template <typename... Args>
+        constexpr auto operator()(Args&&... args) const
+            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                     LEXY_DECLVAL(Container))>
+        {
+            Container result(_detail::invoke(_alloc, _context));
+            if constexpr (_has_reserve<Container>)
+                result.reserve(sizeof...(args));
+            (result.emplace(LEXY_FWD(args)), ...);
+            return result;
+        }
+    };
+
+    template <typename Context>
+    constexpr auto operator[](const Context& context) const
+    {
+        return _with_context<Context>{context, _alloc};
+    }
+
+    template <typename Context>
+    constexpr auto sink(const Context& context) const
+    {
+        return _collection_sink<Container>{Container(_detail::invoke(_alloc, context))};
+    }
+};
 
 template <typename Container>
 struct _collection
 {
+    using return_type = Container;
+
     constexpr Container operator()(Container&& container) const
     {
         return LEXY_MOV(container);
@@ -119,12 +249,7 @@ struct _collection
         Container result;
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace() for efficiency (or something),
-        // but SFINAE check for insert(), as we don't want arbitrary conversions
-        // (and also emplace() isn't constrained).
         (result.emplace(LEXY_FWD(args)), ...);
-
         return result;
     }
 
@@ -135,47 +260,28 @@ struct _collection
         Container result(allocator);
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace() for efficiency (or something),
-        // but SFINAE check for insert(), as we don't want arbitrary conversions
-        // (and also emplace() isn't constrained).
         (result.emplace(LEXY_FWD(args)), ...);
-
         return result;
     }
 
-    struct _sink
-    {
-        Container _result;
-
-        using return_type = Container;
-
-        template <typename C = Container, typename U>
-        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
-        {
-            return _result.insert(LEXY_FWD(obj));
-        }
-
-        template <typename C = Container, typename... Args>
-        auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
-        {
-            return _result.emplace(LEXY_FWD(args)...);
-        }
-
-        Container&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
     constexpr auto sink() const
     {
-        return _sink{Container()};
+        return _collection_sink<Container>{Container()};
     }
     template <typename C = Container>
     constexpr auto sink(const typename C::allocator_type& allocator) const
     {
-        return _sink{Container(allocator)};
+        return _collection_sink<Container>{Container(allocator)};
+    }
+
+    template <typename AllocFn>
+    constexpr auto allocator(AllocFn alloc_fn) const
+    {
+        return _collection_alloc<Container, AllocFn>{alloc_fn};
+    }
+    constexpr auto allocator() const
+    {
+        return allocator([](const auto& alloc) { return alloc; });
     }
 };
 
