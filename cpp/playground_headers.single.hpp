@@ -2293,8 +2293,83 @@ template <typename Container>
 constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
 
 template <typename Container>
+struct _list_sink
+{
+    Container _result;
+
+    using return_type = Container;
+
+    template <typename C = Container, typename U>
+    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
+    {
+        return _result.push_back(LEXY_FWD(obj));
+    }
+
+    template <typename C = Container, typename... Args>
+    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
+    {
+        return _result.emplace_back(LEXY_FWD(args)...);
+    }
+
+    Container&& finish() &&
+    {
+        return LEXY_MOV(_result);
+    }
+};
+
+template <typename Container, typename AllocFn>
+struct _list_alloc
+{
+    AllocFn _alloc;
+
+    using return_type = Container;
+
+    template <typename Context>
+    struct _with_context
+    {
+        const Context& _context;
+        const AllocFn& _alloc;
+
+        constexpr Container operator()(Container&& container) const
+        {
+            return LEXY_MOV(container);
+        }
+        constexpr Container operator()(nullopt&&) const
+        {
+            return Container(_detail::invoke(_alloc, _context));
+        }
+
+        template <typename... Args>
+        constexpr auto operator()(Args&&... args) const
+            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                     LEXY_DECLVAL(Container))>
+        {
+            Container result(_detail::invoke(_alloc, _context));
+            if constexpr (_has_reserve<Container>)
+                result.reserve(sizeof...(args));
+            (result.emplace_back(LEXY_FWD(args)), ...);
+            return result;
+        }
+    };
+
+    template <typename Context>
+    constexpr auto operator[](const Context& context) const
+    {
+        return _with_context<Context>{context, _alloc};
+    }
+
+    template <typename Context>
+    constexpr auto sink(const Context& context) const
+    {
+        return _list_sink<Container>{Container(_detail::invoke(_alloc, context))};
+    }
+};
+
+template <typename Container>
 struct _list
 {
+    using return_type = Container;
+
     constexpr Container operator()(Container&& container) const
     {
         return LEXY_MOV(container);
@@ -2312,12 +2387,7 @@ struct _list
         Container result;
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace_back() for efficiency (or something),
-        // but SFINAE check for push_back(), as we don't want arbitrary conversions
-        // (and also emplace_back() isn't constrained).
         (result.emplace_back(LEXY_FWD(args)), ...);
-
         return result;
     }
     template <typename C = Container, typename... Args>
@@ -2327,46 +2397,28 @@ struct _list
         Container result(allocator);
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // See above.
         (result.emplace_back(LEXY_FWD(args)), ...);
-
         return result;
     }
 
-    struct _sink
-    {
-        Container _result;
-
-        using return_type = Container;
-
-        template <typename C = Container, typename U>
-        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
-        {
-            return _result.push_back(LEXY_FWD(obj));
-        }
-
-        template <typename C = Container, typename... Args>
-        auto operator()(Args&&... args)
-            -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
-        {
-            return _result.emplace_back(LEXY_FWD(args)...);
-        }
-
-        Container&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
     constexpr auto sink() const
     {
-        return _sink{Container()};
+        return _list_sink<Container>{Container()};
     }
     template <typename C = Container>
     constexpr auto sink(const typename C::allocator_type& allocator) const
     {
-        return _sink{Container(allocator)};
+        return _list_sink<Container>{Container(allocator)};
+    }
+
+    template <typename AllocFn>
+    constexpr auto allocator(AllocFn alloc_fn) const
+    {
+        return _list_alloc<Container, AllocFn>{alloc_fn};
+    }
+    constexpr auto allocator() const
+    {
+        return allocator([](const auto& alloc) { return alloc; });
     }
 };
 
@@ -2374,10 +2426,88 @@ struct _list
 /// It repeatedly calls `push_back()` and `emplace_back()`.
 template <typename Container>
 constexpr auto as_list = _list<Container>{};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Container>
+struct _collection_sink
+{
+    Container _result;
+
+    using return_type = Container;
+
+    template <typename C = Container, typename U>
+    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
+    {
+        return _result.insert(LEXY_FWD(obj));
+    }
+
+    template <typename C = Container, typename... Args>
+    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
+    {
+        return _result.emplace(LEXY_FWD(args)...);
+    }
+
+    Container&& finish() &&
+    {
+        return LEXY_MOV(_result);
+    }
+};
+
+template <typename Container, typename AllocFn>
+struct _collection_alloc
+{
+    AllocFn _alloc;
+
+    using return_type = Container;
+
+    template <typename Context>
+    struct _with_context
+    {
+        const Context& _context;
+        const AllocFn& _alloc;
+
+        constexpr Container operator()(Container&& container) const
+        {
+            return LEXY_MOV(container);
+        }
+        constexpr Container operator()(nullopt&&) const
+        {
+            return Container(_detail::invoke(_alloc, _context));
+        }
+
+        template <typename... Args>
+        constexpr auto operator()(Args&&... args) const
+            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                     LEXY_DECLVAL(Container))>
+        {
+            Container result(_detail::invoke(_alloc, _context));
+            if constexpr (_has_reserve<Container>)
+                result.reserve(sizeof...(args));
+            (result.emplace(LEXY_FWD(args)), ...);
+            return result;
+        }
+    };
+
+    template <typename Context>
+    constexpr auto operator[](const Context& context) const
+    {
+        return _with_context<Context>{context, _alloc};
+    }
+
+    template <typename Context>
+    constexpr auto sink(const Context& context) const
+    {
+        return _collection_sink<Container>{Container(_detail::invoke(_alloc, context))};
+    }
+};
 
 template <typename Container>
 struct _collection
 {
+    using return_type = Container;
+
     constexpr Container operator()(Container&& container) const
     {
         return LEXY_MOV(container);
@@ -2395,12 +2525,7 @@ struct _collection
         Container result;
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace() for efficiency (or something),
-        // but SFINAE check for insert(), as we don't want arbitrary conversions
-        // (and also emplace() isn't constrained).
         (result.emplace(LEXY_FWD(args)), ...);
-
         return result;
     }
 
@@ -2411,47 +2536,28 @@ struct _collection
         Container result(allocator);
         if constexpr (_has_reserve<Container>)
             result.reserve(sizeof...(args));
-
-        // Note that we call emplace() for efficiency (or something),
-        // but SFINAE check for insert(), as we don't want arbitrary conversions
-        // (and also emplace() isn't constrained).
         (result.emplace(LEXY_FWD(args)), ...);
-
         return result;
     }
 
-    struct _sink
-    {
-        Container _result;
-
-        using return_type = Container;
-
-        template <typename C = Container, typename U>
-        auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
-        {
-            return _result.insert(LEXY_FWD(obj));
-        }
-
-        template <typename C = Container, typename... Args>
-        auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
-        {
-            return _result.emplace(LEXY_FWD(args)...);
-        }
-
-        Container&& finish() &&
-        {
-            return LEXY_MOV(_result);
-        }
-    };
-
     constexpr auto sink() const
     {
-        return _sink{Container()};
+        return _collection_sink<Container>{Container()};
     }
     template <typename C = Container>
     constexpr auto sink(const typename C::allocator_type& allocator) const
     {
-        return _sink{Container(allocator)};
+        return _collection_sink<Container>{Container(allocator)};
+    }
+
+    template <typename AllocFn>
+    constexpr auto allocator(AllocFn alloc_fn) const
+    {
+        return _collection_alloc<Container, AllocFn>{alloc_fn};
+    }
+    constexpr auto allocator() const
+    {
+        return allocator([](const auto& alloc) { return alloc; });
     }
 };
 
@@ -2991,6 +3097,7 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 #ifndef LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 #define LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 
+#include <cstring>
 
 
 #include <new>
@@ -3022,6 +3129,15 @@ public:
 
     static void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
     {
+#if LEXY_ENABLE_ASSERT
+        // In debug mode, we fill freed memory with 0xFF to detect dangling lexemes.
+        // For default, ASCII, bytes, this is just a noticable value.
+        // For UTF-8, this is the EOF integer value as its an invalid code unit.
+        // For UTF-16, this is the code point 0xFFFF, which is the replacement character.
+        // For UTF-32, this is an out of range code point.
+        std::memset(ptr, 0xFF, bytes);
+#endif
+
 #ifdef __cpp_sized_deallocation
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
             ::operator delete (ptr, bytes, std::align_val_t{alignment});
@@ -7352,6 +7468,9 @@ struct _lit
 template <auto C>
 constexpr auto lit_c = _lit<std::decay_t<decltype(C)>, C>{};
 
+template <unsigned char... C>
+constexpr auto lit_b = _lit<unsigned char, C...>{};
+
 #if LEXY_HAS_NTTP
 /// Matches the literal string.
 template <lexy::_detail::string_literal Str>
@@ -8046,10 +8165,6 @@ inline constexpr auto character = _char{};
 
 namespace lexyd
 {
-// TODO: make public
-template <unsigned char... C>
-using _bytes = _lit<unsigned char, C...>;
-
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom_impl
 {
@@ -8066,7 +8181,7 @@ struct _bom_impl<lexy::utf8_encoding, DontCare>
 {
     static constexpr auto name = "BOM.UTF-8";
 
-    using literal     = _bytes<0xEF, 0xBB, 0xBF>;
+    using literal     = decltype(lit_b<0xEF, 0xBB, 0xBF>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -8074,7 +8189,7 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-16-LE";
 
-    using literal     = _bytes<0xFF, 0xFE>;
+    using literal     = decltype(lit_b<0xFF, 0xFE>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -8082,7 +8197,7 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-16-BE";
 
-    using literal     = _bytes<0xFE, 0xFF>;
+    using literal     = decltype(lit_b<0xFE, 0xFF>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -8090,7 +8205,7 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-32-LE";
 
-    using literal     = _bytes<0xFF, 0xFE, 0x00, 0x00>;
+    using literal     = decltype(lit_b<0xFF, 0xFE, 0x00, 0x00>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -8098,7 +8213,7 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-32-BE";
 
-    using literal     = _bytes<0x00, 0x00, 0xFE, 0xFF>;
+    using literal     = decltype(lit_b<0x00, 0x00, 0xFE, 0xFF>);
     using branch_base = lexyd::branch_base;
 };
 
@@ -9727,7 +9842,6 @@ constexpr auto parenthesized = round_bracketed;
 
 namespace lexyd
 {
-// TODO: make public
 template <typename Token>
 struct _capt : _copy_base<Token>
 {
@@ -9825,6 +9939,14 @@ struct _cap : _copy_base<Rule>
         }
     };
 };
+
+/// Captures whatever the token matches as a lexeme; does not include trailing whitespace.
+template <typename Token>
+constexpr auto capture_token(Token)
+{
+    static_assert(lexy::is_token_rule<Token>);
+    return _capt<Token>{};
+}
 
 /// Captures whatever the rule matches as a lexeme.
 template <typename Rule>
@@ -10409,6 +10531,214 @@ constexpr auto context_flag = _ctx_flag<Id>{};
 
 
 
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_MINUS_HPP_INCLUDED
+#define LEXY_DSL_MINUS_HPP_INCLUDED
+
+
+
+
+
+
+namespace lexy
+{
+/// We've matched the Except of a minus.
+struct minus_failure
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "minus failure";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Token, typename Except>
+struct _minus : token_base<_minus<Token, Except>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        lexy::token_parser_for<Token, Reader> token_parser;
+        typename Reader::iterator             end;
+        bool                                  minus_failure;
+
+        constexpr explicit tp(const Reader& reader)
+        : token_parser(reader), end(reader.position()), minus_failure(false)
+        {}
+
+        constexpr bool try_parse(const Reader& reader)
+        {
+            // Try to parse the token.
+            if (!token_parser.try_parse(reader))
+            {
+                // It didn't match, so we fail.
+                minus_failure = false;
+                return false;
+            }
+            // We already remember the end to have it during error reporting as well.
+            end = token_parser.end;
+
+            // Check whether Except matches on the same input and we're then at EOF.
+            if (auto partial = lexy::partial_reader(reader, token_parser.end);
+                lexy::try_match_token(Except{}, partial)
+                && partial.peek() == Reader::encoding::eof())
+            {
+                // Except did match, so we fail.
+                minus_failure = true;
+                return false;
+            }
+
+            // Success.
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            if (minus_failure)
+            {
+                auto err = lexy::error<Reader, lexy::minus_failure>(reader.position(), this->end);
+                context.on(_ev::error{}, err);
+            }
+            else
+            {
+                // Delegate error to the actual token.
+                token_parser.report_error(context, reader);
+            }
+        }
+    };
+};
+
+/// Matches Token unless Except matches on the input Token matched.
+template <typename Token, typename Except>
+constexpr auto operator-(Token, Except)
+{
+    static_assert(lexy::is_token_rule<Token>);
+    static_assert(lexy::is_token_rule<Except>);
+    return _minus<Token, Except>{};
+}
+template <typename Token, typename E, typename Except>
+constexpr auto operator-(_minus<Token, E>, Except except)
+{
+    static_assert(lexy::is_token_rule<Except>);
+    return _minus<Token, decltype(E{} / except)>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Token>
+struct _prefix : token_base<_prefix<Token>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        lexy::token_parser_for<Token, Reader> token;
+        typename Reader::iterator             end;
+
+        constexpr explicit tp(const Reader& reader) : token(reader), end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Match the token.
+            if (!token.try_parse(reader))
+                return false;
+            reader.set_position(token.end);
+
+            // Consume the rest of the input.
+            lexy::try_match_token(lexy::dsl::any, reader);
+            end = reader.position();
+
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            // Only the token part can fail.
+            token.report_error(context, reader);
+        }
+    };
+};
+
+template <typename Token>
+constexpr auto prefix(Token)
+{
+    return _prefix<Token>{};
+}
+} // namespace lexyd
+
+namespace lexyd
+{
+template <typename Token>
+struct _contains : token_base<_contains<Token>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            while (true)
+            {
+                if (lexy::try_match_token(Token{}, reader))
+                {
+                    // We've found it.
+                    break;
+                }
+                else if (reader.peek() == Reader::encoding::eof())
+                {
+                    // Haven't found it.
+                    end = reader.position();
+                    return false;
+                }
+                else
+                {
+                    // Try again.
+                    reader.bump();
+                }
+            }
+
+            // Consume everything else.
+            lexy::try_match_token(lexy::dsl::any, reader);
+
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            // Trigger an error by parsing the token at the end of the input.
+            reader.set_position(end);
+
+            LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
+                        "forgot to set end in try_parse()");
+
+            lexy::token_parser_for<Token, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            LEXY_ASSERT(!result, "token shouldn't have matched?!");
+            parser.report_error(context, reader);
+        }
+    };
+};
+
+template <typename Token>
+constexpr auto contains(Token)
+{
+    return _contains<Token>{};
+}
+} // namespace lexyd
+
+#endif // LEXY_DSL_MINUS_HPP_INCLUDED
 
 
 
@@ -10460,42 +10790,6 @@ struct _idp : token_base<_idp<Leading, Trailing>>
         {
             leading.report_error(context, reader);
         }
-    };
-};
-
-template <typename R>
-struct _contains : token_base<_contains<R>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            while (true)
-            {
-                if (lexy::try_match_token(lexy::dsl::token(R{}), reader))
-                    // We've found it.
-                    break;
-                else if (reader.peek() == Reader::encoding::eof())
-                    // Haven't found it.
-                    return false;
-                else
-                    // Try again.
-                    reader.bump();
-            }
-
-            // Consume everything else.
-            lexy::try_match_token(lexy::dsl::any, reader);
-
-            end = reader.position();
-            return true;
-        }
-
-        // report_error() not actually needed.
     };
 };
 
@@ -10611,16 +10905,16 @@ struct _id : branch_base
 
     /// Reserves everything starting with the given rule.
     template <typename... R>
-    constexpr auto reserve_prefix(R... prefix) const
+    constexpr auto reserve_prefix(R... r) const
     {
-        return reserve((prefix + lexyd::any)...);
+        return reserve(prefix(_make_reserve(r))...);
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
-    constexpr auto reserve_containing(R...) const
+    constexpr auto reserve_containing(R... r) const
     {
-        return reserve(_contains<R>{}...);
+        return reserve(contains(_make_reserve(r))...);
     }
 
     /// Matches every identifier, ignoring reserved ones.
@@ -13659,105 +13953,6 @@ constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
 
 #endif // LEXY_DSL_MEMBER_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_MINUS_HPP_INCLUDED
-#define LEXY_DSL_MINUS_HPP_INCLUDED
-
-
-
-
-
-namespace lexy
-{
-/// We've matched the Except of a minus.
-struct minus_failure
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "minus failure";
-    }
-};
-} // namespace lexy
-
-namespace lexyd
-{
-template <typename Token, typename Except>
-struct _minus : token_base<_minus<Token, Except>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        lexy::token_parser_for<Token, Reader> token_parser;
-        typename Reader::iterator             end;
-        bool                                  minus_failure;
-
-        constexpr explicit tp(const Reader& reader)
-        : token_parser(reader), end(reader.position()), minus_failure(false)
-        {}
-
-        constexpr bool try_parse(const Reader& reader)
-        {
-            // Try to parse the token.
-            if (!token_parser.try_parse(reader))
-            {
-                // It didn't match, so we fail.
-                minus_failure = false;
-                return false;
-            }
-            // We already remember the end to have it during error reporting as well.
-            end = token_parser.end;
-
-            // Check whether Except matches on the same input and we're then at EOF.
-            if (auto partial = lexy::partial_reader(reader, token_parser.end);
-                lexy::try_match_token(Except{}, partial)
-                && partial.peek() == Reader::encoding::eof())
-            {
-                // Except did match, so we fail.
-                minus_failure = true;
-                return false;
-            }
-
-            // Success.
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            if (minus_failure)
-            {
-                auto err = lexy::error<Reader, lexy::minus_failure>(reader.position(), this->end);
-                context.on(_ev::error{}, err);
-            }
-            else
-            {
-                // Delegate error to the actual token.
-                token_parser.report_error(context, reader);
-            }
-        }
-    };
-};
-
-/// Matches Token unless Except matches on the input Token matched.
-template <typename Token, typename Except>
-constexpr auto operator-(Token, Except)
-{
-    static_assert(lexy::is_token_rule<Token>);
-    static_assert(lexy::is_token_rule<Except>);
-    return _minus<Token, Except>{};
-}
-template <typename Token, typename E, typename Except>
-constexpr auto operator-(_minus<Token, E>, Except except)
-{
-    static_assert(lexy::is_token_rule<Except>);
-    return _minus<Token, decltype(E{} / except)>{};
-}
-} // namespace lexyd
-
-#endif // LEXY_DSL_MINUS_HPP_INCLUDED
 
 
 

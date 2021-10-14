@@ -206,12 +206,12 @@ This is comparable to <a href=/reference/dsl/minus/#minus><code>lexy::dsl::opera
 <li>
 <p>(2) <code>.reserve_prefix()</code>: All rules specified here are matched against the partial input.
 If they match a prefix of the partial input, the identifier is reserved.
-This is comparable to <a href=/reference/dsl/minus/#minus><code>lexy::dsl::operator-</code></a> with <a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a>.</p>
+This is comparable to <a href=/reference/dsl/minus/#minus><code>lexy::dsl::operator-</code></a> with <a href=/reference/dsl/minus/#prefix><code>lexy::dsl::prefix</code></a>.</p>
 </li>
 <li>
 <p>(3) <code>.reserve_containing()</code>: All rules specified here are matched against the partial input.
 If they match somewhere in the partial input, the identifier is reserved.
-This is comparable to <a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a>.</p>
+This is comparable to <a href=/reference/dsl/minus/#minus><code>lexy::dsl::operator-</code></a> with <a href=/reference/dsl/minus/#contains><code>lexy::dsl::contains</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -426,7 +426,7 @@ The same <a href=/reference/encoding/#doc>encoding</a> caveats of <a href=/refer
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></li><li><a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/minus/#minus><code>lexy::dsl::operator-</code></a></li><li><a href=/reference/dsl/loop/#while_><code>lexy::dsl::while_</code></a></li><li><a href=/reference/error/#expected_keyword><code>lexy::expected_keyword</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a></li><li><a href=/reference/dsl/minus/#contains><code>lexy::dsl::contains</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/minus/#minus><code>lexy::dsl::operator-</code></a></li><li><a href=/reference/dsl/minus/#prefix><code>lexy::dsl::prefix</code></a></li><li><a href=/reference/dsl/loop/#while_><code>lexy::dsl::while_</code></a></li><li><a href=/reference/error/#expected_keyword><code>lexy::expected_keyword</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

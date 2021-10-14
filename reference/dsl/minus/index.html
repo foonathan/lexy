@@ -100,26 +100,7 @@ The rule then fails.</p>
 </dl>
 </div>
 <div class=exampleblock>
-<div class=title>Example 1. Match words that don't start with <code>'no'</code></div>
-<div class=content>
-<div class="listingblock playground-example">
-<div class=title><a href="/playground?example=minus_any&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
-<div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>word</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>);</span>
-        <span class=tok-c1>// Without dsl::any, only &#39;no&#39; is forbidden.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>forbidden</span> <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;no&#34;</span><span class=tok-p>)</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>any</span><span class=tok-p>;</span>
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>word</span><span class=tok-p>)</span> <span class=tok-o>-</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>forbidden</span><span class=tok-p>);</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class=exampleblock>
-<div class=title>Example 2. Match a string literal that doesn't contain control characters</div>
+<div class=title>Example 1. Match a string literal that doesn't contain control characters</div>
 <div class=content>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=quoted&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
@@ -157,7 +138,7 @@ keep in mind that this also overrides all errors <code>token</code> might raise.
 <div class=title>Tip</div>
 </td>
 <td class=content>
-Use <a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a> to prevent the requirement that <code>except</code> must match the entire input as seen in the example.
+Use <a href=/reference/dsl/minus/#prefix><code>lexy::dsl::prefix</code></a> or <a href=/reference/dsl/minus/#contains><code>lexy::dsl::contains</code></a> to prevent the requirement that <code>except</code> must match the entire input.
 </td>
 </tr>
 </tbody></table>
@@ -176,9 +157,108 @@ Use <a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a> to prevent t
 </div>
 </div>
 </div>
+<div class=sect1>
+<h2 id=prefix>Token rule <code>lexy::dsl::prefix</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/minus.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>prefix</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token</span><span class=tok-p>)</span>
+    <span class=tok-p>{</span>
+        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>any</span><span class=tok-p>);</span>
+    <span class=tok-p>}</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>prefix</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches <code>token</code> and then consumes the entire input.</p>
+</div>
+<div class=paragraph>
+<p>It is meant to be used in combination with <a href=/reference/dsl/minus/#minus><code>minus</code></a> to remove tokens that start with a given token.</p>
+</div>
+<div class=exampleblock>
+<div class=title>Example 2. Match words that don't start with <code>'no'</code></div>
+<div class=content>
+<div class="listingblock playground-example">
+<div class=title><a href="/playground?example=minus_prefix&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
+        <span class=tok-k>auto</span> <span class=tok-n>word</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>);</span>
+        <span class=tok-c1>// Without dsl::prefix, only &#39;no&#39; is forbidden.</span>
+        <span class=tok-k>auto</span> <span class=tok-n>forbidden</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>prefix</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;no&#34;</span><span class=tok-p>));</span>
+        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>word</span><span class=tok-p>)</span> <span class=tok-o>-</span> <span class=tok-n>forbidden</span><span class=tok-p>;</span>
+    <span class=tok-p>}();</span>
+<span class=tok-p>};</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=contains>Token rule <code>lexy::dsl::contains</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/minus.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>contains</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token</span><span class=tok-p>);</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>contains</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches if <code>token</code> is anywhere in the input.</p>
+</div>
+<div class=paragraph>
+<p>It is meant to be used in combination with <a href=/reference/dsl/minus/#minus><code>minus</code></a> to remove tokens that contain a given token.</p>
+</div>
+<div class=dlist>
+<dl>
+<dt class=hdlist1>Matching</dt>
+<dd>
+<p>Tries to match <code>token</code>.
+If that fails, advances the reader and repeats.
+Only fails, if EOF is reached before <code>token</code> has been matched.</p>
+</dd>
+<dt class=hdlist1>Errors</dt>
+<dd>
+<p>All errors raised by matching <code>token</code> at EOF. The rule then fails.</p>
+</dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>A token node that covers the entire input; its kind is determined by <code>contains()</code>.</p>
+</dd>
+</dl>
+</div>
+<div class=exampleblock>
+<div class=title>Example 3. Match words that don't contain <code>'no'</code></div>
+<div class=content>
+<div class="listingblock playground-example">
+<div class=title><a href="/playground?example=minus_contains&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
+        <span class=tok-k>auto</span> <span class=tok-n>word</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>);</span>
+        <span class=tok-c1>// Without dsl::contains, only &#39;no&#39; is forbidden.</span>
+        <span class=tok-k>auto</span> <span class=tok-n>forbidden</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>contains</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;no&#34;</span><span class=tok-p>));</span>
+        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>word</span><span class=tok-p>)</span> <span class=tok-o>-</span> <span class=tok-n>forbidden</span><span class=tok-p>;</span>
+    <span class=tok-p>}();</span>
+<span class=tok-p>};</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/alternative/#alternative><code>alternative</code></a></li><li><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/alternative/#alternative><code>alternative</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

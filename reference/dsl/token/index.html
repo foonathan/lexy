@@ -216,25 +216,6 @@ The rule then fails.</p>
 </dd>
 </dl>
 </div>
-<div class=exampleblock>
-<div class=title>Example 2. Use <code>token</code> to turn rules into token rules where required</div>
-<div class=content>
-<div class="listingblock playground-example">
-<div class=title><a href="/playground?example=minus_any&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
-<div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>word</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_one</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>);</span>
-        <span class=tok-c1>// Without dsl::any, only &#39;no&#39; is forbidden.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>forbidden</span> <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;no&#34;</span><span class=tok-p>)</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>any</span><span class=tok-p>;</span>
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>word</span><span class=tok-p>)</span> <span class=tok-o>-</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>forbidden</span><span class=tok-p>);</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="admonitionblock note">
 <table>
 <tbody><tr>

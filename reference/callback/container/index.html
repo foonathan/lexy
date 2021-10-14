@@ -60,10 +60,52 @@ lexy/callback/container.hpp — lexy
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
 <span class=tok-p>{</span>
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Container</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>as_list</span><span class=tok-p>;</span>
+    <span class=tok-k>struct</span> <span class=tok-nc><em>as</em></span><em><span class=tok-o>-</span><span class=tok-n>container</span></em>
+    <span class=tok-p>{</span>
+        <span class=tok-c1>//=== callback ===//</span>
+        <span class=tok-k>using</span> <span class=tok-n>return_type</span> <span class=tok-o>=</span> <span class=tok-n>Container</span><span class=tok-p>;</span>
+
+        <span class=tok-k>constexpr</span> <span class=tok-n>Container</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>nullopt</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>Container</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>Container</span><span class=tok-o>&amp;&amp;</span> <span class=tok-n>container</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>Container</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>Container</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-k>const</span> <span class=tok-n>Container</span><span class=tok-o>::</span><span class=tok-n>allocator_type</span><span class=tok-o>&amp;</span> <span class=tok-n>allocator</span><span class=tok-p>,</span>
+                                       <span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-c1>//=== sink ===//</span>
+        <span class=tok-k>struct</span> <span class=tok-nc><em>sink</em></span><em><span class=tok-o>-</span><span class=tok-n>callback</span></em>
+        <span class=tok-p>{</span>
+            <span class=tok-k>using</span> <span class=tok-n>return_type</span> <span class=tok-o>=</span> <span class=tok-n>Container</span><span class=tok-p>;</span>
+
+            <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
+            <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>T</span><span class=tok-o>&amp;&amp;</span> <span class=tok-n>obj</span><span class=tok-p>);</span>
+
+            <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
+            <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-k>operator</span><span class=tok-p>()(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>);</span>
+
+            <span class=tok-k>constexpr</span> <span class=tok-n>Container</span> <span class=tok-n>finish</span><span class=tok-p>()</span> <span class=tok-o>&amp;&amp;</span><span class=tok-p>;</span>
+        <span class=tok-p>};</span>
+
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>sink</em></span><em><span class=tok-o>-</span><span class=tok-n>callback</span></em> <span class=tok-n>sink</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>sink</em></span><em><span class=tok-o>-</span><span class=tok-n>callback</span></em> <span class=tok-n>sink</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Container</span><span class=tok-o>::</span><span class=tok-n>allocator_type</span><span class=tok-o>&amp;</span> <span class=tok-n>allocator</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-c1>//=== allocator ===//</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>AllocatorFn</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>allocator</span><span class=tok-p>(</span><span class=tok-n>AllocatorFn</span> <span class=tok-n>allocator_fn</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>allocator</span><span class=tok-p>()</span> <span class=tok-k>const</span>
+        <span class=tok-p>{</span>
+            <span class=tok-k>return</span> <span class=tok-nf>allocator</span><span class=tok-p>(</span><span class=tok-n><em>identity</em></span><em><span class=tok-o>-</span><span class=tok-n>fn</span></em><span class=tok-p>);</span>
+        <span class=tok-p>}</span>
+    <span class=tok-p>};</span>
+
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Container</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>as</em></span><em><span class=tok-o>-</span><span class=tok-n>container</span></em><span class=tok-o>&lt;</span><span class=tok-n>Container</span><span class=tok-o>&gt;</span> <span class=tok-n>as_list</span><span class=tok-p>;</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Collection</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>as_collection</span><span class=tok-p>;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>as</em></span><em><span class=tok-o>-</span><span class=tok-n>container</span></em><span class=tok-o>&lt;</span><span class=tok-n>Container</span><span class=tok-o>&gt;</span> <span class=tok-n>as_collection</span><span class=tok-p>;</span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
@@ -120,6 +162,14 @@ The resulting sink callback has the following overloads and returns the finished
 </dd>
 </dl>
 </div>
+<div class=paragraph>
+<p>The <code>.allocator()</code> function takes a function that obtains the allocator from the parse state.
+If the function is not provided, it uses the parse state itself as the allocator.
+It returns a new callback and sink that accepts the parse state as context.
+It then has the same overloads and behaviors, except that it will always use the allocator obtained via the <code>allocator_fn</code> from the parse state.
+As a callback, this behavior is similar to <a href=/reference/callback/bind/#bind><code>lexy::bind</code></a> where the allocator is bound via <a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a>.
+As a sink, this behavior is similar to <a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a> where the allocator is bound via <a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a>.</p>
+</div>
 <div class=exampleblock>
 <div class=title>Example 1. Construct a list of integers</div>
 <div class=content>
@@ -145,7 +195,7 @@ The resulting sink callback has the following overloads and returns the finished
 <div class=title>Example 2. Construct a list of integers with a custom allocator</div>
 <div class=content>
 <div class="listingblock godbolt-example">
-<div class=title><a href=https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IiIsInN0ZGluVmlzaWJsZSI6ZmFsc2V9XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjdmVjdG9yXHUwMDNlXG5cbiNpbmNsdWRlIFx1MDAzY2xleHkvYWN0aW9uL3BhcnNlLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9jYWxsYmFjay5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHkvZHNsLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eV9leHQvY29tcGlsZXJfZXhwbG9yZXIuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5X2V4dC9yZXBvcnRfZXJyb3IuaHBwXHUwMDNlXG5cbm5hbWVzcGFjZSBkc2wgPSBsZXh5Ojpkc2w7XG5cbnN0cnVjdCBzdGF0ZVxue1xuICAgIHN0ZDo6YWxsb2NhdG9yXHUwMDNjaW50XHUwMDNlIGFsbG9jYXRvcjsgLy8gVGhlIGFsbG9jYXRvciB0aGF0IHNob3VsZCBiZSB1c2VkLlxuICAgIC8vIFBvdGVudGlhbGx5IG90aGVyIG1lbWJlcnMgaGVyZS5cbn07XG5cbnN0cnVjdCBwcm9kdWN0aW9uXG57XG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIHdoaXRlc3BhY2UgPSBkc2w6OmFzY2lpOjpzcGFjZTtcblxuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byBydWxlID0gW10ge1xuICAgICAgICBhdXRvIGludGVnZXIgPSBkc2w6OmludGVnZXJcdTAwM2NpbnRcdTAwM2UoZHNsOjpkaWdpdHNcdTAwM2NcdTAwM2UpO1xuICAgICAgICByZXR1cm4gZHNsOjpsaXN0KGludGVnZXIsIGRzbDo6c2VwKGRzbDo6Y29tbWEpKTtcbiAgICB9KCk7XG5cbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gdmFsdWVcbiAgICAgICAgLy8gUGFzcyB0aGUgYWxsb2NhdG9yIHRvIHRoZSBzaW5rLlxuICAgICAgICA9IGxleHk6OmJpbmRfc2luayhsZXh5Ojphc19saXN0XHUwMDNjc3RkOjp2ZWN0b3JcdTAwM2NpbnRcdTAwM2VcdTAwM2UsXG4gICAgICAgICAgICAgICAgICAgICAgICAgIGxleHk6OnBhcnNlX3N0YXRlLm1hcChcdTAwMjZzdGF0ZTo6YWxsb2NhdG9yKSk7XG59O1xuXG5pbnQgbWFpbigpXG57XG4gICAgYXV0byBpbnB1dCAgPSBsZXh5X2V4dDo6Y29tcGlsZXJfZXhwbG9yZXJfaW5wdXQoKTtcbiAgICBhdXRvIHJlc3VsdCA9IGxleHk6OnBhcnNlXHUwMDNjcHJvZHVjdGlvblx1MDAzZShpbnB1dCwgc3RhdGUoKSwgbGV4eV9leHQ6OnJlcG9ydF9lcnJvcik7XG4gICAgaWYgKCFyZXN1bHQpXG4gICAgICAgIHJldHVybiAxO1xuXG4gICAgc3RkOjpwcmludGYoXCJudW1iZXJzOiBcIik7XG4gICAgZm9yIChhdXRvIGkgOiByZXN1bHQudmFsdWUoKSlcbiAgICAgICAgc3RkOjpwcmludGYoXCIlZCBcIiwgaSk7XG4gICAgc3RkOjpwdXRjaGFyKCdcXG4nKTtcbn0ifV19 , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=title><a href=https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IiIsInN0ZGluVmlzaWJsZSI6ZmFsc2V9XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjdmVjdG9yXHUwMDNlXG5cbiNpbmNsdWRlIFx1MDAzY2xleHkvYWN0aW9uL3BhcnNlLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9jYWxsYmFjay5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHkvZHNsLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eV9leHQvY29tcGlsZXJfZXhwbG9yZXIuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5X2V4dC9yZXBvcnRfZXJyb3IuaHBwXHUwMDNlXG5cbm5hbWVzcGFjZSBkc2wgPSBsZXh5Ojpkc2w7XG5cbnN0cnVjdCBzdGF0ZVxue1xuICAgIHN0ZDo6YWxsb2NhdG9yXHUwMDNjaW50XHUwMDNlIGFsbG9jYXRvcjsgLy8gVGhlIGFsbG9jYXRvciB0aGF0IHNob3VsZCBiZSB1c2VkLlxuICAgIC8vIFBvdGVudGlhbGx5IG90aGVyIG1lbWJlcnMgaGVyZS5cbn07XG5cbnN0cnVjdCBwcm9kdWN0aW9uXG57XG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIHdoaXRlc3BhY2UgPSBkc2w6OmFzY2lpOjpzcGFjZTtcblxuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byBydWxlID0gW10ge1xuICAgICAgICBhdXRvIGludGVnZXIgPSBkc2w6OmludGVnZXJcdTAwM2NpbnRcdTAwM2UoZHNsOjpkaWdpdHNcdTAwM2NcdTAwM2UpO1xuICAgICAgICByZXR1cm4gZHNsOjpsaXN0KGludGVnZXIsIGRzbDo6c2VwKGRzbDo6Y29tbWEpKTtcbiAgICB9KCk7XG5cbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gdmFsdWVcbiAgICAgICAgLy8gUGFzcyB0aGUgYWxsb2NhdG9yIHRvIHRoZSBzaW5rLlxuICAgICAgICA9IGxleHk6OmFzX2xpc3RcdTAwM2NzdGQ6OnZlY3Rvclx1MDAzY2ludFx1MDAzZVx1MDAzZS5hbGxvY2F0b3IoXHUwMDI2c3RhdGU6OmFsbG9jYXRvcik7XG59O1xuXG5pbnQgbWFpbigpXG57XG4gICAgYXV0byBpbnB1dCAgPSBsZXh5X2V4dDo6Y29tcGlsZXJfZXhwbG9yZXJfaW5wdXQoKTtcbiAgICBhdXRvIHJlc3VsdCA9IGxleHk6OnBhcnNlXHUwMDNjcHJvZHVjdGlvblx1MDAzZShpbnB1dCwgc3RhdGUoKSwgbGV4eV9leHQ6OnJlcG9ydF9lcnJvcik7XG4gICAgaWYgKCFyZXN1bHQpXG4gICAgICAgIHJldHVybiAxO1xuXG4gICAgc3RkOjpwcmludGYoXCJudW1iZXJzOiBcIik7XG4gICAgZm9yIChhdXRvIGkgOiByZXN1bHQudmFsdWUoKSlcbiAgICAgICAgc3RkOjpwcmludGYoXCIlZCBcIiwgaSk7XG4gICAgc3RkOjpwdXRjaGFyKCdcXG4nKTtcbn0ifV19 , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>state</span>
 <span class=tok-p>{</span>
@@ -164,24 +214,11 @@ The resulting sink callback has the following overloads and returns the finished
 
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span>
         <span class=tok-c1>// Pass the allocator to the sink.</span>
-        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>bind_sink</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>as_list</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>vector</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>,</span>
-                          <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>parse_state</span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-o>&amp;</span><span class=tok-n>state</span><span class=tok-o>::</span><span class=tok-n>allocator</span><span class=tok-p>));</span>
+        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>as_list</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>vector</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>.</span><span class=tok-n>allocator</span><span class=tok-p>(</span><span class=tok-o>&amp;</span><span class=tok-n>state</span><span class=tok-o>::</span><span class=tok-n>allocator</span><span class=tok-p>);</span>
 <span class=tok-p>};</span></code></pre>
 </div>
 </div>
 </div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Tip</div>
-</td>
-<td class=content>
-Use <a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a> with <a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a> to pass an allocator to the container.
-</td>
-</tr>
-</tbody></table>
 </div>
 </div>
 </div>
@@ -244,7 +281,7 @@ Use <code>collect</code> for the error callback. It will collect all errors into
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a></li><li><a href=/reference/callback/adapter/#callback><code>lexy::callback</code></a></li><li><a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a></li></ul>
+<ul><li><a href=/reference/callback/bind/#bind><code>lexy::bind</code></a></li><li><a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a></li><li><a href=/reference/callback/adapter/#callback><code>lexy::callback</code></a></li><li><a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
