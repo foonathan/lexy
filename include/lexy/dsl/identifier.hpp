@@ -7,10 +7,10 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/alternative.hpp>
-#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -61,42 +61,6 @@ struct _idp : token_base<_idp<Leading, Trailing>>
         {
             leading.report_error(context, reader);
         }
-    };
-};
-
-template <typename R>
-struct _contains : token_base<_contains<R>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            while (true)
-            {
-                if (lexy::try_match_token(lexy::dsl::token(R{}), reader))
-                    // We've found it.
-                    break;
-                else if (reader.peek() == Reader::encoding::eof())
-                    // Haven't found it.
-                    return false;
-                else
-                    // Try again.
-                    reader.bump();
-            }
-
-            // Consume everything else.
-            lexy::try_match_token(lexy::dsl::any, reader);
-
-            end = reader.position();
-            return true;
-        }
-
-        // report_error() not actually needed.
     };
 };
 
@@ -212,16 +176,16 @@ struct _id : branch_base
 
     /// Reserves everything starting with the given rule.
     template <typename... R>
-    constexpr auto reserve_prefix(R... prefix) const
+    constexpr auto reserve_prefix(R... r) const
     {
-        return reserve((prefix + lexyd::any)...);
+        return reserve(prefix(_make_reserve(r))...);
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
-    constexpr auto reserve_containing(R...) const
+    constexpr auto reserve_containing(R... r) const
     {
-        return reserve(_contains<R>{}...);
+        return reserve(contains(_make_reserve(r))...);
     }
 
     /// Matches every identifier, ignoring reserved ones.

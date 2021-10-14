@@ -98,10 +98,10 @@ If this has happened, parsing the `identifier` rule creates a partial input from
   This is comparable to {{% docref "lexy::dsl::operator-" %}}.
 * (2) `.reserve_prefix()`: All rules specified here are matched against the partial input.
   If they match a prefix of the partial input, the identifier is reserved.
-  This is comparable to {{% docref "lexy::dsl::operator-" %}} with {{% docref "lexy::dsl::any" %}}.
+  This is comparable to {{% docref "lexy::dsl::operator-" %}} with {{% docref "lexy::dsl::prefix" %}}.
 * (3) `.reserve_containing()`: All rules specified here are matched against the partial input.
   If they match somewhere in the partial input, the identifier is reserved.
-  This is comparable to {{% docref "lexy::dsl::find" %}}.
+  This is comparable to {{% docref "lexy::dsl::operator-" %}} with {{% docref "lexy::dsl::contains" %}}.
 
 {{% playground-example reserved_identifier "Parse a C like identifier that is not reserved" %}}
 
