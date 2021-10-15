@@ -17,7 +17,9 @@ namespace lexy_ext::_detail
 template <typename Encoding, typename Iterator>
 constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
 {
-    auto is_cp_boundary = []([[maybe_unused]] auto c) {
+    // [maybe_unused] c breaks MSVC builds targetting C++17
+    auto is_cp_boundary = [](auto c) {
+        (void)c;
         if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
             return (c & 0b1100'0000) != (0b10 << 6);
         else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
