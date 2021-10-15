@@ -98,9 +98,7 @@ namespace lexy
 namespace lexy::dsl
 {
     template <typename T, typename Base>
-    constexpr _rule_ auto integer(_rule_ auto digits);
-    template <typename T, typename Base>
-    constexpr _branch-rule_ auto integer(_branch-rule_ auto digits);
+    constexpr _branch-rule_ auto integer(_token-rule_ auto digits);
 
     template <typename T>
     constexpr _branch-rule_ auto integer(_digits-dsl_  digits);
@@ -110,7 +108,7 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`integer` is a rule and usually a {{% branch-rule %}} that parses a sequence of digits as an integer.
+`integer` is a {{% branch-rule %}} that parses a sequence of digits as an integer.
 
 Requires::
   * `T` is a type with a specialization of <<integer_traits>>.

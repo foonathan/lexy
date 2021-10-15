@@ -10,7 +10,6 @@
 
 namespace lexyd
 {
-// TODO: make public
 template <typename Token>
 struct _capt : _copy_base<Token>
 {
@@ -108,6 +107,14 @@ struct _cap : _copy_base<Rule>
         }
     };
 };
+
+/// Captures whatever the token matches as a lexeme; does not include trailing whitespace.
+template <typename Token>
+constexpr auto capture_token(Token)
+{
+    static_assert(lexy::is_token_rule<Token>);
+    return _capt<Token>{};
+}
 
 /// Captures whatever the rule matches as a lexeme.
 template <typename Rule>

@@ -21,7 +21,7 @@ struct _lst : _copy_base<Item>
         while (true)
         {
             // Parse a separator if necessary.
-            [[maybe_unused]] auto sep_pos = reader.position();
+            [[maybe_unused]] auto sep_begin = reader.position();
             if constexpr (!std::is_void_v<Sep>)
             {
                 lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
@@ -32,6 +32,7 @@ struct _lst : _copy_base<Item>
                 if (!sep.template finish<lexy::sink_parser>(context, reader, sink))
                     return false;
             }
+            [[maybe_unused]] auto sep_end = reader.position();
 
             // Parse the next item.
             if constexpr (lexy::is_branch_rule<Item>)
@@ -43,7 +44,7 @@ struct _lst : _copy_base<Item>
                     // We don't have a next item, exit the loop.
                     // If necessary, we report a trailing separator.
                     if constexpr (!std::is_void_v<Sep>)
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_begin, sep_end);
                     break;
                 }
 
@@ -148,42 +149,44 @@ namespace lexyd
 template <typename Term, typename Item, typename Sep, typename Recover>
 struct _lstt : rule_base
 {
-    template <typename TermParser, typename Context, typename Reader, typename Sink>
-    static constexpr bool _loop(TermParser& term, Context& context, Reader& reader, Sink& sink)
+    // We're using an enum together with a switch to compensate a lack of goto in constexpr.
+    // The simple state machine goes as follows on well-formed input:
+    // terminator -> separator -> separator_trailing_check -> item -> terminator -> ... ->
+    // done
+    //
+    // The interesting case is error recovery.
+    // There we skip over characters until we either found the terminator, separator or
+    // item. We then set the enum to jump to the appropriate state of the state machine.
+    enum class _state
     {
-        // We're using an enum together with a switch to compensate a lack of goto in constexpr.
-        // The simple state machine goes as follows on well-formed input:
-        // terminator -> separator -> separator_trailing_check -> item -> terminator -> ... ->
-        // done
-        //
-        // The interesting case is error recovery.
-        // There we skip over characters until we either found the terminator, separator or
-        // item. We then set the enum to jump to the appropriate state of the state machine.
-        enum class state
-        {
-            terminator,
-            separator,
-            separator_trailing_check,
-            item,
-            recovery,
-        } state
-            = state::terminator;
+        terminator,
+        separator,
+        separator_trailing_check,
+        item,
+        recovery,
+    };
+
+    template <typename TermParser, typename Context, typename Reader, typename Sink>
+    static constexpr bool _loop(_state initial_state, TermParser& term, Context& context,
+                                Reader& reader, Sink& sink)
+    {
+        auto state = initial_state;
 
         [[maybe_unused]] auto sep_pos = reader.position();
         while (true)
         {
             switch (state)
             {
-            case state::terminator:
+            case _state::terminator:
                 if (term.try_parse(context, reader))
                     // We had the terminator, so the list is done.
                     return true;
 
                 // Parse the following list separator next.
-                state = state::separator;
+                state = _state::separator;
                 break;
 
-            case state::separator:
+            case _state::separator:
                 if constexpr (!std::is_void_v<Sep>)
                 {
                     sep_pos = reader.position();
@@ -192,7 +195,7 @@ struct _lstt : rule_base
                                                                                        sink))
                     {
                         // Check for a trailing separator next.
-                        state = state::separator_trailing_check;
+                        state = _state::separator_trailing_check;
                         break;
                     }
                     else if (sep_pos == reader.position())
@@ -207,13 +210,13 @@ struct _lstt : rule_base
                                 && item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue after an item has been parsed.
-                                state = state::terminator;
+                                state = _state::terminator;
                                 break;
                             }
                             else
                             {
                                 // Not an item, recover.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -221,7 +224,7 @@ struct _lstt : rule_base
                         {
                             // We cannot try and parse an item.
                             // To avoid generating wrong errors, immediately recover.
-                            state = state::recovery;
+                            state = _state::recovery;
                             break;
                         }
                     }
@@ -232,18 +235,18 @@ struct _lstt : rule_base
                         // already consumed input. (If we ignore the case where the item and
                         // separator share a common prefix, we know it wasn't the start of an
                         // item so can't just pretend that there is one).
-                        state = state::recovery;
+                        state = _state::recovery;
                         break;
                     }
                 }
                 else
                 {
                     // List doesn't have a separator; immediately parse item next.
-                    state = state::item;
+                    state = _state::item;
                     break;
                 }
 
-            case state::separator_trailing_check:
+            case _state::separator_trailing_check:
                 if constexpr (!std::is_void_v<Sep>)
                 {
                     // We need to check whether we're having a trailing separator by checking
@@ -252,33 +255,33 @@ struct _lstt : rule_base
                     {
                         // We had the terminator, so the list is done.
                         // Report a trailing separator error if necessary.
-                        Sep::report_trailing_error(context, reader, sep_pos);
+                        Sep::report_trailing_error(context, reader, sep_pos, reader.position());
                         return true;
                     }
                     else
                     {
                         // We didn't have a separator, parse item next.
-                        state = state::item;
+                        state = _state::item;
                         break;
                     }
                 }
                 break;
 
-            case state::item:
+            case _state::item:
                 if (lexy::parser_for<Item, lexy::sink_parser>::parse(context, reader, sink))
                 {
                     // Loop back.
-                    state = state::terminator;
+                    state = _state::terminator;
                     break;
                 }
                 else
                 {
                     // Recover from missing item.
-                    state = state::recovery;
+                    state = _state::recovery;
                     break;
                 }
 
-            case state::recovery:
+            case _state::recovery:
                 context.on(_ev::recovery_start{}, reader.position());
                 while (true)
                 {
@@ -294,13 +297,13 @@ struct _lstt : rule_base
                             if (sep.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the trailing separator check.
-                                state = state::separator_trailing_check;
+                                state = _state::separator_trailing_check;
                                 break;
                             }
                             else
                             {
                                 // Need to recover from this.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -320,13 +323,13 @@ struct _lstt : rule_base
                             if (item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the next terminator check.
-                                state = state::terminator;
+                                state = _state::terminator;
                                 break;
                             }
                             else
                             {
                                 // Need to recover from this.
-                                state = state::recovery;
+                                state = _state::recovery;
                                 break;
                             }
                         }
@@ -371,17 +374,15 @@ struct _lstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            lexy::branch_parser_for<Term, Context, Reader> term{};
             auto sink = context.on(_ev::list{}, reader.position());
 
             // Parse initial item.
             using item_parser = lexy::parser_for<Item, lexy::sink_parser>;
-            if (!item_parser::parse(context, reader, sink))
-                return false;
-
-            lexy::branch_parser_for<Term, Context, Reader> term{};
+            auto result       = item_parser::parse(context, reader, sink);
 
             // Parse the remaining items.
-            if (!_loop(term, context, reader, sink))
+            if (!_loop(result ? _state::terminator : _state::recovery, term, context, reader, sink))
                 return false;
 
             // At this point, we just need to finish parsing the terminator.

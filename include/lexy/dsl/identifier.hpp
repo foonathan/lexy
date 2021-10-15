@@ -7,10 +7,10 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/alternative.hpp>
-#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -64,84 +64,92 @@ struct _idp : token_base<_idp<Leading, Trailing>>
     };
 };
 
-template <typename R>
-struct _contains : token_base<_contains<R>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            while (true)
-            {
-                if (lexy::try_match_token(lexy::dsl::token(R{}), reader))
-                    // We've found it.
-                    break;
-                else if (reader.peek() == Reader::encoding::eof())
-                    // Haven't found it.
-                    return false;
-                else
-                    // Try again.
-                    reader.bump();
-            }
-
-            // Consume everything else.
-            lexy::try_match_token(lexy::dsl::any, reader);
-
-            end = reader.position();
-            return true;
-        }
-
-        // report_error() not actually needed.
-    };
-};
-
 template <typename Id, typename CharT, CharT... C>
 struct _kw;
 
 template <typename Leading, typename Trailing, typename... Reserved>
 struct _id : branch_base
 {
-    using _impl = _capt<_idp<Leading, Trailing>>;
+    template <typename Reader>
+    constexpr static auto _is_reserved(const Reader& reader, typename Reader::iterator begin,
+                                       typename Reader::iterator end)
+    {
+        if constexpr (sizeof...(Reserved) == 0)
+        {
+            (void)reader;
+            (void)begin;
+            (void)end;
+
+            // No reserved patterns, never reserved.
+            return std::false_type{};
+        }
+        else
+        {
+            auto id_reader = lexy::partial_reader(reader, begin, end);
+            // Need to match any of the reserved tokens.
+            return lexy::try_match_token((Reserved{} / ...), id_reader)
+                   // And fully match it.
+                   && id_reader.position() == end;
+        }
+    }
 
     template <typename NextParser>
-    struct _pc_impl
+    struct p
     {
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Last argument is the captured lexeme.
-            auto lexeme = (args, ...);
+            // Parse the pattern; this does not consume whitespace, so the range is accurate.
+            auto begin = reader.position();
+            if (!pattern().token_parse(context, reader))
+                return false;
+            auto end = reader.position();
 
-            // Check whether we have a reserved identifier.
-            auto id_reader = lexy::partial_reader(reader, lexeme.begin(), lexeme.end());
-            if (lexy::try_match_token((Reserved{} / ...), id_reader)
-                && id_reader.position() == lexeme.end())
+            // Check for a reserved identifier.
+            if (_is_reserved(reader, begin, end))
             {
-                // We found a reserved identifier.
-                auto err
-                    = lexy::error<Reader, lexy::reserved_identifier>(lexeme.begin(), lexeme.end());
+                // It is reserved, report an error but trivially recover.
+                auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
                 context.on(_ev::error{}, err);
-                // But we can trivially recover, as we've still matched a well-formed
-                // identifier.
             }
 
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            // Skip whitespace and continue with the value.
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
         }
     };
 
-    // If we don't have any reserved identifiers, we immediately continue with the next parser.
-    template <typename NextParser>
-    using _pc = std::conditional_t<sizeof...(Reserved) == 0, NextParser, _pc_impl<NextParser>>;
-
-    template <typename NextParser>
-    using p = lexy::parser_for<_impl, _pc<NextParser>>;
     template <typename Context, typename Reader>
-    using bp = lexy::continuation_branch_parser<_impl, Context, Reader, _pc>;
+    struct bp
+    {
+        typename Reader::iterator end;
+
+        constexpr bool try_parse(Context&, const Reader& reader)
+        {
+            // Parse the pattern.
+            lexy::token_parser_for<decltype(pattern()), Reader> parser(reader);
+            if (!parser.try_parse(reader))
+                return false;
+            end = parser.end;
+
+            // We only succeed if it's not a reserved identifier.
+            return !_is_reserved(reader, reader.position(), end);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+
+            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
+            reader.set_position(end);
+
+            using continuation = lexy::whitespace_parser<Context, NextParser>;
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       lexy::lexeme<Reader>(begin, end));
+        }
+    };
 
     template <typename R>
     constexpr auto _make_reserve(R r) const
@@ -168,20 +176,20 @@ struct _id : branch_base
 
     /// Reserves everything starting with the given rule.
     template <typename... R>
-    constexpr auto reserve_prefix(R... prefix) const
+    constexpr auto reserve_prefix(R... r) const
     {
-        return reserve((prefix + lexyd::any)...);
+        return reserve(prefix(_make_reserve(r))...);
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
-    constexpr auto reserve_containing(R...) const
+    constexpr auto reserve_containing(R... r) const
     {
-        return reserve(_contains<R>{}...);
+        return reserve(contains(_make_reserve(r))...);
     }
 
     /// Matches every identifier, ignoring reserved ones.
-    constexpr auto pattern() const
+    static constexpr auto pattern()
     {
         return _idp<Leading, Trailing>{};
     }

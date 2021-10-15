@@ -57,7 +57,7 @@ The resulting sink callback has the following overloads and returns the finished
   Encodes `cp` in the `Encoding`, which must be ASCII, UTF-8, UTF-16, or UTF-32.
   Calls `.append(begin, end)`, where `[begin, end)` is an iterator range to the encoded representation of `cp`, on the resulting string.
 
-{{% godbolt-example capture_whitespace "Convert a captured `lexy::lexeme` to a `std::string`" %}}
+{{% godbolt-example capture "Convert a captured `lexy::lexeme` to a `std::string`" %}}
 
 {{% godbolt-example list_sep "Build a list of characters" %}}
 

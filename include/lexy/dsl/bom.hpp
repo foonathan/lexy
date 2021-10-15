@@ -11,10 +11,6 @@
 
 namespace lexyd
 {
-// TODO: make public
-template <unsigned char... C>
-using _bytes = _lit<unsigned char, C...>;
-
 template <typename Encoding, lexy::encoding_endianness Endianness>
 struct _bom_impl
 {
@@ -31,7 +27,7 @@ struct _bom_impl<lexy::utf8_encoding, DontCare>
 {
     static constexpr auto name = "BOM.UTF-8";
 
-    using literal     = _bytes<0xEF, 0xBB, 0xBF>;
+    using literal     = decltype(lit_b<0xEF, 0xBB, 0xBF>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -39,7 +35,7 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-16-LE";
 
-    using literal     = _bytes<0xFF, 0xFE>;
+    using literal     = decltype(lit_b<0xFF, 0xFE>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -47,7 +43,7 @@ struct _bom_impl<lexy::utf16_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-16-BE";
 
-    using literal     = _bytes<0xFE, 0xFF>;
+    using literal     = decltype(lit_b<0xFE, 0xFF>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -55,7 +51,7 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::little>
 {
     static constexpr auto name = "BOM.UTF-32-LE";
 
-    using literal     = _bytes<0xFF, 0xFE, 0x00, 0x00>;
+    using literal     = decltype(lit_b<0xFF, 0xFE, 0x00, 0x00>);
     using branch_base = lexyd::branch_base;
 };
 template <>
@@ -63,7 +59,7 @@ struct _bom_impl<lexy::utf32_encoding, lexy::encoding_endianness::big>
 {
     static constexpr auto name = "BOM.UTF-32-BE";
 
-    using literal     = _bytes<0x00, 0x00, 0xFE, 0xFF>;
+    using literal     = decltype(lit_b<0x00, 0x00, 0xFE, 0xFF>);
     using branch_base = lexyd::branch_base;
 };
 

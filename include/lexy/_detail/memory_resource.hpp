@@ -5,6 +5,7 @@
 #ifndef LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 #define LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 
+#include <cstring>
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 #include <new>
@@ -36,6 +37,15 @@ public:
 
     static void deallocate(void* ptr, std::size_t bytes, std::size_t alignment) noexcept
     {
+#if LEXY_ENABLE_ASSERT
+        // In debug mode, we fill freed memory with 0xFF to detect dangling lexemes.
+        // For default, ASCII, bytes, this is just a noticable value.
+        // For UTF-8, this is the EOF integer value as its an invalid code unit.
+        // For UTF-16, this is the code point 0xFFFF, which is the replacement character.
+        // For UTF-32, this is an out of range code point.
+        std::memset(ptr, 0xFF, bytes);
+#endif
+
 #ifdef __cpp_sized_deallocation
         if (alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
             ::operator delete (ptr, bytes, std::align_val_t{alignment});

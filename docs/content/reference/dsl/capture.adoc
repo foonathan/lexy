@@ -1,6 +1,7 @@
 ---
 header: "lexy/dsl/capture.hpp"
 entities:
+  "lexy::dsl::capture_token": capture_token
   "lexy::dsl::capture": capture
 ---
 
@@ -28,12 +29,36 @@ Values::
   A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `rule`,
   followed by all values produced by `rule`.
 
-{{% godbolt-example capture "Parse a name" %}}
-
-{{% godbolt-example capture_whitespace "Parse a name, but disable whitespace skipping" %}}
+{{% godbolt-example capture "Get a single code point" %}}
 
 CAUTION: If a {{% token-rule %}} is captured, the `lexy::lexeme` includes the automatic whitespace skipped after the token.
-Use {{% docref "lexy::dsl::no_whitespace" %}} around the `lexy::dsl::capture()` as seen in the example above.
+Use {{% docref "lexy::dsl::capture_token" %}} or {{% docref "lexy::dsl::identifier" %}} instead.
 
 TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
+
+[#capture_token]
+== Branch rule `lexy::dsl::capture_token`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _branch-rule_ auto capture_token(_token-rule_ auto token);
+}
+----
+
+[.lead]
+`capture_token` is a branch rule that parses `token` capturing everything it has consumed but excluding whitespace as a value.
+
+(Branch) Parsing::
+  Parses `token` unchanged.
+Errors::
+  All errors raised by `token`.
+  The rule then fails if `token` has failed.
+Values::
+  A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `token` except any trailing whitespace.
+
+TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
+
+TIP: In most cases, you should prefer {{% docref "lexy::dsl::identifier" %}} instead.
 

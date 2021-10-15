@@ -259,37 +259,10 @@ TEST_CASE("_integer_parser")
     }
 }
 
-TEST_CASE("dsl::integer(rule)")
+TEST_CASE("dsl::integer(token)")
 {
-    constexpr auto rule = dsl::integer<int, dsl::decimal>(dsl::while_(dsl::digit<>));
-    CHECK(lexy::is_rule<decltype(rule)>);
-
-    constexpr auto callback = [](const char*, int value) { return value; };
-
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.value == 0);
-    CHECK(empty.trace == test_trace());
-
-    auto two = LEXY_VERIFY("11");
-    CHECK(two.status == test_result::success);
-    CHECK(two.value == 11);
-    CHECK(two.trace == test_trace().token("1").token("1"));
-    auto five = LEXY_VERIFY("12345");
-    CHECK(five.status == test_result::success);
-    CHECK(five.value == 12345);
-    CHECK(five.trace == test_trace().token("1").token("2").token("3").token("4").token("5"));
-
-    auto overflow = LEXY_VERIFY("12345678901234567890");
-    CHECK(overflow.status == test_result::recovered_error);
-    if (lexy::_digit_count(10, INT_MAX) == 10)
-        CHECK(overflow.value == 1234567890);
-    // Don't check for trace as it's too long.
-}
-
-TEST_CASE("dsl::integer(branch)")
-{
-    constexpr auto integer = dsl::integer<int, dsl::decimal>(dsl::while_one(dsl::digit<>));
+    constexpr auto integer
+        = dsl::integer<int, dsl::decimal>(dsl::token(dsl::while_one(dsl::digit<>)));
     CHECK(lexy::is_rule<decltype(integer)>);
 
     constexpr auto callback = lexy::callback<int>([](const char*) { return -11; },
@@ -302,22 +275,23 @@ TEST_CASE("dsl::integer(branch)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::recovered_error);
         CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.trace == test_trace().error(0, 0, "missing token").recovery());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 11);
-        CHECK(two.trace == test_trace().token("1").token("1"));
+        CHECK(two.trace == test_trace().token("11"));
         auto five = LEXY_VERIFY("12345");
         CHECK(five.status == test_result::success);
         CHECK(five.value == 12345);
-        CHECK(five.trace == test_trace().token("1").token("2").token("3").token("4").token("5"));
+        CHECK(five.trace == test_trace().token("12345"));
 
         auto overflow = LEXY_VERIFY("12345678901234567890");
         CHECK(overflow.status == test_result::recovered_error);
         if (lexy::_digit_count(10, INT_MAX) == 10)
             CHECK(overflow.value == 1234567890);
-        // Don't check for trace as it's too long.
+        CHECK(overflow.trace
+              == test_trace().token("12345678901234567890").error(0, 20, "integer overflow"));
     }
     SUBCASE("as branch")
     {
@@ -331,17 +305,18 @@ TEST_CASE("dsl::integer(branch)")
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 11);
-        CHECK(two.trace == test_trace().token("1").token("1"));
+        CHECK(two.trace == test_trace().token("11"));
         auto five = LEXY_VERIFY("12345");
         CHECK(five.status == test_result::success);
         CHECK(five.value == 12345);
-        CHECK(five.trace == test_trace().token("1").token("2").token("3").token("4").token("5"));
+        CHECK(five.trace == test_trace().token("12345"));
 
         auto overflow = LEXY_VERIFY("12345678901234567890");
         CHECK(overflow.status == test_result::recovered_error);
         if (lexy::_digit_count(10, INT_MAX) == 10)
             CHECK(overflow.value == 1234567890);
-        // Don't check for trace as it's too long.
+        CHECK(overflow.trace
+              == test_trace().token("12345678901234567890").error(0, 20, "integer overflow"));
     }
 }
 
@@ -513,9 +488,8 @@ TEST_CASE("dsl::integer(dsl::digits.sep())")
 
         auto leading_sep = LEXY_VERIFY("_1");
         CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 1);
-        CHECK(leading_sep.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().error_token("_1"));
+        CHECK(leading_sep.value == 0);
+        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
@@ -603,9 +577,8 @@ TEST_CASE("dsl::integer(dsl::digits.sep().no_leading_zero())")
 
         auto leading_sep = LEXY_VERIFY("_1");
         CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 1);
-        CHECK(leading_sep.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().error_token("_1"));
+        CHECK(leading_sep.value == 0);
+        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
@@ -785,9 +758,8 @@ TEST_CASE("dsl::integer(dsl::n_digits.sep())")
 
         auto leading_sep = LEXY_VERIFY("_1");
         CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 1);
-        CHECK(leading_sep.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().error_token("_1"));
+        CHECK(leading_sep.value == 0);
+        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);

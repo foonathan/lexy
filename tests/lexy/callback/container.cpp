@@ -31,6 +31,8 @@ struct my_allocator : std::allocator<T>
 
 TEST_CASE("as_list")
 {
+    my_allocator<std::string> alloc(42);
+
     SUBCASE("callback default")
     {
         constexpr auto callback = lexy::as_list<std::vector<std::string>>;
@@ -48,6 +50,17 @@ TEST_CASE("as_list")
 
         CHECK(callback(42).empty());
         CHECK(callback(42, "a", std::string("b"), "c")
+              == std::vector<std::string, my_allocator<std::string>>({"a", "b", "c"}, 42));
+    }
+    SUBCASE("callback context allocator")
+    {
+        constexpr auto callback
+            = lexy::as_list<std::vector<std::string, my_allocator<std::string>>> //
+                  .allocator();
+
+        CHECK(callback[alloc]().empty());
+        CHECK(callback[alloc](lexy::nullopt{}).empty());
+        CHECK(callback[alloc]("a", std::string("b"), "c")
               == std::vector<std::string, my_allocator<std::string>>({"a", "b", "c"}, 42));
     }
 
@@ -73,10 +86,25 @@ TEST_CASE("as_list")
         auto result = LEXY_MOV(cb).finish();
         CHECK(result == decltype(result)({"a", "b", "c"}, 42));
     }
+    SUBCASE("sink context allocator")
+    {
+        constexpr auto sink = lexy::as_list<std::vector<std::string, my_allocator<std::string>>> //
+                                  .allocator();
+
+        auto cb = sink.sink(alloc);
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        auto result = LEXY_MOV(cb).finish();
+        CHECK(result == decltype(result)({"a", "b", "c"}, 42));
+    }
 }
 
 TEST_CASE("as_collection")
 {
+    my_allocator<std::string> alloc(42);
+
     SUBCASE("callback default")
     {
         constexpr auto callback = lexy::as_collection<std::set<std::string>>;
@@ -95,6 +123,15 @@ TEST_CASE("as_collection")
         CHECK(callback(42) == set(42));
         CHECK(callback(42, "a", std::string("b"), "c") == set({"a", "b", "c"}, 42));
     }
+    SUBCASE("callback context allocator")
+    {
+        using set               = std::set<std::string, std::less<>, my_allocator<std::string>>;
+        constexpr auto callback = lexy::as_collection<set>.allocator();
+
+        CHECK(callback[alloc]().empty());
+        CHECK(callback[alloc](lexy::nullopt{}).empty());
+        CHECK(callback[alloc]("a", std::string("b"), "c") == set({"a", "b", "c"}, 42));
+    }
 
     SUBCASE("sink default")
     {
@@ -112,6 +149,20 @@ TEST_CASE("as_collection")
         constexpr auto sink
             = lexy::as_collection<std::set<std::string, std::less<>, my_allocator<std::string>>>;
         auto cb = sink.sink(42);
+        cb("a");
+        cb(std::string("b"));
+        cb(1, 'c');
+
+        auto result = LEXY_MOV(cb).finish();
+        CHECK(result == decltype(result)({"a", "b", "c"}, 42));
+    }
+    SUBCASE("sink context allocator")
+    {
+        constexpr auto sink
+            = lexy::as_collection<std::set<std::string, std::less<>, my_allocator<std::string>>> //
+                  .allocator();
+
+        auto cb = sink.sink(alloc);
         cb("a");
         cb(std::string("b"));
         cb(1, 'c');

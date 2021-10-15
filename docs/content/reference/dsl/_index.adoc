@@ -166,7 +166,7 @@ Parse tree::
 [%collapsible]
 .Values
 =====
-{{% docref "lexy::dsl::capture" %}}::
+{{% docref "lexy::dsl::capture" %}} and {{% docref "lexy::dsl::capture_token" %}}::
   capture everything consumed by a rule
 {{% docref "lexy::dsl::position" %}}::
   produce the current input position

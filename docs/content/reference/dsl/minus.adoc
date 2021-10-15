@@ -3,6 +3,8 @@ header: "lexy/dsl/minus.hpp"
 entities:
   "lexy::dsl::operator-": minus
   "minus": minus
+  "lexy::dsl::prefix": prefix
+  "lexy::dsl::contains": contains
 ---
 
 [#minus]
@@ -38,14 +40,60 @@ Errors::
 Parse tree::
   Only a token node for `token` whose kind is determined by the minus rule; nothing for `except`.
 
-{{% playground-example minus_any "Match words that don't start with `'no'`" %}}
-
 {{% playground-example quoted "Match a string literal that doesn't contain control characters" %}}
 
 CAUTION: When using `.error<Tag>` to override the generic `lexy::minus_failure` tag,
 keep in mind that this also overrides all errors `token` might raise.
 
-TIP: Use {{% docref "lexy::dsl::any" %}} to prevent the requirement that `except` must match the entire input as seen in the example.
+TIP: Use {{% docref "lexy::dsl::prefix" %}} or {{% docref "lexy::dsl::contains" %}} to prevent the requirement that `except` must match the entire input.
 
 NOTE: `token - a - b` is entirely equivalent to the {{% docref alternative %}} `token - (a / b)` and also optimized in the same way.
+
+[#prefix]
+== Token rule `lexy::dsl::prefix`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _token-rule_ auto prefix(_token-rule_ auto token)
+    {
+        return dsl::token(token + dsl::any);
+    }
+}
+----
+
+[.lead]
+`prefix` is a {{% token-rule %}} that matches `token` and then consumes the entire input.
+
+It is meant to be used in combination with {{% docref "minus" %}} to remove tokens that start with a given token.
+
+{{% playground-example minus_prefix "Match words that don't start with `'no'`" %}}
+
+[#contains]
+== Token rule `lexy::dsl::contains`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _token-rule_ auto contains(_token-rule_ auto token);
+}
+----
+
+[.lead]
+`contains` is a {{% token-rule %}} that matches if `token` is anywhere in the input.
+
+It is meant to be used in combination with {{% docref "minus" %}} to remove tokens that contain a given token.
+
+Matching::
+  Tries to match `token`.
+  If that fails, advances the reader and repeats.
+  Only fails, if EOF is reached before `token` has been matched.
+Errors::
+  All errors raised by matching `token` at EOF. The rule then fails.
+Parse tree::
+  A token node that covers the entire input; its kind is determined by `contains()`.
+
+{{% playground-example minus_contains "Match words that don't contain `'no'`" %}}
 

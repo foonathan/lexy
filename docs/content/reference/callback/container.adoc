@@ -17,10 +17,52 @@ Callbacks and sinks for constructing containers.
 namespace lexy
 {
     template <typename Container>
-    constexpr auto as_list;
+    struct _as-container_
+    {
+        //=== callback ===//
+        using return_type = Container;
+
+        constexpr Container operator()(lexy::nullopt) const;
+        constexpr Container operator()(Container&& container) const;
+
+        template <typename ... Args>
+        constexpr Container operator()(Args&&... args) const;
+        template <typename ... Args>
+        constexpr Container operator()(const Container::allocator_type& allocator,
+                                       Args&&... args) const;
+
+        //=== sink ===//
+        struct _sink-callback_
+        {
+            using return_type = Container;
+
+            template <typename T>
+            constexpr void operator()(T&& obj);
+
+            template <typename ... Args>
+            constexpr void operator()(Args&&... args);
+
+            constexpr Container finish() &&;
+        };
+
+        constexpr _sink-callback_ sink() const;
+        constexpr _sink-callback_ sink(const Container::allocator_type& allocator) const;
+
+        //=== allocator ===//
+        template <typename AllocatorFn>
+        constexpr auto allocator(AllocatorFn allocator_fn) const;
+
+        constexpr auto allocator() const
+        {
+            return allocator(_identity-fn_);
+        }
+    };
+
+    template <typename Container>
+    constexpr _as-container_<Container> as_list;
 
     template <typename Collection>
-    constexpr auto as_collection;
+    constexpr _as-container_<Container> as_collection;
 }
 ----
 
@@ -56,11 +98,16 @@ The resulting sink callback has the following overloads and returns the finished
 `(Args&&... args)`::
   Calls `.emplace_back()`/`.emplace()` on the container.
 
+The `.allocator()` function takes a function that obtains the allocator from the parse state.
+If the function is not provided, it uses the parse state itself as the allocator.
+It returns a new callback and sink that accepts the parse state as context.
+It then has the same overloads and behaviors, except that it will always use the allocator obtained via the `allocator_fn` from the parse state.
+As a callback, this behavior is similar to {{% docref "lexy::bind" %}} where the allocator is bound via {{% docref "lexy::parse_state" %}}.
+As a sink, this behavior is similar to {{% docref "lexy::bind_sink" %}} where the allocator is bound via {{% docref "lexy::parse_state" %}}.
+
 {{% godbolt-example "as_list" "Construct a list of integers" %}}
 
-{{% godbolt-example "bind_sink-parse_state" "Construct a list of integers with a custom allocator" %}}
-
-TIP: Use {{% docref "lexy::bind_sink" %}} with {{% docref "lexy::parse_state" %}} to pass an allocator to the container.
+{{% godbolt-example "as_list-allocator" "Construct a list of integers with a custom allocator" %}}
 
 [#collect]
 == Sink `lexy::collect`

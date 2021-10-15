@@ -1,8 +1,8 @@
-name: Deploy Docs
+name: Build Docs
 
 on:
   push:
-    branches: [main]
+  pull_request:
 
 jobs:
   deploy_docs:
@@ -28,6 +28,7 @@ jobs:
       run: cmake --build . --target lexy_docs
 
     - name: Deploy
+      if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

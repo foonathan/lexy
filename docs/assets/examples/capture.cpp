@@ -14,10 +14,7 @@ using lexeme = lexy_ext::compiler_explorer_lexeme;
 
 struct production
 {
-    static constexpr auto rule = [] {
-        auto name = dsl::capture(dsl::while_(dsl::ascii::alpha));
-        return LEXY_LIT("My name is ") + name + dsl::period;
-    }();
+    static constexpr auto rule = dsl::capture(dsl::code_point);
 
     // Same as `lexy::as_string<std::string>`.
     static constexpr auto value = lexy::callback<std::string>(
@@ -32,6 +29,6 @@ int main()
     if (!result)
         return 1;
 
-    std::printf("Hello %s!\n", result.value().c_str());
+    std::printf("Codepoint: %s (%zu code units)\n", result.value().c_str(), result.value().size());
 }
 

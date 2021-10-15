@@ -38,54 +38,48 @@ struct _term
     template <typename Rule>
     constexpr auto operator()(Rule rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-            return rule >> terminator();
-        else
-            return rule + terminator();
+        return rule + terminator();
     }
 
     /// Matches rule followed by the terminator, recovering on error.
     template <typename Rule>
-    constexpr auto try_(Rule rule) const
+    constexpr auto try_(Rule) const
     {
-        if constexpr (lexy::is_branch_rule<Rule>)
-            return lexyd::try_(rule >> terminator(), recovery_rule());
-        else
-            return lexyd::try_(rule + terminator(), recovery_rule());
+        return _tryt<Terminator, Rule, decltype(recovery_rule())>{};
     }
 
     /// Matches opt(rule) followed by terminator.
     /// The rule does not require a condition.
     template <typename Rule>
-    constexpr auto opt(Rule rule) const
+    constexpr auto opt(Rule) const
     {
-        return _optt<Terminator, decltype(this->try_(rule))>{};
+        return _optt<Terminator, _tryt<Terminator, Rule, decltype(recovery_rule())>>{};
     }
 
-    /// Matches `list(r, sep)` followed by terminator.
+    /// Matches `list(rule, sep)` followed by terminator.
     /// The rule does not require a condition.
-    template <typename R>
-    constexpr auto list(R) const
+    template <typename Rule>
+    constexpr auto list(Rule) const
     {
-        return _lstt<Terminator, R, void, decltype(recovery_rule())>{};
+        return _lstt<Terminator, Rule, void, decltype(recovery_rule())>{};
     }
-    template <typename R, typename Sep>
-    constexpr auto list(R, Sep) const
+    template <typename Rule, typename Sep>
+    constexpr auto list(Rule, Sep) const
     {
-        return _lstt<Terminator, R, Sep, decltype(recovery_rule())>{};
+        return _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>{};
     }
 
-    /// Matches `opt_list(r, sep)` followed by terminator.
+    /// Matches `opt_list(rule, sep)` followed by terminator.
     /// The rule does not require a condition.
-    template <typename R>
-    constexpr auto opt_list(R) const
+    template <typename Rule>
+    constexpr auto opt_list(Rule) const
     {
-        return _optt<Terminator, _lstt<Terminator, R, void, decltype(recovery_rule())>>{};
+        return _optt<Terminator, _lstt<Terminator, Rule, void, decltype(recovery_rule())>>{};
     }
-    template <typename R, typename S>
-    constexpr auto opt_list(R, S) const
+    template <typename Rule, typename S>
+    constexpr auto opt_list(Rule, S) const
     {
-        return _optt<Terminator, _lstt<Terminator, R, S, decltype(recovery_rule())>>{};
+        return _optt<Terminator, _lstt<Terminator, Rule, S, decltype(recovery_rule())>>{};
     }
 
     //=== access ===//
