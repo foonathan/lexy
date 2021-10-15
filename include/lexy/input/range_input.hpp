@@ -40,7 +40,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<Encoding, Iterator, Sentinel>(_begin, _end);
+        return _range_reader<Encoding>(_begin, _end);
     }
 
 private:

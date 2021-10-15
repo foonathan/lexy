@@ -52,16 +52,17 @@ public:
 };
 #endif
 
-namespace lexy::_detail
+namespace lexy
 {
+// A generic reader from an iterator range.
 template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
-class range_reader
+class _rr
 {
 public:
     using encoding = Encoding;
     using iterator = Iterator;
 
-    constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
+    constexpr explicit _rr(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {
         LEXY_PRECONDITION(lexy::_detail::precedes(begin, end));
     }
@@ -96,7 +97,36 @@ private:
     Iterator                   _cur;
     LEXY_EMPTY_MEMBER Sentinel _end;
 };
-} // namespace lexy::_detail
+
+// A special version where the iterators are pointers.
+template <typename Encoding>
+LEXY_INSTANTIATION_NEWTYPE(_pr, _rr, Encoding, const typename Encoding::char_type*);
+
+// Aliases for the most common encodings.
+LEXY_INSTANTIATION_NEWTYPE(_prd, _pr, lexy::default_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_pr8, _pr, lexy::utf8_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_prb, _pr, lexy::byte_encoding);
+
+template <typename Encoding, typename Iterator, typename Sentinel>
+constexpr auto _range_reader(Iterator begin, Sentinel end)
+{
+    if constexpr (std::is_pointer_v<Iterator>)
+    {
+        if constexpr (std::is_same_v<Encoding, lexy::default_encoding>)
+            return _prd(begin, end);
+        else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+            return _pr8(begin, end);
+        else if constexpr (std::is_same_v<Encoding, lexy::byte_encoding>)
+            return _prb(begin, end);
+        else
+            return _pr<Encoding>(begin, end);
+    }
+    else
+    {
+        return _rr<Encoding, Iterator, Sentinel>(begin, end);
+    }
+}
+} // namespace lexy
 
 namespace lexy
 {
@@ -112,8 +142,7 @@ template <typename Reader>
 constexpr auto partial_reader(const Reader&, typename Reader::iterator begin,
                               typename Reader::iterator end)
 {
-    using reader_t = _detail::range_reader<typename Reader::encoding, typename Reader::iterator>;
-    return reader_t(begin, end);
+    return _range_reader<typename Reader::encoding>(begin, end);
 }
 
 /// Creates a reader that only reads until the given end.

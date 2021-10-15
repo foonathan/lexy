@@ -141,7 +141,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<encoding, argv_iterator>(_begin, _end);
+        return _range_reader<encoding>(_begin, _end);
     }
 
 private:
@@ -167,9 +167,6 @@ namespace lexyd
 {
 struct _argvsep : token_base<_argvsep>
 {
-    template <typename Encoding>
-    using _argv_reader = lexy::_detail::range_reader<Encoding, lexy::argv_iterator>;
-
     template <typename Reader>
     struct tp
     {
@@ -177,9 +174,22 @@ struct _argvsep : token_base<_argvsep>
 
         constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
-        constexpr std::false_type try_parse(const Reader&)
+        constexpr auto try_parse([[maybe_unused]] Reader reader)
         {
-            return {};
+            using encoding = typename Reader::encoding;
+            if constexpr (std::is_same_v<Reader, lexy::input_reader<lexy::argv_input<encoding>>>)
+            {
+                if (reader.peek() != lexy::_char_to_int_type<encoding>('\0'))
+                    return false;
+
+                reader.bump();
+                end = reader.position();
+                return true;
+            }
+            else
+            {
+                return std::false_type{};
+            }
         }
 
         template <typename Context>
@@ -187,32 +197,6 @@ struct _argvsep : token_base<_argvsep>
         {
             auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
                                                                       "argv-separator");
-            context.on(_ev::error{}, err);
-        }
-    };
-    template <typename Encoding>
-    struct tp<_argv_reader<Encoding>>
-    {
-        lexy::argv_iterator end;
-
-        constexpr explicit tp(const _argv_reader<Encoding>& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(_argv_reader<Encoding> reader)
-        {
-            if (reader.peek() != lexy::_char_to_int_type<Encoding>('\0'))
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const _argv_reader<Encoding>& reader)
-        {
-            auto err
-                = lexy::error<_argv_reader<Encoding>, lexy::expected_char_class>(reader.position(),
-                                                                                 "argv-separator");
             context.on(_ev::error{}, err);
         }
     };

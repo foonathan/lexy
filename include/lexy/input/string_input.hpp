@@ -69,7 +69,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
+        return _range_reader<encoding>(_data, _data + _size);
     }
 
 private:

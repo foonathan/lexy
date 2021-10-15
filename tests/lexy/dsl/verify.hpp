@@ -543,8 +543,7 @@ constexpr auto _get_input(Encoding, CharT... cs)
 
         constexpr auto reader() const&
         {
-            using reader_t = lexy::_detail::range_reader<Encoding, const char_type*>;
-            return reader_t(array, array + sizeof...(CharT));
+            return lexy::_range_reader<Encoding>(array, array + sizeof...(CharT));
         }
     };
 

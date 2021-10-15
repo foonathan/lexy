@@ -13,6 +13,64 @@
 
 namespace lexy
 {
+// The reader used by the buffer if it can use a sentinel.
+template <typename Encoding>
+class _br
+{
+public:
+    using encoding = Encoding;
+    using iterator = const typename Encoding::char_type*;
+
+    explicit _br(iterator begin) noexcept : _cur(begin) {}
+
+    auto peek() const noexcept
+    {
+        // The last one will be EOF.
+        return *_cur;
+    }
+
+    void bump() noexcept
+    {
+        ++_cur;
+    }
+
+    iterator position() const noexcept
+    {
+        return _cur;
+    }
+
+    void set_position(iterator new_pos) noexcept
+    {
+        _cur = new_pos;
+    }
+
+private:
+    iterator _cur;
+};
+
+// We use aliases for the three encodings that can actually use it.
+// (i.e. where char_type == int_type).
+LEXY_INSTANTIATION_NEWTYPE(_bra, _br, lexy::ascii_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_br8, _br, lexy::utf8_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_br32, _br, lexy::utf32_encoding);
+
+// Create the appropriate buffer reader.
+template <typename Encoding>
+constexpr auto _buffer_reader(const typename Encoding::char_type* data)
+{
+    if constexpr (std::is_same_v<Encoding, lexy::ascii_encoding>)
+        return _bra(data);
+    else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+        return _br8(data);
+    else if constexpr (std::is_same_v<Encoding, lexy::utf32_encoding>)
+        return _br32(data);
+    else
+        return _br<Encoding>(data);
+}
+} // namespace lexy
+
+namespace lexy
+{
 /// Stores the input that will be parsed.
 /// For encodings with spare code points, it can append an EOF sentinel.
 /// This allows branch-less detection of EOF.
@@ -168,46 +226,12 @@ public:
     auto reader() const& noexcept
     {
         if constexpr (_has_sentinel)
-            return _sentinel_reader(_data);
+            return _buffer_reader<encoding>(_data);
         else
-            return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
+            return _range_reader<encoding>(_data, _data + _size);
     }
 
 private:
-    class _sentinel_reader
-    {
-    public:
-        using encoding = Encoding;
-        using iterator = const char_type*;
-
-        auto peek() const noexcept
-        {
-            // The last one will be EOF.
-            return *_cur;
-        }
-
-        void bump() noexcept
-        {
-            ++_cur;
-        }
-
-        iterator position() const noexcept
-        {
-            return _cur;
-        }
-
-        void set_position(iterator new_pos) noexcept
-        {
-            _cur = new_pos;
-        }
-
-    private:
-        explicit _sentinel_reader(iterator begin) noexcept : _cur(begin) {}
-
-        iterator _cur;
-        friend buffer;
-    };
-
     char_type* allocate(std::size_t size) const
     {
         if constexpr (_has_sentinel)
