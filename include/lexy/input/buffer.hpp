@@ -74,8 +74,7 @@ namespace lexy
 /// Stores the input that will be parsed.
 /// For encodings with spare code points, it can append an EOF sentinel.
 /// This allows branch-less detection of EOF.
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Encoding = default_encoding, typename MemoryResource = void>
 class buffer
 {
     static constexpr auto _has_sentinel
@@ -270,7 +269,7 @@ buffer(const View&, MemoryResource*)
 template <typename Encoding, encoding_endianness Endian>
 struct _make_buffer
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -322,7 +321,7 @@ struct _make_buffer
 template <>
 struct _make_buffer<utf8_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -341,7 +340,7 @@ struct _make_buffer<utf8_encoding, encoding_endianness::bom>
 template <>
 struct _make_buffer<utf16_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -362,7 +361,7 @@ struct _make_buffer<utf16_encoding, encoding_endianness::bom>
 template <>
 struct _make_buffer<utf32_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -387,16 +386,13 @@ template <typename Encoding, encoding_endianness Endianness>
 constexpr auto make_buffer_from_raw = _make_buffer<Encoding, Endianness>{};
 
 //=== convenience typedefs ===//
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
 
-template <typename Tag, typename Encoding = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Tag, typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
 
-template <typename Production, typename Encoding = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Production, typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_error_context = error_context<Production, buffer<Encoding, MemoryResource>>;
 } // namespace lexy
 

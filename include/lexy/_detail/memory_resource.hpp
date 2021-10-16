@@ -75,6 +75,7 @@ class _memory_resource_ptr_empty
 {
 public:
     constexpr explicit _memory_resource_ptr_empty(MemoryResource*) noexcept {}
+    constexpr explicit _memory_resource_ptr_empty(void*) noexcept {}
 
     constexpr auto operator*() const noexcept
     {
@@ -130,15 +131,21 @@ private:
     MemoryResource* _resource;
 };
 
+// clang-format off
 template <typename MemoryResource>
-using memory_resource_ptr = std::conditional_t<std::is_empty_v<MemoryResource>,
-                                               _memory_resource_ptr_empty<MemoryResource>,
-                                               _memory_resource_ptr<MemoryResource>>;
+using memory_resource_ptr
+    = std::conditional_t<std::is_void_v<MemoryResource>,
+            _memory_resource_ptr_empty<default_memory_resource>,
+            std::conditional_t<std::is_empty_v<MemoryResource>,
+                _memory_resource_ptr_empty<MemoryResource>,
+                _memory_resource_ptr<MemoryResource>>>;
+// clang-format on
 
-template <typename MemoryResource>
+template <typename MemoryResource,
+          typename
+          = std::enable_if_t<std::is_void_v<MemoryResource> || std::is_empty_v<MemoryResource>>>
 constexpr MemoryResource* get_memory_resource()
 {
-    static_assert(std::is_empty_v<MemoryResource>, "need to pass a MemoryResource ptr");
     return nullptr;
 }
 } // namespace lexy::_detail

@@ -52,8 +52,7 @@ file_error read_stdin(file_callback cb, void* user_data);
 
 namespace lexy
 {
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Encoding = default_encoding, typename MemoryResource = void>
 class read_file_result
 {
 public:
@@ -138,8 +137,7 @@ struct _read_file_user_data
 
 /// Reads the file at the specified path into a buffer.
 template <typename Encoding          = default_encoding,
-          encoding_endianness Endian = encoding_endianness::bom,
-          typename MemoryResource    = _detail::default_memory_resource>
+          encoding_endianness Endian = encoding_endianness::bom, typename MemoryResource = void>
 auto read_file(const char*     path,
                MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     -> read_file_result<Encoding, MemoryResource>
@@ -151,8 +149,7 @@ auto read_file(const char*     path,
 
 /// Reads stdin into a buffer.
 template <typename Encoding          = default_encoding,
-          encoding_endianness Endian = encoding_endianness::bom,
-          typename MemoryResource    = _detail::default_memory_resource>
+          encoding_endianness Endian = encoding_endianness::bom, typename MemoryResource = void>
 auto read_stdin(MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     -> read_file_result<Encoding, MemoryResource>
 {

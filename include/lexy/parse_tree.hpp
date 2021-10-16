@@ -348,8 +348,7 @@ private:
 //=== parse_tree ===//
 namespace lexy
 {
-template <typename Reader, typename TokenKind = void,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Reader, typename TokenKind = void, typename MemoryResource = void>
 class parse_tree
 {
 public:
@@ -416,8 +415,7 @@ private:
     std::size_t                          _depth;
 };
 
-template <typename Input, typename TokenKind = void,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Input, typename TokenKind = void, typename MemoryResource = void>
 using parse_tree_for = lexy::parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>;
 
 template <typename Reader, typename TokenKind, typename MemoryResource>
