@@ -13,21 +13,22 @@
 //=== parse_context ===//
 namespace lexy
 {
-template <typename Production, typename Handler, typename Reader>
-constexpr auto do_action(Handler&& handler, Reader& reader);
-}
-
-namespace lexy::_detail
+namespace _detail
 {
-template <typename Handler, typename Production>
-using handler_marker = typename Handler::template marker<Production>;
+    struct final_parser;
+
+    template <typename Production>
+    struct production_parser;
+} // namespace _detail
 
 template <typename Production, typename Handler, typename Reader>
 constexpr auto do_action(Handler&& handler, Reader& reader);
 
 template <typename Handler, typename Production, typename RootProduction>
-class parse_context
+class _pc
 {
+    using handler_marker = typename Handler::template marker<Production>;
+
 public:
     //=== parse context ===//
     using handler         = Handler;
@@ -40,10 +41,10 @@ public:
     }
 
     template <typename Event, typename... Args>
-    constexpr auto on(Event ev, Args&&... args) -> std::enable_if_t<
-        !std::is_base_of_v<parse_events::_production_event, Event>,
-        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker<Handler, Production>&),
-                                           ev, LEXY_FWD(args)...))>
+    constexpr auto on(Event ev, Args&&... args)
+        -> std::enable_if_t<!std::is_base_of_v<parse_events::_production_event, Event>,
+                            decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker&),
+                                                               ev, LEXY_FWD(args)...))>
     {
         LEXY_ASSERT(_handler, "using already finished context");
         return _handler->on(_marker, ev, LEXY_FWD(args)...);
@@ -70,7 +71,7 @@ private:
 #endif
 
     template <typename Iterator>
-    constexpr explicit parse_context(Handler& handler, Iterator begin)
+    constexpr explicit _pc(Handler& handler, Iterator begin)
     : _handler(&handler), _marker(handler.on(parse_events::production_start<Production>{}, begin))
     {}
 
@@ -80,7 +81,7 @@ private:
         // If the new production is a token production, need to re-root it.
         using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
                                             ChildProduction, root_production>;
-        return parse_context<Handler, ChildProduction, new_root>(*_handler, begin);
+        return _pc<Handler, ChildProduction, new_root>(*_handler, begin);
     }
 
     template <typename Iterator, typename... Args>
@@ -98,19 +99,19 @@ private:
         _handler = nullptr; // invalidate
     }
 
-    Handler*                            _handler;
-    handler_marker<Handler, Production> _marker;
+    Handler*       _handler;
+    handler_marker _marker;
 
     template <typename, typename, typename>
-    friend class parse_context;
+    friend class _pc;
 
-    friend struct final_parser;
+    friend struct _detail::final_parser;
     template <typename>
-    friend struct production_parser;
+    friend struct _detail::production_parser;
     template <typename P, typename H, typename Reader>
-    friend constexpr auto lexy::do_action(H&& handler, Reader& reader);
+    friend constexpr auto do_action(H&& handler, Reader& reader);
 };
-} // namespace lexy::_detail
+} // namespace lexy
 
 //=== do_action ===//
 namespace lexy::_detail
@@ -172,7 +173,7 @@ constexpr auto do_action(Handler&& handler, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
 
-    _detail::parse_context<Handler, Production, Production> context(handler, reader.position());
+    _pc<Handler, Production, Production> context(handler, reader.position());
 
     using parser = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
     if (parser::parse(context, reader))
