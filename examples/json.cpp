@@ -310,6 +310,11 @@ struct json_value : lexy::transparent_production
 // Entry point of the production.
 struct json
 {
+    // The maximum level of nesting of JSON data structures,
+    // i.e. how many `dsl::recurse` calls are allowed.
+    // json.org comes with a test suite that checks for this nesting level.
+    static constexpr auto max_recursion_depth = 19;
+
     // Whitespace is a sequence of space, tab, carriage return, or newline.
     // Add your comment syntax here.
     static constexpr auto whitespace = dsl::ascii::space / dsl::ascii::newline;

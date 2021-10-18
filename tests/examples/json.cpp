@@ -108,6 +108,11 @@ TEST_CASE("fail17")
     fail(R"(["Illegal backslash escape: \017"])");
 }
 
+TEST_CASE("fail18")
+{
+    fail(R"([[[[[[[[[[[[[[[[[[[["Too deep"]]]]]]]]]]]]]]]]]]]])");
+}
+
 TEST_CASE("fail19")
 {
     fail(R"({"Missing colon" null})");
