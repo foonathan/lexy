@@ -299,24 +299,24 @@ public:
     template <typename Production, typename Iterator>
     void on(const marker<Production>&, _ev::recovery_start, Iterator pos)
     {
-        if (_cur_depth > _opts.max_tree_depth)
-            return;
-
-        const auto loc = _locations.find(pos, _anchor);
-        _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
-        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
-        _out = _detail::write_str(_out, "error recovery");
-        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
-        _out = _detail::write_str(_out, ":");
-        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        if (_cur_depth == _opts.max_tree_depth)
+        if (_cur_depth <= _opts.max_tree_depth)
         {
-            // Print an ellipsis instead of children.
-            _out = _detail::write_str(_out, " ");
-            _out = _detail::write_ellipsis(_out, _opts);
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
+            _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+            _out = _detail::write_str(_out, "error recovery");
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+            _out = _detail::write_str(_out, ":");
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            if (_cur_depth == _opts.max_tree_depth)
+            {
+                // Print an ellipsis instead of children.
+                _out = _detail::write_str(_out, " ");
+                _out = _detail::write_ellipsis(_out, _opts);
+            }
         }
 
         // We can no longer merge tokens.

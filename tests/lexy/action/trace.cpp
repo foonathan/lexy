@@ -474,6 +474,18 @@ TEST_CASE("trace")
  1: 10:   -x
  1: 10: -x
 )");
+        CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
+ 1:  1: - token: Hello
+ 1:  6: - whitespace: \u0020
+ 1:  7: - debug: greeting
+ 1:  7: - object:
+ 1:  7:   - alphabet: ...
+ 1:  7:   - id: ...
+ 1:  7:   - number: ...
+ 1:  7:   - list: ...
+ 1: 17:   - finish
+ 1: 17: - finish
+)");
 
         auto higher_limit           = opts;
         higher_limit.max_tree_depth = 3;
