@@ -19,17 +19,38 @@ namespace _detail
 
     template <typename Production>
     struct production_parser;
+
+    template <typename Handler>
+    struct parse_context_control_block
+    {
+        Handler handler;
+        int     cur_depth, max_depth;
+
+        constexpr parse_context_control_block(Handler&& handler, std::size_t max_depth)
+        : handler(LEXY_MOV(handler)), cur_depth(0), max_depth(static_cast<int>(max_depth))
+        {}
+    };
 } // namespace _detail
 
-template <typename Production, typename Handler, typename Reader>
-constexpr auto do_action(Handler&& handler, Reader& reader);
+template <typename Handler, typename Production>
+using action_result_type
+    = decltype(LEXY_DECLVAL(Handler &&)
+                   .get_action_result(true,
+                                      LEXY_DECLVAL(typename Handler::template marker<Production>)));
 
 template <typename Handler, typename Production, typename RootProduction>
 class _pc
 {
-    using handler_marker = typename Handler::template marker<Production>;
+    using handler_marker  = typename Handler::template marker<Production>;
+    using control_block_t = _detail::parse_context_control_block<Handler>;
 
 public:
+    constexpr control_block_t& control_block()
+    {
+        LEXY_ASSERT(_cb, "using already finished context");
+        return *_cb;
+    }
+
     //=== parse context ===//
     using handler         = Handler;
     using production      = Production;
@@ -46,8 +67,8 @@ public:
                             decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker&),
                                                                ev, LEXY_FWD(args)...))>
     {
-        LEXY_ASSERT(_handler, "using already finished context");
-        return _handler->on(_marker, ev, LEXY_FWD(args)...);
+        LEXY_ASSERT(_cb, "using already finished context");
+        return _cb->handler.on(_marker, ev, LEXY_FWD(args)...);
     }
 
     //=== context variables ===//
@@ -71,8 +92,8 @@ private:
 #endif
 
     template <typename Iterator>
-    constexpr explicit _pc(Handler& handler, Iterator begin)
-    : _handler(&handler), _marker(handler.on(parse_events::production_start<Production>{}, begin))
+    constexpr explicit _pc(control_block_t* cb, Iterator begin)
+    : _cb(cb), _marker(cb->handler.on(parse_events::production_start<Production>{}, begin))
     {}
 
     template <typename ChildProduction, typename Iterator>
@@ -81,26 +102,26 @@ private:
         // If the new production is a token production, need to re-root it.
         using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
                                             ChildProduction, root_production>;
-        return _pc<Handler, ChildProduction, new_root>(*_handler, begin);
+        return _pc<Handler, ChildProduction, new_root>(_cb, begin);
     }
 
     template <typename Iterator, typename... Args>
     constexpr void on(parse_events::production_finish<Production> ev, Iterator end,
                       Args&&... args) &&
     {
-        _handler->on(_marker, ev, end, LEXY_FWD(args)...);
-        _handler = nullptr; // invalidate
+        _cb->handler.on(_marker, ev, end, LEXY_FWD(args)...);
+        _cb = nullptr; // invalidate
     }
 
     template <typename Iterator>
     constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
     {
-        _handler->on(_marker, ev, pos);
-        _handler = nullptr; // invalidate
+        _cb->handler.on(_marker, ev, pos);
+        _cb = nullptr; // invalidate
     }
 
-    Handler*       _handler;
-    handler_marker _marker;
+    control_block_t* _cb;
+    handler_marker   _marker;
 
     template <typename, typename, typename>
     friend class _pc;
@@ -109,7 +130,7 @@ private:
     template <typename>
     friend struct _detail::production_parser;
     template <typename P, typename H, typename Reader>
-    friend constexpr auto do_action(H&& handler, Reader& reader);
+    friend constexpr auto do_action(H&& handler, Reader& reader) -> action_result_type<H, P>;
 };
 } // namespace lexy
 
@@ -170,20 +191,23 @@ namespace lexy
 {
 template <typename Production, typename Handler, typename Reader>
 constexpr auto do_action(Handler&& handler, Reader& reader)
+    -> action_result_type<Handler, Production>
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
 
-    _pc<Handler, Production, Production> context(handler, reader.position());
+    _detail::parse_context_control_block<Handler> control_block(LEXY_MOV(handler),
+                                                                max_recursion_depth<Production>());
+    _pc<Handler, Production, Production>          context(&control_block, reader.position());
 
     using parser = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
     if (parser::parse(context, reader))
     {
-        return LEXY_MOV(handler).get_action_result(true, LEXY_MOV(context._marker));
+        return LEXY_MOV(control_block.handler).get_action_result(true, LEXY_MOV(context._marker));
     }
     else
     {
         LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
-        return LEXY_MOV(handler).get_action_result(false, LEXY_MOV(context._marker));
+        return LEXY_MOV(control_block.handler).get_action_result(false, LEXY_MOV(context._marker));
     }
 }
 } // namespace lexy

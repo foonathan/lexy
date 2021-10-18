@@ -37,7 +37,7 @@ struct prod_token : lexy::token_production
 {};
 } // namespace
 
-TEST_CASE("production whitespace")
+TEST_CASE("production_whitespace")
 {
     CHECK(std::is_same_v<const lexy::production_whitespace<prod_token, prod_ws>, const void>);
     CHECK(
@@ -45,5 +45,19 @@ TEST_CASE("production whitespace")
     CHECK(
         std::is_same_v<const lexy::production_whitespace<prod_ws, prod>, decltype(lexy::dsl::any)>);
     CHECK(std::is_same_v<const lexy::production_whitespace<prod, prod>, const void>);
+}
+
+namespace
+{
+struct prod_depth
+{
+    static constexpr auto max_recursion_depth = 32;
+};
+} // namespace
+
+TEST_CASE("max_recursion_depth()")
+{
+    CHECK(lexy::max_recursion_depth<prod>() == 1024);
+    CHECK(lexy::max_recursion_depth<prod_depth>() == 32);
 }
 

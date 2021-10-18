@@ -233,6 +233,15 @@ TEST_CASE("dsl::p")
     }
 }
 
+namespace
+{
+template <std::size_t N>
+struct with_max_depth
+{
+    static constexpr auto max_recursion_depth = N;
+};
+} // namespace
+
 TEST_CASE("dsl::recurse")
 {
     constexpr auto rec = dsl::recurse<struct test>;
@@ -356,6 +365,65 @@ TEST_CASE("dsl::recurse")
         CHECK(trailing_ws.status == test_result::success);
         CHECK(trailing_ws.trace
               == test_trace().production("inner").token("ab").token("c").finish().whitespace(".."));
+    }
+
+    SUBCASE("max depth")
+    {
+        struct production;
+        struct inner : production_for<decltype(dsl::recurse<production>)>
+        {
+            static constexpr auto name()
+            {
+                return "inner";
+            }
+        };
+        struct production : test_production_for<decltype(dsl::if_(LEXY_LIT("a") >> dsl::p<inner>))>,
+                            with_max_depth<3>
+        {};
+
+        constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                      [](const char*, inner) { return 1; });
+
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto one       = LEXY_VERIFY_P(production, "a");
+        auto one_trace = test_trace().token("a").production("inner").production("test_production");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == one_trace);
+
+        auto two = LEXY_VERIFY_P(production, "aa");
+        auto two_trace
+            = test_trace(one_trace).token("a").production("inner").production("test_production");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 1);
+        CHECK(two.trace == two_trace);
+
+        auto three = LEXY_VERIFY_P(production, "aaa");
+        auto three_trace
+            = test_trace(two_trace).token("a").production("inner").production("test_production");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 1);
+        CHECK(three.trace == three_trace);
+
+        auto four       = LEXY_VERIFY_P(production, "aaaa");
+        auto four_trace = test_trace(three_trace)
+                              .token("a")
+                              .production("inner")
+                              .error(4, 4, "maximum recursion depth exceeded")
+                              .cancel()
+                              .cancel()
+                              .cancel()
+                              .cancel()
+                              .cancel()
+                              .cancel()
+                              .cancel()
+                              .cancel();
+        CHECK(four.status == test_result::fatal_error);
+        CHECK(four.trace == four_trace);
     }
 }
 

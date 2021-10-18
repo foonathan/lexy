@@ -8,6 +8,7 @@
 #include <lexy/action/base.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/error.hpp>
 
 namespace lexyd
 {
@@ -107,13 +108,55 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
 /// Parses the production.
 template <typename Production>
 constexpr auto p = _prd<Production>{};
+} // namespace lexyd
 
-template <typename Production>
+namespace lexy
+{
+struct max_recursion_depth_exceeded
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "maximum recursion depth exceeded";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Production, typename DepthError = void>
 struct _rec : rule_base
 {
     template <typename NextParser>
-    struct p : _prd<Production>::template p<NextParser>
-    {};
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto& control_block = context.production_context().control_block();
+            LEXY_ASSERT(control_block.max_depth > 0, "dsl::recurse<P> is disabled in this context");
+
+            // We're doing a recursive call, check for an exceeded depth.
+            if (control_block.cur_depth >= control_block.max_depth)
+            {
+                // We did report error from which we can't recover.
+                using tag = lexy::_detail::type_or<DepthError, lexy::max_recursion_depth_exceeded>;
+                auto err  = lexy::error<Reader, tag>(reader.position());
+                context.on(_ev::error{}, err);
+                return false;
+            }
+
+            // We parse the production, but with a temporarily incresed depth.
+            ++control_block.cur_depth;
+            auto result = lexy::parser_for<_prd<Production>, NextParser>::parse(context, reader,
+                                                                                LEXY_FWD(args)...);
+            --control_block.cur_depth;
+
+            return result;
+        }
+    };
+
+    template <typename Tag>
+    static constexpr _rec<Production, Tag> max_depth_error = _rec<Production, Tag>{};
 };
 
 /// Parses the production, recursively.

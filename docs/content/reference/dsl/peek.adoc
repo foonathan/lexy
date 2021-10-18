@@ -49,7 +49,7 @@ Values::
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
 
-WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities and it can't use recursion.
 
 CAUTION: This rule requires backtracking, which can slow down parsing.
 
@@ -94,7 +94,7 @@ Values::
 
 NOTE: Automatic {{% docref whitespace %}} skipping is disabled while parsing `rule`.
 
-WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities and it can't use recursion.
 
 CAUTION: This rule requires backtracking, which can slow down parsing.
 

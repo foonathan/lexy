@@ -20,7 +20,8 @@ struct tag_no_whitespace
 template <typename Rule>
 struct ws_production
 {
-    static constexpr auto rule = lexy::dsl::loop(Rule{} | lexy::dsl::break_);
+    static constexpr auto max_recursion_depth = 0;
+    static constexpr auto rule                = lexy::dsl::loop(Rule{} | lexy::dsl::break_);
 };
 
 template <typename Context>

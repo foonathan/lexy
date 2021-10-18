@@ -152,7 +152,8 @@ struct _token : token_base<_token<Rule>>
 {
     struct _production
     {
-        static constexpr auto rule = Rule{};
+        static constexpr auto max_recursion_depth = 0;
+        static constexpr auto rule                = Rule{};
     };
 
     template <typename Reader>

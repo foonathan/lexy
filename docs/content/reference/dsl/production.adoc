@@ -101,22 +101,48 @@ it is still disabled, unless `P` explicitly defines a new whitespace rule.
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct max_recursion_depth_exceeded {};
+}
+
 namespace lexy::dsl
 {
+    struct _recurse_ // models _rule_
+    {
+        template <typename Tag>
+        static constexpr _recurse_ max_depth_error;
+    };
+
     template <_production_ P>
-    constexpr _rule_ auto recurse;
+    constexpr _recurse_ auto recurse;
 }
 ----
 
 [.lead]
 `recurse` is a rule that parses the production `P` but supports recursion.
 
-It behaves exactly the same as the `p` rule.
-The only difference is that `P` does not need to be a complete type, which allows recursion.
+It behaves similar to the `p` rule, but `P` does not need to a be a complete type, which allows recursion.
 For the same reason, `recurse<P>` is never a branch rule.
+
+Parsing::
+  Checks whether the current depth of recursive production call exceeds the maximum parse depth,
+  which is determined by {{% docref "lexy::max_recursion_depth" %}}.
+  Fails, if that is the case.
+  Otherwise, parses `p<P>`, i.e. the production `P`.
+Errors::
+  * A generic error with the specified `Tag` or `lexy::max_recursion_depth_exceeded` if the recursive depth is exceeded,
+    at the position where it would have started to match the production.
+    It then fails without recovering.
+  * All errors raised by parsing `p<P>`.
 
 {{% playground-example recurse "Parse a parenthesized expression" %}}
 
-WARNING: Left recursion will create an infinite loop.
+{{% playground-example recurse_limit "Parse a parenthesized expression with a recursion limit" %}}
+
+WARNING: Left recursion will create a max recursion error.
 Use {{% docref "lexy::dsl::loop" %}} or {{% docref "lexy::dsl::list"%}} instead.
+
+NOTE: The recursion depth only counts productions parsed by `recurse`; intermediate productions parsed using `p` are ignored.
+In particular, the nesting level of `p` rules, which is statically determined by the grammar and not by the input, is allowed to exceed the maximum recursion depth.
 

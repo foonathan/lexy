@@ -115,5 +115,5 @@ but it is skipped at the end, as it is a token rule.
 CAUTION: While `token` is optimized itself, parsing `rule` can be arbitrarily expensive.
 As such, it should only be used when absolutely required.
 
-WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities.
+WARNING: `rule` does not have access to any context variables created by the context-sensitive parsing facilities and it can't use recursion.
 

@@ -157,6 +157,18 @@ using production_whitespace = decltype(_production_whitespace<Production, Root>(
 namespace lexy
 {
 template <typename Production>
+using _detect_max_recursion_depth = decltype(Production::max_recursion_depth);
+
+template <typename EntryProduction>
+LEXY_CONSTEVAL std::size_t max_recursion_depth()
+{
+    if constexpr (_detail::is_detected<_detect_max_recursion_depth, EntryProduction>)
+        return EntryProduction::max_recursion_depth;
+    else
+        return 1024; // Arbitrary power of two.
+}
+
+template <typename Production>
 struct production_value
 {
     static constexpr auto get = Production::value;
