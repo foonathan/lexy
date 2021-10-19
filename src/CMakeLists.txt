@@ -8,6 +8,7 @@ set(header_files
         ${include_dir}/_detail/ascii_table.hpp
         ${include_dir}/_detail/assert.hpp
         ${include_dir}/_detail/buffer_builder.hpp
+        ${include_dir}/_detail/code_point.hpp
         ${include_dir}/_detail/config.hpp
         ${include_dir}/_detail/detect.hpp
         ${include_dir}/_detail/integer_sequence.hpp
