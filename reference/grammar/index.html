@@ -241,9 +241,34 @@ Instead, all child nodes of <code>Production</code> are added to its parent node
 </div>
 </div>
 </div>
+<div class=sect1>
+<h2 id=max_recursion_depth>Function <code>lexy::max_recursion_depth</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/grammar.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>EntryProduction</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>consteval</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>max_recursion_depth</span><span class=tok-p>();</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>Returns the maximum recursion depth of a grammar given its entry production.</p>
+</div>
+<div class=paragraph>
+<p>If the entry production has a <code>static std::size_t</code> member named <code>max_recursion_depth</code> (i.e. <code>EntryProduction::max_recursion_depth</code> is well-formed), returns that value.
+Otherwise returns an implementation-defined "big" value (currently 1024).</p>
+</div>
+<div class=paragraph>
+<p>If the recursion depth of <a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a> exceeds this value, an error is raised.</p>
+</div>
+</div>
+</div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::token_kind</code></a></li><li><a href=/reference/dsl/#doc>rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::token_kind</code></a></li><li><a href=/reference/dsl/#doc>rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

@@ -39,6 +39,14 @@
 #define LEXY_DECLVAL(...)                                                                          \
     reinterpret_cast<::lexy::_detail::add_rvalue_ref<__VA_ARGS__>>(*reinterpret_cast<char*>(1024))
 
+/// Creates a new type from the instantiation of a template.
+/// This is used to shorten type names.
+#define LEXY_INSTANTIATION_NEWTYPE(Name, Templ, ...)                                               \
+    struct Name : Templ<__VA_ARGS__>                                                               \
+    {                                                                                              \
+        using Templ<__VA_ARGS__>::Templ;                                                           \
+    }
+
 namespace lexy::_detail
 {
 template <typename T>
@@ -338,6 +346,12 @@ public:
         return this->_value;
     }
 
+    template <typename Fn, typename... Args>
+    constexpr T& emplace_result(Fn&& fn, Args&&... args)
+    {
+        return emplace(LEXY_FWD(fn)(LEXY_FWD(args)...));
+    }
+
     constexpr explicit operator bool() const noexcept
     {
         return this->_init;
@@ -393,6 +407,11 @@ public:
     {
         LEXY_PRECONDITION(!*this);
         _init = true;
+    }
+    template <typename Fn, typename... Args>
+    constexpr void emplace_result(Fn&& fn, Args&&... args)
+    {
+        LEXY_FWD(fn)(LEXY_FWD(args)...);
     }
 
     constexpr explicit operator bool() const noexcept
@@ -968,6 +987,18 @@ using production_whitespace = decltype(_production_whitespace<Production, Root>(
 
 namespace lexy
 {
+template <typename Production>
+using _detect_max_recursion_depth = decltype(Production::max_recursion_depth);
+
+template <typename EntryProduction>
+LEXY_CONSTEVAL std::size_t max_recursion_depth()
+{
+    if constexpr (_detail::is_detected<_detect_max_recursion_depth, EntryProduction>)
+        return EntryProduction::max_recursion_depth;
+    else
+        return 1024; // Arbitrary power of two.
+}
+
 template <typename Production>
 struct production_value
 {
@@ -1576,16 +1607,17 @@ public:
 };
 #endif
 
-namespace lexy::_detail
+namespace lexy
 {
+// A generic reader from an iterator range.
 template <typename Encoding, typename Iterator, typename Sentinel = Iterator>
-class range_reader
+class _rr
 {
 public:
     using encoding = Encoding;
     using iterator = Iterator;
 
-    constexpr explicit range_reader(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
+    constexpr explicit _rr(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {
         LEXY_PRECONDITION(lexy::_detail::precedes(begin, end));
     }
@@ -1620,7 +1652,36 @@ private:
     Iterator                   _cur;
     LEXY_EMPTY_MEMBER Sentinel _end;
 };
-} // namespace lexy::_detail
+
+// A special version where the iterators are pointers.
+template <typename Encoding>
+LEXY_INSTANTIATION_NEWTYPE(_pr, _rr, Encoding, const typename Encoding::char_type*);
+
+// Aliases for the most common encodings.
+LEXY_INSTANTIATION_NEWTYPE(_prd, _pr, lexy::default_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_pr8, _pr, lexy::utf8_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_prb, _pr, lexy::byte_encoding);
+
+template <typename Encoding, typename Iterator, typename Sentinel>
+constexpr auto _range_reader(Iterator begin, Sentinel end)
+{
+    if constexpr (std::is_pointer_v<Iterator>)
+    {
+        if constexpr (std::is_same_v<Encoding, lexy::default_encoding>)
+            return _prd(begin, end);
+        else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+            return _pr8(begin, end);
+        else if constexpr (std::is_same_v<Encoding, lexy::byte_encoding>)
+            return _prb(begin, end);
+        else
+            return _pr<Encoding>(begin, end);
+    }
+    else
+    {
+        return _rr<Encoding, Iterator, Sentinel>(begin, end);
+    }
+}
+} // namespace lexy
 
 namespace lexy
 {
@@ -1636,8 +1697,7 @@ template <typename Reader>
 constexpr auto partial_reader(const Reader&, typename Reader::iterator begin,
                               typename Reader::iterator end)
 {
-    using reader_t = _detail::range_reader<typename Reader::encoding, typename Reader::iterator>;
-    return reader_t(begin, end);
+    return _range_reader<typename Reader::encoding>(begin, end);
 }
 
 /// Creates a reader that only reads until the given end.
@@ -1665,7 +1725,6 @@ struct production_start : _production_event
 {};
 /// End of the given production.
 /// Arguments: position, values
-/// Returns: value produced  by production.
 template <typename Production>
 struct production_finish : _production_event
 {};
@@ -1952,18 +2011,46 @@ LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
 
 
 //=== parse_context ===//
-namespace lexy::_detail
+namespace lexy
 {
-template <typename Handler, typename Production>
-using handler_production_result = typename Handler::template production_result<Production>;
+namespace _detail
+{
+    struct final_parser;
+
+    template <typename Production>
+    struct production_parser;
+
+    template <typename Handler>
+    struct parse_context_control_block
+    {
+        Handler handler;
+        int     cur_depth, max_depth;
+
+        constexpr parse_context_control_block(Handler&& handler, std::size_t max_depth)
+        : handler(LEXY_MOV(handler)), cur_depth(0), max_depth(static_cast<int>(max_depth))
+        {}
+    };
+} // namespace _detail
 
 template <typename Handler, typename Production>
-using handler_marker = typename Handler::template marker<Production>;
+using action_result_type
+    = decltype(LEXY_DECLVAL(Handler &&)
+                   .get_action_result(true,
+                                      LEXY_DECLVAL(typename Handler::template marker<Production>)));
 
 template <typename Handler, typename Production, typename RootProduction>
-class parse_context
+class _pc
 {
+    using handler_marker  = typename Handler::template marker<Production>;
+    using control_block_t = _detail::parse_context_control_block<Handler>;
+
 public:
+    constexpr control_block_t& control_block()
+    {
+        LEXY_ASSERT(_cb, "using already finished context");
+        return *_cb;
+    }
+
     //=== parse context ===//
     using handler         = Handler;
     using production      = Production;
@@ -1975,13 +2062,13 @@ public:
     }
 
     template <typename Event, typename... Args>
-    constexpr auto on(Event ev, Args&&... args) -> std::enable_if_t<
-        !std::is_base_of_v<parse_events::_production_event, Event>,
-        decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker<Handler, Production>&),
-                                           ev, LEXY_FWD(args)...))>
+    constexpr auto on(Event ev, Args&&... args)
+        -> std::enable_if_t<!std::is_base_of_v<parse_events::_production_event, Event>,
+                            decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker&),
+                                                               ev, LEXY_FWD(args)...))>
     {
-        LEXY_ASSERT(_handler, "using already finished context");
-        return _handler->on(_marker, ev, LEXY_FWD(args)...);
+        LEXY_ASSERT(_cb, "using already finished context");
+        return _cb->handler.on(_marker, ev, LEXY_FWD(args)...);
     }
 
     //=== context variables ===//
@@ -2005,8 +2092,8 @@ private:
 #endif
 
     template <typename Iterator>
-    constexpr explicit parse_context(Handler& handler, Iterator begin)
-    : _handler(&handler), _marker(handler.on(parse_events::production_start<Production>{}, begin))
+    constexpr explicit _pc(control_block_t* cb, Iterator begin)
+    : _cb(cb), _marker(cb->handler.on(parse_events::production_start<Production>{}, begin))
     {}
 
     template <typename ChildProduction, typename Iterator>
@@ -2015,49 +2102,37 @@ private:
         // If the new production is a token production, need to re-root it.
         using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
                                             ChildProduction, root_production>;
-        return parse_context<Handler, ChildProduction, new_root>(*_handler, begin);
+        return _pc<Handler, ChildProduction, new_root>(_cb, begin);
     }
 
     template <typename Iterator, typename... Args>
     constexpr void on(parse_events::production_finish<Production> ev, Iterator end,
                       Args&&... args) &&
     {
-        using result_t = handler_production_result<Handler, Production>;
-        if constexpr (std::is_void_v<result_t>)
-        {
-            _handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...);
-            _result.emplace();
-        }
-        else
-        {
-            _result.emplace(_handler->on(LEXY_MOV(_marker), ev, end, LEXY_FWD(args)...));
-        }
-
-        _handler = nullptr; // invalidate
+        _cb->handler.on(_marker, ev, end, LEXY_FWD(args)...);
+        _cb = nullptr; // invalidate
     }
 
     template <typename Iterator>
     constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
     {
-        _handler->on(LEXY_MOV(_marker), ev, pos);
-        _handler = nullptr; // invalidate
+        _cb->handler.on(_marker, ev, pos);
+        _cb = nullptr; // invalidate
     }
 
-    Handler*                                                  _handler;
-    handler_marker<Handler, Production>                       _marker;
-    lazy_init<handler_production_result<Handler, Production>> _result;
+    control_block_t* _cb;
+    handler_marker   _marker;
 
     template <typename, typename, typename>
-    friend class parse_context;
+    friend class _pc;
 
-    friend struct final_parser;
+    friend struct _detail::final_parser;
     template <typename>
-    friend struct production_parser;
+    friend struct _detail::production_parser;
     template <typename P, typename H, typename Reader>
-    friend constexpr auto action_impl(H& handler, Reader& reader)
-        -> lazy_init<handler_production_result<H, P>>;
+    friend constexpr auto do_action(H&& handler, Reader& reader) -> action_result_type<H, P>;
 };
-} // namespace lexy::_detail
+} // namespace lexy
 
 //=== do_action ===//
 namespace lexy::_detail
@@ -2102,51 +2177,37 @@ struct production_parser
                                  lexy::whitespace_parser<Context, NextParser>, NextParser>;
 
         // Pass the produced value to the next parser.
-        using result_t = handler_production_result<typename Context::handler, Production>;
+        using result_t = decltype(LEXY_MOV(sub_context._marker).get_value());
         if constexpr (std::is_void_v<result_t>)
             return continuation::parse(context, reader, LEXY_FWD(args)...);
         else
             return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       LEXY_MOV(*sub_context._result));
+                                       LEXY_MOV(sub_context._marker).get_value());
     }
 };
-
-template <typename Production, typename Handler, typename Reader>
-constexpr auto action_impl(Handler& handler, Reader& reader)
-    -> lazy_init<handler_production_result<Handler, Production>>
-{
-    parse_context<Handler, Production, Production> context(handler, reader.position());
-
-    using parser = lexy::parser_for<lexy::production_rule<Production>, final_parser>;
-    if (!parser::parse(context, reader))
-    {
-        // We had an error, cancel the production.
-        LEXY_ASSERT(!context._result, "result must be empty on cancel");
-        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
-    }
-
-    return LEXY_MOV(context._result);
-}
 } // namespace lexy::_detail
 
 namespace lexy
 {
 template <typename Production, typename Handler, typename Reader>
 constexpr auto do_action(Handler&& handler, Reader& reader)
+    -> action_result_type<Handler, Production>
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
-    auto result = _detail::action_impl<Production>(handler, reader);
-    if (result)
+
+    _detail::parse_context_control_block<Handler> control_block(LEXY_MOV(handler),
+                                                                max_recursion_depth<Production>());
+    _pc<Handler, Production, Production>          context(&control_block, reader.position());
+
+    using parser = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
+    if (parser::parse(context, reader))
     {
-        using result_t = _detail::handler_production_result<Handler, Production>;
-        if constexpr (std::is_void_v<result_t>)
-            return LEXY_MOV(handler).template get_result_value<Production>();
-        else
-            return LEXY_MOV(handler).template get_result_value<Production>(LEXY_MOV(*result));
+        return LEXY_MOV(control_block.handler).get_action_result(true, LEXY_MOV(context._marker));
     }
     else
     {
-        return LEXY_MOV(handler).template get_result_empty<Production>();
+        LEXY_MOV(context).on(parse_events::production_cancel<Production>{}, reader.position());
+        return LEXY_MOV(control_block.handler).get_action_result(false, LEXY_MOV(context._marker));
     }
 }
 } // namespace lexy
@@ -3018,27 +3079,20 @@ public:
     : _sink(_get_error_sink(callback)), _input(&input)
     {}
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr auto get_result_value() && noexcept
-    {
-        return validate_result<ErrorCallback>(true, LEXY_MOV(_sink).finish());
-    }
-    template <typename Production>
-    constexpr auto get_result_empty() && noexcept
-    {
-        return validate_result<ErrorCallback>(false, LEXY_MOV(_sink).finish());
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
     {
         iterator position; // beginning of the production
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr auto get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return validate_result<ErrorCallback>(parse_result, LEXY_MOV(_sink).finish());
+    }
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
@@ -3167,6 +3221,7 @@ class _memory_resource_ptr_empty
 {
 public:
     constexpr explicit _memory_resource_ptr_empty(MemoryResource*) noexcept {}
+    constexpr explicit _memory_resource_ptr_empty(void*) noexcept {}
 
     constexpr auto operator*() const noexcept
     {
@@ -3222,15 +3277,21 @@ private:
     MemoryResource* _resource;
 };
 
+// clang-format off
 template <typename MemoryResource>
-using memory_resource_ptr = std::conditional_t<std::is_empty_v<MemoryResource>,
-                                               _memory_resource_ptr_empty<MemoryResource>,
-                                               _memory_resource_ptr<MemoryResource>>;
+using memory_resource_ptr
+    = std::conditional_t<std::is_void_v<MemoryResource>,
+            _memory_resource_ptr_empty<default_memory_resource>,
+            std::conditional_t<std::is_empty_v<MemoryResource>,
+                _memory_resource_ptr_empty<MemoryResource>,
+                _memory_resource_ptr<MemoryResource>>>;
+// clang-format on
 
-template <typename MemoryResource>
+template <typename MemoryResource,
+          typename
+          = std::enable_if_t<std::is_void_v<MemoryResource> || std::is_empty_v<MemoryResource>>>
 constexpr MemoryResource* get_memory_resource()
 {
-    static_assert(std::is_empty_v<MemoryResource>, "need to pass a MemoryResource ptr");
     return nullptr;
 }
 } // namespace lexy::_detail
@@ -3958,8 +4019,7 @@ private:
 //=== parse_tree ===//
 namespace lexy
 {
-template <typename Reader, typename TokenKind = void,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Reader, typename TokenKind = void, typename MemoryResource = void>
 class parse_tree
 {
 public:
@@ -4026,8 +4086,7 @@ private:
     std::size_t                          _depth;
 };
 
-template <typename Input, typename TokenKind = void,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Input, typename TokenKind = void, typename MemoryResource = void>
 using parse_tree_for = lexy::parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>;
 
 template <typename Reader, typename TokenKind, typename MemoryResource>
@@ -4666,28 +4725,21 @@ public:
         return LEXY_MOV(_validate).get_result(did_recover);
     }
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr auto get_result_value() && noexcept
-    {
-        return LEXY_MOV(_validate).template get_result_value<Production>();
-    }
-    template <typename Production>
-    constexpr auto get_result_empty() && noexcept
-    {
-        return LEXY_MOV(_validate).template get_result_empty<Production>();
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
     {
         typename Tree::builder::marker                                                builder;
         typename lexy::validate_handler<Input, Callback>::template marker<Production> validate;
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr auto get_action_result(bool parse_result, marker<Production>&& m) &&
+    {
+        return LEXY_MOV(_validate).get_action_result(parse_result, LEXY_MOV(m.validate));
+    }
 
     template <typename Production>
     constexpr auto on(parse_events::production_start<Production>, iterator pos)
@@ -4723,7 +4775,7 @@ public:
     }
 
     template <typename Production, typename... Args>
-    constexpr void on(marker<Production>&& m, parse_events::production_finish<Production>, iterator,
+    constexpr void on(marker<Production>& m, parse_events::production_finish<Production>, iterator,
                       Args&&...)
     {
         if (--_depth == 0)
@@ -4733,7 +4785,7 @@ public:
             _builder->finish_production(LEXY_MOV(m.builder));
     }
     template <typename Production>
-    constexpr void on(marker<Production>&& m, parse_events::production_cancel<Production>, iterator)
+    constexpr void on(marker<Production>& m, parse_events::production_cancel<Production>, iterator)
     {
         if (--_depth == 0)
             // Clear tree instead of production.
@@ -5051,28 +5103,18 @@ class match_handler
 public:
     constexpr match_handler() : _failed(false) {}
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr bool get_result_value() && noexcept
-    {
-        // Parsing succeeded or parsing recovered from an error.
-        // Return true, if we had an error, false otherwise.
-        return !_failed;
-    }
-    template <typename Production>
-    constexpr bool get_result_empty() && noexcept
-    {
-        // Parsing could not recover from an error, return false.
-        return false;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
-    {};
+    {
+        constexpr void get_value() && {}
+    };
+
+    template <typename Production>
+    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return parse_result && !_failed;
+    }
 
     template <typename Production, typename Iterator>
     constexpr marker<Production> on(parse_events::production_start<Production>, Iterator)
@@ -5256,7 +5298,8 @@ struct _token : token_base<_token<Rule>>
 {
     struct _production
     {
-        static constexpr auto rule = Rule{};
+        static constexpr auto max_recursion_depth = 0;
+        static constexpr auto rule                = Rule{};
     };
 
     template <typename Reader>
@@ -5672,7 +5715,7 @@ public:
     //=== reader ===//
     constexpr auto reader() const& noexcept
     {
-        return _detail::range_reader<Encoding, Iterator, Sentinel>(_begin, _end);
+        return _range_reader<Encoding>(_begin, _end);
     }
 
 private:
@@ -6795,23 +6838,6 @@ public:
         LEXY_PRECONDITION(_opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
     }
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    OutputIt get_result_value() && noexcept
-    {
-        *_out++ = '\n';
-        return _out;
-    }
-    template <typename Production>
-    OutputIt get_result_empty() && noexcept
-    {
-        *_out++ = '\n';
-        return _out;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
@@ -6819,7 +6845,16 @@ public:
         // The beginning of the previous production.
         // If the current production gets canceled, it needs to be restored.
         location previous_anchor;
+
+        constexpr void get_value() && {}
     };
+
+    template <typename Production>
+    constexpr OutputIt get_action_result(bool, marker<Production>&&) &&
+    {
+        *_out++ = '\n';
+        return _out;
+    }
 
     template <typename Production, typename Iterator>
     marker<Production> on(_ev::production_start<Production>, Iterator pos)
@@ -6857,7 +6892,7 @@ public:
     }
 
     template <typename Production, typename Iterator>
-    auto on(marker<Production>, _ev::list, Iterator)
+    auto on(const marker<Production>&, _ev::list, Iterator)
     {
         return lexy::noop.sink();
     }
@@ -6894,7 +6929,7 @@ public:
     }
 
     template <typename Production, typename Reader, typename Tag>
-    void on(marker<Production>, _ev::error, const lexy::error<Reader, Tag>& error)
+    void on(const marker<Production>&, _ev::error, const lexy::error<Reader, Tag>& error)
     {
         if (_cur_depth > _opts.max_tree_depth)
             return;
@@ -6974,24 +7009,24 @@ public:
     template <typename Production, typename Iterator>
     void on(const marker<Production>&, _ev::recovery_start, Iterator pos)
     {
-        if (_cur_depth > _opts.max_tree_depth)
-            return;
-
-        const auto loc = _locations.find(pos, _anchor);
-        _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
-        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
-        _out = _detail::write_str(_out, "error recovery");
-        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
-        _out = _detail::write_str(_out, ":");
-        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        if (_cur_depth == _opts.max_tree_depth)
+        if (_cur_depth <= _opts.max_tree_depth)
         {
-            // Print an ellipsis instead of children.
-            _out = _detail::write_str(_out, " ");
-            _out = _detail::write_ellipsis(_out, _opts);
+            const auto loc = _locations.find(pos, _anchor);
+            _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
+            _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+            _out = _detail::write_str(_out, "error recovery");
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+            _out = _detail::write_str(_out, ":");
+            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+            if (_cur_depth == _opts.max_tree_depth)
+            {
+                // Print an ellipsis instead of children.
+                _out = _detail::write_str(_out, " ");
+                _out = _detail::write_ellipsis(_out, _opts);
+            }
         }
 
         // We can no longer merge tokens.
@@ -7049,7 +7084,7 @@ public:
     }
 
     template <typename Production, typename Iterator, typename... Args>
-    void on(marker<Production>&&, _ev::production_finish<Production>, Iterator pos, Args&&...)
+    void on(marker<Production>&, _ev::production_finish<Production>, Iterator pos, Args&&...)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {
@@ -7060,7 +7095,7 @@ public:
         --_cur_depth;
     }
     template <typename Production, typename Iterator>
-    void on(marker<Production>&& m, _ev::production_cancel<Production>, Iterator pos)
+    void on(marker<Production>& m, _ev::production_cancel<Production>, Iterator pos)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {
@@ -9346,7 +9381,8 @@ struct tag_no_whitespace
 template <typename Rule>
 struct ws_production
 {
-    static constexpr auto rule = lexy::dsl::loop(Rule{} | lexy::dsl::break_);
+    static constexpr auto max_recursion_depth = 0;
+    static constexpr auto rule                = lexy::dsl::loop(Rule{} | lexy::dsl::break_);
 };
 
 template <typename Context>
@@ -9354,25 +9390,18 @@ struct whitespace_handler
 {
     Context* parent;
 
-    //=== result ===//
-    template <typename Production>
-    using production_result = void;
-
-    template <typename Production>
-    constexpr bool get_result_value() && noexcept
-    {
-        return true;
-    }
-    template <typename Production>
-    constexpr bool get_result_empty() && noexcept
-    {
-        return false;
-    }
-
     //=== events ===//
     template <typename Production>
     struct marker
-    {};
+    {
+        constexpr void get_value() && {}
+    };
+
+    template <typename Production>
+    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
+    {
+        return parse_result;
+    }
 
     template <typename Rule, typename Iterator>
     constexpr auto on(parse_events::production_start<ws_production<Rule>>, Iterator)
@@ -14158,6 +14187,7 @@ constexpr auto position = _pos{};
 
 
 
+
 namespace lexyd
 {
 /// Parses the rule of the production as if it were part of the current production.
@@ -14256,13 +14286,55 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
 /// Parses the production.
 template <typename Production>
 constexpr auto p = _prd<Production>{};
+} // namespace lexyd
 
-template <typename Production>
+namespace lexy
+{
+struct max_recursion_depth_exceeded
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "maximum recursion depth exceeded";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Production, typename DepthError = void>
 struct _rec : rule_base
 {
     template <typename NextParser>
-    struct p : _prd<Production>::template p<NextParser>
-    {};
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto& control_block = context.production_context().control_block();
+            LEXY_ASSERT(control_block.max_depth > 0, "dsl::recurse<P> is disabled in this context");
+
+            // We're doing a recursive call, check for an exceeded depth.
+            if (control_block.cur_depth >= control_block.max_depth)
+            {
+                // We did report error from which we can't recover.
+                using tag = lexy::_detail::type_or<DepthError, lexy::max_recursion_depth_exceeded>;
+                auto err  = lexy::error<Reader, tag>(reader.position());
+                context.on(_ev::error{}, err);
+                return false;
+            }
+
+            // We parse the production, but with a temporarily incresed depth.
+            ++control_block.cur_depth;
+            auto result = lexy::parser_for<_prd<Production>, NextParser>::parse(context, reader,
+                                                                                LEXY_FWD(args)...);
+            --control_block.cur_depth;
+
+            return result;
+        }
+    };
+
+    template <typename Tag>
+    static constexpr _rec<Production, Tag> max_depth_error = _rec<Production, Tag>{};
 };
 
 /// Parses the production, recursively.
@@ -14784,11 +14856,68 @@ private:
 
 namespace lexy
 {
+// The reader used by the buffer if it can use a sentinel.
+template <typename Encoding>
+class _br
+{
+public:
+    using encoding = Encoding;
+    using iterator = const typename Encoding::char_type*;
+
+    explicit _br(iterator begin) noexcept : _cur(begin) {}
+
+    auto peek() const noexcept
+    {
+        // The last one will be EOF.
+        return *_cur;
+    }
+
+    void bump() noexcept
+    {
+        ++_cur;
+    }
+
+    iterator position() const noexcept
+    {
+        return _cur;
+    }
+
+    void set_position(iterator new_pos) noexcept
+    {
+        _cur = new_pos;
+    }
+
+private:
+    iterator _cur;
+};
+
+// We use aliases for the three encodings that can actually use it.
+// (i.e. where char_type == int_type).
+LEXY_INSTANTIATION_NEWTYPE(_bra, _br, lexy::ascii_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_br8, _br, lexy::utf8_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_br32, _br, lexy::utf32_encoding);
+
+// Create the appropriate buffer reader.
+template <typename Encoding>
+constexpr auto _buffer_reader(const typename Encoding::char_type* data)
+{
+    if constexpr (std::is_same_v<Encoding, lexy::ascii_encoding>)
+        return _bra(data);
+    else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+        return _br8(data);
+    else if constexpr (std::is_same_v<Encoding, lexy::utf32_encoding>)
+        return _br32(data);
+    else
+        return _br<Encoding>(data);
+}
+} // namespace lexy
+
+namespace lexy
+{
 /// Stores the input that will be parsed.
 /// For encodings with spare code points, it can append an EOF sentinel.
 /// This allows branch-less detection of EOF.
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Encoding = default_encoding, typename MemoryResource = void>
 class buffer
 {
     static constexpr auto _has_sentinel
@@ -14939,46 +15068,12 @@ public:
     auto reader() const& noexcept
     {
         if constexpr (_has_sentinel)
-            return _sentinel_reader(_data);
+            return _buffer_reader<encoding>(_data);
         else
-            return _detail::range_reader<encoding, const char_type*>(_data, _data + _size);
+            return _range_reader<encoding>(_data, _data + _size);
     }
 
 private:
-    class _sentinel_reader
-    {
-    public:
-        using encoding = Encoding;
-        using iterator = const char_type*;
-
-        auto peek() const noexcept
-        {
-            // The last one will be EOF.
-            return *_cur;
-        }
-
-        void bump() noexcept
-        {
-            ++_cur;
-        }
-
-        iterator position() const noexcept
-        {
-            return _cur;
-        }
-
-        void set_position(iterator new_pos) noexcept
-        {
-            _cur = new_pos;
-        }
-
-    private:
-        explicit _sentinel_reader(iterator begin) noexcept : _cur(begin) {}
-
-        iterator _cur;
-        friend buffer;
-    };
-
     char_type* allocate(std::size_t size) const
     {
         if constexpr (_has_sentinel)
@@ -15017,7 +15112,7 @@ buffer(const View&, MemoryResource*)
 template <typename Encoding, encoding_endianness Endian>
 struct _make_buffer
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -15069,7 +15164,7 @@ struct _make_buffer
 template <>
 struct _make_buffer<utf8_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -15088,7 +15183,7 @@ struct _make_buffer<utf8_encoding, encoding_endianness::bom>
 template <>
 struct _make_buffer<utf16_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -15109,7 +15204,7 @@ struct _make_buffer<utf16_encoding, encoding_endianness::bom>
 template <>
 struct _make_buffer<utf32_encoding, encoding_endianness::bom>
 {
-    template <typename MemoryResource = _detail::default_memory_resource>
+    template <typename MemoryResource = void>
     auto operator()(const void* _memory, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
     {
@@ -15134,16 +15229,13 @@ template <typename Encoding, encoding_endianness Endianness>
 constexpr auto make_buffer_from_raw = _make_buffer<Encoding, Endianness>{};
 
 //=== convenience typedefs ===//
-template <typename Encoding       = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
 
-template <typename Tag, typename Encoding = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Tag, typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
 
-template <typename Production, typename Encoding = default_encoding,
-          typename MemoryResource = _detail::default_memory_resource>
+template <typename Production, typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_error_context = error_context<Production, buffer<Encoding, MemoryResource>>;
 } // namespace lexy
 
