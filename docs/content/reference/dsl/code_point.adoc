@@ -17,6 +17,10 @@ namespace lexy::dsl
     class _code-point-dsl_ // models _token-rule_
     {
     public:
+        // see below for member functions
+        template <char32_t CodePoint>
+        constexpr _token-rule_ lit() const;
+
         template <typename Predicate>
         constexpr _token-rule_ auto if_() const; // see below
 
@@ -48,6 +52,38 @@ CAUTION: As a token rule, it matches {{% docref whitespace whitespace %}} immedi
 As such, the rule is best used in contexts where automatic whitespace skipping is disabled.
 
 NOTE: If the input has been validated, the rule only fails if the reader is at the end of the input.
+
+[#code_point-lit]
+== Token rule `lexy::dsl::code_point.lit`
+
+{{% interface %}}
+----
+template <char32_t CodePoint>
+constexpr _token-rule_ lit() const;
+----
+
+[.lead]
+`code_pont.lit` is a {{% token-rule %}} that matches the specific `CodePoint`.
+
+Requires::
+  * `CodePoint` is the value of a scalar code point (i.e. non-surrogate and not out of bounds).
+  * The input {{% encoding %}} is ASCII, UTF-8, UTF-16, or UTF-32.
+    If it is ASCII, `CodePoint` is an ASCII character.
+Matching::
+  Matches and consumes the code units that encode `CodePoint` in the encoding of the input.
+  For ASCII and UTF-32, this is a single code unit, for UTF-8 up to four code units, and for UTF-16 up to two code units.
+Errors::
+  {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
+  Its `.string()` is the encoded version of `CodePoint`, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
+
+It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding `CodePoint` in the encoding of the input.
+
+{{% playground-example "code_point_lit" "Match a smiley face" %}}
+
+NOTE: The caveats of {{% docref "lexy::dsl::lit" %}} regarding whitespace skipping and keywords apply here as well.
+
+CAUTION: If the input contains an ill-formed code unit sequence, this is not checked by this rule;
+it simply compares each code unit.
 
 [#code_point-if]
 == Token rule `lexy::dsl::code_point.if_`

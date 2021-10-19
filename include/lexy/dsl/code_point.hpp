@@ -6,11 +6,67 @@
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
 #include <lexy/_detail/code_point.hpp>
+#include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 
 namespace lexyd
 {
+template <char32_t Cp>
+struct _cpl : token_base<_cpl<Cp>>
+{
+    template <typename Encoding>
+    struct _literal_t
+    {
+        using char_type = typename Encoding::char_type;
+        char_type   str[4];
+        std::size_t length;
+
+        constexpr _literal_t()
+        : str{}, length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
+        {}
+    };
+    template <typename Reader>
+    static constexpr _literal_t<typename Reader::encoding> _literal
+        = _literal_t<typename Reader::encoding>{};
+
+    template <typename Reader,
+              typename Indices = lexy::_detail::make_index_sequence<_literal<Reader>.length>>
+    struct tp;
+    template <typename Reader, std::size_t... Idx>
+    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            constexpr auto str = _literal<Reader>.str;
+
+            auto result
+                // Compare each code unit, bump on success, cancel on failure.
+                = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(str[Idx])
+                        ? (reader.bump(), true)
+                        : false)
+                   && ...);
+            end = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            constexpr auto str = _literal<Reader>.str;
+
+            auto begin = reader.position();
+            auto index = lexy::_detail::range_size(begin, this->end);
+            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index);
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
 template <typename Predicate>
 struct _cp : token_base<_cp<Predicate>>
 {
@@ -81,6 +137,13 @@ struct _cp : token_base<_cp<Predicate>>
             }
         }
     };
+
+    template <char32_t CodePoint>
+    constexpr auto lit() const
+    {
+        static_assert(lexy::code_point(CodePoint).is_scalar());
+        return _cpl<CodePoint>{};
+    }
 
     template <typename P>
     constexpr auto if_() const
