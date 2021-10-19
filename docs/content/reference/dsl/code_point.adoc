@@ -19,6 +19,9 @@ namespace lexy::dsl
     public:
         template <typename Predicate>
         constexpr _token-rule_ auto if_() const; // see below
+
+        template <char32_t Low, char32_t High>
+        constexpr _token-rule_ auto range() const;
     };
 
     constexpr _code-point-dsl_ auto code_point;
@@ -73,4 +76,24 @@ NOTE: As the rule uses the type name of `Predicate` in the error, it does not ac
 NOTE: In the future, lexy will gain support for specifying code point ranges and Unicode character classes in a more convenient way, as done for {{% docref `lexy::dsl::ascii` %}}.
 
 CAUTION: The same caveat about {{% docref whitespace whitespace %}} as for `code_point` applies here as well.
+
+[#code_point-range]
+== Token rule `lexy::dsl::code_point.range`
+
+{{% interface %}}
+----
+template <char32_t Low, char32_t High>
+constexpr _token-rule_ auto range() const;
+----
+
+[.lead]
+`code_point.range` is a {{% token-rule %}} that matches a code point in the range `[Low, High]`.
+
+Matches::
+  Matches and consumes the normal `code_point` rule to get a `lexy::code_point cp` and checks that `Low \<= cp \<= High`.
+Errors::
+  * {{% docref "lexy::expected_char_class" %}} (`"code-point.range"`):
+    if the code point is not in the range; at the starting reader position.
+    The rule then fails.
+  * All errors raised by the normal `code_point` rule. The rule then fails.
 

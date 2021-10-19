@@ -88,6 +88,25 @@ struct _cp : token_base<_cp<Predicate>>
         static_assert(std::is_void_v<Predicate>);
         return _cp<P>{};
     }
+
+    template <char32_t Low, char32_t High>
+    constexpr auto range() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.range";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return Low <= cp.value() && cp.value() <= High;
+            }
+        };
+
+        return if_<predicate>();
+    }
 };
 
 /// Matches a single unicode code point in the current unicode encoding.

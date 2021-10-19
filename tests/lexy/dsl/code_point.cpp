@@ -446,3 +446,34 @@ TEST_CASE("dsl::code_point.if_()")
           == test_trace().expected_char_class(0, "predicate").error_token("\\u00E4").cancel());
 }
 
+TEST_CASE("dsl::code_point.range()")
+{
+    constexpr auto rule = lexy::dsl::code_point.range<'a', 'c'>();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+    auto b = LEXY_VERIFY(u"b");
+    CHECK(b.status == test_result::success);
+    CHECK(b.trace == test_trace().token("b"));
+    auto c = LEXY_VERIFY(u"c");
+    CHECK(c.status == test_result::success);
+    CHECK(c.trace == test_trace().token("c"));
+
+    auto d = LEXY_VERIFY(u"d");
+    CHECK(d.status == test_result::fatal_error);
+    CHECK(d.trace
+          == test_trace().expected_char_class(0, "code-point.range").error_token("d").cancel());
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+}
+
