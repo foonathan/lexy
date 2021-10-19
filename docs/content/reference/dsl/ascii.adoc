@@ -2,27 +2,32 @@
 header: "lexy/dsl/ascii.hpp"
 entities:
   "lexy::dsl::ascii": doc
-  "lexy::dsl::ascii::control": doc
-  "lexy::dsl::ascii::blank": doc
-  "lexy::dsl::ascii::newline": doc
-  "lexy::dsl::ascii::other_space": doc
-  "lexy::dsl::ascii::space": doc
-  "lexy::dsl::ascii::digit": doc
-  "lexy::dsl::ascii::lower": doc
-  "lexy::dsl::ascii::upper": doc
-  "lexy::dsl::ascii::alpha": doc
-  "lexy::dsl::ascii::alpha_underscore": doc
-  "lexy::dsl::ascii::alpha_digit": doc
-  "lexy::dsl::ascii::alpha_digit_underscore": doc
-  "lexy::dsl::ascii::alnum": doc
-  "lexy::dsl::ascii::punct": doc
-  "lexy::dsl::ascii::graph": doc
-  "lexy::dsl::ascii::print": doc
-  "lexy::dsl::ascii::character": doc
+  "lexy::dsl::ascii::control": class
+  "lexy::dsl::ascii::blank": class
+  "lexy::dsl::ascii::newline": class
+  "lexy::dsl::ascii::other_space": class
+  "lexy::dsl::ascii::space": class
+  "lexy::dsl::ascii::digit": class
+  "lexy::dsl::ascii::lower": class
+  "lexy::dsl::ascii::upper": class
+  "lexy::dsl::ascii::alpha": class
+  "lexy::dsl::ascii::alpha_underscore": class
+  "lexy::dsl::ascii::alpha_digit": class
+  "lexy::dsl::ascii::alpha_digit_underscore": class
+  "lexy::dsl::ascii::alnum": class
+  "lexy::dsl::ascii::punct": class
+  "lexy::dsl::ascii::graph": class
+  "lexy::dsl::ascii::print": class
+  "lexy::dsl::ascii::character": class
+  "lexy::dsl::ascii::one_of": one_of
+  "LEXY_ASCII_ONE_OF": one_of
 ---
 
 [.lead]
 Token rules for matching the ASCII character classes.
+
+[#class]
+== ASCII character classes
 
 {{% interface %}}
 ----
@@ -106,4 +111,36 @@ As such, the rule is best used in contexts where automatic whitespace skipping i
 They can safely be used as part of the whitespace definition.
 
 TIP: The equivalent of `std::isxdigit()` is {{% docref "lexy::dsl::digit" "`lexy::dsl::digit<lexy::dsl::hex>`" %}}.
+
+[#one_of]
+== Token rule `lexy::dsl::ascii::one_of`
+
+{{% interface %}}
+----
+namespace lexy::dsl::ascii
+{
+    template <auto Str>
+    constexpr _token-rule_ auto one_of;
+}
+
+#define LEXY_ASCII_ONE_OF(Str) lexy::dsl::ascii::one_of<Str>
+----
+
+[.lead]
+`one_of` is a {{% token-rule %}} that matches one of the specified ASCII characters.
+
+Requires::
+  `Str` contains only ASCII characters and has type `char`.
+Matching::
+  Matches and consumes one of the characters of `Str` (excluding the final null terminator).
+  Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
+Errors::
+  {{% docref "lexy::expected_char_class" %}} (`Str` is the name): at the unchanged reader position. The rule then fails.
+
+The macro `LEXY_ASCII_ONE_OF(Str)` is equivalent to `one_of<Str>`, except that it also works on older compilers that do not support C++20's extended NTTPs.
+Use this instead of `one_of<Str>` if you need to support them.
+
+{{% playground-example "one_of" "Match the name of a musical note." %}}
+
+NOTE: It is impossible to match the null character using `one_of`.
 

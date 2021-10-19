@@ -47,8 +47,8 @@ struct _lit
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<
-                typename Reader::encoding::char_type>;
+            using char_type    = typename Reader::encoding::char_type;
+            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<char_type>;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);

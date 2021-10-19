@@ -6,6 +6,7 @@
 #define LEXY_DSL_ASCII_HPP_INCLUDED
 
 #include <lexy/_detail/ascii_table.hpp>
+#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 
@@ -304,6 +305,61 @@ struct _char : _ascii<_char>
     }
 };
 inline constexpr auto character = _char{};
+} // namespace lexyd::ascii
+
+namespace lexyd::ascii
+{
+template <char... C>
+struct _alt : token_base<_alt<C...>>
+{
+    static_assert(sizeof...(C) > 0);
+
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            auto cur = reader.peek();
+            if (((cur != lexy::_char_to_int_type<typename Reader::encoding>(C)) && ...))
+                return false;
+
+            reader.bump();
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            constexpr auto str = lexy::_detail::type_string<char, C...>::template c_str<char>;
+
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), str);
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
+template <typename CharT, CharT... C>
+struct _one_of
+{
+    static_assert((std::is_same_v<CharT, char> && ... && lexy::_is_ascii(C)),
+                  "only ASCII characters are supported");
+
+    using rule = _alt<C...>;
+};
+
+#if LEXY_HAS_NTTP
+/// Matches one of the ASCII characters.
+template <lexy::_detail::string_literal Str>
+constexpr auto one_of = typename lexy::_detail::to_type_string<_one_of, Str>::rule{};
+#endif
+
+#define LEXY_ASCII_ONE_OF(Str)                                                                     \
+    LEXY_NTTP_STRING(::lexyd::ascii::_one_of, Str)::rule {}
 } // namespace lexyd::ascii
 
 #endif // LEXY_DSL_ASCII_HPP_INCLUDED
