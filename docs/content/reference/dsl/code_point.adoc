@@ -25,6 +25,9 @@ namespace lexy::dsl
         template <typename Predicate>
         constexpr _token-rule_ auto if_() const; // see below
 
+        template <lexy::code_point::general_category_t Category>
+        constexpr _token-rule_ auto general_category() const;
+
         template <char32_t Low, char32_t High>
         constexpr _token-rule_ auto range() const;
     };
@@ -113,6 +116,29 @@ NOTE: As the rule uses the type name of `Predicate` in the error, it does not ac
 NOTE: In the future, lexy will gain support for specifying code point ranges and Unicode character classes in a more convenient way, as done for {{% docref `lexy::dsl::ascii` %}}.
 
 CAUTION: The same caveat about {{% docref whitespace whitespace %}} as for `code_point` applies here as well.
+
+[#code_point-general_category]
+== Token rule `lexy::dsl::code_point.general_category`
+
+{{% interface %}}
+----
+template <lexy::code_point::general_category_t Category>
+constexpr _token-rule_ auto general_category() const;
+
+template <lexy::code_point::_gc-group_ CategoryGroup>
+constexpr _token-rule_ auto general_category() const;
+----
+
+[.lead]
+`code_point.range` is a {{% token-rule %}} that matches a code point with the specified {{% docref "lexy::code_point::general_category_t" %}} or group of categories.
+
+Matches::
+  Matches and consumes the normal `code_point` rule to get a `lexy::code_point cp` and checks that `cp.general_category() == Category` or `cp.general_category() == CategoryGroup`.
+Errors::
+  * {{% docref "lexy::expected_char_class" %}} (`"<name of Category>"`):
+    if the code point is not in the category; at the starting reader position.
+    The rule then fails.
+  * All errors raised by the normal `code_point` rule. The rule then fails.
 
 [#code_point-range]
 == Token rule `lexy::dsl::code_point.range`

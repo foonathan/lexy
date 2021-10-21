@@ -152,6 +152,56 @@ struct _cp : token_base<_cp<Predicate>>
         return _cp<P>{};
     }
 
+    template <lexy::code_point::general_category_t Category>
+    constexpr auto general_category() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return lexy::_detail::general_category_name(Category);
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                // Note: can't use `cp.is_noncharacter()` for `Cn` as `Cn` also includes all code
+                // points that are currently unassigned.
+                if constexpr (Category == lexy::code_point::Cc)
+                    return cp.is_control();
+                else if constexpr (Category == lexy::code_point::Cs)
+                    return cp.is_surrogate();
+                else if constexpr (Category == lexy::code_point::Co)
+                    return cp.is_private_use();
+                else
+                    return cp.general_category() == Category;
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <const auto& GcGroup>
+    struct _group_pred;
+    template <lexy::code_point::general_category_t... Cats,
+              const lexy::code_point::_gc_group<Cats...>& GcGroup>
+    struct _group_pred<GcGroup>
+    {
+        static LEXY_CONSTEVAL auto name()
+        {
+            return GcGroup.name;
+        }
+
+        constexpr bool operator()(lexy::code_point cp) const
+        {
+            return cp.general_category() == GcGroup;
+        }
+    };
+    template <const auto& GcGroup>
+    constexpr auto general_category() const
+    {
+        return if_<_group_pred<GcGroup>>();
+    }
+
     template <char32_t Low, char32_t High>
     constexpr auto range() const
     {

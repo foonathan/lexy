@@ -548,6 +548,141 @@ TEST_CASE("dsl::code_point.if_()")
           == test_trace().expected_char_class(0, "predicate").error_token("\\u00E4").cancel());
 }
 
+TEST_CASE("dsl::code_point.general_category()")
+{
+    constexpr auto rule = lexy::dsl::code_point.general_category<lexy::code_point::Ll>();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+    auto b = LEXY_VERIFY(u"b");
+    CHECK(b.status == test_result::success);
+    CHECK(b.trace == test_trace().token("b"));
+    auto c = LEXY_VERIFY(u"c");
+    CHECK(c.status == test_result::success);
+    CHECK(c.trace == test_trace().token("c"));
+
+    auto umlaut = LEXY_VERIFY(u"ä");
+    CHECK(umlaut.status == test_result::success);
+    CHECK(umlaut.trace == test_trace().token("\\u00E4"));
+    auto cyrillic = LEXY_VERIFY(u"ҁ");
+    CHECK(cyrillic.status == test_result::success);
+    CHECK(cyrillic.trace == test_trace().token("\\u0481"));
+    auto greek = LEXY_VERIFY(u"φ");
+    CHECK(greek.status == test_result::success);
+    CHECK(greek.trace == test_trace().token("\\u03C6"));
+    auto math = LEXY_VERIFY(u"𝐚");
+    CHECK(math.status == test_result::success);
+    CHECK(math.trace == test_trace().token("\\U0001D41A"));
+
+    auto A = LEXY_VERIFY(u"A");
+    CHECK(A.status == test_result::fatal_error);
+    CHECK(A.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.lowercase-letter")
+                 .error_token("A")
+                 .cancel());
+    auto Umlaut = LEXY_VERIFY(u"Ä");
+    CHECK(Umlaut.status == test_result::fatal_error);
+    CHECK(Umlaut.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.lowercase-letter")
+                 .error_token("\\u00C4")
+                 .cancel());
+    auto Cyrillic = LEXY_VERIFY(u"Ҁ");
+    CHECK(Cyrillic.status == test_result::fatal_error);
+    CHECK(Cyrillic.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.lowercase-letter")
+                 .error_token("\\u0480")
+                 .cancel());
+    auto Greek = LEXY_VERIFY(u"Φ");
+    CHECK(Greek.status == test_result::fatal_error);
+    CHECK(Greek.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.lowercase-letter")
+                 .error_token("\\u03A6")
+                 .cancel());
+    auto Math = LEXY_VERIFY(u"𝐀");
+    CHECK(Math.status == test_result::fatal_error);
+    CHECK(Math.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.lowercase-letter")
+                 .error_token("\\U0001D400")
+                 .cancel());
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+}
+
+TEST_CASE("dsl::code_point.general_category() group")
+{
+    constexpr auto rule = lexy::dsl::code_point.general_category<lexy::code_point::L>();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+    auto b = LEXY_VERIFY(u"b");
+    CHECK(b.status == test_result::success);
+    CHECK(b.trace == test_trace().token("b"));
+    auto c = LEXY_VERIFY(u"c");
+    CHECK(c.status == test_result::success);
+    CHECK(c.trace == test_trace().token("c"));
+
+    auto umlaut = LEXY_VERIFY(u"ä");
+    CHECK(umlaut.status == test_result::success);
+    CHECK(umlaut.trace == test_trace().token("\\u00E4"));
+    auto cyrillic = LEXY_VERIFY(u"ҁ");
+    CHECK(cyrillic.status == test_result::success);
+    CHECK(cyrillic.trace == test_trace().token("\\u0481"));
+    auto greek = LEXY_VERIFY(u"φ");
+    CHECK(greek.status == test_result::success);
+    CHECK(greek.trace == test_trace().token("\\u03C6"));
+    auto math = LEXY_VERIFY(u"𝐚");
+    CHECK(math.status == test_result::success);
+    CHECK(math.trace == test_trace().token("\\U0001D41A"));
+
+    auto A = LEXY_VERIFY(u"A");
+    CHECK(A.status == test_result::success);
+    CHECK(A.trace == test_trace().token("A"));
+    auto Umlaut = LEXY_VERIFY(u"Ä");
+    CHECK(Umlaut.status == test_result::success);
+    CHECK(Umlaut.trace == test_trace().token("\\u00C4"));
+    auto Cyrillic = LEXY_VERIFY(u"Ҁ");
+    CHECK(Cyrillic.status == test_result::success);
+    CHECK(Cyrillic.trace == test_trace().token("\\u0480"));
+    auto Greek = LEXY_VERIFY(u"Φ");
+    CHECK(Greek.status == test_result::success);
+    CHECK(Greek.trace == test_trace().token("\\u03A6"));
+    auto Math = LEXY_VERIFY(u"𝐀");
+    CHECK(Math.status == test_result::success);
+    CHECK(Math.trace == test_trace().token("\\U0001D400"));
+
+    auto digit = LEXY_VERIFY(u"1");
+    CHECK(digit.status == test_result::fatal_error);
+    CHECK(digit.trace
+          == test_trace().expected_char_class(0, "code-point.letter").error_token("1").cancel());
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+}
+
 TEST_CASE("dsl::code_point.range()")
 {
     constexpr auto rule = lexy::dsl::code_point.range<'a', 'c'>();

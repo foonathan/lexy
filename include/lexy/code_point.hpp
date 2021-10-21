@@ -148,8 +148,8 @@ public:
     };
 
 #define LEXY_UNICODE_CATEGORY_GROUP(Name, Short, Long, ...)                                        \
-    static constexpr auto Short = _gc_group<__VA_ARGS__>{"code-point." Name};                      \
-    static constexpr auto Long  = Short
+    static constexpr _gc_group<__VA_ARGS__> Short{"code-point." Name};                             \
+    static constexpr _gc_group<__VA_ARGS__> Long = Short
 
     LEXY_UNICODE_CATEGORY_GROUP("cased-letter", LC, cased_letter, Lu, Ll, Lt);
     LEXY_UNICODE_CATEGORY_GROUP("letter", L, letter, Lu, Ll, Lt, Lm, Lo);
@@ -178,6 +178,84 @@ private:
     char32_t _value;
 };
 } // namespace lexy
+
+namespace lexy::_detail
+{
+constexpr const char* general_category_name(lexy::code_point::general_category_t category)
+{
+    switch (category)
+    {
+    case lexy::code_point::Lu:
+        return "code-point.uppercase-letter";
+    case lexy::code_point::Ll:
+        return "code-point.lowercase-letter";
+    case lexy::code_point::Lt:
+        return "code-point.titlecase-letter";
+    case lexy::code_point::Lm:
+        return "code-point.modifier-letter";
+    case lexy::code_point::Lo:
+        return "code-point.other-letter";
+
+    case lexy::code_point::Mn:
+        return "code-point.nonspacing-mark";
+    case lexy::code_point::Mc:
+        return "code-point.combining-mark";
+    case lexy::code_point::Me:
+        return "code-point.enclosing-mark";
+
+    case lexy::code_point::Nd:
+        return "code-point.decimal-number";
+    case lexy::code_point::Nl:
+        return "code-point.letter-number";
+    case lexy::code_point::No:
+        return "code-point.other-number";
+
+    case lexy::code_point::Pc:
+        return "code-point.connector-punctuation";
+    case lexy::code_point::Pd:
+        return "code-point.dash-punctuation";
+    case lexy::code_point::Ps:
+        return "code-point.open-punctuation";
+    case lexy::code_point::Pe:
+        return "code-point.close-punctuation";
+    case lexy::code_point::Pi:
+        return "code-point.initial-quote-punctuation";
+    case lexy::code_point::Pf:
+        return "code-point.final-quote-punctuation";
+    case lexy::code_point::Po:
+        return "code-point.other-punctuation";
+
+    case lexy::code_point::Sm:
+        return "code-point.math-symbol";
+    case lexy::code_point::Sc:
+        return "code-point.currency-symbol";
+    case lexy::code_point::Sk:
+        return "code-point.modifier-symbol";
+    case lexy::code_point::So:
+        return "code-point.other-symbol";
+
+    case lexy::code_point::Zs:
+        return "code-point.space-separator";
+    case lexy::code_point::Zl:
+        return "code-point.line-separator";
+    case lexy::code_point::Zp:
+        return "code-point.paragraph-separator";
+
+    case lexy::code_point::Cc:
+        return "code-point.control";
+    case lexy::code_point::Cf:
+        return "code-point.format";
+    case lexy::code_point::Cs:
+        return "code-point.surrogate";
+    case lexy::code_point::Co:
+        return "code-point.private-use";
+    case lexy::code_point::Cn:
+        return "code-point.not-assigned";
+    }
+
+    return nullptr; // unreachable
+}
+} // namespace lexy::_detail
 
 #if LEXY_HAS_UNICODE_DATABASE
 #    include <lexy/_detail/unicode_database.hpp>
