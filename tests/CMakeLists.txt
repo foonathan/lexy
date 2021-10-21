@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(doctest)
 
 # A generic test target.
 add_library(lexy_test_base ${CMAKE_CURRENT_SOURCE_DIR}/doctest_main.cpp)
-target_link_libraries(lexy_test_base PUBLIC foonathan::lexy::dev foonathan::lexy::file doctest)
+target_link_libraries(lexy_test_base PUBLIC foonathan::lexy::dev foonathan::lexy::file foonathan::lexy::unicode doctest)
 target_compile_definitions(lexy_test_base PUBLIC LEXY_TEST)
 
 if(MSVC AND NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

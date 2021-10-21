@@ -161,6 +161,8 @@ Simply put it somewhere and use `add_subdirectory()` to make the following targe
   It is an `INTERFACE` target that sets the required include path and {cpp} standard flags.
 `foonathan::lexy::file`::
   Link to this library if you want to use the (not header only) `lexy::read_file()` functionality.
+`foonathan::lexy::unicode`::
+  Link to this library if you want to use advanced Unicode rules that require the Unicode character database.
 `foonathan::lexy::ext`::
   Link to this library if you want to use the extension headers in `lexy_ext/`.
 `foonathan::lexy`::

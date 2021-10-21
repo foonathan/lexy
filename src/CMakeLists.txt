@@ -169,6 +169,11 @@ add_library(foonathan::lexy::file ALIAS lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
 target_sources(lexy_file PRIVATE input/file.cpp)
 
+# Link to enable unicode database.
+add_library(lexy_unicode INTERFACE)
+add_library(foonathan::lexy::unicode ALIAS lexy_unicode)
+target_compile_definitions(lexy_unicode INTERFACE LEXY_HAS_UNICODE_DATABASE=1)
+
 # Link to have extension headers.
 add_library(lexy_ext INTERFACE)
 add_library(foonathan::lexy::ext ALIAS lexy_ext)
@@ -177,5 +182,5 @@ target_sources(lexy_ext INTERFACE ${ext_headers_files})
 # Umbrella target with all components.
 add_library(lexy INTERFACE)
 add_library(foonathan::lexy ALIAS lexy)
-target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::ext)
+target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::unicode foonathan::lexy::ext)
 

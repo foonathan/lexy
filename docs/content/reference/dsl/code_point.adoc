@@ -2,6 +2,7 @@
 header: "lexy/dsl/code_point.hpp"
 entities:
   "lexy::dsl::code_point": code_point
+  "lexy::dsl::code_point.if_": code_point-if
 ---
 
 [.lead]
