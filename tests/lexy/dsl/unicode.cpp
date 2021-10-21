@@ -179,3 +179,27 @@ TEST_CASE("dsl::unicode::character")
     test("code-point.character", rule, dsl::ascii::character);
 }
 
+TEST_CASE("dsl::unicode::xid_start")
+{
+    constexpr auto rule = dsl::unicode::xid_start;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("code-point.XID-start", rule, dsl::ascii::alpha);
+}
+
+TEST_CASE("dsl::unicode::xid_start_underscore")
+{
+    constexpr auto rule = dsl::unicode::xid_start_underscore;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("code-point.XID-start-underscore", rule, dsl::ascii::alpha_underscore);
+}
+
+TEST_CASE("dsl::unicode::xid_continue")
+{
+    constexpr auto rule = dsl::unicode::xid_continue;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("code-point.XID-continue", rule, dsl::ascii::alpha_digit_underscore);
+}
+

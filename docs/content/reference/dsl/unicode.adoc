@@ -17,6 +17,9 @@ entities:
   "lexy::dsl::unicode::graph": class
   "lexy::dsl::unicode::print": class
   "lexy::dsl::unicode::character": class
+  "lexy::dsl::unicode::xid_start": identifier
+  "lexy::dsl::unicode::xid_start_underscore": identifier
+  "lexy::dsl::unicode::xid_continue": identifier
 ---
 
 [.lead]
@@ -99,4 +102,37 @@ They can safely be used as part of the whitespace definition.
 NOTE: There is no `dsl::unicode::punct`.
 The Unicode standard defines it as general category `P` (Punctuation), which is unsatisfactory as it does not include e.g. `$` unlike `dsl::ascii::punct` (it's a currency symbol instead).
 POSIX includes `$` as well as other non-alphabetic symbols, which is unsatisfactory as `dsl::unicode::punct` would include characters Unicode does not consider punctuation.
+
+[#identifier]
+== Unicode identifier classes
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    namespace unicode
+    {
+        constexpr _token-rule_ auto xid_start;
+        constexpr _token-rule_ auto xid_start_underscore;
+        constexpr _token-rule_ auto xid_continue;
+    }
+}
+----
+
+[.lead]
+These {{% token-rule %}}s match one Unicode code point from the link:https://unicode.org/reports/tr31/[`XID_Start`/`XID_Continue`] character classes.
+They are used to parse Unicode-aware {{% docref "lexy::dsl::identifier" %}}.
+
+They are implemented using {{% docref "lexy::dsl::code_point.if_" %}} using an appropriate predicate and require the Unicode database:
+
+* `xid_start` matches any Unicode character that can occur at the beginning of an identifier.
+  It is a superset of {{% docref "lexy::dsl::ascii::alpha" %}}.
+* `xid_start_underscore` matches `xid_start` or `_` (underscore.
+  It is a superset of {{% docref "lexy::dsl::ascii::alpha_underscore" %}}.
+* `xid_continue` matches any Unicode character that can occur after the initial character of an identifier.
+  It is a superset of {{% docref "lexy::dsl::ascii::alpha_digit_underscore" %}}.
+
+{{% playground-example identifier-unicode "Parse a Unicode-aware C-like identifier" %}}
+
+WARNING: `xid_start` does not include `_` (underscore)!
 

@@ -23,6 +23,8 @@ class CodePointProperties:
         self.is_alphabetic   = False
         self.is_uppercase    = False
         self.is_lowercase    = False
+        self.is_xid_start    = False
+        self.is_xid_continue = False
 
     def set_general_category(self, category):
         self.general_category = category
@@ -40,9 +42,14 @@ class CodePointProperties:
             self.is_uppercase = True
         elif prop == 'Lowercase':
             self.is_lowercase = True
+        elif prop == 'XID_Start':
+            self.is_xid_start = True
+        elif prop == 'XID_Continue':
+            self.is_xid_continue = True
 
     def dict_key(self):
-        return (self.general_category, self.is_whitespace, self.is_join_control, self.is_alphabetic, self.is_uppercase, self.is_lowercase)
+        return (self.general_category, self.is_whitespace, self.is_join_control,
+                self.is_alphabetic, self.is_uppercase, self.is_lowercase, self.is_xid_start, self.is_xid_continue)
 
 def fetch_ucd_file(path):
     return (line.decode('utf-8') for line in urllib.request.urlopen(UCD_URL + path))
@@ -168,6 +175,8 @@ def generate_lookup_tables(tables):
         yield '    alphabetic,\n'
         yield '    uppercase,\n'
         yield '    lowercase,\n'
+        yield '    xid_start,\n'
+        yield '    xid_continue,\n'
         yield '    _property_count,\n'
         yield '};\n'
         yield 'static_assert(static_cast<int>(_property_count) <= 8);\n'
@@ -186,6 +195,10 @@ def generate_lookup_tables(tables):
                 mask |= 1 << 3
             if prop.is_lowercase:
                 mask |= 1 << 4
+            if prop.is_xid_start:
+                mask |= 1 << 5
+            if prop.is_xid_continue:
+                mask |= 1 << 6
             yield f'{mask},'
         yield '}'
 

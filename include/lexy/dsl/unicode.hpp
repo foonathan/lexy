@@ -206,6 +206,45 @@ struct _char
 inline constexpr auto character = code_point.if_<_char>();
 } // namespace lexyd::unicode
 
+namespace lexyd::unicode
+{
+struct _xid_start
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "code-point.XID-start";
+    }
+
+    LEXY_UNICODE_PROPERTY_PREDICATE(xid_start)
+};
+inline constexpr auto xid_start = code_point.if_<_xid_start>();
+
+struct _xid_start_underscore
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "code-point.XID-start-underscore";
+    }
+
+    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    {
+        return cp.value() == '_' || _xid_start{}(cp);
+    }
+};
+inline constexpr auto xid_start_underscore = code_point.if_<_xid_start_underscore>();
+
+struct _xid_continue
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "code-point.XID-continue";
+    }
+
+    LEXY_UNICODE_PROPERTY_PREDICATE(xid_continue)
+};
+inline constexpr auto xid_continue = code_point.if_<_xid_continue>();
+} // namespace lexyd::unicode
+
 #undef LEXY_UNICODE_PROPERTY_PREDICATE
 
 #endif // LEXY_DSL_UNICODE_HPP_INCLUDED

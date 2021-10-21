@@ -71,7 +71,9 @@ Parse tree::
   The single token node created by `.pattern()` (see below).
   Its kind cannot be overridden.
 
-{{% playground-example identifier "Parse a C like identifier" %}}
+{{% playground-example identifier "Parse a C-like identifier" %}}
+
+{{% playground-example identifier-unicode "Parse a Unicode-aware C-like identifier" %}}
 
 TIP: Use the character classes from {{% docref "lexy::dsl::ascii" %}} for simple identifier matching as seen in the example.
 
