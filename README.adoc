@@ -71,9 +71,10 @@ Error recovery::
   Log an error, recover, and continue parsing! https://lexy.foonathan.net/playground/?example=recover[Try it online].
 
 Unicode support::
-  You can parse UTF-8, UTF-16, or UTF-32.
+  You can parse UTF-8, UTF-16, or UTF-32 and access (some of) the Unicode character database.
   `lexy` takes care of code point encoding and decoding as necessary, as well as endianness and byte-order marks.
   Want to match a string literal containing arbitrary Unicode code points or `\u21D4` and store the result in a `std::string`?
+  Want to match any Unicode alphabetic or whitespace character, or a Unicode-aware identifier?
   You can do so out of the box.
 
 Keyword and identifier parsing::
