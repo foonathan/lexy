@@ -40,6 +40,8 @@ TEST_CASE("visualize code_point")
         CHECK(visualize(lexy::code_point('a'), opts) == R"(a)");
         CHECK(visualize(lexy::code_point('B'), opts) == R"(B)");
 
+        CHECK(visualize(lexy::code_point(0x80), opts) == R"(\u0080)");
+
         CHECK(visualize(lexy::code_point(0x1234), opts) == R"(\u1234)");
         CHECK(visualize(lexy::code_point(0x10'FFFF), opts) == R"(\U0010FFFF)");
     }
@@ -64,6 +66,8 @@ TEST_CASE("visualize code_point")
 
         CHECK(visualize(lexy::code_point('a'), opts) == R"(a)");
         CHECK(visualize(lexy::code_point('B'), opts) == R"(B)");
+
+        CHECK(visualize(lexy::code_point(0x80), opts) == R"(⟨U+0080⟩)");
 
         CHECK(visualize(lexy::code_point(0x1234), opts) == R"(⟨U+1234⟩)");
         CHECK(visualize(lexy::code_point(0x10'FFFF), opts) == R"(⟨U+10FFFF⟩)");

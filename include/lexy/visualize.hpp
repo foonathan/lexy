@@ -210,7 +210,7 @@ OutputIt visualize_to(OutputIt out, lexy::code_point cp, visualization_options o
     }
     else if (cp.is_control())
     {
-        auto c = static_cast<char>(cp.value());
+        auto c = static_cast<int>(cp.value());
         switch (c)
         {
         case '\0':
