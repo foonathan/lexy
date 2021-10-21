@@ -80,6 +80,7 @@ set(tests
         dsl/trace.cpp
         dsl/token.cpp
         dsl/times.cpp
+        dsl/unicode.cpp
         dsl/until.cpp
         dsl/whitespace.cpp
 

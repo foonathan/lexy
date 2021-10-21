@@ -121,6 +121,8 @@ NOTE: As the rule uses the type name of `Predicate` in the error, it does not ac
 
 CAUTION: The same caveat about {{% docref whitespace whitespace %}} as for `code_point` applies here as well.
 
+NOTE: See {{% docref "lexy::dsl::unicode" %}} for common predefined predicates.
+
 [#code_point-classification]
 == Token rule `lexy::dsl::code_point.ascii`/`bmp`/`noncharacter`
 

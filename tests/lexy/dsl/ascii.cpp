@@ -142,21 +142,28 @@ TEST_CASE("dsl::ascii::alpha_digit")
     test("ASCII.alpha-digit", rule, [](int c) { return std::isalnum(c); });
 }
 
-TEST_CASE("dsl::ascii::alpha_digit_underscore")
-{
-    constexpr auto rule = dsl::ascii::alpha_digit_underscore;
-    CHECK(lexy::is_token_rule<decltype(rule)>);
-
-    test("ASCII.alpha-digit-underscore", rule,
-         [](int c) { return (std::isalnum(c) != 0) || c == '_'; });
-}
-
 TEST_CASE("dsl::ascii::alnum")
 {
     constexpr auto rule = dsl::ascii::alnum;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     CHECK(equivalent_rules(rule, dsl::ascii::alpha_digit));
+}
+
+TEST_CASE("dsl::ascii::word")
+{
+    constexpr auto rule = dsl::ascii::word;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("ASCII.word", rule, [](int c) { return (std::isalnum(c) != 0) || c == '_'; });
+}
+
+TEST_CASE("dsl::ascii::alpha_digit_underscore")
+{
+    constexpr auto rule = dsl::ascii::alpha_digit_underscore;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::ascii::word));
 }
 
 TEST_CASE("dsl::ascii::punct")

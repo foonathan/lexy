@@ -1,0 +1,102 @@
+---
+header: "lexy/dsl/unicode.hpp"
+entities:
+  "lexy::dsl::unicode": doc
+  "lexy::dsl::unicode::control": class
+  "lexy::dsl::unicode::blank": class
+  "lexy::dsl::unicode::newline": class
+  "lexy::dsl::unicode::other_space": class
+  "lexy::dsl::unicode::space": class
+  "lexy::dsl::unicode::digit": class
+  "lexy::dsl::unicode::lower": class
+  "lexy::dsl::unicode::upper": class
+  "lexy::dsl::unicode::alpha": class
+  "lexy::dsl::unicode::alpha_digit": class
+  "lexy::dsl::unicode::alnum": class
+  "lexy::dsl::unicode::word": class
+  "lexy::dsl::unicode::graph": class
+  "lexy::dsl::unicode::print": class
+  "lexy::dsl::unicode::character": class
+---
+
+[.lead]
+Token rules for matching Unicode character classes.
+
+[#class]
+== Unicode character classes
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    namespace unicode
+    {
+        constexpr _token-rule_ auto control;
+
+        constexpr _token-rule_ auto blank;
+        constexpr _token-rule_ auto newline;
+        constexpr _token-rule_ auto other_space;
+        constexpr _token-rule_ auto space;
+
+        constexpr _token-rule_ auto digit;
+
+        constexpr _token-rule_ auto lower;
+        constexpr _token-rule_ auto upper;
+        constexpr _token-rule_ auto alpha;
+
+        constexpr _token-rule_ auto alpha_digit;
+        constexpr _token-rule_ auto alnum = alpha_digit;
+
+        constexpr _token-rule_ auto word;
+
+        constexpr _token-rule_ auto graph;
+        constexpr _token-rule_ auto print;
+
+        constexpr _token-rule_ auto character;
+    }
+}
+----
+
+[.lead]
+These {{% token-rule %}}s match one Unicode code point from a character class.
+
+They are implemented using {{% docref "lexy::dsl::code_point.if_" %}} using an appropriate predicate (see the table below).
+They require the Unicode database.
+
+Each rule matches a superset of the corresponding rule in {{% docref "lexy::dsl::ascii" %}}.
+
+[%collapsible]
+.The character classes
+====
+|===
+| Token Rule                | Character Class
+
+| `control`                 | link:https://unicode.org/reports/tr18/#cntrl[`Cc` (Other, control)]
+| `blank`                   | link:https://unicode.org/reports/tr18/#blank[`Zs` (Separator, space) or `\t`]
+| `newline`                 | `\r`, `\n`, `NEL`, `LINE SEPARATOR`, or `PARAGRAPH SEPARATOR`
+| `other_space`             | `\f` or `\v`
+| `space`                   | link:https://unicode.org/reports/tr18/#space[`Whitespace`], which is `blank`, `newline` or `other_space`
+| `digit`                   | link:https://unicode.org/reports/tr18/#digit[`Nd` (Number, decimal digit)]
+| `lower`                   | link:https://unicode.org/reports/tr18/#lower[`Lowercase`]
+| `upper`                   | link:https://unicode.org/reports/tr18/#upper[`Uppercase`]
+| `alpha`                   | link:https://unicode.org/reports/tr18/#alpha[`Alphabetic`]
+| `alpha_digit`             | link:https://unicode.org/reports/tr18/#alnum[`alpha`, `digit`]
+| `word`                    | link:https://unicode.org/reports/tr18/#word[`alpha`, `digit`, `M` (Mark), `Pc` (Punctuation, connector), join control]
+| `graph`                   | link:https://unicode.org/reports/tr18/#graph[everything but `space`, `control`, `Cs` (Other, surrogate), `Cn` (Other, not assigned)]
+| `print`                   | link:https://unicode.org/reports/tr18/#graph[`graph` or `blank` but without `control`]
+| `character`               | any code point that is assigned (i.e. not `Cn` (Other, not assigned))
+|===
+====
+
+CAUTION: Unlike in the ASCII case, `alpha` is *not* `lower` or `upper`: there are alphabetic characters that don't have a case.
+
+CAUTION: Differentiate between `lexy::dsl::unicode::newline`, which matches `\r` or `\n` and others, and {{% docref "lexy::dsl::newline" %}}, which matches `\r\n` or `\n`!
+
+CAUTION: As token rules, they match {{% docref whitespace whitespace %}} immediately following the character.
+As such, the rule is best used in contexts where automatic whitespace skipping is disabled.
+They can safely be used as part of the whitespace definition.
+
+NOTE: There is no `dsl::unicode::punct`.
+The Unicode standard defines it as general category `P` (Punctuation), which is unsatisfactory as it does not include e.g. `$` unlike `dsl::ascii::punct` (it's a currency symbol instead).
+POSIX includes `$` as well as other non-alphabetic symbols, which is unsatisfactory as `dsl::unicode::punct` would include characters Unicode does not consider punctuation.
+

@@ -223,11 +223,11 @@ struct _alnum : _ascii<_alnum>
 inline constexpr auto alnum       = _alnum{};
 inline constexpr auto alpha_digit = _alnum{};
 
-struct _alnumu : _ascii<_alnumu>
+struct _word : _ascii<_word>
 {
     static LEXY_CONSTEVAL auto ascii_name()
     {
-        return "ASCII.alpha-digit-underscore";
+        return "ASCII.word";
     }
 
     template <typename Encoding>
@@ -238,7 +238,8 @@ struct _alnumu : _ascii<_alnumu>
             .contains<Encoding, ascii_table_t::alpha_underscore, ascii_table_t::digit>(i);
     }
 };
-inline constexpr auto alpha_digit_underscore = _alnumu{};
+inline constexpr auto word                   = _word{};
+inline constexpr auto alpha_digit_underscore = _word{};
 
 //=== punct ===//
 struct _punct : _ascii<_punct>

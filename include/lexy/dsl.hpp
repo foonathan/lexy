@@ -46,6 +46,7 @@
 #include <lexy/dsl/terminator.hpp>
 #include <lexy/dsl/times.hpp>
 #include <lexy/dsl/token.hpp>
+#include <lexy/dsl/unicode.hpp>
 #include <lexy/dsl/until.hpp>
 #include <lexy/dsl/whitespace.hpp>
 

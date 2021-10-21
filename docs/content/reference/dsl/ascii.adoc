@@ -13,8 +13,9 @@ entities:
   "lexy::dsl::ascii::alpha": class
   "lexy::dsl::ascii::alpha_underscore": class
   "lexy::dsl::ascii::alpha_digit": class
-  "lexy::dsl::ascii::alpha_digit_underscore": class
   "lexy::dsl::ascii::alnum": class
+  "lexy::dsl::ascii::word": class
+  "lexy::dsl::ascii::alpha_digit_underscore": class
   "lexy::dsl::ascii::punct": class
   "lexy::dsl::ascii::graph": class
   "lexy::dsl::ascii::print": class
@@ -50,8 +51,10 @@ namespace lexy::dsl
         constexpr _token-rule_ auto alpha_underscore;
 
         constexpr _token-rule_ auto alpha_digit;
-        constexpr _token-rule_ auto alpha_digit_underscore;
         constexpr _token-rule_ auto alnum = alpha_digit;
+
+        constexpr _token-rule_ auto word;
+        constexpr _token-rule_ auto alpha_digit_underscore = word;
 
         constexpr _token-rule_ auto punct;
 
@@ -65,7 +68,7 @@ namespace lexy::dsl
 ----
 
 [.lead]
-Every {{% token-rule %}} in the namespace `lexy::dsl::ascii` matches one ASCII character from a character class.
+These {{% token-rule %}}s match one ASCII character from a character class.
 
 Matching::
   Matches and consumes one character from the character class given in the table below.
@@ -89,8 +92,8 @@ Errors::
 | `upper`                   | `ABCDEFGHIJKLMNOPQRSTUVWXYZ`      | `std::isupper()`
 | `alpha`                   | `lower`, `upper`                  | `std::isalpha()`
 | `alpha_underscore`        | `lower`, `upper`, `'_'`           | n/a
-| `alpha_digit`, `alnum`    | `lower`, `upper`, `digit`         | `std::isalnum()`
-| `alpha_digit_underscore`  | `lower`, `upper`, `digit`, `'_'`  | n/a
+| `alpha_digit`             | `lower`, `upper`, `digit`         | `std::isalnum()`
+| `word`                    | `lower`, `upper`, `digit`, `'_'`  | n/a
 | `punct`                   | ``!"#$%&'()*+,-./:;\<\=>?@[\]^_`{\|}~`` | `std::ispunct()`
 | `graph`                   | `alpha_digit`, `punct`            | `std::isgraph()`
 | `print`                   | `alpha_digit`, `punct`, `' '` (space) | `std::ispunct()`
@@ -111,6 +114,8 @@ As such, the rule is best used in contexts where automatic whitespace skipping i
 They can safely be used as part of the whitespace definition.
 
 TIP: The equivalent of `std::isxdigit()` is {{% docref "lexy::dsl::digit" "`lexy::dsl::digit<lexy::dsl::hex>`" %}}.
+
+TIP: Use {{% docref "lexy::dsl::unicode" %}} for the equivalent Unicode character classes.
 
 [#one_of]
 == Token rule `lexy::dsl::ascii::one_of`

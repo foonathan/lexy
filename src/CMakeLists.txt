@@ -83,6 +83,7 @@ set(header_files
         ${include_dir}/dsl/terminator.hpp
         ${include_dir}/dsl/times.hpp
         ${include_dir}/dsl/token.hpp
+        ${include_dir}/dsl/unicode.hpp
         ${include_dir}/dsl/until.hpp
         ${include_dir}/dsl/whitespace.hpp
 

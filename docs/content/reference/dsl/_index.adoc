@@ -92,10 +92,12 @@ Parse tree::
 [%collapsible]
 .Character classes
 ====
+{{% docref "lexy::dsl::code_point" %}}::
+  match (specific) Unicode code points
 {{% docref "lexy::dsl::ascii" %}}::
   match ASCII character classes
-{{% docref "lexy::dsl::code_point" %}}::
-  match Unicode code points
+{{% docref "lexy::dsl::unicode" %}}::
+  match Unicode character classes
 {{% docref "lexy::dsl::operator-" %}}::
   exclude some characters
 {{% docref "lexy::dsl::operator/" %}}::
