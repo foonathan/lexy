@@ -548,6 +548,109 @@ TEST_CASE("dsl::code_point.if_()")
           == test_trace().expected_char_class(0, "predicate").error_token("\\u00E4").cancel());
 }
 
+TEST_CASE("dsl::code_point.ascii()")
+{
+    constexpr auto rule = lexy::dsl::code_point.ascii();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+
+    auto bmp = LEXY_VERIFY(u"ä");
+    CHECK(bmp.status == test_result::fatal_error);
+    CHECK(
+        bmp.trace
+        == test_trace().expected_char_class(0, "code-point.ASCII").error_token("\\u00E4").cancel());
+    auto outside_bmp = LEXY_VERIFY(u"🙂");
+    CHECK(outside_bmp.status == test_result::fatal_error);
+    CHECK(outside_bmp.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.ASCII")
+                 .error_token("\\U0001F642")
+                 .cancel());
+}
+
+TEST_CASE("dsl::code_point.bmp()")
+{
+    constexpr auto rule = lexy::dsl::code_point.bmp();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+
+    auto bmp = LEXY_VERIFY(u"ä");
+    CHECK(bmp.status == test_result::success);
+    CHECK(bmp.trace == test_trace().token("\\u00E4"));
+
+    auto outside_bmp = LEXY_VERIFY(u"🙂");
+    CHECK(outside_bmp.status == test_result::fatal_error);
+    CHECK(outside_bmp.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.BMP")
+                 .error_token("\\U0001F642")
+                 .cancel());
+}
+
+TEST_CASE("dsl::code_point.noncharacter()")
+{
+    constexpr auto rule = lexy::dsl::code_point.noncharacter();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::fatal_error);
+    CHECK(a.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.non-character")
+                 .error_token("a")
+                 .cancel());
+    auto bmp = LEXY_VERIFY(u"ä");
+    CHECK(bmp.status == test_result::fatal_error);
+    CHECK(bmp.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.non-character")
+                 .error_token("\\u00E4")
+                 .cancel());
+    auto outside_bmp = LEXY_VERIFY(u"🙂");
+    CHECK(outside_bmp.status == test_result::fatal_error);
+    CHECK(outside_bmp.trace
+          == test_trace()
+                 .expected_char_class(0, "code-point.non-character")
+                 .error_token("\\U0001F642")
+                 .cancel());
+
+    auto noncharacter = LEXY_VERIFY(u"\uFDDF");
+    CHECK(noncharacter.status == test_result::success);
+    CHECK(noncharacter.trace == test_trace().token("\\uFDDF"));
+}
+
 TEST_CASE("dsl::code_point.general_category()")
 {
     constexpr auto rule = lexy::dsl::code_point.general_category<lexy::code_point::Ll>();

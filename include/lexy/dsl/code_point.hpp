@@ -152,6 +152,58 @@ struct _cp : token_base<_cp<Predicate>>
         return _cp<P>{};
     }
 
+    constexpr auto ascii() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.ASCII";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_ascii();
+            }
+        };
+
+        return if_<predicate>();
+    }
+    constexpr auto bmp() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.BMP";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_bmp();
+            }
+        };
+
+        return if_<predicate>();
+    }
+    constexpr auto noncharacter() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.non-character";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_noncharacter();
+            }
+        };
+
+        return if_<predicate>();
+    }
+
     template <lexy::code_point::general_category_t Category>
     constexpr auto general_category() const
     {
