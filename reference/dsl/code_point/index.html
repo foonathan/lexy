@@ -62,8 +62,24 @@ lexy/dsl/code_point.hpp — lexy
     <span class=tok-k>class</span> <span class=tok-nc><em>code</em></span><em><span class=tok-o>-</span><span class=tok-n>point</span><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// models <em>token-rule</em></span>
     <span class=tok-p>{</span>
     <span class=tok-k>public</span><span class=tok-o>:</span>
+        <span class=tok-c1>// see below for member functions</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-kt>char32_t</span> <span class=tok-n>CodePoint</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-n>lit</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Predicate</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>if_</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span> <span class=tok-c1>// see below</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>if_</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>ascii</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>bmp</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>noncharacter</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-o>::</span><span class=tok-n>general_category_t</span> <span class=tok-n>Category</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-o>::</span><span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>CategoryGroup</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-kt>char32_t</span> <span class=tok-n>Low</span><span class=tok-p>,</span> <span class=tok-kt>char32_t</span> <span class=tok-n>High</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>range</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
     <span class=tok-k>constexpr</span> <span class=tok-n><em>code</em></span><em><span class=tok-o>-</span><span class=tok-n>point</span><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-k>auto</span> <span class=tok-n>code_point</span><span class=tok-p>;</span>
@@ -71,7 +87,7 @@ lexy/dsl/code_point.hpp — lexy
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>code_point</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a single Unicode <a href=https://en.wikipedia.org/wiki/Code_point>code point</a>.</p>
+<p><code>code_point</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a single scalar Unicode <a href=https://en.wikipedia.org/wiki/Code_point>code point</a>.</p>
 </div>
 <div class=dlist>
 <dl>
@@ -135,6 +151,91 @@ If the input has been validated, the rule only fails if the reader is at the end
 </div>
 </div>
 <div class=sect1>
+<h2 id=code_point-lit>Token rule <code>lexy::dsl::code_point.lit</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-kt>char32_t</span> <span class=tok-n>CodePoint</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-n>lit</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>code_pont.lit</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches the specific <code>CodePoint</code>.</p>
+</div>
+<div class=dlist>
+<dl>
+<dt class=hdlist1>Requires</dt>
+<dd>
+<div class=ulist>
+<ul>
+<li>
+<p><code>CodePoint</code> is the value of a scalar code point (i.e. non-surrogate and not out of bounds).</p>
+</li>
+<li>
+<p>The input <a href=/reference/encoding/#doc>encoding</a> is ASCII, UTF-8, UTF-16, or UTF-32.
+If it is ASCII, <code>CodePoint</code> is an ASCII character.</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class=hdlist1>Matching</dt>
+<dd>
+<p>Matches and consumes the code units that encode <code>CodePoint</code> in the encoding of the input.
+For ASCII and UTF-32, this is a single code unit, for UTF-8 up to four code units, and for UTF-16 up to two code units.</p>
+</dd>
+<dt class=hdlist1>Errors</dt>
+<dd>
+<p><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a>: if one code unit did not compare equal or the reader reached the end of the input.
+Its <code>.string()</code> is the encoded version of <code>CodePoint</code>, its <code>.index()</code> is the index of the code unit where the mismatch/missing one occurred, and its <code>.position()</code> is the reader position where it started to match the literal.</p>
+</dd>
+</dl>
+</div>
+<div class=paragraph>
+<p>It behaves identical to <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a> where <code>Str</code> is determined by encoding <code>CodePoint</code> in the encoding of the input.</p>
+</div>
+<div class=exampleblock>
+<div class=title>Example 2. Match a smiley face</div>
+<div class=content>
+<div class="listingblock playground-example">
+<div class=title><a href="/playground?example=code_point_lit&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-p>.</span><span class=tok-n>lit</span><span class=tok-o>&lt;</span><span class=tok-mh>0x1F642</span><span class=tok-o>&gt;</span><span class=tok-p>()</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span>
+<span class=tok-p>};</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+The caveats of <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a> regarding whitespace skipping and keywords apply here as well.
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Caution</div>
+</td>
+<td class=content>
+If the input contains an ill-formed code unit sequence, this is not checked by this rule;
+it simply compares each code unit.
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class=sect1>
 <h2 id=code_point-if>Token rule <code>lexy::dsl::code_point.if_</code></h2>
 <div class=sectionbody>
 <div class=listingblock>
@@ -171,7 +272,7 @@ The rule then fails.</p>
 </dl>
 </div>
 <div class=exampleblock>
-<div class=title>Example 2. Parse even code points only</div>
+<div class=title>Example 3. Parse even code points only</div>
 <div class=content>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=code_point_if&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
@@ -204,18 +305,6 @@ As the rule uses the type name of <code>Predicate</code> in the error, it does n
 </tr>
 </tbody></table>
 </div>
-<div class="admonitionblock note">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Note</div>
-</td>
-<td class=content>
-In the future, lexy will gain support for specifying code point ranges and Unicode character classes in a more convenient way, as done for <a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a>.
-</td>
-</tr>
-</tbody></table>
-</div>
 <div class="admonitionblock caution">
 <table>
 <tbody><tr>
@@ -228,11 +317,169 @@ The same caveat about <a href=/reference/dsl/whitespace/#doc>whitespace</a> as f
 </tr>
 </tbody></table>
 </div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+See <a href=/reference/dsl/unicode/#doc><code>lexy::dsl::unicode</code></a> for common predefined predicates.
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=code_point-classification>Token rule <code>lexy::dsl::code_point.ascii</code>/<code>bmp</code>/<code>noncharacter</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>ascii</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>bmp</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>noncharacter</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>code_point.range</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a code point with the specified classification.</p>
+</div>
+<div class=dlist>
+<dl>
+<dt class=hdlist1>Matches</dt>
+<dd>
+<p>Matches and consumes the normal <code>code_point</code> rule to get a <code>lexy::code_point cp</code> and checks that <code>cp.is_ascii()</code>/<code>cp.is_bmp()</code>/<code>cp.is_noncharacter()</code>.</p>
+</dd>
+<dt class=hdlist1>Errors</dt>
+<dd>
+<div class=ulist>
+<ul>
+<li>
+<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"&lt;name>"</code>):
+if the code point does not have the classification; at the starting reader position.
+The rule then fails.</p>
+</li>
+<li>
+<p>All errors raised by the normal <code>code_point</code> rule. The rule then fails.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+The other classification functions don’t have rules:
+* <code>cp.is_valid()</code> and <code>cp.is_scalar()</code> is always <code>true</code>; <code>cp.is_surrogate()</code> is never <code>true</code>.
+* <code>cp.is_control()</code> is general category <code>Cc</code>.
+* <code>cp.is_private_use()</code> is general category <code>Co</code>.
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=code_point-general_category>Token rule <code>lexy::dsl::code_point.general_category</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-o>::</span><span class=tok-n>general_category_t</span> <span class=tok-n>Category</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-o>::</span><span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>CategoryGroup</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>code_point.range</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a code point with the specified <a href=/reference/code_point/#general_category><code>lexy::code_point::general_category_t</code></a> or group of categories.</p>
+</div>
+<div class=dlist>
+<dl>
+<dt class=hdlist1>Matches</dt>
+<dd>
+<p>Matches and consumes the normal <code>code_point</code> rule to get a <code>lexy::code_point cp</code> and checks that <code>cp.general_category() == Category</code> or <code>cp.general_category() == CategoryGroup</code>.</p>
+</dd>
+<dt class=hdlist1>Errors</dt>
+<dd>
+<div class=ulist>
+<ul>
+<li>
+<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"&lt;name of Category>"</code>):
+if the code point is not in the category; at the starting reader position.
+The rule then fails.</p>
+</li>
+<li>
+<p>All errors raised by the normal <code>code_point</code> rule. The rule then fails.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+While <code>cp.general_category()</code> requires the Unicode database, <code>Cc</code> (Other, control) and <code>Co</code> (Other, private use) are fixed.
+As an optimization, <code>cp.is_control()</code>/<code>cp.is_private_use()</code> are used instead, so they don’t require the Unicode database.
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class=sect1>
+<h2 id=code_point-range>Token rule <code>lexy::dsl::code_point.range</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/dsl/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-kt>char32_t</span> <span class=tok-n>Low</span><span class=tok-p>,</span> <span class=tok-kt>char32_t</span> <span class=tok-n>High</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>range</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p><code>code_point.range</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a code point in the range <code>[Low, High]</code>.</p>
+</div>
+<div class=dlist>
+<dl>
+<dt class=hdlist1>Matches</dt>
+<dd>
+<p>Matches and consumes the normal <code>code_point</code> rule to get a <code>lexy::code_point cp</code> and checks that <code>Low &lt;= cp &lt;= High</code>.</p>
+</dd>
+<dt class=hdlist1>Errors</dt>
+<dd>
+<div class=ulist>
+<ul>
+<li>
+<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"code-point.range"</code>):
+if the code point is not in the range; at the starting reader position.
+The rule then fails.</p>
+</li>
+<li>
+<p>All errors raised by the normal <code>code_point</code> rule. The rule then fails.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/code_point/#general_category><code>lexy::code_point::general_category_t</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/unicode/#doc><code>lexy::dsl::unicode</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

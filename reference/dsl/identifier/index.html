@@ -137,7 +137,7 @@ Its kind cannot be overridden.</p>
 </dl>
 </div>
 <div class=exampleblock>
-<div class=title>Example 1. Parse a C like identifier</div>
+<div class=title>Example 1. Parse a C-like identifier</div>
 <div class=content>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=identifier&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
@@ -149,6 +149,22 @@ Its kind cannot be overridden.</p>
         <span class=tok-k>auto</span> <span class=tok-n>tail</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha_digit_underscore</span><span class=tok-p>;</span>
         <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>head</span><span class=tok-p>,</span> <span class=tok-n>tail</span><span class=tok-p>);</span>
     <span class=tok-p>}();</span>
+<span class=tok-p>};</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class=exampleblock>
+<div class=title>Example 2. Parse a Unicode-aware C-like identifier</div>
+<div class=content>
+<div class="listingblock playground-example">
+<div class=title><a href="/playground?example=identifier-unicode&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
+        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>unicode</span><span class=tok-o>::</span><span class=tok-n>xid_start_underscore</span><span class=tok-p>,</span> <span class=tok-c1>// want &#39;_&#39; as well</span>
+                          <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>unicode</span><span class=tok-o>::</span><span class=tok-n>xid_continue</span><span class=tok-p>);</span>
 <span class=tok-p>};</span></code></pre>
 </div>
 </div>
@@ -216,7 +232,7 @@ This is comparable to <a href=/reference/dsl/minus/#minus><code>lexy::dsl::opera
 </ul>
 </div>
 <div class=exampleblock>
-<div class=title>Example 2. Parse a C like identifier that is not reserved</div>
+<div class=title>Example 3. Parse a C like identifier that is not reserved</div>
 <div class=content>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=reserved_identifier&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
@@ -365,7 +381,7 @@ except that it also works on older compilers that do not support C++20’s exten
 Use this instead of <code>keyword&lt;Str>(identifier)</code> if you need to support them.</p>
 </div>
 <div class=exampleblock>
-<div class=title>Example 3. Parse a keyword</div>
+<div class=title>Example 4. Parse a keyword</div>
 <div class=content>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=keyword&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>

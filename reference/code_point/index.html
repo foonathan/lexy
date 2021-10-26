@@ -76,6 +76,14 @@ lexy/code_point.hpp — lexy
 
         <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_scalar</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
 
+        <span class=tok-c1>//=== general category ===//</span>
+        <span class=tok-k>enum</span> <span class=tok-nc>general_category_t</span><span class=tok-p>;</span>
+
+        <span class=tok-k>constexpr</span> <span class=tok-n>general_category_t</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+
+        <span class=tok-k>struct</span> <span class=tok-nc><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em><span class=tok-p>;</span>
+        <span class=tok-c1>// <em>gc-group</em> constants, see below.</span>
+
         <span class=tok-c1>//=== comparison ===//</span>
         <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>code_point</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>code_point</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
         <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>code_point</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>code_point</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
@@ -165,6 +173,7 @@ lexy/code_point.hpp — lexy
 </td>
 <td class=content>
 Those are all of the <a href=https://en.wikipedia.org/wiki/Unicode_character_property#General_Category>general categories</a> that are stable.
+As such, they are available without the Unicode database.
 </td>
 </tr>
 </tbody></table>
@@ -180,6 +189,104 @@ Those are all of the <a href=https://en.wikipedia.org/wiki/Unicode_character_pro
 </div>
 <div class="paragraph lead">
 <p>Returns <code>true</code> if the code point is valid and not a surrogate, <code>false</code> otherwise.</p>
+</div>
+</div>
+<div class=sect2>
+<h3 id=general_category>General Category</h3>
+<div class=listingblock>
+<div class=title><code>lexy/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>enum</span> <span class=tok-nc>general_category_t</span>
+<span class=tok-p>{</span>
+    <span class=tok-c1>// Enum values written in the same line are aliases.</span>
+
+    <span class=tok-n>Lu</span><span class=tok-p>,</span> <span class=tok-n>uppercase_letter</span><span class=tok-p>,</span>
+    <span class=tok-n>Ll</span><span class=tok-p>,</span> <span class=tok-n>lowercase_letter</span><span class=tok-p>,</span>
+    <span class=tok-n>Lt</span><span class=tok-p>,</span> <span class=tok-n>titlecase_letter</span><span class=tok-p>,</span>
+    <span class=tok-n>Lm</span><span class=tok-p>,</span> <span class=tok-n>modifier_letter</span><span class=tok-p>,</span>
+    <span class=tok-n>Lo</span><span class=tok-p>,</span> <span class=tok-n>other_letter</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Mn</span><span class=tok-p>,</span> <span class=tok-n>nonspacing_mark</span><span class=tok-p>,</span>
+    <span class=tok-n>Mc</span><span class=tok-p>,</span> <span class=tok-n>spaing_mark</span><span class=tok-p>,</span>
+    <span class=tok-n>Me</span><span class=tok-p>,</span> <span class=tok-n>enclosing_mark</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Nd</span><span class=tok-p>,</span> <span class=tok-n>decimal_number</span><span class=tok-p>,</span>
+    <span class=tok-n>Nl</span><span class=tok-p>,</span> <span class=tok-n>letter_number</span><span class=tok-p>,</span>
+    <span class=tok-n>No</span><span class=tok-p>,</span> <span class=tok-n>other_number</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Pc</span><span class=tok-p>,</span> <span class=tok-n>connector_punctuation</span><span class=tok-p>,</span>
+    <span class=tok-n>Pd</span><span class=tok-p>,</span> <span class=tok-n>dash_punctuation</span><span class=tok-p>,</span>
+    <span class=tok-n>Ps</span><span class=tok-p>,</span> <span class=tok-n>open_punctuation</span><span class=tok-p>,</span>
+    <span class=tok-n>Pe</span><span class=tok-p>,</span> <span class=tok-n>closing_punctuation</span><span class=tok-p>,</span>
+    <span class=tok-n>Pi</span><span class=tok-p>,</span> <span class=tok-n>initial_puncutation</span><span class=tok-p>,</span>
+    <span class=tok-n>Pf</span><span class=tok-p>,</span> <span class=tok-n>final_puncutation</span><span class=tok-p>,</span>
+    <span class=tok-n>Po</span><span class=tok-p>,</span> <span class=tok-n>other_punctuation</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Sm</span><span class=tok-p>,</span> <span class=tok-n>math_symbol</span><span class=tok-p>,</span>
+    <span class=tok-n>Sc</span><span class=tok-p>,</span> <span class=tok-n>currency_symbol</span><span class=tok-p>,</span>
+    <span class=tok-n>Sk</span><span class=tok-p>,</span> <span class=tok-n>modifier_symbol</span><span class=tok-p>,</span>
+    <span class=tok-n>So</span><span class=tok-p>,</span> <span class=tok-n>other_symbol</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Zs</span><span class=tok-p>,</span> <span class=tok-n>space_separator</span><span class=tok-p>,</span>
+    <span class=tok-n>Zl</span><span class=tok-p>,</span> <span class=tok-n>line_separator</span><span class=tok-p>,</span>
+    <span class=tok-n>Zp</span><span class=tok-p>,</span> <span class=tok-n>paragraph_separator</span><span class=tok-p>,</span>
+
+    <span class=tok-n>Cc</span><span class=tok-p>,</span> <span class=tok-n>control</span><span class=tok-p>,</span>
+    <span class=tok-n>Cf</span><span class=tok-p>,</span> <span class=tok-n>format</span><span class=tok-p>,</span>
+    <span class=tok-n>Cs</span><span class=tok-p>,</span> <span class=tok-n>surrogate</span><span class=tok-p>,</span>
+    <span class=tok-n>Co</span><span class=tok-p>,</span> <span class=tok-n>private_use</span><span class=tok-p>,</span>
+    <span class=tok-n>Cn</span><span class=tok-p>,</span> <span class=tok-n>unassigned</span><span class=tok-p>,</span>
+<span class=tok-p>};</span>
+
+<span class=tok-k>constexpr</span> <span class=tok-n>general_category_t</span> <span class=tok-n>general_category</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>Returns the <a href=https://en.wikipedia.org/wiki/Unicode_character_property#General_Category>general category</a> of the code point.</p>
+</div>
+<div class=paragraph>
+<p>This function requires the Unicode database.</p>
+</div>
+<div class=listingblock>
+<div class=title><code>lexy/code_point.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em>
+<span class=tok-p>{</span>
+    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>group</span><span class=tok-p>,</span> <span class=tok-n>general_category_t</span> <span class=tok-n>cat</span><span class=tok-p>);</span>
+    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>general_category_t</span> <span class=tok-n>cat</span><span class=tok-p>,</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>group</span><span class=tok-p>);</span>
+
+    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>group</span><span class=tok-p>,</span> <span class=tok-n>general_category_t</span> <span class=tok-n>cat</span><span class=tok-p>);</span>
+    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>general_category_t</span> <span class=tok-n>cat</span><span class=tok-p>,</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>group</span><span class=tok-p>);</span>
+<span class=tok-p>};</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>LC</span><span class=tok-p>;</span>                 <span class=tok-c1>// LC = Lu, Ll, Lt</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>cased_letter</span> <span class=tok-o>=</span> <span class=tok-n>LC</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>L</span><span class=tok-p>;</span>                  <span class=tok-c1>// L = Lu, Ll, Lt, Lm, Lo</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>letter</span> <span class=tok-o>=</span> <span class=tok-n>L</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>M</span><span class=tok-p>;</span>                  <span class=tok-c1>// M = Mn, Mc, Me</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>mark</span> <span class=tok-o>=</span> <span class=tok-n>M</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>N</span><span class=tok-p>;</span>                  <span class=tok-c1>// N = Nd, Nl, No</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>number</span> <span class=tok-o>=</span> <span class=tok-n>N</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>P</span><span class=tok-p>;</span>                  <span class=tok-c1>// P = Pc, Pd, Ps, Pe, Pi, Pf, Po</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>punctuation</span> <span class=tok-o>=</span> <span class=tok-n>P</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>Z</span><span class=tok-p>;</span>                  <span class=tok-c1>// Z = Zs, Zl, Zp</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>separator</span> <span class=tok-o>=</span> <span class=tok-n>Z</span><span class=tok-p>;</span>
+
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>C</span><span class=tok-p>;</span>                  <span class=tok-c1>// C = Cc, Cf, Cs, Co, Cn</span>
+<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>gc</em></span><em><span class=tok-o>-</span><span class=tok-n>group</span></em> <span class=tok-n>other</span><span class=tok-p>;</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>Tag objects to check for a specific Unicode category.
+They have an overloaded <code>operator==</code> and <code>operator!=</code> with the <code>general_category_t</code> and can be used to check that a code point category is in the group.</p>
+</div>
+<div class=paragraph>
+<p>This can be done without the Unicode database, but the category of a code point requires the Unicode database.</p>
 </div>
 </div>
 </div>

@@ -122,9 +122,10 @@ Write parse rules that detect common mistakes and issue appropriate diagnostics!
 </dd>
 <dt class=hdlist1>Unicode support</dt>
 <dd>
-<p>You can parse UTF-8, UTF-16, or UTF-32.
+<p>You can parse UTF-8, UTF-16, or UTF-32 and access (some of) the Unicode character database.
 <code>lexy</code> takes care of code point encoding and decoding as necessary, as well as endianness and byte-order marks.
 Want to match a string literal containing arbitrary Unicode code points or <code>\u21D4</code> and store the result in a <code>std::string</code>?
+Want to match any Unicode alphabetic or whitespace character, or a Unicode-aware identifier?
 You can do so out of the box.</p>
 </dd>
 <dt class=hdlist1>Keyword and identifier parsing</dt>
@@ -271,6 +272,10 @@ It is an <code>INTERFACE</code> target that sets the required include path and C
 <dt class=hdlist1><code>foonathan::lexy::file</code></dt>
 <dd>
 <p>Link to this library if you want to use the (not header only) <code>lexy::read_file()</code> functionality.</p>
+</dd>
+<dt class=hdlist1><code>foonathan::lexy::unicode</code></dt>
+<dd>
+<p>Link to this library if you want to use advanced Unicode rules that require the Unicode character database.</p>
 </dd>
 <dt class=hdlist1><code>foonathan::lexy::ext</code></dt>
 <dd>
