@@ -228,7 +228,7 @@ struct string : lexy::token_production
 
     static constexpr auto rule = [] {
         // Everything is allowed inside a string except for control characters.
-        auto code_point = (dsl::code_point - dsl::ascii::control).error<invalid_char>;
+        auto code_point = (dsl::code_point - dsl::unicode::control).error<invalid_char>;
 
         // Escape sequences start with a backlash and either map one of the symbols,
         // or a Unicode code point of the form uXXXX.
