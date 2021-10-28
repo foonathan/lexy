@@ -15,15 +15,15 @@ constexpr bool match_newline(Reader& reader)
 {
     using encoding = typename Reader::encoding;
 
-    if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+    if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
     {
         reader.bump();
         return true;
     }
-    else if (reader.peek() == lexy::_char_to_int_type<encoding>('\r'))
+    else if (reader.peek() == lexy::_detail::transcode_int<encoding>('\r'))
     {
         reader.bump();
-        if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+        if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
         {
             reader.bump();
             return true;

@@ -179,7 +179,7 @@ struct _argvsep : token_base<_argvsep>
             using encoding = typename Reader::encoding;
             if constexpr (std::is_same_v<Reader, lexy::input_reader<lexy::argv_input<encoding>>>)
             {
-                if (reader.peek() != lexy::_char_to_int_type<encoding>('\0'))
+                if (reader.peek() != lexy::_detail::transcode_int<encoding>('\0'))
                     return false;
 
                 reader.bump();

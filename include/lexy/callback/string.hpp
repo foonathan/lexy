@@ -22,7 +22,7 @@ struct _as_string
 {
     using return_type = String;
     using _char_type  = _string_char_type<String>;
-    static_assert(lexy::_is_compatible_char_type<Encoding, _char_type>,
+    static_assert(lexy::_detail::is_compatible_char_type<Encoding, _char_type>,
                   "invalid character type/encoding combination");
 
     constexpr String operator()(nullopt&&) const

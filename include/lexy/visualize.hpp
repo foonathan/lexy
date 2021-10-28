@@ -376,7 +376,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         {
             // If the character is in fact ASCII, visualize the code point.
             // Otherwise, visualize as byte.
-            if (lexy::_is_ascii(c))
+            if (lexy::_detail::is_ascii(c))
                 out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
             else
                 out = write_escaped_byte(out, static_cast<unsigned char>(c));

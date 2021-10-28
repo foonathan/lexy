@@ -230,19 +230,19 @@ struct _deduce_encoding<std::byte>
 } // namespace lexy
 
 //=== impls ===//
-namespace lexy
+namespace lexy::_detail
 {
 template <typename Encoding, typename CharT>
-constexpr bool _is_compatible_char_type
+constexpr bool is_compatible_char_type
     = std::is_same_v<typename Encoding::char_type,
                      CharT> || Encoding::template is_secondary_char_type<CharT>();
 
 template <typename Encoding, typename CharT>
-using _require_secondary_char_type
+using require_secondary_char_type
     = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>()>;
 
 template <typename CharT>
-constexpr bool _is_ascii(CharT c)
+constexpr bool is_ascii(CharT c)
 {
     if constexpr (std::is_signed_v<CharT>)
         return 0 <= c && c <= 0x7F;
@@ -251,7 +251,7 @@ constexpr bool _is_ascii(CharT c)
 }
 
 template <typename Encoding, typename CharT>
-LEXY_CONSTEVAL auto _char_to_int_type(CharT c)
+LEXY_CONSTEVAL auto transcode_int(CharT c)
 {
     using encoding_char_type = typename Encoding::char_type;
 
@@ -274,12 +274,12 @@ LEXY_CONSTEVAL auto _char_to_int_type(CharT c)
 #endif
     else
     {
-        LEXY_ASSERT(_is_ascii(c), "character type of string literal didn't match, "
-                                  "so only ASCII characters are supported");
+        LEXY_ASSERT(is_ascii(c), "character type of string literal didn't match, "
+                                 "so only ASCII characters are supported");
         return Encoding::to_int_type(static_cast<encoding_char_type>(c));
     }
 }
-} // namespace lexy
+} // namespace lexy::_detail
 
 #endif // LEXY_ENCODING_HPP_INCLUDED
 

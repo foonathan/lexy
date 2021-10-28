@@ -134,14 +134,14 @@ public:
     : buffer(begin, std::size_t(end - begin), resource)
     {}
 
-    template <typename CharT, typename = _require_secondary_char_type<encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<encoding, CharT>>
     explicit buffer(const CharT* data, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     : buffer(reinterpret_cast<const char_type*>(data), size, resource)
     {
         static_assert(sizeof(CharT) == sizeof(char_type));
     }
-    template <typename CharT, typename = _require_secondary_char_type<encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<encoding, CharT>>
     explicit buffer(const CharT* begin, const CharT* end,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     : buffer(reinterpret_cast<const char_type*>(begin), reinterpret_cast<const char_type*>(end),

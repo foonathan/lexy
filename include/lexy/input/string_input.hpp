@@ -32,11 +32,11 @@ public:
     : string_input(begin, std::size_t(end - begin))
     {}
 
-    template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<Encoding, CharT>>
     string_input(const CharT* data, std::size_t size) noexcept
     : _data(reinterpret_cast<const char_type*>(data)), _size(size)
     {}
-    template <typename CharT, typename = _require_secondary_char_type<Encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<Encoding, CharT>>
     string_input(const CharT* begin, const CharT* end) noexcept
     : string_input(begin, std::size_t(end - begin))
     {}

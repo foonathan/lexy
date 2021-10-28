@@ -46,7 +46,8 @@ struct _cpl : token_base<_cpl<Cp>>
 
             auto result
                 // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(str[Idx])
+                = ((reader.peek()
+                            == lexy::_detail::transcode_int<typename Reader::encoding>(str[Idx])
                         ? (reader.bump(), true)
                         : false)
                    && ...);

@@ -70,8 +70,8 @@ struct _blank : _ascii<_blank>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>(' ')
-               || i == lexy::_char_to_int_type<Encoding>('\t');
+        return i == lexy::_detail::transcode_int<Encoding>(' ')
+               || i == lexy::_detail::transcode_int<Encoding>('\t');
     }
 };
 inline constexpr auto blank = _blank{};
@@ -86,8 +86,8 @@ struct _newline : _ascii<_newline>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('\n')
-               || i == lexy::_char_to_int_type<Encoding>('\r');
+        return i == lexy::_detail::transcode_int<Encoding>('\n')
+               || i == lexy::_detail::transcode_int<Encoding>('\r');
     }
 };
 inline constexpr auto newline = _newline{};
@@ -102,8 +102,8 @@ struct _other_space : _ascii<_other_space>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('\f')
-               || i == lexy::_char_to_int_type<Encoding>('\v');
+        return i == lexy::_detail::transcode_int<Encoding>('\f')
+               || i == lexy::_detail::transcode_int<Encoding>('\v');
     }
 };
 inline constexpr auto other_space = _other_space{};
@@ -135,8 +135,8 @@ struct _lower : _ascii<_lower>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('a') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('z');
+        return lexy::_detail::transcode_int<Encoding>('a') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('z');
     }
 };
 inline constexpr auto lower = _lower{};
@@ -151,8 +151,8 @@ struct _upper : _ascii<_upper>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('A') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('Z');
+        return lexy::_detail::transcode_int<Encoding>('A') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('Z');
     }
 };
 inline constexpr auto upper = _upper{};
@@ -269,8 +269,8 @@ struct _graph : _ascii<_graph>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x21') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7E');
+        return lexy::_detail::transcode_int<Encoding>('\x21') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
     }
 };
 inline constexpr auto graph = _graph{};
@@ -285,8 +285,8 @@ struct _print : _ascii<_print>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x20') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7E');
+        return lexy::_detail::transcode_int<Encoding>('\x20') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
     }
 };
 inline constexpr auto print = _print{};
@@ -301,8 +301,8 @@ struct _char : _ascii<_char>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x00') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7F');
+        return lexy::_detail::transcode_int<Encoding>('\x00') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7F');
     }
 };
 inline constexpr auto character = _char{};
@@ -325,7 +325,7 @@ struct _alt : token_base<_alt<C...>>
         constexpr bool try_parse(Reader reader)
         {
             auto cur = reader.peek();
-            if (((cur != lexy::_char_to_int_type<typename Reader::encoding>(C)) && ...))
+            if (((cur != lexy::_detail::transcode_int<typename Reader::encoding>(C)) && ...))
                 return false;
 
             reader.bump();
@@ -347,7 +347,7 @@ struct _alt : token_base<_alt<C...>>
 template <typename CharT, CharT... C>
 struct _one_of
 {
-    static_assert((std::is_same_v<CharT, char> && ... && lexy::_is_ascii(C)),
+    static_assert((std::is_same_v<CharT, char> && ... && lexy::_detail::is_ascii(C)),
                   "only ASCII characters are supported");
 
     using rule = _alt<C...>;

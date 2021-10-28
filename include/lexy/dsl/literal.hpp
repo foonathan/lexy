@@ -35,7 +35,7 @@ struct _lit
             {
                 auto result
                     // Compare each code unit, bump on success, cancel on failure.
-                    = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(C)
+                    = ((reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>(C)
                             ? (reader.bump(), true)
                             : false)
                        && ...);

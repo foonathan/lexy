@@ -65,7 +65,7 @@ struct _trie
     LEXY_CONSTEVAL auto transition_char(std::size_t node, std::size_t transition) const
     {
         auto begin = node == 0 ? 0 : std::size_t(_node_transition_idx[node - 1]);
-        return lexy::_char_to_int_type<Encoding>(_transition_char[begin + transition]);
+        return transcode_int<Encoding>(_transition_char[begin + transition]);
     }
     LEXY_CONSTEVAL std::size_t transition_next(std::size_t node, std::size_t transition) const
     {

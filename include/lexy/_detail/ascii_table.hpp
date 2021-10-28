@@ -104,8 +104,8 @@ public:
     {
         constexpr auto mask = ((1 << Cats) | ...);
 
-        if (i < lexy::_char_to_int_type<Encoding>(0x00)
-            || lexy::_char_to_int_type<Encoding>(0x7F) < i)
+        if (i < lexy::_detail::transcode_int<Encoding>(0x00)
+            || lexy::_detail::transcode_int<Encoding>(0x7F) < i)
             return false;
 
         // NOLINTNEXTLINE: We've checked that we're positive in the condition above.

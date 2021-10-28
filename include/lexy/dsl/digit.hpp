@@ -25,8 +25,8 @@ struct binary
     template <typename Encoding>
     static constexpr bool match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('0')
-               || i == lexy::_char_to_int_type<Encoding>('1');
+        return i == lexy::_detail::transcode_int<Encoding>('0')
+               || i == lexy::_detail::transcode_int<Encoding>('1');
     }
 
     template <typename CharT>
@@ -48,8 +48,8 @@ struct octal
     template <typename Encoding>
     static constexpr bool match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('0') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('7');
+        return lexy::_detail::transcode_int<Encoding>('0') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('7');
     }
 
     template <typename CharT>
@@ -184,7 +184,7 @@ struct _zero : token_base<_zero>
 
         constexpr bool try_parse(Reader reader)
         {
-            if (reader.peek() != lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() != lexy::_detail::transcode_int<typename Reader::encoding>('0'))
                 return false;
 
             reader.bump();
@@ -278,7 +278,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
         constexpr bool try_parse(Reader reader)
         {
             // Check for a zero that is followed by a digit or separator.
-            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
             {
                 reader.bump();
                 end = reader.position();
@@ -415,7 +415,7 @@ struct _digits_t : token_base<_digits_t<Base>>
         constexpr bool try_parse(Reader reader)
         {
             // Check for a zero that is followed by a digit.
-            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
             {
                 reader.bump();
                 end = reader.position();
