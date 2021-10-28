@@ -281,16 +281,24 @@ window.addEventListener('load', async() => {
             callback(null, completions);
         }
     });
-    editor_grammar.on('click', function(){
-        const pos    = editor_grammar.getCursorPosition();
-        const token = editor_grammar.session.getTokenAt(pos.row, pos.column);
-        if (token.type !== 'dsl')
-            return;
-        const identifier = token.value.toLowerCase();
+    editor_grammar.renderer.on('afterRender', function(){
+        const dsl_identifiers = document.querySelectorAll('span.ace_dsl');
+        for (let span of dsl_identifiers)
+        {
+            const text = span.childNodes[0];
+            const identifier = text.data.toLowerCase();
+            const url = doc_entities[identifier] ?? doc_entities['lexy::' + identifier];
+            if (url)
+            {
+                var link = document.createElement('a');
+                link.appendChild(text.cloneNode(true));
+                link.title = "Documentation";
+                link.href = url;
+                link.target = "_blank";
 
-        let url = doc_entities[identifier] ?? doc_entities['lexy::' + identifier];
-        if (url)
-            window.location.href = url;
+                text.replaceWith(link);
+            }
+        }
     });
 
     editor_input.setTheme("ace/theme/github");
