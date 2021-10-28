@@ -10,6 +10,18 @@ async function fetch_local_file(url)
     return await response.text();
 }
 
+function json_stringify(object)
+{
+    // I can't use JSON.stringify directly, as the resulting JSON is base64 encoded.
+    // This can't deal with Unicode code points, so I need to escape them in the JSON representation first.
+    // Code taken (and fixed) from: https://stackoverflow.com/a/31652607.
+    var json = JSON.stringify(object);
+    json = json.replace(/[\u0080-\uFFFF]/g, function(c) {
+        return "\\u" + ("0000" + c.charCodeAt(0).toString(16)).substr(-4)
+    });
+    return json;
+}
+
 export function list_of_productions(source)
 {
     var result = [];
@@ -69,7 +81,7 @@ export async function compile_and_run(source, input, mode)
     const response = await fetch(`${api}/compiler/${compiler_id}/compile`, {
         method: "POST",
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body)
+        body: json_stringify(body)
     });
     if (!response.ok)
         return { success: false, message: `Compiler Explorer error: ${response.status} - ${response.statusText}` };
@@ -120,7 +132,7 @@ export async function get_godbolt_permalink(source, input)
     const response = await fetch(api + "shortener", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(state)
+        body: json_stringify(state)
     });
     if (!response.ok)
         return get_godbolt_url(source, input);
@@ -130,7 +142,7 @@ export async function get_godbolt_permalink(source, input)
 export function get_godbolt_url(source, input)
 {
     const state = get_godbolt_clientstate(source, input);
-    const state_str = JSON.stringify(state);
+    const state_str = json_stringify(state);
     return "https://godbolt.org/clientstate/" + encodeURIComponent(btoa(state_str));
 }
 

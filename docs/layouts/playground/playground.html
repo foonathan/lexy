@@ -190,7 +190,6 @@ async function run()
     const source = await playground.preprocess_source('playground', editor_grammar.getValue(), toolbar_production.value);
     const input  = editor_input.getValue();
     const mode = toolbar_mode.value;
-    console.log(mode);
 
     const result = await playground.compile_and_run(source, input, mode);
     const ansi_up = new AnsiUp;
@@ -198,7 +197,6 @@ async function run()
     {
         if (mode == 'tree')
         {
-            console.log(result.code);
             if (result.code == 0) // no error
             {
                 d3.select(output_graph).graphviz().renderDot(result.stdout);
