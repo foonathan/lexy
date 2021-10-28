@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/code_point.hpp>
 #include <lexy/dsl/identifier.hpp>
 
 TEST_CASE("dsl::operator/")
@@ -119,6 +120,31 @@ TEST_CASE("dsl::operator/")
         auto three_upper = LEXY_VERIFY("XYZ");
         CHECK(three_upper.status == test_result::success);
         CHECK(three_upper.trace == test_trace().token("XY"));
+    }
+
+    SUBCASE("code point")
+    {
+        constexpr auto rule = dsl::code_point.lit<'a'>() / dsl::code_point.lit<'b'>()
+                              / dsl::code_point.lit<0x12345>() / dsl::code_point.lit<0x12346>();
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY(u"");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
+
+        auto a = LEXY_VERIFY(u"a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.trace == test_trace().literal("a"));
+        auto b = LEXY_VERIFY(u"b");
+        CHECK(b.status == test_result::success);
+        CHECK(b.trace == test_trace().literal("b"));
+
+        auto first = LEXY_VERIFY(u"\U00012345");
+        CHECK(first.status == test_result::success);
+        CHECK(first.trace == test_trace().literal("\\U00012345"));
+        auto second = LEXY_VERIFY(u"\U00012346");
+        CHECK(second.status == test_result::success);
+        CHECK(second.trace == test_trace().literal("\\U00012346"));
     }
 }
 

@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/encoding.hpp>
 
 namespace lexy::_detail
 {
@@ -22,7 +23,7 @@ struct type_string
     static constexpr auto size = sizeof...(Cs);
 
     template <typename T = char_type>
-    static constexpr T c_str[sizeof...(Cs) + 1] = {T(Cs)..., T()};
+    static constexpr T c_str[sizeof...(Cs) + 1] = {transcode_char<T>(Cs)..., T()};
 };
 } // namespace lexy::_detail
 

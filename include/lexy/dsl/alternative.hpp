@@ -11,6 +11,66 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 
+namespace lexyd
+{
+template <char32_t Cp>
+struct _cpl;
+}
+
+namespace lexy::_detail
+{
+template <typename... Tokens>
+struct partition_alt;
+
+template <>
+struct partition_alt<>
+{
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens = Templ<Strings...>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = Templ<Tokens...>;
+};
+
+template <typename H, typename... T>
+struct partition_alt<H, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens = typename _tail::template trie_tokens<Encoding, Templ, Strings...>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename _tail::template other_tokens<Templ, Tokens..., H>;
+};
+template <typename CharT, CharT... C, typename... T>
+struct partition_alt<lexyd::_lit<CharT, C...>, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens =
+        typename _tail::template trie_tokens<Encoding, Templ, Strings..., type_string<CharT, C...>>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename _tail::template other_tokens<Templ, Tokens...>;
+};
+template <char32_t Cp, typename... T>
+struct partition_alt<lexyd::_cpl<Cp>, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding>
+    using _string = typename lexyd::_cpl<Cp>::template _string<Encoding>;
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens =
+        typename _tail::template trie_tokens<Encoding, Templ, Strings..., _string<Encoding>>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename partition_alt<T...>::template other_tokens<Templ, Tokens...>;
+};
+} // namespace lexy::_detail
+
 namespace lexy
 {
 struct exhausted_alternatives
@@ -22,109 +82,59 @@ struct exhausted_alternatives
 };
 } // namespace lexy
 
-namespace lexy::_detail
-{
-template <typename... Tokens>
-struct build_token_trie;
-
-template <>
-struct build_token_trie<>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        if constexpr (sizeof...(Strings) == 0)
-            return lexy::_detail::trie<char>;
-        else
-            return lexy::_detail::trie<std::common_type_t<typename Strings::char_type...>,
-                                       Strings...>;
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens = Templ<Tokens...>;
-};
-
-template <typename H, typename... T>
-struct build_token_trie<H, T...>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        return build_token_trie<T...>::template trie<Strings...>();
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens =
-        typename build_token_trie<T...>::template other_tokens<Templ, Tokens..., H>;
-};
-template <typename CharT, CharT... C, typename... T>
-struct build_token_trie<lexyd::_lit<CharT, C...>, T...>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        return build_token_trie<T...>::template trie<Strings..., type_string<CharT, C...>>();
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens = typename build_token_trie<T...>::template other_tokens<Templ, Tokens...>;
-};
-} // namespace lexy::_detail
-
 namespace lexyd
 {
-template <typename... Tokens>
-struct _malt : token_base<_malt<Tokens...>>
+template <typename Partition, typename Encoding>
+struct _token_trie
 {
-    template <typename Reader,
-              typename Indices = lexy::_detail::make_index_sequence<sizeof...(Tokens)>>
-    struct tp;
-    template <typename Reader, std::size_t... Idx>
-    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
+    template <typename... Strings>
+    struct _impl
     {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr auto try_parse([[maybe_unused]] const Reader& reader)
+        static constexpr auto get()
         {
-            if constexpr (sizeof...(Tokens) == 0)
-                return std::false_type{};
-            else
-            {
-                auto result = false;
-                auto impl   = [&](auto token, Reader local_reader) {
-                    // Try to match the current token.
-                    if (!lexy::try_match_token(token, local_reader))
-                        return;
-
-                    // Update end to longest match.
-                    end    = lexy::_detail::max_range_end(reader.position(), end,
-                                                            local_reader.position());
-                    result = true;
-                };
-
-                // Need to try everything.
-                (impl(Tokens{}, reader), ...);
-                return result;
-            }
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::exhausted_alternatives>(reader.position());
-            context.on(_ev::error{}, err);
+            return lexy::_detail::trie<Encoding, Strings...>;
         }
     };
+
+    static constexpr auto get = Partition::template trie_tokens<Encoding, _impl>::get();
+    using parser              = lexy::_detail::trie_parser<get>;
+};
+
+template <typename Partition>
+struct _malt
+{
+    template <typename... Tokens>
+    struct _impl
+    {
+        template <typename Reader>
+        static constexpr bool try_match(Reader& reader)
+        {
+            auto result = false;
+
+            auto                  begin   = reader.position();
+            auto                  end     = begin;
+            [[maybe_unused]] auto process = [&](auto token, Reader local_reader) {
+                // Try to match the current token.
+                if (!lexy::try_match_token(token, local_reader))
+                    return;
+
+                // Update end to longest match.
+                end    = lexy::_detail::max_range_end(begin, end, local_reader.position());
+                result = true;
+            };
+            (process(Tokens{}, reader), ...);
+
+            reader.set_position(end);
+            return result;
+        }
+    };
+
+    using parser = typename Partition::template other_tokens<_impl>;
 };
 
 template <typename... Tokens>
 struct _alt : token_base<_alt<Tokens...>>
 {
-    using _builder              = lexy::_detail::build_token_trie<typename Tokens::token_type...>;
-    static constexpr auto _trie = _builder::trie();
-
     template <typename Reader>
     struct tp
     {
@@ -134,31 +144,35 @@ struct _alt : token_base<_alt<Tokens...>>
 
         constexpr bool try_parse(const Reader& reader)
         {
-            lexy::token_parser_for<typename _builder::template other_tokens<_malt>, Reader>
-                manual_parser(reader);
+            using encoding = typename Reader::encoding;
+
+            using partition     = lexy::_detail::partition_alt<typename Tokens::token_type...>;
+            using trie_parser   = typename _token_trie<partition, encoding>::parser;
+            using manual_parser = typename _malt<partition>::parser;
 
             // We check the trie as a baseline.
             // This gives us a first end position.
-            if (auto trie_reader = reader;
-                lexy::_detail::trie_parser<_trie, Reader>::try_match(trie_reader))
+            if (auto trie_reader = reader; trie_parser::try_match(trie_reader))
             {
                 end = trie_reader.position();
 
-                if (trie_reader.peek() == Reader::encoding::eof())
+                if (trie_reader.peek() == encoding::eof())
                     // Exit early, there can't be a longer match.
                     return true;
 
                 // Check the remaining tokens to see if we have a longer match.
-                if (manual_parser.try_parse(reader))
-                    end = lexy::_detail::max_range_end(reader.position(), end, manual_parser.end);
+                if (auto manual_reader = reader; manual_parser::try_match(manual_reader))
+                    end = lexy::_detail::max_range_end(reader.position(), end,
+                                                       manual_reader.position());
 
                 return true;
             }
             else
             {
                 // Check the remaining tokens only.
-                auto result = manual_parser.try_parse(reader);
-                end         = manual_parser.end;
+                auto manual_reader = reader;
+                auto result        = manual_parser::try_match(manual_reader);
+                end                = manual_reader.position();
                 return result;
             }
         }

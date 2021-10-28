@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/code_point.hpp>
 #include <lexy/_detail/integer_sequence.hpp>
+#include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 
@@ -16,22 +17,37 @@ template <char32_t Cp>
 struct _cpl : token_base<_cpl<Cp>>
 {
     template <typename Encoding>
-    struct _literal_t
+    static auto _string_impl()
     {
         using char_type = typename Encoding::char_type;
-        char_type   str[4];
-        std::size_t length;
 
-        constexpr _literal_t()
-        : str{}, length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
-        {}
-    };
-    template <typename Reader>
-    static constexpr _literal_t<typename Reader::encoding> _literal
-        = _literal_t<typename Reader::encoding>{};
+        constexpr struct data_t
+        {
+            char_type   str[4];
+            std::size_t length;
+
+            constexpr data_t()
+            : str{},
+              length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
+            {}
+        } data;
+
+        if constexpr (data.length == 1)
+            return lexy::_detail::type_string<char_type, data.str[0]>{};
+        else if constexpr (data.length == 2)
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1]>{};
+        else if constexpr (data.length == 3)
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2]>{};
+        else
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2],
+                                              data.str[3]>{};
+    }
+    template <typename Encoding>
+    using _string = decltype(_string_impl<Encoding>());
 
     template <typename Reader,
-              typename Indices = lexy::_detail::make_index_sequence<_literal<Reader>.length>>
+              typename Indices
+              = lexy::_detail::make_index_sequence<_string<typename Reader::encoding>::size>>
     struct tp;
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
@@ -42,14 +58,13 @@ struct _cpl : token_base<_cpl<Cp>>
 
         constexpr bool try_parse(Reader reader)
         {
-            constexpr auto str = _literal<Reader>.str;
+            using encoding     = typename Reader::encoding;
+            constexpr auto str = _string<encoding>::template c_str<>;
 
             auto result
                 // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek()
-                            == lexy::_detail::transcode_int<typename Reader::encoding>(str[Idx])
-                        ? (reader.bump(), true)
-                        : false)
+                = ((reader.peek() == encoding::to_int_type(str[Idx]) ? (reader.bump(), true)
+                                                                     : false)
                    && ...);
             end = reader.position();
             return result;
@@ -58,7 +73,8 @@ struct _cpl : token_base<_cpl<Cp>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            constexpr auto str = _literal<Reader>.str;
+            using encoding     = typename Reader::encoding;
+            constexpr auto str = _string<encoding>::template c_str<>;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);

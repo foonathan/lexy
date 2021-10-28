@@ -171,9 +171,10 @@ public:
     constexpr key_index try_parse(Reader& reader) const
     {
         static_assert(!empty(), "symbol table must not be empty");
+        constexpr auto& trie = _trie<typename Reader::encoding>::object;
 
-        auto result = _detail::trie_parser<_trie::object, Reader>::parse(reader);
-        if (result == _trie::object.invalid_value)
+        auto result = _detail::trie_parser<trie>::parse(reader);
+        if (result == trie.invalid_value)
             return key_index();
         else
             return key_index(result);
@@ -186,9 +187,10 @@ public:
     }
 
 private:
+    template <typename Encoding>
     struct _trie
     {
-        static constexpr auto object = lexy::_detail::trie<char_type, Strings...>;
+        static constexpr auto object = lexy::_detail::trie<Encoding, Strings...>;
     };
 
     template <std::size_t... Idx, typename... Args>

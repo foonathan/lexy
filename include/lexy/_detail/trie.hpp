@@ -12,7 +12,7 @@
 
 namespace lexy::_detail
 {
-template <typename CharT, std::size_t NodeCount>
+template <typename Encoding, std::size_t NodeCount>
 struct _trie
 {
     static_assert(NodeCount > 0);
@@ -61,11 +61,10 @@ struct _trie
         return std::size_t(end - begin);
     }
 
-    template <typename Encoding>
-    LEXY_CONSTEVAL auto transition_char(std::size_t node, std::size_t transition) const
+    LEXY_CONSTEVAL auto transition_int(std::size_t node, std::size_t transition) const
     {
         auto begin = node == 0 ? 0 : std::size_t(_node_transition_idx[node - 1]);
-        return transcode_int<Encoding>(_transition_char[begin + transition]);
+        return Encoding::to_int_type(_transition_char[begin + transition]);
     }
     LEXY_CONSTEVAL std::size_t transition_next(std::size_t node, std::size_t transition) const
     {
@@ -80,13 +79,14 @@ struct _trie
     index_type _node_transition_idx[NodeCount];
 
     // Shared array for all transitions.
-    index_type _transition_node[NodeCount == 1 ? 1 : NodeCount - 1];
-    CharT      _transition_char[NodeCount == 1 ? 1 : NodeCount - 1];
+    index_type                   _transition_node[NodeCount == 1 ? 1 : NodeCount - 1];
+    typename Encoding::char_type _transition_char[NodeCount == 1 ? 1 : NodeCount - 1];
 };
 
-template <typename CharT, typename... Strings, std::size_t... Idxs>
+template <typename Encoding, typename... Strings, std::size_t... Idxs>
 LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 {
+    using char_type = typename Encoding::char_type;
     // We can estimate the number of nodes in the trie by adding all strings together.
     // This is the worst case where the strings don't share any nodes.
     // The plus one comes from the additional root node.
@@ -99,9 +99,9 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
         std::size_t node_count = 1;
 
         std::size_t node_value[node_count_upper_bound] = {std::size_t(-1)};
-        CharT       node_transition[node_count_upper_bound][node_count_upper_bound] = {};
+        char_type   node_transition[node_count_upper_bound][node_count_upper_bound] = {};
 
-        constexpr void insert(std::size_t value, const CharT* str, std::size_t size)
+        constexpr void insert(std::size_t value, const char_type* str, std::size_t size)
         {
             auto cur_node = std::size_t(0);
             for (auto ptr = str; ptr != str + size; ++ptr)
@@ -141,12 +141,12 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // We build the trie by inserting all strings.
     constexpr auto builder = [] {
         builder_t builder;
-        (builder.insert(Idxs, Strings::template c_str<CharT>, Strings::size), ...);
+        (builder.insert(Idxs, Strings::template c_str<char_type>, Strings::size), ...);
         return builder;
     }();
 
     // Now we also now the exact number of nodes in the trie.
-    _trie<CharT, builder.node_count> result{};
+    _trie<Encoding, builder.node_count> result{};
     using index_type = typename decltype(result)::index_type;
 
     // Translate the adjacency matrix representation into the actual trie representation.
@@ -174,12 +174,14 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 }
 
 /// A trie containing the given strings.
-template <typename CharT, typename... Strings>
+template <typename Encoding, typename... Strings>
 constexpr auto trie
-    = _make_trie<CharT, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
+    = _make_trie<Encoding, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
 
-template <const auto& Trie, typename Reader>
-struct trie_parser
+template <const auto& Trie>
+struct trie_parser;
+template <typename Encoding, std::size_t NodeCount, const _trie<Encoding, NodeCount>& Trie>
+struct trie_parser<Trie>
 {
     // 0 ... number-of-transitions-of-Node
     template <std::size_t Node>
@@ -190,10 +192,9 @@ struct trie_parser
     template <std::size_t Node, std::size_t... Transitions>
     struct handle_node<Node, lexy::_detail::index_sequence<Transitions...>>
     {
+        template <typename Reader>
         static constexpr std::size_t parse(Reader& reader)
         {
-            using encoding = typename Reader::encoding;
-
             constexpr auto cur_value = Trie.node_value(Node);
             auto           cur_pos   = reader.position();
 
@@ -202,8 +203,8 @@ struct trie_parser
                 auto result = Trie.invalid_value;
 
                 // Find a transition that would match.
-                auto next_char = reader.peek();
-                (void)((next_char == Trie.template transition_char<encoding>(Node, Transitions)
+                auto next = reader.peek();
+                (void)((next == Trie.transition_int(Node, Transitions)
                         ? // We did find a transition that matches, consume the character and take.
                         reader.bump(),
                         result
@@ -227,6 +228,7 @@ struct trie_parser
     template <std::size_t Node>
     struct handle_node<Node, lexy::_detail::index_sequence<>>
     {
+        template <typename Reader>
         static constexpr std::size_t parse(Reader&)
         {
             // We don't have any transitions, so we always return the current value.
@@ -234,6 +236,7 @@ struct trie_parser
         }
     };
 
+    template <typename Reader>
     static constexpr std::size_t parse([[maybe_unused]] Reader& reader)
     {
         if constexpr (Trie.empty())
@@ -243,6 +246,7 @@ struct trie_parser
             return handle_node<0>::parse(reader);
     }
 
+    template <typename Reader>
     static constexpr auto try_match([[maybe_unused]] Reader& reader)
     {
         if constexpr (Trie.empty())

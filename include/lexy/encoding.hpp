@@ -250,34 +250,40 @@ constexpr bool is_ascii(CharT c)
         return c <= 0x7F;
 }
 
-template <typename Encoding, typename CharT>
-LEXY_CONSTEVAL auto transcode_int(CharT c)
+template <typename TargetCharT, typename CharT>
+LEXY_CONSTEVAL TargetCharT transcode_char(CharT c)
 {
-    using encoding_char_type = typename Encoding::char_type;
-
-    if constexpr (std::is_same_v<CharT, encoding_char_type>)
-        return Encoding::to_int_type(c);
-    else if constexpr (std::is_same_v<CharT, unsigned char> && sizeof(encoding_char_type) == 1)
+    if constexpr (std::is_same_v<CharT, TargetCharT>)
+        return c;
+    else if constexpr (std::is_same_v<CharT, unsigned char> && sizeof(TargetCharT) == 1)
     {
         // We allow using unsigned char to express raw bytes, if we have a byte-only input.
         // This enables the BOM rule.
-        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+        return static_cast<TargetCharT>(c);
     }
 #if !LEXY_HAS_CHAR8_T
-    else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<Encoding, lexy::utf8_encoding>)
+    else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<TargetCharT, LEXY_CHAR8_T>)
     {
         // If we don't have char8_t, `LEXY_LIT(u8"ä")` would have the type char, not LEXY_CHAR8_T
         // (which is unsigned char). So we disable checking in that case, to allow such usage. Note
         // that this prevents catching `LEXY_LIT("ä")`, but there is nothing we can do.
-        return Encoding::to_int_type(static_cast<LEXY_CHAR8_T>(c));
+        return static_cast<LEXY_CHAR8_T>(c);
     }
 #endif
     else
     {
         LEXY_ASSERT(is_ascii(c), "character type of string literal didn't match, "
                                  "so only ASCII characters are supported");
-        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+        // Note that we don't need to worry about signed/unsigned conversion, all ASCII values are
+        // positive.
+        return static_cast<TargetCharT>(c);
     }
+}
+
+template <typename Encoding, typename CharT>
+LEXY_CONSTEVAL auto transcode_int(CharT c) -> typename Encoding::int_type
+{
+    return Encoding::to_int_type(transcode_char<typename Encoding::char_type>(c));
 }
 } // namespace lexy::_detail
 
