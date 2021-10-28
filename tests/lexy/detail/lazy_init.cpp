@@ -23,6 +23,14 @@ TEST_CASE("_detail::lazy_init")
         }();
         CHECK(emplaced);
         CHECK(*emplaced == 42);
+
+        constexpr auto emplaced_result = [] {
+            lazy_init result;
+            result.emplace_result([](int i) { return 2 * i; }, 21);
+            return result;
+        }();
+        CHECK(emplaced_result);
+        CHECK(*emplaced_result == 42);
     }
     SUBCASE("non-trivial")
     {
@@ -39,6 +47,14 @@ TEST_CASE("_detail::lazy_init")
         CHECK(emplaced);
         CHECK(*emplaced == "aaaaa");
         CHECK(emplaced->size() == 5);
+
+        auto emplaced_result = [] {
+            lazy_init result;
+            result.emplace_result([](char c) { return std::string(5, c); }, 'a');
+            return result;
+        }();
+        CHECK(emplaced_result);
+        CHECK(*emplaced_result == "aaaaa");
 
         SUBCASE("move constructor from empty")
         {

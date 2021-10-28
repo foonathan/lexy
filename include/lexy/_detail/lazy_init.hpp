@@ -177,6 +177,7 @@ public:
     constexpr void emplace_result(Fn&& fn, Args&&... args)
     {
         LEXY_FWD(fn)(LEXY_FWD(args)...);
+        _init = true;
     }
 
     constexpr explicit operator bool() const noexcept
