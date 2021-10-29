@@ -87,6 +87,8 @@ template <typename Encoding, typename... Strings, std::size_t... Idxs>
 LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 {
     using char_type = typename Encoding::char_type;
+    using int_type  = typename Encoding::int_type;
+
     // We can estimate the number of nodes in the trie by adding all strings together.
     // This is the worst case where the strings don't share any nodes.
     // The plus one comes from the additional root node.
@@ -96,18 +98,24 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // So we use this temporary representation using an adjacency matrix.
     struct builder_t
     {
-        std::size_t node_count = 1;
+        std::size_t node_count;
 
-        std::size_t node_value[node_count_upper_bound] = {std::size_t(-1)};
-        char_type   node_transition[node_count_upper_bound][node_count_upper_bound] = {};
+        std::size_t node_value[node_count_upper_bound];
+        int_type    node_transition[node_count_upper_bound][node_count_upper_bound];
+
+        constexpr builder_t() : node_count(1), node_value{std::size_t(-1)}, node_transition{}
+        {
+            for (auto from = 0u; from != node_count_upper_bound; ++from)
+                for (auto to = 0u; to != node_count_upper_bound; ++to)
+                    node_transition[from][to] = Encoding::eof();
+        }
 
         constexpr void insert(std::size_t value, const char_type* str, std::size_t size)
         {
             auto cur_node = std::size_t(0);
             for (auto ptr = str; ptr != str + size; ++ptr)
             {
-                auto c = *ptr;
-                LEXY_PRECONDITION(c);
+                auto c = Encoding::to_int_type(*ptr);
 
                 auto found = false;
                 for (auto next_node = cur_node + 1; next_node < node_count; ++next_node)
@@ -158,11 +166,11 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
             = value == std::size_t(-1) ? result.invalid_value : index_type(value);
 
         for (auto next_node = node + 1; next_node != builder.node_count; ++next_node)
-            if (auto c = builder.node_transition[node][next_node])
+            if (auto c = builder.node_transition[node][next_node]; c != Encoding::eof())
             {
                 // We've found a transition, add it to the shared transition array.
                 result._transition_node[transition_idx] = index_type(next_node);
-                result._transition_char[transition_idx] = c;
+                result._transition_char[transition_idx] = static_cast<char_type>(c);
                 ++transition_idx;
             }
 

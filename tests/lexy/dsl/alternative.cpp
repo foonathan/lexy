@@ -146,5 +146,25 @@ TEST_CASE("dsl::operator/")
         CHECK(second.status == test_result::success);
         CHECK(second.trace == test_trace().literal("\\U00012346"));
     }
+    SUBCASE("null bytes")
+    {
+        constexpr auto rule = dsl::lit_b<0> / dsl::lit_b<0, 0> / dsl::lit_b<'a', 0, 'b'>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted alternatives").cancel());
+
+        auto null = LEXY_VERIFY("\0", 1);
+        CHECK(null.status == test_result::success);
+        CHECK(null.trace == test_trace().token("\\0"));
+        auto double_null = LEXY_VERIFY("\0\0", 2);
+        CHECK(double_null.status == test_result::success);
+        CHECK(double_null.trace == test_trace().token("\\0\\0"));
+
+        auto a_null_b = LEXY_VERIFY("a\0b", 3);
+        CHECK(a_null_b.status == test_result::success);
+        CHECK(a_null_b.trace == test_trace().token("a\\0b"));
+    }
 }
 
