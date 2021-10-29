@@ -254,12 +254,8 @@ template <typename TargetCharT, typename CharT>
 LEXY_CONSTEVAL TargetCharT transcode_char(CharT c)
 {
     if constexpr (std::is_same_v<CharT, TargetCharT>)
-        return c;
-    else if constexpr (std::is_same_v<CharT, unsigned char> && sizeof(TargetCharT) == 1)
     {
-        // We allow using unsigned char to express raw bytes, if we have a byte-only input.
-        // This enables the BOM rule.
-        return static_cast<TargetCharT>(c);
+        return c;
     }
 #if !LEXY_HAS_CHAR8_T
     else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<TargetCharT, LEXY_CHAR8_T>)

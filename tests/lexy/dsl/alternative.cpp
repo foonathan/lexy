@@ -157,14 +157,14 @@ TEST_CASE("dsl::operator/")
 
         auto null = LEXY_VERIFY("\0", 1);
         CHECK(null.status == test_result::success);
-        CHECK(null.trace == test_trace().token("\\0"));
+        CHECK(null.trace == test_trace().literal("\\0"));
         auto double_null = LEXY_VERIFY("\0\0", 2);
         CHECK(double_null.status == test_result::success);
-        CHECK(double_null.trace == test_trace().token("\\0\\0"));
+        CHECK(double_null.trace == test_trace().literal("\\0\\0"));
 
         auto a_null_b = LEXY_VERIFY("a\0b", 3);
         CHECK(a_null_b.status == test_result::success);
-        CHECK(a_null_b.trace == test_trace().token("a\\0b"));
+        CHECK(a_null_b.trace == test_trace().literal("a\\0b"));
     }
 }
 

@@ -92,7 +92,7 @@ namespace lexy::dsl
 `lit_b<C...>` matches a sequence of bytes.
 
 Requires::
-  The {{% encoding %}} must be a single-byte encoding, such as {{% docref "lexy::default_encoding" %}} or {{% docref "lexy::byte_encoding" %}}.
+  The input encoding is {{% docref "lexy::byte_encoding" %}} unless all characters are ASCII.
 Matching::
   Matches and consumes the exact sequence of bytes.
 Errors::

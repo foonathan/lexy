@@ -21,7 +21,7 @@ namespace lexy::dsl
 
 Requires::
   * The combination of `Encoding` and `Endianness` is listed in the table below.
-  * The input encoding has single byte code units (e.g. {{% docref "lexy::byte_encoding" %}}).
+  * The input encoding is {{% docref "lexy::byte_encoding" %}}.
 Matching::
   Matches and consumes the byte sequence given in the table below.
   This is done by repeatedly comparing the code unit against the numeric values.

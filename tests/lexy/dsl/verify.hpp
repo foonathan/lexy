@@ -544,6 +544,11 @@ constexpr auto _get_input(Encoding, const CharT* str)
 {
     return lexy::zstring_input<Encoding>(str);
 }
+template <typename Encoding, typename = typename Encoding::int_type>
+constexpr auto _get_input(Encoding)
+{
+    return lexy::string_input<Encoding>();
+}
 template <typename Encoding, typename... CharT, typename = std::enable_if_t<(sizeof...(CharT) > 1)>>
 constexpr auto _get_input(Encoding, CharT... cs)
 {

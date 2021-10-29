@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-12-01
+
+`dsl::bom` and `dsl::lit_b` now require `lexy::byte_encoding`.
+
 == 2021-11-30
 
 Remove `lexy_ext/input_location.hpp`: use `lexy/input_location.hpp` instead, which has a different interface but more functionality.
