@@ -38,6 +38,7 @@
 #include <lexy/dsl/production.hpp>
 #include <lexy/dsl/punctuator.hpp>
 #include <lexy/dsl/recover.hpp>
+#include <lexy/dsl/repeat.hpp>
 #include <lexy/dsl/return.hpp>
 #include <lexy/dsl/scan.hpp>
 #include <lexy/dsl/separator.hpp>

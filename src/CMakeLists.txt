@@ -76,6 +76,7 @@ set(header_files
         ${include_dir}/dsl/production.hpp
         ${include_dir}/dsl/punctuator.hpp
         ${include_dir}/dsl/recover.hpp
+        ${include_dir}/dsl/repeat.hpp
         ${include_dir}/dsl/return.hpp
         ${include_dir}/dsl/scan.hpp
         ${include_dir}/dsl/separator.hpp

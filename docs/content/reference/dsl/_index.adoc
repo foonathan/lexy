@@ -149,10 +149,10 @@ the other rule does not have access to context variables, and any context modifi
   parse a rule repeatedly
 {{% docref "lexy::dsl::while_" %}} and {{% docref "lexy::dsl::while_one" %}}::
   parse a branch rule while its condition matches
-{{% docref "lexy::dsl::times" %}}::
-  parse a rule N times
 {{% docref "lexy::dsl::list" %}}::
   parse a list of things
+{{% docref "lexy::dsl::times" %}} and {{% docref "lexy::dsl::repeat" %}}::
+  parse a rule `N` times
 {{% docref "lexy::dsl::until" %}}::
   skip everything until a rule matches
 =====

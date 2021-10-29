@@ -72,6 +72,7 @@ set(tests
         dsl/production.cpp
         dsl/punctuator.cpp
         dsl/recover.cpp
+        dsl/repeat.cpp
         dsl/return.cpp
         dsl/scan.cpp
         dsl/sequence.cpp

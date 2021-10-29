@@ -33,12 +33,15 @@ Parsing::
 Errors::
   * All errors raised by parsing `rule` or `sep`.
     The rule then fails.
-  * `lexy::unexpected_trailing_separator`: if a trailing separator can be matched after the last item; at the position of the separator.
-    It then recovers by simply consuming the separator and continues.
+  * `lexy::unexpected_trailing_separator`: if a trailing separator can be matched after the last item and that is not allowed;
+    at the position of the separator.
+    It then recovers by simply consuming the separator.
 Values::
   All values produced by each `rule` invocation in order.
 
 {{% godbolt-example times_tsep "Parse and sum three integers separated by comma" %}}
+
+NOTE: See {{% docref "lexy::dsl::repeat" %}} if the number of repetitions should be determined by the input.
 
 [#twice]
 == Rule `lexy::dsl::twice`
