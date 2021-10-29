@@ -124,27 +124,17 @@ struct max_recursion_depth_exceeded
 namespace lexyd
 {
 template <typename Production, typename DepthError = void>
-struct _rec : rule_base
+struct _recb : branch_base
 {
     template <typename NextParser>
-    struct p
+    struct _depth_handler
     {
-        struct _cont
-        {
-            template <typename Context, typename Reader, typename... Args>
-            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
-            {
-                auto& control_block = context.production_context().control_block();
-                --control_block.cur_depth;
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
-            }
-        };
-
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename Context, typename Reader>
+        static constexpr bool increment_depth(Context& context, Reader& reader)
         {
             auto& control_block = context.production_context().control_block();
-            LEXY_ASSERT(control_block.max_depth > 0, "dsl::recurse<P> is disabled in this context");
+            LEXY_ASSERT(control_block.max_depth > 0,
+                        "dsl::recurse_branch<P> is disabled in this context");
 
             // We're doing a recursive call, check for an exceeded depth.
             if (control_block.cur_depth >= control_block.max_depth)
@@ -156,12 +146,66 @@ struct _rec : rule_base
                 return false;
             }
 
-            // We parse the production, but with a temporarily incresed depth.
             ++control_block.cur_depth;
-            return lexy::parser_for<_prd<Production>, _cont>::parse(context, reader,
+            return true;
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto& control_block = context.production_context().control_block();
+            --control_block.cur_depth;
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename Context, typename Reader>
+    struct bp
+    {
+        static_assert(lexy::is_branch_rule<lexy::production_rule<Production>>);
+
+        using impl = lexy::branch_parser_for<_prd<Production>, Context, Reader>;
+        impl _impl;
+
+        constexpr auto try_parse(Context& context, const Reader& reader)
+        {
+            return _impl.try_parse(context, reader);
+        }
+
+        template <typename NextParser, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            using depth = _depth_handler<NextParser>;
+            if (!depth::increment_depth(context, reader))
+                return false;
+            return _impl.template finish<depth>(context, reader, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using depth = _depth_handler<NextParser>;
+            if (!depth::increment_depth(context, reader))
+                return false;
+
+            return lexy::parser_for<_prd<Production>, depth>::parse(context, reader,
                                                                     LEXY_FWD(args)...);
         }
     };
+
+    template <typename Tag>
+    static constexpr _recb<Production, Tag> max_depth_error = _recb<Production, Tag>{};
+};
+
+template <typename Production, typename DepthError = void>
+struct _rec : rule_base
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<_recb<Production, DepthError>, NextParser>;
 
     template <typename Tag>
     static constexpr _rec<Production, Tag> max_depth_error = _rec<Production, Tag>{};
@@ -172,6 +216,9 @@ struct _rec : rule_base
 /// condition outwards.
 template <typename Production>
 constexpr auto recurse = _rec<Production>{};
+
+template <typename Production>
+constexpr auto recurse_branch = _recb<Production>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED

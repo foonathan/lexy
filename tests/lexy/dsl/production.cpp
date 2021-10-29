@@ -476,3 +476,62 @@ TEST_CASE("dsl::recurse")
     }
 }
 
+TEST_CASE("dsl::recurse_branch")
+{
+    constexpr auto rec = dsl::recurse_branch<struct test>;
+    CHECK(lexy::is_branch_rule<decltype(rec)>);
+
+    SUBCASE("direct recursion")
+    {
+        struct production
+        : test_production_for<decltype(LEXY_LIT("b") >> dsl::if_(dsl::recurse_branch<production>)
+                                       | LEXY_LIT("a"))>
+        {};
+
+        constexpr auto callback
+            = lexy::callback<int>([](const char*) { return 0; },
+                                  [](const char*, int count) { return count + 1; });
+
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "exhausted choice").cancel());
+
+        auto a = LEXY_VERIFY_P(production, "a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.value == 0);
+        CHECK(a.trace == test_trace().token("a"));
+        auto b = LEXY_VERIFY_P(production, "b");
+        CHECK(b.status == test_result::success);
+        CHECK(b.value == 0);
+        CHECK(b.trace == test_trace().token("b").production("test_production").cancel());
+
+        auto ba = LEXY_VERIFY_P(production, "ba");
+        CHECK(ba.status == test_result::success);
+        CHECK(ba.value == 1);
+        CHECK(ba.trace == test_trace().token("b").production("test_production").token("a"));
+        auto bb = LEXY_VERIFY_P(production, "bb");
+        CHECK(bb.status == test_result::success);
+        CHECK(bb.value == 1);
+        CHECK(bb.trace
+              == test_trace()
+                     .token("b")
+                     .production("test_production")
+                     .token("b")
+                     .production("test_production")
+                     .cancel());
+
+        auto bba = LEXY_VERIFY_P(production, "bba");
+        CHECK(bba.status == test_result::success);
+        CHECK(bba.value == 2);
+        CHECK(bba.trace
+              == test_trace()
+                     .token("b")
+                     .production("test_production")
+                     .token("b")
+                     .production("test_production")
+                     .token("a"));
+    }
+
+    // No need to test other cases, code is shared with `dsl::p`.
+}
+

@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::inline_": inline_
   "lexy::dsl::p": p
   "lexy::dsl::recurse": recurse
+  "lexy::dsl::recurse_branch": recurse
 ---
 
 [.lead]
@@ -108,14 +109,16 @@ namespace lexy
 
 namespace lexy::dsl
 {
-    struct _recurse_ // models _rule_
+    struct _recurse_ // models _rule_ or _branch-rule_
     {
         template <typename Tag>
         static constexpr _recurse_ max_depth_error;
     };
 
     template <_production_ P>
-    constexpr _recurse_ auto recurse;
+    constexpr _recurse_ auto recurse;        // _rule_
+    template <_production_ P>
+    constexpr _recurse_ auto recurse_branch; // _branch-rule_
 }
 ----
 
@@ -123,13 +126,18 @@ namespace lexy::dsl
 `recurse` is a rule that parses the production `P` but supports recursion.
 
 It behaves similar to the `p` rule, but `P` does not need to a be a complete type, which allows recursion.
-For the same reason, `recurse<P>` is never a branch rule.
+For the same reason, `recurse<P>` is never a branch rule: it can't know whether `P` is a branch.
+Use `recurse_branch<P>` if you know that `P` is a branch; it will cause a delayed `static_assert` if it isn't.
 
 Parsing::
   Checks whether the current depth of recursive production call exceeds the maximum parse depth,
   which is determined by {{% docref "lexy::max_recursion_depth" %}}.
   Fails, if that is the case.
   Otherwise, parses `p<P>`, i.e. the production `P`.
+Branch parsing::
+  Branch parses `p<P>`, i.e. the production `P`.
+  The recursive depth check is done after the branch condition has matched.
+  It will not backtrack if the condition matches but the depth is exceeded.
 Errors::
   * A generic error with the specified `Tag` or `lexy::max_recursion_depth_exceeded` if the recursive depth is exceeded,
     at the position where it would have started to match the production.
