@@ -308,14 +308,16 @@ it is still disabled, unless <code>P</code> explicitly defines a new whitespace 
 
 <span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
 <span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc><em>recurse</em></span> <span class=tok-c1>// models <em>rule</em></span>
+    <span class=tok-k>struct</span> <span class=tok-nc><em>recurse</em></span> <span class=tok-c1>// models <em>rule</em> or <em>branch-rule</em></span>
     <span class=tok-p>{</span>
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
         <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-n>max_depth_error</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-k>auto</span> <span class=tok-n>recurse</span><span class=tok-p>;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-k>auto</span> <span class=tok-n>recurse</span><span class=tok-p>;</span>        <span class=tok-c1>// <em>rule</em></span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-k>auto</span> <span class=tok-n>recurse_branch</span><span class=tok-p>;</span> <span class=tok-c1>// <em>branch-rule</em></span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
@@ -324,7 +326,8 @@ it is still disabled, unless <code>P</code> explicitly defines a new whitespace 
 </div>
 <div class=paragraph>
 <p>It behaves similar to the <code>p</code> rule, but <code>P</code> does not need to a be a complete type, which allows recursion.
-For the same reason, <code>recurse&lt;P></code> is never a branch rule.</p>
+For the same reason, <code>recurse&lt;P></code> is never a branch rule: it can’t know whether <code>P</code> is a branch.
+Use <code>recurse_branch&lt;P></code> if you know that <code>P</code> is a branch; it will cause a delayed <code>static_assert</code> if it isn’t.</p>
 </div>
 <div class=dlist>
 <dl>
@@ -334,6 +337,12 @@ For the same reason, <code>recurse&lt;P></code> is never a branch rule.</p>
 which is determined by <a href=/reference/grammar/#max_recursion_depth><code>lexy::max_recursion_depth</code></a>.
 Fails, if that is the case.
 Otherwise, parses <code>p&lt;P></code>, i.e. the production <code>P</code>.</p>
+</dd>
+<dt class=hdlist1>Branch parsing</dt>
+<dd>
+<p>Branch parses <code>p&lt;P></code>, i.e. the production <code>P</code>.
+The recursive depth check is done after the branch condition has matched.
+It will not backtrack if the condition matches but the depth is exceeded.</p>
 </dd>
 <dt class=hdlist1>Errors</dt>
 <dd>
