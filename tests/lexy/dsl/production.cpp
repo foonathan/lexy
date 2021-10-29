@@ -370,7 +370,7 @@ TEST_CASE("dsl::recurse")
     SUBCASE("max depth")
     {
         struct production;
-        struct inner : production_for<decltype(dsl::recurse<production>)>
+        struct inner : production_for<decltype(dsl::recurse<production> + dsl::recurse<production>)>
         {
             static constexpr auto name()
             {
@@ -389,39 +389,88 @@ TEST_CASE("dsl::recurse")
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto one       = LEXY_VERIFY_P(production, "a");
-        auto one_trace = test_trace().token("a").production("inner").production("test_production");
+        auto one = LEXY_VERIFY_P(production, "a");
+        // clang-format off
+        auto one_trace = test_trace()
+                             .token("a")
+                             .production("inner")
+                                 .production("test_production").finish()
+                                 .production("test_production").finish()
+                                 .finish();
+        // clang-format on
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
         CHECK(one.trace == one_trace);
 
         auto two = LEXY_VERIFY_P(production, "aa");
-        auto two_trace
-            = test_trace(one_trace).token("a").production("inner").production("test_production");
+        // clang-format off
+        auto two_trace = test_trace()
+                             .token("a")
+                             .production("inner")
+                                 .production("test_production")
+                                     .token("a")
+                                     .production("inner")
+                                         .production("test_production").finish()
+                                         .production("test_production").finish()
+                                         .finish()
+                                     .finish()
+                                 .production("test_production").finish()
+                                 .finish();
+        // clang-format on
         CHECK(two.status == test_result::success);
         CHECK(two.value == 1);
         CHECK(two.trace == two_trace);
 
         auto three = LEXY_VERIFY_P(production, "aaa");
-        auto three_trace
-            = test_trace(two_trace).token("a").production("inner").production("test_production");
+        // clang-format off
+        auto three_trace = test_trace()
+                             .token("a")
+                             .production("inner")
+                                 .production("test_production")
+                                     .token("a")
+                                     .production("inner")
+                                         .production("test_production")
+                                             .token("a")
+                                             .production("inner")
+                                                 .production("test_production").finish()
+                                                 .production("test_production").finish()
+                                                 .finish()
+                                             .finish()
+                                         .production("test_production").finish()
+                                         .finish()
+                                     .finish()
+                                 .production("test_production").finish()
+                                 .finish();
+        // clang-format on
         CHECK(three.status == test_result::success);
         CHECK(three.value == 1);
         CHECK(three.trace == three_trace);
 
-        auto four       = LEXY_VERIFY_P(production, "aaaa");
-        auto four_trace = test_trace(three_trace)
-                              .token("a")
-                              .production("inner")
-                              .error(4, 4, "maximum recursion depth exceeded")
-                              .cancel()
-                              .cancel()
-                              .cancel()
-                              .cancel()
-                              .cancel()
-                              .cancel()
-                              .cancel()
-                              .cancel();
+        auto four = LEXY_VERIFY_P(production, "aaaa");
+        // clang-format off
+        auto four_trace
+            = test_trace()
+                 .token("a")
+                 .production("inner")
+                     .production("test_production")
+                         .token("a")
+                         .production("inner")
+                             .production("test_production")
+                                 .token("a")
+                                 .production("inner")
+                                     .production("test_production")
+                                         .token("a")
+                                         .production("inner")
+                                         .error(4, 4, "maximum recursion depth exceeded")
+                                         .cancel()
+                                     .cancel()
+                                 .cancel()
+                             .cancel()
+                         .cancel()
+                     .cancel()
+                 .cancel()
+              .cancel();
+        // clang-format on
         CHECK(four.status == test_result::fatal_error);
         CHECK(four.trace == four_trace);
     }

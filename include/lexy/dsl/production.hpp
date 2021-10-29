@@ -129,6 +129,17 @@ struct _rec : rule_base
     template <typename NextParser>
     struct p
     {
+        struct _cont
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+            {
+                auto& control_block = context.production_context().control_block();
+                --control_block.cur_depth;
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
@@ -147,11 +158,8 @@ struct _rec : rule_base
 
             // We parse the production, but with a temporarily incresed depth.
             ++control_block.cur_depth;
-            auto result = lexy::parser_for<_prd<Production>, NextParser>::parse(context, reader,
-                                                                                LEXY_FWD(args)...);
-            --control_block.cur_depth;
-
-            return result;
+            return lexy::parser_for<_prd<Production>, _cont>::parse(context, reader,
+                                                                    LEXY_FWD(args)...);
         }
     };
 
