@@ -65,27 +65,55 @@ constexpr auto split_context(const Location& location, const lexy::lexeme<Reader
         auto newline = location.newline();
         LEXY_PRECONDITION(lexy::_detail::precedes(newline.begin(), underlined.begin()));
 
-        // The end of the underlined part is either the end of the underline or the newline.
-        // Due to the nature of newlines, we don't need to advance to the next code point boundary.
-        auto underlined_end
-            = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), newline.end());
+        auto underlined_end = [&] {
+            if (underlined.empty())
+            {
+                // Our underlined part is empty, extend it to cover one code unit.
+                // For simplicity, we extend it further so that it covers the entire newline.
+                return newline.end();
+            }
+            else
+            {
+                // The end of the underlined part is either the end of the underline or the newline.
+                // Due to the nature of newlines, we don't need to advance to the next code point
+                // boundary.
+                return lexy::_detail::min_range_end(underlined.begin(), underlined.end(),
+                                                    newline.end());
+            }
+        }();
 
-        // Use the trimmed underline, and nothing comes after it.
+        // Use the trimmed/extended underline, and nothing comes after it.
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, underlined_end};
     }
     else
     {
-        // The end of the underlined part is either the end of the underline or the end of the
-        // context...
-        auto underlined_end
-            = lexy::_detail::min_range_end(underlined.begin(), underlined.end(), context.end());
-        // ... advanced to the next code point boundary.
-        // This ensures that something like `dsl::ascii::alpha` does not split a non-ASCII code
-        // point.
-        underlined_end = find_cp_boundary<encoding>(underlined_end, context.end());
+        auto underlined_end = [&] {
+            if (underlined.empty())
+            {
+                LEXY_ASSERT(underlined.end() != context.end(),
+                            "we would have triggered underline_after_end");
+                return find_cp_boundary<encoding>(lexy::_detail::next(underlined.end()),
+                                                  context.end());
+            }
+            else
+            {
+                // Trim the underlined part, so it does not extend the context.
+                auto trimmed = lexy::_detail::min_range_end(underlined.begin(), underlined.end(),
+                                                            context.end());
+                if (trimmed == context.end())
+                    return trimmed;
 
-        // Use the trimmed underline, everything that remains (if any) is part of the context.
+                // If we haven't trimmed it, we need to advance it to the next code point boundary.
+                // This also prevents an empty underline.
+                // (We assume the context ends at a code point boundary, so don't need to trim it
+                // above.)
+                return find_cp_boundary<encoding>(underlined.end(), context.end());
+            }
+        }();
+
+        // Use the trimmed/extended underline, everything that remains (if any) is part of the
+        // context.
         result.underlined = {underlined.begin(), underlined_end};
         result.after      = {underlined_end, context.end()};
     }
@@ -207,6 +235,7 @@ struct error_writer
         // Then underline.
         auto underline_count = lexy::visualization_display_width(underlined, opts);
         if (underline_count == 0)
+            // This is only possible if we have an error right at EOF.
             underline_count = 1;
         for (auto i = 0u; i != underline_count; ++i)
             out = write_str(out, underline(kind));
@@ -258,9 +287,9 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        auto underlined = lexy::lexeme_for<Input>(error.position(), error.index() + 1);
 
-        out = writer.write_annotation(out, annotation_kind::primary, location,
-                                      {error.position(), error.index() + 1},
+        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -271,9 +300,9 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        auto underlined = lexy::lexeme_for<Input>(error.begin(), error.end());
 
-        out = writer.write_annotation(out, annotation_kind::primary, location,
-                                      {error.begin(), error.end()},
+        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected keyword '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -283,8 +312,8 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
     {
-        out = writer.write_annotation(out, annotation_kind::primary, location,
-                                      {error.position(), 1},
+        auto underlined = lexy::lexeme_for<Input>(error.position(), error.position());
+        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
                                       [&](OutputIt out, lexy::visualization_options) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::_detail::write_str(out,
@@ -295,13 +324,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else
     {
-        auto underlined = [&] {
-            if (error.begin() == error.end())
-                return lexy::lexeme_for<Input>(error.position(), 1);
-            else
-                return lexy::lexeme_for<Input>(error.begin(), error.end());
-        }();
-
+        auto underlined = lexy::lexeme_for<Input>(error.begin(), error.end());
         out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
                                       [&](OutputIt out, lexy::visualization_options) {
                                           return lexy::_detail::write_str(out, error.message());

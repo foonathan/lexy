@@ -54,7 +54,16 @@ TEST_CASE("_detail::write_error")
      |   ^^ error tag
 )*");
         }
-        SUBCASE("expected literal")
+        SUBCASE("expected literal, first character")
+        {
+            lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 0);
+            CHECK(write(context, error) == R"*(error: while parsing production
+     |
+   1 | hello world
+     |   ^ expected 'abc'
+)*");
+        }
+        SUBCASE("expected literal, other characters")
         {
             lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 1);
             CHECK(write(context, error) == R"*(error: while parsing production
@@ -99,6 +108,7 @@ TEST_CASE("_detail::write_error")
      |   ^ error tag
 )*");
     }
+
     SUBCASE("error at newline")
     {
         auto input = lexy::zstring_input("hello\nworld");
@@ -135,6 +145,7 @@ TEST_CASE("_detail::write_error")
      |      ^ error tag
 )*");
     }
+
     SUBCASE("escaped characters")
     {
         auto input = lexy::zstring_input<lexy::utf8_encoding>(LEXY_CHAR8_STR("hel\u1234lo"));
@@ -159,6 +170,7 @@ TEST_CASE("_detail::write_error")
      | ^^^^^^^^^ error tag
 )*");
     }
+
     SUBCASE("multi-line range")
     {
         auto input = lexy::zstring_input("hello\nworld");
