@@ -18,6 +18,7 @@ namespace lexyd
 LEXY_PUNCT(period, ".");
 LEXY_PUNCT(comma, ",");
 LEXY_PUNCT(colon, ":");
+LEXY_PUNCT(double_colon, "::");
 LEXY_PUNCT(semicolon, ";");
 
 LEXY_PUNCT(exclamation_mark, "!");

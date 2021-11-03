@@ -30,6 +30,14 @@ TEST_CASE("dsl::colon")
     CHECK(equivalent_rules(rule, dsl::lit_c<':'>));
 }
 
+TEST_CASE("dsl::double_colon")
+{
+    constexpr auto rule = dsl::double_colon;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, LEXY_LIT("::")));
+}
+
 TEST_CASE("dsl::semicolon")
 {
     constexpr auto rule = dsl::semicolon;

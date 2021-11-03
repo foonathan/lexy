@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::period": doc
   "lexy::dsl::comma": doc
   "lexy::dsl::colon": doc
+  "lexy::dsl::double_colon": doc
   "lexy::dsl::semicolon": doc
   "lexy::dsl::exclamation_mark": doc
   "lexy::dsl::question_mark": doc
@@ -30,10 +31,12 @@ Predefined punctuators.
 ----
 namespace lexy::dsl
 {
-    constexpr _token-rule_ auto period    = lit<".">;
-    constexpr _token-rule_ auto comma     = lit<",">;
-    constexpr _token-rule_ auto colon     = lit<":">;
-    constexpr _token-rule_ auto semicolon = lit<";">;
+    constexpr _token-rule_ auto period       = lit<".">;
+    constexpr _token-rule_ auto comma        = lit<",">;
+    constexpr _token-rule_ auto colon        = lit<":">;
+    constexpr _token-rule_ auto double_colon = lit<"::">;
+    constexpr _token-rule_ auto semicolon    = lit<";">;
+
 
     constexpr _token-rule_ auto exclamation_mark = lit<"!">;
     constexpr _token-rule_ auto question_mark    = lit<"?">;
