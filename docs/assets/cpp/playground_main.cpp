@@ -44,8 +44,9 @@ int main(int, char* argv[])
             switch (event)
             {
             case lexy::traverse_event::enter:
-                std::printf("\"node-%p\" [label=\"%s\", shape=ellipse, style=bold];\n",
-                            node.address(), node.kind().name());
+                std::printf(
+                    "\"node-%p\" [label=\"%s\", tooltip=\"production\", shape=ellipse, style=bold];\n",
+                    node.address(), node.kind().name());
                 break;
 
             case lexy::traverse_event::exit:
@@ -58,16 +59,23 @@ int main(int, char* argv[])
                 std::printf("\"node-%p\" [label=\"", node.address());
                 if (node.lexeme().empty())
                 {
-                    std::printf("%s", node.kind().name());
-                    std::puts("\", shape=box];");
+                    std::printf("%s\"", node.kind().name());
                 }
                 else
                 {
                     lexy::visualize_to(print_quoted_iterator{}, node.lexeme(),
                                        {lexy::visualize_use_unicode | lexy::visualize_use_symbols
                                         | lexy::visualize_space});
-                    std::puts("\", shape=box, style=filled];");
+                    std::puts("\", style=filled");
                 }
+
+                std::puts("shape=box");
+                if (node.kind() == lexy::error_token_kind)
+                    std::puts(", fontcolor=red");
+                else if (node.kind() == lexy::whitespace_token_kind)
+                    std::puts(", fontcolor=gray30");
+                std::printf(", tooltip=\"%s\"", node.kind().name());
+                std::puts("];");
                 break;
             }
         }
