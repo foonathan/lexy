@@ -130,8 +130,13 @@ public:
 
         constexpr bool equal(stable_iterator rhs) const noexcept
         {
-            LEXY_PRECONDITION(_buffer == rhs._buffer);
-            return _idx == rhs._idx;
+            if (!_buffer || !rhs._buffer)
+                return !_buffer && !rhs._buffer;
+            else
+            {
+                LEXY_PRECONDITION(_buffer == rhs._buffer);
+                return _idx == rhs._idx;
+            }
         }
 
         constexpr std::size_t index() const noexcept
