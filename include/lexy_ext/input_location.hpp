@@ -66,38 +66,41 @@ public:
         /// The entire line that contains the position.
         constexpr lexy::lexeme_for<Input> context() const
         {
-            return {_reader.position(), _eol};
+            auto eol = _reader.position();
+            for (auto reader = _reader; true; reader.bump())
+            {
+                eol = reader.position();
+                if (reader.peek() == decltype(reader)::encoding::eof()
+                    || lexy::try_match_token(TokenLine{}, reader))
+                    break;
+            }
+
+            return {_reader.position(), eol};
         }
 
         /// The newline after the line, if there is any.
         constexpr lexy::lexeme_for<Input> newline() const
         {
-            auto reader = _reader;
             // Advance to EOl.
-            while (reader.position() != _eol)
-                reader.bump();
-            // Bump newline.
-            lexy::try_match_token(TokenLine{}, reader);
-            return {_eol, reader.position()};
+            for (auto reader = _reader; true; reader.bump())
+            {
+                auto pos = reader.position();
+                if (reader.peek() == decltype(reader)::encoding::eof())
+                    return {pos, pos};
+                else if (lexy::try_match_token(TokenLine{}, reader))
+                    return {pos, reader.position()};
+            }
+
+            return {}; // unreachable
         }
 
     private:
         constexpr location(lexy::input_reader<Input> reader, std::size_t line, std::size_t column)
-        : _reader(LEXY_MOV(reader)), _eol(), _line(line), _column(column)
-        {
-            // Find EOL.
-            for (auto reader = _reader; true; reader.bump())
-            {
-                _eol = reader.position();
-                if (reader.peek() == decltype(reader)::encoding::eof()
-                    || lexy::try_match_token(TokenLine{}, reader))
-                    break;
-            }
-        }
+        : _reader(LEXY_MOV(reader)), _line(line), _column(column)
+        {}
 
         // The reader starts at the beginning of the given line.
         lexy::input_reader<Input> _reader;
-        iterator                  _eol;
         std::size_t               _line, _column;
 
         friend input_location_finder;
