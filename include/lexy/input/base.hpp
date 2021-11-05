@@ -88,8 +88,7 @@ public:
 
     constexpr void set_position(iterator new_pos) noexcept
     {
-        LEXY_PRECONDITION(new_pos != Iterator());
-        LEXY_PRECONDITION(lexy::_detail::precedes(_cur, _end));
+        LEXY_PRECONDITION(lexy::_detail::precedes(new_pos, _end));
         _cur = new_pos;
     }
 
