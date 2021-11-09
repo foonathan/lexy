@@ -25,9 +25,11 @@ namespace _detail
     {
         Handler handler;
         int     cur_depth, max_depth;
+        bool    enable_whitespace_skipping;
 
         constexpr parse_context_control_block(Handler&& handler, std::size_t max_depth)
-        : handler(LEXY_MOV(handler)), cur_depth(0), max_depth(static_cast<int>(max_depth))
+        : handler(LEXY_MOV(handler)), cur_depth(0), max_depth(static_cast<int>(max_depth)),
+          enable_whitespace_skipping(true)
         {}
     };
 } // namespace _detail

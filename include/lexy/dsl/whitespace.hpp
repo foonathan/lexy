@@ -14,9 +14,6 @@
 //=== implementation ===//
 namespace lexy::_detail
 {
-struct tag_no_whitespace
-{};
-
 template <typename Rule>
 struct ws_production
 {
@@ -130,20 +127,19 @@ struct automatic_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        if constexpr (Context::contains(lexy::_detail::tag_no_whitespace{}))
-        {
-            // Automatic whitespace skipping is disabled.
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-        else
+        if (context.production_context().control_block().enable_whitespace_skipping)
         {
             // Skip the appropriate whitespace.
             using rule = context_whitespace<Context>;
             return manual_ws_parser<rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
         }
+        else
+        {
+            // Automatic whitespace skipping is disabled.
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
     }
 };
-
 } // namespace lexy::_detail
 
 //=== whitespace ===//
@@ -204,17 +200,12 @@ struct _wsn : _copy_base<Rule>
     template <typename NextParser>
     struct _pc
     {
-        template <typename ParentContext, typename Id, typename T, typename Reader,
-                  typename Context, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(lexy::_detail::parse_context_var<ParentContext, Id, T>&,
-                                           Reader& reader, Context& context, Args&&... args)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            static_assert(std::is_same_v<ParentContext, Context>                      //
-                              && std::is_same_v<Id, lexy::_detail::tag_no_whitespace> //
-                              && std::is_same_v<Id, T>,
-                          "cannot create context variables inside `lexy::dsl::no_whitespace()`");
-
-            // Continue with the normal context, after skipping whitespace.
+            // Enable automatic whitespace skipping again.
+            context.production_context().control_block().enable_whitespace_skipping = true;
+            // And skip whitespace once.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -224,28 +215,23 @@ struct _wsn : _copy_base<Rule>
               typename Whitespace = lexy::_detail::context_whitespace<Context>>
     struct bp
     {
-        using whitespace_context
-            = lexy::_detail::parse_context_var<Context, lexy::_detail::tag_no_whitespace>;
-
-        lexy::branch_parser_for<Rule, whitespace_context, Reader> rule;
+        lexy::branch_parser_for<Rule, Context, Reader> rule;
 
         constexpr auto try_parse(Context& context, const Reader& reader)
         {
-            // Create a context that doesn't allow whitespace.
-            // This is essentially free, so we can do it twice.
-            whitespace_context ws_context(context);
-
-            // Try parse the rule in that context.
-            return rule.try_parse(ws_context, reader);
+            // Temporary disable whitespace skipping to parse the rule.
+            context.production_context().control_block().enable_whitespace_skipping = false;
+            auto result = rule.try_parse(context, reader);
+            context.production_context().control_block().enable_whitespace_skipping = true;
+            return result;
         }
 
         template <typename NextParser, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
-            // Finish the rule with on another whitespace context.
-            whitespace_context ws_context(context);
-            return rule.template finish<_pc<NextParser>>(ws_context, reader, context,
-                                                         LEXY_FWD(args)...);
+            // Finish the rule with whitespace skipping disabled.
+            context.production_context().control_block().enable_whitespace_skipping = false;
+            return rule.template finish<_pc<NextParser>>(context, reader, LEXY_FWD(args)...);
         }
     };
 
@@ -268,13 +254,10 @@ struct _wsn : _copy_base<Rule>
             }
             else
             {
-                // Parse the rule in the whitespace context.
-                lexy::_detail::parse_context_var ws_context(context,
-                                                            lexy::_detail::tag_no_whitespace{},
-                                                            lexy::_detail::tag_no_whitespace{});
-
+                // Parse the rule with whitespace skipping disabled.
+                context.production_context().control_block().enable_whitespace_skipping = false;
                 using parser = lexy::parser_for<Rule, _pc<NextParser>>;
-                return parser::parse(ws_context, reader, context, LEXY_FWD(args)...);
+                return parser::parse(context, reader, LEXY_FWD(args)...);
             }
         }
     };
