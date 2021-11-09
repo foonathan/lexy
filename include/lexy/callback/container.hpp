@@ -48,10 +48,10 @@ struct _list_alloc
 
     using return_type = Container;
 
-    template <typename Context>
-    struct _with_context
+    template <typename State>
+    struct _with_state
     {
-        const Context& _context;
+        const State&   _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -60,7 +60,7 @@ struct _list_alloc
         }
         constexpr Container operator()(nullopt&&) const
         {
-            return Container(_detail::invoke(_alloc, _context));
+            return Container(_detail::invoke(_alloc, _state));
         }
 
         template <typename... Args>
@@ -68,7 +68,7 @@ struct _list_alloc
             -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
                                      LEXY_DECLVAL(Container))>
         {
-            Container result(_detail::invoke(_alloc, _context));
+            Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
                 result.reserve(sizeof...(args));
             (result.emplace_back(LEXY_FWD(args)), ...);
@@ -76,16 +76,16 @@ struct _list_alloc
         }
     };
 
-    template <typename Context>
-    constexpr auto operator[](const Context& context) const
+    template <typename State>
+    constexpr auto operator[](const State& state) const
     {
-        return _with_context<Context>{context, _alloc};
+        return _with_state<State>{state, _alloc};
     }
 
-    template <typename Context>
-    constexpr auto sink(const Context& context) const
+    template <typename State>
+    constexpr auto sink(const State& state) const
     {
-        return _list_sink<Container>{Container(_detail::invoke(_alloc, context))};
+        return _list_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }
 };
 
@@ -186,10 +186,10 @@ struct _collection_alloc
 
     using return_type = Container;
 
-    template <typename Context>
-    struct _with_context
+    template <typename State>
+    struct _with_state
     {
-        const Context& _context;
+        const State&   _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -198,7 +198,7 @@ struct _collection_alloc
         }
         constexpr Container operator()(nullopt&&) const
         {
-            return Container(_detail::invoke(_alloc, _context));
+            return Container(_detail::invoke(_alloc, _state));
         }
 
         template <typename... Args>
@@ -206,7 +206,7 @@ struct _collection_alloc
             -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
                                      LEXY_DECLVAL(Container))>
         {
-            Container result(_detail::invoke(_alloc, _context));
+            Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
                 result.reserve(sizeof...(args));
             (result.emplace(LEXY_FWD(args)), ...);
@@ -214,16 +214,16 @@ struct _collection_alloc
         }
     };
 
-    template <typename Context>
-    constexpr auto operator[](const Context& context) const
+    template <typename State>
+    constexpr auto operator[](const State& state) const
     {
-        return _with_context<Context>{context, _alloc};
+        return _with_state<State>{state, _alloc};
     }
 
-    template <typename Context>
-    constexpr auto sink(const Context& context) const
+    template <typename State>
+    constexpr auto sink(const State& state) const
     {
-        return _collection_sink<Container>{Container(_detail::invoke(_alloc, context))};
+        return _collection_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }
 };
 

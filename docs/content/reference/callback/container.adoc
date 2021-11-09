@@ -100,7 +100,7 @@ The resulting sink callback has the following overloads and returns the finished
 
 The `.allocator()` function takes a function that obtains the allocator from the parse state.
 If the function is not provided, it uses the parse state itself as the allocator.
-It returns a new callback and sink that accepts the parse state as context.
+It returns a new callback and sink that accepts the parse state.
 It then has the same overloads and behaviors, except that it will always use the allocator obtained via the `allocator_fn` from the parse state.
 As a callback, this behavior is similar to {{% docref "lexy::bind" %}} where the allocator is bound via {{% docref "lexy::parse_state" %}}.
 As a sink, this behavior is similar to {{% docref "lexy::bind_sink" %}} where the allocator is bound via {{% docref "lexy::parse_state" %}}.

@@ -158,10 +158,13 @@ they produce the result of parsing `P` as its value.
 If `P` is the top-level `Production`, its result is returned as the final value of the {{% docref "lexy::parse_result" %}}.
 
 The second overload of `lexy::parse` accepts a `state`, which is an arbitrary object.
-If `P::value` is a callback that accepts `state` as context, or a sink that accepts `state` as the argument to `.sink()`,
+If `P::value` is a callback that accepts `state` as state parameter, or a sink that accepts `state` as the argument to `.sink()`,
 it will be passed to them.
 
 TIP: Use {{% docref "lexy::operator>>" %}} to combine a sink and a callback in case 3 above.
 
 TIP: Use {{% docref "lexy::bind" %}} and {{% docref "lexy::bind_sink" %}} with the placeholder {{% docref "lexy::parse_state" %}} to access the `state` object in existing callbacks.
+
+NOTE: `state` cannot (and should not) be modified by the callbacks/sinks.
+If it were modified, this would not be reset during backtracking.
 

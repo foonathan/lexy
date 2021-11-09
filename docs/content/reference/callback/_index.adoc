@@ -24,10 +24,10 @@ concept callback-for = callback<T>
         -> std::same_as<typename T::return_type;
     };
 
-template <typename T, typename Context, typename ... Args>
-concept callback-with-context = callback<T>
-  && requires(const T& cb, const Context& context) {
-        { cb[context](std::forward<Args>(args)...) }
+template <typename T, typename State, typename ... Args>
+concept callback-with-state = callback<T>
+  && requires(const T& cb, const State& state) {
+        { cb[state](std::forward<Args>(args)...) }
           -> std::same_as<typename T::return_type>;
      };
 ----
@@ -38,9 +38,9 @@ A _callback_ is a function object with a `return_type` typedef that specifies it
 The callback can have multiple overloads of `operator()`, but all of them must return the same type.
 To be usable in the grammar, a callback must not have any mutable state.
 
-A callback can optionally take a context.
+A callback can optionally take a state.
 This is an additional parameter that is passed via `operator[]` in addition to all the arguments.
-During parsing, the callback arguments are the values produced by the rules while the context parameter is the parse state.
+During parsing, the callback arguments are the values produced by the rules while the state parameter is the parse state.
 
 [#sink]
 == Sink

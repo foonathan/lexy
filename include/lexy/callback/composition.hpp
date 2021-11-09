@@ -9,11 +9,11 @@
 
 namespace lexy
 {
-template <typename Cb, typename Context, typename = void>
-struct _compose_context
+template <typename Cb, typename State, typename = void>
+struct _compose_state
 {
-    const Cb&      _cb;
-    const Context& _context;
+    const Cb&    _cb;
+    const State& _state;
 
     using return_type = typename Cb::return_type;
 
@@ -23,18 +23,18 @@ struct _compose_context
         return _cb(LEXY_FWD(args)...);
     }
 };
-template <typename Cb, typename Context>
-struct _compose_context<Cb, Context, std::enable_if_t<lexy::is_callback_context<Cb, Context>>>
+template <typename Cb, typename State>
+struct _compose_state<Cb, State, std::enable_if_t<lexy::is_callback_state<Cb, State>>>
 {
-    const Cb&      _cb;
-    const Context& _context;
+    const Cb&    _cb;
+    const State& _state;
 
     using return_type = typename Cb::return_type;
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const -> decltype(_cb[_context](LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args) const -> decltype(_cb[_state](LEXY_FWD(args)...))
     {
-        return _cb[_context](LEXY_FWD(args)...);
+        return _cb[_state](LEXY_FWD(args)...);
     }
 };
 
@@ -50,13 +50,13 @@ struct _compose_cb
 
     using return_type = typename Second::return_type;
 
-    template <typename Context,
-              typename = std::enable_if_t<lexy::is_callback_context<First, Context> //
-                                          || lexy::is_callback_context<Second, Context>>>
-    constexpr auto operator[](const Context& context) const
+    template <typename State,
+              typename = std::enable_if_t<lexy::is_callback_state<First, State> //
+                                          || lexy::is_callback_state<Second, State>>>
+    constexpr auto operator[](const State& state) const
     {
-        auto first  = _compose_context<First, Context>{_first, context};
-        auto second = _compose_context<Second, Context>{_second, context};
+        auto first  = _compose_state<First, State>{_first, state};
+        auto second = _compose_state<Second, State>{_second, state};
         return lexy::_compose_cb(LEXY_MOV(first), LEXY_MOV(second));
     }
 
@@ -82,11 +82,10 @@ struct _compose_s
         return _sink.sink(LEXY_FWD(args)...);
     }
 
-    template <typename Context,
-              typename = std::enable_if_t<lexy::is_callback_context<Callback, Context>>>
-    constexpr auto operator[](const Context& context) const
+    template <typename State, typename = std::enable_if_t<lexy::is_callback_state<Callback, State>>>
+    constexpr auto operator[](const State& state) const
     {
-        return _compose_context<Callback, Context>{_callback, context};
+        return _compose_state<Callback, State>{_callback, state};
     }
 
     template <typename... Args>

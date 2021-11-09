@@ -26,7 +26,7 @@ namespace lexy
 [.lead]
 A placeholder that expands to all values produced by a rule unchanged.
 
-In a bound call of the form `bound[context](args...)`, expands to `args...`.
+In a bound call of the form `bound[state](args...)`, expands to `args...`.
 The arguments are forwarded unchanged and in the same order.
 This happens in addition to any {{% docref "lexy::nth_value" %}} expansion.
 
@@ -67,17 +67,17 @@ namespace lexy
 [.lead]
 A placeholder that expands to the Nth value produced by a rule.
 
-In a bound call of the form `bound[context](args...)`, expands to the Nth argument (1-indexed).
+In a bound call of the form `bound[state](args...)`, expands to the Nth argument (1-indexed).
 It is ill-formed if there are fewer than N arguments.
 For convenience, placeholders 1 through 8 are pre-defined.
 
 The member function `map()` takes an invocable `fn` and returns a placeholder that expands to the transformed value.
-In a bound call of the form `bound[context](args...)`, expands to the `std::invoke(fn, arg)`, where `arg` is the Nth argument.
+In a bound call of the form `bound[state](args...)`, expands to the `std::invoke(fn, arg)`, where `arg` is the Nth argument.
 
 The member function `or_()` or the `operator||` overload (which can be invoked as `lexy::_1 || fallback` and `lexy::_1 or fallback`) take a `fallback` value and return a placeholder that expands to the Nth value or `fallback`.
-In a bound call of the form `bound[context](args...)` with fewer than N arguments,
+In a bound call of the form `bound[state](args...)` with fewer than N arguments,
 expands to `fallback`.
-In a bound call of the form `bound[context](args...)` where the Nth argument is of type {{% docref "lexy::nullopt" %}}, expands to `fallback`.
+In a bound call of the form `bound[state](args...)` where the Nth argument is of type {{% docref "lexy::nullopt" %}}, expands to `fallback`.
 Otherwise, expands to the Nth argument.
 
 The member function `or_default()` returns a placeholder that expands to the Nth value or a default-constructed object.
@@ -110,11 +110,11 @@ namespace lexy
 [.lead]
 A placeholder that expands to the parse state.
 
-In a bound call of the form `bound[context](args...)`, expands to `context`.
-It is ill-formed if no `context` was provided to the callback.
+In a bound call of the form `bound[state](args...)`, expands to `state`.
+It is ill-formed if no `state` was provided to the callback.
 
 The member function `map()` takes an invocable `fn` and returns a placeholder that expands to the transformed parse state.
-In a bound call of the form `bound[context](args...)`, expands to the `std::invoke(fn, context)`.
+In a bound call of the form `bound[state](args...)`, expands to the `std::invoke(fn, state)`.
 
 {{% godbolt-example "bind-parse_state" "Access additional state in a callback" %}}
 
@@ -133,7 +133,7 @@ namespace lexy
 [.lead]
 Bind parameters or transform and reorder arguments of a callback.
 
-When invoked as `bound[context](args...)` it invokes `callback` with the bound arguments.
+When invoked as `bound[state](args...)` it invokes `callback` with the bound arguments.
 If the bound argument is a placeholder, it is expanded as described there.
 Otherwise, the bound argument is forwarded as-is.
 
@@ -160,8 +160,8 @@ It returns a sink whose `sink()` member function forwards to `sink` and returns 
 However, `sink.sink()` is invoked by the bound arguments.
 
 A call to `bound.sink()` results in a call to `sink.sink(args...)`, where no argument must be a placeholder.
-A call to `bound.sink(context)` results in a call to `sink.sink()` with the expanded arguments:
-If the argument is a placeholder, it is expanded as described there but note that there are no values, only a context parameter.
+A call to `bound.sink(state)` results in a call to `sink.sink()` with the expanded arguments:
+If the argument is a placeholder, it is expanded as described there but note that there are no values, only a state parameter.
 Otherwise, the bound argument is forwarded as-is.
 
 A call to `bound(...)` will be forwarded as-is onto `sink(...)`, allowing a bound sink to be used with rules like `opt_list` from {{% docref "lexy::dsl::terminator" %}}.

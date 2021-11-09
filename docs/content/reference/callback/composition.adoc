@@ -20,7 +20,7 @@ namespace lexy
 Composes two callbacks.
 
 The result is a callback that forwards all arguments to `first`, then forwards that result to `second.`
-If either `first` or `second` is a callback with context, the result is as well and it will forward the context.
+If either `first` or `second` is a callback with a state argument, the result is as well and it will forward the state.
 
 {{% godbolt-example "compose-callback" "Compose two callbacks" %}}
 
@@ -42,7 +42,7 @@ Combines a sink and a callback.
 The result is both a sink and a callback.
 As a sink, it forwards to the `sink`.
 As a callback, it forwards all arguments to `callback`.
-If the callback accepts a context, the result does as well and will forward it.
+If the callback accepts a state, the result does as well and will forward it.
 
 {{% godbolt-example "compose-sink" "Compose a sink and a callback" %}}
 

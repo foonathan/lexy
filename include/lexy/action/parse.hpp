@@ -107,7 +107,7 @@ inline constexpr bool _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 template <typename State, typename Input, typename ErrorCallback>
 class parse_handler
 {
-    using state_t  = _detail::type_or<State, _detail::no_bind_context>;
+    using state_t  = _detail::type_or<State, _detail::no_bind_state>;
     using iterator = typename lexy::input_reader<Input>::iterator;
 
     template <typename Production>
@@ -195,7 +195,7 @@ public:
         if constexpr (lexy::is_callback_for<typename value::type, Args&&...>)
         {
             // We have a callback for those arguments; invoke it.
-            if constexpr (lexy::is_callback_context<typename value::type, state_t>)
+            if constexpr (lexy::is_callback_state<typename value::type, state_t>)
                 m._value.emplace_result(value::get[_state], LEXY_FWD(args)...);
             else
                 m._value.emplace_result(value::get, LEXY_FWD(args)...);
@@ -244,7 +244,7 @@ template <typename State, typename Input, typename ErrorCallback>
 parse_handler(const State&, const Input& input, const ErrorCallback& callback)
     -> parse_handler<State, Input, ErrorCallback>;
 template <typename Input, typename ErrorCallback>
-parse_handler(const _detail::no_bind_context&, const Input& input, const ErrorCallback& callback)
+parse_handler(const _detail::no_bind_state&, const Input& input, const ErrorCallback& callback)
     -> parse_handler<void, Input, ErrorCallback>;
 
 /// Parses the production into a value, invoking the callback on error.
@@ -259,7 +259,7 @@ constexpr auto parse(const Input& input, State&& state, Callback callback)
 template <typename Production, typename Input, typename Callback>
 constexpr auto parse(const Input& input, Callback callback)
 {
-    return parse<Production>(input, _detail::no_bind_context{}, LEXY_MOV(callback));
+    return parse<Production>(input, _detail::no_bind_state{}, LEXY_MOV(callback));
 }
 } // namespace lexy
 

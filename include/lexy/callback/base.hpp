@@ -22,11 +22,11 @@ template <typename T, typename... Args>
 constexpr bool is_callback_for
     = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 
-template <typename T, typename Context>
-using _detect_callback_context = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const Context&)]);
-template <typename T, typename Context>
-constexpr bool is_callback_context
-    = _detail::is_detected<_detect_callback_context, T, std::decay_t<Context>>;
+template <typename T, typename State>
+using _detect_callback_state = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const State&)]);
+template <typename T, typename State>
+constexpr bool is_callback_state
+    = _detail::is_detected<_detect_callback_state, T, std::decay_t<State>>;
 
 /// Returns the type of the `.sink()` function.
 template <typename Sink, typename... Args>

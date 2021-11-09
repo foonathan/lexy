@@ -24,7 +24,7 @@ TEST_CASE("callback compose")
         CHECK(composed(0) == 0);
         CHECK(composed(8) == 16);
     }
-    SUBCASE("callbacks with context")
+    SUBCASE("callbacks with state")
     {
         constexpr auto a
             = lexy::bind(lexy::callback<int>([](int factor, int i) { return factor * i; }),
@@ -70,7 +70,7 @@ TEST_CASE("callback compose")
         auto result = composed(LEXY_MOV(s).finish());
         CHECK(result == 1);
     }
-    SUBCASE("sink and two callback with context")
+    SUBCASE("sink and two callback with state")
     {
         constexpr auto sink = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
         constexpr auto cb_a = lexy::callback<std::string>([](int i) { return std::to_string(i); });

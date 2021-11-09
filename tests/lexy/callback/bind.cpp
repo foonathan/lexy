@@ -106,7 +106,7 @@ TEST_CASE("bind_sink")
         }
     };
 
-    SUBCASE("bound with context")
+    SUBCASE("bound with state")
     {
         constexpr auto bound = lexy::bind_sink(my_sink{}, lexy::parse_state, 3.14f);
 
@@ -116,7 +116,7 @@ TEST_CASE("bind_sink")
         CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);
     }
 
-    SUBCASE("bound without context")
+    SUBCASE("bound without state")
     {
         constexpr auto bound = lexy::bind_sink(my_sink{}, 2, 3.14f);
 
