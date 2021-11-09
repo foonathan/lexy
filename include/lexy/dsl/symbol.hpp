@@ -361,7 +361,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             {
                 // Unknown symbol or not an identifier.
                 // Parse the identifier pattern normally, and see if that fails.
-                using id_parser = lexy::parser_for<_idp<L, T>, lexy::pattern_parser<Context>>;
+                using id_parser = lexy::parser_for<_idp<L, T>, lexy::pattern_parser<>>;
                 if (!id_parser::parse(context, reader))
                     // It did fail, so it reported an error and we're done here.
                     return false;

@@ -92,70 +92,6 @@ template <typename Rule>
 using _copy_base = decltype(_copy_base_impl<Rule>());
 } // namespace lexyd
 
-//=== parse_context_var ===//
-namespace lexy::_detail
-{
-template <typename Parent, typename Id, typename T = Id>
-class parse_context_var
-{
-public:
-    constexpr explicit parse_context_var(Parent& parent) : _parent(&parent), _value() {}
-    constexpr explicit parse_context_var(Parent& parent, T&& value)
-    : _parent(&parent), _value(LEXY_MOV(value))
-    {}
-    constexpr explicit parse_context_var(Parent& parent, Id, T&& value)
-    : _parent(&parent), _value(LEXY_MOV(value))
-    {}
-
-    //=== parse context ===//
-    using handler         = typename Parent::handler;
-    using production      = typename Parent::production;
-    using root_production = typename Parent::root_production;
-
-    constexpr auto& production_context()
-    {
-        return _parent->production_context();
-    }
-
-    template <typename Event, typename... Args>
-    constexpr auto on(Event ev, Args&&... args)
-    {
-        return production_context().on(ev, LEXY_FWD(args)...);
-    }
-
-    //=== context variables ===//
-    template <typename Id2>
-    static LEXY_CONSTEVAL bool contains([[maybe_unused]] Id2 id)
-    {
-        if constexpr (std::is_same_v<Id, Id2>)
-            return true;
-        else
-            return Parent::contains(id);
-    }
-
-    template <typename Id2>
-    constexpr auto& get([[maybe_unused]] Id2 id)
-    {
-        if constexpr (std::is_same_v<Id2, Id>)
-            return _value;
-        else
-            return _parent->get(id);
-    }
-    template <typename Id2>
-    constexpr const auto& get([[maybe_unused]] Id2 id) const
-    {
-        if constexpr (std::is_same_v<Id2, Id>)
-            return _value;
-        else
-            return _parent->get(id);
-    }
-
-private:
-    Parent* _parent;
-    T       _value;
-};
-} // namespace lexy::_detail
-
 //=== parser ===//
 #define LEXY_PARSER_FUNC LEXY_FORCE_INLINE constexpr
 
@@ -202,16 +138,15 @@ struct continuation_branch_parser
     }
 };
 
-/// A parser that does not support any arguments or context changes.
-template <typename Context>
+/// A parser that does not support any arguments.
+template <typename... PrevArgs>
 struct pattern_parser
 {
-    template <typename NewContext, typename Reader, typename... Args>
-    LEXY_PARSER_FUNC static std::true_type parse(NewContext&, Reader&, Args&&...)
+    template <typename Context, typename Reader, typename... Args>
+    LEXY_PARSER_FUNC static std::true_type parse(Context&, Reader&, const PrevArgs&..., Args&&...)
     {
         // A rule is used inside a loop or similar situation, where it must not produce values, but
         // it did.
-        static_assert(std::is_same_v<Context, NewContext>, "pattern rule must not change context");
         static_assert(sizeof...(Args) == 0, "pattern rule must not produce any values");
         return {};
     }

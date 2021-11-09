@@ -201,7 +201,7 @@ struct _escape : _escape_base
 
         // We do, so consume it.
         // It's a token, so this can't fail.
-        token.template finish<lexy::pattern_parser<Context>>(context, reader);
+        token.template finish<lexy::pattern_parser<>>(context, reader);
 
         // Try to parse the correct branch.
         auto try_parse_branch = [&](auto branch) {

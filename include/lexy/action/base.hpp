@@ -7,6 +7,7 @@
 
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/lazy_init.hpp>
+#include <lexy/_detail/type_name.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/grammar.hpp>
 
@@ -20,16 +21,65 @@ namespace _detail
     template <typename Production>
     struct production_parser;
 
+    struct parse_context_var_base
+    {
+        const void*             id;
+        parse_context_var_base* next;
+
+        constexpr parse_context_var_base(const void* id) : id(id), next(nullptr) {}
+
+        template <typename Context>
+        constexpr void link(Context& context)
+        {
+            auto& cb = context.control_block();
+            next     = cb.vars;
+            cb.vars  = this;
+        }
+
+        template <typename Context>
+        constexpr void unlink(Context& context)
+        {
+            auto& cb = context.control_block();
+            cb.vars  = next;
+        }
+    };
+
+    template <typename Id, typename T>
+    struct parse_context_var : parse_context_var_base
+    {
+        static constexpr auto type_id = lexy::_detail::type_id<Id>();
+
+        T value;
+
+        explicit constexpr parse_context_var(T&& value)
+        : parse_context_var_base(&type_id), value(LEXY_MOV(value))
+        {}
+
+        template <typename Context>
+        static constexpr T& get(Context& context)
+        {
+            auto& cb = context.control_block();
+
+            for (auto cur = cb.vars; cur; cur = cur->next)
+                if (cur->id == &type_id)
+                    return static_cast<parse_context_var*>(cur)->value;
+
+            LEXY_ASSERT(false, "context variable hasn't been created");
+            return LEXY_DECLVAL(T&);
+        }
+    };
+
     template <typename Handler>
     struct parse_context_control_block
     {
-        Handler handler;
-        int     cur_depth, max_depth;
-        bool    enable_whitespace_skipping;
+        Handler                 handler;
+        parse_context_var_base* vars;
+        int                     cur_depth, max_depth;
+        bool                    enable_whitespace_skipping;
 
         constexpr parse_context_control_block(Handler&& handler, std::size_t max_depth)
-        : handler(LEXY_MOV(handler)), cur_depth(0), max_depth(static_cast<int>(max_depth)),
-          enable_whitespace_skipping(true)
+        : handler(LEXY_MOV(handler)), vars(nullptr), cur_depth(0),
+          max_depth(static_cast<int>(max_depth)), enable_whitespace_skipping(true)
         {}
     };
 } // namespace _detail
@@ -49,7 +99,6 @@ class _pc
 public:
     constexpr control_block_t& control_block()
     {
-        LEXY_ASSERT(_cb, "using already finished context");
         return *_cb;
     }
 
@@ -69,7 +118,6 @@ public:
                             decltype(LEXY_DECLVAL(Handler&).on(LEXY_DECLVAL(const handler_marker&),
                                                                ev, LEXY_FWD(args)...))>
     {
-        LEXY_ASSERT(_cb, "using already finished context");
         return _cb->handler.on(_marker, ev, LEXY_FWD(args)...);
     }
 
@@ -108,15 +156,13 @@ private:
     }
 
     template <typename Iterator, typename... Args>
-    constexpr void on(parse_events::production_finish<Production> ev, Iterator end,
-                      Args&&... args) &&
+    constexpr void on(parse_events::production_finish<Production> ev, Iterator end, Args&&... args)
     {
         _cb->handler.on(_marker, ev, end, LEXY_FWD(args)...);
-        _cb = nullptr; // invalidate
     }
 
     template <typename Iterator>
-    constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos) &&
+    constexpr void on(parse_events::production_cancel<Production> ev, Iterator pos)
     {
         _cb->handler.on(_marker, ev, pos);
         _cb = nullptr; // invalidate

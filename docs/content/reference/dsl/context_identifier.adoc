@@ -33,15 +33,6 @@ namespace lexy::dsl
 [.lead]
 `context_identifier` is not a rule, but a DSL for specifying rules that manipulate an {{% docref "lexy::dsl::identifier" %}} variable of the current context.
 
-The "name" of the identifier variable is given by `Id`, which is an arbitrary type.
-Two `context_lexeme` objects manipulate the same identifier variable if they are instantiated by the same type.
-The "namespace" is unique per type, if a different context variable ({{% docref "lexy::dsl::context_counter" %}}, {{% docref "lexy::dsl::context_flag" %}}) uses `Id`, it refers to a different variable.
-
-The variable is created inside the current context:
-it is not accessible outside the current production, including in child production.
-Once the current production finishes parsing, all context variables of it are destroyed;
-it is impossible to create on that persists between different productions including multiple invocations of the same production.
-
 {{% playground-example "context_identifier" "Parse the same word twice" %}}
 
 === Rule `.create()`
@@ -54,12 +45,10 @@ constexpr _rule_ auto create() const;
 [.lead]
 `.create()` returns a rule that creates the identifier variable.
 
-Requires::
-  The identifier with the name `Id` has not been created yet in the current context,
-  i.e. `.create()` has not been parsed earlier.
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates an identifier with name `Id` inside the current context.
+  If a context variable (of any) type with that name already exists, it is shadowed.
   This identifier is initialized to the empty string; it's underlying type is {{% docref "lexy::lexeme" %}}.
 Errors::
   None.

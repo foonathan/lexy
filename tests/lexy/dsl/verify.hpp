@@ -551,6 +551,11 @@ constexpr auto _get_input(Encoding, CharT... cs)
 }
 } // namespace lexy_test
 
+#define LEXY_VERIFY_RUNTIME_P(Prod, ...)                                                           \
+    lexy_test::verify<Prod>(lexy_test::_get_input(__VA_ARGS__), callback)
+#define LEXY_VERIFY_RUNTIME(...)                                                                   \
+    LEXY_VERIFY_RUNTIME_P(lexy_test::test_production_for<decltype(rule)>, __VA_ARGS__)
+
 #ifndef LEXY_DISABLE_CONSTEXPR_TESTS
 
 #    define LEXY_VERIFY_P(Prod, ...)                                                               \
@@ -567,8 +572,7 @@ constexpr auto _get_input(Encoding, CharT... cs)
         }()
 #else
 
-#    define LEXY_VERIFY_P(Prod, ...)                                                               \
-        lexy_test::verify<Prod>(lexy_test::_get_input(__VA_ARGS__), callback)
+#    define LEXY_VERIFY_P(Prod, ...) LEXY_VERIFY_RUNTIME_P(Prod, __VA_ARGS__)
 
 #endif
 

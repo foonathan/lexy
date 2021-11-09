@@ -9,6 +9,7 @@
 
 TEST_CASE("dsl::context_flag")
 {
+    // Note: runtime checks only here due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89074.
     constexpr auto flag = dsl::context_flag<struct id>;
 
     constexpr auto callback = lexy::callback<int>([](const char*) { return 2; },
@@ -18,12 +19,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -32,12 +33,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 1);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == test_trace());
@@ -47,12 +48,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + flag.set() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 1);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == test_trace());
@@ -61,12 +62,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + flag.set() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 1);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == test_trace());
@@ -75,12 +76,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + flag.reset() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -89,12 +90,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + flag.reset() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -103,12 +104,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + flag.toggle() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 1);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == test_trace());
@@ -117,12 +118,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + flag.toggle() + flag.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -132,12 +133,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + dsl::if_(flag.is_set() >> flag.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 2);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 2);
         CHECK(abc.trace == test_trace());
@@ -146,12 +147,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + dsl::if_(flag.is_set() >> flag.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 1);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == test_trace());
@@ -160,12 +161,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create() + dsl::if_(flag.is_reset() >> flag.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -174,12 +175,12 @@ TEST_CASE("dsl::context_flag")
     {
         constexpr auto rule = flag.create<true>() + dsl::if_(flag.is_reset() >> flag.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 2);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 2);
         CHECK(abc.trace == test_trace());

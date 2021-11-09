@@ -132,7 +132,7 @@ struct _recb : branch_base
         template <typename Context, typename Reader>
         static constexpr bool increment_depth(Context& context, Reader& reader)
         {
-            auto& control_block = context.production_context().control_block();
+            auto& control_block = context.control_block();
             LEXY_ASSERT(control_block.max_depth > 0,
                         "dsl::recurse_branch<P> is disabled in this context");
 
@@ -153,7 +153,7 @@ struct _recb : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto& control_block = context.production_context().control_block();
+            auto& control_block = context.control_block();
             --control_block.cur_depth;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }

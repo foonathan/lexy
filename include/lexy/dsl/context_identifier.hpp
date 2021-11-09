@@ -22,6 +22,9 @@ struct different_identifier
 
 namespace lexyd
 {
+template <typename Id, typename Reader>
+using _ctx_id = lexy::_detail::parse_context_var<Id, lexy::lexeme<Reader>>;
+
 template <typename Id>
 struct _ctx_icreate : rule_base
 {
@@ -31,9 +34,11 @@ struct _ctx_icreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            static_assert(!Context::contains(Id{}));
-            lexy::_detail::parse_context_var identifier_ctx(context, Id{}, lexy::lexeme<Reader>());
-            return NextParser::parse(identifier_ctx, reader, LEXY_FWD(args)...);
+            _ctx_id<Id, Reader> var({});
+            var.link(context);
+            auto result = NextParser::parse(context, reader, LEXY_FWD(args)...);
+            var.unlink(context);
+            return result;
         }
     };
 };
@@ -48,7 +53,7 @@ struct _ctx_icap : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // The last argument will be a lexeme.
-            context.get(Id{}) = (args, ...);
+            _ctx_id<Id, Reader>::get(context) = (args, ...);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -81,7 +86,7 @@ struct _ctx_irem : branch_base
 
             // The two lexemes need to be equal.
             auto lexeme = lexy::lexeme<Reader>(reader.position(), end);
-            return lexy::_detail::equal_lexemes(context.get(Id{}), lexeme);
+            return lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(context), lexeme);
         }
 
         template <typename NextParser, typename... Args>
@@ -105,7 +110,7 @@ struct _ctx_irem : branch_base
             LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, PrevArgs&&... args,
                                                lexy::lexeme<Reader> lexeme)
             {
-                if (!lexy::_detail::equal_lexemes(context.get(Id{}), lexeme))
+                if (!lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(context), lexeme))
                 {
                     // The lexemes weren't equal.
                     using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;
@@ -137,24 +142,21 @@ struct _ctx_irem : branch_base
 namespace lexyd
 {
 template <typename Id, typename Identifier>
-struct _ctx_identifier
+struct _ctx_id_dsl
 {
-    struct id
-    {};
-
     constexpr auto create() const
     {
-        return _ctx_icreate<id>{};
+        return _ctx_icreate<Id>{};
     }
 
     constexpr auto capture() const
     {
-        return _ctx_icap<id, Identifier>{};
+        return _ctx_icap<Id, Identifier>{};
     }
 
     constexpr auto rematch() const
     {
-        return _ctx_irem<id, Identifier, void>{};
+        return _ctx_irem<Id, Identifier, void>{};
     }
 };
 
@@ -162,7 +164,7 @@ struct _ctx_identifier
 template <typename Id, typename Leading, typename Trailing, typename... Reserved>
 constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 {
-    return _ctx_identifier<Id, _id<Leading, Trailing, Reserved...>>{};
+    return _ctx_id_dsl<Id, _id<Leading, Trailing, Reserved...>>{};
 }
 } // namespace lexyd
 

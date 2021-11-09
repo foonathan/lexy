@@ -5,10 +5,14 @@
 #ifndef LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 #define LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 
+#include <lexy/action/base.hpp>
 #include <lexy/dsl/base.hpp>
 
 namespace lexyd
 {
+template <typename Id>
+using _ctx_flag = lexy::_detail::parse_context_var<Id, bool>;
+
 template <typename Id, bool InitialValue>
 struct _ctx_fcreate : rule_base
 {
@@ -18,9 +22,11 @@ struct _ctx_fcreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            static_assert(!Context::contains(Id{}));
-            lexy::_detail::parse_context_var flag_ctx(context, Id{}, InitialValue);
-            return NextParser::parse(flag_ctx, reader, LEXY_FWD(args)...);
+            _ctx_flag<Id> var(InitialValue);
+            var.link(context);
+            auto result = NextParser::parse(context, reader, LEXY_FWD(args)...);
+            var.unlink(context);
+            return result;
         }
     };
 };
@@ -34,7 +40,7 @@ struct _ctx_fset : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.get(Id{}) = Value;
+            _ctx_flag<Id>::get(context) = Value;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -49,7 +55,8 @@ struct _ctx_ftoggle : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.get(Id{}) = !context.get(Id{});
+            auto& flag = _ctx_flag<Id>::get(context);
+            flag       = !flag;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -61,9 +68,9 @@ struct _ctx_fis : branch_base
     template <typename Context, typename Reader>
     struct bp
     {
-        constexpr bool try_parse(const Context& context, const Reader&)
+        constexpr bool try_parse(Context& context, const Reader&)
         {
-            return context.get(Id{}) == Value;
+            return _ctx_flag<Id>::get(context) == Value;
         }
 
         template <typename NextParser, typename... Args>
@@ -86,7 +93,8 @@ struct _ctx_fvalue : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., context.get(Id{}));
+            return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                     _ctx_flag<Id>::get(context));
         }
     };
 };
@@ -95,49 +103,46 @@ struct _ctx_fvalue : rule_base
 namespace lexyd
 {
 template <typename Id>
-struct _ctx_flag
+struct _ctx_flag_dsl
 {
-    struct id
-    {};
-
     template <bool InitialValue = false>
     constexpr auto create() const
     {
-        return _ctx_fcreate<id, InitialValue>{};
+        return _ctx_fcreate<Id, InitialValue>{};
     }
 
     constexpr auto set() const
     {
-        return _ctx_fset<id, true>{};
+        return _ctx_fset<Id, true>{};
     }
     constexpr auto reset() const
     {
-        return _ctx_fset<id, false>{};
+        return _ctx_fset<Id, false>{};
     }
 
     constexpr auto toggle() const
     {
-        return _ctx_ftoggle<id>{};
+        return _ctx_ftoggle<Id>{};
     }
 
     constexpr auto is_set() const
     {
-        return _ctx_fis<id, true>{};
+        return _ctx_fis<Id, true>{};
     }
     constexpr auto is_reset() const
     {
-        return _ctx_fis<id, false>{};
+        return _ctx_fis<Id, false>{};
     }
 
     constexpr auto value() const
     {
-        return _ctx_fvalue<id>{};
+        return _ctx_fvalue<Id>{};
     }
 };
 
 /// Declares a flag.
 template <typename Id>
-constexpr auto context_flag = _ctx_flag<Id>{};
+constexpr auto context_flag = _ctx_flag_dsl<Id>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED

@@ -16,8 +16,9 @@ concept rule = …;
 
 The grammar in lexy is specified in several productions, where each one defines an associated _rule_.
 This rule is an object built from the objects and functions of namespace `lexy::dsl` that defines some (implementation-defined) parsing function.
-Parsing a rule takes the reader, which remembers the current position of the input, and the context, which stores information about the current production and whitespace rules, and is responsible for handling errors and values;
-it can have one of the following results:
+Parsing a rule takes the reader, which remembers the current position of the input, and the context, which stores information about the current production and whitespace rules, and is responsible for handling errors and values.
+
+Parsing can have one of the following results:
 
 * Parsing can succeed.
   Then it consumes some input by advancing the reader position and produces zero or more values.
@@ -45,6 +46,17 @@ as such they're also branch rules where the entire rule is used as the condition
 Because they're atomic elements of the input, they also participate in {{% docref "whitespace" "automatic whitespace skipping" %}}:
 after every token, lexy will automatically skip whitespace, if one has been defined.
 
+The parse context stores state that can be accessed during parsing.
+This includes things like the current recursion depth, see {{% docref "lexy::dsl::recurse" %}},
+whether or not automatic whitespace skipping is currently enabled, see {{% docref whitespace "whitespace skipping" %}},
+but also arbitrary user-defined variables, see {{% docref "lexy::dsl::context_flag" %}}, {{% docref "lexy::dsl::context_counter" %}}, and {{% docref "lexy::dsl::context_identifier" %}}.
+
+When a rule modifies the context during parsing, by adding an additional context variable for example,
+this modification is available for all following rules in the current production and all child productions.
+In particular, the modification is no longer visible in any parent production.
+If a rule is parsed in a loop, e.g. by {{% docref "lexy::dsl::loop" %}} or {{% docref "lexy::dsl::list" %}},
+any context modification does not persist between loop iterations, and is also not available outside the loop.
+
 == How to read the DSL documentation footnote:[link:https://xkcd.com/1343[obligatory XKCD]]
 
 The behavior of a rule is described by the following sections.
@@ -71,6 +83,9 @@ Parse tree::
   This section describes what nodes are created in the `lexy::parse_tree`.
   If omitted, a token rule creates a single token node covering everything consumed,
   and a rule produces no extra nodes besides the ones created by the other rules it parses.
+
+If a rule parses another rule in a new context (e.g. {{% docref "lexy::dsl::peek" %}}),
+the other rule does not have access to context variables, and any context modification is not visible outside of the rule.
 
 == The rule DSL
 

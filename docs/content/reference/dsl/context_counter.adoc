@@ -41,15 +41,6 @@ namespace lexy::dsl
 [.lead]
 `context_counter` is not a rule, but a DSL for specifying rules that manipulate a counter of the current context.
 
-The "name" of the counter is given by `Id`, which is an arbitrary type.
-Two `context_counter` objects manipulate the same counter if they are instantiated by the same type.
-The "namespace" is unique per type, if a different context counter ({{% docref "lexy::dsl::context_flag" %}}, {{% docref "lexy::dsl::context_identifier" %}}) uses `Id`, it refers to a different counter.
-
-The counter is created inside the current context:
-it is not accessible outside the current production, including in child production.
-Once the current production finishes parsing, all context counters of it are destroyed;
-it is impossible to create on that persists between different productions including multiple invocations of the same production.
-
 {{% playground-example "context_counter" "Parse `n` `a`, then `n` `b` without recursion" %}}
 
 === Rule `.create()`
@@ -63,12 +54,10 @@ constexpr _rule_ auto create() const;
 [.lead]
 `.create()` returns a rule that creates the counter.
 
-Requires::
-  The counter with the name `Id` has not been created yet in the current context,
-  i.e. `.create()` has not been parsed earlier.
 Parsing::
   Matches everything, without consuming anything.
   As a side effect, it creates a counter with name `Id` inside the current context.
+  If a context variable (of any) type with that name already exists, it is shadowed.
   This counter is initialized to `InitialValue`; it's underlying type is `int`.
 Errors::
   None.

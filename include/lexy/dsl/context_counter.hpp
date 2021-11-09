@@ -6,6 +6,7 @@
 #define LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 
 #include <lexy/_detail/iterator.hpp>
+#include <lexy/action/base.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/error.hpp>
 
@@ -22,6 +23,9 @@ struct unequal_counts
 
 namespace lexyd
 {
+template <typename Id>
+using _ctx_counter = lexy::_detail::parse_context_var<Id, int>;
+
 template <typename Id, int InitialValue>
 struct _ctx_ccreate : rule_base
 {
@@ -31,9 +35,11 @@ struct _ctx_ccreate : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            static_assert(!Context::contains(Id{}));
-            lexy::_detail::parse_context_var counter_ctx(context, Id{}, InitialValue);
-            return NextParser::parse(counter_ctx, reader, LEXY_FWD(args)...);
+            _ctx_counter<Id> var(InitialValue);
+            var.link(context);
+            auto result = NextParser::parse(context, reader, LEXY_FWD(args)...);
+            var.unlink(context);
+            return result;
         }
     };
 };
@@ -47,7 +53,7 @@ struct _ctx_cadd : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            context.get(Id{}) += Delta;
+            _ctx_counter<Id>::get(context) += Delta;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -66,7 +72,7 @@ struct _ctx_cpush : _copy_base<Rule>
             auto end    = reader.position();
             auto length = lexy::_detail::range_size(begin, end);
 
-            context.get(Id{}) += int(length) * Sign;
+            _ctx_counter<Id>::get(context) += int(length) * Sign;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
@@ -111,9 +117,9 @@ struct _ctx_cis : branch_base
     template <typename Context, typename Reader>
     struct bp
     {
-        constexpr bool try_parse(const Context& context, const Reader&)
+        constexpr bool try_parse(Context& context, const Reader&)
         {
-            return context.get(Id{}) == Value;
+            return _ctx_counter<Id>::get(context) == Value;
         }
 
         template <typename NextParser, typename... Args>
@@ -136,7 +142,8 @@ struct _ctx_cvalue : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., context.get(Id{}));
+            return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                     _ctx_counter<Id>::get(context));
         }
     };
 };
@@ -149,10 +156,10 @@ struct _ctx_ceq<H, T...> : branch_base
     template <typename Context, typename Reader>
     struct bp
     {
-        constexpr bool try_parse(const Context& context, const Reader&)
+        constexpr bool try_parse(Context& context, const Reader&)
         {
-            auto value = context.get(H{});
-            return ((value == context.get(T{})) && ...);
+            auto value = _ctx_counter<H>::get(context);
+            return ((value == _ctx_counter<T>::get(context)) && ...);
         }
 
         template <typename NextParser, typename... Args>
@@ -168,8 +175,8 @@ struct _ctx_ceq<H, T...> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto value = context.get(H{});
-            if (((value != context.get(T{})) || ...))
+            auto value = _ctx_counter<H>::get(context);
+            if (((value != _ctx_counter<T>::get(context)) || ...))
             {
                 auto err = lexy::error<Reader, lexy::unequal_counts>(reader.position());
                 context.on(_ev::error{}, err);
@@ -185,41 +192,38 @@ struct _ctx_ceq<H, T...> : branch_base
 namespace lexyd
 {
 template <typename Id>
-struct _ctx_counter
+struct _ctx_counter_dsl
 {
-    struct id
-    {};
-
     template <int InitialValue = 0>
     constexpr auto create() const
     {
-        return _ctx_ccreate<id, InitialValue>{};
+        return _ctx_ccreate<Id, InitialValue>{};
     }
 
     constexpr auto inc() const
     {
-        return _ctx_cadd<id, +1>{};
+        return _ctx_cadd<Id, +1>{};
     }
     constexpr auto dec() const
     {
-        return _ctx_cadd<id, -1>{};
+        return _ctx_cadd<Id, -1>{};
     }
 
     template <typename Rule>
     constexpr auto push(Rule) const
     {
-        return _ctx_cpush<id, Rule, +1>{};
+        return _ctx_cpush<Id, Rule, +1>{};
     }
     template <typename Rule>
     constexpr auto pop(Rule) const
     {
-        return _ctx_cpush<id, Rule, -1>{};
+        return _ctx_cpush<Id, Rule, -1>{};
     }
 
     template <int Value>
     constexpr auto is() const
     {
-        return _ctx_cis<id, Value>{};
+        return _ctx_cis<Id, Value>{};
     }
     constexpr auto is_zero() const
     {
@@ -228,20 +232,20 @@ struct _ctx_counter
 
     constexpr auto value() const
     {
-        return _ctx_cvalue<id>{};
+        return _ctx_cvalue<Id>{};
     }
 };
 
 /// Declares an integer counter that is added to the parsing context.
 template <typename Id>
-constexpr auto context_counter = _ctx_counter<Id>{};
+constexpr auto context_counter = _ctx_counter_dsl<Id>{};
 
 /// Takes a branch only if all counters are equal.
 template <typename... Ids>
-constexpr auto equal_counts(_ctx_counter<Ids>...)
+constexpr auto equal_counts(_ctx_counter_dsl<Ids>...)
 {
     static_assert(sizeof...(Ids) > 1);
-    return _ctx_ceq<typename _ctx_counter<Ids>::id...>{};
+    return _ctx_ceq<Ids...>{};
 }
 } // namespace lexyd
 

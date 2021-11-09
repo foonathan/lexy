@@ -26,7 +26,7 @@ struct combination_duplicate
 namespace lexyd
 {
 template <typename Sink>
-struct _comb_state
+struct _comb_control
 {
     // The sink to store values of the item.
     Sink& sink;
@@ -45,16 +45,16 @@ struct _comb_it : rule_base
     template <typename NextParser>
     struct p
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader&, Args&&... args)
+        template <typename Context, typename Reader, typename Sink, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context&, Reader&, _comb_control<Sink>& ctrl,
+                                           Args&&... args)
         {
-            auto& state = context.get(_break{});
-            state.idx   = Idx;
+            ctrl.idx = Idx;
             if constexpr (sizeof...(Args) > 0)
             {
-                if (!state.handled[Idx])
+                if (!ctrl.handled[Idx])
                     // Only call the sink if it is not a duplicate.
-                    state.sink(LEXY_FWD(args)...);
+                    ctrl.sink(LEXY_FWD(args)...);
             }
             return true;
         }
@@ -82,26 +82,23 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto sink       = context.on(_ev::list{}, reader.position());
-            bool handled[N] = {};
-            using state_t   = _comb_state<decltype(sink)>;
-
-            lexy::_detail::parse_context_var comb_context(context, _break{},
-                                                          state_t{sink, handled});
-            auto&                            state = comb_context.get(_break{});
+            auto                          sink       = context.on(_ev::list{}, reader.position());
+            bool                          handled[N] = {};
+            _comb_control<decltype(sink)> control{sink, handled};
 
             // Parse all iterations of the choice.
             for (auto count = 0; count < int(N); ++count)
             {
                 auto begin = reader.position();
 
-                using parser = lexy::parser_for<_comb_choice, lexy::pattern_parser<Context>>;
-                if (!parser::parse(comb_context, reader))
+                using parser
+                    = lexy::parser_for<_comb_choice, lexy::pattern_parser<decltype(control)>>;
+                if (!parser::parse(context, reader, control))
                     return false;
-                else if (state.loop_break)
+                else if (control.loop_break)
                     break; // Partial combination and we're done.
 
-                if (handled[state.idx])
+                if (handled[control.idx])
                 {
                     using tag = lexy::_detail::type_or<DuplicateError, lexy::combination_duplicate>;
                     auto err  = lexy::error<Reader, tag>(begin, reader.position());
@@ -111,7 +108,7 @@ struct _comb : rule_base
                 }
                 else
                 {
-                    handled[state.idx] = true;
+                    handled[control.idx] = true;
                 }
             }
 

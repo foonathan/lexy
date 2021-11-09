@@ -67,8 +67,7 @@ struct _must : branch_base
                 return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
 
             // The branch wasn't taken, so we fail with the specific error by parsing Error.
-            auto result
-                = lexy::parser_for<Error, lexy::pattern_parser<Context>>::parse(context, reader);
+            auto result = lexy::parser_for<Error, lexy::pattern_parser<>>::parse(context, reader);
             LEXY_ASSERT(!result, "error must not recover");
 
             return false;

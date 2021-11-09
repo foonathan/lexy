@@ -20,6 +20,7 @@ struct with_whitespace
 
 TEST_CASE("dsl::context_counter")
 {
+    // Note: runtime checks only here due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89074.
     constexpr auto counter = dsl::context_counter<struct id>;
 
     constexpr auto callback = lexy::callback<int>([](const char*) { return -11; },
@@ -29,12 +30,12 @@ TEST_CASE("dsl::context_counter")
     {
         constexpr auto rule = counter.create() + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
         CHECK(abc.trace == test_trace());
@@ -43,12 +44,12 @@ TEST_CASE("dsl::context_counter")
     {
         constexpr auto rule = counter.create<42>() + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 42);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 42);
         CHECK(abc.trace == test_trace());
@@ -59,12 +60,12 @@ TEST_CASE("dsl::context_counter")
         constexpr auto rule = counter.create<11>() + counter.inc() + counter.inc() + counter.inc()
                               + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 14);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 14);
         CHECK(abc.trace == test_trace());
@@ -74,12 +75,12 @@ TEST_CASE("dsl::context_counter")
         constexpr auto rule = counter.create<11>() + counter.dec() + counter.dec() + counter.dec()
                               + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 8);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 8);
         CHECK(abc.trace == test_trace());
@@ -90,11 +91,11 @@ TEST_CASE("dsl::context_counter")
         constexpr auto rule
             = counter.create<11>() + counter.push(LEXY_LIT("abc")) + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::fatal_error);
         CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 14);
         CHECK(abc.trace == test_trace().token("abc"));
@@ -102,7 +103,7 @@ TEST_CASE("dsl::context_counter")
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
 
-        auto whitespace = LEXY_VERIFY_P(production, "abc...");
+        auto whitespace = LEXY_VERIFY_RUNTIME_P(production, "abc...");
         CHECK(whitespace.status == test_result::success);
         CHECK(whitespace.value == 17);
         CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
@@ -111,11 +112,11 @@ TEST_CASE("dsl::context_counter")
     {
         constexpr auto rule = counter.create<11>() + counter.pop(LEXY_LIT("abc")) + counter.value();
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::fatal_error);
         CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 8);
         CHECK(abc.trace == test_trace().token("abc"));
@@ -123,7 +124,7 @@ TEST_CASE("dsl::context_counter")
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
 
-        auto whitespace = LEXY_VERIFY_P(production, "abc...");
+        auto whitespace = LEXY_VERIFY_RUNTIME_P(production, "abc...");
         CHECK(whitespace.status == test_result::success);
         CHECK(whitespace.value == 5);
         CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
@@ -133,12 +134,12 @@ TEST_CASE("dsl::context_counter")
     {
         constexpr auto rule = counter.create<42>() + dsl::if_(counter.is<42>() >> counter.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 42);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 42);
         CHECK(abc.trace == test_trace());
@@ -147,12 +148,12 @@ TEST_CASE("dsl::context_counter")
     {
         constexpr auto rule = counter.create() + dsl::if_(counter.is<42>() >> counter.value());
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == -11);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == -11);
         CHECK(abc.trace == test_trace());
@@ -203,19 +204,19 @@ TEST_CASE("dsl::equal_counts()")
     {
         constexpr auto rule = setup + equal;
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
-        auto aabbcc = LEXY_VERIFY("aabbcc");
+        auto aabbcc = LEXY_VERIFY_RUNTIME("aabbcc");
         CHECK(aabbcc.status == test_result::success);
         CHECK(aabbcc.trace
               == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
 
-        auto aabcc = LEXY_VERIFY("aabcc");
+        auto aabcc = LEXY_VERIFY_RUNTIME("aabcc");
         CHECK(aabcc.status == test_result::recovered_error);
         CHECK(aabcc.trace
               == test_trace()
@@ -225,7 +226,7 @@ TEST_CASE("dsl::equal_counts()")
                      .token("c")
                      .token("c")
                      .error(5, 5, "unequal counts"));
-        auto aabbccc = LEXY_VERIFY("aabbccc");
+        auto aabbccc = LEXY_VERIFY_RUNTIME("aabbccc");
         CHECK(aabbccc.status == test_result::recovered_error);
         CHECK(aabbccc.trace
               == test_trace()
@@ -242,19 +243,19 @@ TEST_CASE("dsl::equal_counts()")
     {
         constexpr auto rule = setup + dsl::must(equal).error<my_error>;
 
-        auto empty = LEXY_VERIFY("");
+        auto empty = LEXY_VERIFY_RUNTIME("");
         CHECK(empty.status == test_result::success);
         CHECK(empty.trace == test_trace());
 
-        auto abc = LEXY_VERIFY("abc");
+        auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
-        auto aabbcc = LEXY_VERIFY("aabbcc");
+        auto aabbcc = LEXY_VERIFY_RUNTIME("aabbcc");
         CHECK(aabbcc.status == test_result::success);
         CHECK(aabbcc.trace
               == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
 
-        auto aabcc = LEXY_VERIFY("aabcc");
+        auto aabcc = LEXY_VERIFY_RUNTIME("aabcc");
         CHECK(aabcc.status == test_result::fatal_error);
         CHECK(aabcc.trace
               == test_trace()
@@ -265,7 +266,7 @@ TEST_CASE("dsl::equal_counts()")
                      .token("c")
                      .error(5, 5, "my error")
                      .cancel());
-        auto aabbccc = LEXY_VERIFY("aabbccc");
+        auto aabbccc = LEXY_VERIFY_RUNTIME("aabbccc");
         CHECK(aabbccc.status == test_result::fatal_error);
         CHECK(aabbccc.trace
               == test_trace()

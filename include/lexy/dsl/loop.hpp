@@ -15,11 +15,10 @@ struct _break : unconditional_branch_base
     template <typename NextParser>
     struct p
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader&, Args&&...)
+        template <typename Context, typename Reader, typename LoopControl, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context&, Reader&, LoopControl& cntrl, Args&&...)
         {
-            // We set loop break on the member with the specified id.
-            context.get(_break{}).loop_break = true;
+            cntrl.loop_break = true;
             return true;
         }
     };
@@ -43,16 +42,15 @@ struct _loop : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            struct flag
+            struct loop_control_t
             {
                 bool loop_break = false;
-            };
+            } control;
 
-            lexy::_detail::parse_context_var loop_context(context, _break{}, flag{});
-            while (!loop_context.get(_break{}).loop_break)
+            while (!control.loop_break)
             {
-                using parser = lexy::parser_for<Rule, lexy::pattern_parser<decltype(loop_context)>>;
-                if (!parser::parse(loop_context, reader))
+                using parser = lexy::parser_for<Rule, lexy::pattern_parser<loop_control_t>>;
+                if (!parser::parse(context, reader, control))
                     return false;
             }
 
@@ -83,7 +81,7 @@ struct _whl : rule_base
             lexy::branch_parser_for<Branch, Context, Reader> branch{};
             while (branch.try_parse(context, reader))
             {
-                if (!branch.template finish<lexy::pattern_parser<Context>>(context, reader))
+                if (!branch.template finish<lexy::pattern_parser<>>(context, reader))
                     return false;
             }
 

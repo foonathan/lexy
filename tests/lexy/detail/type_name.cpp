@@ -45,7 +45,7 @@ TEST_CASE("_detail::type_name")
     {
         CHECK(lexy::_detail::type_name<test_type>() == lexy::_detail::string_view("some type"));
     }
-#if LEXY_HAS_AUTOMATIC_TYPE_NAME
+#if LEXY_HAS_CONSTEXPR_AUTOMATIC_TYPE_NAME
     SUBCASE("automatic")
     {
         CHECK(lexy::_detail::type_name<int, 0>() == lexy::_detail::string_view("int"));

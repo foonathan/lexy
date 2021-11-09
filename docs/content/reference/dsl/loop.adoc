@@ -26,7 +26,7 @@ namespace lexy::dsl
 `loop` is a rule that matches `rule` repeatedly.
 
 Requires::
-  `rule` does not produce any values or creates context variables that persist between loop iterations.
+  `rule` does not produce any values.
 Parsing::
   Parses `rule` repeatedly until it either fails or `break_` is parsed.
 Errors::

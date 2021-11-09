@@ -95,8 +95,9 @@ struct _chc
                 if (!parser.try_parse(context, reader))
                     return false;
 
-                // LEXY_FWD(args) will break MSVC builds targetting C++17
-                result = parser.template finish<NextParser>(context, reader, static_cast<Args&&>(args)...);
+                // LEXY_FWD(args) will break MSVC builds targeting C++17.
+                result = parser.template finish<NextParser>(context, reader,
+                                                            static_cast<Args&&>(args)...);
                 return true;
             };
 

@@ -127,7 +127,7 @@ struct automatic_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        if (context.production_context().control_block().enable_whitespace_skipping)
+        if (context.control_block().enable_whitespace_skipping)
         {
             // Skip the appropriate whitespace.
             using rule = context_whitespace<Context>;
@@ -204,7 +204,7 @@ struct _wsn : _copy_base<Rule>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Enable automatic whitespace skipping again.
-            context.production_context().control_block().enable_whitespace_skipping = true;
+            context.control_block().enable_whitespace_skipping = true;
             // And skip whitespace once.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
@@ -220,9 +220,9 @@ struct _wsn : _copy_base<Rule>
         constexpr auto try_parse(Context& context, const Reader& reader)
         {
             // Temporary disable whitespace skipping to parse the rule.
-            context.production_context().control_block().enable_whitespace_skipping = false;
-            auto result = rule.try_parse(context, reader);
-            context.production_context().control_block().enable_whitespace_skipping = true;
+            context.control_block().enable_whitespace_skipping = false;
+            auto result                                        = rule.try_parse(context, reader);
+            context.control_block().enable_whitespace_skipping = true;
             return result;
         }
 
@@ -230,7 +230,7 @@ struct _wsn : _copy_base<Rule>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the rule with whitespace skipping disabled.
-            context.production_context().control_block().enable_whitespace_skipping = false;
+            context.control_block().enable_whitespace_skipping = false;
             return rule.template finish<_pc<NextParser>>(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -255,7 +255,7 @@ struct _wsn : _copy_base<Rule>
             else
             {
                 // Parse the rule with whitespace skipping disabled.
-                context.production_context().control_block().enable_whitespace_skipping = false;
+                context.control_block().enable_whitespace_skipping = false;
                 using parser = lexy::parser_for<Rule, _pc<NextParser>>;
                 return parser::parse(context, reader, LEXY_FWD(args)...);
             }
