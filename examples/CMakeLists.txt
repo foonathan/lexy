@@ -25,10 +25,15 @@ target_link_libraries(lexy_example_json PRIVATE foonathan::lexy::dev foonathan::
 add_executable(lexy_example_shell)
 set_target_properties(lexy_example_shell PROPERTIES OUTPUT_NAME "shell")
 target_sources(lexy_example_shell PRIVATE shell.cpp)
-target_link_libraries(lexy_example_shell PRIVATE foonathan::lexy::dev foonathan::lexy::file)
+target_link_libraries(lexy_example_shell PRIVATE foonathan::lexy::dev)
 
 add_executable(lexy_example_xml)
 set_target_properties(lexy_example_xml PROPERTIES OUTPUT_NAME "xml")
 target_sources(lexy_example_xml PRIVATE xml.cpp)
 target_link_libraries(lexy_example_xml PRIVATE foonathan::lexy::dev foonathan::lexy::file)
+
+add_executable(lexy_example_turing EXCLUDE_FROM_ALL)
+set_target_properties(lexy_example_turing PROPERTIES OUTPUT_NAME "turing")
+target_sources(lexy_example_turing PRIVATE turing.cpp)
+target_link_libraries(lexy_example_turing PRIVATE foonathan::lexy::dev foonathan::lexy::file)
 
