@@ -281,11 +281,16 @@ struct _keyword<_id<L, T, R...>>
 };
 
 #if LEXY_HAS_NTTP
-/// Matches the keyword.
 template <lexy::_detail::string_literal Str, typename L, typename T, typename... R>
 constexpr auto keyword(_id<L, T, R...>)
 {
     return lexy::_detail::to_type_string<_keyword<_id<L, T>>::template get, Str>{};
+}
+#else
+template <auto C, typename L, typename T, typename... R>
+constexpr auto keyword(_id<L, T, R...>)
+{
+    return _kw<_id<L, T>, std::decay_t<decltype(C)>, C>{};
 }
 #endif
 

@@ -266,31 +266,40 @@ TEST_CASE("dsl::keyword")
 {
     constexpr auto id = dsl::identifier(dsl::ascii::alpha).reserve(LEXY_LIT("foo"));
 
-    constexpr auto rule = LEXY_KEYWORD("Int", id);
-    CHECK(lexy::is_token_rule<decltype(rule)>);
+    SUBCASE("string")
+    {
+        constexpr auto rule = LEXY_KEYWORD("Int", id);
+        CHECK(lexy::is_token_rule<decltype(rule)>);
 
 #if LEXY_HAS_NTTP
-    CHECK(equivalent_rules(rule, dsl::keyword<"Int">(id)));
+        CHECK(equivalent_rules(rule, dsl::keyword<"Int">(id)));
 #endif
 
-    constexpr auto callback = token_callback;
+        constexpr auto callback = token_callback;
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_keyword(0, 0, "Int").cancel());
-    auto I = LEXY_VERIFY("I");
-    CHECK(I.status == test_result::fatal_error);
-    CHECK(I.trace == test_trace().expected_keyword(0, 1, "Int").cancel());
-    auto In = LEXY_VERIFY("In");
-    CHECK(In.status == test_result::fatal_error);
-    CHECK(In.trace == test_trace().expected_keyword(0, 2, "Int").cancel());
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_keyword(0, 0, "Int").cancel());
+        auto I = LEXY_VERIFY("I");
+        CHECK(I.status == test_result::fatal_error);
+        CHECK(I.trace == test_trace().expected_keyword(0, 1, "Int").cancel());
+        auto In = LEXY_VERIFY("In");
+        CHECK(In.status == test_result::fatal_error);
+        CHECK(In.trace == test_trace().expected_keyword(0, 2, "Int").cancel());
 
-    auto Int = LEXY_VERIFY("Int");
-    CHECK(Int.status == test_result::success);
-    CHECK(Int.trace == test_trace().token("Int"));
+        auto Int = LEXY_VERIFY("Int");
+        CHECK(Int.status == test_result::success);
+        CHECK(Int.trace == test_trace().token("Int"));
 
-    auto Integer = LEXY_VERIFY("Integer");
-    CHECK(Integer.status == test_result::fatal_error);
-    CHECK(Integer.trace == test_trace().expected_keyword(0, 7, "Int").error_token("Int").cancel());
+        auto Integer = LEXY_VERIFY("Integer");
+        CHECK(Integer.status == test_result::fatal_error);
+        CHECK(Integer.trace
+              == test_trace().expected_keyword(0, 7, "Int").error_token("Int").cancel());
+    }
+    SUBCASE("char")
+    {
+        constexpr auto rule = dsl::keyword<'a'>(id);
+        CHECK(equivalent_rules(rule, LEXY_KEYWORD("a", id)));
+    }
 }
 

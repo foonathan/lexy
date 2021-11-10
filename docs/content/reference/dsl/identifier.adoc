@@ -154,6 +154,8 @@ They simply return `leading`/`trailing` from the arguments passed to `identifier
 ----
 namespace lexy::dsl
 {
+    template <auto Char>
+    constexpr _token-rule_ auto keyword(_identifier-dsl_ identifier);
     template <auto Str>
     constexpr _token-rule_ auto keyword(_identifier-dsl_ identifier);
 }
