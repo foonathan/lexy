@@ -49,115 +49,24 @@ constexpr auto debug = lexy::_detail::to_type_string<_debug, Str>{};
 } // namespace lexyd
 
 //=== trace ====//
-namespace lexy
+namespace lexy::_detail
 {
-namespace _ev = lexy::parse_events;
-
-template <typename OutputIt, typename Input, typename TokenKind = void>
-class trace_handler
+template <typename OutputIt, typename TokenKind>
+class trace_writer
 {
-    using location_finder = lexy_ext::input_location_finder<Input>;
-    using location        = typename location_finder::location;
-
-    struct label_t
-    {
-        const LEXY_CHAR_OF_u8* line;
-        const LEXY_CHAR_OF_u8* event;
-        const LEXY_CHAR_OF_u8* finish_event;
-        const LEXY_CHAR_OF_u8* cancel_event;
-    };
-
-    label_t label() const
-    {
-        return _opts.is_set(visualize_use_unicode) ? label_t{u8"│  ", u8"├──", u8"┴", u8"└"}
-                                                   : label_t{u8"  ", u8"- ", u8"- finish", u8"-"};
-    }
-
-    enum class prefix
-    {
-        event,
-        cancel,
-        finish,
-    };
-
-    OutputIt write_prefix(OutputIt out, std::size_t cur_depth, const location& loc, prefix p) const
-    {
-        const auto l = label();
-
-        if (cur_depth > 0)
-            *out++ = '\n';
-
-        out = _detail::write_color<_detail::color::faint>(out, _opts);
-        out = _detail::write_format(out, "%2zu:%3zu", loc.line_nr(), loc.column_nr());
-        out = _detail::write_str(out, ": ");
-        out = _detail::write_color<_detail::color::reset>(out, _opts);
-
-        if (cur_depth > 0)
-        {
-            for (auto i = 0u; i != cur_depth - 1; ++i)
-                out = _detail::write_str(out, l.line);
-
-            switch (p)
-            {
-            case prefix::event:
-                out = _detail::write_str(out, l.event);
-                break;
-            case prefix::cancel:
-                out = _detail::write_str(out, l.cancel_event);
-                out = _detail::write_color<_detail::color::yellow>(out, _opts);
-                if (_opts.is_set(visualize_use_unicode))
-                    out = _detail::write_str(out, u8"╳");
-                else
-                    out = _detail::write_str(out, "x");
-                out = _detail::write_color<_detail::color::reset>(out, _opts);
-                break;
-            case prefix::finish:
-                out = _detail::write_str(out, l.finish_event);
-                break;
-            }
-        }
-
-        return out;
-    }
-
 public:
-    explicit trace_handler(OutputIt out, const Input& input,
-                           visualization_options opts = {}) noexcept
-    : _out(out), _cur_depth(0), _locations(input), _anchor(_locations.beginning()), _opts(opts)
+    explicit trace_writer(OutputIt out, visualization_options opts)
+    : _out(out), _opts(opts), _cur_depth(0)
+    {}
+
+    template <typename Location, typename Production>
+    void write_production_start(const Location& loc, Production)
     {
-        LEXY_PRECONDITION(_opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
-    }
-
-    //=== events ===//
-    template <typename Production>
-    struct marker
-    {
-        // The beginning of the previous production.
-        // If the current production gets canceled, it needs to be restored.
-        location previous_anchor;
-
-        constexpr void get_value() && {}
-    };
-
-    template <typename Production>
-    constexpr OutputIt get_action_result(bool, marker<Production>&&) &&
-    {
-        *_out++ = '\n';
-        return _out;
-    }
-
-    template <typename Production, typename Iterator>
-    marker<Production> on(_ev::production_start<Production>, Iterator pos)
-    {
-        const auto loc = _locations.find(pos, _anchor);
-
-        // All other events are after this point.
-        auto previous_anchor = _anchor;
-        _anchor              = loc;
-
+        _last_token.reset();
         if (_cur_depth <= _opts.max_tree_depth)
         {
-            _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+            write_prefix(loc, prefix::event);
+
             _out = _detail::write_color<_detail::color::bold>(_out, _opts);
             _out = _detail::write_str(_out, lexy::production_name<Production>());
             _out = _detail::write_color<_detail::color::reset>(_out, _opts);
@@ -176,57 +85,66 @@ public:
         }
 
         ++_cur_depth;
-        _last_token.reset();
-
-        return {previous_anchor};
     }
 
-    template <typename Production, typename Iterator>
-    auto on(const marker<Production>&, _ev::list, Iterator)
-    {
-        return lexy::noop.sink();
-    }
-
-    template <typename Production, typename TK, typename Iterator>
-    void on(const marker<Production>&, _ev::token, TK _kind, Iterator begin, Iterator end)
+    template <typename Location, typename Production, typename Reader>
+    void write_token(const Location& loc, Production production, lexy::token_kind<TokenKind> kind,
+                     lexy::lexeme<Reader> lexeme)
     {
         if (_cur_depth > _opts.max_tree_depth)
             return;
 
-        const auto kind = lexy::token_kind<TokenKind>(_kind);
-        const auto loc  = _locations.find(begin, _anchor);
-
-        if (_last_token.merge(Production{}, kind))
+        if (_last_token.merge(production, kind))
         {
-            _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end), _opts | visualize_space);
+            _out = visualize_to(_out, lexeme, _opts | visualize_space);
         }
         else
         {
-            _out = write_prefix(_out, _cur_depth, loc, prefix::event);
+            write_prefix(loc, prefix::event);
+
             _out = _detail::write_color<_detail::color::bold>(_out, _opts);
             _out = _detail::write_str(_out, kind.name());
             _out = _detail::write_color<_detail::color::reset>(_out, _opts);
 
-            if (begin != end)
+            if (!lexeme.empty())
             {
                 _out = _detail::write_str(_out, ": ");
-                _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end),
-                                    _opts | visualize_space);
+                _out = visualize_to(_out, lexeme, _opts | visualize_space);
             }
         }
 
         _last_token.update(kind);
     }
 
-    template <typename Production, typename Reader, typename Tag>
-    void on(const marker<Production>&, _ev::error, const lexy::error<Reader, Tag>& error)
+    template <typename Location, typename Reader>
+    void write_backtrack(const Location& loc, lexy::lexeme<Reader> lexeme)
     {
+        _last_token.reset();
+        if (_cur_depth > _opts.max_tree_depth || lexeme.empty())
+            return;
+
+        write_prefix(loc, prefix::event);
+
+        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "backtracked");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_str(_out, ": ");
+
+        _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+        _out = visualize_to(_out, lexeme, _opts.reset(visualize_use_color) | visualize_space);
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+    }
+
+    template <typename Location, typename Reader, typename Tag>
+    void write_error(const Location& loc, const lexy::error<Reader, Tag>& error)
+    {
+        _last_token.reset();
         if (_cur_depth > _opts.max_tree_depth)
             return;
 
-        const auto loc = _locations.find(error.position(), _anchor);
+        write_prefix(loc, prefix::event);
 
-        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
         _out = _detail::write_color<_detail::color::red, _detail::color::bold>(_out, _opts);
         _out = _detail::write_str(_out, "error");
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
@@ -262,47 +180,16 @@ public:
         }
 
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        // We can no longer merge tokens.
-        _last_token.reset();
     }
 
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, _ev::backtracked, Iterator begin, Iterator end)
+    template <typename Location>
+    void write_recovery_start(const Location& loc)
     {
-        if (_cur_depth > _opts.max_tree_depth
-            // If we haven't actually consumed any characters, we didn't really backtrack;
-            // peeking at the next character is allowed.
-            || begin == end)
-            return;
-
-        const auto loc = _locations.find(begin, _anchor);
-
-        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
-        _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
-        _out = _detail::write_str(_out, "backtracked");
-        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-        if (begin != end)
-        {
-            _out = _detail::write_str(_out, ": ");
-            _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
-            _out = visualize_to(_out, lexy::lexeme_for<Input>(begin, end),
-                                _opts.reset(visualize_use_color) | visualize_space);
-            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-        }
-
-        // We can no longer merge tokens.
         _last_token.reset();
-    }
-
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, _ev::recovery_start, Iterator pos)
-    {
         if (_cur_depth <= _opts.max_tree_depth)
         {
-            const auto loc = _locations.find(pos, _anchor);
-            _out           = write_prefix(_out, _cur_depth, loc, prefix::event);
+            write_prefix(loc, prefix::event);
+
             _out = _detail::write_color<_detail::color::yellow, _detail::color::bold>(_out, _opts);
             _out = _detail::write_str(_out, "error recovery");
             _out = _detail::write_color<_detail::color::reset>(_out, _opts);
@@ -318,48 +205,18 @@ public:
                 _out = _detail::write_ellipsis(_out, _opts);
             }
         }
-
-        // We can no longer merge tokens.
-        _last_token.reset();
-        // Treat it as an extra level.
         ++_cur_depth;
     }
 
-    template <typename Iterator>
-    void on_recovery_end(Iterator pos, bool success)
+    template <typename Location>
+    void write_debug(const Location& loc, const char* str)
     {
-        if (_cur_depth < _opts.max_tree_depth)
-        {
-            const auto loc = _locations.find(pos, _anchor);
-            _out = write_prefix(_out, _cur_depth, loc, success ? prefix::finish : prefix::cancel);
-
-            if (!success)
-            {}
-        }
-
         _last_token.reset();
-        --_cur_depth;
-    }
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, _ev::recovery_finish, Iterator pos)
-    {
-        on_recovery_end(pos, true);
-    }
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, _ev::recovery_cancel, Iterator pos)
-    {
-        on_recovery_end(pos, false);
-    }
-
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, _ev::debug_event, Iterator pos, const char* str)
-    {
         if (_cur_depth > _opts.max_tree_depth)
             return;
 
-        const auto loc = _locations.find(pos, _anchor);
+        write_prefix(loc, prefix::event);
 
-        _out = write_prefix(_out, _cur_depth, loc, prefix::event);
         _out = _detail::write_color<_detail::color::blue, _detail::color::bold>(_out, _opts);
         _out = _detail::write_str(_out, "debug");
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
@@ -368,38 +225,77 @@ public:
         _out = _detail::write_str(_out, ": ");
         _out = _detail::write_str(_out, str);
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+    }
 
-        // We can no longer merge tokens.
+    template <typename Location>
+    void write_finish(const Location& loc)
+    {
         _last_token.reset();
-    }
 
-    template <typename Production, typename Iterator, typename... Args>
-    void on(marker<Production>&, _ev::production_finish<Production>, Iterator pos, Args&&...)
-    {
         if (_cur_depth <= _opts.max_tree_depth)
-        {
-            const auto loc = _locations.find(pos, _anchor);
-            _out           = write_prefix(_out, _cur_depth, loc, prefix::finish);
-        }
-
+            write_prefix(loc, prefix::finish);
         --_cur_depth;
     }
-    template <typename Production, typename Iterator>
-    void on(marker<Production>& m, _ev::production_cancel<Production>, Iterator pos)
+    template <typename Location>
+    void write_cancel(const Location& loc)
     {
+        _last_token.reset();
+
         if (_cur_depth <= _opts.max_tree_depth)
-        {
-            const auto loc = _locations.find(pos, _anchor);
-            _out           = write_prefix(_out, _cur_depth, loc, prefix::cancel);
-        }
-
+            write_prefix(loc, prefix::cancel);
         --_cur_depth;
+    }
 
-        // Restore the anchor as we've backtracked.
-        _anchor = m.previous_anchor;
+    OutputIt finish() &&
+    {
+        *_out++ = '\n';
+        return _out;
     }
 
 private:
+    enum class prefix
+    {
+        event,
+        cancel,
+        finish,
+    };
+
+    template <typename Location>
+    void write_prefix(const Location& loc, prefix p)
+    {
+        const auto use_unicode = _opts.is_set(visualize_use_unicode);
+
+        if (_cur_depth > 0)
+            *_out++ = '\n';
+
+        _out = _detail::write_color<_detail::color::faint>(_out, _opts);
+        _out = _detail::write_format(_out, "%2zu:%3zu", loc.line_nr(), loc.column_nr());
+        _out = _detail::write_str(_out, ": ");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        if (_cur_depth > 0)
+        {
+            for (auto i = 0u; i != _cur_depth - 1; ++i)
+                _out = _detail::write_str(_out, use_unicode ? u8"│  " : u8"  ");
+
+            switch (p)
+            {
+            case prefix::event:
+                _out = _detail::write_str(_out, use_unicode ? u8"├──" : u8"- ");
+                break;
+            case prefix::cancel:
+                _out = _detail::write_str(_out, use_unicode ? u8"└" : u8"-");
+                _out = _detail::write_color<_detail::color::yellow>(_out, _opts);
+                _out = _detail::write_str(_out, use_unicode ? u8"╳" : u8"x");
+                _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+                break;
+            case prefix::finish:
+                _out = _detail::write_str(_out, use_unicode ? u8"┴" : u8"- finish");
+                break;
+            }
+        }
+    }
+
     struct last_token_info
     {
         bool                        first_token;
@@ -429,15 +325,125 @@ private:
         }
     };
 
-    OutputIt _out;
+    OutputIt              _out;
+    visualization_options _opts;
 
     std::size_t     _cur_depth;
     last_token_info _last_token;
+};
+} // namespace lexy::_detail
+
+namespace lexy
+{
+template <typename OutputIt, typename Input, typename TokenKind = void>
+class trace_handler
+{
+    using location_finder = lexy_ext::input_location_finder<Input>;
+    using location        = typename location_finder::location;
+
+public:
+    explicit trace_handler(OutputIt out, const Input& input,
+                           visualization_options opts = {}) noexcept
+    : _writer(out, opts), _locations(input), _anchor(_locations.beginning())
+    {
+        LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
+    }
+
+    template <typename Production>
+    class event_handler
+    {
+        using iterator = typename lexy::input_reader<Input>::iterator;
+
+    public:
+        void on(trace_handler& handler, parse_events::production_start, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_production_start(loc, Production{});
+
+            // All events for the production are after the initial event.
+            _previous_anchor.emplace(handler._anchor);
+            handler._anchor = loc;
+        }
+        void on(trace_handler& handler, parse_events::production_finish, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_finish(loc);
+        }
+        void on(trace_handler& handler, parse_events::production_cancel, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_cancel(loc);
+
+            // We've backtracked, so we need to restore the anchor.
+            handler._anchor = *_previous_anchor;
+        }
+
+        template <typename TK>
+        void on(trace_handler& handler, parse_events::token, TK kind, iterator begin, iterator end)
+        {
+            auto loc = handler.find_location(begin);
+            handler._writer.write_token(loc, Production{}, token_kind<TokenKind>(kind),
+                                        lexeme_for<Input>(begin, end));
+        }
+        void on(trace_handler& handler, parse_events::backtracked, iterator begin, iterator end)
+        {
+            auto loc = handler.find_location(begin);
+            handler._writer.write_backtrack(loc, lexeme_for<Input>(begin, end));
+        }
+
+        template <typename Error>
+        void on(trace_handler& handler, parse_events::error, const Error& error)
+        {
+            auto loc = handler.find_location(error.position());
+            handler._writer.write_error(loc, error);
+        }
+
+        void on(trace_handler& handler, parse_events::recovery_start, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_recovery_start(loc);
+        }
+        void on(trace_handler& handler, parse_events::recovery_finish, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_finish(loc);
+        }
+        void on(trace_handler& handler, parse_events::recovery_cancel, iterator pos)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_cancel(loc);
+        }
+
+        void on(trace_handler& handler, parse_events::debug_event, iterator pos, const char* str)
+        {
+            auto loc = handler.find_location(pos);
+            handler._writer.write_debug(loc, str);
+        }
+
+    private:
+        // The beginning of the previous production.
+        // If the current production gets canceled, it needs to be restored.
+        _detail::lazy_init<location> _previous_anchor;
+    };
+
+    template <typename Production>
+    using value_callback = _detail::void_value_callback<Production>;
+
+    constexpr OutputIt get_result_void(bool) &&
+    {
+        return LEXY_MOV(_writer).finish();
+    }
+
+private:
+    location find_location(typename lexy::input_reader<Input>::iterator pos)
+    {
+        return _locations.find(pos, _anchor);
+    }
+
+    _detail::trace_writer<OutputIt, TokenKind> _writer;
 
     location_finder _locations;
     location        _anchor;
-
-    visualization_options _opts;
 };
 
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>

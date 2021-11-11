@@ -70,7 +70,7 @@ struct _lst : _copy_base<Item>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Construct the sink.
-            auto sink = context.on(_ev::list{}, reader.position());
+            auto sink = context.value_callback().sink();
 
             // Parse the first item.
             if (!lexy::parser_for<Item, lexy::sink_parser>::parse(context, reader, sink))
@@ -101,7 +101,7 @@ struct _lst : _copy_base<Item>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // At this point, we have a list so construct a sink.
-            auto sink = context.on(_ev::list{}, reader.position());
+            auto sink = context.value_callback().sink();
 
             // Finish the first item, passing all values to the sink.
             if (!item.template finish<lexy::sink_parser>(context, reader, sink))
@@ -375,7 +375,7 @@ struct _lstt : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             lexy::branch_parser_for<Term, Context, Reader> term{};
-            auto sink = context.on(_ev::list{}, reader.position());
+            auto                                           sink = context.value_callback().sink();
 
             // Parse initial item.
             using item_parser = lexy::parser_for<Item, lexy::sink_parser>;

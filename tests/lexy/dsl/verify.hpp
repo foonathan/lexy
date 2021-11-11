@@ -312,167 +312,168 @@ struct test_result
 template <typename Input, typename Callback>
 struct test_handler
 {
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
 public:
     test_handler(const Input& input, Callback cb)
     : _trace(nullptr), _cb(cb), _had_error(false), _begin(input.reader().position()),
       _last_token(_begin)
     {}
 
-    //=== events ===//
     template <typename Production>
-    struct marker
+    class event_handler
     {
-        int _value;
-
-        auto get_value() &&
+    public:
+        void on(test_handler& handler, lexy::parse_events::production_start, iterator pos)
         {
-            if constexpr (is_test_production<Production>)
-                return _value;
-            else
-                return Production{};
+            CHECK(handler._last_token == pos);
+            handler._trace.production(lexy::production_name<Production>());
+        }
+        void on(test_handler& handler, lexy::parse_events::production_finish, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.finish();
+        }
+        void on(test_handler& handler, lexy::parse_events::production_cancel, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.cancel();
+        }
+
+        template <typename TK>
+        void on(test_handler& handler, lexy::parse_events::token, TK _kind, iterator begin,
+                iterator end)
+        {
+            auto kind = lexy::token_kind(_kind);
+
+            auto lex      = lexy::lexeme_for<Input>(begin, end);
+            auto spelling = doctest::toString(lex);
+
+            handler._trace.token(kind.name(), spelling.c_str());
+
+            CHECK(handler._last_token == begin);
+            handler._last_token = end;
+        }
+        void on(test_handler& handler, lexy::parse_events::backtracked, iterator begin,
+                iterator end)
+        {
+            CHECK(handler._last_token == begin);
+
+            if (begin != end)
+            {
+                auto lex      = lexy::lexeme_for<Input>(begin, end);
+                auto spelling = doctest::toString(lex);
+
+                handler._trace.backtracked(spelling.c_str());
+            }
+        }
+
+        template <typename Reader, typename Tag>
+        void on(test_handler&                   handler, lexy::parse_events::error,
+                const lexy::error<Reader, Tag>& error)
+        {
+            auto begin = lexy::_detail::range_size(handler._begin, error.begin());
+            auto end   = lexy::_detail::range_size(handler._begin, error.end());
+            handler._trace.error(begin, end, error.message());
+
+            handler._had_error = true;
+        }
+        template <typename Reader>
+        void on(test_handler& handler, lexy::parse_events::error,
+                const lexy::error<Reader, lexy::expected_literal>& error)
+        {
+            auto pos = lexy::_detail::range_size(handler._begin, error.position());
+            auto string
+                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+            handler._trace.expected_literal(pos, doctest::toString(string).c_str(), error.index());
+
+            handler._had_error = true;
+        }
+        template <typename Reader>
+        void on(test_handler& handler, lexy::parse_events::error,
+                const lexy::error<Reader, lexy::expected_keyword>& error)
+        {
+            auto begin = lexy::_detail::range_size(handler._begin, error.begin());
+            auto end   = lexy::_detail::range_size(handler._begin, error.end());
+            auto string
+                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+            handler._trace.expected_keyword(begin, end, doctest::toString(string).c_str());
+
+            handler._had_error = true;
+        }
+        template <typename Reader>
+        void on(test_handler& handler, lexy::parse_events::error,
+                const lexy::error<Reader, lexy::expected_char_class>& error)
+        {
+            auto pos = lexy::_detail::range_size(handler._begin, error.position());
+            handler._trace.expected_char_class(pos, error.character_class());
+
+            handler._had_error = true;
+        }
+
+        void on(test_handler& handler, lexy::parse_events::recovery_start, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.recovery();
+        }
+        void on(test_handler& handler, lexy::parse_events::recovery_finish, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.finish();
+        }
+        void on(test_handler& handler, lexy::parse_events::recovery_cancel, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.cancel();
+        }
+
+        void on(test_handler& handler, const lexy::parse_events::debug_event&, iterator pos,
+                const char* str)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.token("debug", str);
         }
     };
 
     template <typename Production>
-    constexpr auto get_action_result(bool parse_result, marker<Production>&& m) &&
+    class value_callback
     {
-        static_assert(is_test_production<Production>);
+    public:
+        constexpr explicit value_callback(test_handler& handler) : _handler(&handler) {}
 
-        if (parse_result)
+        using return_type = std::conditional_t<is_test_production<Production>, int, Production>;
+
+        constexpr auto sink() const
+        {
+            return lexy::count.sink();
+        }
+
+        template <typename... Args>
+        constexpr return_type operator()([[maybe_unused]] Args&&... args) const
+        {
+            if constexpr (is_test_production<Production>)
+                return _handler->_cb(_handler->_begin, LEXY_FWD(args)...);
+            else
+                return Production{};
+        }
+
+    private:
+        test_handler* _handler;
+    };
+
+    template <typename T>
+    constexpr auto get_result(bool rule_parse_result, int result) &&
+    {
+        if (rule_parse_result)
             return test_result{_had_error ? test_result::recovered_error : test_result::success,
-                               m._value, LEXY_MOV(_trace)};
+                               result, LEXY_MOV(_trace)};
         else
             return test_result{test_result::fatal_error, -1, LEXY_MOV(_trace)};
     }
-
-    template <typename Production, typename Iterator>
-    auto on(marker<Production>, lexy::parse_events::list, Iterator)
+    template <typename T>
+    constexpr auto get_result(bool rule_parse_result) &&
     {
-        return lexy::count.sink();
-    }
-
-    template <typename Production, typename Iterator>
-    marker<Production> on(lexy::parse_events::production_start<Production>, Iterator pos)
-    {
-        CHECK(_last_token == pos);
-
-        _trace.production(lexy::production_name<Production>());
-        return {};
-    }
-    template <typename Production, typename Iterator, typename... Args>
-    void on(marker<Production>& m, lexy::parse_events::production_finish<Production>, Iterator pos,
-            [[maybe_unused]] Args&&... args)
-    {
-        CHECK(_last_token == pos);
-
-        _trace.finish();
-
-        if constexpr (is_test_production<Production>)
-            m._value = _cb(_begin, LEXY_FWD(args)...);
-    }
-    template <typename Production, typename Iterator>
-    void on(marker<Production>, lexy::parse_events::production_cancel<Production>, Iterator pos)
-    {
-        CHECK(_last_token == pos);
-
-        _trace.cancel();
-    }
-
-    template <typename Production, typename TK, typename Iterator>
-    void on(const marker<Production>&, lexy::parse_events::token, TK _kind, Iterator begin,
-            Iterator end)
-    {
-        auto kind = lexy::token_kind(_kind);
-
-        auto lex      = lexy::lexeme_for<Input>(begin, end);
-        auto spelling = doctest::toString(lex);
-
-        _trace.token(kind.name(), spelling.c_str());
-
-        CHECK(_last_token == begin);
-        _last_token = end;
-    }
-
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, lexy::parse_events::backtracked, Iterator begin,
-            Iterator end)
-    {
-        CHECK(_last_token == begin);
-
-        if (begin != end)
-        {
-            auto lex      = lexy::lexeme_for<Input>(begin, end);
-            auto spelling = doctest::toString(lex);
-
-            _trace.backtracked(spelling.c_str());
-        }
-    }
-
-    template <typename Production, typename Reader, typename Tag>
-    void on(marker<Production>, lexy::parse_events::error, const lexy::error<Reader, Tag>& error)
-    {
-        auto begin = lexy::_detail::range_size(_begin, error.begin());
-        auto end   = lexy::_detail::range_size(_begin, error.end());
-        _trace.error(begin, end, error.message());
-
-        _had_error = true;
-    }
-    template <typename Production, typename Reader>
-    void on(marker<Production>, lexy::parse_events::error,
-            const lexy::error<Reader, lexy::expected_literal>& error)
-    {
-        auto pos    = lexy::_detail::range_size(_begin, error.position());
-        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
-        _trace.expected_literal(pos, doctest::toString(string).c_str(), error.index());
-
-        _had_error = true;
-    }
-    template <typename Production, typename Reader>
-    void on(marker<Production>, lexy::parse_events::error,
-            const lexy::error<Reader, lexy::expected_keyword>& error)
-    {
-        auto begin  = lexy::_detail::range_size(_begin, error.begin());
-        auto end    = lexy::_detail::range_size(_begin, error.end());
-        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
-        _trace.expected_keyword(begin, end, doctest::toString(string).c_str());
-
-        _had_error = true;
-    }
-    template <typename Production, typename Reader>
-    void on(marker<Production>, lexy::parse_events::error,
-            const lexy::error<Reader, lexy::expected_char_class>& error)
-    {
-        auto pos = lexy::_detail::range_size(_begin, error.position());
-        _trace.expected_char_class(pos, error.character_class());
-
-        _had_error = true;
-    }
-
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, lexy::parse_events::recovery_start, Iterator pos)
-    {
-        CHECK(_last_token == pos);
-        _trace.recovery();
-    }
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, lexy::parse_events::recovery_finish, Iterator pos)
-    {
-        CHECK(_last_token == pos);
-        _trace.finish();
-    }
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, lexy::parse_events::recovery_cancel, Iterator pos)
-    {
-        CHECK(_last_token == pos);
-        _trace.cancel();
-    }
-
-    template <typename Production, typename Iterator>
-    void on(const marker<Production>&, const lexy::parse_events::debug_event&, Iterator pos,
-            const char* str)
-    {
-        CHECK(_last_token == pos);
-        _trace.token("debug", str);
+        return LEXY_MOV(*this).template get_result<T>(rule_parse_result, -1);
     }
 
 private:
@@ -481,7 +482,7 @@ private:
     Callback _cb;
     bool     _had_error;
 
-    typename lexy::input_reader<Input>::iterator _begin, _last_token;
+    iterator _begin, _last_token;
 };
 
 constexpr auto token_callback = [](auto) { return 0; };

@@ -13,45 +13,33 @@
 //=== parse_events ===//
 namespace lexy::parse_events
 {
-struct _production_event
-{};
-
 /// Start of the given production.
 /// Arguments: position
-/// Returns: new marker
-template <typename Production>
-struct production_start : _production_event
+struct production_start
 {};
 /// End of the given production.
-/// Arguments: position, values
-template <typename Production>
-struct production_finish : _production_event
+/// Arguments: position
+struct production_finish
 {};
 /// Production is canceled.
 /// Arguments: position
-template <typename Production>
-struct production_cancel : _production_event
-{};
-
-/// A parse error occurrs.
-/// Arguments: error object
-struct error
+struct production_cancel
 {};
 
 /// A token was consumed.
 /// Arguments: kind, begin, end
 struct token
 {};
-/// Beginning of a list.
-/// Arguments: position
-/// Returns sink.
-struct list
-{};
 
 /// The input backtracked from end to begin.
 /// Only meaningful for begin != end.
 /// Arguments: begin, end
 struct backtracked
+{};
+
+/// A parse error occurrs.
+/// Arguments: error object
+struct error
 {};
 
 /// Non-trivial error recovery started,

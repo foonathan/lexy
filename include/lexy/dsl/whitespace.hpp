@@ -21,53 +21,46 @@ struct ws_production
     static constexpr auto rule                = lexy::dsl::loop(Rule{} | lexy::dsl::break_);
 };
 
+// A special handler for parsing whitespace.
+// It only forwards errors to the context and ignores all other events.
 template <typename Context>
-struct whitespace_handler
+class whitespace_handler
 {
-    Context* parent;
-
-    //=== events ===//
-    template <typename Production>
-    struct marker
-    {
-        constexpr void get_value() && {}
-    };
+public:
+    constexpr explicit whitespace_handler(Context& context) : _context(&context) {}
 
     template <typename Production>
-    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
-    {
-        return parse_result;
-    }
-
-    template <typename Rule, typename Iterator>
-    constexpr auto on(parse_events::production_start<ws_production<Rule>>, Iterator)
-    {
-        return marker<ws_production<Rule>>{};
-    }
-    template <typename Production, typename Iterator>
-    constexpr auto on(parse_events::production_start<Production>, Iterator)
+    struct event_handler
     {
         static_assert(_detail::error<Production>,
                       "whitespace rule must not contain `dsl::p` or `dsl::recurse`;"
                       "use `dsl::inline_` instead");
-        return marker<Production>{};
-    }
-
-    template <typename Production, typename Iterator>
-    constexpr auto on(marker<Production>, parse_events::list, Iterator)
+    };
+    template <typename Rule>
+    class event_handler<ws_production<Rule>>
     {
-        return lexy::noop.sink();
-    }
+    public:
+        template <typename Error>
+        constexpr void on(whitespace_handler& handler, parse_events::error ev, Error&& error)
+        {
+            handler._context->on(ev, LEXY_FWD(error));
+        }
 
-    template <typename Production, typename Error>
-    constexpr void on(marker<Production>, parse_events::error ev, Error&& error)
+        template <typename Event, typename... Args>
+        constexpr void on(whitespace_handler&, Event, const Args&...)
+        {}
+    };
+
+    template <typename Production>
+    using value_callback = _detail::void_value_callback<Production>;
+
+    constexpr bool get_result_void(bool rule_parse_result) &&
     {
-        parent->on(ev, LEXY_FWD(error));
+        return rule_parse_result;
     }
 
-    template <typename... Args>
-    constexpr void on(const Args&...)
-    {}
+private:
+    Context* _context;
 };
 
 template <typename Rule, typename NextParser>
@@ -88,8 +81,7 @@ struct manual_ws_parser
         {
             // Parse the rule using a special handler that only forwards errors.
             using production = ws_production<Rule>;
-            whitespace_handler<Context> ws_handler{&context};
-            result = lexy::do_action<production>(LEXY_MOV(ws_handler), reader);
+            result           = lexy::do_action<production>(whitespace_handler(context), reader);
         }
         auto end = reader.position();
 
@@ -127,7 +119,7 @@ struct automatic_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        if (context.control_block().enable_whitespace_skipping)
+        if (context.control_block->enable_whitespace_skipping)
         {
             // Skip the appropriate whitespace.
             using rule = context_whitespace<Context>;
@@ -204,7 +196,7 @@ struct _wsn : _copy_base<Rule>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Enable automatic whitespace skipping again.
-            context.control_block().enable_whitespace_skipping = true;
+            context.control_block->enable_whitespace_skipping = true;
             // And skip whitespace once.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
@@ -220,9 +212,9 @@ struct _wsn : _copy_base<Rule>
         constexpr auto try_parse(Context& context, const Reader& reader)
         {
             // Temporary disable whitespace skipping to parse the rule.
-            context.control_block().enable_whitespace_skipping = false;
-            auto result                                        = rule.try_parse(context, reader);
-            context.control_block().enable_whitespace_skipping = true;
+            context.control_block->enable_whitespace_skipping = false;
+            auto result                                       = rule.try_parse(context, reader);
+            context.control_block->enable_whitespace_skipping = true;
             return result;
         }
 
@@ -230,7 +222,7 @@ struct _wsn : _copy_base<Rule>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the rule with whitespace skipping disabled.
-            context.control_block().enable_whitespace_skipping = false;
+            context.control_block->enable_whitespace_skipping = false;
             return rule.template finish<_pc<NextParser>>(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -255,7 +247,7 @@ struct _wsn : _copy_base<Rule>
             else
             {
                 // Parse the rule with whitespace skipping disabled.
-                context.control_block().enable_whitespace_skipping = false;
+                context.control_block->enable_whitespace_skipping = false;
                 using parser = lexy::parser_for<Rule, _pc<NextParser>>;
                 return parser::parse(context, reader, LEXY_FWD(args)...);
             }

@@ -6,7 +6,6 @@
 #define LEXY_ACTION_MATCH_HPP_INCLUDED
 
 #include <lexy/action/base.hpp>
-#include <lexy/callback/noop.hpp>
 
 namespace lexy
 {
@@ -15,40 +14,28 @@ class match_handler
 public:
     constexpr match_handler() : _failed(false) {}
 
-    //=== events ===//
     template <typename Production>
-    struct marker
+    class event_handler
     {
-        constexpr void get_value() && {}
+    public:
+        template <typename Error>
+        constexpr void on(match_handler& handler, parse_events::error, Error&&)
+        {
+            handler._failed = true;
+        }
+
+        template <typename Event, typename... Args>
+        constexpr void on(match_handler&, Event, const Args&...)
+        {}
     };
 
     template <typename Production>
-    constexpr bool get_action_result(bool parse_result, marker<Production>&&) &&
-    {
-        return parse_result && !_failed;
-    }
+    using value_callback = _detail::void_value_callback<Production>;
 
-    template <typename Production, typename Iterator>
-    constexpr marker<Production> on(parse_events::production_start<Production>, Iterator)
+    constexpr bool get_result_void(bool rule_parse_result) &&
     {
-        return {};
+        return rule_parse_result && !_failed;
     }
-
-    template <typename Production, typename Iterator>
-    constexpr auto on(marker<Production>, parse_events::list, Iterator)
-    {
-        return lexy::noop.sink();
-    }
-
-    template <typename Production, typename Error>
-    constexpr void on(marker<Production>, parse_events::error, Error&&)
-    {
-        _failed = true;
-    }
-
-    template <typename... Args>
-    constexpr void on(const Args&...)
-    {}
 
 private:
     bool _failed;

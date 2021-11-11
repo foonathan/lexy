@@ -85,7 +85,7 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto sink = context.on(_ev::list{}, reader.position());
+            auto sink = context.value_callback().sink();
 
             // Parse characters until we have the closing delimiter.
             lexy::branch_parser_for<Close, Context, Reader> close{};

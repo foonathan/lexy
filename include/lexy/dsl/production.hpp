@@ -38,23 +38,24 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
     template <typename NextParser>
     struct p
     {
-        using impl = lexy::_detail::production_parser<Production>;
-
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Create a context for the production and parse the context there.
-            auto sub_context = impl::get_sub_context(context, reader);
+            auto sub_context = context.sub_context(Production{});
+            sub_context.on(_ev::production_start{}, reader.position());
+
             if (_parse_production<Production>(sub_context, reader))
             {
-                // Extract value and continue.
-                return impl::template finish<NextParser>(context, reader, sub_context,
-                                                         LEXY_FWD(args)...);
+                sub_context.on(_ev::production_finish{}, reader.position());
+
+                using continuation = lexy::_detail::context_finish_parser<NextParser>;
+                return continuation::parse(context, reader, sub_context, LEXY_FWD(args)...);
             }
             else
             {
                 // Cancel.
-                impl::cancel_sub_context(sub_context, reader);
+                sub_context.on(_ev::production_cancel{}, reader.position());
                 return false;
             }
         }
@@ -63,8 +64,7 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
     template <typename Context, typename Reader>
     struct bp
     {
-        using impl          = lexy::_detail::production_parser<Production>;
-        using sub_context_t = typename impl::template sub_context_t<Context, Reader>;
+        using sub_context_t = decltype(LEXY_DECLVAL(Context&).sub_context(Production{}));
         using parser_t
             = lexy::branch_parser_for<lexy::production_rule<Production>, sub_context_t, Reader>;
 
@@ -75,12 +75,13 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         {
             // Create the new context.
             sub_context = {};
-            sub_context.emplace(impl::get_sub_context(context, reader));
+            sub_context.emplace(context.sub_context(Production{}));
+            sub_context->on(_ev::production_start{}, reader.position());
 
             // Try and parse the production on the new context.
             auto result = parser.try_parse(*sub_context, reader);
             if (!result)
-                impl::cancel_sub_context(*sub_context, reader);
+                sub_context->on(_ev::production_cancel{}, reader.position());
 
             return result;
         }
@@ -91,14 +92,15 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
             // Finish the production.
             if (_finish_production(parser, *sub_context, reader))
             {
-                // Continue parsing with the result.
-                return impl::template finish<NextParser>(context, reader, *sub_context,
-                                                         LEXY_FWD(args)...);
+                sub_context->on(_ev::production_finish{}, reader.position());
+
+                using continuation = lexy::_detail::context_finish_parser<NextParser>;
+                return continuation::parse(context, reader, *sub_context, LEXY_FWD(args)...);
             }
             else
             {
                 // Cancel.
-                impl::cancel_sub_context(*sub_context, reader);
+                sub_context->on(_ev::production_cancel{}, reader.position());
                 return false;
             }
         }
@@ -132,12 +134,12 @@ struct _recb : branch_base
         template <typename Context, typename Reader>
         static constexpr bool increment_depth(Context& context, Reader& reader)
         {
-            auto& control_block = context.control_block();
-            LEXY_ASSERT(control_block.max_depth > 0,
+            auto control_block = context.control_block;
+            LEXY_ASSERT(control_block->max_depth > 0,
                         "dsl::recurse_branch<P> is disabled in this context");
 
             // We're doing a recursive call, check for an exceeded depth.
-            if (control_block.cur_depth >= control_block.max_depth)
+            if (control_block->cur_depth >= control_block->max_depth)
             {
                 // We did report error from which we can't recover.
                 using tag = lexy::_detail::type_or<DepthError, lexy::max_recursion_depth_exceeded>;
@@ -146,15 +148,15 @@ struct _recb : branch_base
                 return false;
             }
 
-            ++control_block.cur_depth;
+            ++control_block->cur_depth;
             return true;
         }
 
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto& control_block = context.control_block();
-            --control_block.cur_depth;
+            auto control_block = context.control_block;
+            --control_block->cur_depth;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };

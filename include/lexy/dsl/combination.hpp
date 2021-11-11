@@ -82,7 +82,7 @@ struct _comb : rule_base
         {
             constexpr auto N = sizeof...(R);
 
-            auto                          sink       = context.on(_ev::list{}, reader.position());
+            auto                          sink       = context.value_callback().sink();
             bool                          handled[N] = {};
             _comb_control<decltype(sink)> control{sink, handled};
 

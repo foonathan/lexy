@@ -122,50 +122,46 @@ namespace lexy
 template <typename Input, typename ErrorCallback>
 class validate_handler
 {
-    using iterator = typename lexy::input_reader<Input>::iterator;
-
 public:
     constexpr explicit validate_handler(const Input& input, const ErrorCallback& callback)
     : _sink(_get_error_sink(callback)), _input(&input)
     {}
 
-    //=== events ===//
     template <typename Production>
-    struct marker
+    class event_handler
     {
-        iterator position; // beginning of the production
+        using iterator = typename lexy::input_reader<Input>::iterator;
 
-        constexpr void get_value() && {}
+    public:
+        constexpr event_handler() = default;
+
+        constexpr void on(validate_handler&, parse_events::production_start, iterator pos)
+        {
+            _begin = pos;
+        }
+
+        template <typename Error>
+        constexpr void on(validate_handler& handler, parse_events::error, Error&& error)
+        {
+            lexy::error_context err_ctx(Production{}, *handler._input, _begin);
+            handler._sink(err_ctx, LEXY_FWD(error));
+        }
+
+        template <typename Event, typename... Args>
+        constexpr void on(validate_handler&, Event, const Args&...)
+        {}
+
+    private:
+        iterator _begin = {};
     };
 
     template <typename Production>
-    constexpr auto get_action_result(bool parse_result, marker<Production>&&) &&
-    {
-        return validate_result<ErrorCallback>(parse_result, LEXY_MOV(_sink).finish());
-    }
+    using value_callback = _detail::void_value_callback<Production>;
 
-    template <typename Production, typename Iterator>
-    constexpr marker<Production> on(parse_events::production_start<Production>, Iterator pos)
+    constexpr auto get_result_void(bool rule_parse_result) &&
     {
-        return {pos};
+        return validate_result<ErrorCallback>(rule_parse_result, LEXY_MOV(_sink).finish());
     }
-
-    template <typename Production, typename Iterator>
-    constexpr auto on(marker<Production>, parse_events::list, Iterator)
-    {
-        return lexy::noop.sink();
-    }
-
-    template <typename Production, typename Error>
-    constexpr void on(marker<Production> m, parse_events::error, Error&& error)
-    {
-        lexy::error_context err_ctx(Production{}, *_input, m.position);
-        _sink(err_ctx, LEXY_FWD(error));
-    }
-
-    template <typename... Args>
-    constexpr void on(const Args&...)
-    {}
 
 private:
     _error_sink_t<ErrorCallback> _sink;
