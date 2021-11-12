@@ -94,7 +94,7 @@ constexpr bool equivalent_rules(RuleA, RuleB)
 //=== verify ===//
 namespace lexy::parse_events
 {
-struct debug_event;
+struct debug;
 }
 
 namespace lexy_test
@@ -427,7 +427,7 @@ public:
             handler._trace.cancel();
         }
 
-        void on(test_handler& handler, const lexy::parse_events::debug_event&, iterator pos,
+        void on(test_handler& handler, const lexy::parse_events::debug&, iterator pos,
                 const char* str)
         {
             CHECK(handler._last_token == pos);

@@ -7,17 +7,16 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/action/base.hpp>
-#include <lexy/callback/noop.hpp>
 #include <lexy/token.hpp>
 #include <lexy/visualize.hpp>
 #include <lexy_ext/input_location.hpp> // implementation detail only
 
-//=== debug_event ===//
+//=== debug event ===//
 namespace lexy::parse_events
 {
 /// Debug event was triggered.
 /// Arguments: pos, str
-struct debug_event
+struct debug
 {};
 } // namespace lexy::parse_events
 
@@ -33,7 +32,7 @@ struct _debug : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<>;
-            context.on(_ev::debug_event{}, reader.position(), str);
+            context.on(_ev::debug{}, reader.position(), str);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -414,7 +413,7 @@ public:
             handler._writer.write_cancel(loc);
         }
 
-        void on(trace_handler& handler, parse_events::debug_event, iterator pos, const char* str)
+        void on(trace_handler& handler, parse_events::debug, iterator pos, const char* str)
         {
             auto loc = handler.find_location(pos);
             handler._writer.write_debug(loc, str);
