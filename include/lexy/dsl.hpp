@@ -39,6 +39,7 @@
 #include <lexy/dsl/punctuator.hpp>
 #include <lexy/dsl/recover.hpp>
 #include <lexy/dsl/return.hpp>
+#include <lexy/dsl/scan.hpp>
 #include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/sign.hpp>

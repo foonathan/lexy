@@ -1,0 +1,92 @@
+---
+header: "lexy/dsl/scan.hpp"
+entities:
+  "lexy::rule_scanner": scan
+  "lexy::dsl::scan": scan
+  "lexy::scan_production": scan_production
+---
+
+[.lead]
+Manually parse input.
+
+[#scan]
+== Rule `lexy::dsl::scan`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename Context, typename Reader>
+    class rule_scanner
+    : public _scanner-common_
+    {
+    public:
+        using production      = _current-production_;
+        using root_production = _current-root-production_;
+
+        // Current recursion depth.
+        constexpr std::size_t recursion_depth() const noexcept;
+
+        // Position where `dsl::scan` was reached.
+        constexpr auto begin() const noexcept -> typename Reader::iterator;
+    };
+}
+
+namespace lexy::dsl
+{
+    constexpr _rule_ auto scan;
+}
+----
+
+[.lead]
+Parses input using a user-defined function.
+
+Requires::
+  The current production `P` has a `static` member function that accepts a reference of `lexy::rule_scanner` and returns a {{% docref "lexy::scan_result" %}}.
+Parsing::
+  Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position.
+  Then parses and consumes everything parsed and consumed by `P::scan()`.
+  Succeeds, if `P::scan()` returns a {{% docref "lexy::scan_result" %}} that contains a value.
+  Fails otherwise.
+Errors::
+  All errors raised by `P::scan()`, either directly by calling `.error()` or indirectly by parsing a rule that fails.
+  Recovers if `P::scan()` recovers and is able to return a value.
+Values::
+  If the `value_type` of the returned {{% docref "lexy::scan_result" %}} is non-void, returns that value.
+  Otherwise, produces no value.
+Parse tree::
+  Creates all nodes created from the rules parsed by `P::scan()` as if those rules were parsed directly.
+
+`lexy::rule_scanner` implements {{% docref "lexy::scanner-common" %}}.
+While parsing a rule, everything is forwarded to the top-level parse action, and it has access to the same context:
+The use of `dsl::scan` is a complete implementation detail of a production; it cannot be observed by the parse action in any way.
+Regardless of the top-level parse action, the overloads of `.parse()` and `.branch()` taking a {{% docref "lexy::scan_result" %}} ensure that values are produced.
+
+{{% playground-example "scan" "Parse a Rust-style raw string literal" %}}
+
+TIP: Use {{% docref "lexy::scan_production" %}} to remove boilerplate for a production whose rule is entirely `dsl::scan`.
+
+NOTE: Use {{% docref "lexy::scan" %}} if you want to manually parse the root production.
+
+[#scan_production]
+== Class `lexy::scan_production`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename T>
+    struct scan_production
+    {
+        // The return type of the scan() function.
+        using scan_result = lexy::scan_result<T>;
+
+        static constexpr auto rule  = dsl::scan;
+        static constexpr auto value = lexy::forward<T>;
+    };
+}
+----
+
+[.lead]
+Convenience class for productions that are parsed entirely manually producing a value of type `T`.
+

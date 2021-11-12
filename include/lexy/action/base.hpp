@@ -186,11 +186,11 @@ constexpr auto do_action(Handler&& handler, Reader& reader)
 //=== value callback ===//
 namespace lexy::_detail
 {
-template <typename Production>
-struct void_value_callback
+struct _void_value_callback
 {
+    constexpr _void_value_callback() = default;
     template <typename Handler>
-    constexpr explicit void_value_callback(Handler&)
+    constexpr explicit _void_value_callback(Handler&)
     {}
 
     using return_type = void;
@@ -204,6 +204,8 @@ struct void_value_callback
     constexpr void operator()(Args&&...) const
     {}
 };
+template <typename Production>
+using void_value_callback = _void_value_callback; // to prevent unnecessary instantiations
 } // namespace lexy::_detail
 
 #endif // LEXY_ACTION_BASE_HPP_INCLUDED

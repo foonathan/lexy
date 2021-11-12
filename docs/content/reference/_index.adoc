@@ -115,6 +115,8 @@ Actions take a grammar and an input, and do something with the grammar on that i
   Parses a grammar on an input and returns its value.
 {{% headerref "action/parse_as_tree" %}}::
   Parses a grammar on an input and returns the parse tree.
+{{% headerref "action/scan" %}}::
+  Parses a grammar manually by dispatching to other rules.
 {{% headerref "action/trace" %}}::
   Traces parse events to visualize and debug the parsing process.
 

@@ -18,6 +18,7 @@ set(tests
         action/match.cpp
         action/parse.cpp
         action/parse_as_tree.cpp
+        action/scan.cpp
         action/trace.cpp
         action/validate.cpp
 
@@ -72,6 +73,7 @@ set(tests
         dsl/punctuator.cpp
         dsl/recover.cpp
         dsl/return.cpp
+        dsl/scan.cpp
         dsl/sequence.cpp
         dsl/separator.cpp
         dsl/sign.cpp

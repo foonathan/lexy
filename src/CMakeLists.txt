@@ -27,6 +27,7 @@ set(header_files
         ${include_dir}/action/match.hpp
         ${include_dir}/action/parse.hpp
         ${include_dir}/action/parse_as_tree.hpp
+        ${include_dir}/action/scan.hpp
         ${include_dir}/action/validate.hpp
 
         ${include_dir}/callback/adapter.hpp
@@ -76,6 +77,7 @@ set(header_files
         ${include_dir}/dsl/punctuator.hpp
         ${include_dir}/dsl/recover.hpp
         ${include_dir}/dsl/return.hpp
+        ${include_dir}/dsl/scan.hpp
         ${include_dir}/dsl/separator.hpp
         ${include_dir}/dsl/sequence.hpp
         ${include_dir}/dsl/sign.hpp

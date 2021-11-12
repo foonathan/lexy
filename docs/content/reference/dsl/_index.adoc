@@ -191,6 +191,8 @@ the other rule does not have access to context variables, and any context modifi
   produce an empty placeholder value
 {{% docref "lexy::dsl::member" %}}::
   parse something into a member variable
+{{% docref "lexy::dsl::scan" %}}::
+  parse a completely user-defined rule
 =====
 
 [%collapsible]
