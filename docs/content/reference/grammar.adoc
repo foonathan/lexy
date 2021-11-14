@@ -4,7 +4,7 @@ entities:
   "lexy::production_name": production_name
   "lexy::production_rule": production_rule
   "lexy::production_whitespace": production_whitespace
-  "lexy::production_value": production_value
+  "lexy::production_value_callback": production_value_callback
   "lexy::token_production": token_production
   "lexy::transparent_production": transparent_production
   "lexy::max_recursion_depth": max_recursion_depth
@@ -92,24 +92,61 @@ It is determined as follows:
 
 This is used by {{% docref "lexy::dsl::whitespace" %}} during automatic whitespace skipping.
 
-[#production_value]
-== Trait `lexy::production_value`
+[#production_value_callback]
+== Callback `lexy::production_value_callback`
 
 {{% interface %}}
 ----
 namespace lexy
 {
-    template <_production_ Production>
-    struct production_value
+    template <_production_ Production, typename ParseState = void>
+    class production_value_callback
     {
-        static constexpr auto get = Production::value;
-        using type                = std::decay_t<decltype(get)>;
+    public:
+        constexpr explicit production_value_callback(const ParseState&);
+
+        using return_type = _see-below_;
+
+        constexpr _sink_ auto sink() const;
+
+        template <typename ... Args>
+        constexpr return_type operator()(Args&&... args);
     };
 }
 ----
 
+A callback and sink that wraps `Production::value`.
+
+If `Production::value` is a link:{{< relref "callback#callback" >}}[callback], `return_type` is its return type, `.sink()` is ill-formed and `operator()` forwards to `Production::value.operator()`.
+
+If `Production::value` is a link:{{< relref "callback#sink" >}}[sink],
+`return_type` is its return type, `.sink()` forwards to `Production::value.sink()`, and `operator()` accepts the return type of the sink and forwards it unchanged.
+
+If `Production::value` is both a callback and a sink, `return_type` is the return type of the callback, `.sink()` forwards to the sink, and `operator()` to the callback.
+
+If `ParseState` is non-void, the provided one will be forwarded to `Production::value.sink()` as argument, and passed as state parameter to the callback part of `Production::value`.
+
+TIP: Use {{% docref "lexy::operator>>" %}} to combine a sink and a callback in one `Production::value`.
+
+[#max_recursion_depth]
+== Function `lexy::max_recursion_depth`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_production_ EntryProduction>
+    consteval std::size_t max_recursion_depth();
+}
+----
+
 [.lead]
-Returns the type and object of the callback/sink of the production.
+Returns the maximum recursion depth of a grammar given its entry production.
+
+If the entry production has a `static std::size_t` member named `max_recursion_depth` (i.e. `EntryProduction::max_recursion_depth` is well-formed), returns that value.
+Otherwise returns an implementation-defined "big" value (currently 1024).
+
+If the recursion depth of {{% docref "lexy::dsl::recurse" %}} exceeds this value, an error is raised.
 
 [#token_production]
 == Class `lexy::token_production`
@@ -152,24 +189,4 @@ Base class to indicate that this production should not show up in the parse tree
 
 In the parse tree, there will be no separate node for `Production`.
 Instead, all child nodes of `Production` are added to its parent node.
-
-[#max_recursion_depth]
-== Function `lexy::max_recursion_depth`
-
-{{% interface %}}
-----
-namespace lexy
-{
-    template <_production_ EntryProduction>
-    consteval std::size_t max_recursion_depth();
-}
-----
-
-[.lead]
-Returns the maximum recursion depth of a grammar given its entry production.
-
-If the entry production has a `static std::size_t` member named `max_recursion_depth` (i.e. `EntryProduction::max_recursion_depth` is well-formed), returns that value.
-Otherwise returns an implementation-defined "big" value (currently 1024).
-
-If the recursion depth of {{% docref "lexy::dsl::recurse" %}} exceeds this value, an error is raised.
 

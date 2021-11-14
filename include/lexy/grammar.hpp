@@ -9,6 +9,7 @@
 #include <lexy/_detail/config.hpp>
 #include <lexy/_detail/detect.hpp>
 #include <lexy/_detail/type_name.hpp>
+#include <lexy/callback/base.hpp>
 
 //=== rule ===//
 // We use a shorthand namespace to decrease symbol size.
@@ -122,6 +123,18 @@ LEXY_CONSTEVAL const char* production_name()
 {
     return _detail::type_name<Production>();
 }
+
+template <typename Production>
+using _detect_max_recursion_depth = decltype(Production::max_recursion_depth);
+
+template <typename EntryProduction>
+LEXY_CONSTEVAL std::size_t max_recursion_depth()
+{
+    if constexpr (_detail::is_detected<_detect_max_recursion_depth, EntryProduction>)
+        return EntryProduction::max_recursion_depth;
+    else
+        return 1024; // Arbitrary power of two.
+}
 } // namespace lexy
 
 namespace lexy
@@ -156,23 +169,83 @@ using production_whitespace = decltype(_production_whitespace<Production, Root>(
 
 namespace lexy
 {
-template <typename Production>
-using _detect_max_recursion_depth = decltype(Production::max_recursion_depth);
+template <typename To, typename... Args>
+inline constexpr auto _is_convertible = false;
+template <typename To, typename Arg>
+inline constexpr auto _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
+template <>
+inline constexpr auto _is_convertible<void> = true;
 
-template <typename EntryProduction>
-LEXY_CONSTEVAL std::size_t max_recursion_depth()
+template <typename Production, typename ParseState = void>
+class production_value_callback
 {
-    if constexpr (_detail::is_detected<_detect_max_recursion_depth, EntryProduction>)
-        return EntryProduction::max_recursion_depth;
-    else
-        return 1024; // Arbitrary power of two.
-}
+    using _type = std::decay_t<decltype(Production::value)>;
 
-template <typename Production>
-struct production_value
-{
-    static constexpr auto get = Production::value;
-    using type                = std::decay_t<decltype(get)>;
+    static auto _return_type_callback()
+    {
+        if constexpr (lexy::is_callback<_type>)
+            return Production::value;
+        else if constexpr (lexy::is_sink<_type, ParseState>)
+            return Production::value.sink(LEXY_DECLVAL(const ParseState&));
+        else
+            return Production::value.sink();
+    }
+
+public:
+    template <typename State = ParseState, typename = std::enable_if_t<std::is_void_v<State>>>
+    constexpr production_value_callback() : _state(nullptr)
+    {}
+
+    template <typename State = ParseState,
+              typename       = std::enable_if_t<std::is_same_v<State, ParseState>>>
+    constexpr explicit production_value_callback(const State& state) : _state(&state)
+    {}
+
+    using return_type = typename decltype(_return_type_callback())::return_type;
+
+    constexpr auto sink() const
+    {
+        if constexpr (lexy::is_sink<_type, ParseState>)
+            return Production::value.sink(*_state);
+        else
+            return Production::value.sink();
+    }
+
+    template <typename... Args>
+    constexpr return_type operator()(Args&&... args)
+    {
+        if constexpr (lexy::is_callback_for<_type, Args&&...>)
+        {
+            if constexpr (lexy::is_callback_state<_type, ParseState>)
+                return Production::value[*_state](LEXY_FWD(args)...);
+            else
+                return Production::value(LEXY_FWD(args)...);
+        }
+        else if constexpr (lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>)
+        {
+            if constexpr (_is_convertible<return_type, Args&&...>)
+            {
+                // We don't have a matching callback, but it is a single argument that has
+                // the correct type already, or we return void and have no arguments.
+                // Assume it came from the list sink and return the value without invoking a
+                // callback.
+                return (LEXY_FWD(args), ...);
+            }
+            else
+            {
+                static_assert(_detail::error<Production, Args...>,
+                              "missing value callback overload for production; only have sink");
+            }
+        }
+        else
+        {
+            static_assert(_detail::error<Production, Args...>,
+                          "missing value callback overload for production");
+        }
+    }
+
+private:
+    const ParseState* _state;
 };
 } // namespace lexy
 

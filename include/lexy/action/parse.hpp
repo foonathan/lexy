@@ -96,32 +96,11 @@ private:
 
 namespace lexy
 {
-template <typename To, typename... Args>
-inline constexpr auto _is_convertible = false;
-template <typename To, typename Arg>
-inline constexpr auto _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
-template <>
-inline constexpr auto _is_convertible<void> = true;
-
 template <typename State, typename Input, typename ErrorCallback>
 class parse_handler
 {
     using state_t  = _detail::type_or<State, _detail::no_bind_state>;
     using iterator = typename lexy::input_reader<Input>::iterator;
-
-    template <typename Production>
-    static auto _value_callback()
-    {
-        using value = lexy::production_value<Production>;
-        if constexpr (lexy::is_callback<typename value::type>)
-            return value::get;
-        else if constexpr (lexy::is_sink<typename value::type, const state_t&>)
-            return value::get.sink(LEXY_DECLVAL(const state_t&));
-        else
-            return value::get.sink();
-    }
-    template <typename Production>
-    using _production_value_t = typename decltype(_value_callback<Production>())::return_type;
 
 public:
     constexpr explicit parse_handler(const state_t& state, const Input& input,
@@ -139,60 +118,13 @@ public:
     }
 
     template <typename Production>
-    class value_callback
+    using value_callback = production_value_callback<Production, state_t>;
+
+    template <typename Production>
+    constexpr explicit operator value_callback<Production>()
     {
-        using prod_value = lexy::production_value<Production>;
-
-    public:
-        constexpr explicit value_callback(parse_handler& handler) : _state(handler._state) {}
-
-        using return_type = _production_value_t<Production>;
-
-        constexpr auto sink() const
-        {
-            if constexpr (lexy::is_sink<typename prod_value::type, const state_t&>)
-                return prod_value::get.sink(*_state);
-            else
-                return prod_value::get.sink();
-        }
-
-        template <typename... Args>
-        constexpr return_type operator()(Args&&... args) const
-        {
-            using callback = typename prod_value::type;
-            if constexpr (lexy::is_callback_for<callback, Args&&...>)
-            {
-                if constexpr (lexy::is_callback_state<callback, const state_t&>)
-                    return prod_value::get[*_state](LEXY_FWD(args)...);
-                else
-                    return prod_value::get(LEXY_FWD(args)...);
-            }
-            else if constexpr (lexy::is_sink<callback> || lexy::is_sink<callback, const state_t&>)
-            {
-                if constexpr (_is_convertible<return_type, Args&&...>)
-                {
-                    // We don't have a matching callback, but it is a single argument that has
-                    // the correct type already, or we return void and have no arguments.
-                    // Assume it came from the list sink and return the value without invoking a
-                    // callback.
-                    return (LEXY_FWD(args), ...);
-                }
-                else
-                {
-                    static_assert(_detail::error<Production, Args...>,
-                                  "missing value callback overload for production; only have sink");
-                }
-            }
-            else
-            {
-                static_assert(_detail::error<Production, Args...>,
-                              "missing value callback overload for production");
-            }
-        }
-
-    private:
-        const state_t* _state;
-    };
+        return value_callback<Production>(*_state);
+    }
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {

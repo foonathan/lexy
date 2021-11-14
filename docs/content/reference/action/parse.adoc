@@ -137,31 +137,14 @@ All values produced during parsing are forwarded to the `Production::value` call
 all errors raised are forwarded to the {{% error-callback %}}.
 Returns the {{% docref "lexy::parse_result" %}} containing the final value and the result of the error callback.
 
-It requires that every production `P` of the grammar reachable by `Production` has a `::value` callback.
-It is used as follows:
-
-1. `P::rule` does not contain a rule that requires a sink (e.g. {{% docref "lexy::dsl::list" %}}).
-   Then `P::value` must be a link:{{< relref "callback#callback" >}}[callback].
-   It will be invoked with all values produced by `P::rule`; it's result is the result of parsing `P`.
-2. `P::rule` contains a rule that requires a sink and no other rule produces a value.
-   Then `P::value` must be a link:{{< relref "callback#sink" >}}[sink], and it will be used to collect the values.
-   If `P::value` is a also a callback that accepts the result of the sink,
-   the result of parsing `P` is the `P::value` invoked with the sink result.
-   Otherwise, the result of parsing `P` is the result of the sink.
-3. `P::rule` contains both rules that require a sink and other rules produce values.
-   Then `P::value` must be both a callback and a sink.
-   The sink is used to collect the values, its final result is forwarded together with all other values to the callback.
-   The result of parsing `P` is the result of the callback.
-
-If `P` is reached by a {{% docref "lexy::dsl::p" %}} or {{% docref "lexy::dsl::recurse" %}} rule,
-they produce the result of parsing `P` as its value.
-If `P` is the top-level `Production`, its result is returned as the final value of the {{% docref "lexy::parse_result" %}}.
+The value of any production `P` in the grammar is determined using {{% docref "lexy::production_value_callback" %}} and `P::value`:
+all values produced by parsing `P::rule` will be forwarded to `lexy::production_value_callback`'s `operator()`.
+This includes the value produced recursively by parsing a child production with {{% docref "lexy::dsl::p" %}} or {{% docref "lexy::dsl::recurse" %}}.
+If `P::rule` contains a rule that requires a sink (e.g. {{% docref "lexy::dsl::list" %}}, it will use the sink of `lexy::production_value_callback`, which requires that `P::value` is a sink.
+The final value of the parse action is the value produced by `Production`.
 
 The second overload of `lexy::parse` accepts a `state`, which is an arbitrary object.
-If `P::value` is a callback that accepts `state` as state parameter, or a sink that accepts `state` as the argument to `.sink()`,
-it will be passed to them.
-
-TIP: Use {{% docref "lexy::operator>>" %}} to combine a sink and a callback in case 3 above.
+This will be forwarded to `lexy::production_value_callback`, which uses it as the state parameter.
 
 TIP: Use {{% docref "lexy::bind" %}} and {{% docref "lexy::bind_sink" %}} with the placeholder {{% docref "lexy::parse_state" %}} to access the `state` object in existing callbacks.
 
