@@ -5,6 +5,9 @@
 add_executable(lexy_test_email email.cpp)
 target_link_libraries(lexy_test_email PRIVATE lexy_test_base)
 
+add_executable(lexy_test_ip_address ip_address.cpp)
+target_link_libraries(lexy_test_ip_address PRIVATE lexy_test_base)
+
 add_executable(lexy_test_json json.cpp)
 target_link_libraries(lexy_test_json PRIVATE lexy_test_base)
 
