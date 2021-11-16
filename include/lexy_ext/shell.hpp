@@ -246,6 +246,32 @@ public:
             LEXY_MOV(_writer).done();
         }
 
+        auto output_iterator()
+        {
+            struct iterator
+            {
+                typename Prompt::write_message_callback* _writer;
+
+                iterator& operator*() noexcept
+                {
+                    return *this;
+                }
+                iterator& operator++(int) noexcept
+                {
+                    return *this;
+                }
+
+                iterator& operator=(char c)
+                {
+                    auto chr = static_cast<char_type>(c);
+                    (*_writer)(&chr, 1);
+                    return *this;
+                }
+            };
+
+            return iterator{&_writer};
+        }
+
         writer& operator()(const char_type* str, std::size_t length)
         {
             _writer(str, length);

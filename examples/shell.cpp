@@ -6,11 +6,8 @@
 #include <memory>
 #include <string>
 
-#include <lexy/action/parse.hpp>
 #include <lexy/callback.hpp>
 #include <lexy/dsl.hpp>
-
-#include <lexy_ext/report_error.hpp> // lexy_ext::report_error
 #include <lexy_ext/shell.hpp>
 
 // A shell with a couple of basic commands.
@@ -35,6 +32,17 @@ struct interpreter
 
         return iter->second;
     }
+};
+
+// Special directives that control what happens with entered commands.
+enum class directive
+{
+    // Command following it is executed (the default).
+    execute,
+    // Parsing of the command following it is traced.
+    trace,
+    // All variables are printed.
+    vars,
 };
 
 class cmd_base
@@ -103,7 +111,7 @@ constexpr auto identifier = dsl::identifier(dsl::ascii::alnum);
 
 //=== The arguments ===//
 // The content of a string literal: any unicode code point except for control characters.
-constexpr auto str_char = dsl::code_point - dsl::ascii::control;
+constexpr auto str_char = dsl::code_point - dsl::unicode::control;
 
 // An unquoted sequence of characters.
 struct arg_bare
@@ -239,9 +247,44 @@ struct command
     }();
     static constexpr auto value = lexy::forward<shell::command>;
 };
+
+//=== the directive ===//
+// Parse an optional parsing directive with trailing separator.
+// Note that it doesn't parse the following command, this is done manually.
+struct directive
+{
+    struct unknown_directive
+    {
+        static constexpr auto name = "unknown directive";
+    };
+
+    // Map pre-defined directives.
+    static constexpr auto directives
+        = lexy::symbol_table<shell::directive>                        //
+              .map<LEXY_SYMBOL("execute")>(shell::directive::execute) //
+              .map<LEXY_SYMBOL("trace")>(shell::directive::trace)     //
+              .map<LEXY_SYMBOL("vars")>(shell::directive::vars);
+
+    static constexpr auto rule = [] {
+        auto pattern   = dsl::identifier(dsl::ascii::alpha);
+        auto directive = dsl::symbol<directives>(pattern).error<unknown_directive>;
+
+        // A directive is optional, but it also consumes the argument separator if parsed.
+        return dsl::opt(dsl::colon >> directive + dsl::if_(arg_sep));
+    }();
+
+    // Forward the existing directive but default to execute.
+    static constexpr auto value
+        = lexy::bind(lexy::forward<shell::directive>, lexy::_1 or shell::directive::execute);
+};
 } // namespace grammar
 
 #ifndef LEXY_TEST
+#    include <lexy/action/parse.hpp>
+#    include <lexy/action/scan.hpp>
+#    include <lexy/action/trace.hpp>
+#    include <lexy_ext/report_error.hpp>
+
 int main()
 {
     for (shell::interpreter intp; intp.shell.is_open();)
@@ -250,13 +293,45 @@ int main()
         // Note: everytime we do it, the memory of the previous line is cleared.
         auto input = intp.shell.prompt_for_input();
 
-        // Then we parse the command.
-        auto result = lexy::parse<grammar::command>(input, intp, lexy_ext::report_error);
-        if (!result)
+        // Use a scanner to handle the directives.
+        auto scanner = lexy::scan(input, lexy_ext::report_error);
+        // Parse a directive.
+        auto directive = scanner.parse<grammar::directive>();
+        if (!scanner)
             continue;
 
-        // ... and execute it.
-        auto exit = result.value()->execute(intp);
+        auto exit = false;
+        switch (directive.value())
+        {
+        case shell::directive::execute: {
+            // Parse the command in the remaining input...
+            auto result = lexy::parse<grammar::command>(scanner.remaining_input(), intp,
+                                                        lexy_ext::report_error);
+            if (result)
+                // ... and execute it.
+                exit = result.value()->execute(intp);
+            break;
+        }
+
+        case shell::directive::trace:
+            // Trace the command in the remaining input.
+            lexy::trace_to<grammar::command>(intp.shell.write_message().output_iterator(),
+                                             scanner.remaining_input(), {lexy::visualize_fancy});
+            break;
+
+        case shell::directive::vars: {
+            // Write all variables.
+            auto writer = intp.shell.write_message();
+            for (auto [name, value] : intp.variables)
+            {
+                writer(name.data(), name.length());
+                writer(" = ");
+                writer(value.data(), value.length());
+                writer("\n");
+            }
+        }
+        }
+
         if (exit)
             break;
     }
