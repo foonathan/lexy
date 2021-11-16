@@ -389,9 +389,19 @@ struct _int : _copy_base<Token>
                 {}
 
                 auto recovery_end = reader.position();
-                if (recovery_begin != recovery_end)
-                    context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, recovery_end);
-                context.on(_ev::recovery_finish{}, recovery_end);
+                if (begin == recovery_begin && recovery_begin == recovery_end)
+                {
+                    // We didn't get any digits; don't recover.
+                    context.on(_ev::recovery_cancel{}, recovery_end);
+                    return false;
+                }
+                else
+                {
+                    if (recovery_begin != recovery_end)
+                        context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
+                                   recovery_end);
+                    context.on(_ev::recovery_finish{}, recovery_end);
+                }
             }
             auto end = reader.position();
 

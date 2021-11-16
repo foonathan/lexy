@@ -129,7 +129,8 @@ Errors::
     The rule then recovers by consuming as much additional digits of the `Base` as possible.
     If `digits` is a known instantiation with a separator, it will also skip separators.
     This happens without any validation for trailing separators or leading zeros.
-    It then converts everything already consumed by the failed `digits` and everything recovered to an integer as if nothing happened.
+    Recovery fails if `digits` and this recovery process combined haven't consumed any input.
+    Otherwise, it converts everything consumed and recovery succeeds.
 Values::
   First produces all values from parsing `digits`.
   Then produces the integer of type `T` by iterating over the code units consumed by `digits` and handling them as follows:

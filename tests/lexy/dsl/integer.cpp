@@ -273,9 +273,9 @@ TEST_CASE("dsl::integer(token)")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().error(0, 0, "missing token").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().error(0, 0, "missing token").recovery().cancel().cancel());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
@@ -333,9 +333,9 @@ TEST_CASE("dsl::integer(dsl::digits)")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
@@ -393,9 +393,9 @@ TEST_CASE("dsl::integer(dsl::digits.no_leading_zero())")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
@@ -468,9 +468,9 @@ TEST_CASE("dsl::integer(dsl::digits.sep())")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
@@ -487,9 +487,9 @@ TEST_CASE("dsl::integer(dsl::digits.sep())")
         CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
         auto leading_sep = LEXY_VERIFY("_1");
-        CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 0);
-        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(leading_sep.status == test_result::fatal_error);
+        CHECK(leading_sep.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
@@ -557,9 +557,9 @@ TEST_CASE("dsl::integer(dsl::digits.sep().no_leading_zero())")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto two = LEXY_VERIFY("11");
         CHECK(two.status == test_result::success);
@@ -576,9 +576,9 @@ TEST_CASE("dsl::integer(dsl::digits.sep().no_leading_zero())")
         CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
         auto leading_sep = LEXY_VERIFY("_1");
-        CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 0);
-        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(leading_sep.status == test_result::fatal_error);
+        CHECK(leading_sep.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
@@ -661,9 +661,9 @@ TEST_CASE("dsl::integer(dsl::n_digits)")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto one = LEXY_VERIFY("1");
         CHECK(one.status == test_result::recovered_error);
@@ -727,9 +727,9 @@ TEST_CASE("dsl::integer(dsl::n_digits.sep())")
         constexpr auto rule = integer;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
 
         auto one = LEXY_VERIFY("1");
         CHECK(one.status == test_result::recovered_error);
@@ -757,9 +757,9 @@ TEST_CASE("dsl::integer(dsl::n_digits.sep())")
         CHECK(with_sep.trace == test_trace().token("1_2_3"));
 
         auto leading_sep = LEXY_VERIFY("_1");
-        CHECK(leading_sep.status == test_result::recovered_error);
-        CHECK(leading_sep.value == 0);
-        CHECK(leading_sep.trace == test_trace().expected_char_class(0, "digit.decimal").recovery());
+        CHECK(leading_sep.status == test_result::fatal_error);
+        CHECK(leading_sep.trace
+              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
         auto trailing_sep = LEXY_VERIFY("1_");
         CHECK(trailing_sep.status == test_result::recovered_error);
         CHECK(trailing_sep.value == 1);
@@ -823,9 +823,9 @@ TEST_CASE("dsl::code_point_id")
         constexpr auto rule = id;
 
         auto empty = LEXY_VERIFY("");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.hex").recovery());
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_char_class(0, "digit.hex").recovery().cancel().cancel());
 
         auto latin_small_letter_e_with_acute = LEXY_VERIFY("0000E9");
         CHECK(latin_small_letter_e_with_acute.status == test_result::success);
