@@ -45,6 +45,13 @@ struct _construct
             return T{LEXY_FWD(args)...};
     }
 };
+template <>
+struct _construct<void>
+{
+    using return_type = void;
+
+    constexpr void operator()() const {}
+};
 
 /// A callback that constructs an object of type T by forwarding the arguments.
 template <typename T>

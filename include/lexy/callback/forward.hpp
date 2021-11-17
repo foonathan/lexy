@@ -23,6 +23,13 @@ struct _fwd
         return t;
     }
 };
+template <>
+struct _fwd<void>
+{
+    using return_type = void;
+
+    constexpr void operator()() const {}
+};
 
 /// A callback that just forwards an existing object.
 template <typename T>

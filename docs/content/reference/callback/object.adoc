@@ -14,14 +14,18 @@ namespace lexy
 {
     template <typename T>
     constexpr _callback_ auto construct;
+
+    template <>
+    constexpr _callback_ auto construct<void>;
 }
 ----
 
 [.lead]
 Construct an object of type `T`.
 
-It accepts arbitrary arguments and returns `T(std::forward<Args>(args)...)` if that is well-formed,
+The primary template accepts arbitrary arguments and returns `T(std::forward<Args>(args)...)` if that is well-formed,
 otherwise `T{std::forward<Args>(args)...}`.
+The specialization for `void` accepts no arguments and does nothing to return `void`.
 
 {{% godbolt-example "point" "Construct a point from two integers" %}}
 

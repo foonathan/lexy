@@ -13,13 +13,17 @@ namespace lexy
 {
     template <typename T>
     constexpr _callback_ auto forward;
+
+    template <>
+    constexpr _callback_ auto forward<void>;
 }
 ----
 
 [.lead]
 Forwards an existing object.
 
-It accepts `const T&` and `T&&` and forwards them as a `T`.
+The primary template accepts `const T&` and `T&&` and forwards them as a `T`.
+The specialization for `void` accepts no arguments and does nothing to return `void`.
 
 {{% godbolt-example "true_false" "Forward the value of child productions" %}}
 

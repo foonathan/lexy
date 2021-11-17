@@ -10,5 +10,8 @@ TEST_CASE("forward")
 {
     auto cb = lexy::forward<int>;
     CHECK(cb(0) == 0);
+
+    auto cb_void = lexy::forward<void>;
+    cb_void();
 }
 

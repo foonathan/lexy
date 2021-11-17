@@ -42,6 +42,12 @@ TEST_CASE("construct")
         CHECK(result.a == 11);
         CHECK(result.b == 3.14f);
     }
+
+    SUBCASE("void")
+    {
+        auto cb = lexy::construct<void>;
+        cb();
+    }
 }
 
 TEST_CASE("new_")
