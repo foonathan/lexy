@@ -435,11 +435,13 @@ public:
         }
     };
 
-    template <typename Production>
+    template <typename Production, typename State>
     class value_callback
     {
+        static_assert(std::is_same_v<State, test_handler>);
+
     public:
-        constexpr explicit value_callback(test_handler& handler) : _handler(&handler) {}
+        constexpr explicit value_callback(const State* handler) : _handler(handler) {}
 
         using return_type = std::conditional_t<is_test_production<Production>, int, Production>;
 
@@ -458,7 +460,7 @@ public:
         }
 
     private:
-        test_handler* _handler;
+        const test_handler* _handler;
     };
 
     template <typename T>
@@ -499,7 +501,7 @@ test_result verify(const Input& input, Callback cb)
 
     test_handler<Input, Callback> handler(input, cb);
     auto                          reader = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
+    return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
 }
 
 template <typename Rule, typename Input, typename Callback>

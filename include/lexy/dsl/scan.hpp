@@ -123,10 +123,14 @@ scan_result(T&&) -> scan_result<std::decay_t<T>>;
 //=== scanner implementation ===//
 namespace lexy::_detail
 {
+template <typename Context>
+using _value_callback_for = lexy::production_value_callback<
+    typename Context::production,
+    std::remove_pointer_t<decltype(LEXY_DECLVAL(decltype(Context::control_block))->parse_state)>>;
+
 // The context used for a child production during scanning.
 // It forwards all events but overrides the value callback.
-template <typename Context,
-          typename ValueCallback = lexy::production_value_callback<typename Context::production>>
+template <typename Context, typename ValueCallback = _value_callback_for<Context>>
 struct spc_child
 {
     using production      = typename Context::production;
@@ -143,12 +147,15 @@ struct spc_child
     constexpr auto sub_context(ChildProduction child)
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
-        return spc_child<sub_context_t>(control_block);
+        if constexpr (std::is_same_v<ValueCallback, void_value_callback>)
+            return spc_child<sub_context_t, void_value_callback>(control_block);
+        else
+            return spc_child<sub_context_t>(control_block);
     }
 
     constexpr auto value_callback()
     {
-        return ValueCallback();
+        return ValueCallback(control_block->parse_state);
     }
 
     template <typename Event, typename... Args>
@@ -180,7 +187,7 @@ struct spc
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
         if constexpr (std::is_void_v<T>)
-            return spc_child<sub_context_t, _void_value_callback>(control_block);
+            return spc_child<sub_context_t, void_value_callback>(control_block);
         else
             return spc_child<sub_context_t>(control_block);
     }

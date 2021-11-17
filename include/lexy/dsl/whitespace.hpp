@@ -51,8 +51,8 @@ public:
         {}
     };
 
-    template <typename Production>
-    using value_callback = _detail::void_value_callback<Production>;
+    template <typename Production, typename State>
+    using value_callback = _detail::void_value_callback;
 
     constexpr bool get_result_void(bool rule_parse_result) &&
     {
@@ -81,7 +81,8 @@ struct manual_ws_parser
         {
             // Parse the rule using a special handler that only forwards errors.
             using production = ws_production<Rule>;
-            result           = lexy::do_action<production>(whitespace_handler(context), reader);
+            result = lexy::do_action<production>(whitespace_handler(context), lexy::no_parse_state,
+                                                 reader);
         }
         auto end = reader.position();
 

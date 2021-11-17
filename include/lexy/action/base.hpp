@@ -65,33 +65,41 @@ namespace _detail
         }
     };
 
-    template <typename Handler>
+    template <typename Handler, typename State = void>
     struct parse_context_control_block
     {
-        Handler                 parse_handler;
-        parse_context_var_base* vars;
-        int                     cur_depth, max_depth;
-        bool                    enable_whitespace_skipping;
+        LEXY_EMPTY_MEMBER Handler parse_handler;
+        const State*              parse_state;
 
-        constexpr parse_context_control_block(Handler&& handler, std::size_t max_depth)
-        : parse_handler(LEXY_MOV(handler)), vars(nullptr), cur_depth(0),
-          max_depth(static_cast<int>(max_depth)), enable_whitespace_skipping(true)
+        parse_context_var_base* vars;
+
+        int  cur_depth, max_depth;
+        bool enable_whitespace_skipping;
+
+        constexpr parse_context_control_block(Handler&& handler, const State* state,
+                                              std::size_t max_depth)
+        : parse_handler(LEXY_MOV(handler)), parse_state(state), //
+          vars(nullptr),                                        //
+          cur_depth(0), max_depth(static_cast<int>(max_depth)), enable_whitespace_skipping(true)
         {}
     };
 } // namespace _detail
 
-template <typename Handler, typename Production, typename RootProduction = Production>
+template <typename Handler, typename State, typename Production,
+          typename RootProduction = Production>
 struct _pc
 {
     using production      = Production;
     using root_production = RootProduction;
-    using value_type      = typename Handler::template value_callback<Production>::return_type;
+    using value_type = typename Handler::template value_callback<Production, State>::return_type;
 
-    typename Handler::template event_handler<Production> handler;
-    _detail::parse_context_control_block<Handler>*       control_block;
-    _detail::lazy_init<value_type>                       value;
+    typename Handler::template event_handler<Production>  handler;
+    _detail::parse_context_control_block<Handler, State>* control_block;
+    _detail::lazy_init<value_type>                        value;
 
-    constexpr explicit _pc(_detail::parse_context_control_block<Handler>* cb) : control_block(cb) {}
+    constexpr explicit _pc(_detail::parse_context_control_block<Handler, State>* cb)
+    : control_block(cb)
+    {}
 
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction)
@@ -99,13 +107,13 @@ struct _pc
         // Update the root production if necessary.
         using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
                                             ChildProduction, RootProduction>;
-        return _pc<Handler, ChildProduction, new_root>(control_block);
+        return _pc<Handler, State, ChildProduction, new_root>(control_block);
     }
 
     constexpr auto value_callback()
     {
-        using callback = typename Handler::template value_callback<Production>;
-        return callback(control_block->parse_handler);
+        using callback = typename Handler::template value_callback<Production, State>;
+        return callback(control_block->parse_state);
     }
 
     template <typename Event, typename... Args>
@@ -153,14 +161,16 @@ struct context_finish_parser
 
 namespace lexy
 {
-template <typename Production, typename Handler, typename Reader>
-constexpr auto do_action(Handler&& handler, Reader& reader)
+constexpr void* no_parse_state = nullptr;
+
+template <typename Production, typename Handler, typename State, typename Reader>
+constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
 
-    _detail::parse_context_control_block control_block(LEXY_MOV(handler),
+    _detail::parse_context_control_block control_block(LEXY_MOV(handler), state,
                                                        max_recursion_depth<Production>());
-    _pc<Handler, Production>             context(&control_block);
+    _pc<Handler, State, Production>      context(&control_block);
 
     context.on(parse_events::production_start{}, reader.position());
 
@@ -186,11 +196,11 @@ constexpr auto do_action(Handler&& handler, Reader& reader)
 //=== value callback ===//
 namespace lexy::_detail
 {
-struct _void_value_callback
+struct void_value_callback
 {
-    constexpr _void_value_callback() = default;
-    template <typename Handler>
-    constexpr explicit _void_value_callback(Handler&)
+    constexpr void_value_callback() = default;
+    template <typename State>
+    constexpr explicit void_value_callback(State*)
     {}
 
     using return_type = void;
@@ -204,8 +214,6 @@ struct _void_value_callback
     constexpr void operator()(Args&&...) const
     {}
 };
-template <typename Production>
-using void_value_callback = _void_value_callback; // to prevent unnecessary instantiations
 } // namespace lexy::_detail
 
 #endif // LEXY_ACTION_BASE_HPP_INCLUDED

@@ -425,8 +425,8 @@ public:
         _detail::lazy_init<location> _previous_anchor;
     };
 
-    template <typename Production>
-    using value_callback = _detail::void_value_callback<Production>;
+    template <typename Production, typename State>
+    using value_callback = _detail::void_value_callback;
 
     constexpr OutputIt get_result_void(bool) &&
     {
@@ -450,7 +450,7 @@ OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts =
 {
     auto reader = input.reader();
     return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
-                                       reader);
+                                       no_parse_state, reader);
 }
 
 template <typename Production, typename TokenKind = void, typename Input>

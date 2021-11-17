@@ -81,8 +81,8 @@ public:
             _validate;
     };
 
-    template <typename Production>
-    using value_callback = _detail::void_value_callback<Production>;
+    template <typename Production, typename State>
+    using value_callback = _detail::void_value_callback;
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {
@@ -105,7 +105,7 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 {
     auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
     auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
+    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
 }
 } // namespace lexy
 

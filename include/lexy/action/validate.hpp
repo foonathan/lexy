@@ -155,8 +155,8 @@ public:
         iterator _begin = {};
     };
 
-    template <typename Production>
-    using value_callback = _detail::void_value_callback<Production>;
+    template <typename Production, typename State>
+    using value_callback = _detail::void_value_callback;
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {
@@ -174,7 +174,7 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 {
     auto handler = validate_handler(input, callback);
     auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), reader);
+    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
 }
 } // namespace lexy
 

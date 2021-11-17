@@ -192,6 +192,8 @@ class production_value_callback
     }
 
 public:
+    constexpr explicit production_value_callback(const ParseState* state) : _state(state) {}
+
     template <typename State = ParseState, typename = std::enable_if_t<std::is_void_v<State>>>
     constexpr production_value_callback() : _state(nullptr)
     {}

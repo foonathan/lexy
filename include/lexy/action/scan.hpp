@@ -52,7 +52,8 @@ public:
 
 private:
     constexpr explicit scanner(const Input& input, const ErrorCallback& callback)
-    : _impl(input.reader()), _cb(_handler(input, callback), max_recursion_depth<_production>()),
+    : _impl(input.reader()),
+      _cb(_handler(input, callback), no_parse_state, max_recursion_depth<_production>()),
       _context(&_cb)
     {
         _context.on(parse_events::production_start{}, this->position());
@@ -64,7 +65,7 @@ private:
     }
 
     _detail::parse_context_control_block<_handler> _cb;
-    _pc<_handler, _production, _production>        _context;
+    _pc<_handler, void, _production>               _context;
 
     friend _impl;
     template <typename, typename I, typename EC>

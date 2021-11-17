@@ -29,8 +29,8 @@ public:
         {}
     };
 
-    template <typename Production>
-    using value_callback = _detail::void_value_callback<Production>;
+    template <typename Production, typename State>
+    using value_callback = _detail::void_value_callback;
 
     constexpr bool get_result_void(bool rule_parse_result) &&
     {
@@ -45,7 +45,7 @@ template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
     auto reader = input.reader();
-    return lexy::do_action<Production>(match_handler(), reader);
+    return lexy::do_action<Production>(match_handler(), no_parse_state, reader);
 }
 } // namespace lexy
 
