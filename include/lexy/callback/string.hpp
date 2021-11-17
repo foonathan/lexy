@@ -80,10 +80,10 @@ struct _as_string
 
         using return_type = String;
 
-        template <typename CharT>
-        auto operator()(CharT c) -> decltype(_result.push_back(c))
+        template <typename CharT, typename = decltype(LEXY_DECLVAL(String).push_back(CharT()))>
+        void operator()(CharT c)
         {
-            return _result.push_back(c);
+            _result.push_back(c);
         }
 
         void operator()(String&& str)
