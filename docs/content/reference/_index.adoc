@@ -107,6 +107,11 @@ TIP: It is a recommended to put all the productions into a separate namespace.
 
 Actions take a grammar and an input, and do something with the grammar on that input.
 
+They also optionally take a parse state argument.
+If provided, it will be forwarded as state parameter to the callbacks,
+and to rules such as {{% docref "lexy::dsl::scan" %}}.
+It can be used to pass additional meta data or allocators etc. to the grammar.
+
 {{% headerref "action/match" %}}::
   Matches a grammar on an input and return a `true`/`false` result.
 {{% headerref "action/validate" %}}::

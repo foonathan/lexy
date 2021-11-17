@@ -47,6 +47,13 @@ constexpr bool match(const Input& input)
     auto reader = input.reader();
     return lexy::do_action<Production>(match_handler(), no_parse_state, reader);
 }
+
+template <typename Production, typename Input, typename State>
+constexpr bool match(const Input& input, const State& state)
+{
+    auto reader = input.reader();
+    return lexy::do_action<Production>(match_handler(), &state, reader);
+}
 } // namespace lexy
 
 #endif // LEXY_ACTION_MATCH_HPP_INCLUDED

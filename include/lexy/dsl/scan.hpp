@@ -463,6 +463,9 @@ private:
 
 namespace lexyd
 {
+template <typename Context, typename Scanner, typename StatePtr>
+using _detect_scan_state = decltype(Context::production::scan(LEXY_DECLVAL(Scanner&), *StatePtr()));
+
 struct _scan : rule_base
 {
     template <typename NextParser>
@@ -472,7 +475,14 @@ struct _scan : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             lexy::rule_scanner scanner(context, reader);
-            lexy::scan_result  result = Context::production::scan(scanner);
+            lexy::scan_result  result = [&] {
+                if constexpr (lexy::_detail::is_detected<
+                                  _detect_scan_state, Context, decltype(scanner),
+                                  decltype(context.control_block->parse_state)>)
+                    return Context::production::scan(scanner, *context.control_block->parse_state);
+                else
+                    return Context::production::scan(scanner);
+            }();
             reader.set_position(scanner.position());
             if (!result)
                 return false;

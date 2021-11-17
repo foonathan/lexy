@@ -70,6 +70,24 @@ struct no_value_scan : lexy::scan_production<void>, test_production
         return true;
     }
 };
+
+struct state_scan : lexy::scan_production<const char*>, test_production
+{
+    // Overload is required as we also call lexy::match without a state.
+    template <typename Reader, typename Context>
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>&)
+    {
+        return nullptr;
+    }
+
+    template <typename Reader, typename Context, typename State>
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>&, const State& state)
+    {
+        // The parse state is the test handler itself.
+        return state.begin();
+    }
+};
+
 } // namespace
 
 TEST_CASE("dsl::scan")
@@ -145,6 +163,18 @@ TEST_CASE("dsl::scan")
         auto abc = LEXY_VERIFY_P(no_value_scan, "abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.trace == test_trace().production("literal").token("abc"));
+    }
+    SUBCASE("with state")
+    {
+        constexpr auto callback = [](const char* begin, const char* value) {
+            CHECK(begin == value);
+            return 0;
+        };
+
+        auto empty = LEXY_VERIFY_P(state_scan, "");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
     }
 }
 

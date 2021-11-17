@@ -42,9 +42,11 @@ namespace lexy::dsl
 Parses input using a user-defined function.
 
 Requires::
-  The current production `P` has a `static` member function that accepts a reference of `lexy::rule_scanner` and returns a {{% docref "lexy::scan_result" %}}.
+  The current production `P` has a `static` member function that returns a {{% docref "lexy::scan_result" %}},
+  It must take at least one argument, which is a reference to a `lexy::rule_scanner`.
+  It can optionally take a second argument, which is a reference to the parse state passed to the top-level action.
 Parsing::
-  Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position.
+  Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position, and optionally the parse state.
   Then parses and consumes everything parsed and consumed by `P::scan()`.
   Succeeds, if `P::scan()` returns a {{% docref "lexy::scan_result" %}} that contains a value.
   Fails otherwise.
@@ -67,6 +69,9 @@ Regardless of the top-level parse action, the overloads of `.parse()` and `.bran
 TIP: Use {{% docref "lexy::scan_production" %}} to remove boilerplate for a production whose rule is entirely `dsl::scan`.
 
 NOTE: Use {{% docref "lexy::scan" %}} if you want to manually parse the root production.
+
+CAUTION: If `P::scan()` only provides the overload that takes a specific parse state,
+this parse state must be passed to all actions that are used with the grammar.
 
 [#scan_production]
 == Class `lexy::scan_production`

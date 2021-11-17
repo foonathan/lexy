@@ -176,6 +176,15 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
     auto reader  = input.reader();
     return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
 }
+
+template <typename Production, typename Input, typename State, typename ErrorCallback>
+constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    auto handler = validate_handler(input, callback);
+    auto reader  = input.reader();
+    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+}
 } // namespace lexy
 
 #endif // LEXY_ACTION_VALIDATE_HPP_INCLUDED

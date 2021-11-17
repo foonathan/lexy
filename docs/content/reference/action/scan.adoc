@@ -311,16 +311,23 @@ The second overload then puts the scanner in a failed state, the first overload 
 namespace lexy
 {
     template <_production_ ControlProduction,
-              _input_ Input, _error-callback_ ErrorCallback>
+              _input_ Input, typename ParseState, _error-callback_ ErrorCallback>
     class scanner
     : public _scanner-common_
     {
     public:
+        constexpr const ParseState& parse_state() const;
+
         constexpr auto finish() && -> lexy::validate_result<ErrorCallback>;
     };
 
     template <_production_ ControlProduction = void>
     constexpr scanner scan(const _input_ auto& input,
+                           _error-callback_ auto error_callback);
+
+    template <_production_ ControlProduction = void, typename ParseState>
+    constexpr scanner scan(const _input_ auto& input,
+                           const ParseState& parse_state,
                            _error-callback_ auto error_callback);
 }
 ----
@@ -352,4 +359,7 @@ It does not need a `::rule` member; any member specified will be ignored.
 TIP: See {{< github-example "shell" >}} for an example that uses `lexy::scan()` to handle parsing directives that don't directly belong to the grammar.
 
 NOTE: Use {{% docref "lexy::dsl::scan" %}} if you want to manually parse some production of your grammar.
+
+CAUTION: The overload that takes a `parse_state` internally stores a pointer to it.
+As such, `parse_state` must live as long as the `lexy::scanner` object.
 

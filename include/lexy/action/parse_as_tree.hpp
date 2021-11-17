@@ -107,6 +107,17 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
     auto reader  = input.reader();
     return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
 }
+
+template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
+          typename State, typename ErrorCallback>
+auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+                   const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
+    auto reader  = input.reader();
+    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+}
 } // namespace lexy
 
 #endif // LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED

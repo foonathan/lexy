@@ -122,8 +122,8 @@ namespace lexy
                          _error-callback_ auto error_callback)
       -> parse_result<_see-below_, decltype(error_callback)>;
 
-    template <_production_ Production, typename State>
-    constexpr auto parse(const _input_ auto& input, const State& state,
+    template <_production_ Production, typename ParseState>
+    constexpr auto parse(const _input_ auto& input, const ParseState& parse_state,
                          _error-callback_ auto error_callback)
       -> parse_result<_see-below_, decltype(error_callback)>;
 }
@@ -143,11 +143,5 @@ This includes the value produced recursively by parsing a child production with 
 If `P::rule` contains a rule that requires a sink (e.g. {{% docref "lexy::dsl::list" %}}, it will use the sink of `lexy::production_value_callback`, which requires that `P::value` is a sink.
 The final value of the parse action is the value produced by `Production`.
 
-The second overload of `lexy::parse` accepts a `state`, which is an arbitrary object.
-This will be forwarded to `lexy::production_value_callback`, which uses it as the state parameter.
-
 TIP: Use {{% docref "lexy::bind" %}} and {{% docref "lexy::bind_sink" %}} with the placeholder {{% docref "lexy::parse_state" %}} to access the `state` object in existing callbacks.
-
-NOTE: `state` cannot (and should not) be modified by the callbacks/sinks.
-If it were modified, this would not be reset during backtracking.
 

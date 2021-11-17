@@ -28,16 +28,29 @@ template <typename ControlProduction>
 struct _scp : ControlProduction, _scp<void>
 {};
 
-template <typename ControlProduction, typename Input, typename ErrorCallback>
-class scanner : public _detail::scanner<scanner<ControlProduction, Input, ErrorCallback>,
+template <typename ControlProduction, typename Input, typename State, typename ErrorCallback>
+class scanner : public _detail::scanner<scanner<ControlProduction, Input, State, ErrorCallback>,
                                         lexy::input_reader<Input>>
 {
-    using _impl       = _detail::scanner<scanner<ControlProduction, Input, ErrorCallback>,
+    using _impl       = _detail::scanner<scanner<ControlProduction, Input, State, ErrorCallback>,
                                    lexy::input_reader<Input>>;
     using _handler    = lexy::validate_handler<Input, ErrorCallback>;
     using _production = _scp<ControlProduction>;
 
 public:
+    constexpr explicit scanner(const Input& input, const State* state,
+                               const ErrorCallback& callback)
+    : _impl(input.reader()),
+      _cb(_handler(input, callback), state, max_recursion_depth<_production>()), _context(&_cb)
+    {
+        _context.on(parse_events::production_start{}, this->position());
+    }
+
+    constexpr const auto& parse_state() const
+    {
+        return *_context.control_block->parse_state;
+    }
+
     constexpr auto finish() && -> lexy::validate_result<ErrorCallback>
     {
         auto parse_result = static_cast<bool>(*this);
@@ -51,31 +64,27 @@ public:
     }
 
 private:
-    constexpr explicit scanner(const Input& input, const ErrorCallback& callback)
-    : _impl(input.reader()),
-      _cb(_handler(input, callback), no_parse_state, max_recursion_depth<_production>()),
-      _context(&_cb)
-    {
-        _context.on(parse_events::production_start{}, this->position());
-    }
-
     auto& context() noexcept
     {
         return _context;
     }
 
     _detail::parse_context_control_block<_handler> _cb;
-    _pc<_handler, void, _production>               _context;
+    _pc<_handler, State, _production>              _context;
 
     friend _impl;
-    template <typename, typename I, typename EC>
-    friend constexpr auto scan(const I& input, const EC& callback);
 };
 
 template <typename ControlProduction = void, typename Input, typename ErrorCallback>
 constexpr auto scan(const Input& input, const ErrorCallback& callback)
 {
-    return scanner<ControlProduction, Input, ErrorCallback>(input, callback);
+    return scanner<ControlProduction, Input, void, ErrorCallback>(input, no_parse_state, callback);
+}
+
+template <typename ControlProduction = void, typename Input, typename State, typename ErrorCallback>
+constexpr auto scan(const Input& input, const State& state, const ErrorCallback& callback)
+{
+    return scanner<ControlProduction, Input, State, ErrorCallback>(input, &state, callback);
 }
 } // namespace lexy
 

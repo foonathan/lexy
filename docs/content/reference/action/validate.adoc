@@ -122,6 +122,12 @@ namespace lexy
     constexpr auto validate(const _input_ auto& input,
                             _error-callback_ auto error_callback)
       -> validate_result<decltype(error_callback)>;
+
+    template <_production_ Production, typename ParseState>
+    constexpr auto validate(const _input_ auto& input,
+                            const ParseState& state,
+                            _error-callback_ auto error_callback)
+      -> validate_result<decltype(error_callback)>;
 }
 ----
 

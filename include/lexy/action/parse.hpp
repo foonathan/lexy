@@ -152,7 +152,7 @@ constexpr auto parse(const Input& input, Callback callback)
 }
 
 template <typename Production, typename Input, typename State, typename Callback>
-constexpr auto parse(const Input& input, State&& state, Callback callback)
+constexpr auto parse(const Input& input, const State& state, Callback callback)
 {
     auto handler = lexy::parse_handler(input, LEXY_MOV(callback));
     auto reader  = input.reader();

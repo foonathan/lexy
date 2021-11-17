@@ -13,6 +13,9 @@ namespace lexy
 {
     template <_production_ Production>
     constexpr bool match(const _input_ auto& input);
+
+    template <_production_ Production, typename ParseState>
+    constexpr bool match(const _input_ auto& input, const ParseState& state);
 }
 ----
 

@@ -478,6 +478,11 @@ public:
         return LEXY_MOV(*this).template get_result<T>(rule_parse_result, -1);
     }
 
+    constexpr iterator begin() const
+    {
+        return _begin;
+    }
+
 private:
     test_trace _trace;
 

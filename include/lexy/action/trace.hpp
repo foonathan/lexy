@@ -453,10 +453,25 @@ OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts =
                                        no_parse_state, reader);
 }
 
+template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
+          typename ParseState>
+OutputIt trace_to(OutputIt out, const Input& input, const ParseState& state,
+                  visualization_options opts = {})
+{
+    auto reader = input.reader();
+    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
+                                       &state, reader);
+}
+
 template <typename Production, typename TokenKind = void, typename Input>
 void trace(std::FILE* file, const Input& input, visualization_options opts = {})
 {
     trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, opts);
+}
+template <typename Production, typename TokenKind = void, typename Input, typename State>
+void trace(std::FILE* file, const Input& input, const State& state, visualization_options opts = {})
+{
+    trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, state, opts);
 }
 } // namespace lexy
 
