@@ -257,7 +257,7 @@ window.addEventListener('load', async() => {
             // regex with three cases
             // first case is something like dsl::name or dsl::name::name
             // second case is something like LEXY_NAME
-            regex: '(lexy::)?dsl::[a-z0-9_]+(::[a-z0-9_]+)*|LEXY_[A-Z0-9_]+'
+            regex: '(lexy::(dsl::)?|dsl::)[a-z0-9_]+(::[a-z0-9_]+)*|LEXY_[A-Z0-9_]+'
         });
 
         // Force recreation of tokenizer.
@@ -275,6 +275,8 @@ window.addEventListener('load', async() => {
             for (let name in doc_entities) {
                 if (name.startsWith("lexy::dsl"))
                     completions.push({ value: name.replace(/^lexy::/, ''), meta: 'lexy' });
+                else if (name.startsWith("lexy::"))
+                    completions.push({ value: name, meta: 'lexy' });
                 else if (name.startsWith("lexy_"))
                     completions.push({ value: name.toUpperCase(), meta: 'lexy' });
             }
