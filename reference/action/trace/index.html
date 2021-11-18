@@ -64,8 +64,20 @@ lexy/action/trace.hpp — lexy
     <span class=tok-n>OutputIt</span> <span class=tok-n>trace_to</span><span class=tok-p>(</span><span class=tok-n>OutputIt</span> <span class=tok-n>out</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-k>auto</span> <span class=tok-n><em>input</em></span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
                       <span class=tok-n>visualization_options</span> <span class=tok-n>opts</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
 
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-p>,</span>
+              <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>output_iterator</span><span class=tok-o>&lt;</span><span class=tok-kt>char</span><span class=tok-o>&gt;</span> <span class=tok-n>OutputIt</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>ParseState</span><span class=tok-o>&gt;</span>
+    <span class=tok-n>OutputIt</span> <span class=tok-n>trace_to</span><span class=tok-p>(</span><span class=tok-n>OutputIt</span> <span class=tok-n>out</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-k>auto</span> <span class=tok-n><em>input</em></span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
+                      <span class=tok-k>const</span> <span class=tok-n>ParseState</span><span class=tok-o>&amp;</span> <span class=tok-n>parse_state</span><span class=tok-p>,</span>
+                      <span class=tok-n>visualization_options</span> <span class=tok-n>opts</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
+
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-o>&gt;</span>
-    <span class=tok-kt>void</span> <span class=tok-n>trace</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>FILE</span><span class=tok-o>*</span> <span class=tok-n>file</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-k>auto</span> <span class=tok-n><em>input</em></span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
+    <span class=tok-kt>void</span> <span class=tok-n>trace</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>FILE</span><span class=tok-o><strong></strong></span><strong> <span class=tok-n>file</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-k>auto</span> <span class=tok-n><em>input</em></span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
+               <span class=tok-n>visualization_options</span> <span class=tok-n>opts</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
+
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-p>,</span>
+              <span class=tok-k>typename</span> <span class=tok-nc>ParseState</span><span class=tok-o>&gt;</span>
+    <span class=tok-kt>void</span> <span class=tok-n>trace</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>FILE</span><span class=tok-o></span></strong> <span class=tok-n>file</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-k>auto</span> <span class=tok-n><em>input</em></span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
+               <span class=tok-k>const</span> <span class=tok-n>ParseState</span><span class=tok-o>&amp;</span> <span class=tok-n>parse_state</span><span class=tok-p>,</span>
                <span class=tok-n>visualization_options</span> <span class=tok-n>opts</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
 <span class=tok-p>}</span></code></pre>
 </div>
@@ -74,7 +86,7 @@ lexy/action/trace.hpp — lexy
 <p>An action that traces the events of parsing <code>Production</code> on <code>input</code> and visualizes them.</p>
 </div>
 <div class=paragraph>
-<p>The first overload writes the events to <code>out</code>; the second one to <code>file</code>.
+<p>The first two overloads write the events to <code>out</code>; the last two to <code>file</code>.
 Like <a href=/reference/visualize/#visualize_to><code>lexy::visualize_to</code></a>, the output is meant to be human-readable only.
 It is not documented exactly and subject to change.</p>
 </div>

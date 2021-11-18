@@ -237,8 +237,8 @@ Otherwise, returns <code>errors().size()</code>.</p>
                          <span class=tok-n><em>error</em></span><em><span class=tok-o>-</span><span class=tok-n>callback</span></em> <span class=tok-k>auto</span> <span class=tok-n>error_callback</span><span class=tok-p>)</span>
       <span class=tok-o>-&gt;</span> <span class=tok-n>parse_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-p>,</span> <span class=tok-k>decltype</span><span class=tok-p>(</span><span class=tok-n>error_callback</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>State</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n><em>input</em></span> <span class=tok-k>auto</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-n>State</span><span class=tok-o>&amp;</span> <span class=tok-n>state</span><span class=tok-p>,</span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>ParseState</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n><em>input</em></span> <span class=tok-k>auto</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-n>ParseState</span><span class=tok-o>&amp;</span> <span class=tok-n>parse_state</span><span class=tok-p>,</span>
                          <span class=tok-n><em>error</em></span><em><span class=tok-o>-</span><span class=tok-n>callback</span></em> <span class=tok-k>auto</span> <span class=tok-n>error_callback</span><span class=tok-p>)</span>
       <span class=tok-o>-&gt;</span> <span class=tok-n>parse_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-p>,</span> <span class=tok-k>decltype</span><span class=tok-p>(</span><span class=tok-n>error_callback</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
 <span class=tok-p>}</span></code></pre>
@@ -254,52 +254,11 @@ all errors raised are forwarded to the <a href=/reference/action/validate/#error
 Returns the <a href=/reference/action/parse/#parse_result><code>lexy::parse_result</code></a> containing the final value and the result of the error callback.</p>
 </div>
 <div class=paragraph>
-<p>It requires that every production <code>P</code> of the grammar reachable by <code>Production</code> has a <code>::value</code> callback.
-It is used as follows:</p>
-</div>
-<div class="olist arabic">
-<ol class=arabic>
-<li>
-<p><code>P::rule</code> does not contain a rule that requires a sink (e.g. <a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a>).
-Then <code>P::value</code> must be a <a href=/reference/callback/#callback>callback</a>.
-It will be invoked with all values produced by <code>P::rule</code>; it’s result is the result of parsing <code>P</code>.</p>
-</li>
-<li>
-<p><code>P::rule</code> contains a rule that requires a sink and no other rule produces a value.
-Then <code>P::value</code> must be a <a href=/reference/callback/#sink>sink</a>, and it will be used to collect the values.
-If <code>P::value</code> is a also a callback that accepts the result of the sink,
-the result of parsing <code>P</code> is the <code>P::value</code> invoked with the sink result.
-Otherwise, the result of parsing <code>P</code> is the result of the sink.</p>
-</li>
-<li>
-<p><code>P::rule</code> contains both rules that require a sink and other rules produce values.
-Then <code>P::value</code> must be both a callback and a sink.
-The sink is used to collect the values, its final result is forwarded together with all other values to the callback.
-The result of parsing <code>P</code> is the result of the callback.</p>
-</li>
-</ol>
-</div>
-<div class=paragraph>
-<p>If <code>P</code> is reached by a <a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a> or <a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a> rule,
-they produce the result of parsing <code>P</code> as its value.
-If <code>P</code> is the top-level <code>Production</code>, its result is returned as the final value of the <a href=/reference/action/parse/#parse_result><code>lexy::parse_result</code></a>.</p>
-</div>
-<div class=paragraph>
-<p>The second overload of <code>lexy::parse</code> accepts a <code>state</code>, which is an arbitrary object.
-If <code>P::value</code> is a callback that accepts <code>state</code> as context, or a sink that accepts <code>state</code> as the argument to <code>.sink()</code>,
-it will be passed to them.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Tip</div>
-</td>
-<td class=content>
-Use <a href=/reference/callback/composition/#compose-sink><code>lexy::operator>></code></a> to combine a sink and a callback in case 3 above.
-</td>
-</tr>
-</tbody></table>
+<p>The value of any production <code>P</code> in the grammar is determined using <a href=/reference/grammar/#production_value_callback><code>lexy::production_value_callback</code></a> and <code>P::value</code>:
+all values produced by parsing <code>P::rule</code> will be forwarded to <code>lexy::production_value_callback’s `operator()</code>.
+This includes the value produced recursively by parsing a child production with <a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a> or <a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a>.
+If <code>P::rule</code> contains a rule that requires a sink (e.g. <a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a>, it will use the sink of <code>lexy::production_value_callback</code>, which requires that <code>P::value</code> is a sink.
+The final value of the parse action is the value produced by <code>Production</code>.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -317,7 +276,7 @@ Use <a href=/reference/callback/bind/#bind><code>lexy::bind</code></a> and <a hr
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/callback/bind/#bind><code>lexy::bind</code></a></li><li><a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a></li><li><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/callback/composition/#compose-sink><code>lexy::operator>></code></a></li><li><a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a></li><li><a href=/reference/action/validate/#validate_result><code>lexy::validate_result</code></a></li><li><a href=/reference/action/validate/#error-callback>error callback</a></li></ul>
+<ul><li><a href=/reference/callback/bind/#bind><code>lexy::bind</code></a></li><li><a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a></li><li><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a></li><li><a href=/reference/grammar/#production_value_callback><code>lexy::production_value_callback</code></a></li><li><a href=/reference/action/validate/#validate_result><code>lexy::validate_result</code></a></li><li><a href=/reference/action/validate/#error-callback>error callback</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

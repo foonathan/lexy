@@ -58,6 +58,9 @@ lexy/callback/object.hpp — lexy
 <span class=tok-p>{</span>
     <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
     <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>construct</span><span class=tok-p>;</span>
+
+    <span class=tok-k>template</span> <span class=tok-o>&lt;&gt;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>construct</span><span class=tok-o>&lt;</span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
 <span class=tok-p>}</span></code></pre>
 </div>
 </div>
@@ -65,8 +68,9 @@ lexy/callback/object.hpp — lexy
 <p>Construct an object of type <code>T</code>.</p>
 </div>
 <div class=paragraph>
-<p>It accepts arbitrary arguments and returns <code>T(std::forward&lt;Args>(args)…​)</code> if that is well-formed,
-otherwise <code>T{std::forward&lt;Args>(args)…​}</code>.</p>
+<p>The primary template accepts arbitrary arguments and returns <code>T(std::forward&lt;Args>(args)…​)</code> if that is well-formed,
+otherwise <code>T{std::forward&lt;Args>(args)…​}</code>.
+The specialization for <code>void</code> accepts no arguments and does nothing to return <code>void</code>.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 1. Construct a point from two integers</div>

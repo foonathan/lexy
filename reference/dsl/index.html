@@ -60,8 +60,10 @@ lexy/dsl.hpp — lexy
 <div class=paragraph>
 <p>The grammar in lexy is specified in several productions, where each one defines an associated <em>rule</em>.
 This rule is an object built from the objects and functions of namespace <code>lexy::dsl</code> that defines some (implementation-defined) parsing function.
-Parsing a rule takes the reader, which remembers the current position of the input, and the context, which stores information about the current production and whitespace rules, and is responsible for handling errors and values;
-it can have one of the following results:</p>
+Parsing a rule takes the reader, which remembers the current position of the input, and the context, which stores information about the current production and whitespace rules, and is responsible for handling errors and values.</p>
+</div>
+<div class=paragraph>
+<p>Parsing can have one of the following results:</p>
 </div>
 <div class=ulist>
 <ul>
@@ -110,6 +112,19 @@ as such they’re also branch rules where the entire rule is used as the conditi
 Because they’re atomic elements of the input, they also participate in <a href=/reference/dsl/whitespace/#doc>automatic whitespace skipping</a>:
 after every token, lexy will automatically skip whitespace, if one has been defined.</p>
 </div>
+<div class=paragraph>
+<p>The parse context stores state that can be accessed during parsing.
+This includes things like the current recursion depth, see <a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a>,
+whether or not automatic whitespace skipping is currently enabled, see <a href=/reference/dsl/whitespace/#doc>whitespace skipping</a>,
+but also arbitrary user-defined variables, see <a href=/reference/dsl/context_flag/#context_flag><code>lexy::dsl::context_flag</code></a>, <a href=/reference/dsl/context_counter/#context_counter><code>lexy::dsl::context_counter</code></a>, and <a href=/reference/dsl/context_identifier/#context_identifier><code>lexy::dsl::context_identifier</code></a>.</p>
+</div>
+<div class=paragraph>
+<p>When a rule modifies the context during parsing, by adding an additional context variable for example,
+this modification is available for all following rules in the current production and all child productions.
+In particular, the modification is no longer visible in any parent production.
+If a rule is parsed in a loop, e.g. by <a href=/reference/dsl/loop/#loop><code>lexy::dsl::loop</code></a> or <a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a>,
+any context modification does not persist between loop iterations, and is also not available outside the loop.</p>
+</div>
 <div class=sect1>
 <h2 id=_how_to_read_the_dsl_documentation_1>How to read the DSL documentation <sup class=footnote>[<a id=_footnoteref_1 class=footnote href=#_footnotedef_1 title="View footnote.">1</a>]</sup></h2>
 <div class=sectionbody>
@@ -152,6 +167,10 @@ If omitted, a token rule creates a single token node covering everything consume
 and a rule produces no extra nodes besides the ones created by the other rules it parses.</p>
 </dd>
 </dl>
+</div>
+<div class=paragraph>
+<p>If a rule parses another rule in a new context (e.g. <a href=/reference/dsl/peek/#peek><code>lexy::dsl::peek</code></a>),
+the other rule does not have access to context variables, and any context modification is not visible outside of the rule.</p>
 </div>
 </div>
 </div>
@@ -352,6 +371,10 @@ and a rule produces no extra nodes besides the ones created by the other rules i
 <dt class=hdlist1><a href=/reference/dsl/member/#member><code>lexy::dsl::member</code></a></dt>
 <dd>
 <p>parse something into a member variable</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/scan/#scan><code>lexy::dsl::scan</code></a></dt>
+<dd>
+<p>parse a completely user-defined rule</p>
 </dd>
 </dl>
 </div>

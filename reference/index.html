@@ -225,6 +225,12 @@ It is a recommended to put all the productions into a separate namespace.
 <div class=paragraph>
 <p>Actions take a grammar and an input, and do something with the grammar on that input.</p>
 </div>
+<div class=paragraph>
+<p>They also optionally take a parse state argument.
+If provided, it will be forwarded as state parameter to the callbacks,
+and to rules such as <a href=/reference/dsl/scan/#scan><code>lexy::dsl::scan</code></a>.
+It can be used to pass additional meta data or allocators etc. to the grammar.</p>
+</div>
 <div class=dlist>
 <dl>
 <dt class=hdlist1><a href=/reference/action/match/><code>lexy/action/match.hpp</code></a></dt>
@@ -242,6 +248,10 @@ It is a recommended to put all the productions into a separate namespace.
 <dt class=hdlist1><a href=/reference/action/parse_as_tree/><code>lexy/action/parse_as_tree.hpp</code></a></dt>
 <dd>
 <p>Parses a grammar on an input and returns the parse tree.</p>
+</dd>
+<dt class=hdlist1><a href=/reference/action/scan/><code>lexy/action/scan.hpp</code></a></dt>
+<dd>
+<p>Parses a grammar manually by dispatching to other rules.</p>
 </dd>
 <dt class=hdlist1><a href=/reference/action/trace/><code>lexy/action/trace.hpp</code></a></dt>
 <dd>

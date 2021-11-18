@@ -165,7 +165,7 @@ The resulting sink callback has the following overloads and returns the finished
 <div class=paragraph>
 <p>The <code>.allocator()</code> function takes a function that obtains the allocator from the parse state.
 If the function is not provided, it uses the parse state itself as the allocator.
-It returns a new callback and sink that accepts the parse state as context.
+It returns a new callback and sink that accepts the parse state.
 It then has the same overloads and behaviors, except that it will always use the allocator obtained via the <code>allocator_fn</code> from the parse state.
 As a callback, this behavior is similar to <a href=/reference/callback/bind/#bind><code>lexy::bind</code></a> where the allocator is bound via <a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a>.
 As a sink, this behavior is similar to <a href=/reference/callback/bind/#bind_sink><code>lexy::bind_sink</code></a> where the allocator is bound via <a href=/reference/callback/bind/#parse_state><code>lexy::parse_state</code></a>.</p>

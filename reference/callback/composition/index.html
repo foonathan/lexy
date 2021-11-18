@@ -65,7 +65,7 @@ lexy/callback/composition.hpp — lexy
 </div>
 <div class=paragraph>
 <p>The result is a callback that forwards all arguments to <code>first</code>, then forwards that result to <code>second.</code>
-If either <code>first</code> or <code>second</code> is a callback with context, the result is as well and it will forward the context.</p>
+If either <code>first</code> or <code>second</code> is a callback with a state argument, the result is as well and it will forward the state.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 1. Compose two callbacks</div>
@@ -102,7 +102,7 @@ If either <code>first</code> or <code>second</code> is a callback with context, 
 <p>The result is both a sink and a callback.
 As a sink, it forwards to the <code>sink</code>.
 As a callback, it forwards all arguments to <code>callback</code>.
-If the callback accepts a context, the result does as well and will forward it.</p>
+If the callback accepts a state, the result does as well and will forward it.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 2. Compose a sink and a callback</div>

@@ -50,10 +50,10 @@
         <span class=tok-o>-&gt;</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>same_as</span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>::</span><span class=tok-n>return_type</span><span class=tok-p>;</span>
     <span class=tok-p>};</span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Context</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-<span class=tok-k>concept</span> <span class=tok-nc>callback</span><span class=tok-o>-</span><span class=tok-n>with</span><span class=tok-o>-</span><span class=tok-n>context</span> <span class=tok-o>=</span> <span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span>
-  <span class=tok-o>&amp;&amp;</span> <span class=tok-k>requires</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>T</span><span class=tok-o>&amp;</span> <span class=tok-n>cb</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-n>Context</span><span class=tok-o>&amp;</span> <span class=tok-n>context</span><span class=tok-p>)</span> <span class=tok-p>{</span>
-        <span class=tok-p>{</span> <span class=tok-n>cb</span><span class=tok-p>[</span><span class=tok-n>context</span><span class=tok-p>](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>args</span><span class=tok-p>)...)</span> <span class=tok-p>}</span>
+<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>State</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
+<span class=tok-k>concept</span> <span class=tok-nc>callback</span><span class=tok-o>-</span><span class=tok-n>with</span><span class=tok-o>-</span><span class=tok-n>state</span> <span class=tok-o>=</span> <span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span>
+  <span class=tok-o>&amp;&amp;</span> <span class=tok-k>requires</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>T</span><span class=tok-o>&amp;</span> <span class=tok-n>cb</span><span class=tok-p>,</span> <span class=tok-k>const</span> <span class=tok-n>State</span><span class=tok-o>&amp;</span> <span class=tok-n>state</span><span class=tok-p>)</span> <span class=tok-p>{</span>
+        <span class=tok-p>{</span> <span class=tok-n>cb</span><span class=tok-p>[</span><span class=tok-n>state</span><span class=tok-p>](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>args</span><span class=tok-p>)...)</span> <span class=tok-p>}</span>
           <span class=tok-o>-&gt;</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>same_as</span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>::</span><span class=tok-n>return_type</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
      <span class=tok-p>};</span></code></pre>
 </div>
@@ -66,9 +66,9 @@
 To be usable in the grammar, a callback must not have any mutable state.</p>
 </div>
 <div class=paragraph>
-<p>A callback can optionally take a context.
+<p>A callback can optionally take a state.
 This is an additional parameter that is passed via <code>operator[]</code> in addition to all the arguments.
-During parsing, the callback arguments are the values produced by the rules while the context parameter is the parse state.</p>
+During parsing, the callback arguments are the values produced by the rules while the state parameter is the parse state.</p>
 </div>
 </div>
 </div>

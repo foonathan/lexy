@@ -85,17 +85,6 @@ lexy/dsl/context_counter.hpp — lexy
 <div class="paragraph lead">
 <p><code>context_counter</code> is not a rule, but a DSL for specifying rules that manipulate a counter of the current context.</p>
 </div>
-<div class=paragraph>
-<p>The "name" of the counter is given by <code>Id</code>, which is an arbitrary type.
-Two <code>context_counter</code> objects manipulate the same counter if they are instantiated by the same type.
-The "namespace" is unique per type, if a different context counter (<a href=/reference/dsl/context_flag/#context_flag><code>lexy::dsl::context_flag</code></a>, <a href=/reference/dsl/context_identifier/#context_identifier><code>lexy::dsl::context_identifier</code></a>) uses <code>Id</code>, it refers to a different counter.</p>
-</div>
-<div class=paragraph>
-<p>The counter is created inside the current context:
-it is not accessible outside the current production, including in child production.
-Once the current production finishes parsing, all context counters of it are destroyed;
-it is impossible to create on that persists between different productions including multiple invocations of the same production.</p>
-</div>
 <div class=exampleblock>
 <div class=title>Example 1. Parse <code>n</code> <code>a</code>, then <code>n</code> <code>b</code> without recursion</div>
 <div class=content>
@@ -139,15 +128,11 @@ it is impossible to create on that persists between different productions includ
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Requires</dt>
-<dd>
-<p>The counter with the name <code>Id</code> has not been created yet in the current context,
-i.e. <code>.create()</code> has not been parsed earlier.</p>
-</dd>
 <dt class=hdlist1>Parsing</dt>
 <dd>
 <p>Matches everything, without consuming anything.
 As a side effect, it creates a counter with name <code>Id</code> inside the current context.
+If a context variable (of any) type with that name already exists, it is shadowed.
 This counter is initialized to <code>InitialValue</code>; it’s underlying type is <code>int</code>.</p>
 </dd>
 <dt class=hdlist1>Errors</dt>
@@ -430,7 +415,7 @@ It then recovers without having consumed any input.</p>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/context_flag/#context_flag><code>lexy::dsl::context_flag</code></a></li><li><a href=/reference/dsl/context_identifier/#context_identifier><code>lexy::dsl::context_identifier</code></a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

@@ -212,7 +212,8 @@ the integer value produced is the last value it had before the overflow occurred
 The rule then recovers by consuming as much additional digits of the <code>Base</code> as possible.
 If <code>digits</code> is a known instantiation with a separator, it will also skip separators.
 This happens without any validation for trailing separators or leading zeros.
-It then converts everything already consumed by the failed <code>digits</code> and everything recovered to an integer as if nothing happened.</p>
+Recovery fails if <code>digits</code> and this recovery process combined haven’t consumed any input.
+Otherwise, it converts everything consumed and recovery succeeds.</p>
 </li>
 </ul>
 </div>
