@@ -264,7 +264,8 @@ public:
                 iterator& operator=(char c)
                 {
                     auto chr = static_cast<char_type>(c);
-                    (*_writer)(&chr, 1);
+                    // clang-cl requires this->.
+                    (*this->_writer)(&chr, 1);
                     return *this;
                 }
             };
