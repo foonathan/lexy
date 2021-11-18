@@ -160,8 +160,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -Wno-parentheses)
     # GCC doesn't properly detect when local typedefs escape via the return type.
     target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
-    # GCC's arry bounds warning seems to have false positives.
-    target_compile_options(lexy_dev INTERFACE -Wno-array-bounds)
+    # GCC's arry bounds and maybe uninitialized warning seems to have false positives.
+    target_compile_options(lexy_dev INTERFACE -Wno-array-bounds -Wno-maybe-uninitialized)
 elseif(MSVC)
     target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105)
 endif()
