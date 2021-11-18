@@ -1,6 +1,7 @@
 ---
 header: "lexy/action/scan.hpp"
 entities:
+  "lexy::scan_failed": scan_result
   "lexy::scan_result": scan_result
   "lexy::scanner-common": scanner-common
   "lexy::scanner": scan
@@ -38,6 +39,12 @@ namespace lexy
         // T != void only
         constexpr const T& value() const& noexcept;
         constexpr T&& value() && noexcept;
+
+        // T != void only
+        template <typename U = T>
+        constexpr U value_or(U&& fallback) const& noexcept;
+        template <typename U = T>
+        constexpr U value_or(U&& fallback) && noexcept;
     };
 }
 ----
