@@ -1,4 +1,4 @@
-// INPUT: r##"Hello "# World!"##
+// INPUT:r##"Hello "# World!"##
 struct production
 // We produce a UTF-8 lexeme (i.e. a string view) of the contents.
 : lexy::scan_production<lexy::buffer_lexeme<lexy::utf8_encoding>>,
