@@ -115,18 +115,25 @@ namespace lexy
         constexpr void fatal_error(Tag tag, Args&&... args);
 
         //=== convenience ===//
-        constexpr bool peek(_rule_ auto rule)
-        {
-            return branch(dsl::peek(rule));
-        }
-
+        // Forwards to `parse(result, rule)` overload.
         template <typename T>
-        constexpr scan_result<T> parse(_rule_ auto rule)
-        {
-            scan_result<T> result;
-            parse(result, rule);
-            return result;
-        }
+        constexpr scan_result<T> parse(_rule_ auto rule);
+
+        // Equivalent to `branch(dsl::peek(rule))`.
+        constexpr bool peek(_rule_ auto rule);
+
+        // Equivalent to `parse(result, dsl::integer<T, Base>(digits))`.
+        template <typename T, typename Base>
+        constexpr scan_result<T> auto integer(_token-rule_ auto digits);
+        template <typename T>
+        constexpr scan_result<T> integer(_digits-dsl_  digits);
+        template <typename T>
+        constexpr scan_result<T> integer(_ndigits-dsl_ digits);
+
+        // Forwards to `parse(rule)` (without value!) and then returns a lexeme.
+        constexpr scan_result<lexeme<Reader>> capture(_rule_ auto rule);
+        // Forwards to `parse(result, dsl::capture_token(rule))`.
+        constexpr scan_result<lexeme<Reader>> capture_token(_token-rule_ auto rule);
     };
 }
 ----

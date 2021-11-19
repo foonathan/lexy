@@ -19,9 +19,9 @@ int main()
     auto scanner = lexy::scan<control_production>(input, lexy_ext::report_error);
 
     // Parse two integers separated by comma.
-    auto x = scanner.parse<int>(dsl::integer<int>(dsl::digits<>));
+    auto x = scanner.integer<int>(dsl::digits<>);
     scanner.parse(dsl::comma);
-    auto y = scanner.parse<int>(dsl::integer<int>(dsl::digits<>));
+    auto y = scanner.integer<int>(dsl::digits<>);
 
     std::printf("%d, %d", x.value_or(-1), y.value_or(-1));
 }

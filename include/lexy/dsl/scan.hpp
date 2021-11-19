@@ -11,6 +11,7 @@
 #include <lexy/callback/object.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/error.hpp>
+#include <lexy/lexeme.hpp>
 
 //=== rule forward declaration ===//
 namespace lexyd
@@ -19,8 +20,15 @@ template <typename Production>
 struct _prd;
 template <typename Rule, typename Tag>
 struct _peek;
+template <typename Token>
+struct _capt;
 
 struct _scan;
+
+template <typename T, typename Base, typename Digits>
+constexpr auto integer(Digits);
+template <typename T, typename Digits>
+constexpr auto integer(Digits);
 } // namespace lexyd
 
 namespace lexy::_detail
@@ -411,6 +419,14 @@ public:
     }
 
     //=== convenience ===//
+    template <typename T, typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
+    constexpr auto parse(Rule rule)
+    {
+        scan_result<T> result;
+        parse(result, rule);
+        return result;
+    }
+
     template <typename Rule>
     constexpr bool peek(Rule)
     {
@@ -418,11 +434,40 @@ public:
         return branch(dsl::_peek<Rule, void>{});
     }
 
-    template <typename T, typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
-    constexpr auto parse(Rule rule)
+    template <typename T, typename Base, typename Digits>
+    constexpr auto integer(Digits digits)
     {
         scan_result<T> result;
-        parse(result, rule);
+        parse(result, lexyd::integer<T, Base>(digits));
+        return result;
+    }
+    template <typename T, typename Digits>
+    constexpr auto integer(Digits digits)
+    {
+        scan_result<T> result;
+        parse(result, lexyd::integer<T>(digits));
+        return result;
+    }
+
+    template <typename Rule>
+    constexpr auto capture(Rule rule) -> scan_result<lexeme<Reader>>
+    {
+        static_assert(lexy::is_rule<Rule>);
+
+        auto begin = _reader.position();
+        parse(rule);
+        auto end = _reader.position();
+
+        if (*this)
+            return lexeme<Reader>(begin, end);
+        else
+            return scan_failed;
+    }
+    template <typename Token>
+    constexpr auto capture_token(Token)
+    {
+        scan_result<lexeme<Reader>> result;
+        parse(result, lexyd::_capt<Token>{});
         return result;
     }
 
