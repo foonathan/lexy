@@ -81,6 +81,8 @@ public:
     }
 
 private:
+    constexpr explicit scan_result(_detail::lazy_init<T>&& value) : _value(LEXY_MOV(value)) {}
+
     _detail::lazy_init<T> _value;
 
     template <typename Derived, typename Reader>
@@ -110,6 +112,8 @@ public:
     }
 
 private:
+    constexpr explicit scan_result(_detail::lazy_init<void>&& value) : _value(LEXY_MOV(value)) {}
+
     _detail::lazy_init<void> _value;
 
     template <typename Derived, typename Reader>
@@ -118,6 +122,8 @@ private:
 
 template <typename T>
 scan_result(T&&) -> scan_result<std::decay_t<T>>;
+template <typename T>
+scan_result(_detail::lazy_init<T>&&) -> scan_result<T>;
 } // namespace lexy
 
 //=== scanner implementation ===//
@@ -142,6 +148,7 @@ struct spc_child
     _detail::lazy_init<value_type>   value;
 
     constexpr explicit spc_child(decltype(Context::control_block) cb) : control_block(cb) {}
+    constexpr explicit spc_child(const Context& context) : control_block(context.control_block) {}
 
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction child)
@@ -261,6 +268,35 @@ public:
             _state = _state_failed;
     }
 
+    template <typename Production, typename Rule = lexy::production_rule<Production>>
+    constexpr auto parse(Production production = {})
+    {
+        // Directly create a child context from the production context.
+        auto context
+            = _detail::spc_child(static_cast<Derived&>(*this).context().sub_context(production));
+
+        // We can't use an early return to get automatic return type deduction.
+        if (_state != _state_failed)
+        {
+            // We manually parse the rule of the production, so need to raise events.
+            context.on(lexy::parse_events::production_start{}, _reader.position());
+
+            using parser = lexy::parser_for<Rule, lexy::_detail::final_parser>;
+            auto success = parser::parse(context, _reader);
+            if (success)
+            {
+                context.on(lexy::parse_events::production_finish{}, _reader.position());
+            }
+            else
+            {
+                context.on(lexy::parse_events::production_cancel{}, _reader.position());
+                _state = _state_failed;
+            }
+        }
+
+        return scan_result(LEXY_MOV(context.value));
+    }
+
     template <typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
     constexpr void parse(Rule rule)
     {
@@ -286,6 +322,12 @@ public:
         if (!success)
             _state = _state_failed;
         return true; // branch was taken
+    }
+
+    template <typename Production, typename T, typename = lexy::production_rule<Production>>
+    constexpr bool branch(scan_result<T>& result, Production = {})
+    {
+        return branch(result, lexyd::_prd<Production>{});
     }
 
     template <typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
@@ -382,21 +424,6 @@ public:
         scan_result<T> result;
         parse(result, rule);
         return result;
-    }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    constexpr auto parse(Production = {})
-    {
-        using value_type = typename lexy::production_value_callback<Production>::return_type;
-
-        scan_result<value_type> result;
-        parse(result, lexyd::_prd<Production>{});
-        return result;
-    }
-
-    template <typename Production, typename T, typename = lexy::production_rule<Production>>
-    constexpr bool branch(scan_result<T>& result, Production = {})
-    {
-        return branch(result, lexyd::_prd<Production>{});
     }
 
 protected:

@@ -85,11 +85,19 @@ namespace lexy
         template <typename T>
         constexpr void parse(scan_result<T>& result, _rule_ auto rule);
 
+        template <_production_ Production>
+        constexpr auto parse(Production production = {})
+          -> scan_result<_return-type-of-value_>;
+
         constexpr void parse(_rule_ auto rule);
 
         //=== branch parsing ===//
         template <typename T>
         constexpr bool branch(scan_result<T>& result, _branch-rule_ auto rule);
+
+        template <_production_ Production>
+        constexpr bool branch(scan_result<_return-type-of-value_>& result,
+                              Production production = {});
 
         template <typename T>
         constexpr bool branch(_branch-rule_ auto rule);
@@ -118,24 +126,6 @@ namespace lexy
             scan_result<T> result;
             parse(result, rule);
             return result;
-        }
-
-        // Production argument can be specified or deduced from argument.
-        template <_production_ Production>
-        constexpr auto parse(Production production = {})
-          -> scan_result<_return-type-of-value_>
-        {
-            scan_result<_return-type-of-value_> result;
-            parse(result, dsl::p<Production>);
-            return result;
-        }
-
-        // Production argument can be specified or deduced from argument.
-        template <_production_ Production>
-        constexpr bool branch(scan_result<_return-type-of-value_>& result,
-                              Production production = {})
-        {
-            return branch(result, dsl::p<Production>);
         }
     };
 }
@@ -200,6 +190,10 @@ Returns a new input that can be used to access the input from `position()` until
 template <typename T>
 constexpr void parse(scan_result<T>& result, _rule_ auto rule);
 
+template <_production_ Production>
+constexpr auto parse(Production production = {})
+  -> scan_result<_return-type-of-value_>;
+
 constexpr void parse(_rule_ auto rule);
 ----
 
@@ -219,7 +213,11 @@ regardless of the actual parse action used in the top-level.
 If `rule` parses a child production `P`, it invokes the `P::value` callback as necessary to produce a value.
 When the rule succeeds, all arguments produced by `rule` are passed to `lexy::construct<T>` and the result stored in `result`.
 
-The second overload parses the `rule` as if the parse action {{% docref "lexy::match" %}} was used;
+The second overload parses the `production`;
+it is equivalent to `parse(result, dsl::p<Production>)`.
+The production can be specified by an explicit template argument or by passing an object as parameter.
+
+The third overload parses the `rule` as if the parse action {{% docref "lexy::match" %}} was used;
 no value is produced and child productions do not need a `::value` member.
 
 === Branch parsing
@@ -228,6 +226,10 @@ no value is produced and child productions do not need a `::value` member.
 ----
 template <typename T>
 constexpr bool branch(scan_result<T>& result, _branch-rule_ auto rule);
+
+template <_production_ Production>
+constexpr bool branch(scan_result<_return-type-of-value_>& result,
+                      Production production = {});
 
 template <typename T>
 constexpr bool branch(_branch-rule_ auto rule);
@@ -246,7 +248,7 @@ If that succeeds, consumes everything consumed by `rule`, generating the necessa
 Otherwise, consumes everything already consumed by `rule` and puts the scanner in the error state.
 It then also returns `true`, as parsing has already committed to take the branch and only failed later.
 
-Similar to `.parse()`, the first overload produces a value, while the second one doesn't.
+Similar to `.parse()`, the first overload produces a value, the second overload a production, and the third overload does not produce values.
 
 NOTE: `scanner.branch(condition) ? scanner.parse(a) : scanner.parse(b)` is entirely equivalent to `scanner.parse(condition >> a | dsl::else_ >> b)`.
 
