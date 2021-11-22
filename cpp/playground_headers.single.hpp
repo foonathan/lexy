@@ -13621,6 +13621,46 @@ using _integer_parser
     = std::conditional_t<_is_bounded<T>, _bounded_integer_parser<T, Base, AssumeOnlyDigits>,
                          _unbounded_integer_parser<T, Base>>;
 
+template <typename T, typename Digits>
+struct _integer_parser_digits;
+template <typename T, typename Base>
+struct _integer_parser_digits<T, _digits<Base>>
+{
+    using type = _integer_parser<T, Base, true>;
+};
+template <typename T, typename Base>
+struct _integer_parser_digits<T, _digits_t<Base>>
+{
+    using type = _integer_parser<T, Base, false>;
+};
+template <typename T, typename Base, typename Sep>
+struct _integer_parser_digits<T, _digits_s<Base, Sep>>
+{
+    using type = _integer_parser<T, Base, false>;
+};
+template <typename T, typename Base, typename Sep>
+struct _integer_parser_digits<T, _digits_st<Base, Sep>>
+{
+    using type = _integer_parser<T, Base, false>;
+};
+template <typename T, std::size_t N, typename Base>
+struct _integer_parser_digits<T, _ndigits<N, Base>>
+{
+    using value_type
+        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
+    using type = _integer_parser<value_type, Base, true>;
+};
+template <typename T, std::size_t N, typename Base, typename Sep>
+struct _integer_parser_digits<T, _ndigits_s<N, Base, Sep>>
+{
+    using value_type
+        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
+    using type = _integer_parser<value_type, Base, false>;
+};
+
+template <typename T, typename Digits>
+using _integer_parser_for = typename _integer_parser_digits<T, Digits>::type;
+
 template <typename Token, typename IntParser, typename Tag>
 struct _int : _copy_base<Token>
 {
@@ -13717,46 +13757,10 @@ constexpr auto integer(Digits)
     return _int<Digits, parser, void>{};
 }
 
-template <typename T, typename Base>
-constexpr auto integer(_digits<Base>)
+template <typename T, typename Digits>
+constexpr auto integer(Digits)
 {
-    using parser = _integer_parser<T, Base, true>;
-    return _int<_digits<Base>, parser, void>{};
-}
-template <typename T, typename Base, typename Sep>
-constexpr auto integer(_digits_s<Base, Sep>)
-{
-    using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_s<Base, Sep>, parser, void>{};
-}
-template <typename T, typename Base>
-constexpr auto integer(_digits_t<Base>)
-{
-    using parser = _integer_parser<T, Base, true>;
-    return _int<_digits_t<Base>, parser, void>{};
-}
-template <typename T, typename Base, typename Sep>
-constexpr auto integer(_digits_st<Base, Sep>)
-{
-    using parser = _integer_parser<T, Base, false>;
-    return _int<_digits_st<Base, Sep>, parser, void>{};
-}
-
-template <typename T, typename Base, std::size_t N>
-constexpr auto integer(_ndigits<N, Base>)
-{
-    using type
-        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
-    using parser = _integer_parser<type, Base, true>;
-    return _int<_ndigits<N, Base>, parser, void>{};
-}
-template <typename T, typename Base, std::size_t N, typename Sep>
-constexpr auto integer(_ndigits_s<N, Base, Sep>)
-{
-    using type
-        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
-    using parser = _integer_parser<type, Base, false>;
-    return _int<_ndigits_s<N, Base, Sep>, parser, void>{};
+    return _int<Digits, _integer_parser_for<T, Digits>, void>{};
 }
 } // namespace lexyd
 
@@ -15311,6 +15315,7 @@ constexpr auto new_ = _new<T, PtrT>{};
 
 
 
+
 //=== rule forward declaration ===//
 namespace lexyd
 {
@@ -15318,8 +15323,15 @@ template <typename Production>
 struct _prd;
 template <typename Rule, typename Tag>
 struct _peek;
+template <typename Token>
+struct _capt;
 
 struct _scan;
+
+template <typename T, typename Base, typename Digits>
+constexpr auto integer(Digits);
+template <typename T, typename Digits>
+constexpr auto integer(Digits);
 } // namespace lexyd
 
 namespace lexy::_detail
@@ -15380,6 +15392,8 @@ public:
     }
 
 private:
+    constexpr explicit scan_result(_detail::lazy_init<T>&& value) : _value(LEXY_MOV(value)) {}
+
     _detail::lazy_init<T> _value;
 
     template <typename Derived, typename Reader>
@@ -15409,6 +15423,8 @@ public:
     }
 
 private:
+    constexpr explicit scan_result(_detail::lazy_init<void>&& value) : _value(LEXY_MOV(value)) {}
+
     _detail::lazy_init<void> _value;
 
     template <typename Derived, typename Reader>
@@ -15417,6 +15433,8 @@ private:
 
 template <typename T>
 scan_result(T&&) -> scan_result<std::decay_t<T>>;
+template <typename T>
+scan_result(_detail::lazy_init<T>&&) -> scan_result<T>;
 } // namespace lexy
 
 //=== scanner implementation ===//
@@ -15441,6 +15459,7 @@ struct spc_child
     _detail::lazy_init<value_type>   value;
 
     constexpr explicit spc_child(decltype(Context::control_block) cb) : control_block(cb) {}
+    constexpr explicit spc_child(const Context& context) : control_block(context.control_block) {}
 
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction child)
@@ -15560,6 +15579,35 @@ public:
             _state = _state_failed;
     }
 
+    template <typename Production, typename Rule = lexy::production_rule<Production>>
+    constexpr auto parse(Production production = {})
+    {
+        // Directly create a child context from the production context.
+        auto context
+            = _detail::spc_child(static_cast<Derived&>(*this).context().sub_context(production));
+
+        // We can't use an early return to get automatic return type deduction.
+        if (_state != _state_failed)
+        {
+            // We manually parse the rule of the production, so need to raise events.
+            context.on(lexy::parse_events::production_start{}, _reader.position());
+
+            using parser = lexy::parser_for<Rule, lexy::_detail::final_parser>;
+            auto success = parser::parse(context, _reader);
+            if (success)
+            {
+                context.on(lexy::parse_events::production_finish{}, _reader.position());
+            }
+            else
+            {
+                context.on(lexy::parse_events::production_cancel{}, _reader.position());
+                _state = _state_failed;
+            }
+        }
+
+        return scan_result(LEXY_MOV(context.value));
+    }
+
     template <typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
     constexpr void parse(Rule rule)
     {
@@ -15585,6 +15633,12 @@ public:
         if (!success)
             _state = _state_failed;
         return true; // branch was taken
+    }
+
+    template <typename Production, typename T, typename = lexy::production_rule<Production>>
+    constexpr bool branch(scan_result<T>& result, Production = {})
+    {
+        return branch(result, lexyd::_prd<Production>{});
     }
 
     template <typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
@@ -15668,13 +15722,6 @@ public:
     }
 
     //=== convenience ===//
-    template <typename Rule>
-    constexpr bool peek(Rule)
-    {
-        static_assert(lexy::is_rule<Rule>);
-        return branch(dsl::_peek<Rule, void>{});
-    }
-
     template <typename T, typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
     constexpr auto parse(Rule rule)
     {
@@ -15682,20 +15729,49 @@ public:
         parse(result, rule);
         return result;
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    constexpr auto parse(Production = {})
-    {
-        using value_type = typename lexy::production_value_callback<Production>::return_type;
 
-        scan_result<value_type> result;
-        parse(result, lexyd::_prd<Production>{});
+    template <typename Rule>
+    constexpr bool peek(Rule)
+    {
+        static_assert(lexy::is_rule<Rule>);
+        return branch(dsl::_peek<Rule, void>{});
+    }
+
+    template <typename T, typename Base, typename Digits>
+    constexpr auto integer(Digits digits)
+    {
+        scan_result<T> result;
+        parse(result, lexyd::integer<T, Base>(digits));
+        return result;
+    }
+    template <typename T, typename Digits>
+    constexpr auto integer(Digits digits)
+    {
+        scan_result<T> result;
+        parse(result, lexyd::integer<T>(digits));
         return result;
     }
 
-    template <typename Production, typename T, typename = lexy::production_rule<Production>>
-    constexpr bool branch(scan_result<T>& result, Production = {})
+    template <typename Rule>
+    constexpr auto capture(Rule rule) -> scan_result<lexeme<Reader>>
     {
-        return branch(result, lexyd::_prd<Production>{});
+        static_assert(lexy::is_rule<Rule>);
+
+        auto begin = _reader.position();
+        parse(rule);
+        auto end = _reader.position();
+
+        if (*this)
+            return lexeme<Reader>(begin, end);
+        else
+            return scan_failed;
+    }
+    template <typename Token>
+    constexpr auto capture_token(Token)
+    {
+        scan_result<lexeme<Reader>> result;
+        parse(result, lexyd::_capt<Token>{});
+        return result;
     }
 
 protected:

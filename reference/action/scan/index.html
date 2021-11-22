@@ -130,11 +130,19 @@ Unlike <code>std::optional&lt;T></code>, it supports <code>void</code> and is im
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
 
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{})</span>
+          <span class=tok-o>-&gt;</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+
         <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
 
         <span class=tok-c1>//=== branch parsing ===//</span>
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span>
+                              <span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
 
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
         <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
@@ -152,36 +160,25 @@ Unlike <code>std::optional&lt;T></code>, it supports <code>void</code> and is im
         <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-n>fatal_error</span><span class=tok-p>(</span><span class=tok-n>Tag</span> <span class=tok-n>tag</span><span class=tok-p>,</span> <span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>);</span>
 
         <span class=tok-c1>//=== convenience ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span>
-        <span class=tok-p>{</span>
-            <span class=tok-k>return</span> <span class=tok-nf>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n>rule</span><span class=tok-p>));</span>
-        <span class=tok-p>}</span>
-
+        <span class=tok-c1>// Forwards to <code>parse(result, rule)</code> overload.</span>
         <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>)</span>
-        <span class=tok-p>{</span>
-            <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-n>result</span><span class=tok-p>;</span>
-            <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-            <span class=tok-k>return</span> <span class=tok-n>result</span><span class=tok-p>;</span>
-        <span class=tok-p>}</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
 
-        <span class=tok-c1>// Production argument can be specified or deduced from argument.</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{})</span>
-          <span class=tok-o>-&gt;</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;</span>
-        <span class=tok-p>{</span>
-            <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;</span> <span class=tok-n>result</span><span class=tok-p>;</span>
-            <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>Production</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-            <span class=tok-k>return</span> <span class=tok-n>result</span><span class=tok-p>;</span>
-        <span class=tok-p>}</span>
+        <span class=tok-c1>// Equivalent to <code>branch(dsl::peek(rule))</code>.</span>
+        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
 
-        <span class=tok-c1>// Production argument can be specified or deduced from argument.</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span>
-                              <span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{})</span>
-        <span class=tok-p>{</span>
-            <span class=tok-k>return</span> <span class=tok-nf>branch</span><span class=tok-p>(</span><span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>Production</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-        <span class=tok-p>}</span>
+        <span class=tok-c1>// Equivalent to <code>parse(result, dsl::integer&lt;T, Base&gt;(digits))</code>.</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Base</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-k>auto</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>digits</span><span class=tok-p>);</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>digits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em>  <span class=tok-n>digits</span><span class=tok-p>);</span>
+        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span> <span class=tok-n>integer</span><span class=tok-p>(</span><span class=tok-n><em>ndigits</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>digits</span><span class=tok-p>);</span>
+
+        <span class=tok-c1>// Forwards to <code>parse(rule)</code> (without value!) and then returns a lexeme.</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;&gt;</span> <span class=tok-n>capture</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+        <span class=tok-c1>// Forwards to <code>parse(result, dsl::capture_token(rule))</code>.</span>
+        <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;&gt;</span> <span class=tok-n>capture_token</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
     <span class=tok-p>};</span>
 <span class=tok-p>}</span></code></pre>
 </div>
@@ -271,6 +268,10 @@ The iterator must only be dereferenced if <code>is_at_eof() == false</code>.
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
 <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
 
+<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{})</span>
+  <span class=tok-o>-&gt;</span> <span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+
 <span class=tok-k>constexpr</span> <span class=tok-kt>void</span> <span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span></code></pre>
 </div>
 </div>
@@ -294,7 +295,12 @@ If <code>rule</code> parses a child production <code>P</code>, it invokes the <c
 When the rule succeeds, all arguments produced by <code>rule</code> are passed to <code>lexy::construct&lt;T></code> and the result stored in <code>result</code>.</p>
 </div>
 <div class=paragraph>
-<p>The second overload parses the <code>rule</code> as if the parse action <a href=/reference/action/match/#match><code>lexy::match</code></a> was used;
+<p>The second overload parses the <code>production</code>;
+it is equivalent to <code>parse(result, dsl::p&lt;Production>)</code>.
+The production can be specified by an explicit template argument or by passing an object as parameter.</p>
+</div>
+<div class=paragraph>
+<p>The third overload parses the <code>rule</code> as if the parse action <a href=/reference/action/match/#match><code>lexy::match</code></a> was used;
 no value is produced and child productions do not need a <code>::value</code> member.</p>
 </div>
 </div>
@@ -305,6 +311,10 @@ no value is produced and child productions do not need a <code>::value</code> me
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
 <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
+
+<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>Production</span><span class=tok-o>&gt;</span>
+<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n><em>return</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span><span class=tok-o>-</span><span class=tok-n>of</span><span class=tok-o>-</span><span class=tok-n>value</span></em><span class=tok-o>&gt;&amp;</span> <span class=tok-n>result</span><span class=tok-p>,</span>
+                      <span class=tok-n>Production</span> <span class=tok-n>production</span> <span class=tok-o>=</span> <span class=tok-p>{});</span>
 
 <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
 <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span></code></pre>
@@ -326,7 +336,7 @@ Otherwise, consumes everything already consumed by <code>rule</code> and puts th
 It then also returns <code>true</code>, as parsing has already committed to take the branch and only failed later.</p>
 </div>
 <div class=paragraph>
-<p>Similar to <code>.parse()</code>, the first overload produces a value, while the second one doesn’t.</p>
+<p>Similar to <code>.parse()</code>, the first overload produces a value, the second overload a production, and the third overload does not produce values.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -535,7 +545,7 @@ It does not need a <code>::rule</code> member; any member specified will be igno
 <div class=title>Example 2. Use <code>lexy</code> as a verbose <code>std::scanf</code> replacement</div>
 <div class=content>
 <div class="listingblock godbolt-example">
-<div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IjExLCA0MiIsInN0ZGluVmlzaWJsZSI6dHJ1ZX1dLCJpZCI6MSwibGFuZ3VhZ2UiOiJjKysiLCJzb3VyY2UiOiIjaW5jbHVkZSBcdTAwM2NsZXh5L2FjdGlvbi9zY2FuLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9kc2wuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5X2V4dC9jb21waWxlcl9leHBsb3Jlci5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHlfZXh0L3JlcG9ydF9lcnJvci5ocHBcdTAwM2VcblxubmFtZXNwYWNlIGRzbCA9IGxleHk6OmRzbDtcblxuc3RydWN0IGNvbnRyb2xfcHJvZHVjdGlvblxue1xuICAgIC8vIEFsbG93IEFTQ0lJIHdoaXRlc3BhY2UuXG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIHdoaXRlc3BhY2UgPSBkc2w6OmFzY2lpOjpzcGFjZTtcbn07XG5cbmludCBtYWluKClcbntcbiAgICAvLyBDb25zdHJ1Y3QgYSBzY2FubmVyIGZvciB0aGUgaW5wdXQuXG4gICAgYXV0byBpbnB1dCAgID0gbGV4eV9leHQ6OmNvbXBpbGVyX2V4cGxvcmVyX2lucHV0KCk7XG4gICAgYXV0byBzY2FubmVyID0gbGV4eTo6c2Nhblx1MDAzY2NvbnRyb2xfcHJvZHVjdGlvblx1MDAzZShpbnB1dCwgbGV4eV9leHQ6OnJlcG9ydF9lcnJvcik7XG5cbiAgICAvLyBQYXJzZSB0d28gaW50ZWdlcnMgc2VwYXJhdGVkIGJ5IGNvbW1hLlxuICAgIGF1dG8geCA9IHNjYW5uZXIucGFyc2VcdTAwM2NpbnRcdTAwM2UoZHNsOjppbnRlZ2VyXHUwMDNjaW50XHUwMDNlKGRzbDo6ZGlnaXRzXHUwMDNjXHUwMDNlKSk7XG4gICAgc2Nhbm5lci5wYXJzZShkc2w6OmNvbW1hKTtcbiAgICBhdXRvIHkgPSBzY2FubmVyLnBhcnNlXHUwMDNjaW50XHUwMDNlKGRzbDo6aW50ZWdlclx1MDAzY2ludFx1MDAzZShkc2w6OmRpZ2l0c1x1MDAzY1x1MDAzZSkpO1xuXG4gICAgc3RkOjpwcmludGYoXCIlZCwgJWRcIiwgeC52YWx1ZV9vcigtMSksIHkudmFsdWVfb3IoLTEpKTtcbn1cbiJ9XX0=" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
+<div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IjExLCA0MiIsInN0ZGluVmlzaWJsZSI6dHJ1ZX1dLCJpZCI6MSwibGFuZ3VhZ2UiOiJjKysiLCJzb3VyY2UiOiIjaW5jbHVkZSBcdTAwM2NsZXh5L2FjdGlvbi9zY2FuLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9kc2wuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5X2V4dC9jb21waWxlcl9leHBsb3Jlci5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHlfZXh0L3JlcG9ydF9lcnJvci5ocHBcdTAwM2VcblxubmFtZXNwYWNlIGRzbCA9IGxleHk6OmRzbDtcblxuc3RydWN0IGNvbnRyb2xfcHJvZHVjdGlvblxue1xuICAgIC8vIEFsbG93IEFTQ0lJIHdoaXRlc3BhY2UuXG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIHdoaXRlc3BhY2UgPSBkc2w6OmFzY2lpOjpzcGFjZTtcbn07XG5cbmludCBtYWluKClcbntcbiAgICAvLyBDb25zdHJ1Y3QgYSBzY2FubmVyIGZvciB0aGUgaW5wdXQuXG4gICAgYXV0byBpbnB1dCAgID0gbGV4eV9leHQ6OmNvbXBpbGVyX2V4cGxvcmVyX2lucHV0KCk7XG4gICAgYXV0byBzY2FubmVyID0gbGV4eTo6c2Nhblx1MDAzY2NvbnRyb2xfcHJvZHVjdGlvblx1MDAzZShpbnB1dCwgbGV4eV9leHQ6OnJlcG9ydF9lcnJvcik7XG5cbiAgICAvLyBQYXJzZSB0d28gaW50ZWdlcnMgc2VwYXJhdGVkIGJ5IGNvbW1hLlxuICAgIGF1dG8geCA9IHNjYW5uZXIuaW50ZWdlclx1MDAzY2ludFx1MDAzZShkc2w6OmRpZ2l0c1x1MDAzY1x1MDAzZSk7XG4gICAgc2Nhbm5lci5wYXJzZShkc2w6OmNvbW1hKTtcbiAgICBhdXRvIHkgPSBzY2FubmVyLmludGVnZXJcdTAwM2NpbnRcdTAwM2UoZHNsOjpkaWdpdHNcdTAwM2NcdTAwM2UpO1xuXG4gICAgc3RkOjpwcmludGYoXCIlZCwgJWRcIiwgeC52YWx1ZV9vcigtMSksIHkudmFsdWVfb3IoLTEpKTtcbn1cbiJ9XX0=" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>control_production</span>
 <span class=tok-p>{</span>
@@ -550,9 +560,9 @@ It does not need a <code>::rule</code> member; any member specified will be igno
     <span class=tok-k>auto</span> <span class=tok-n>scanner</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan</span><span class=tok-o>&lt;</span><span class=tok-n>control_production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>,</span> <span class=tok-n>lexy_ext</span><span class=tok-o>::</span><span class=tok-n>report_error</span><span class=tok-p>);</span>
 
     <span class=tok-c1>// Parse two integers separated by comma.</span>
-    <span class=tok-k>auto</span> <span class=tok-n>x</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>));</span>
+    <span class=tok-k>auto</span> <span class=tok-n>x</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span>
     <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>comma</span><span class=tok-p>);</span>
-    <span class=tok-k>auto</span> <span class=tok-n>y</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>));</span>
+    <span class=tok-k>auto</span> <span class=tok-n>y</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span>
 
     <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>printf</span><span class=tok-p>(</span><span class=tok-s>&#34;%d, %d&#34;</span><span class=tok-p>,</span> <span class=tok-n>x</span><span class=tok-p>.</span><span class=tok-n>value_or</span><span class=tok-p>(</span><span class=tok-mi>-1</span><span class=tok-p>),</span> <span class=tok-n>y</span><span class=tok-p>.</span><span class=tok-n>value_or</span><span class=tok-p>(</span><span class=tok-mi>-1</span><span class=tok-p>));</span>
 <span class=tok-p>}</span></code></pre>
