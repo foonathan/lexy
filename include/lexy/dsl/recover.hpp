@@ -147,9 +147,11 @@ struct _reco : _recovery_base
             context.on(_ev::recovery_start{}, begin);
 
             // Try to match one of the recovery rules.
-            lexy::branch_parser_for<decltype((R{} | ...)), Context, Reader> recovery{};
-            while (!recovery.try_parse(context, reader))
+            lexy::branch_parser_for<decltype((R{} | ...)), Reader> recovery{};
+            while (!recovery.try_parse(context.control_block, reader))
             {
+                recovery.cancel(context);
+
                 if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
                     limit.try_parse(reader))
                 {
@@ -271,18 +273,24 @@ struct _tryr : _copy_base<Rule>
 {
     using impl = _tryt<void, Rule, Recover>;
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        lexy::branch_parser_for<Rule, Reader> rule;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            // Forward branching behavior.
-            return rule.try_parse(context, reader);
+            return rule.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            rule.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the rule and check whether it reached the continuation.

@@ -23,8 +23,8 @@ struct _break : unconditional_branch_base
         }
     };
 
-    template <typename Context, typename Reader>
-    using bp = lexy::unconditional_branch_parser<_break, Context, Reader>;
+    template <typename Reader>
+    using bp = lexy::unconditional_branch_parser<_break, Reader>;
 };
 
 /// Exits a loop().
@@ -78,12 +78,13 @@ struct _whl : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_parser_for<Branch, Context, Reader> branch{};
-            while (branch.try_parse(context, reader))
+            lexy::branch_parser_for<Branch, Reader> branch{};
+            while (branch.try_parse(context.control_block, reader))
             {
                 if (!branch.template finish<lexy::pattern_parser<>>(context, reader))
                     return false;
             }
+            branch.cancel(context);
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }

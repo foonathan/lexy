@@ -88,19 +88,24 @@ namespace lexy
 template <typename Rule, typename NextParser>
 using parser_for = typename Rule::template p<NextParser>;
 
-template <typename BranchRule, typename Context, typename Reader>
-using branch_parser_for = typename BranchRule::template bp<Context, Reader>;
+template <typename BranchRule, typename Reader>
+using branch_parser_for = typename BranchRule::template bp<Reader>;
 
 /// A branch parser that takes a branch unconditionally and forwards to the regular parser.
-template <typename Rule, typename Context, typename Reader>
+template <typename Rule, typename Reader>
 struct unconditional_branch_parser
 {
-    constexpr std::true_type try_parse(const Context&, const Reader&)
+    template <typename ControlBlock>
+    constexpr std::true_type try_parse(const ControlBlock*, const Reader&)
     {
         return {};
     }
 
-    template <typename NextParser, typename... Args>
+    template <typename Context>
+    constexpr void cancel(Context&)
+    {}
+
+    template <typename NextParser, typename Context, typename... Args>
     LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
     {
         return parser_for<Rule, NextParser>::parse(context, reader, LEXY_FWD(args)...);
@@ -108,18 +113,24 @@ struct unconditional_branch_parser
 };
 
 /// A branch parser that parses a branch rule but with a special continuation.
-template <typename BranchRule, typename Context, typename Reader,
-          template <typename> typename Continuation>
+template <typename BranchRule, typename Reader, template <typename> typename Continuation>
 struct continuation_branch_parser
 {
-    branch_parser_for<BranchRule, Context, Reader> impl;
+    branch_parser_for<BranchRule, Reader> impl;
 
-    constexpr auto try_parse(Context& context, const Reader& reader)
+    template <typename ControlBlock>
+    constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
     {
-        return impl.try_parse(context, reader);
+        return impl.try_parse(cb, reader);
     }
 
-    template <typename NextParser, typename... Args>
+    template <typename Context>
+    constexpr void cancel(Context& context)
+    {
+        impl.cancel(context);
+    }
+
+    template <typename NextParser, typename Context, typename... Args>
     LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
     {
         return impl.template finish<Continuation<NextParser>>(context, reader, LEXY_FWD(args)...);

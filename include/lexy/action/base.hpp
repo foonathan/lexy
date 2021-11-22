@@ -51,11 +51,9 @@ namespace _detail
         : parse_context_var_base(&type_id), value(LEXY_MOV(value))
         {}
 
-        template <typename Context>
-        static constexpr T& get(Context& context)
+        template <typename ControlBlock>
+        static constexpr T& get(const ControlBlock* cb)
         {
-            auto cb = context.control_block;
-
             for (auto cur = cb->vars; cur; cur = cur->next)
                 if (cur->id == &type_id)
                     return static_cast<parse_context_var*>(cur)->value;

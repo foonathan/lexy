@@ -61,46 +61,48 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        using sub_context_t = decltype(LEXY_DECLVAL(Context&).sub_context(Production{}));
-        using parser_t
-            = lexy::branch_parser_for<lexy::production_rule<Production>, sub_context_t, Reader>;
+        using parser_t = lexy::branch_parser_for<lexy::production_rule<Production>, Reader>;
 
-        lexy::_detail::lazy_init<sub_context_t> sub_context;
-        parser_t                                parser;
+        parser_t                  parser;
+        typename Reader::iterator begin;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            // Create the new context.
-            sub_context = {};
-            sub_context.emplace(context.sub_context(Production{}));
-            sub_context->on(_ev::production_start{}, reader.position());
-
-            // Try and parse the production on the new context.
-            auto result = parser.try_parse(*sub_context, reader);
-            if (!result)
-                sub_context->on(_ev::production_cancel{}, reader.position());
-
-            return result;
+            begin = reader.position();
+            return parser.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            // Cancel in a new context.
+            auto sub_context = context.sub_context(Production{});
+            sub_context.on(_ev::production_start{}, begin);
+            parser.cancel(sub_context);
+            sub_context.on(_ev::production_cancel{}, begin);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            // Finish the production.
-            if (_finish_production(parser, *sub_context, reader))
+            // Finish the production in a new context.
+            auto sub_context = context.sub_context(Production{});
+            sub_context.on(_ev::production_start{}, begin);
+            if (_finish_production(parser, sub_context, reader))
             {
-                sub_context->on(_ev::production_finish{}, reader.position());
+                sub_context.on(_ev::production_finish{}, reader.position());
 
                 using continuation = lexy::_detail::context_finish_parser<NextParser>;
-                return continuation::parse(context, reader, *sub_context, LEXY_FWD(args)...);
+                return continuation::parse(context, reader, sub_context, LEXY_FWD(args)...);
             }
             else
             {
                 // Cancel.
-                sub_context->on(_ev::production_cancel{}, reader.position());
+                sub_context.on(_ev::production_cancel{}, reader.position());
                 return false;
             }
         }
@@ -161,20 +163,27 @@ struct _recb : branch_base
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         static_assert(lexy::is_branch_rule<lexy::production_rule<Production>>);
 
-        using impl = lexy::branch_parser_for<_prd<Production>, Context, Reader>;
+        using impl = lexy::branch_parser_for<_prd<Production>, Reader>;
         impl _impl;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            return _impl.try_parse(context, reader);
+            return _impl.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            _impl.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             using depth = _depth_handler<NextParser>;

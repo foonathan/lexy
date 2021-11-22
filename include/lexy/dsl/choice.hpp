@@ -31,23 +31,23 @@ struct _chc
 {
     static constexpr auto _any_unconditional = (lexy::is_unconditional_branch_rule<R> || ...);
 
-    template <typename Context, typename Reader,
-              typename Indices = lexy::_detail::make_index_sequence<sizeof...(R)>>
+    template <typename Reader, typename Indices = lexy::_detail::make_index_sequence<sizeof...(R)>>
     struct bp;
-    template <typename Context, typename Reader, std::size_t... Idx>
-    struct bp<Context, Reader, lexy::_detail::index_sequence<Idx...>>
+    template <typename Reader, std::size_t... Idx>
+    struct bp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
         template <typename Rule>
-        using rp = lexy::branch_parser_for<Rule, Context, Reader>;
+        using rp = lexy::branch_parser_for<Rule, Reader>;
 
         lexy::_detail::tuple<rp<R>...> r_parsers;
         std::size_t                    branch_idx;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
             -> std::conditional_t<_any_unconditional, std::true_type, bool>
         {
             auto try_r = [&](std::size_t idx, auto& parser) {
-                if (!parser.try_parse(context, reader))
+                if (!parser.try_parse(cb, reader))
                     return false;
 
                 branch_idx = idx;
@@ -68,17 +68,24 @@ struct _chc
             }
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            // Need to cancel all branches.
+            (r_parsers.template get<Idx>().cancel(context), ...);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            // Need to call finish on the selected branch.
+            // Need to call finish on the selected branch, and cancel on all others before that.
             auto result = false;
             (void)((Idx == branch_idx
                         ? (result
                            = r_parsers.template get<Idx>()
                                  .template finish<NextParser>(context, reader, LEXY_FWD(args)...),
                            true)
-                        : false)
+                        : (r_parsers.template get<Idx>().cancel(context), false))
                    || ...);
             return result;
         }
@@ -92,8 +99,11 @@ struct _chc
         {
             auto result = false;
             auto try_r  = [&](auto&& parser) {
-                if (!parser.try_parse(context, reader))
+                if (!parser.try_parse(context.control_block, reader))
+                {
+                    parser.cancel(context);
                     return false;
+                }
 
                 // LEXY_FWD(args) will break MSVC builds targeting C++17.
                 result = parser.template finish<NextParser>(context, reader,
@@ -102,7 +112,7 @@ struct _chc
             };
 
             // Try to parse each branch in order.
-            auto found_branch = (try_r(lexy::branch_parser_for<R, Context, Reader>{}) || ...);
+            auto found_branch = (try_r(lexy::branch_parser_for<R, Reader>{}) || ...);
             if constexpr (_any_unconditional)
             {
                 LEXY_ASSERT(found_branch,

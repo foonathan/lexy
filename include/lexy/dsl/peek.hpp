@@ -34,27 +34,35 @@ namespace lexyd
 template <typename Rule, typename Tag>
 struct _peek : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        static constexpr bool try_parse(Context& context, Reader reader)
+        typename Reader::iterator begin;
+        typename Reader::iterator end;
+
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
             // We need to match the entire rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
 
-            auto begin  = reader.position();
+            begin       = reader.position();
             auto result = parser.try_parse(reader);
-            auto end    = parser.end;
-
-            // Report that we've backtracked.
-            context.on(_ev::backtracked{}, begin, end);
+            end         = parser.end;
 
             return result;
         }
 
-        template <typename NextParser, typename... Args>
-        LEXY_PARSER_FUNC static bool finish(Context& context, Reader& reader, Args&&... args)
+        template <typename Context>
+        constexpr void cancel(Context& context)
         {
+            context.on(_ev::backtracked{}, begin, end);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            context.on(_ev::backtracked{}, begin, end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -65,16 +73,18 @@ struct _peek : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (!bp<Context, Reader>::try_parse(context, reader))
+            bp<Reader> impl{};
+            if (!impl.try_parse(context.control_block, reader))
             {
                 // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
-                auto err  = lexy::error<Reader, tag>(reader.position());
+                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end);
                 context.on(_ev::error{}, err);
 
                 // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
+            context.on(_ev::backtracked{}, impl.begin, impl.end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -86,29 +96,35 @@ struct _peek : branch_base
 template <typename Rule, typename Tag>
 struct _peekn : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
+        typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        constexpr bool try_parse(Context& context, Reader reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
             // We must not match the rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
 
-            auto begin  = reader.position();
+            begin       = reader.position();
             auto result = !parser.try_parse(reader);
             end         = parser.end;
-
-            // Report that we've backtracked.
-            context.on(_ev::backtracked{}, begin, end);
 
             return result;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            context.on(_ev::backtracked{}, begin, end);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
+            context.on(_ev::backtracked{}, begin, end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -119,16 +135,18 @@ struct _peekn : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (bp<Context, Reader> impl{}; !impl.try_parse(context, reader))
+            bp<Reader> impl{};
+            if (!impl.try_parse(context.control_block, reader))
             {
                 // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::error<Reader, tag>(reader.position(), impl.end);
+                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end);
                 context.on(_ev::error{}, err);
 
                 // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
+            context.on(_ev::backtracked{}, impl.begin, impl.end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };

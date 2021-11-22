@@ -34,8 +34,8 @@ struct _err : unconditional_branch_base
             return false;
         }
     };
-    template <typename Context, typename Reader>
-    using bp = lexy::unconditional_branch_parser<_err, Context, Reader>;
+    template <typename Reader>
+    using bp = lexy::unconditional_branch_parser<_err, Reader>;
 
     /// Adds a rule whose match will be part of the error location.
     template <typename R>
@@ -62,9 +62,10 @@ struct _must : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Try and parse the branch.
-            lexy::branch_parser_for<Branch, Context, Reader> branch{};
-            if (branch.try_parse(context, reader))
+            lexy::branch_parser_for<Branch, Reader> branch{};
+            if (branch.try_parse(context.control_block, reader))
                 return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            branch.cancel(context);
 
             // The branch wasn't taken, so we fail with the specific error by parsing Error.
             auto result = lexy::parser_for<Error, lexy::pattern_parser<>>::parse(context, reader);
@@ -75,8 +76,8 @@ struct _must : branch_base
     };
 
     // As a branch we parse it exactly the same.
-    template <typename Context, typename Reader>
-    using bp = lexy::branch_parser_for<Branch, Context, Reader>;
+    template <typename Reader>
+    using bp = lexy::branch_parser_for<Branch, Reader>;
 };
 
 template <typename Branch>

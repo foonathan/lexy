@@ -229,13 +229,14 @@ struct _id;
 template <const auto& Table, typename Token, typename Tag>
 struct _sym : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator                         end;
         typename std::decay_t<decltype(Table)>::key_index symbol;
 
-        constexpr bool try_parse(Context&, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(ControlBlock&, const Reader& reader)
         {
             // Try and parse the token.
             lexy::token_parser_for<Token, Reader> parser(reader);
@@ -255,7 +256,11 @@ struct _sym : branch_base
             return static_cast<bool>(symbol);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
@@ -315,13 +320,14 @@ struct _sym : branch_base
 template <const auto& Table, typename L, typename T, typename Tag>
 struct _sym<Table, _idp<L, T>, Tag> : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename std::decay_t<decltype(Table)>::key_index symbol;
         typename Reader::iterator                         end;
 
-        constexpr bool try_parse(const Context&, Reader reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
@@ -333,7 +339,11 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             return !lexy::try_match_token(T{}, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the identifier pattern.
@@ -395,13 +405,14 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
 template <const auto& Table, typename Tag>
 struct _sym<Table, void, Tag> : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename std::decay_t<decltype(Table)>::key_index symbol;
         typename Reader::iterator                         end;
 
-        constexpr bool try_parse(const Context&, Reader reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
@@ -411,7 +422,11 @@ struct _sym<Table, void, Tag> : branch_base
             return static_cast<bool>(symbol);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
@@ -430,9 +445,10 @@ struct _sym<Table, void, Tag> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            bp<Context, Reader> impl{};
-            if (impl.try_parse(context, reader))
+            bp<Reader> impl{};
+            if (impl.try_parse(context.control_block, reader))
                 return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            impl.cancel(context);
 
             // Unknown symbol.
             using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;

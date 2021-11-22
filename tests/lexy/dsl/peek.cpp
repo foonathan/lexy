@@ -33,7 +33,7 @@ TEST_CASE("dsl::peek()")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::recovered_error);
-        CHECK(a.trace == test_trace().backtracked("a").error(0, 0, "peek failure"));
+        CHECK(a.trace == test_trace().error(0, 1, "peek failure").backtracked("a"));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::success);
@@ -49,7 +49,7 @@ TEST_CASE("dsl::peek()")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::recovered_error);
-        CHECK(a.trace == test_trace().backtracked("a").error(0, 0, "my error"));
+        CHECK(a.trace == test_trace().error(0, 1, "my error").backtracked("a"));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::success);
@@ -103,7 +103,7 @@ TEST_CASE("dsl::peek_not()")
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().backtracked("ab").error(0, 2, "unexpected"));
+        CHECK(ab.trace == test_trace().error(0, 2, "unexpected").backtracked("ab"));
     }
     SUBCASE("as rule with .error")
     {
@@ -119,7 +119,7 @@ TEST_CASE("dsl::peek_not()")
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().backtracked("ab").error(0, 2, "my error"));
+        CHECK(ab.trace == test_trace().error(0, 2, "my error").backtracked("ab"));
     }
 
     SUBCASE("as branch")

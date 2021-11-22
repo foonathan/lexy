@@ -322,9 +322,12 @@ public:
 
         _detail::spc context(result._value, static_cast<Derived&>(*this).context());
 
-        lexy::branch_parser_for<Rule, decltype(context), Reader> parser{};
-        if (!parser.try_parse(context, _reader))
+        lexy::branch_parser_for<Rule, Reader> parser{};
+        if (!parser.try_parse(context.control_block, _reader))
+        {
+            parser.cancel(context);
             return false; // branch wasn't token
+        }
 
         auto success = parser.template finish<lexy::_detail::final_parser>(context, _reader);
         if (!success)

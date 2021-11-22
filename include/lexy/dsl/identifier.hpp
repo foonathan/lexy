@@ -120,12 +120,13 @@ struct _id : branch_base
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator end;
 
-        constexpr bool try_parse(Context&, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, const Reader& reader)
         {
             // Parse the pattern.
             lexy::token_parser_for<decltype(pattern()), Reader> parser(reader);
@@ -137,7 +138,11 @@ struct _id : branch_base
             return !_is_reserved(reader, reader.position(), end);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();

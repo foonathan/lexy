@@ -35,16 +35,22 @@ struct _del : rule_base
     static constexpr bool _loop(CloseParser& close, Context& context, Reader& reader, Sink& sink)
     {
         auto del_begin = reader.position();
-        while (!close.try_parse(context, reader))
+        while (!close.try_parse(context.control_block, reader))
         {
+            close.cancel(context);
+
             // Check for missing delimiter.
-            if (lexy::branch_parser_for<Limit, Context, Reader> limit{};
-                limit.try_parse(context, reader))
+            if (lexy::branch_parser_for<Limit, Reader> limit{};
+                limit.try_parse(context.control_block, reader))
             {
                 auto err
                     = lexy::error<Reader, lexy::missing_delimiter>(del_begin, reader.position());
                 context.on(_ev::error{}, err);
                 return false;
+            }
+            else
+            {
+                limit.cancel(context);
             }
 
             // Check for escape sequences.
@@ -88,7 +94,7 @@ struct _del : rule_base
             auto sink = context.value_callback().sink();
 
             // Parse characters until we have the closing delimiter.
-            lexy::branch_parser_for<Close, Context, Reader> close{};
+            lexy::branch_parser_for<Close, Reader> close{};
             if (!_loop(close, context, reader, sink))
                 return false;
 
@@ -194,10 +200,12 @@ struct _escape : _escape_base
         auto begin = reader.position();
 
         // Check whether we're having the initial escape character.
-        lexy::branch_parser_for<Escape, Context, Reader> token{};
-        if (!token.try_parse(context, reader))
-            // No need to call backtrack(), it's a token.
+        lexy::branch_parser_for<Escape, Reader> token{};
+        if (!token.try_parse(context.control_block, reader))
+        {
+            token.cancel(context);
             return false;
+        }
 
         // We do, so consume it.
         // It's a token, so this can't fail.
@@ -205,9 +213,12 @@ struct _escape : _escape_base
 
         // Try to parse the correct branch.
         auto try_parse_branch = [&](auto branch) {
-            lexy::branch_parser_for<decltype(branch), Context, Reader> parser{};
-            if (!parser.try_parse(context, reader))
+            lexy::branch_parser_for<decltype(branch), Reader> parser{};
+            if (!parser.try_parse(context.control_block, reader))
+            {
+                parser.cancel(context);
                 return false;
+            }
 
             // This might fail, but we don't care:
             // it will definitely consume the escape token, and everything that is a valid prefix.

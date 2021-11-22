@@ -24,10 +24,13 @@ struct _lst : _copy_base<Item>
             [[maybe_unused]] auto sep_begin = reader.position();
             if constexpr (!std::is_void_v<Sep>)
             {
-                lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
-                if (!sep.try_parse(context, reader))
+                lexy::branch_parser_for<typename Sep::rule, Reader> sep{};
+                if (!sep.try_parse(context.control_block, reader))
+                {
                     // We didn't have a separator, list is definitely finished.
+                    sep.cancel(context);
                     break;
+                }
 
                 if (!sep.template finish<lexy::sink_parser>(context, reader, sink))
                     return false;
@@ -38,11 +41,12 @@ struct _lst : _copy_base<Item>
             if constexpr (lexy::is_branch_rule<Item>)
             {
                 // It's a branch, so try parsing it to detect loop exit.
-                lexy::branch_parser_for<Item, Context, Reader> item{};
-                if (!item.try_parse(context, reader))
+                lexy::branch_parser_for<Item, Reader> item{};
+                if (!item.try_parse(context.control_block, reader))
                 {
                     // We don't have a next item, exit the loop.
                     // If necessary, we report a trailing separator.
+                    item.cancel(context);
                     if constexpr (!std::is_void_v<Sep>)
                         Sep::report_trailing_error(context, reader, sep_begin, sep_end);
                     break;
@@ -86,18 +90,25 @@ struct _lst : _copy_base<Item>
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Item, Context, Reader> item;
+        lexy::branch_parser_for<Item, Reader> item;
 
-        constexpr bool try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader& reader)
         {
             // We parse a list if we can parse its first item.
-            return item.try_parse(context, reader);
+            return item.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            return item.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // At this point, we have a list so construct a sink.
@@ -178,9 +189,10 @@ struct _lstt : rule_base
             switch (state)
             {
             case _state::terminator:
-                if (term.try_parse(context, reader))
+                if (term.try_parse(context.control_block, reader))
                     // We had the terminator, so the list is done.
                     return true;
+                term.cancel(context);
 
                 // Parse the following list separator next.
                 state = _state::separator;
@@ -205,8 +217,8 @@ struct _lstt : rule_base
 
                         if constexpr (lexy::is_branch_rule<Item>)
                         {
-                            lexy::branch_parser_for<Item, Context, Reader> item{};
-                            if (item.try_parse(context, reader)
+                            lexy::branch_parser_for<Item, Reader> item{};
+                            if (item.try_parse(context.control_block, reader)
                                 && item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue after an item has been parsed.
@@ -216,6 +228,7 @@ struct _lstt : rule_base
                             else
                             {
                                 // Not an item, recover.
+                                item.cancel(context);
                                 state = _state::recovery;
                                 break;
                             }
@@ -251,7 +264,7 @@ struct _lstt : rule_base
                 {
                     // We need to check whether we're having a trailing separator by checking
                     // for a terminating one.
-                    if (term.try_parse(context, reader))
+                    if (term.try_parse(context.control_block, reader))
                     {
                         // We had the terminator, so the list is done.
                         // Report a trailing separator error if necessary.
@@ -290,8 +303,8 @@ struct _lstt : rule_base
                     {
                         sep_pos = reader.position();
 
-                        lexy::branch_parser_for<typename Sep::rule, Context, Reader> sep{};
-                        if (sep.try_parse(context, reader))
+                        lexy::branch_parser_for<typename Sep::rule, Reader> sep{};
+                        if (sep.try_parse(context.control_block, reader))
                         {
                             context.on(_ev::recovery_finish{}, reader.position());
                             if (sep.template finish<lexy::sink_parser>(context, reader, sink))
@@ -307,6 +320,10 @@ struct _lstt : rule_base
                                 break;
                             }
                         }
+                        else
+                        {
+                            sep.cancel(context);
+                        }
                     }
                     // When we don't have a separator, but the item is a branch, we also succeed
                     // when we reach the next item.
@@ -316,8 +333,8 @@ struct _lstt : rule_base
                     // "beginning of the next one".
                     else if constexpr (lexy::is_branch_rule<Item>)
                     {
-                        lexy::branch_parser_for<Item, Context, Reader> item{};
-                        if (item.try_parse(context, reader))
+                        lexy::branch_parser_for<Item, Reader> item{};
+                        if (item.try_parse(context.control_block, reader))
                         {
                             context.on(_ev::recovery_finish{}, reader.position());
                             if (item.template finish<lexy::sink_parser>(context, reader, sink))
@@ -333,26 +350,37 @@ struct _lstt : rule_base
                                 break;
                             }
                         }
+                        else
+                        {
+                            item.cancel(context);
+                        }
                     }
 
                     // At this point, we couldn't detect the next item.
                     // Recovery succeeds when we reach the terminator.
-                    if (term.try_parse(context, reader))
+                    if (term.try_parse(context.control_block, reader))
                     {
                         // We're now done with the entire list.
                         context.on(_ev::recovery_finish{}, reader.position());
                         return true;
                     }
+                    else
+                    {
+                        term.cancel(context);
+                    }
 
                     // At this point, we couldn't detect the next item or a terminator.
                     // Recovery fails when we reach the limit.
-                    lexy::branch_parser_for<decltype(Recover{}.get_limit()), Context, Reader>
-                        limit{};
-                    if (limit.try_parse(context, reader))
+                    lexy::branch_parser_for<decltype(Recover{}.get_limit()), Reader> limit{};
+                    if (limit.try_parse(context.control_block, reader))
                     {
                         // Recovery has failed, propagate error.
                         context.on(_ev::recovery_cancel{}, reader.position());
                         return false;
+                    }
+                    else
+                    {
+                        limit.cancel(context);
                     }
 
                     // Consume one code unit and try again.
@@ -374,8 +402,8 @@ struct _lstt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_parser_for<Term, Context, Reader> term{};
-            auto                                           sink = context.value_callback().sink();
+            lexy::branch_parser_for<Term, Reader> term{};
+            auto                                  sink = context.value_callback().sink();
 
             // Parse initial item.
             using item_parser = lexy::parser_for<Item, lexy::sink_parser>;

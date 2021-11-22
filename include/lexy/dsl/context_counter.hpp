@@ -53,7 +53,7 @@ struct _ctx_cadd : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            _ctx_counter<Id>::get(context) += Delta;
+            _ctx_counter<Id>::get(context.control_block) += Delta;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -72,24 +72,30 @@ struct _ctx_cpush : _copy_base<Rule>
             auto end    = reader.position();
             auto length = lexy::_detail::range_size(begin, end);
 
-            _ctx_counter<Id>::get(context) += int(length) * Sign;
+            _ctx_counter<Id>::get(context.control_block) += int(length) * Sign;
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        lexy::branch_parser_for<Rule, Reader> rule;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            // Forward to the rule.
-            return rule.try_parse(context, reader);
+            return rule.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            rule.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Forward to the rule, but remember the current reader position.
@@ -114,15 +120,20 @@ struct _ctx_cpush : _copy_base<Rule>
 template <typename Id, int Value>
 struct _ctx_cis : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        constexpr bool try_parse(Context& context, const Reader&)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader&)
         {
-            return _ctx_counter<Id>::get(context) == Value;
+            return _ctx_counter<Id>::get(cb) == Value;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -143,7 +154,7 @@ struct _ctx_cvalue : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                     _ctx_counter<Id>::get(context));
+                                     _ctx_counter<Id>::get(context.control_block));
         }
     };
 };
@@ -153,16 +164,21 @@ struct _ctx_ceq;
 template <typename H, typename... T>
 struct _ctx_ceq<H, T...> : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        constexpr bool try_parse(Context& context, const Reader&)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader&)
         {
-            auto value = _ctx_counter<H>::get(context);
-            return ((value == _ctx_counter<T>::get(context)) && ...);
+            auto value = _ctx_counter<H>::get(cb);
+            return ((value == _ctx_counter<T>::get(cb)) && ...);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -175,8 +191,8 @@ struct _ctx_ceq<H, T...> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto value = _ctx_counter<H>::get(context);
-            if (((value != _ctx_counter<T>::get(context)) || ...))
+            auto value = _ctx_counter<H>::get(context.control_block);
+            if (((value != _ctx_counter<T>::get(context.control_block)) || ...))
             {
                 auto err = lexy::error<Reader, lexy::unequal_counts>(reader.position());
                 context.on(_ev::error{}, err);

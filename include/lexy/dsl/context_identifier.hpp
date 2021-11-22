@@ -53,12 +53,12 @@ struct _ctx_icap : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // The last argument will be a lexeme.
-            _ctx_id<Id, Reader>::get(context) = (args, ...);
+            _ctx_id<Id, Reader>::get(context.control_block) = (args, ...);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
-    template <typename Context, typename Reader>
-    using bp = lexy::continuation_branch_parser<Identifier, Context, Reader, _pc>;
+    template <typename Reader>
+    using bp = lexy::continuation_branch_parser<Identifier, Reader, _pc>;
     template <typename NextParser>
     using p = lexy::parser_for<Identifier, _pc<NextParser>>;
 };
@@ -71,12 +71,13 @@ struct _ctx_irem : branch_base
     // as it needs to match a previously parsed identifier, which wasn't reserved.
     using _pattern = decltype(Identifier{}.pattern());
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator end;
 
-        constexpr bool try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader& reader)
         {
             // Parse the pattern.
             lexy::token_parser_for<_pattern, Reader> parser(reader);
@@ -86,10 +87,14 @@ struct _ctx_irem : branch_base
 
             // The two lexemes need to be equal.
             auto lexeme = lexy::lexeme<Reader>(reader.position(), end);
-            return lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(context), lexeme);
+            return lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(cb), lexeme);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish parsing the token.
@@ -110,7 +115,8 @@ struct _ctx_irem : branch_base
             LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, PrevArgs&&... args,
                                                lexy::lexeme<Reader> lexeme)
             {
-                if (!lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(context), lexeme))
+                if (!lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(context.control_block),
+                                                  lexeme))
                 {
                     // The lexemes weren't equal.
                     using tag = lexy::_detail::type_or<Tag, lexy::different_identifier>;

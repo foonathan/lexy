@@ -388,12 +388,13 @@ struct _int : _copy_base<Token>
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator end;
 
-        constexpr auto try_parse(Context&, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
         {
             lexy::token_parser_for<Token, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -401,7 +402,11 @@ struct _int : _copy_base<Token>
             return result;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();

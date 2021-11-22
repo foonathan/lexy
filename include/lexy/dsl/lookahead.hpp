@@ -25,12 +25,16 @@ namespace lexyd
 template <typename Needle, typename End, typename Tag>
 struct _look : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        static constexpr bool try_parse(Context& context, Reader reader)
+        typename Reader::iterator begin;
+        typename Reader::iterator end;
+
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
-            auto begin = reader.position();
+            begin = reader.position();
 
             auto result = [&] {
                 while (true)
@@ -52,17 +56,20 @@ struct _look : branch_base
                 return false; // unreachable
             }();
 
-            auto end = reader.position();
-
-            // Report that we've backtracked.
-            context.on(_ev::backtracked{}, begin, end);
-
+            end = reader.position();
             return result;
         }
 
-        template <typename NextParser, typename... Args>
-        LEXY_PARSER_FUNC static bool finish(Context& context, Reader& reader, Args&&... args)
+        template <typename Context>
+        constexpr void cancel(Context& context)
         {
+            context.on(_ev::backtracked{}, begin, end);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            context.on(_ev::backtracked{}, begin, end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -73,15 +80,18 @@ struct _look : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            if (!bp<Context, Reader>::try_parse(context, reader))
+            bp<Reader> impl{};
+            if (!impl.try_parse(context.control_block, reader))
             {
                 // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::lookahead_failure>;
-                auto err  = lexy::error<Reader, tag>(reader.position());
+                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end);
                 context.on(_ev::error{}, err);
+
                 // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
+            context.on(_ev::backtracked{}, impl.begin, impl.end);
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };

@@ -20,8 +20,8 @@ struct _br : _copy_base<Condition>
 
     // We parse Condition and then seq<R...>.
     // Condition's try_parse() checks the branch condition, which is what we want.
-    template <typename Context, typename Reader>
-    using bp = lexy::continuation_branch_parser<Condition, Context, Reader, _pc>;
+    template <typename Reader>
+    using bp = lexy::continuation_branch_parser<Condition, Reader, _pc>;
 
     template <typename NextParser>
     using p = lexy::parser_for<_seq_impl<Condition, R...>, NextParser>;
@@ -109,8 +109,8 @@ struct _else : unconditional_branch_base
     template <typename NextParser>
     using p = NextParser;
 
-    template <typename Context, typename Reader>
-    using bp = lexy::unconditional_branch_parser<_else, Context, Reader>;
+    template <typename Reader>
+    using bp = lexy::unconditional_branch_parser<_else, Reader>;
 };
 struct _else_dsl
 {

@@ -40,7 +40,7 @@ struct _ctx_fset : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            _ctx_flag<Id>::get(context) = Value;
+            _ctx_flag<Id>::get(context.control_block) = Value;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -55,7 +55,7 @@ struct _ctx_ftoggle : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto& flag = _ctx_flag<Id>::get(context);
+            auto& flag = _ctx_flag<Id>::get(context.control_block);
             flag       = !flag;
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
@@ -65,15 +65,20 @@ struct _ctx_ftoggle : rule_base
 template <typename Id, bool Value>
 struct _ctx_fis : branch_base
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        constexpr bool try_parse(Context& context, const Reader&)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader&)
         {
-            return _ctx_flag<Id>::get(context) == Value;
+            return _ctx_flag<Id>::get(cb) == Value;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -94,7 +99,7 @@ struct _ctx_fvalue : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                     _ctx_flag<Id>::get(context));
+                                     _ctx_flag<Id>::get(context.control_block));
         }
     };
 };

@@ -204,22 +204,26 @@ struct _wsn : _copy_base<Rule>
         }
     };
 
-    template <typename Context, typename Reader,
-              typename Whitespace = lexy::_detail::context_whitespace<Context>>
+    template <typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        lexy::branch_parser_for<Rule, Reader> rule;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            // Temporary disable whitespace skipping to parse the rule.
-            context.control_block->enable_whitespace_skipping = false;
-            auto result                                       = rule.try_parse(context, reader);
-            context.control_block->enable_whitespace_skipping = true;
-            return result;
+            // Note that this can't skip whitespace as there is no way to access the whitespace
+            // rule.
+            return rule.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            rule.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the rule with whitespace skipping disabled.
@@ -227,11 +231,6 @@ struct _wsn : _copy_base<Rule>
             return rule.template finish<_pc<NextParser>>(context, reader, LEXY_FWD(args)...);
         }
     };
-
-    // Optimization: if there is no whitespace rule, we just parse Rule directly.
-    template <typename Context, typename Reader>
-    struct bp<Context, Reader, void> : lexy::branch_parser_for<Rule, Context, Reader>
-    {};
 
     template <typename NextParser>
     struct p

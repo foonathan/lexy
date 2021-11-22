@@ -62,13 +62,16 @@ struct _opt : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::branch_parser_for<Branch, Context, Reader> branch{};
-            if (branch.try_parse(context, reader))
+            lexy::branch_parser_for<Branch, Reader> branch{};
+            if (branch.try_parse(context.control_block, reader))
                 // We take the branch.
                 return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
             else
+            {
                 // We don't take the branch and produce a nullopt.
+                branch.cancel(context);
                 return NextParser::parse(context, reader, LEXY_FWD(args)..., lexy::nullopt{});
+            }
         }
     };
 };
@@ -99,11 +102,12 @@ struct _optt : rule_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Try to parse the terminator.
-            lexy::branch_parser_for<Term, Context, Reader> term{};
-            if (term.try_parse(context, reader))
+            lexy::branch_parser_for<Term, Reader> term{};
+            if (term.try_parse(context.control_block, reader))
                 // We had the terminator, so produce nullopt.
                 return term.template finish<NextParser>(context, reader, LEXY_FWD(args)...,
                                                         lexy::nullopt{});
+            term.cancel(context);
 
             // We didn't have the terminator, so we parse the rule.
             using parser = lexy::parser_for<Rule, NextParser>;

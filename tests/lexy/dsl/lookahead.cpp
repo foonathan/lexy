@@ -33,11 +33,11 @@ TEST_CASE("dsl::lookahead()")
 
         auto nothing = LEXY_VERIFY("abc");
         CHECK(nothing.status == test_result::recovered_error);
-        CHECK(nothing.trace == test_trace().backtracked("abc").error(0, 0, "lookahead failure"));
+        CHECK(nothing.trace == test_trace().error(0, 3, "lookahead failure").backtracked("abc"));
         auto nothing_limit = LEXY_VERIFY("abc!def");
         CHECK(nothing_limit.status == test_result::recovered_error);
         CHECK(nothing_limit.trace
-              == test_trace().backtracked("abc!").error(0, 0, "lookahead failure"));
+              == test_trace().error(0, 4, "lookahead failure").backtracked("abc!"));
 
         auto something = LEXY_VERIFY("abc.");
         CHECK(something.status == test_result::success);
@@ -49,7 +49,7 @@ TEST_CASE("dsl::lookahead()")
         auto limit_something = LEXY_VERIFY("abc!def.");
         CHECK(limit_something.status == test_result::recovered_error);
         CHECK(limit_something.trace
-              == test_trace().backtracked("abc!").error(0, 0, "lookahead failure"));
+              == test_trace().error(0, 4, "lookahead failure").backtracked("abc!"));
     }
     SUBCASE("as rule with .error")
     {
@@ -61,10 +61,10 @@ TEST_CASE("dsl::lookahead()")
 
         auto nothing = LEXY_VERIFY("abc");
         CHECK(nothing.status == test_result::recovered_error);
-        CHECK(nothing.trace == test_trace().backtracked("abc").error(0, 0, "my error"));
+        CHECK(nothing.trace == test_trace().error(0, 3, "my error").backtracked("abc"));
         auto nothing_limit = LEXY_VERIFY("abc!def");
         CHECK(nothing_limit.status == test_result::recovered_error);
-        CHECK(nothing_limit.trace == test_trace().backtracked("abc!").error(0, 0, "my error"));
+        CHECK(nothing_limit.trace == test_trace().error(0, 4, "my error").backtracked("abc!"));
 
         auto something = LEXY_VERIFY("abc.");
         CHECK(something.status == test_result::success);
@@ -75,7 +75,7 @@ TEST_CASE("dsl::lookahead()")
 
         auto limit_something = LEXY_VERIFY("abc!def.");
         CHECK(limit_something.status == test_result::recovered_error);
-        CHECK(limit_something.trace == test_trace().backtracked("abc!").error(0, 0, "my error"));
+        CHECK(limit_something.trace == test_trace().error(0, 4, "my error").backtracked("abc!"));
     }
     SUBCASE("as branch")
     {

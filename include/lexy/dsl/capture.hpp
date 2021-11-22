@@ -13,12 +13,13 @@ namespace lexyd
 template <typename Token>
 struct _capt : _copy_base<Token>
 {
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator end;
 
-        constexpr auto try_parse(Context&, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
         {
             lexy::token_parser_for<Token, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -26,7 +27,11 @@ struct _capt : _copy_base<Token>
             return result;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
@@ -74,18 +79,24 @@ struct _cap : _copy_base<Rule>
         }
     };
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
-        lexy::branch_parser_for<Rule, Context, Reader> rule;
+        lexy::branch_parser_for<Rule, Reader> rule;
 
-        constexpr auto try_parse(Context& context, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
         {
-            // Forward to the rule.
-            return rule.try_parse(context, reader);
+            return rule.try_parse(cb, reader);
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            rule.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Forward to the rule, but remember the current reader position.

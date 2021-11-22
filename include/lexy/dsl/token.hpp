@@ -33,12 +33,13 @@ struct token_base : _token_base, BranchKind
 {
     using token_type = Derived;
 
-    template <typename Context, typename Reader>
+    template <typename Reader>
     struct bp
     {
         typename Reader::iterator end;
 
-        constexpr auto try_parse(const Context&, const Reader& reader)
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
         {
             lexy::token_parser_for<Derived, Reader> parser(reader);
             auto                                    result = parser.try_parse(reader);
@@ -46,7 +47,11 @@ struct token_base : _token_base, BranchKind
             return result;
         }
 
-        template <typename NextParser, typename... Args>
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             context.on(_ev::token{}, Derived{}, reader.position(), end);
