@@ -38,6 +38,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
   Its `.string()` is `Str`, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 The macro `LEXY_LIT(Str)` is equivalent to `lit<Str>`, except that it also works on older compilers that do not support C++20's extended NTTPs.
 Use this instead of `lit<Str>` if you need to support them.
@@ -96,6 +98,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
   Its `.string()` is the string of the bytes converted to the correct character type, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 TIP: Use {{% docref "lexy::dsl::bom" %}} to match a byte-order mark.
 

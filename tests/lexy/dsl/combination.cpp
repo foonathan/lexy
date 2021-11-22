@@ -21,14 +21,14 @@ TEST_CASE("dsl::combination()")
 
     auto make_trace = [](const char* first, const char* second, const char* third) {
         return test_trace()
-            .token(first)
-            .token(first)
+            .literal(first)
+            .literal(first)
             .position()
-            .token(second)
-            .token(second)
+            .literal(second)
+            .literal(second)
             .position()
-            .token(third)
-            .token(third)
+            .literal(third)
+            .literal(third)
             .position();
     };
 
@@ -75,15 +75,15 @@ TEST_CASE("dsl::combination()")
 
         auto branch_error = LEXY_VERIFY("abbcc");
         CHECK(branch_error.status == test_result::fatal_error);
-        CHECK(branch_error.trace == test_trace().token("a").expected_literal(1, "a", 0).cancel());
+        CHECK(branch_error.trace == test_trace().literal("a").expected_literal(1, "a", 0).cancel());
 
         auto ab       = LEXY_VERIFY("aabb");
         auto ab_trace = test_trace()
-                            .token("a")
-                            .token("a")
+                            .literal("a")
+                            .literal("a")
                             .position()
-                            .token("b")
-                            .token("b")
+                            .literal("b")
+                            .literal("b")
                             .position()
                             .error(4, 4, "exhausted choice")
                             .cancel();
@@ -92,36 +92,36 @@ TEST_CASE("dsl::combination()")
 
         auto aabc       = LEXY_VERIFY("aaaabbcc");
         auto aabc_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(2, 4, "combination duplicate")
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(aabc.status == test_result::recovered_error);
         CHECK(aabc.value == 3);
         CHECK(aabc.trace == aabc_trace);
         auto abac       = LEXY_VERIFY("aabbaacc");
         auto abac_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(4, 6, "combination duplicate")
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(abac.status == test_result::recovered_error);
         CHECK(abac.value == 3);
@@ -163,18 +163,18 @@ TEST_CASE("dsl::combination()")
 
         auto aabc       = LEXY_VERIFY("aaaabbcc");
         auto aabc_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(2, 4, "my error")
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(aabc.status == test_result::recovered_error);
         CHECK(aabc.value == 3);
@@ -196,14 +196,14 @@ TEST_CASE("dsl::partial_combination()")
 
     auto make_trace = [](const char* first, const char* second, const char* third) {
         return test_trace()
-            .token(first)
-            .token(first)
+            .literal(first)
+            .literal(first)
             .position()
-            .token(second)
-            .token(second)
+            .literal(second)
+            .literal(second)
             .position()
-            .token(third)
-            .token(third)
+            .literal(third)
+            .literal(third)
             .position();
     };
 
@@ -252,47 +252,52 @@ TEST_CASE("dsl::partial_combination()")
 
         auto branch_error = LEXY_VERIFY("abbcc");
         CHECK(branch_error.status == test_result::fatal_error);
-        CHECK(branch_error.trace == test_trace().token("a").expected_literal(1, "a", 0).cancel());
+        CHECK(branch_error.trace == test_trace().literal("a").expected_literal(1, "a", 0).cancel());
 
-        auto ab = LEXY_VERIFY("aabb");
-        auto ab_trace
-            = test_trace().token("a").token("a").position().token("b").token("b").position();
+        auto ab       = LEXY_VERIFY("aabb");
+        auto ab_trace = test_trace()
+                            .literal("a")
+                            .literal("a")
+                            .position()
+                            .literal("b")
+                            .literal("b")
+                            .position();
         CHECK(ab.status == test_result::success);
         CHECK(ab.value == 2);
         CHECK(ab.trace == ab_trace);
 
         auto aabc       = LEXY_VERIFY("aaaabbcc");
         auto aabc_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(2, 4, "combination duplicate")
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(aabc.status == test_result::recovered_error);
         CHECK(aabc.value == 3);
         CHECK(aabc.trace == aabc_trace);
         auto abac       = LEXY_VERIFY("aabbaacc");
         auto abac_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(4, 6, "combination duplicate")
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(abac.status == test_result::recovered_error);
         CHECK(abac.value == 3);
@@ -319,18 +324,18 @@ TEST_CASE("dsl::partial_combination()")
 
         auto aabc       = LEXY_VERIFY("aaaabbcc");
         auto aabc_trace = test_trace()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
-                              .token("a")
-                              .token("a")
+                              .literal("a")
+                              .literal("a")
                               .position()
                               .error(2, 4, "my error")
-                              .token("b")
-                              .token("b")
+                              .literal("b")
+                              .literal("b")
                               .position()
-                              .token("c")
-                              .token("c")
+                              .literal("c")
+                              .literal("c")
                               .position();
         CHECK(aabc.status == test_result::recovered_error);
         CHECK(aabc.value == 3);

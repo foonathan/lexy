@@ -36,6 +36,6 @@ TEST_CASE("dsl::argv_separator")
 
     auto argv_sep = LEXY_VERIFY(lexy::argv_input(lexy::_detail::next(argv_begin, 3), argv_end));
     CHECK(argv_sep.status == test_result::success);
-    CHECK(argv_sep.trace == test_trace().token("\\0"));
+    CHECK(argv_sep.trace == test_trace().literal("\\0"));
 }
 

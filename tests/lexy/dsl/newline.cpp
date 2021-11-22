@@ -23,10 +23,10 @@ TEST_CASE("dsl::newline")
 
     auto n = LEXY_VERIFY("\n");
     CHECK(n.status == test_result::success);
-    CHECK(n.trace == test_trace().token("\\n"));
+    CHECK(n.trace == test_trace().token("newline", "\\n"));
     auto rn = LEXY_VERIFY("\r\n");
     CHECK(rn.status == test_result::success);
-    CHECK(rn.trace == test_trace().token("\\r\\n"));
+    CHECK(rn.trace == test_trace().token("newline", "\\r\\n"));
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
@@ -34,17 +34,17 @@ TEST_CASE("dsl::newline")
 
     auto nr = LEXY_VERIFY("\n\r");
     CHECK(nr.status == test_result::success);
-    CHECK(nr.trace == test_trace().token("\\n"));
+    CHECK(nr.trace == test_trace().token("newline", "\\n"));
     auto nn = LEXY_VERIFY("\n\n");
     CHECK(nn.status == test_result::success);
-    CHECK(nn.trace == test_trace().token("\\n"));
+    CHECK(nn.trace == test_trace().token("newline", "\\n"));
     auto nrn = LEXY_VERIFY("\n\r\n");
     CHECK(nrn.status == test_result::success);
-    CHECK(nrn.trace == test_trace().token("\\n"));
+    CHECK(nrn.trace == test_trace().token("newline", "\\n"));
 
     auto utf16 = LEXY_VERIFY(u"\r\n");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("\\r\\n"));
+    CHECK(utf16.trace == test_trace().token("newline", "\\r\\n"));
 }
 
 TEST_CASE("dsl::eol")

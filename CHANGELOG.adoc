@@ -3,6 +3,11 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-11-23
+
+Added more pre-defined token kinds: for example, tokens created by `LEXY_LIT()` now have their own literal token kind.
+This breaks code that does not use user-defined token kinds and does matching on `lexy::parse_tree`.
+
 == 2021-10-13
 
 * Terminator rules are no longer branch rules; this behavior was somewhat confusing.

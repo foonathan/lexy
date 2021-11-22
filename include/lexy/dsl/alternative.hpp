@@ -100,7 +100,7 @@ struct _malt : token_base<_malt<Tokens...>>
 
                     // Update end to longest match.
                     end    = lexy::_detail::max_range_end(reader.position(), end,
-                                                       local_reader.position());
+                                                            local_reader.position());
                     result = true;
                 };
 
@@ -197,6 +197,25 @@ constexpr auto operator/(_alt<R...>, _alt<S...>)
     return _alt<R..., S...>{};
 }
 } // namespace lexyd
+
+namespace lexy
+{
+template <typename H, typename... T>
+constexpr auto token_kind_of<lexy::dsl::_alt<H, T...>> = [] {
+    constexpr auto is_equal = [](auto a, auto b) {
+        if constexpr (std::is_same_v<decltype(a), decltype(b)>)
+            return a == b;
+        else
+            return false;
+    };
+
+    constexpr auto kind = lexy::token_kind_of<H>;
+    if constexpr ((is_equal(kind, lexy::token_kind_of<T>) && ...))
+        return kind;
+    else
+        return lexy::unknown_token_kind;
+}();
+} // namespace lexy
 
 #endif // LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
 

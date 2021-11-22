@@ -278,5 +278,16 @@ struct _cp : token_base<_cp<Predicate>>
 constexpr auto code_point = _cp<void>{};
 } // namespace lexyd
 
+namespace lexy
+{
+template <char32_t Cp>
+constexpr auto token_kind_of<lexy::dsl::_cpl<Cp>> = lexy::literal_token_kind;
+
+// The void-version without predicate logically matches any input (modulo encoding errors, of
+// course).
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind;
+} // namespace lexy
+
 #endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
 

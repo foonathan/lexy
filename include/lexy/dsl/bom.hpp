@@ -91,5 +91,11 @@ template <typename Encoding, lexy::encoding_endianness Endianness>
 inline constexpr auto bom = _bom<Encoding, Endianness>{};
 } // namespace lexyd
 
+namespace lexy
+{
+template <typename Encoding, lexy::encoding_endianness Endianness>
+constexpr auto token_kind_of<lexy::dsl::_bom<Encoding, Endianness>> = lexy::literal_token_kind;
+}
+
 #endif // LEXY_DSL_BOM_HPP_INCLUDED
 

@@ -126,10 +126,10 @@ TEST_CASE("dsl::zero")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto zerozero = LEXY_VERIFY("00");
     CHECK(zerozero.status == test_result::success);
-    CHECK(zerozero.trace == test_trace().token("0"));
+    CHECK(zerozero.trace == test_trace().token("digits", "0"));
 
     auto nine = LEXY_VERIFY("9");
     CHECK(nine.status == test_result::fatal_error);
@@ -137,7 +137,7 @@ TEST_CASE("dsl::zero")
 
     auto utf16 = LEXY_VERIFY(u"0");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("0"));
+    CHECK(utf16.trace == test_trace().token("digits", "0"));
 }
 
 TEST_CASE("dsl::digit")
@@ -154,10 +154,10 @@ TEST_CASE("dsl::digit")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto six = LEXY_VERIFY("6");
     CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("6"));
+    CHECK(six.trace == test_trace().token("digits", "6"));
 
     auto nine = LEXY_VERIFY("9");
     CHECK(nine.status == test_result::fatal_error);
@@ -165,11 +165,11 @@ TEST_CASE("dsl::digit")
 
     auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("3"));
+    CHECK(three_seven.trace == test_trace().token("digits", "3"));
 
     auto utf16 = LEXY_VERIFY(u"0");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("0"));
+    CHECK(utf16.trace == test_trace().token("digits", "0"));
 }
 
 TEST_CASE("dsl::digits<>")
@@ -185,24 +185,24 @@ TEST_CASE("dsl::digits<>")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto six = LEXY_VERIFY("6");
     CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("6"));
+    CHECK(six.trace == test_trace().token("digits", "6"));
     auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("37"));
+    CHECK(three_seven.trace == test_trace().token("digits", "37"));
     auto one_two_three = LEXY_VERIFY("123");
     CHECK(one_two_three.status == test_result::success);
-    CHECK(one_two_three.trace == test_trace().token("123"));
+    CHECK(one_two_three.trace == test_trace().token("digits", "123"));
 
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::success);
-    CHECK(zero_zero_seven.trace == test_trace().token("007"));
+    CHECK(zero_zero_seven.trace == test_trace().token("digits", "007"));
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("11"));
+    CHECK(utf16.trace == test_trace().token("digits", "11"));
 }
 
 TEST_CASE("dsl::digits<>.no_leading_zero()")
@@ -218,16 +218,16 @@ TEST_CASE("dsl::digits<>.no_leading_zero()")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto six = LEXY_VERIFY("6");
     CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("6"));
+    CHECK(six.trace == test_trace().token("digits", "6"));
     auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("37"));
+    CHECK(three_seven.trace == test_trace().token("digits", "37"));
     auto one_two_three = LEXY_VERIFY("123");
     CHECK(one_two_three.status == test_result::success);
-    CHECK(one_two_three.trace == test_trace().token("123"));
+    CHECK(one_two_three.trace == test_trace().token("digits", "123"));
 
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::fatal_error);
@@ -236,7 +236,7 @@ TEST_CASE("dsl::digits<>.no_leading_zero()")
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("11"));
+    CHECK(utf16.trace == test_trace().token("digits", "11"));
 }
 
 TEST_CASE("dsl::digits<>.sep()")
@@ -252,24 +252,24 @@ TEST_CASE("dsl::digits<>.sep()")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto six = LEXY_VERIFY("6");
     CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("6"));
+    CHECK(six.trace == test_trace().token("digits", "6"));
     auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("37"));
+    CHECK(three_seven.trace == test_trace().token("digits", "37"));
     auto one_two_three = LEXY_VERIFY("123");
     CHECK(one_two_three.status == test_result::success);
-    CHECK(one_two_three.trace == test_trace().token("123"));
+    CHECK(one_two_three.trace == test_trace().token("digits", "123"));
 
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::success);
-    CHECK(zero_zero_seven.trace == test_trace().token("007"));
+    CHECK(zero_zero_seven.trace == test_trace().token("digits", "007"));
 
     auto with_sep = LEXY_VERIFY("1_2_3");
     CHECK(with_sep.status == test_result::success);
-    CHECK(with_sep.trace == test_trace().token("1_2_3"));
+    CHECK(with_sep.trace == test_trace().token("digits", "1_2_3"));
 
     auto leading_sep = LEXY_VERIFY("_1");
     CHECK(leading_sep.status == test_result::fatal_error);
@@ -281,7 +281,7 @@ TEST_CASE("dsl::digits<>.sep()")
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("11"));
+    CHECK(utf16.trace == test_trace().token("digits", "11"));
 }
 
 TEST_CASE("dsl::digits<>.sep().no_leading_zero")
@@ -298,16 +298,16 @@ TEST_CASE("dsl::digits<>.sep().no_leading_zero")
 
     auto zero = LEXY_VERIFY("0");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("0"));
+    CHECK(zero.trace == test_trace().token("digits", "0"));
     auto six = LEXY_VERIFY("6");
     CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("6"));
+    CHECK(six.trace == test_trace().token("digits", "6"));
     auto three_seven = LEXY_VERIFY("37");
     CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("37"));
+    CHECK(three_seven.trace == test_trace().token("digits", "37"));
     auto one_two_three = LEXY_VERIFY("123");
     CHECK(one_two_three.status == test_result::success);
-    CHECK(one_two_three.trace == test_trace().token("123"));
+    CHECK(one_two_three.trace == test_trace().token("digits", "123"));
 
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::fatal_error);
@@ -320,7 +320,7 @@ TEST_CASE("dsl::digits<>.sep().no_leading_zero")
 
     auto with_sep = LEXY_VERIFY("1_2_3");
     CHECK(with_sep.status == test_result::success);
-    CHECK(with_sep.trace == test_trace().token("1_2_3"));
+    CHECK(with_sep.trace == test_trace().token("digits", "1_2_3"));
 
     auto leading_sep = LEXY_VERIFY("_1");
     CHECK(leading_sep.status == test_result::fatal_error);
@@ -332,7 +332,7 @@ TEST_CASE("dsl::digits<>.sep().no_leading_zero")
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("11"));
+    CHECK(utf16.trace == test_trace().token("digits", "11"));
 }
 
 TEST_CASE("digit separators")
@@ -363,10 +363,10 @@ TEST_CASE("dsl::n_digits")
 
     auto three = LEXY_VERIFY("123");
     CHECK(three.status == test_result::success);
-    CHECK(three.trace == test_trace().token("123"));
+    CHECK(three.trace == test_trace().token("digits", "123"));
     auto four = LEXY_VERIFY("1234");
     CHECK(four.status == test_result::success);
-    CHECK(four.trace == test_trace().token("123"));
+    CHECK(four.trace == test_trace().token("digits", "123"));
 }
 
 TEST_CASE("dsl::n_digits.sep()")
@@ -391,14 +391,14 @@ TEST_CASE("dsl::n_digits.sep()")
 
     auto three = LEXY_VERIFY("123");
     CHECK(three.status == test_result::success);
-    CHECK(three.trace == test_trace().token("123"));
+    CHECK(three.trace == test_trace().token("digits", "123"));
     auto four = LEXY_VERIFY("1234");
     CHECK(four.status == test_result::success);
-    CHECK(four.trace == test_trace().token("123"));
+    CHECK(four.trace == test_trace().token("digits", "123"));
 
     auto with_sep = LEXY_VERIFY("1_2_3");
     CHECK(with_sep.status == test_result::success);
-    CHECK(with_sep.trace == test_trace().token("1_2_3"));
+    CHECK(with_sep.trace == test_trace().token("digits", "1_2_3"));
 
     auto leading_sep = LEXY_VERIFY("_1");
     CHECK(leading_sep.status == test_result::fatal_error);

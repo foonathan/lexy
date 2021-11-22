@@ -98,7 +98,7 @@ TEST_CASE("dsl::context_counter")
         auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 14);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
@@ -106,7 +106,7 @@ TEST_CASE("dsl::context_counter")
         auto whitespace = LEXY_VERIFY_RUNTIME_P(production, "abc...");
         CHECK(whitespace.status == test_result::success);
         CHECK(whitespace.value == 17);
-        CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
+        CHECK(whitespace.trace == test_trace().literal("abc").whitespace("..."));
     }
     SUBCASE(".pop()")
     {
@@ -119,7 +119,7 @@ TEST_CASE("dsl::context_counter")
         auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 8);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
@@ -127,7 +127,7 @@ TEST_CASE("dsl::context_counter")
         auto whitespace = LEXY_VERIFY_RUNTIME_P(production, "abc...");
         CHECK(whitespace.status == test_result::success);
         CHECK(whitespace.value == 5);
-        CHECK(whitespace.trace == test_trace().token("abc").whitespace("..."));
+        CHECK(whitespace.trace == test_trace().literal("abc").whitespace("..."));
     }
 
     SUBCASE(".is<42>() true")
@@ -210,33 +210,39 @@ TEST_CASE("dsl::equal_counts()")
 
         auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
+        CHECK(abc.trace == test_trace().literal("a").literal("b").literal("c"));
         auto aabbcc = LEXY_VERIFY_RUNTIME("aabbcc");
         CHECK(aabbcc.status == test_result::success);
         CHECK(aabbcc.trace
-              == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
+              == test_trace()
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c"));
 
         auto aabcc = LEXY_VERIFY_RUNTIME("aabcc");
         CHECK(aabcc.status == test_result::recovered_error);
         CHECK(aabcc.trace
               == test_trace()
-                     .token("a")
-                     .token("a")
-                     .token("b")
-                     .token("c")
-                     .token("c")
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c")
                      .error(5, 5, "unequal counts"));
         auto aabbccc = LEXY_VERIFY_RUNTIME("aabbccc");
         CHECK(aabbccc.status == test_result::recovered_error);
         CHECK(aabbccc.trace
               == test_trace()
-                     .token("a")
-                     .token("a")
-                     .token("b")
-                     .token("b")
-                     .token("c")
-                     .token("c")
-                     .token("c")
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c")
+                     .literal("c")
                      .error(7, 7, "unequal counts"));
     }
     SUBCASE("as branch")
@@ -249,34 +255,40 @@ TEST_CASE("dsl::equal_counts()")
 
         auto abc = LEXY_VERIFY_RUNTIME("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
+        CHECK(abc.trace == test_trace().literal("a").literal("b").literal("c"));
         auto aabbcc = LEXY_VERIFY_RUNTIME("aabbcc");
         CHECK(aabbcc.status == test_result::success);
         CHECK(aabbcc.trace
-              == test_trace().token("a").token("a").token("b").token("b").token("c").token("c"));
+              == test_trace()
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c"));
 
         auto aabcc = LEXY_VERIFY_RUNTIME("aabcc");
         CHECK(aabcc.status == test_result::fatal_error);
         CHECK(aabcc.trace
               == test_trace()
-                     .token("a")
-                     .token("a")
-                     .token("b")
-                     .token("c")
-                     .token("c")
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c")
                      .error(5, 5, "my error")
                      .cancel());
         auto aabbccc = LEXY_VERIFY_RUNTIME("aabbccc");
         CHECK(aabbccc.status == test_result::fatal_error);
         CHECK(aabbccc.trace
               == test_trace()
-                     .token("a")
-                     .token("a")
-                     .token("b")
-                     .token("b")
-                     .token("c")
-                     .token("c")
-                     .token("c")
+                     .literal("a")
+                     .literal("a")
+                     .literal("b")
+                     .literal("b")
+                     .literal("c")
+                     .literal("c")
+                     .literal("c")
                      .error(7, 7, "my error")
                      .cancel());
     }

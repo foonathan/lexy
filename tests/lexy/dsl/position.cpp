@@ -24,16 +24,22 @@ TEST_CASE("dsl::position")
     auto one = LEXY_VERIFY("ab");
     CHECK(one.status == test_result::success);
     CHECK(one.value == 1);
-    CHECK(one.trace == test_trace().token("a").position().token("b"));
+    CHECK(one.trace == test_trace().literal("a").position().literal("b"));
     auto two = LEXY_VERIFY("aabb");
     CHECK(two.status == test_result::success);
     CHECK(two.value == 2);
-    CHECK(two.trace == test_trace().token("a").token("a").position().token("b").token("b"));
+    CHECK(two.trace == test_trace().literal("a").literal("a").position().literal("b").literal("b"));
     auto three = LEXY_VERIFY("aaabbb");
     CHECK(three.status == test_result::success);
     CHECK(three.value == 3);
     CHECK(three.trace
-          == test_trace().token("a").token("a").token("a").position().token("b").token("b").token(
-              "b"));
+          == test_trace()
+                 .literal("a")
+                 .literal("a")
+                 .literal("a")
+                 .position()
+                 .literal("b")
+                 .literal("b")
+                 .literal("b"));
 }
 

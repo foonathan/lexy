@@ -32,7 +32,7 @@ TEST_CASE("dsl::operator+")
 
     auto a       = LEXY_VERIFY("a");
     auto a_trace = test_trace()
-                       .token("a")
+                       .literal("a")
                        .position()
                        .expected_literal(1, "bc", 0)
                        .expected_literal(1, "de", 0)
@@ -42,7 +42,7 @@ TEST_CASE("dsl::operator+")
 
     auto ab       = LEXY_VERIFY("ab");
     auto ab_trace = test_trace()
-                        .token("a")
+                        .literal("a")
                         .position()
                         .expected_literal(1, "bc", 1)
                         .error_token("b")
@@ -53,15 +53,15 @@ TEST_CASE("dsl::operator+")
 
     auto abc = LEXY_VERIFY("abc");
     auto abc_trace
-        = test_trace().token("a").position().token("bc").expected_literal(3, "de", 0).cancel();
+        = test_trace().literal("a").position().literal("bc").expected_literal(3, "de", 0).cancel();
     CHECK(abc.status == test_result::fatal_error);
     CHECK(abc.trace == abc_trace);
 
     auto abcd       = LEXY_VERIFY("abcd");
     auto abcd_trace = test_trace()
-                          .token("a")
+                          .literal("a")
                           .position()
-                          .token("bc")
+                          .literal("bc")
                           .expected_literal(3, "de", 1)
                           .error_token("d")
                           .cancel();
@@ -69,16 +69,17 @@ TEST_CASE("dsl::operator+")
     CHECK(abcd.trace == abcd_trace);
 
     auto abcde       = LEXY_VERIFY("abcde");
-    auto abcde_trace = test_trace().token("a").position().token("bc").token("de");
+    auto abcde_trace = test_trace().literal("a").position().literal("bc").literal("de");
     CHECK(abcde.status == test_result::success);
     CHECK(abcde.trace == abcde_trace);
     auto abcdef       = LEXY_VERIFY("abcdef");
-    auto abcdef_trace = test_trace().token("a").position().token("bc").token("de");
+    auto abcdef_trace = test_trace().literal("a").position().literal("bc").literal("de");
     CHECK(abcdef.status == test_result::success);
     CHECK(abcdef.trace == abcdef_trace);
 
-    auto ade       = LEXY_VERIFY("ade");
-    auto ade_trace = test_trace().token("a").position().expected_literal(1, "bc", 0).token("de");
+    auto ade = LEXY_VERIFY("ade");
+    auto ade_trace
+        = test_trace().literal("a").position().expected_literal(1, "bc", 0).literal("de");
     CHECK(ade.status == test_result::recovered_error);
     CHECK(ade.trace == ade_trace);
 }

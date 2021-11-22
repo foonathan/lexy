@@ -397,15 +397,15 @@ TEST_CASE("dsl::code_point")
 
     auto ascii = LEXY_VERIFY(u"a");
     CHECK(ascii.status == test_result::success);
-    CHECK(ascii.trace == test_trace().token("a"));
+    CHECK(ascii.trace == test_trace().token("any", "a"));
 
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::success);
-    CHECK(bmp.trace == test_trace().token("\\u00E4"));
+    CHECK(bmp.trace == test_trace().token("any", "\\u00E4"));
 
     auto emoji = LEXY_VERIFY(u"🙂");
     CHECK(emoji.status == test_result::success);
-    CHECK(emoji.trace == test_trace().token("\\U0001F642"));
+    CHECK(emoji.trace == test_trace().token("any", "\\U0001F642"));
 }
 
 TEST_CASE("dsl::code_point.lit()")
@@ -426,7 +426,7 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto ok = LEXY_VERIFY(u"a");
         CHECK(ok.status == test_result::success);
-        CHECK(ok.trace == test_trace().token("a"));
+        CHECK(ok.trace == test_trace().literal("a"));
 
         auto not_ascii = LEXY_VERIFY(u"b");
         CHECK(not_ascii.status == test_result::fatal_error);
@@ -440,11 +440,11 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto twice = LEXY_VERIFY(u"aa");
         CHECK(twice.status == test_result::success);
-        CHECK(twice.trace == test_trace().token("a"));
+        CHECK(twice.trace == test_trace().literal("a"));
 
         auto ascii = LEXY_VERIFY(lexy::ascii_encoding{}, "a");
         CHECK(ascii.status == test_result::success);
-        CHECK(ascii.trace == test_trace().token("a"));
+        CHECK(ascii.trace == test_trace().literal("a"));
     }
     SUBCASE("BMP")
     {
@@ -459,7 +459,7 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto ok = LEXY_VERIFY(u"ä");
         CHECK(ok.status == test_result::success);
-        CHECK(ok.trace == test_trace().token("\\u00E4"));
+        CHECK(ok.trace == test_trace().literal("\\u00E4"));
 
         auto not_ascii = LEXY_VERIFY(u"a");
         CHECK(not_ascii.status == test_result::fatal_error);
@@ -473,7 +473,7 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto twice = LEXY_VERIFY(u"ää");
         CHECK(twice.status == test_result::success);
-        CHECK(twice.trace == test_trace().token("\\u00E4"));
+        CHECK(twice.trace == test_trace().literal("\\u00E4"));
     }
     SUBCASE("multi")
     {
@@ -488,7 +488,7 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto ok = LEXY_VERIFY(u"🙂");
         CHECK(ok.status == test_result::success);
-        CHECK(ok.trace == test_trace().token("\\U0001F642"));
+        CHECK(ok.trace == test_trace().literal("\\U0001F642"));
 
         auto not_ascii = LEXY_VERIFY(u"a");
         CHECK(not_ascii.status == test_result::fatal_error);
@@ -506,7 +506,7 @@ TEST_CASE("dsl::code_point.lit()")
 
         auto twice = LEXY_VERIFY(u"🙂🙂");
         CHECK(twice.status == test_result::success);
-        CHECK(twice.trace == test_trace().token("\\U0001F642"));
+        CHECK(twice.trace == test_trace().literal("\\U0001F642"));
     }
 }
 

@@ -159,6 +159,10 @@ public:
     {
         return token("token", spelling);
     }
+    test_trace& literal(const char* spelling)
+    {
+        return token("literal", spelling);
+    }
     test_trace& whitespace(const char* spelling)
     {
         return token("whitespace", spelling);

@@ -23,20 +23,20 @@ TEST_CASE("dsl::operator/")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::success);
-        CHECK(ab.trace == test_trace().token("ab"));
+        CHECK(ab.trace == test_trace().literal("ab"));
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
         auto def = LEXY_VERIFY("def");
         CHECK(def.status == test_result::success);
-        CHECK(def.trace == test_trace().token("def"));
+        CHECK(def.trace == test_trace().literal("def"));
 
         auto aa = LEXY_VERIFY("a");
         CHECK(aa.status == test_result::success);
-        CHECK(aa.trace == test_trace().token("a"));
+        CHECK(aa.trace == test_trace().literal("a"));
 
         auto ABC = LEXY_VERIFY("ABC");
         CHECK(ABC.status == test_result::fatal_error);

@@ -28,6 +28,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_char_class" %}} (`"BOM.<encoding>-<endianness>"`): at the starting position.
   The rule then fails.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 [%collapsible]
 .The possible BOMs

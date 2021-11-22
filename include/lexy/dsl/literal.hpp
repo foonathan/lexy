@@ -74,5 +74,11 @@ constexpr auto lit = lexy::_detail::to_type_string<_lit, Str>{};
     LEXY_NTTP_STRING(::lexyd::_lit, Str) {}
 } // namespace lexyd
 
+namespace lexy
+{
+template <typename CharT, CharT... C>
+inline constexpr auto token_kind_of<lexy::dsl::_lit<CharT, C...>> = lexy::literal_token_kind;
+} // namespace lexy
+
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED
 

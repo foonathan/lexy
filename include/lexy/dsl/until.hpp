@@ -118,5 +118,13 @@ constexpr auto until(Condition)
 }
 } // namespace lexyd
 
+namespace lexy
+{
+template <typename Condition>
+constexpr auto token_kind_of<lexy::dsl::_until_eof<Condition>> = lexy::any_token_kind;
+template <typename Condition>
+constexpr auto token_kind_of<lexy::dsl::_until<Condition>> = lexy::any_token_kind;
+} // namespace lexy
+
 #endif // LEXY_DSL_UNTIL_HPP_INCLUDED
 

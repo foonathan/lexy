@@ -40,18 +40,18 @@ TEST_CASE("dsl::operator|")
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc").production("label").token("!"));
+        CHECK(abc.trace == test_trace().literal("abc").production("label").literal("!"));
 
         auto def = LEXY_VERIFY("def!");
         CHECK(def.status == test_result::success);
         CHECK(def.value == 1);
-        CHECK(def.trace == test_trace().token("def").production("label").token("!"));
+        CHECK(def.trace == test_trace().literal("def").production("label").literal("!"));
 
         auto branch_error = LEXY_VERIFY("abc");
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().token("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
     }
     SUBCASE("branches are ordered")
     {
@@ -66,12 +66,13 @@ TEST_CASE("dsl::operator|")
         auto a = LEXY_VERIFY("a!");
         CHECK(a.status == test_result::success);
         CHECK(a.value == 0);
-        CHECK(a.trace == test_trace().token("a").production("label").token("!"));
+        CHECK(a.trace == test_trace().literal("a").production("label").literal("!"));
 
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::recovered_error);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("a").production("label").expected_literal(1, "!", 0));
+        CHECK(abc.trace
+              == test_trace().literal("a").production("label").expected_literal(1, "!", 0));
     }
     SUBCASE("with else")
     {
@@ -88,18 +89,18 @@ TEST_CASE("dsl::operator|")
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc").production("label").token("!"));
+        CHECK(abc.trace == test_trace().literal("abc").production("label").literal("!"));
 
         auto def = LEXY_VERIFY("def!");
         CHECK(def.status == test_result::success);
         CHECK(def.value == 1);
-        CHECK(def.trace == test_trace().token("def").production("label").token("!"));
+        CHECK(def.trace == test_trace().literal("def").production("label").literal("!"));
 
         auto branch_error = LEXY_VERIFY("abc");
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().token("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
     }
     SUBCASE("with error")
     {
@@ -123,18 +124,18 @@ TEST_CASE("dsl::operator|")
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc").production("label").token("!"));
+        CHECK(abc.trace == test_trace().literal("abc").production("label").literal("!"));
 
         auto def = LEXY_VERIFY("def!");
         CHECK(def.status == test_result::success);
         CHECK(def.value == 1);
-        CHECK(def.trace == test_trace().token("def").production("label").token("!"));
+        CHECK(def.trace == test_trace().literal("def").production("label").literal("!"));
 
         auto branch_error = LEXY_VERIFY("abc");
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().token("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
     }
 
     SUBCASE("as branch")
@@ -151,18 +152,18 @@ TEST_CASE("dsl::operator|")
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc").production("label").token("!"));
+        CHECK(abc.trace == test_trace().literal("abc").production("label").literal("!"));
 
         auto def = LEXY_VERIFY("def!");
         CHECK(def.status == test_result::success);
         CHECK(def.value == 1);
-        CHECK(def.trace == test_trace().token("def").production("label").token("!"));
+        CHECK(def.trace == test_trace().literal("def").production("label").literal("!"));
 
         auto branch_error = LEXY_VERIFY("abc");
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().token("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
     }
 }
 

@@ -227,7 +227,7 @@ namespace lexy
 {
 template <typename Leading, typename Trailing>
 constexpr auto token_kind_of<lexy::dsl::_idp<Leading, Trailing>> = lexy::identifier_token_kind;
-}
+} // namespace lexy
 
 //=== keyword ===//
 namespace lexyd
@@ -297,6 +297,12 @@ constexpr auto keyword(_id<L, T, R...>)
 #define LEXY_KEYWORD(Str, Id)                                                                      \
     LEXY_NTTP_STRING(::lexyd::_keyword<std::decay_t<decltype(Id)>>::template get, Str) {}
 } // namespace lexyd
+
+namespace lexy
+{
+template <typename Id, typename CharT, CharT... C>
+constexpr auto token_kind_of<lexy::dsl::_kw<Id, CharT, C...>> = lexy::literal_token_kind;
+} // namespace lexy
 
 #endif // LEXY_DSL_IDENTIFIER_HPP_INCLUDED
 

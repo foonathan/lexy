@@ -116,13 +116,13 @@ TEST_CASE("dsl::must().error")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto b = LEXY_VERIFY("b");
         CHECK(b.status == test_result::success);
-        CHECK(b.trace == test_trace().token("b"));
+        CHECK(b.trace == test_trace().literal("b"));
         auto c = LEXY_VERIFY("c");
         CHECK(c.status == test_result::success);
-        CHECK(c.trace == test_trace().token("c"));
+        CHECK(c.trace == test_trace().literal("c"));
     }
     SUBCASE("as branch")
     {
@@ -134,13 +134,13 @@ TEST_CASE("dsl::must().error")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto b = LEXY_VERIFY("b");
         CHECK(b.status == test_result::success);
-        CHECK(b.trace == test_trace().token("b"));
+        CHECK(b.trace == test_trace().literal("b"));
         auto c = LEXY_VERIFY("c");
         CHECK(c.status == test_result::success);
-        CHECK(c.trace == test_trace().token("c"));
+        CHECK(c.trace == test_trace().literal("c"));
     }
 }
 
@@ -166,13 +166,13 @@ TEST_CASE("dsl::must().error(rule)")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto b = LEXY_VERIFY("b");
         CHECK(b.status == test_result::success);
-        CHECK(b.trace == test_trace().token("b"));
+        CHECK(b.trace == test_trace().literal("b"));
         auto c = LEXY_VERIFY("c");
         CHECK(c.status == test_result::success);
-        CHECK(c.trace == test_trace().token("c"));
+        CHECK(c.trace == test_trace().literal("c"));
     }
     SUBCASE("as branch")
     {
@@ -188,13 +188,13 @@ TEST_CASE("dsl::must().error(rule)")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto b = LEXY_VERIFY("b");
         CHECK(b.status == test_result::success);
-        CHECK(b.trace == test_trace().token("b"));
+        CHECK(b.trace == test_trace().literal("b"));
         auto c = LEXY_VERIFY("c");
         CHECK(c.status == test_result::success);
-        CHECK(c.trace == test_trace().token("c"));
+        CHECK(c.trace == test_trace().literal("c"));
     }
 }
 

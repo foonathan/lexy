@@ -70,7 +70,7 @@ TEST_CASE("dsl::peek()")
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::success);
-        CHECK(ab.trace == test_trace().backtracked("ab").token("a"));
+        CHECK(ab.trace == test_trace().backtracked("ab").literal("a"));
     }
 }
 
@@ -132,7 +132,7 @@ TEST_CASE("dsl::peek_not()")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::success);
-        CHECK(a.trace == test_trace().backtracked("a").token("a"));
+        CHECK(a.trace == test_trace().backtracked("a").literal("a"));
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::success);

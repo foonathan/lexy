@@ -24,6 +24,8 @@ Matching::
   consumes only until the end of the partial input is reached.
 Errors::
   None.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::any_token_kind`.
 
 {{% playground-example any "Match literally any input" %}}
 

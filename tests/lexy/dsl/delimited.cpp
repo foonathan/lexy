@@ -51,26 +51,27 @@ TEST_CASE("dsl::delimited(open, close)")
         auto zero = LEXY_VERIFY("()");
         CHECK(zero.status == test_result::success);
         CHECK(zero.value == 0);
-        CHECK(zero.trace == test_trace().token("(").token(")"));
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
         auto one = LEXY_VERIFY("(a)");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
-        CHECK(one.trace == test_trace().token("(").token("a").token(")"));
+        CHECK(one.trace == test_trace().literal("(").token("a").literal(")"));
         auto two = LEXY_VERIFY("(ab)");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 2);
-        CHECK(two.trace == test_trace().token("(").token("a").token("b").token(")"));
+        CHECK(two.trace == test_trace().literal("(").token("a").token("b").literal(")"));
         auto three = LEXY_VERIFY("(abc)");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 3);
-        CHECK(three.trace == test_trace().token("(").token("a").token("b").token("c").token(")"));
+        CHECK(three.trace
+              == test_trace().literal("(").token("a").token("b").token("c").literal(")"));
 
         auto invalid = LEXY_VERIFY("(a\x80-c)");
         CHECK(invalid.status == test_result::recovered_error);
         CHECK(invalid.value == 3);
         CHECK(invalid.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
@@ -78,25 +79,25 @@ TEST_CASE("dsl::delimited(open, close)")
                      .finish()
                      .token("-")
                      .token("c")
-                     .token(")"));
+                     .literal(")"));
         auto invalid_end = LEXY_VERIFY("(a\x80)");
         CHECK(invalid_end.status == test_result::recovered_error);
         CHECK(invalid_end.value == 1);
         CHECK(invalid_end.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
                      .error_token("\\x80")
                      .finish()
-                     .token(")"));
+                     .literal(")"));
 
         auto unterminated = LEXY_VERIFY("(ab");
         CHECK(unterminated.status == test_result::fatal_error);
         CHECK(unterminated.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")
@@ -110,13 +111,13 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(whitespace.value == 5);
         CHECK(whitespace.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token(".")
                      .token("a")
                      .token("b")
                      .token("c")
                      .token(".")
-                     .token(")")
+                     .literal(")")
                      .whitespace("."));
     }
     SUBCASE("as branch")
@@ -131,18 +132,19 @@ TEST_CASE("dsl::delimited(open, close)")
         auto zero = LEXY_VERIFY("()");
         CHECK(zero.status == test_result::success);
         CHECK(zero.value == 0);
-        CHECK(zero.trace == test_trace().token("(").token(")"));
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
         auto three = LEXY_VERIFY("(abc)");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 3);
-        CHECK(three.trace == test_trace().token("(").token("a").token("b").token("c").token(")"));
+        CHECK(three.trace
+              == test_trace().literal("(").token("a").token("b").token("c").literal(")"));
 
         auto invalid = LEXY_VERIFY("(a\x80-c)");
         CHECK(invalid.status == test_result::recovered_error);
         CHECK(invalid.value == 3);
         CHECK(invalid.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
@@ -150,25 +152,25 @@ TEST_CASE("dsl::delimited(open, close)")
                      .finish()
                      .token("-")
                      .token("c")
-                     .token(")"));
+                     .literal(")"));
         auto invalid_end = LEXY_VERIFY("(a\x80)");
         CHECK(invalid_end.status == test_result::recovered_error);
         CHECK(invalid_end.value == 1);
         CHECK(invalid_end.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
                      .error_token("\\x80")
                      .finish()
-                     .token(")"));
+                     .literal(")"));
 
         auto unterminated = LEXY_VERIFY("(ab");
         CHECK(unterminated.status == test_result::fatal_error);
         CHECK(unterminated.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")
@@ -182,13 +184,13 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(whitespace.value == 5);
         CHECK(whitespace.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token(".")
                      .token("a")
                      .token("b")
                      .token("c")
                      .token(".")
-                     .token(")")
+                     .literal(")")
                      .whitespace("."));
     }
 
@@ -205,18 +207,19 @@ TEST_CASE("dsl::delimited(open, close)")
         auto zero = LEXY_VERIFY("()");
         CHECK(zero.status == test_result::success);
         CHECK(zero.value == 0);
-        CHECK(zero.trace == test_trace().token("(").token(")"));
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
         auto three = LEXY_VERIFY("(abc)");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 3);
-        CHECK(three.trace == test_trace().token("(").token("a").token("b").token("c").token(")"));
+        CHECK(three.trace
+              == test_trace().literal("(").token("a").token("b").token("c").literal(")"));
 
         auto invalid = LEXY_VERIFY("(a\x80-c)");
         CHECK(invalid.status == test_result::recovered_error);
         CHECK(invalid.value == 3);
         CHECK(invalid.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
@@ -224,13 +227,13 @@ TEST_CASE("dsl::delimited(open, close)")
                      .finish()
                      .token("-")
                      .token("c")
-                     .token(")"));
+                     .literal(")"));
 
         auto unterminated = LEXY_VERIFY("(ab");
         CHECK(unterminated.status == test_result::fatal_error);
         CHECK(unterminated.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")
@@ -240,37 +243,39 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(escape_a.status == test_result::success);
         CHECK(escape_a.value == 2);
         CHECK(escape_a.trace
-              == test_trace().token("(").token("a").token("$").token("a").token("b").token(")"));
+              == test_trace().literal("(").token("a").literal("$").literal("a").token("b").literal(
+                  ")"));
         auto escape_close = LEXY_VERIFY("(a$)b)");
         CHECK(escape_close.status == test_result::success);
         CHECK(escape_close.value == 2);
         CHECK(escape_close.trace
-              == test_trace().token("(").token("a").token("$").token(")").token("b").token(")"));
+              == test_trace().literal("(").token("a").literal("$").literal(")").token("b").literal(
+                  ")"));
         auto escape_unknown = LEXY_VERIFY("(a$?b)");
         CHECK(escape_unknown.status == test_result::recovered_error);
         CHECK(escape_unknown.value == 3);
         CHECK(escape_unknown.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
-                     .token("$")
+                     .literal("$")
                      .error(2, 3, "invalid escape sequence")
                      .token("?")
                      .token("b")
-                     .token(")"));
+                     .literal(")"));
         auto escape_escape = LEXY_VERIFY("(a$$ab)");
         CHECK(escape_escape.status == test_result::recovered_error);
         CHECK(escape_escape.value == 2);
         CHECK(escape_escape.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
-                     .token("$")
+                     .literal("$")
                      .error(2, 3, "invalid escape sequence")
-                     .token("$")
-                     .token("a")
+                     .literal("$")
+                     .literal("a")
                      .token("b")
-                     .token(")"));
+                     .literal(")"));
     }
     SUBCASE(".limit()")
     {
@@ -285,18 +290,19 @@ TEST_CASE("dsl::delimited(open, close)")
         auto zero = LEXY_VERIFY("()");
         CHECK(zero.status == test_result::success);
         CHECK(zero.value == 0);
-        CHECK(zero.trace == test_trace().token("(").token(")"));
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
         auto three = LEXY_VERIFY("(abc)");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 3);
-        CHECK(three.trace == test_trace().token("(").token("a").token("b").token("c").token(")"));
+        CHECK(three.trace
+              == test_trace().literal("(").token("a").token("b").token("c").literal(")"));
 
         auto invalid = LEXY_VERIFY("(a\x80-c)");
         CHECK(invalid.status == test_result::recovered_error);
         CHECK(invalid.value == 3);
         CHECK(invalid.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
@@ -304,12 +310,12 @@ TEST_CASE("dsl::delimited(open, close)")
                      .finish()
                      .token("-")
                      .token("c")
-                     .token(")"));
+                     .literal(")"));
         auto invalid_limit = LEXY_VERIFY("(a\x80\nc)");
         CHECK(invalid_limit.status == test_result::fatal_error);
         CHECK(invalid_limit.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .expected_char_class(2, "ASCII")
                      .recovery()
@@ -322,7 +328,7 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(unterminated.status == test_result::fatal_error);
         CHECK(unterminated.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")
@@ -332,7 +338,7 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(unterminated_nl.status == test_result::fatal_error);
         CHECK(unterminated_nl.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")
@@ -341,7 +347,7 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(unterminated_mark.status == test_result::fatal_error);
         CHECK(unterminated_mark.trace
               == test_trace()
-                     .token("(")
+                     .literal("(")
                      .token("a")
                      .token("b")
                      .error(1, 3, "missing delimiter")

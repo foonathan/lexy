@@ -49,14 +49,22 @@ namespace lexy
 {
 enum predefined_token_kind : std::uint_least16_t
 {
-    unknown_token_kind              = UINT_LEAST16_MAX,
-    error_token_kind                = UINT_LEAST16_MAX - 1,
-    whitespace_token_kind           = UINT_LEAST16_MAX - 2,
-    position_token_kind             = UINT_LEAST16_MAX - 3,
-    eof_token_kind                  = UINT_LEAST16_MAX - 4,
-    eol_token_kind                  = UINT_LEAST16_MAX - 5,
-    identifier_token_kind           = UINT_LEAST16_MAX - 6,
-    _smallest_predefined_token_kind = identifier_token_kind,
+    unknown_token_kind = UINT_LEAST16_MAX,
+
+    error_token_kind      = UINT_LEAST16_MAX - 1,
+    whitespace_token_kind = UINT_LEAST16_MAX - 2,
+    any_token_kind        = UINT_LEAST16_MAX - 3,
+
+    literal_token_kind  = UINT_LEAST16_MAX - 4,
+    position_token_kind = UINT_LEAST16_MAX - 5,
+    eof_token_kind      = UINT_LEAST16_MAX - 6,
+    eol_token_kind      = UINT_LEAST16_MAX - 7,
+    newline_token_kind  = UINT_LEAST16_MAX - 8,
+
+    identifier_token_kind = UINT_LEAST16_MAX - 9,
+    digits_token_kind     = UINT_LEAST16_MAX - 10,
+
+    _smallest_predefined_token_kind = digits_token_kind,
 };
 
 constexpr const char* _kind_name(predefined_token_kind kind) noexcept
@@ -65,18 +73,29 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
     {
     case unknown_token_kind:
         return "token";
+
     case error_token_kind:
         return "error token";
     case whitespace_token_kind:
         return "whitespace";
+    case any_token_kind:
+        return "any";
+
+    case literal_token_kind:
+        return "literal";
     case position_token_kind:
         return "position";
     case eof_token_kind:
         return "EOF";
     case eol_token_kind:
         return "EOL";
+    case newline_token_kind:
+        return "newline";
+
     case identifier_token_kind:
         return "identifier";
+    case digits_token_kind:
+        return "digits";
     }
 
     return ""; // unreachable
@@ -84,7 +103,7 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
 
 /// Specialize to define the token kind of a rule.
 template <typename TokenRule>
-constexpr auto token_kind_of = nullptr;
+constexpr auto token_kind_of = lexy::unknown_token_kind;
 
 template <typename TokenRule>
 constexpr auto token_kind_of<const TokenRule> = token_kind_of<TokenRule>;

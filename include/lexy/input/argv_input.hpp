@@ -206,5 +206,11 @@ struct _argvsep : token_base<_argvsep>
 constexpr auto argv_separator = _argvsep{};
 } // namespace lexyd
 
+namespace lexy
+{
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_argvsep> = lexy::literal_token_kind;
+} // namespace lexy
+
 #endif // LEXY_INPUT_ARGV_INPUT_HPP_INCLUDED
 

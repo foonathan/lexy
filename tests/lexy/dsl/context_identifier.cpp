@@ -47,22 +47,22 @@ TEST_CASE("dsl::context_identifier")
         auto one = LEXY_VERIFY_RUNTIME("a-a");
         CHECK(one.status == test_result::success);
         CHECK(one.trace
-              == test_trace().token("identifier", "a").token("-").token("identifier", "a"));
+              == test_trace().token("identifier", "a").literal("-").token("identifier", "a"));
         auto two = LEXY_VERIFY_RUNTIME("ab-ab");
         CHECK(two.status == test_result::success);
         CHECK(two.trace
-              == test_trace().token("identifier", "ab").token("-").token("identifier", "ab"));
+              == test_trace().token("identifier", "ab").literal("-").token("identifier", "ab"));
         auto three = LEXY_VERIFY_RUNTIME("abc-abc");
         CHECK(three.status == test_result::success);
         CHECK(three.trace
-              == test_trace().token("identifier", "abc").token("-").token("identifier", "abc"));
+              == test_trace().token("identifier", "abc").literal("-").token("identifier", "abc"));
 
         auto mismatch = LEXY_VERIFY_RUNTIME("abc-abd");
         CHECK(mismatch.status == test_result::recovered_error);
         CHECK(mismatch.trace
               == test_trace()
                      .token("identifier", "abc")
-                     .token("-")
+                     .literal("-")
                      .token("identifier", "abd")
                      .error(4, 7, "different identifier"));
         auto mismatch_length = LEXY_VERIFY_RUNTIME("abc-abcd");
@@ -70,7 +70,7 @@ TEST_CASE("dsl::context_identifier")
         CHECK(mismatch_length.trace
               == test_trace()
                      .token("identifier", "abc")
-                     .token("-")
+                     .literal("-")
                      .token("identifier", "abcd")
                      .error(4, 8, "different identifier"));
 
@@ -83,7 +83,7 @@ TEST_CASE("dsl::context_identifier")
               == test_trace()
                      .token("identifier", "abc")
                      .whitespace(".")
-                     .token("-")
+                     .literal("-")
                      .whitespace(".")
                      .token("identifier", "abc")
                      .whitespace("..."));
@@ -102,22 +102,22 @@ TEST_CASE("dsl::context_identifier")
         auto one = LEXY_VERIFY_RUNTIME("a-a");
         CHECK(one.status == test_result::success);
         CHECK(one.trace
-              == test_trace().token("identifier", "a").token("-").token("identifier", "a"));
+              == test_trace().token("identifier", "a").literal("-").token("identifier", "a"));
         auto two = LEXY_VERIFY_RUNTIME("ab-ab");
         CHECK(two.status == test_result::success);
         CHECK(two.trace
-              == test_trace().token("identifier", "ab").token("-").token("identifier", "ab"));
+              == test_trace().token("identifier", "ab").literal("-").token("identifier", "ab"));
         auto three = LEXY_VERIFY_RUNTIME("abc-abc");
         CHECK(three.status == test_result::success);
         CHECK(three.trace
-              == test_trace().token("identifier", "abc").token("-").token("identifier", "abc"));
+              == test_trace().token("identifier", "abc").literal("-").token("identifier", "abc"));
 
         auto mismatch = LEXY_VERIFY_RUNTIME("abc-abd");
         CHECK(mismatch.status == test_result::recovered_error);
         CHECK(mismatch.trace
               == test_trace()
                      .token("identifier", "abc")
-                     .token("-")
+                     .literal("-")
                      .token("identifier", "abd")
                      .error(4, 7, "my error"));
         auto mismatch_length = LEXY_VERIFY_RUNTIME("abc-abcd");
@@ -125,7 +125,7 @@ TEST_CASE("dsl::context_identifier")
         CHECK(mismatch_length.trace
               == test_trace()
                      .token("identifier", "abc")
-                     .token("-")
+                     .literal("-")
                      .token("identifier", "abcd")
                      .error(4, 8, "my error"));
     }
@@ -144,26 +144,32 @@ TEST_CASE("dsl::context_identifier")
         auto one = LEXY_VERIFY_RUNTIME("a-a");
         CHECK(one.status == test_result::success);
         CHECK(one.trace
-              == test_trace().token("identifier", "a").token("-").token("identifier", "a"));
+              == test_trace().token("identifier", "a").literal("-").token("identifier", "a"));
         auto two = LEXY_VERIFY_RUNTIME("ab-ab");
         CHECK(two.status == test_result::success);
         CHECK(two.trace
-              == test_trace().token("identifier", "ab").token("-").token("identifier", "ab"));
+              == test_trace().token("identifier", "ab").literal("-").token("identifier", "ab"));
         auto three = LEXY_VERIFY_RUNTIME("abc-abc");
         CHECK(three.status == test_result::success);
         CHECK(three.trace
-              == test_trace().token("identifier", "abc").token("-").token("identifier", "abc"));
+              == test_trace().token("identifier", "abc").literal("-").token("identifier", "abc"));
 
         auto mismatch = LEXY_VERIFY_RUNTIME("abc-abd");
         CHECK(mismatch.status == test_result::fatal_error);
-        CHECK(
-            mismatch.trace
-            == test_trace().token("identifier", "abc").token("-").error(4, 4, "my error").cancel());
+        CHECK(mismatch.trace
+              == test_trace()
+                     .token("identifier", "abc")
+                     .literal("-")
+                     .error(4, 4, "my error")
+                     .cancel());
         auto mismatch_length = LEXY_VERIFY_RUNTIME("abc-abcd");
         CHECK(mismatch_length.status == test_result::fatal_error);
-        CHECK(
-            mismatch_length.trace
-            == test_trace().token("identifier", "abc").token("-").error(4, 4, "my error").cancel());
+        CHECK(mismatch_length.trace
+              == test_trace()
+                     .token("identifier", "abc")
+                     .literal("-")
+                     .error(4, 4, "my error")
+                     .cancel());
     }
 }
 

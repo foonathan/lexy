@@ -25,7 +25,7 @@ TEST_CASE("dsl::plus_sign")
     auto plus = LEXY_VERIFY("+");
     CHECK(plus.status == test_result::success);
     CHECK(plus.value == 1);
-    CHECK(plus.trace == test_trace().token("+"));
+    CHECK(plus.trace == test_trace().literal("+"));
     auto minus = LEXY_VERIFY("-");
     CHECK(minus.status == test_result::success);
     CHECK(minus.value == 0);
@@ -55,7 +55,7 @@ TEST_CASE("dsl::minus_sign")
     auto minus = LEXY_VERIFY("-");
     CHECK(minus.status == test_result::success);
     CHECK(minus.value == 1);
-    CHECK(minus.trace == test_trace().token("-"));
+    CHECK(minus.trace == test_trace().literal("-"));
 }
 
 TEST_CASE("dsl::sign")
@@ -81,10 +81,10 @@ TEST_CASE("dsl::sign")
     auto plus = LEXY_VERIFY("+");
     CHECK(plus.status == test_result::success);
     CHECK(plus.value == 1);
-    CHECK(plus.trace == test_trace().token("+"));
+    CHECK(plus.trace == test_trace().literal("+"));
     auto minus = LEXY_VERIFY("-");
     CHECK(minus.status == test_result::success);
     CHECK(minus.value == 2);
-    CHECK(minus.trace == test_trace().token("-"));
+    CHECK(minus.trace == test_trace().literal("-"));
 }
 

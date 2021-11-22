@@ -240,6 +240,14 @@ template <typename Base = decimal>
 constexpr auto digit = _digit<Base>{};
 } // namespace lexyd
 
+namespace lexy
+{
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_zero> = lexy::digits_token_kind;
+template <typename Base>
+constexpr auto token_kind_of<lexy::dsl::_digit<Base>> = lexy::digits_token_kind;
+} // namespace lexy
+
 //=== digits ===//
 namespace lexy
 {
@@ -517,6 +525,18 @@ constexpr auto digit_sep_underscore = LEXY_LIT("_");
 constexpr auto digit_sep_tick       = LEXY_LIT("'");
 } // namespace lexyd
 
+namespace lexy
+{
+template <typename Base>
+constexpr auto token_kind_of<lexy::dsl::_digits<Base>> = lexy::digits_token_kind;
+template <typename Base>
+constexpr auto token_kind_of<lexy::dsl::_digits_t<Base>> = lexy::digits_token_kind;
+template <typename Base, typename Sep>
+constexpr auto token_kind_of<lexy::dsl::_digits_s<Base, Sep>> = lexy::digits_token_kind;
+template <typename Base, typename Sep>
+constexpr auto token_kind_of<lexy::dsl::_digits_st<Base, Sep>> = lexy::digits_token_kind;
+} // namespace lexy
+
 //=== n_digits ===//
 namespace lexyd
 {
@@ -600,6 +620,14 @@ struct _ndigits : token_base<_ndigits<N, Base>>
 template <std::size_t N, typename Base = decimal>
 constexpr auto n_digits = _ndigits<N, Base>{};
 } // namespace lexyd
+
+namespace lexy
+{
+template <std::size_t N, typename Base>
+constexpr auto token_kind_of<lexy::dsl::_ndigits<N, Base>> = lexy::digits_token_kind;
+template <std::size_t N, typename Base, typename Sep>
+constexpr auto token_kind_of<lexy::dsl::_ndigits_s<N, Base, Sep>> = lexy::digits_token_kind;
+} // namespace lexy
 
 #endif // LEXY_DSL_DIGIT_HPP_INCLUDED
 

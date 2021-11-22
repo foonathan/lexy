@@ -139,20 +139,19 @@ public:
 
     /// Creates the token kind of a token rule.
     template <typename TokenRule, typename = std::enable_if_t<lexy::is_token_rule<TokenRule>>>
-    constexpr token_kind(TokenRule) noexcept : token_kind()
+    constexpr token_kind(TokenRule) noexcept
+    // We initialize it according to the external mapping.
+    : token_kind(token_kind_map_for<TokenKind>.lookup(TokenRule{}))
     {
-        // Look for internal mapping first.
-        constexpr auto token_rule_kind = lexy::token_kind_of<TokenRule>;
-        if constexpr (_is_compatible_kind_type<decltype(token_rule_kind)>())
+        // If unknown, override it by internal mapping.
+        if (!*this)
         {
-            // The token has an associated kind of the same type.
-            *this = token_kind(token_rule_kind);
-        }
-        else
-        {
-            // Look for an external mapping.
-            auto result = token_kind_map_for<TokenKind>.lookup(TokenRule{});
-            *this       = token_kind(result);
+            constexpr auto token_rule_kind = lexy::token_kind_of<TokenRule>;
+            if constexpr (_is_compatible_kind_type<decltype(token_rule_kind)>())
+            {
+                // The token has an associated kind of the same type.
+                *this = token_kind(token_rule_kind);
+            }
         }
     }
 

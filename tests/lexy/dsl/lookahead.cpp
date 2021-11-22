@@ -94,10 +94,10 @@ TEST_CASE("dsl::lookahead()")
 
         auto something = LEXY_VERIFY("abc.");
         CHECK(something.status == test_result::success);
-        CHECK(something.trace == test_trace().backtracked("abc.").token("abc."));
+        CHECK(something.trace == test_trace().backtracked("abc.").token("any", "abc."));
         auto something_limit = LEXY_VERIFY("abc.def!ghi");
         CHECK(something_limit.status == test_result::success);
-        CHECK(something_limit.trace == test_trace().backtracked("abc.").token("abc."));
+        CHECK(something_limit.trace == test_trace().backtracked("abc.").token("any", "abc."));
 
         auto limit_something = LEXY_VERIFY("abc!def.");
         CHECK(limit_something.status == test_result::success);

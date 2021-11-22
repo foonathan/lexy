@@ -78,19 +78,19 @@ TEST_CASE("trace")
         auto opts = lexy::visualization_options();
 
         CHECK(trace("Hello abcd", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
  1:  7:   - alphabet:
  1:  7:     - backtracked: ab
- 1:  7:     - token: abcd
+ 1:  7:     - literal: abcd
  1: 11:     - finish
  1: 11:   - finish
  1: 11: - finish
 )");
         CHECK(trace("Hello ax", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -104,7 +104,7 @@ TEST_CASE("trace")
  1:  9: - finish
 )");
         CHECK(trace("Hello name", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -117,7 +117,7 @@ TEST_CASE("trace")
  1: 11: - finish
 )");
         CHECK(trace("Hello 123", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -132,7 +132,7 @@ TEST_CASE("trace")
  1: 10: - finish
 )");
         CHECK(trace("Hello [123, 456]", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -143,23 +143,23 @@ TEST_CASE("trace")
  1:  7:   - number:
  1:  7:     -x
  1:  7:   - list:
- 1:  7:     - token: [
+ 1:  7:     - literal: [
  1:  8:     - number:
  1:  8:       - identifier: 123
  1: 11:       - finish
- 1: 11:     - token: ,
+ 1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number:
  1: 13:       - identifier: 456
  1: 16:       - finish
- 1: 16:     - token: ]
+ 1: 16:     - literal: ]
  1: 17:     - finish
  1: 17:   - finish
  1: 17: - finish
 )");
 
         CHECK(trace("Hello", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - debug: greeting
  1:  6: - object:
  1:  6:   - alphabet:
@@ -175,7 +175,7 @@ TEST_CASE("trace")
  1:  6: - finish
 )");
         CHECK(trace("Hello abc", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -188,7 +188,7 @@ TEST_CASE("trace")
  1: 10: -x
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -199,11 +199,11 @@ TEST_CASE("trace")
  1:  7:   - number:
  1:  7:     -x
  1:  7:   - list:
- 1:  7:     - token: [
+ 1:  7:     - literal: [
  1:  8:     - number:
  1:  8:       - identifier: 123
  1: 11:       - finish
- 1: 11:     - token: ,
+ 1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number:
  1: 13:       - error: expected 'ASCII.digit' character
@@ -211,13 +211,13 @@ TEST_CASE("trace")
  1: 13:     - error recovery:
  1: 13:       - error token: abc
  1: 16:       - finish
- 1: 16:     - token: ]
+ 1: 16:     - literal: ]
  1: 17:     - finish
  1: 17:   - finish
  1: 17: - finish
 )");
         CHECK(trace("Hello [123, abc", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -228,11 +228,11 @@ TEST_CASE("trace")
  1:  7:   - number:
  1:  7:     -x
  1:  7:   - list:
- 1:  7:     - token: [
+ 1:  7:     - literal: [
  1:  8:     - number:
  1:  8:       - identifier: 123
  1: 11:       - finish
- 1: 11:     - token: ,
+ 1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number:
  1: 13:       - error: expected 'ASCII.digit' character
@@ -250,19 +250,19 @@ TEST_CASE("trace")
         auto opts = lexy::visualization_options{lexy::visualize_use_unicode};
 
         CHECK(trace("Hello abcd", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
  1:  7: │  ├──alphabet:
  1:  7: │  │  ├──backtracked: ab
- 1:  7: │  │  ├──token: abcd
+ 1:  7: │  │  ├──literal: abcd
  1: 11: │  │  ┴
  1: 11: │  ┴
  1: 11: ┴
 )");
         CHECK(trace("Hello ax", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -276,7 +276,7 @@ TEST_CASE("trace")
  1:  9: ┴
 )");
         CHECK(trace("Hello name", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -289,7 +289,7 @@ TEST_CASE("trace")
  1: 11: ┴
 )");
         CHECK(trace("Hello 123", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -304,7 +304,7 @@ TEST_CASE("trace")
  1: 10: ┴
 )");
         CHECK(trace("Hello [123, 456]", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -315,23 +315,23 @@ TEST_CASE("trace")
  1:  7: │  ├──number:
  1:  7: │  │  └╳
  1:  7: │  ├──list:
- 1:  7: │  │  ├──token: [
+ 1:  7: │  │  ├──literal: [
  1:  8: │  │  ├──number:
  1:  8: │  │  │  ├──identifier: 123
  1: 11: │  │  │  ┴
- 1: 11: │  │  ├──token: ,
+ 1: 11: │  │  ├──literal: ,
  1: 12: │  │  ├──whitespace: ⟨SP⟩
  1: 13: │  │  ├──number:
  1: 13: │  │  │  ├──identifier: 456
  1: 16: │  │  │  ┴
- 1: 16: │  │  ├──token: ]
+ 1: 16: │  │  ├──literal: ]
  1: 17: │  │  ┴
  1: 17: │  ┴
  1: 17: ┴
 )");
 
         CHECK(trace("Hello", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──debug: greeting
  1:  6: ├──object:
  1:  6: │  ├──alphabet:
@@ -347,7 +347,7 @@ TEST_CASE("trace")
  1:  6: ┴
 )");
         CHECK(trace("Hello abc", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -360,7 +360,7 @@ TEST_CASE("trace")
  1: 10: └╳
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -371,11 +371,11 @@ TEST_CASE("trace")
  1:  7: │  ├──number:
  1:  7: │  │  └╳
  1:  7: │  ├──list:
- 1:  7: │  │  ├──token: [
+ 1:  7: │  │  ├──literal: [
  1:  8: │  │  ├──number:
  1:  8: │  │  │  ├──identifier: 123
  1: 11: │  │  │  ┴
- 1: 11: │  │  ├──token: ,
+ 1: 11: │  │  ├──literal: ,
  1: 12: │  │  ├──whitespace: ⟨SP⟩
  1: 13: │  │  ├──number:
  1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
@@ -383,13 +383,13 @@ TEST_CASE("trace")
  1: 13: │  │  ├──error recovery:
  1: 13: │  │  │  ├──error token: abc
  1: 16: │  │  │  ┴
- 1: 16: │  │  ├──token: ]
+ 1: 16: │  │  ├──literal: ]
  1: 17: │  │  ┴
  1: 17: │  ┴
  1: 17: ┴
 )");
         CHECK(trace("Hello [123, abc", opts) == R"( 1:  1: production:
- 1:  1: ├──token: Hello
+ 1:  1: ├──literal: Hello
  1:  6: ├──whitespace: ⟨SP⟩
  1:  7: ├──debug: greeting
  1:  7: ├──object:
@@ -400,11 +400,11 @@ TEST_CASE("trace")
  1:  7: │  ├──number:
  1:  7: │  │  └╳
  1:  7: │  ├──list:
- 1:  7: │  │  ├──token: [
+ 1:  7: │  │  ├──literal: [
  1:  8: │  │  ├──number:
  1:  8: │  │  │  ├──identifier: 123
  1: 11: │  │  │  ┴
- 1: 11: │  │  ├──token: ,
+ 1: 11: │  │  ├──literal: ,
  1: 12: │  │  ├──whitespace: ⟨SP⟩
  1: 13: │  │  ├──number:
  1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
@@ -423,7 +423,7 @@ TEST_CASE("trace")
         auto opts = lexy::visualization_options{{}, 2};
 
         CHECK(trace("Hello abcd", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -432,7 +432,7 @@ TEST_CASE("trace")
  1: 11: - finish
 )");
         CHECK(trace("Hello name", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -442,7 +442,7 @@ TEST_CASE("trace")
  1: 11: - finish
 )");
         CHECK(trace("Hello 123", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -454,7 +454,7 @@ TEST_CASE("trace")
 )");
 
         CHECK(trace("Hello", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - debug: greeting
  1:  6: - object:
  1:  6:   - alphabet: ...
@@ -466,7 +466,7 @@ TEST_CASE("trace")
  1:  6: - finish
 )");
         CHECK(trace("Hello abc", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -475,7 +475,7 @@ TEST_CASE("trace")
  1: 10: -x
 )");
         CHECK(trace("Hello [123, abc]", opts) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -490,7 +490,7 @@ TEST_CASE("trace")
         auto higher_limit           = opts;
         higher_limit.max_tree_depth = 3;
         CHECK(trace("Hello [123, abc]", higher_limit) == R"( 1:  1: production:
- 1:  1: - token: Hello
+ 1:  1: - literal: Hello
  1:  6: - whitespace: \u0020
  1:  7: - debug: greeting
  1:  7: - object:
@@ -501,13 +501,13 @@ TEST_CASE("trace")
  1:  7:   - number:
  1:  7:     -x
  1:  7:   - list:
- 1:  7:     - token: [
+ 1:  7:     - literal: [
  1:  8:     - number: ...
- 1: 11:     - token: ,
+ 1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number: ...
  1: 13:     - error recovery: ...
- 1: 16:     - token: ]
+ 1: 16:     - literal: ]
  1: 17:     - finish
  1: 17:   - finish
  1: 17: - finish

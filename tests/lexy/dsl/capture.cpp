@@ -42,7 +42,7 @@ TEST_CASE("dsl::capture_token()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
@@ -50,7 +50,7 @@ TEST_CASE("dsl::capture_token()")
         auto abc_ws = LEXY_VERIFY_P(production, "abc...");
         CHECK(abc_ws.status == test_result::success);
         CHECK(abc_ws.value == 0);
-        CHECK(abc_ws.trace == test_trace().token("abc").whitespace("..."));
+        CHECK(abc_ws.trace == test_trace().literal("abc").whitespace("..."));
     }
 
     SUBCASE("as branch")
@@ -78,7 +78,7 @@ TEST_CASE("dsl::capture_token()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
@@ -86,7 +86,7 @@ TEST_CASE("dsl::capture_token()")
         auto abc_ws = LEXY_VERIFY_P(production, "abc...");
         CHECK(abc_ws.status == test_result::success);
         CHECK(abc_ws.value == 1);
-        CHECK(abc_ws.trace == test_trace().token("abc").whitespace("..."));
+        CHECK(abc_ws.trace == test_trace().literal("abc").whitespace("..."));
     }
 }
 
@@ -118,7 +118,7 @@ TEST_CASE("dsl::capture()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
@@ -126,7 +126,7 @@ TEST_CASE("dsl::capture()")
         auto abc_ws = LEXY_VERIFY_P(production, "abc...");
         CHECK(abc_ws.status == test_result::success);
         CHECK(abc_ws.value == 3);
-        CHECK(abc_ws.trace == test_trace().token("abc").whitespace("..."));
+        CHECK(abc_ws.trace == test_trace().literal("abc").whitespace("..."));
     }
     SUBCASE("rule")
     {
@@ -156,13 +156,14 @@ TEST_CASE("dsl::capture()")
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 0);
-        CHECK(ab.trace
-              == test_trace().token("a").position().expected_literal(1, "bc", 1).error_token("b"));
+        CHECK(
+            ab.trace
+            == test_trace().literal("a").position().expected_literal(1, "bc", 1).error_token("b"));
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("a").position().token("bc"));
+        CHECK(abc.trace == test_trace().literal("a").position().literal("bc"));
     }
     SUBCASE("directly nested")
     {
@@ -190,7 +191,7 @@ TEST_CASE("dsl::capture()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
     }
     SUBCASE("indirectly nested")
     {
@@ -219,7 +220,7 @@ TEST_CASE("dsl::capture()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 0);
-        CHECK(abc.trace == test_trace().token("a").token("b").token("c"));
+        CHECK(abc.trace == test_trace().literal("a").literal("b").literal("c"));
     }
 
     SUBCASE("as branch")
@@ -247,7 +248,7 @@ TEST_CASE("dsl::capture()")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
     }
 }
 

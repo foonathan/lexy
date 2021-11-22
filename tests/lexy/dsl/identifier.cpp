@@ -289,7 +289,7 @@ TEST_CASE("dsl::keyword")
 
         auto Int = LEXY_VERIFY("Int");
         CHECK(Int.status == test_result::success);
-        CHECK(Int.trace == test_trace().token("Int"));
+        CHECK(Int.trace == test_trace().literal("Int"));
 
         auto Integer = LEXY_VERIFY("Integer");
         CHECK(Integer.status == test_result::fatal_error);

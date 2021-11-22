@@ -17,11 +17,11 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::success);
-        CHECK(empty.trace == test_trace().token(""));
+        CHECK(empty.trace == test_trace().literal(""));
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token(""));
+        CHECK(abc.trace == test_trace().literal(""));
     }
 
     SUBCASE("UTF-8")
@@ -35,7 +35,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xEF, 0xBB, 0xBF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\xEF\xBB\xBF)"));
+        CHECK(bom.trace == test_trace().literal(R"(\xEF\xBB\xBF)"));
     }
 
     SUBCASE("UTF-16, little")
@@ -49,7 +49,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFF, 0xFE);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\xFF\xFE)"));
+        CHECK(bom.trace == test_trace().literal(R"(\xFF\xFE)"));
     }
     SUBCASE("UTF-16, big")
     {
@@ -62,7 +62,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\xFE\xFF)"));
+        CHECK(bom.trace == test_trace().literal(R"(\xFE\xFF)"));
     }
 
     SUBCASE("UTF-32, little")
@@ -76,7 +76,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0xFF, 0xFE, 0x00, 0x00);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\xFF\xFE\0\0)"));
+        CHECK(bom.trace == test_trace().literal(R"(\xFF\xFE\0\0)"));
     }
     SUBCASE("UTF-32, big")
     {
@@ -89,7 +89,7 @@ TEST_CASE("dsl::bom")
 
         auto bom = LEXY_VERIFY(lexy::default_encoding{}, 0x00, 0x00, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);
-        CHECK(bom.trace == test_trace().token(R"(\0\0\xFE\xFF)"));
+        CHECK(bom.trace == test_trace().literal(R"(\0\0\xFE\xFF)"));
     }
 }
 

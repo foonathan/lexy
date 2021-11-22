@@ -19,16 +19,16 @@ TEST_CASE("dsl::until()")
 
     auto zero = LEXY_VERIFY("!");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("!"));
+    CHECK(zero.trace == test_trace().token("any", "!"));
     auto one = LEXY_VERIFY("a!");
     CHECK(one.status == test_result::success);
-    CHECK(one.trace == test_trace().token("a!"));
+    CHECK(one.trace == test_trace().token("any", "a!"));
     auto two = LEXY_VERIFY("ab!");
     CHECK(two.status == test_result::success);
-    CHECK(two.trace == test_trace().token("ab!"));
+    CHECK(two.trace == test_trace().token("any", "ab!"));
     auto three = LEXY_VERIFY("abc!");
     CHECK(three.status == test_result::success);
-    CHECK(three.trace == test_trace().token("abc!"));
+    CHECK(three.trace == test_trace().token("any", "abc!"));
 
     auto unterminated = LEXY_VERIFY("abc");
     CHECK(unterminated.status == test_result::fatal_error);
@@ -37,7 +37,7 @@ TEST_CASE("dsl::until()")
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
     CHECK(invalid_utf8.status == test_result::success);
-    CHECK(invalid_utf8.trace == test_trace().token("abc\\x80!"));
+    CHECK(invalid_utf8.trace == test_trace().token("any", "abc\\x80!"));
 }
 
 TEST_CASE("dsl::until().or_eof()")
@@ -49,27 +49,27 @@ TEST_CASE("dsl::until().or_eof()")
 
     auto empty = LEXY_VERIFY("");
     CHECK(empty.status == test_result::success);
-    CHECK(empty.trace == test_trace().token(""));
+    CHECK(empty.trace == test_trace().token("any", ""));
 
     auto zero = LEXY_VERIFY("!");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("!"));
+    CHECK(zero.trace == test_trace().token("any", "!"));
     auto one = LEXY_VERIFY("a!");
     CHECK(one.status == test_result::success);
-    CHECK(one.trace == test_trace().token("a!"));
+    CHECK(one.trace == test_trace().token("any", "a!"));
     auto two = LEXY_VERIFY("ab!");
     CHECK(two.status == test_result::success);
-    CHECK(two.trace == test_trace().token("ab!"));
+    CHECK(two.trace == test_trace().token("any", "ab!"));
     auto three = LEXY_VERIFY("abc!");
     CHECK(three.status == test_result::success);
-    CHECK(three.trace == test_trace().token("abc!"));
+    CHECK(three.trace == test_trace().token("any", "abc!"));
 
     auto unterminated = LEXY_VERIFY("abc");
     CHECK(unterminated.status == test_result::success);
-    CHECK(unterminated.trace == test_trace().token("abc"));
+    CHECK(unterminated.trace == test_trace().token("any", "abc"));
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
     CHECK(invalid_utf8.status == test_result::success);
-    CHECK(invalid_utf8.trace == test_trace().token("abc\\x80!"));
+    CHECK(invalid_utf8.trace == test_trace().token("any", "abc\\x80!"));
 }
 

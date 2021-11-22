@@ -100,8 +100,10 @@ constexpr auto eol = _eol{};
 namespace lexy
 {
 template <>
+inline constexpr auto token_kind_of<lexy::dsl::_nl> = lexy::newline_token_kind;
+template <>
 inline constexpr auto token_kind_of<lexy::dsl::_eol> = lexy::eol_token_kind;
-}
+} // namespace lexy
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
 

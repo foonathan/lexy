@@ -89,20 +89,20 @@ TEST_CASE("dsl::opt()")
 
     auto ab = LEXY_VERIFY("ab");
     CHECK(ab.status == test_result::fatal_error);
-    CHECK(ab.trace == test_trace().token("ab").expected_literal(2, "cd", 0).cancel());
+    CHECK(ab.trace == test_trace().literal("ab").expected_literal(2, "cd", 0).cancel());
     auto abc = LEXY_VERIFY("abc");
     CHECK(abc.status == test_result::fatal_error);
     CHECK(abc.trace
-          == test_trace().token("ab").expected_literal(2, "cd", 1).error_token("c").cancel());
+          == test_trace().literal("ab").expected_literal(2, "cd", 1).error_token("c").cancel());
 
     auto abcd = LEXY_VERIFY("abcd");
     CHECK(abcd.status == test_result::success);
     CHECK(abcd.value == 1);
-    CHECK(abcd.trace == test_trace().token("ab").token("cd"));
+    CHECK(abcd.trace == test_trace().literal("ab").literal("cd"));
     auto abcde = LEXY_VERIFY("abcde");
     CHECK(abcde.status == test_result::success);
     CHECK(abcde.value == 1);
-    CHECK(abcde.trace == test_trace().token("ab").token("cd"));
+    CHECK(abcde.trace == test_trace().literal("ab").literal("cd"));
 }
 
 TEST_CASE("dsl::opt(unconditional)")

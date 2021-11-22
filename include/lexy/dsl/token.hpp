@@ -81,7 +81,7 @@ struct token_base : _token_base, BranchKind
             }
         }
 
-        context.on(_ev::token{}, Derived{}, begin, parser.end);
+        context.on(_ev::token{}, typename Derived::token_type{}, begin, parser.end);
         reader.set_position(parser.end);
 
         return true;

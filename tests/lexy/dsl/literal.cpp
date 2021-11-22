@@ -26,10 +26,10 @@ TEST_CASE("dsl::lit_b")
 
     auto abc = LEXY_VERIFY("abc");
     CHECK(abc.status == test_result::success);
-    CHECK(abc.trace == test_trace().token("abc"));
+    CHECK(abc.trace == test_trace().literal("abc"));
     auto abcd = LEXY_VERIFY("abcd");
     CHECK(abcd.status == test_result::success);
-    CHECK(abcd.trace == test_trace().token("abc"));
+    CHECK(abcd.trace == test_trace().literal("abc"));
 
     auto a = LEXY_VERIFY("a");
     CHECK(a.status == test_result::fatal_error);
@@ -51,7 +51,7 @@ TEST_CASE("dsl::lit_b")
 
     auto utf16 = LEXY_VERIFY(u"abc");
     CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("abc"));
+    CHECK(utf16.trace == test_trace().literal("abc"));
 }
 
 TEST_CASE("dsl::lit")
@@ -73,10 +73,10 @@ TEST_CASE("dsl::lit")
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
         auto abcd = LEXY_VERIFY("abcd");
         CHECK(abcd.status == test_result::success);
-        CHECK(abcd.trace == test_trace().token("abc"));
+        CHECK(abcd.trace == test_trace().literal("abc"));
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::fatal_error);
@@ -98,7 +98,7 @@ TEST_CASE("dsl::lit")
 
         auto utf16 = LEXY_VERIFY(u"abc");
         CHECK(utf16.status == test_result::success);
-        CHECK(utf16.trace == test_trace().token("abc"));
+        CHECK(utf16.trace == test_trace().literal("abc"));
     }
     SUBCASE("UTF-16, but only in ASCII")
     {
@@ -115,11 +115,11 @@ TEST_CASE("dsl::lit")
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().token("abc"));
+        CHECK(abc.trace == test_trace().literal("abc"));
 
         auto utf16 = LEXY_VERIFY(u"abc");
         CHECK(utf16.status == test_result::success);
-        CHECK(utf16.trace == test_trace().token("abc"));
+        CHECK(utf16.trace == test_trace().literal("abc"));
     }
     SUBCASE("UTF-16, non ASCII")
     {
@@ -136,7 +136,7 @@ TEST_CASE("dsl::lit")
 
         auto umlaute = LEXY_VERIFY(u"äöü");
         CHECK(umlaute.status == test_result::success);
-        CHECK(umlaute.trace == test_trace().token("\\u00E4\\u00F6\\u00FC"));
+        CHECK(umlaute.trace == test_trace().literal("\\u00E4\\u00F6\\u00FC"));
     }
 }
 

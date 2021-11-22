@@ -45,7 +45,7 @@ TEST_CASE("dsl::member")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().token("abc").position());
+        CHECK(abc.trace == test_trace().literal("abc").position());
     }
     SUBCASE("macro")
     {
@@ -61,7 +61,7 @@ TEST_CASE("dsl::member")
         auto abc = verify(rule, lexy::zstring_input("abc"), callback);
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().token("abc").position());
+        CHECK(abc.trace == test_trace().literal("abc").position());
     }
 
     SUBCASE("as branch")
@@ -78,7 +78,7 @@ TEST_CASE("dsl::member")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().token("abc").position());
+        CHECK(abc.trace == test_trace().literal("abc").position());
     }
 }
 

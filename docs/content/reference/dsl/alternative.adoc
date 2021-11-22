@@ -30,8 +30,9 @@ Matching::
 Errors::
   `lexy::exhausted_alternatives`: if neither `lhs` or `rhs` matched; at the original reader position. The rule then fails without consuming anything.
 Parse tree::
-  Single token node whose kind is determined by the kind of `operator/`;
-  the token kinds of its individual tokens are lost.
+  Single token node covering everything consumed by the selected token.
+  If the token kind of all individual token rules identical, that is the token kind.
+  Otherwise, the kind is unknown.
 
 As the result of `operator/` is itself a token rule, it can be chained.
 

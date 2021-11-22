@@ -317,7 +317,7 @@ TEST_CASE("roundtrip01")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::null{})
-                        .token("null")
+                        .literal("null")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -329,7 +329,7 @@ TEST_CASE("roundtrip02")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::boolean{})
-                        .token("true")
+                        .literal("true")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -341,7 +341,7 @@ TEST_CASE("roundtrip03")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::boolean{})
-                        .token("false")
+                        .literal("false")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -353,7 +353,7 @@ TEST_CASE("roundtrip04")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("0")
+                        .token(lexy::digits_token_kind, "0")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -365,7 +365,9 @@ TEST_CASE("roundtrip05")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::string{})
-                        .token("\"foo\"")
+                        .literal("\"")
+                        .token("foo")
+                        .literal("\"")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -377,8 +379,8 @@ TEST_CASE("roundtrip06")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::array{})
-                        .token("[")
-                        .token("]")
+                        .literal("[")
+                        .literal("]")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -390,8 +392,8 @@ TEST_CASE("roundtrip07")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::object{})
-                        .token("{")
-                        .token("}")
+                        .literal("{")
+                        .literal("}")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -404,15 +406,15 @@ TEST_CASE("roundtrip08")
     // clang-format off
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
         .production(grammar::array{})
-        .token("[")
+        .literal("[")
         .production(grammar::number{})
-            .token("0")
+            .token(lexy::digits_token_kind, "0")
             .finish()
-        .token(",")
+        .literal(",")
         .production(grammar::number{})
-            .token("1")
+            .token(lexy::digits_token_kind, "1")
             .finish()
-        .token("]")
+        .literal("]")
         .finish()
         .eof();
     // clang-format on
@@ -426,19 +428,19 @@ TEST_CASE("roundtrip08 - whitespace")
     // clang-format off
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
         .production(grammar::array{})
-        .token("[")
+        .literal("[")
         .whitespace(" ")
         .production(grammar::number{})
-            .token("0")
+            .token(lexy::digits_token_kind, "0")
             .finish()
         .whitespace(" ")
-        .token(",")
+        .literal(",")
         .whitespace(" ")
         .production(grammar::number{})
-            .token("1")
+            .token(lexy::digits_token_kind, "1")
             .finish()
         .whitespace(" ")
-        .token("]")
+        .literal("]")
         .finish()
         .eof();
     // clang-format on
@@ -452,15 +454,19 @@ TEST_CASE("roundtrip09")
     // clang-format off
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
         .production(grammar::object{})
-        .token("{")
+        .literal("{")
         .production(grammar::string{})
-            .token("\"foo\"")
+            .literal("\"")
+            .token("foo")
+            .literal("\"")
             .finish()
-        .token(":")
+        .literal(":")
         .production(grammar::string{})
-            .token("\"bar\"")
+            .literal("\"")
+            .token("bar")
+            .literal("\"")
             .finish()
-        .token("}")
+        .literal("}")
         .finish()
         .eof();
     // clang-format on
@@ -474,19 +480,23 @@ TEST_CASE("roundtrip09 - whitespace")
     // clang-format off
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
         .production(grammar::object{})
-        .token("{")
+        .literal("{")
         .whitespace(" ")
         .production(grammar::string{})
-            .token("\"foo\"")
+            .literal("\"")
+            .token("foo")
+            .literal("\"")
             .finish()
         .whitespace(" ")
-        .token(":")
+        .literal(":")
         .whitespace(" ")
         .production(grammar::string{})
-            .token("\"bar\"")
+            .literal("\"")
+            .token("bar")
+            .literal("\"")
             .finish()
         .whitespace(" ")
-        .token("}")
+        .literal("}")
         .finish()
         .eof();
     // clang-format on
@@ -500,23 +510,29 @@ TEST_CASE("roundtrip10")
     // clang-format off
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
         .production(grammar::object{})
-        .token("{")
+        .literal("{")
         .production(grammar::string{})
-            .token("\"a\"")
+            .literal("\"")
+            .token("a")
+            .literal("\"")
             .finish()
-        .token(":")
+        .literal(":")
         .production(grammar::null{})
-            .token("null")
+            .literal("null")
             .finish()
-        .token(",")
+        .literal(",")
         .production(grammar::string{})
-            .token("\"foo\"")
+            .literal("\"")
+            .token("foo")
+            .literal("\"")
             .finish()
-        .token(":")
+        .literal(":")
         .production(grammar::string{})
-            .token("\"bar\"")
+            .literal("\"")
+            .token("bar")
+            .literal("\"")
             .finish()
-        .token("}")
+        .literal("}")
         .finish()
         .eof();
     // clang-format on
@@ -529,7 +545,8 @@ TEST_CASE("roundtrip11")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("-1")
+                        .literal("-")
+                        .token(lexy::digits_token_kind, "1")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -541,7 +558,8 @@ TEST_CASE("roundtrip12")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("-2147483648")
+                        .literal("-")
+                        .token(lexy::digits_token_kind, "2147483648")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -553,7 +571,8 @@ TEST_CASE("roundtrip13")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("-1234567890123456789")
+                        .literal("-")
+                        .token(lexy::digits_token_kind, "1234567890123456789")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -567,7 +586,7 @@ TEST_CASE("roundtrip15")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("1")
+                        .token(lexy::digits_token_kind, "1")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -579,7 +598,7 @@ TEST_CASE("roundtrip16")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("2147483647")
+                        .token(lexy::digits_token_kind, "2147483647")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -591,7 +610,7 @@ TEST_CASE("roundtrip17")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("4294967295")
+                        .token(lexy::digits_token_kind, "4294967295")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -603,7 +622,7 @@ TEST_CASE("roundtrip18")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("1234567890123456789")
+                        .token(lexy::digits_token_kind, "1234567890123456789")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -615,7 +634,7 @@ TEST_CASE("roundtrip19")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("9223372036854775807")
+                        .token(lexy::digits_token_kind, "9223372036854775807")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -627,7 +646,9 @@ TEST_CASE("roundtrip20")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("0.0")
+                        .token(lexy::digits_token_kind, "0")
+                        .literal(".")
+                        .token(lexy::digits_token_kind, "0")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -639,7 +660,10 @@ TEST_CASE("roundtrip21")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("-0.0")
+                        .literal("-")
+                        .token(lexy::digits_token_kind, "0")
+                        .literal(".")
+                        .token(lexy::digits_token_kind, "0")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -651,7 +675,9 @@ TEST_CASE("roundtrip22")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("1.2345")
+                        .token(lexy::digits_token_kind, "1")
+                        .literal(".")
+                        .token(lexy::digits_token_kind, "2345")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -663,7 +689,10 @@ TEST_CASE("roundtrip23")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("-1.2345")
+                        .literal("-")
+                        .token(lexy::digits_token_kind, "1")
+                        .literal(".")
+                        .token(lexy::digits_token_kind, "2345")
                         .finish()
                         .eof();
     CHECK(tree == expected);
@@ -675,7 +704,9 @@ TEST_CASE("roundtrip24")
 
     auto expected = lexy_ext::parse_tree_desc(grammar::json{})
                         .production(grammar::number{})
-                        .token("5e-324")
+                        .token(lexy::digits_token_kind, "5")
+                        .literal("e-")
+                        .token(lexy::digits_token_kind, "324")
                         .finish()
                         .eof();
     CHECK(tree == expected);

@@ -31,7 +31,7 @@ TEST_CASE("token whitespace")
 
     auto abc = LEXY_VERIFY_P(production, "abc");
     CHECK(abc.status == test_result::success);
-    CHECK(abc.trace == test_trace().token("abc"));
+    CHECK(abc.trace == test_trace().literal("abc"));
 
     auto leading_ws = LEXY_VERIFY_P(production, "..abc");
     CHECK(leading_ws.status == test_result::fatal_error);
@@ -41,7 +41,7 @@ TEST_CASE("token whitespace")
     CHECK(inner_ws.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
     auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
     CHECK(trailing_ws.status == test_result::success);
-    CHECK(trailing_ws.trace == test_trace().token("abc").whitespace(".."));
+    CHECK(trailing_ws.trace == test_trace().literal("abc").whitespace(".."));
 }
 
 namespace

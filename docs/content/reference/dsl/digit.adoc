@@ -73,6 +73,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_char_class" %}} (`"digit.zero"`): instead of {{% docref "lexy::expected_literal" %}}; at the starting reader position.
   The rule then fails.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example zero "The number zero" %}}
 
@@ -99,6 +101,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_char_class" %}} (`"digit.<base>"`): at the starting reader position.
   The rule then fails.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example digit "A hexadecimal digit, upper-case letters only" %}}
 
@@ -144,6 +148,8 @@ Errors::
     The rule then fails.
   * All errors raised by matching a digit after a separator to prevent trailing separators.
     The rule then fails.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example digits "Decimal digits with digit separator but without leading zeroes" %}}
 
@@ -180,6 +186,8 @@ Matching::
   This does not count towards the number of digits.
 Errors::
   All errors raised by matching `digit<Base>`. The rule then fails.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example n_digits "A `\x` escape sequence" %}}
 

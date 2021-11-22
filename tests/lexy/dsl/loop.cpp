@@ -22,26 +22,31 @@ TEST_CASE("dsl::loop()")
 
     auto zero = LEXY_VERIFY("!");
     CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("!"));
+    CHECK(zero.trace == test_trace().literal("!"));
     auto one = LEXY_VERIFY("abc!");
     CHECK(one.status == test_result::success);
-    CHECK(one.trace == test_trace().token("a").token("bc").token("!"));
+    CHECK(one.trace == test_trace().literal("a").literal("bc").literal("!"));
     auto two = LEXY_VERIFY("abcabc!");
     CHECK(two.status == test_result::success);
-    CHECK(two.trace == test_trace().token("a").token("bc").token("a").token("bc").token("!"));
+    CHECK(two.trace
+          == test_trace().literal("a").literal("bc").literal("a").literal("bc").literal("!"));
 
-    auto recover = LEXY_VERIFY("aabc!");
-    auto recover_trace
-        = test_trace().token("a").expected_literal(1, "bc", 0).token("a").token("bc").token("!");
+    auto recover       = LEXY_VERIFY("aabc!");
+    auto recover_trace = test_trace()
+                             .literal("a")
+                             .expected_literal(1, "bc", 0)
+                             .literal("a")
+                             .literal("bc")
+                             .literal("!");
     CHECK(recover.status == test_result::recovered_error);
     CHECK(recover.trace == recover_trace);
 
     auto unterminated       = LEXY_VERIFY("abcabc");
     auto unterminated_trace = test_trace()
-                                  .token("a")
-                                  .token("bc")
-                                  .token("a")
-                                  .token("bc")
+                                  .literal("a")
+                                  .literal("bc")
+                                  .literal("a")
+                                  .literal("bc")
                                   .error(6, 6, "exhausted choice")
                                   .cancel();
     CHECK(unterminated.status == test_result::fatal_error);
@@ -61,19 +66,21 @@ TEST_CASE("dsl::while_()")
 
     auto one = LEXY_VERIFY("abc");
     CHECK(one.status == test_result::success);
-    CHECK(one.trace == test_trace().token("a").token("bc"));
+    CHECK(one.trace == test_trace().literal("a").literal("bc"));
     auto two = LEXY_VERIFY("abcabc");
     CHECK(two.status == test_result::success);
-    CHECK(two.trace == test_trace().token("a").token("bc").token("a").token("bc"));
+    CHECK(two.trace == test_trace().literal("a").literal("bc").literal("a").literal("bc"));
     auto three = LEXY_VERIFY("abcabcabc");
     CHECK(three.status == test_result::success);
-    CHECK(three.trace
-          == test_trace().token("a").token("bc").token("a").token("bc").token("a").token("bc"));
+    CHECK(
+        three.trace
+        == test_trace().literal("a").literal("bc").literal("a").literal("bc").literal("a").literal(
+            "bc"));
 
     auto recovered = LEXY_VERIFY("aabc");
     CHECK(recovered.status == test_result::recovered_error);
     CHECK(recovered.trace
-          == test_trace().token("a").expected_literal(1, "bc", 0).token("a").token("bc"));
+          == test_trace().literal("a").expected_literal(1, "bc", 0).literal("a").literal("bc"));
 }
 
 TEST_CASE("dsl::while_one()")

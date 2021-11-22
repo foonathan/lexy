@@ -175,6 +175,8 @@ Matching::
 Errors::
   {{% docref "lexy::expected_keyword" %}}: if either `identifier.pattern()` or the `lit` rule failed.
   Its range covers the everything consumed by `identifier.pattern()` and its `.string()` is `Str`.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 The macro `LEXY_KEYWORD(Str, Identifier)` is equivalent to `keyword<Str>(Identifier)`,
 except that it also works on older compilers that do not support C++20's extended NTTPs.

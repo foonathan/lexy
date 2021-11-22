@@ -33,5 +33,11 @@ struct _any : token_base<_any, unconditional_branch_base>
 constexpr auto any = _any{};
 } // namespace lexyd
 
+namespace lexy
+{
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
+}
+
 #endif // LEXY_DSL_ANY_HPP_INCLUDED
 

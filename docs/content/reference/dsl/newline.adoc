@@ -27,6 +27,8 @@ Matching::
   Succeeds if one of them matched.
 Errors::
   {{% docref "lexy::expected_char_class" %}} (`"newline"`): if they both did not match; at the starting reader position.
+Parse tree::
+  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::newline_token_kind`.
 
 {{% playground-example newline "Match a newline at the end" %}}
 

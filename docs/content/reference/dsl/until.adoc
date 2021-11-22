@@ -34,7 +34,7 @@ Errors::
   If `.or_eof()` has been used, it can never fail.
 Parse tree::
   A single token node that contains everything consumed before `condition` and everything consumed by `condition`.
-  The token kind is determined by `until`, not `condition`.
+  It has the {{% docref "lexy::predefined_token_kind" %}} `lexy::any_token_kind`.
 
 `until(condition)` aggressively discards input to find a match for `condition`.
 It doesn't matter what the input is.

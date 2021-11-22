@@ -110,7 +110,7 @@ TEST_CASE("dsl::scan")
         CHECK(abc.status == test_result::fatal_error);
         // clang-format off
         CHECK(abc.trace == test_trace()
-                             .token("abc")
+                             .literal("abc")
                              .production("integer")
                                  .expected_char_class(3, "digit.decimal")
                                  .recovery().cancel()
@@ -122,9 +122,9 @@ TEST_CASE("dsl::scan")
         CHECK(abc_small.value == 4);
         CHECK(abc_small.trace
               == test_trace()
-                     .token("abc")
+                     .literal("abc")
                      .production("integer")
-                     .token("4")
+                     .token("digits", "4")
                      .finish()
                      .error(3, 4, "invalid-integer")
                      .eof());
@@ -132,7 +132,12 @@ TEST_CASE("dsl::scan")
         CHECK(abc_big.status == test_result::success);
         CHECK(abc_big.value == 42);
         CHECK(abc_big.trace
-              == test_trace().token("abc").production("integer").token("42").finish().eof());
+              == test_trace()
+                     .literal("abc")
+                     .production("integer")
+                     .token("digits", "42")
+                     .finish()
+                     .eof());
 
         auto small = LEXY_VERIFY_P(simple_scan, "4");
         CHECK(small.status == test_result::recovered_error);
@@ -141,7 +146,7 @@ TEST_CASE("dsl::scan")
               == test_trace()
                      .backtracked("4")
                      .production("integer")
-                     .token("4")
+                     .token("digits", "4")
                      .finish()
                      .error(0, 1, "invalid-integer")
                      .eof());
@@ -149,7 +154,12 @@ TEST_CASE("dsl::scan")
         CHECK(big.status == test_result::success);
         CHECK(big.value == 42);
         CHECK(big.trace
-              == test_trace().backtracked("4").production("integer").token("42").finish().eof());
+              == test_trace()
+                     .backtracked("4")
+                     .production("integer")
+                     .token("digits", "42")
+                     .finish()
+                     .eof());
     }
     SUBCASE("void")
     {
@@ -162,7 +172,7 @@ TEST_CASE("dsl::scan")
 
         auto abc = LEXY_VERIFY_P(no_value_scan, "abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().production("literal").token("abc"));
+        CHECK(abc.trace == test_trace().production("literal").literal("abc"));
     }
     SUBCASE("with state")
     {

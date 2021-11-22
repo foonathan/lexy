@@ -58,7 +58,7 @@ TEST_CASE("dsl::p")
         auto a       = LEXY_VERIFY("a");
         auto a_trace = test_trace()
                            .production("production")
-                           .token("a")
+                           .literal("a")
                            .position()
                            .expected_literal(1, "bc", 0);
         CHECK(a.status == test_result::recovered_error);
@@ -67,7 +67,7 @@ TEST_CASE("dsl::p")
         auto ab       = LEXY_VERIFY("ab");
         auto ab_trace = test_trace()
                             .production("production")
-                            .token("a")
+                            .literal("a")
                             .position()
                             .expected_literal(1, "bc", 1)
                             .error_token("b");
@@ -75,8 +75,9 @@ TEST_CASE("dsl::p")
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
 
-        auto abc       = LEXY_VERIFY("abc");
-        auto abc_trace = test_trace().production("production").token("a").position().token("bc");
+        auto abc = LEXY_VERIFY("abc");
+        auto abc_trace
+            = test_trace().production("production").literal("a").position().literal("bc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == abc_trace);
@@ -104,7 +105,7 @@ TEST_CASE("dsl::p")
         auto a       = LEXY_VERIFY("a");
         auto a_trace = test_trace()
                            .production("production")
-                           .token("a")
+                           .literal("a")
                            .position()
                            .expected_literal(1, "bc", 0);
         CHECK(a.status == test_result::recovered_error);
@@ -113,7 +114,7 @@ TEST_CASE("dsl::p")
         auto ab       = LEXY_VERIFY("ab");
         auto ab_trace = test_trace()
                             .production("production")
-                            .token("a")
+                            .literal("a")
                             .position()
                             .expected_literal(1, "bc", 1)
                             .error_token("b");
@@ -121,8 +122,9 @@ TEST_CASE("dsl::p")
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
 
-        auto abc       = LEXY_VERIFY("abc");
-        auto abc_trace = test_trace().production("production").token("a").position().token("bc");
+        auto abc = LEXY_VERIFY("abc");
+        auto abc_trace
+            = test_trace().production("production").literal("a").position().literal("bc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == abc_trace);
@@ -160,7 +162,7 @@ TEST_CASE("dsl::p")
         auto a_trace = test_trace()
                            .production("nested")
                            .production("production")
-                           .token("a")
+                           .literal("a")
                            .position()
                            .expected_literal(1, "bc", 0);
         CHECK(a.status == test_result::recovered_error);
@@ -170,7 +172,7 @@ TEST_CASE("dsl::p")
         auto ab_trace = test_trace()
                             .production("nested")
                             .production("production")
-                            .token("a")
+                            .literal("a")
                             .position()
                             .expected_literal(1, "bc", 1)
                             .error_token("b");
@@ -182,9 +184,9 @@ TEST_CASE("dsl::p")
         auto abc_trace = test_trace()
                              .production("nested")
                              .production("production")
-                             .token("a")
+                             .literal("a")
                              .position()
-                             .token("bc");
+                             .literal("bc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.value == 1);
         CHECK(abc.trace == abc_trace);
@@ -211,7 +213,7 @@ TEST_CASE("dsl::p")
 
         auto abc = LEXY_VERIFY_P(production, "abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().production("inner").token("ab").token("c"));
+        CHECK(abc.trace == test_trace().production("inner").literal("ab").literal("c"));
 
         auto leading_ws = LEXY_VERIFY_P(production, "..abc");
         CHECK(leading_ws.status == test_result::fatal_error);
@@ -222,14 +224,15 @@ TEST_CASE("dsl::p")
         CHECK(inner_ws.trace
               == test_trace()
                      .production("inner")
-                     .token("ab")
+                     .literal("ab")
                      .expected_literal(2, "c", 0)
                      .cancel()
                      .cancel());
         auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
         CHECK(trailing_ws.status == test_result::success);
         CHECK(trailing_ws.trace
-              == test_trace().production("inner").token("ab").token("c").finish().whitespace(".."));
+              == test_trace().production("inner").literal("ab").literal("c").finish().whitespace(
+                  ".."));
     }
 }
 
@@ -263,19 +266,19 @@ TEST_CASE("dsl::recurse")
         CHECK(empty.trace == test_trace());
 
         auto one       = LEXY_VERIFY_P(production, "a");
-        auto one_trace = test_trace().token("a").production("test_production");
+        auto one_trace = test_trace().literal("a").production("test_production");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
         CHECK(one.trace == one_trace);
 
         auto two       = LEXY_VERIFY_P(production, "aa");
-        auto two_trace = test_trace(one_trace).token("a").production("test_production");
+        auto two_trace = test_trace(one_trace).literal("a").production("test_production");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 2);
         CHECK(two.trace == two_trace);
 
         auto three       = LEXY_VERIFY_P(production, "aaa");
-        auto three_trace = test_trace(two_trace).token("a").production("test_production");
+        auto three_trace = test_trace(two_trace).literal("a").production("test_production");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 3);
         CHECK(three.trace == three_trace);
@@ -301,22 +304,23 @@ TEST_CASE("dsl::recurse")
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
 
-        auto one       = LEXY_VERIFY_P(production, "a");
-        auto one_trace = test_trace().token("a").production("inner").production("test_production");
+        auto one = LEXY_VERIFY_P(production, "a");
+        auto one_trace
+            = test_trace().literal("a").production("inner").production("test_production");
         CHECK(one.status == test_result::success);
         CHECK(one.value == 1);
         CHECK(one.trace == one_trace);
 
         auto two = LEXY_VERIFY_P(production, "aa");
         auto two_trace
-            = test_trace(one_trace).token("a").production("inner").production("test_production");
+            = test_trace(one_trace).literal("a").production("inner").production("test_production");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 1);
         CHECK(two.trace == two_trace);
 
         auto three = LEXY_VERIFY_P(production, "aaa");
         auto three_trace
-            = test_trace(two_trace).token("a").production("inner").production("test_production");
+            = test_trace(two_trace).literal("a").production("inner").production("test_production");
         CHECK(three.status == test_result::success);
         CHECK(three.value == 1);
         CHECK(three.trace == three_trace);
@@ -346,7 +350,7 @@ TEST_CASE("dsl::recurse")
 
         auto abc = LEXY_VERIFY_P(production, "abc");
         CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().production("inner").token("ab").token("c"));
+        CHECK(abc.trace == test_trace().production("inner").literal("ab").literal("c"));
 
         auto leading_ws = LEXY_VERIFY_P(production, "..abc");
         CHECK(leading_ws.status == test_result::fatal_error);
@@ -357,14 +361,15 @@ TEST_CASE("dsl::recurse")
         CHECK(inner_ws.trace
               == test_trace()
                      .production("inner")
-                     .token("ab")
+                     .literal("ab")
                      .expected_literal(2, "c", 0)
                      .cancel()
                      .cancel());
         auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
         CHECK(trailing_ws.status == test_result::success);
         CHECK(trailing_ws.trace
-              == test_trace().production("inner").token("ab").token("c").finish().whitespace(".."));
+              == test_trace().production("inner").literal("ab").literal("c").finish().whitespace(
+                  ".."));
     }
 
     SUBCASE("max depth")
@@ -392,7 +397,7 @@ TEST_CASE("dsl::recurse")
         auto one = LEXY_VERIFY_P(production, "a");
         // clang-format off
         auto one_trace = test_trace()
-                             .token("a")
+                             .literal("a")
                              .production("inner")
                                  .production("test_production").finish()
                                  .production("test_production").finish()
@@ -405,10 +410,10 @@ TEST_CASE("dsl::recurse")
         auto two = LEXY_VERIFY_P(production, "aa");
         // clang-format off
         auto two_trace = test_trace()
-                             .token("a")
+                             .literal("a")
                              .production("inner")
                                  .production("test_production")
-                                     .token("a")
+                                     .literal("a")
                                      .production("inner")
                                          .production("test_production").finish()
                                          .production("test_production").finish()
@@ -424,13 +429,13 @@ TEST_CASE("dsl::recurse")
         auto three = LEXY_VERIFY_P(production, "aaa");
         // clang-format off
         auto three_trace = test_trace()
-                             .token("a")
+                             .literal("a")
                              .production("inner")
                                  .production("test_production")
-                                     .token("a")
+                                     .literal("a")
                                      .production("inner")
                                          .production("test_production")
-                                             .token("a")
+                                             .literal("a")
                                              .production("inner")
                                                  .production("test_production").finish()
                                                  .production("test_production").finish()
@@ -450,16 +455,16 @@ TEST_CASE("dsl::recurse")
         // clang-format off
         auto four_trace
             = test_trace()
-                 .token("a")
+                 .literal("a")
                  .production("inner")
                      .production("test_production")
-                         .token("a")
+                         .literal("a")
                          .production("inner")
                              .production("test_production")
-                                 .token("a")
+                                 .literal("a")
                                  .production("inner")
                                      .production("test_production")
-                                         .token("a")
+                                         .literal("a")
                                          .production("inner")
                                          .error(4, 4, "maximum recursion depth exceeded")
                                          .cancel()
@@ -499,24 +504,24 @@ TEST_CASE("dsl::recurse_branch")
         auto a = LEXY_VERIFY_P(production, "a");
         CHECK(a.status == test_result::success);
         CHECK(a.value == 0);
-        CHECK(a.trace == test_trace().token("a"));
+        CHECK(a.trace == test_trace().literal("a"));
         auto b = LEXY_VERIFY_P(production, "b");
         CHECK(b.status == test_result::success);
         CHECK(b.value == 0);
-        CHECK(b.trace == test_trace().token("b").production("test_production").cancel());
+        CHECK(b.trace == test_trace().literal("b").production("test_production").cancel());
 
         auto ba = LEXY_VERIFY_P(production, "ba");
         CHECK(ba.status == test_result::success);
         CHECK(ba.value == 1);
-        CHECK(ba.trace == test_trace().token("b").production("test_production").token("a"));
+        CHECK(ba.trace == test_trace().literal("b").production("test_production").literal("a"));
         auto bb = LEXY_VERIFY_P(production, "bb");
         CHECK(bb.status == test_result::success);
         CHECK(bb.value == 1);
         CHECK(bb.trace
               == test_trace()
-                     .token("b")
+                     .literal("b")
                      .production("test_production")
-                     .token("b")
+                     .literal("b")
                      .production("test_production")
                      .cancel());
 
@@ -525,11 +530,11 @@ TEST_CASE("dsl::recurse_branch")
         CHECK(bba.value == 2);
         CHECK(bba.trace
               == test_trace()
-                     .token("b")
+                     .literal("b")
                      .production("test_production")
-                     .token("b")
+                     .literal("b")
                      .production("test_production")
-                     .token("a"));
+                     .literal("a"));
     }
 
     // No need to test other cases, code is shared with `dsl::p`.
