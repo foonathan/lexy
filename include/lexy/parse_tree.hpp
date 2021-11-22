@@ -532,17 +532,14 @@ public:
     void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
                typename Reader::iterator end)
     {
-        if (!_kind && begin == end)
-            // Don't add empty, unknown tokens.
+        if (_kind.ignore_if_empty() && begin == end)
             return;
 
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
         if (auto token = _cur.last_child.token();
-            // We merge subsequent token nodes with the same kind inside of a token production,
-            // or if the kind is error_token_kind.
-            token && token->kind == kind
-            && (_cur.prod->token_production || kind == lexy::error_token_kind))
+            // We merge error tokens.
+            token && token->kind == kind && kind == lexy::error_token_kind)
         {
             // No need to allocate a new node, just extend the previous node.
             token->update_end(end);

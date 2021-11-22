@@ -132,16 +132,16 @@ Errors::
     Otherwise, it fails.
 Values::
   It creates a sink of the current context.
-  The sink is invoked with a {{% docref "lexy::lexeme" %}} capturing everything consumed by `c`, separately.
+  The sink is invoked with a {{% docref "lexy::lexeme" %}} capturing everything consumed by `c`;
+  a sequence of contiguous characters is merged into a single lexeme.
   It is also invoked with every value produced by `escape`.
   The invocations happen separately in lexical order.
   The rule then produces all values of `open()`, the final value of the sink, and all values of `close()`.
 Parse tree::
-  `delimited` does not have any special parse tree handling:
+  `delimited` does has any special parse tree handling:
   it will create the nodes for `open()`, then the nodes for each `c` and `escape`, and the nodes for `close()`.
+  However, instead of creating separate token nodes for each `c`, adjacent token nodes are merged into a single one covering as much as possible.
   A character that is skipped during error recovery will create a token node whose {{% docref "lexy::predefined_token_kind" %}} is `lexy::error_token_kind`.
-  If the current production inherits from {{% docref "lexy::token_production" %}},
-  adjacent token nodes of the same kind (which includes the default kind) are merged.
 
 {{% playground-example "quoted" "Parse a quoted string" %}}
 

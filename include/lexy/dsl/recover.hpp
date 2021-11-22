@@ -78,8 +78,7 @@ struct _find : _recovery_base
                 {
                     // Haven't found it, recovery fails.
                     auto end = reader.position();
-                    if (begin != end)
-                        context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                     context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
@@ -91,8 +90,7 @@ struct _find : _recovery_base
             }
 
             auto end = reader.position();
-            if (begin != end)
-                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
             context.on(_ev::recovery_finish{}, end);
 
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
@@ -157,8 +155,7 @@ struct _reco : _recovery_base
                 {
                     // We've failed to recover as we've reached the limit.
                     auto end = reader.position();
-                    if (begin != end)
-                        context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                     context.on(_ev::recovery_cancel{}, end);
                     return false;
                 }
@@ -170,8 +167,7 @@ struct _reco : _recovery_base
             }
 
             auto end = reader.position();
-            if (begin != end)
-                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
             context.on(_ev::recovery_finish{}, end);
 
             // Finish with the rule that matched.

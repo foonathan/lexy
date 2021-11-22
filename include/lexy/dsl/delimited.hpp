@@ -28,13 +28,41 @@ struct missing_delimiter
 
 namespace lexyd
 {
+template <typename Char, typename Reader>
+struct _del_chars
+{
+    lexy::token_parser_for<Char, Reader> parser;
+    typename Reader::iterator            begin;
+
+    constexpr _del_chars(const Reader& reader) : parser(reader), begin(reader.position()) {}
+
+    constexpr bool try_parse(Reader& reader)
+    {
+        parser      = lexy::token_parser_for<Char, Reader>(reader);
+        auto result = parser.try_parse(reader);
+        reader.set_position(parser.end);
+        return result;
+    }
+
+    template <typename Context, typename Sink>
+    constexpr void finish(Context& context, Sink& sink, typename Reader::iterator end)
+    {
+        if (begin == end)
+            return;
+
+        context.on(_ev::token{}, typename Char::token_type{}, begin, end);
+        sink(lexy::lexeme<Reader>(begin, end));
+    }
+};
+
 template <typename Close, typename Char, typename Limit, typename... Escapes>
 struct _del : rule_base
 {
     template <typename CloseParser, typename Context, typename Reader, typename Sink>
     static constexpr bool _loop(CloseParser& close, Context& context, Reader& reader, Sink& sink)
     {
-        auto del_begin = reader.position();
+        auto                     del_begin = reader.position();
+        _del_chars<Char, Reader> cur_chars(reader);
         while (!close.try_parse(context.control_block, reader))
         {
             close.cancel(context);
@@ -43,8 +71,11 @@ struct _del : rule_base
             if (lexy::branch_parser_for<Limit, Reader> limit{};
                 limit.try_parse(context.control_block, reader))
             {
-                auto err
-                    = lexy::error<Reader, lexy::missing_delimiter>(del_begin, reader.position());
+                // We're done, so finish the current characters.
+                auto end = reader.position();
+                cur_chars.finish(context, sink, end);
+
+                auto err = lexy::error<Reader, lexy::missing_delimiter>(del_begin, end);
                 context.on(_ev::error{}, err);
                 return false;
             }
@@ -54,34 +85,40 @@ struct _del : rule_base
             }
 
             // Check for escape sequences.
-            if ((Escapes::_try_parse(context, reader, sink) || ...))
+            if ((Escapes::_try_parse(context, reader, sink, cur_chars) || ...))
                 // We had an escape sequence, so do nothing in this iteration.
                 continue;
 
             // Parse the next character.
-            if (auto begin = reader.position(); Char::token_parse(context, reader))
+            if (auto begin = reader.position(); !cur_chars.try_parse(reader))
             {
-                // Pass it to the sink.
-                sink(lexy::lexeme<Reader>(begin, reader.position()));
-            }
-            else
-            {
-                // Recover from it; this is always possible,.
-                context.on(_ev::recovery_start{}, reader.position());
+                // It has failed, so finish the current character sequence and report an error.
+                cur_chars.finish(context, sink, begin);
+                cur_chars.parser.report_error(context, reader);
 
-                if (begin == reader.position())
+                // Recover from it; this is always possible,.
+                auto end = reader.position();
+                context.on(_ev::recovery_start{}, end);
+
+                if (begin == end)
                 {
                     // The character didn't consume anything, so we manually discard one code unit.
                     LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
                                 "EOF should be checked before calling this");
                     reader.bump();
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, reader.position());
+                    end = reader.position();
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                 }
 
-                context.on(_ev::recovery_finish{}, reader.position());
+                context.on(_ev::recovery_finish{}, end);
+
+                // We start the next character after error recovery.
+                cur_chars.begin = end;
             }
         }
 
+        // Finish the currently active character sequence.
+        cur_chars.finish(context, sink, reader.position());
         return true;
     }
 
@@ -194,20 +231,20 @@ namespace lexyd
 template <typename Escape, typename... Branches>
 struct _escape : _escape_base
 {
-    template <typename Context, typename Reader, typename Sink>
-    static constexpr bool _try_parse(Context& context, Reader& reader, Sink& sink)
+    template <typename Context, typename Reader, typename Sink, typename Char>
+    static constexpr bool _try_parse(Context& context, Reader& reader, Sink& sink,
+                                     _del_chars<Char, Reader>& cur_chars)
     {
         auto begin = reader.position();
 
         // Check whether we're having the initial escape character.
         lexy::branch_parser_for<Escape, Reader> token{};
         if (!token.try_parse(context.control_block, reader))
-        {
-            token.cancel(context);
+            // No need to call `.cancel()`; it's a token.
             return false;
-        }
 
-        // We do, so consume it.
+        // We do, so finish current character sequence and consume the escape token.
+        cur_chars.finish(context, sink, begin);
         // It's a token, so this can't fail.
         token.template finish<lexy::pattern_parser<>>(context, reader);
 
@@ -239,6 +276,8 @@ struct _escape : _escape_base
             context.on(_ev::error{}, err);
         }
 
+        // Restart the current character sequence after the escape sequence.
+        cur_chars.begin = reader.position();
         return true;
     }
 

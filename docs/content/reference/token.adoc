@@ -87,6 +87,7 @@ namespace lexy
         //== access ===//
         constexpr explicit operator bool() const noexcept;
         constexpr bool is_predefined() const noexcept;
+        constexpr bool ignore_if_empty() const noexcept;
 
         constexpr _underlying-type_ get() const noexcept;
 
@@ -170,9 +171,13 @@ Cases 2 and 3 are subject to the same range restrictions as the constructor that
 constexpr explicit operator bool() const noexcept; <1>
 
 constexpr bool is_predefined() const noexcept;     <2>
+
+constexpr bool ignore_if_empty() const noexcept;   <3>
 ----
 <1> Returns `true` if the token kind is not `lexy::unknown_token_kind`, `false` otherwise.
 <2> Returns `true` if the token kind is user-defined (including unknown), `false` otherwise.
+<3> Returns `true` if an empty token of that kind should be ignored by {{% docref "lexy::parse_tree" %}} and related, `false` otherwise.
+    It currently returns `true` for `lexy::unknown_token_kind`, `lexy::error_token_kind`, `lexy::whitespace_token_kind`.
 
 {{% interface %}}
 ----

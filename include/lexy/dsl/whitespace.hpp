@@ -89,18 +89,14 @@ struct manual_ws_parser
         if (result)
         {
             // Add a whitespace token node.
-            if (begin != end)
-                context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
-
+            context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
             // And continue.
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
         else
         {
             // Add an error token node.
-            if (begin != end)
-                context.on(lexy::parse_events::token{}, lexy::error_token_kind, begin, end);
-
+            context.on(lexy::parse_events::token{}, lexy::error_token_kind, begin, end);
             // And cancel.
             return false;
         }

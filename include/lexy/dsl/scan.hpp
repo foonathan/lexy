@@ -398,11 +398,8 @@ public:
         auto result = lexy::try_match_token(rule, _reader);
         auto end    = _reader.position();
 
-        if (begin != end)
-        {
-            auto& context = static_cast<Derived&>(*this).context();
-            context.on(parse_events::token{}, lexy::error_token_kind, begin, end);
-        }
+        auto& context = static_cast<Derived&>(*this).context();
+        context.on(parse_events::token{}, lexy::error_token_kind, begin, end);
 
         return result;
     }

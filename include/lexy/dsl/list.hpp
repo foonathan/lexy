@@ -294,8 +294,9 @@ struct _lstt : rule_base
                     break;
                 }
 
-            case _state::recovery:
-                context.on(_ev::recovery_start{}, reader.position());
+            case _state::recovery: {
+                auto recovery_begin = reader.position();
+                context.on(_ev::recovery_start{}, recovery_begin);
                 while (true)
                 {
                     // Recovery succeeds when we reach the next separator.
@@ -306,7 +307,11 @@ struct _lstt : rule_base
                         lexy::branch_parser_for<typename Sep::rule, Reader> sep{};
                         if (sep.try_parse(context.control_block, reader))
                         {
-                            context.on(_ev::recovery_finish{}, reader.position());
+                            auto recovery_end = reader.position();
+                            context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
+                                       recovery_end);
+                            context.on(_ev::recovery_finish{}, recovery_end);
+
                             if (sep.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the trailing separator check.
@@ -336,7 +341,11 @@ struct _lstt : rule_base
                         lexy::branch_parser_for<Item, Reader> item{};
                         if (item.try_parse(context.control_block, reader))
                         {
-                            context.on(_ev::recovery_finish{}, reader.position());
+                            auto recovery_end = reader.position();
+                            context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
+                                       recovery_end);
+                            context.on(_ev::recovery_finish{}, recovery_end);
+
                             if (item.template finish<lexy::sink_parser>(context, reader, sink))
                             {
                                 // Continue the list with the next terminator check.
@@ -361,7 +370,10 @@ struct _lstt : rule_base
                     if (term.try_parse(context.control_block, reader))
                     {
                         // We're now done with the entire list.
-                        context.on(_ev::recovery_finish{}, reader.position());
+                        auto recovery_end = reader.position();
+                        context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
+                                   recovery_end);
+                        context.on(_ev::recovery_finish{}, recovery_end);
                         return true;
                     }
                     else
@@ -375,7 +387,10 @@ struct _lstt : rule_base
                     if (limit.try_parse(context.control_block, reader))
                     {
                         // Recovery has failed, propagate error.
-                        context.on(_ev::recovery_cancel{}, reader.position());
+                        auto recovery_end = reader.position();
+                        context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
+                                   recovery_end);
+                        context.on(_ev::recovery_cancel{}, recovery_end);
                         return false;
                     }
                     else
@@ -384,12 +399,10 @@ struct _lstt : rule_base
                     }
 
                     // Consume one code unit and try again.
-                    auto begin = reader.position();
                     reader.bump();
-                    auto end = reader.position();
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                 }
                 break;
+            }
             }
         }
 

@@ -39,9 +39,7 @@ During parsing, `tree` is cleared and replaced by a new tree that represents the
 it will have a production node for each production, and a token node for each tokens as indicated by the {{% rule %}}s.
 If a production is a {{% docref "lexy::transparent_production" %}}, it will not get its own node in the parse tree,
 but the would-be children instead added to the currently active node.
-If a production is a {{% docref "lexy::token_production" %}}, adjacent token nodes with the same {{% docref "lexy::token_kind" %}} are merged,
-and only one node will be added for each run of adjacent tokens.
-If a token rule has an unknown token kind and matches without having consumed any input, it will not be added to the parse tree.
+If a token rule has an ignorable {{% docref "lexy::token_kind" %}} and matches without having consumed any input, it will not be added to the parse tree.
 
 The resulting parse tree is a lossless representation of the input:
 Traversing all token nodes of the tree and concatenating their {{% docref "lexy::lexeme" %}}s will yield the same input back.

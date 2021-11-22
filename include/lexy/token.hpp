@@ -166,6 +166,12 @@ public:
         return _value >= _smallest_predefined_token_kind;
     }
 
+    constexpr bool ignore_if_empty() const noexcept
+    {
+        return _value == unknown_token_kind || _value == error_token_kind
+               || _value == whitespace_token_kind;
+    }
+
     constexpr const char* name() const noexcept
     {
         if (is_predefined())

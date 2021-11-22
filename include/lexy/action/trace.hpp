@@ -61,7 +61,6 @@ public:
     template <typename Location, typename Production>
     void write_production_start(const Location& loc, Production)
     {
-        _last_token.reset();
         if (_cur_depth <= _opts.max_tree_depth)
         {
             write_prefix(loc, prefix::event);
@@ -86,39 +85,29 @@ public:
         ++_cur_depth;
     }
 
-    template <typename Location, typename Production, typename Reader>
-    void write_token(const Location& loc, Production production, lexy::token_kind<TokenKind> kind,
+    template <typename Location, typename Reader>
+    void write_token(const Location& loc, lexy::token_kind<TokenKind> kind,
                      lexy::lexeme<Reader> lexeme)
     {
-        if (_cur_depth > _opts.max_tree_depth)
+        if (_cur_depth > _opts.max_tree_depth || (kind.ignore_if_empty() && lexeme.empty()))
             return;
 
-        if (_last_token.merge(production, kind))
+        write_prefix(loc, prefix::event);
+
+        _out = _detail::write_color<_detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, kind.name());
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        if (!lexeme.empty())
         {
+            _out = _detail::write_str(_out, ": ");
             _out = visualize_to(_out, lexeme, _opts | visualize_space);
         }
-        else
-        {
-            write_prefix(loc, prefix::event);
-
-            _out = _detail::write_color<_detail::color::bold>(_out, _opts);
-            _out = _detail::write_str(_out, kind.name());
-            _out = _detail::write_color<_detail::color::reset>(_out, _opts);
-
-            if (!lexeme.empty())
-            {
-                _out = _detail::write_str(_out, ": ");
-                _out = visualize_to(_out, lexeme, _opts | visualize_space);
-            }
-        }
-
-        _last_token.update(kind);
     }
 
     template <typename Location, typename Reader>
     void write_backtrack(const Location& loc, lexy::lexeme<Reader> lexeme)
     {
-        _last_token.reset();
         if (_cur_depth > _opts.max_tree_depth || lexeme.empty())
             return;
 
@@ -138,7 +127,6 @@ public:
     template <typename Location, typename Reader, typename Tag>
     void write_error(const Location& loc, const lexy::error<Reader, Tag>& error)
     {
-        _last_token.reset();
         if (_cur_depth > _opts.max_tree_depth)
             return;
 
@@ -184,7 +172,6 @@ public:
     template <typename Location>
     void write_recovery_start(const Location& loc)
     {
-        _last_token.reset();
         if (_cur_depth <= _opts.max_tree_depth)
         {
             write_prefix(loc, prefix::event);
@@ -210,7 +197,6 @@ public:
     template <typename Location>
     void write_debug(const Location& loc, const char* str)
     {
-        _last_token.reset();
         if (_cur_depth > _opts.max_tree_depth)
             return;
 
@@ -229,8 +215,6 @@ public:
     template <typename Location>
     void write_finish(const Location& loc)
     {
-        _last_token.reset();
-
         if (_cur_depth <= _opts.max_tree_depth)
             write_prefix(loc, prefix::finish);
         --_cur_depth;
@@ -238,8 +222,6 @@ public:
     template <typename Location>
     void write_cancel(const Location& loc)
     {
-        _last_token.reset();
-
         if (_cur_depth <= _opts.max_tree_depth)
             write_prefix(loc, prefix::cancel);
         --_cur_depth;
@@ -295,40 +277,10 @@ private:
         }
     }
 
-    struct last_token_info
-    {
-        bool                        first_token;
-        lexy::token_kind<TokenKind> kind;
-
-        last_token_info() : first_token(true) {}
-
-        template <typename Production>
-        bool merge(Production, lexy::token_kind<TokenKind> new_kind) const
-        {
-            if (first_token || kind != new_kind)
-                return false;
-
-            // We can merge inside a token production or if it's an error token.
-            return lexy::is_token_production<Production> || kind == lexy::error_token_kind;
-        }
-
-        void update(lexy::token_kind<TokenKind> new_kind)
-        {
-            first_token = false;
-            kind        = new_kind;
-        }
-
-        void reset()
-        {
-            first_token = true;
-        }
-    };
-
     OutputIt              _out;
     visualization_options _opts;
 
-    std::size_t     _cur_depth;
-    last_token_info _last_token;
+    std::size_t _cur_depth;
 };
 } // namespace lexy::_detail
 
@@ -381,7 +333,7 @@ public:
         void on(trace_handler& handler, parse_events::token, TK kind, iterator begin, iterator end)
         {
             auto loc = handler.find_location(begin);
-            handler._writer.write_token(loc, Production{}, token_kind<TokenKind>(kind),
+            handler._writer.write_token(loc, token_kind<TokenKind>(kind),
                                         lexeme_for<Input>(begin, end));
         }
         void on(trace_handler& handler, parse_events::backtracked, iterator begin, iterator end)

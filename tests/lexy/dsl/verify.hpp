@@ -349,6 +349,8 @@ public:
                 iterator end)
         {
             auto kind = lexy::token_kind(_kind);
+            if (kind.ignore_if_empty() && begin == end)
+                return;
 
             auto lex      = lexy::lexeme_for<Input>(begin, end);
             auto spelling = doctest::toString(lex);
@@ -451,7 +453,10 @@ public:
 
         constexpr auto sink() const
         {
-            return lexy::count.sink();
+            if constexpr (is_test_production<Production> && lexy::is_sink<decltype(_handler->_cb)>)
+                return _handler->_cb.sink();
+            else
+                return lexy::count.sink();
         }
 
         template <typename... Args>

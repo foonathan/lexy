@@ -165,9 +165,7 @@ namespace lexy
 
 [.lead]
 Base class to indicate that a production is conceptually a token.
-
 This inhibits whitespace skipping (directly) inside the production.
-In the parse tree, it will merge adjacent child tokens of the same {{% docref "lexy::token_kind" %}}.
 
 [#transparent_production]
 == Class `lexy::transparent_production`

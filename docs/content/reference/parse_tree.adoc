@@ -157,14 +157,7 @@ However, the `marker` object must still be passed to `finish_production` or `can
   Construct a new token node and push it to the active node's list of children.
   The node will have the specified {{% docref "lexy::token_kind" %}} and the lexeme `[begin, end)` of the input.
 +
-If `kind` is `lexy::unknown_token_kind` and `begin == end`, no token node is constructed.
-+
-If the production of the active node is a {{% docref "lexy::token_production" %}},
-the previously last child of the production node is also a token node,
-and its kind is the same as `kind`,
-no token node is constructed.
-Instead, the previous token node is extended to cover everything up to `end`.
-This assumes that there is no gap between token nodes.
+If `kind.ignore_if_empty() == true` and `begin == end`, no token node is constructed.
 
 `finish_production`::
   Finishes the production node of the corresponding `marker` object,

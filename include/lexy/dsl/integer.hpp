@@ -442,9 +442,7 @@ struct _int : _copy_base<Token>
                 }
                 else
                 {
-                    if (recovery_begin != recovery_end)
-                        context.on(_ev::token{}, lexy::error_token_kind, recovery_begin,
-                                   recovery_end);
+                    context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, recovery_end);
                     context.on(_ev::recovery_finish{}, recovery_end);
                 }
             }

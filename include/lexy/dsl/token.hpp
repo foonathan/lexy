@@ -78,8 +78,7 @@ struct token_base : _token_base, BranchKind
             {
                 parser.report_error(context, reader);
 
-                if (begin != parser.end)
-                    context.on(_ev::token{}, lexy::error_token_kind, reader.position(), parser.end);
+                context.on(_ev::token{}, lexy::error_token_kind, reader.position(), parser.end);
                 reader.set_position(parser.end);
 
                 return false;
