@@ -107,6 +107,10 @@ For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up t
 This includes surrogates, overlong UTF-8 sequences, or out of range code points (especially for ASCII).
 The rule then fails.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::any_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class=exampleblock>
@@ -188,6 +192,10 @@ For ASCII and UTF-32, this is a single code unit, for UTF-8 up to four code unit
 <dd>
 <p><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a>: if one code unit did not compare equal or the reader reached the end of the input.
 Its <code>.string()</code> is the encoded version of <code>CodePoint</code>, its <code>.index()</code> is the index of the code unit where the mismatch/missing one occurred, and its <code>.position()</code> is the reader position where it started to match the literal.</p>
+</dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -479,7 +487,7 @@ The rule then fails.</p>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/code_point/#general_category><code>lexy::code_point::general_category_t</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/unicode/#doc><code>lexy::dsl::unicode</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/code_point/#general_category><code>lexy::code_point::general_category_t</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/unicode/#doc><code>lexy::dsl::unicode</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

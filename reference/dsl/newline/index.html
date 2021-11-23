@@ -77,6 +77,10 @@ Succeeds if one of them matched.</p>
 <dd>
 <p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"newline"</code>): if they both did not match; at the starting reader position.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::newline_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class=exampleblock>
@@ -149,7 +153,7 @@ Succeeds if one of them matched.</p>
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>Single token type with the <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::eol_token_kind</code>.</p>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::eol_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -183,7 +187,7 @@ The same caveat about <a href=/reference/dsl/whitespace/#doc><code>whitespace</c
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::newline</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::newline</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

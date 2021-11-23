@@ -143,7 +143,7 @@ The rule then fails if <code>ws</code> has failed; even if in a branch context.<
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>A single token node with the <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::whitespace_token_kind</code> whose range covers everything consumed;
+<p>A single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::whitespace_token_kind</code> whose range covers everything consumed;
 all individual token nodes of the whitespace rules are merged into this one.
 It is only added to the parse tree if it is not empty.</p>
 </dd>
@@ -477,7 +477,7 @@ When <code>r</code> contains a <a href=/reference/dsl/production/#p><code>lexy::
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::space</code></a></li><li><a href=/reference/dsl/delimited/#delimited><code>lexy::dsl::delimited</code></a></li><li><a href=/reference/dsl/loop/#loop><code>lexy::dsl::loop</code></a></li><li><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/grammar/#production_whitespace><code>lexy::production_whitespace</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::space</code></a></li><li><a href=/reference/dsl/delimited/#delimited><code>lexy::dsl::delimited</code></a></li><li><a href=/reference/dsl/loop/#loop><code>lexy::dsl::loop</code></a></li><li><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/grammar/#production_whitespace><code>lexy::production_whitespace</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

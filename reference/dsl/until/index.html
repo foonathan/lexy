@@ -86,7 +86,7 @@ If <code>.or_eof()</code> has been used, it can never fail.</p>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
 <p>A single token node that contains everything consumed before <code>condition</code> and everything consumed by <code>condition</code>.
-The token kind is determined by <code>until</code>, not <code>condition</code>.</p>
+It has the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::any_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -154,7 +154,7 @@ This is similar to the behavior of an unterminated <code>/*</code> comment.
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/terminator/#terminator><code>lexy::dsl::terminator</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/terminator/#terminator><code>lexy::dsl::terminator</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

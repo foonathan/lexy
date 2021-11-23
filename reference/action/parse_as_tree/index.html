@@ -86,9 +86,7 @@ Returns the <a href=/reference/action/validate/#validate_result><code>lexy::vali
 it will have a production node for each production, and a token node for each tokens as indicated by the <a href=/reference/dsl/#doc>rule</a>s.
 If a production is a <a href=/reference/grammar/#transparent_production><code>lexy::transparent_production</code></a>, it will not get its own node in the parse tree,
 but the would-be children instead added to the currently active node.
-If a production is a <a href=/reference/grammar/#token_production><code>lexy::token_production</code></a>, adjacent token nodes with the same <a href=/reference/token/#token_kind><code>lexy::token_kind</code></a> are merged,
-and only one node will be added for each run of adjacent tokens.
-If a token rule has an unknown token kind and matches without having consumed any input, it will not be added to the parse tree.</p>
+If a token rule has an ignorable <a href=/reference/token/#token_kind><code>lexy::token_kind</code></a> and matches without having consumed any input, it will not be added to the parse tree.</p>
 </div>
 <div class=paragraph>
 <p>The resulting parse tree is a lossless representation of the input:
@@ -98,7 +96,7 @@ Traversing all token nodes of the tree and concatenating their <a href=/referenc
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::token_kind</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/grammar/#transparent_production><code>lexy::transparent_production</code></a></li><li><a href=/reference/action/validate/#validate_result><code>lexy::validate_result</code></a></li><li><a href=/reference/dsl/#doc>rules</a></li></ul>
+<ul><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::token_kind</code></a></li><li><a href=/reference/grammar/#transparent_production><code>lexy::transparent_production</code></a></li><li><a href=/reference/action/validate/#validate_result><code>lexy::validate_result</code></a></li><li><a href=/reference/dsl/#doc>rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

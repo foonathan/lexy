@@ -96,6 +96,10 @@ and no <a href=https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization>n
 <p><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a>: if one code unit did not compare equal or the reader reached the end of the input.
 Its <code>.string()</code> is <code>Str</code>, its <code>.index()</code> is the index of the code unit where the mismatch/missing one occurred, and its <code>.position()</code> is the reader position where it started to match the literal.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class=paragraph>
@@ -255,6 +259,10 @@ Literals that match common <a href=/reference/dsl/punctuator/#doc><code>punctuat
 <p><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a>: if one code unit did not compare equal or the reader reached the end of the input.
 Its <code>.string()</code> is the string of the bytes converted to the correct character type, its <code>.index()</code> is the index of the code unit where the mismatch/missing one occurred, and its <code>.position()</code> is the reader position where it started to match the literal.</p>
 </dd>
+<dt class=hdlist1>Parse tree</dt>
+<dd>
+<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
+</dd>
 </dl>
 </div>
 <div class="admonitionblock tip">
@@ -273,7 +281,7 @@ Use <a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a> to match a b
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></li><li><a href=/reference/dsl/identifier/#keyword><code>lexy::dsl::keyword</code></a></li><li><a href=/reference/dsl/whitespace/#no_whitespace><code>lexy::dsl::no_whitespace</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/dsl/punctuator/#doc><code>punctuators</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></li><li><a href=/reference/dsl/identifier/#keyword><code>lexy::dsl::keyword</code></a></li><li><a href=/reference/dsl/whitespace/#no_whitespace><code>lexy::dsl::no_whitespace</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/punctuator/#doc><code>punctuators</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

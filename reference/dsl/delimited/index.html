@@ -250,18 +250,18 @@ Otherwise, it fails.</p>
 <dt class=hdlist1>Values</dt>
 <dd>
 <p>It creates a sink of the current context.
-The sink is invoked with a <a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a> capturing everything consumed by <code>c</code>, separately.
+The sink is invoked with a <a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a> capturing everything consumed by <code>c</code>;
+a sequence of contiguous characters is merged into a single lexeme.
 It is also invoked with every value produced by <code>escape</code>.
 The invocations happen separately in lexical order.
 The rule then produces all values of <code>open()</code>, the final value of the sink, and all values of <code>close()</code>.</p>
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p><code>delimited</code> does not have any special parse tree handling:
+<p><code>delimited</code> does has any special parse tree handling:
 it will create the nodes for <code>open()</code>, then the nodes for each <code>c</code> and <code>escape</code>, and the nodes for <code>close()</code>.
-A character that is skipped during error recovery will create a token node whose <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.
-If the current production inherits from <a href=/reference/grammar/#token_production><code>lexy::token_production</code></a>,
-adjacent token nodes of the same kind (which includes the default kind) are merged.</p>
+However, instead of creating separate token nodes for each <code>c</code>, adjacent token nodes are merged into a single one covering as much as possible.
+A character that is skipped during error recovery will create a token node whose <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -585,7 +585,7 @@ They don’t actually define any escape sequences, just the initial character.
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/capture/#capture><code>lexy::dsl::capture</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/grammar/#token_production><code>lexy::token_production</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/choice/#choice><code>choice</code></a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/capture/#capture><code>lexy::dsl::capture</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

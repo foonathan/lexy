@@ -233,15 +233,7 @@ However, the <code>marker</code> object must still be passed to <code>finish_pro
 <p>Construct a new token node and push it to the active node’s list of children.
 The node will have the specified <a href=/reference/token/#token_kind><code>lexy::token_kind</code></a> and the lexeme <code>[begin, end)</code> of the input.</p>
 <div class=paragraph>
-<p>If <code>kind</code> is <code>lexy::unknown_token_kind</code> and <code>begin == end</code>, no token node is constructed.</p>
-</div>
-<div class=paragraph>
-<p>If the production of the active node is a <a href=/reference/grammar/#token_production><code>lexy::token_production</code></a>,
-the previously last child of the production node is also a token node,
-and its kind is the same as <code>kind</code>,
-no token node is constructed.
-Instead, the previous token node is extended to cover everything up to <code>end</code>.
-This assumes that there is no gap between token nodes.</p>
+<p>If <code>kind.ignore_if_empty() == true</code> and <code>begin == end</code>, no token node is constructed.</p>
 </div>
 </dd>
 <dt class=hdlist1><code>finish_production</code></dt>

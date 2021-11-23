@@ -62,12 +62,19 @@ lexy/token.hpp — lexy
     <span class=tok-k>enum</span> <span class=tok-nc>predefined_token_kind</span>
     <span class=tok-p>{</span>
         <span class=tok-n>unknown_token_kind</span><span class=tok-p>,</span>
+
         <span class=tok-n>error_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>whitespace_token_kind</span><span class=tok-p>,</span>
+        <span class=tok-n>any_token_kind</span><span class=tok-p>,</span>
+
+        <span class=tok-n>literal_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>position_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>eof_token_kind</span><span class=tok-p>,</span>
         <span class=tok-n>eol_token_kind</span><span class=tok-p>,</span>
+        <span class=tok-n>newline_token_kind</span><span class=tok-p>,</span>
+
         <span class=tok-n>identifier_token_kind</span><span class=tok-p>,</span>
+        <span class=tok-n>digits_token_kind</span><span class=tok-p>,</span>
     <span class=tok-p>};</span>
 <span class=tok-p>}</span></code></pre>
 </div>
@@ -101,6 +108,14 @@ lexy/token.hpp — lexy
 <td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a> (not actually a token rule)</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::any_token_kind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a>, <a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a> (without predicate), <a href=/reference/dsl/until/#until><code>lexy::dsl::until</code></a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::literal_token_kind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a>, <a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a> (literal version), and other tokens that are fully identified by their spelling</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::position_token_kind</code></p></td>
 <td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/position/#position><code>lexy::dsl::position</code></a> (not actually a token rule)</p></td>
 </tr>
@@ -113,25 +128,21 @@ lexy/token.hpp — lexy
 <td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/newline/#eol><code>lexy::dsl::eol</code></a></p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::newline_token_kind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/newline/#newline><code>lexy::dsl::newline</code></a></p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::identifier_token_kind</code></p></td>
 <td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a> and <a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class=tableblock><code>lexy::digits_token_kind</code></p></td>
+<td class="tableblock halign-left valign-top"><p class=tableblock><a href=/reference/dsl/digit/#digit><code>lexy::dsl::digit</code></a>, <a href=/reference/dsl/digit/#digits><code>lexy::dsl::digits</code></a>, and other rules parsing digits</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </details>
-<div class="admonitionblock note">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Note</div>
-</td>
-<td class=content>
-The enumeration is actually defined in <a href=/reference/grammar/><code>lexy/grammar.hpp.hpp</code></a>, but documented here for convenience.
-</td>
-</tr>
-</tbody></table>
-</div>
 </div>
 </div>
 <div class=sect1>
@@ -160,6 +171,7 @@ The enumeration is actually defined in <a href=/reference/grammar/><code>lexy/gr
         <span class=tok-c1>//== access ===//</span>
         <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-k>operator</span> <span class=tok-kt>bool</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
         <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_predefined</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>ignore_if_empty</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
 
         <span class=tok-k>constexpr</span> <span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em> <span class=tok-n>get</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
 
@@ -184,7 +196,7 @@ Otherwise, <code>TokenKind</code> must be an enumeration type.</p>
 </div>
 <div class=paragraph>
 <p>Token rules are associated with their kind using <a href=/reference/dsl/token/#kind><code>.kind</code></a> or by specializing <a href=/reference/token/#token_kind_map><code>lexy::token_kind_map_for</code></a>.
-Some token rules that require special behavior in the parse tree have a <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a>.
+Some token rules that require special behavior in the parse tree have a <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a>.
 For all others, the token kind is unknown by default.</p>
 </div>
 <div class=paragraph>
@@ -203,7 +215,7 @@ For all others, the token kind is unknown by default.</p>
 </div>
 </div>
 <div class=paragraph>
-<p>Initialize with the given <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a>.</p>
+<p>Initialize with the given <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a>.</p>
 </div>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
@@ -240,16 +252,16 @@ Otherwise, deduces the specified information type.</p>
 <div class="olist arabic">
 <ol class=arabic>
 <li>
-<p>If <code>token_rule</code> has been assigned a <a href=/reference/token/#token_kind><code>lexy::predefined_token_kind</code></a> by lexy, uses that.</p>
+<p>If <a href=/reference/token/#token_kind_map><code>lexy::token_kind_map_for</code></a> instantiated with <code>TokenKind</code> contains a token kind for <code>token_rule</code>, uses that.</p>
+</li>
+<li>
+<p>Otherwise, if <code>token_rule</code> has been assigned a <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> by lexy, uses that.</p>
 </li>
 <li>
 <p>Otherwise, if <code>token_rule</code> has been assigned a user-defined token kind by <a href=/reference/dsl/token/#kind><code>.kind</code></a>,
 whose type is compatible, uses that.
 If <code>TokenKind == void</code>, a user-defined token kind is compatible if it is an integral value;
 else, a user-defined token kind is compatible if it has the same enumeration type.</p>
-</li>
-<li>
-<p>Otherwise, if <a href=/reference/token/#token_kind_map><code>lexy::token_kind_map_for</code></a> instantiated with <code>TokenKind</code> contains a token kind for <code>token_rule</code>, uses that.</p>
 </li>
 <li>
 <p>Otherwise, uses <code>lexy::unknown_token_kind</code>.</p>
@@ -267,7 +279,9 @@ else, a user-defined token kind is compatible if it has the same enumeration typ
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-k>operator</span> <span class=tok-kt>bool</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span> <b class=conum>(1)</b>
 
-<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_predefined</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>     <b class=conum>(2)</b></code></pre>
+<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_predefined</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>     <b class=conum>(2)</b>
+
+<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>ignore_if_empty</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>   <b class=conum>(3)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -277,6 +291,10 @@ else, a user-defined token kind is compatible if it has the same enumeration typ
 </li>
 <li>
 <p>Returns <code>true</code> if the token kind is user-defined (including unknown), <code>false</code> otherwise.</p>
+</li>
+<li>
+<p>Returns <code>true</code> if an empty token of that kind should be ignored by <a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a> and related, <code>false</code> otherwise.
+It currently returns <code>true</code> for <code>lexy::unknown_token_kind</code>, <code>lexy::error_token_kind</code>, <code>lexy::whitespace_token_kind</code>.</p>
 </li>
 </ol>
 </div>
@@ -496,7 +514,7 @@ while the former is the concrete realization of the rule (e.g. the number <code>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/newline/#eol><code>lexy::dsl::eol</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/position/#position><code>lexy::dsl::position</code></a></li><li><a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/token/#doc><code>token-rule</code></a></li></ul>
+<ul><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></li><li><a href=/reference/dsl/code_point/#code_point><code>lexy::dsl::code_point</code></a></li><li><a href=/reference/dsl/digit/#digit><code>lexy::dsl::digit</code></a></li><li><a href=/reference/dsl/digit/#digits><code>lexy::dsl::digits</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/newline/#eol><code>lexy::dsl::eol</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/identifier/#identifier><code>lexy::dsl::identifier</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/newline/#newline><code>lexy::dsl::newline</code></a></li><li><a href=/reference/dsl/position/#position><code>lexy::dsl::position</code></a></li><li><a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></li><li><a href=/reference/dsl/symbol/#symbol><code>lexy::dsl::symbol</code></a></li><li><a href=/reference/dsl/until/#until><code>lexy::dsl::until</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/parse_tree/#parse_tree><code>lexy::parse_tree</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/token/#doc><code>token-rule</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

@@ -81,8 +81,9 @@ lexy/dsl/alternative.hpp — lexy
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>Single token node whose kind is determined by the kind of <code>operator/</code>;
-the token kinds of its individual tokens are lost.</p>
+<p>Single token node covering everything consumed by the selected token.
+If the token kind of all individual token rules identical, that is the token kind.
+Otherwise, the kind is unknown.</p>
 </dd>
 </dl>
 </div>
