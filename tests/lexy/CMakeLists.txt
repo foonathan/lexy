@@ -45,6 +45,7 @@ set(tests
         dsl/bom.cpp
         dsl/brackets.cpp
         dsl/branch.cpp
+        dsl/byte.cpp
         dsl/capture.cpp
         dsl/choice.cpp
         dsl/code_point.cpp

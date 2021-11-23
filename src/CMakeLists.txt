@@ -51,6 +51,7 @@ set(header_files
         ${include_dir}/dsl/bom.hpp
         ${include_dir}/dsl/brackets.hpp
         ${include_dir}/dsl/branch.hpp
+        ${include_dir}/dsl/byte.hpp
         ${include_dir}/dsl/capture.hpp
         ${include_dir}/dsl/choice.hpp
         ${include_dir}/dsl/code_point.hpp

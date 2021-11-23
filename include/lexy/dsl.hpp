@@ -11,6 +11,7 @@
 #include <lexy/dsl/bom.hpp>
 #include <lexy/dsl/brackets.hpp>
 #include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/byte.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/code_point.hpp>
