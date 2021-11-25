@@ -42,6 +42,7 @@ set(tests
         dsl/argv_input.cpp
         dsl/ascii.cpp
         dsl/base.cpp
+        dsl/bits.cpp
         dsl/bom.cpp
         dsl/brackets.cpp
         dsl/branch.cpp

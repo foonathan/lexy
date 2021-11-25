@@ -117,8 +117,6 @@ the other rule does not have access to context variables, and any context modifi
   exclude some characters
 {{% docref "lexy::dsl::operator/" %}}::
   combine character classes
-{{% docref "lexy::dsl::bom" %}}::
-  parse a byte-order mark (BOM)
 ====
 
 [%collapsible]
@@ -258,6 +256,19 @@ the other rule does not have access to context variables, and any context modifi
   an integer counter
 {{% docref "lexy::dsl::context_identifier" %}}::
   an identifier variable
+====
+
+[%collapsible]
+.Byte input
+====
+{{% docref "lexy::dsl::bytes" %}} and {{% docref "lexy::dsl::padding_bytes" %}}::
+  parse `N` bytes
+{{% docref "lexy::dsl::bint8" %}}, {{% docref "lexy::dsl::bint16" %}}, ... ::
+  parse a little/big endian integer
+{{% docref "lexy::dsl::bits" %}}::
+  parse a byte with specific bit patterns
+{{% docref "lexy::dsl::bom" %}}::
+  parse a byte-order mark (BOM)
 ====
 
 [%collapsible]

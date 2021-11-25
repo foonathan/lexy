@@ -8,6 +8,7 @@
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/any.hpp>
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/bits.hpp>
 #include <lexy/dsl/bom.hpp>
 #include <lexy/dsl/brackets.hpp>
 #include <lexy/dsl/branch.hpp>

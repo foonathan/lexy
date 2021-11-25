@@ -48,6 +48,7 @@ set(header_files
         ${include_dir}/dsl/any.hpp
         ${include_dir}/dsl/ascii.hpp
         ${include_dir}/dsl/base.hpp
+        ${include_dir}/dsl/bits.hpp
         ${include_dir}/dsl/bom.hpp
         ${include_dir}/dsl/brackets.hpp
         ${include_dir}/dsl/branch.hpp
