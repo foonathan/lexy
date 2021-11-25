@@ -34,6 +34,7 @@ set(header_files
         ${include_dir}/callback/aggregate.hpp
         ${include_dir}/callback/base.hpp
         ${include_dir}/callback/bind.hpp
+        ${include_dir}/callback/bit_cast.hpp
         ${include_dir}/callback/composition.hpp
         ${include_dir}/callback/constant.hpp
         ${include_dir}/callback/container.hpp

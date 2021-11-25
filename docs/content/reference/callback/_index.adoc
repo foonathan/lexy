@@ -98,6 +98,8 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
   Forward an existing value unchanged.
 {{% docref "lexy::construct" %}} and {{% docref "lexy::new_" %}}::
   Construct a new object.
+{{% docref "lexy::bit_cast" %}}::
+  Constructs a new object by reinterpreting the bits of an existing one.
 
 .Rule specific:
 {{% docref "lexy::as_integer" %}}::

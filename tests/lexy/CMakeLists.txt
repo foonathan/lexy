@@ -26,6 +26,7 @@ set(tests
         callback/aggregate.cpp
         callback/base.cpp
         callback/bind.cpp
+        callback/bit_cast.cpp
         callback/composition.cpp
         callback/constant.cpp
         callback/container.cpp
