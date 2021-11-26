@@ -113,7 +113,7 @@ constexpr auto token_kind_of<const TokenRule> = token_kind_of<TokenRule>;
 namespace lexy
 {
 template <typename Production>
-using production_rule = std::decay_t<decltype(Production::rule)>;
+using production_rule = LEXY_DECAY_DECLTYPE(Production::rule);
 
 template <typename Production>
 constexpr bool is_production = _detail::is_detected<production_rule, Production>;
@@ -198,7 +198,7 @@ inline constexpr auto _is_convertible<void> = true;
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
-    using _type = std::decay_t<decltype(Production::value)>;
+    using _type = LEXY_DECAY_DECLTYPE(Production::value);
 
     static auto _return_type_callback()
     {

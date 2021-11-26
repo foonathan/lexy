@@ -69,7 +69,7 @@ public:
 #    endif
     LEXY_CONSTEVAL auto map(Args&&... args) const
     {
-        return map<_detail::type_string<std::decay_t<decltype(C)>, C>>(LEXY_FWD(args)...);
+        return map<_detail::type_string<LEXY_DECAY_DECLTYPE(C), C>>(LEXY_FWD(args)...);
     }
 #endif
 
@@ -232,8 +232,8 @@ struct _sym : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator                         end;
-        typename std::decay_t<decltype(Table)>::key_index symbol;
+        typename Reader::iterator end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
         template <typename ControlBlock>
         constexpr bool try_parse(ControlBlock&, const Reader& reader)
@@ -323,8 +323,8 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
-        typename std::decay_t<decltype(Table)>::key_index symbol;
-        typename Reader::iterator                         end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
+        typename Reader::iterator end;
 
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock*, Reader reader)
@@ -408,8 +408,8 @@ struct _sym<Table, void, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
-        typename std::decay_t<decltype(Table)>::key_index symbol;
-        typename Reader::iterator                         end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
+        typename Reader::iterator end;
 
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock*, Reader reader)

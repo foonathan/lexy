@@ -50,7 +50,7 @@ private:
 
 template <typename Iterator, typename Sentinel>
 range_input(Iterator begin, Sentinel end)
-    -> range_input<deduce_encoding<std::decay_t<decltype(*begin)>>, Iterator, Sentinel>;
+    -> range_input<deduce_encoding<LEXY_DECAY_DECLTYPE(*begin)>, Iterator, Sentinel>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED

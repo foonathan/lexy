@@ -136,8 +136,7 @@ TEST_CASE("token_kind")
         CHECK(period == lexy::dsl::period);
 
         lexy::token_kind<token_kind> manual(lexy::dsl::period.kind<token_kind::b>);
-        INFO(int(
-            lexy::token_kind_of<std::decay_t<decltype(lexy::dsl::period.kind<token_kind::b>)>>));
+        INFO(int(lexy::token_kind_of<LEXY_DECAY_DECLTYPE(lexy::dsl::period.kind<token_kind::b>)>));
         CHECK(manual);
         CHECK(!manual.is_predefined());
         CHECK(manual.get() == token_kind::b);

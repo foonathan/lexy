@@ -253,7 +253,7 @@ buffer(const CharT*, const CharT*) -> buffer<deduce_encoding<CharT>>;
 template <typename CharT>
 buffer(const CharT*, std::size_t) -> buffer<deduce_encoding<CharT>>;
 template <typename View>
-buffer(const View&) -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>>;
+buffer(const View&) -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>>;
 
 template <typename CharT, typename MemoryResource>
 buffer(const CharT*, const CharT*, MemoryResource*)
@@ -263,7 +263,7 @@ buffer(const CharT*, std::size_t, MemoryResource*)
     -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
-    -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>, MemoryResource>;
+    -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>, MemoryResource>;
 
 //=== make_buffer ===//
 template <typename Encoding, encoding_endianness Endian>

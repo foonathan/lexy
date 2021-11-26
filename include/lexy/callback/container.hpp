@@ -65,8 +65,8 @@ struct _list_alloc
 
         template <typename... Args>
         constexpr auto operator()(Args&&... args) const
-            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
-                                     LEXY_DECLVAL(Container))>
+            -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                   LEXY_DECLVAL(Container))
         {
             Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
@@ -105,8 +105,8 @@ struct _list
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
-                                 LEXY_DECLVAL(Container))>
+        -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                               LEXY_DECLVAL(Container))
     {
         Container result;
         if constexpr (_has_reserve<Container>)
@@ -203,8 +203,8 @@ struct _collection_alloc
 
         template <typename... Args>
         constexpr auto operator()(Args&&... args) const
-            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
-                                     LEXY_DECLVAL(Container))>
+            -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                   LEXY_DECLVAL(Container))
         {
             Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
@@ -243,8 +243,8 @@ struct _collection
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
-                                 LEXY_DECLVAL(Container))>
+        -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                               LEXY_DECLVAL(Container))
     {
         Container result;
         if constexpr (_has_reserve<Container>)

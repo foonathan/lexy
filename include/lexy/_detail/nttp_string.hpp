@@ -120,9 +120,9 @@ struct macro_type_string
 #    define LEXY_NTTP_STRING1(Str, I)                                                              \
         ::std::conditional_t<                                                                      \
             (I < LEXY_NTTP_STRING_LENGTH(Str)),                                                    \
-            ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>,                         \
+            ::lexy::_detail::type_string<::LEXY_DECAY_DECLTYPE(Str[0]),                            \
                                          (I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,   \
-            ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>>>
+            ::lexy::_detail::type_string<::LEXY_DECAY_DECLTYPE(Str[0])>>
 
 // recursively split the string in two
 #    define LEXY_NTTP_STRING2(Str, I)                                                              \

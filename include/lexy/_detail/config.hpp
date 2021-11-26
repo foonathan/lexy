@@ -25,6 +25,8 @@
 #define LEXY_DECLVAL(...)                                                                          \
     reinterpret_cast<::lexy::_detail::add_rvalue_ref<__VA_ARGS__>>(*reinterpret_cast<char*>(1024))
 
+#define LEXY_DECAY_DECLTYPE(...) std::decay_t<decltype(__VA_ARGS__)>
+
 /// Creates a new type from the instantiation of a template.
 /// This is used to shorten type names.
 #define LEXY_INSTANTIATION_NEWTYPE(Name, Templ, ...)                                               \

@@ -59,7 +59,7 @@ struct _lit
 };
 
 template <auto C>
-constexpr auto lit_c = _lit<std::decay_t<decltype(C)>, C>{};
+constexpr auto lit_c = _lit<LEXY_DECAY_DECLTYPE(C), C>{};
 
 template <unsigned char... C>
 constexpr auto lit_b = _lit<unsigned char, C...>{};

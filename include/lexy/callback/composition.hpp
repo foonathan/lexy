@@ -62,7 +62,7 @@ struct _compose_cb
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))>
+        -> LEXY_DECAY_DECLTYPE(_first(LEXY_FWD(args)...), LEXY_DECLVAL(return_type))
     {
         return _second(_first(LEXY_FWD(args)...));
     }

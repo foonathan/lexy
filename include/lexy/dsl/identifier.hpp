@@ -295,12 +295,12 @@ constexpr auto keyword(_id<L, T, R...>)
 template <auto C, typename L, typename T, typename... R>
 constexpr auto keyword(_id<L, T, R...>)
 {
-    return _kw<_id<L, T>, std::decay_t<decltype(C)>, C>{};
+    return _kw<_id<L, T>, LEXY_DECAY_DECLTYPE(C), C>{};
 }
 #endif
 
 #define LEXY_KEYWORD(Str, Id)                                                                      \
-    LEXY_NTTP_STRING(::lexyd::_keyword<std::decay_t<decltype(Id)>>::template get, Str) {}
+    LEXY_NTTP_STRING(::lexyd::_keyword<LEXY_DECAY_DECLTYPE(Id)>::template get, Str) {}
 } // namespace lexyd
 
 namespace lexy

@@ -44,7 +44,7 @@ struct _unchecked_code_unit
 ///
 /// By default, it counts code units and newlines.
 template <typename Input, typename TokenColumn = _unchecked_code_unit,
-          typename TokenLine = std::decay_t<decltype(lexy::dsl::newline)>>
+          typename TokenLine = LEXY_DECAY_DECLTYPE(lexy::dsl::newline)>
 class input_location_finder
 {
 public:
