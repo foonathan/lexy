@@ -40,6 +40,8 @@
 #define LEXY_DECLVAL(...)                                                                          \
     reinterpret_cast<::lexy::_detail::add_rvalue_ref<__VA_ARGS__>>(*reinterpret_cast<char*>(1024))
 
+#define LEXY_DECAY_DECLTYPE(...) std::decay_t<decltype(__VA_ARGS__)>
+
 /// Creates a new type from the instantiation of a template.
 /// This is used to shorten type names.
 #define LEXY_INSTANTIATION_NEWTYPE(Name, Templ, ...)                                               \
@@ -1120,7 +1122,7 @@ constexpr auto token_kind_of<const TokenRule> = token_kind_of<TokenRule>;
 namespace lexy
 {
 template <typename Production>
-using production_rule = std::decay_t<decltype(Production::rule)>;
+using production_rule = LEXY_DECAY_DECLTYPE(Production::rule);
 
 template <typename Production>
 constexpr bool is_production = _detail::is_detected<production_rule, Production>;
@@ -1205,7 +1207,7 @@ inline constexpr auto _is_convertible<void> = true;
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
-    using _type = std::decay_t<decltype(Production::value)>;
+    using _type = LEXY_DECAY_DECLTYPE(Production::value);
 
     static auto _return_type_callback()
     {
@@ -2494,8 +2496,8 @@ struct _list_alloc
 
         template <typename... Args>
         constexpr auto operator()(Args&&... args) const
-            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
-                                     LEXY_DECLVAL(Container))>
+            -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                                   LEXY_DECLVAL(Container))
         {
             Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
@@ -2534,8 +2536,8 @@ struct _list
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
-                                 LEXY_DECLVAL(Container))>
+        -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).push_back(LEXY_FWD(args)), ...),
+                               LEXY_DECLVAL(Container))
     {
         Container result;
         if constexpr (_has_reserve<Container>)
@@ -2632,8 +2634,8 @@ struct _collection_alloc
 
         template <typename... Args>
         constexpr auto operator()(Args&&... args) const
-            -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
-                                     LEXY_DECLVAL(Container))>
+            -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                                   LEXY_DECLVAL(Container))
         {
             Container result(_detail::invoke(_alloc, _state));
             if constexpr (_has_reserve<Container>)
@@ -2672,8 +2674,8 @@ struct _collection
 
     template <typename... Args>
     constexpr auto operator()(Args&&... args) const
-        -> std::decay_t<decltype((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
-                                 LEXY_DECLVAL(Container))>
+        -> LEXY_DECAY_DECLTYPE((LEXY_DECLVAL(Container&).insert(LEXY_FWD(args)), ...),
+                               LEXY_DECLVAL(Container))
     {
         Container result;
         if constexpr (_has_reserve<Container>)
@@ -3535,8 +3537,8 @@ struct _tk_map_empty
     LEXY_CONSTEVAL auto map(Token) const
     {
         static_assert(lexy::is_token_rule<Token>, "cannot map non-token to token kind");
-        return _tk_map<std::decay_t<decltype(TokenKind)>,
-                       Token>(lexy::_detail::index_sequence_for<>{}, nullptr, TokenKind);
+        return _tk_map<LEXY_DECAY_DECLTYPE(TokenKind), Token>(lexy::_detail::index_sequence_for<>{},
+                                                              nullptr, TokenKind);
     }
 };
 
@@ -3558,7 +3560,7 @@ using _detect_token_kind_name = decltype(token_kind_name(TokenKind{}));
 
 template <typename TokenRule>
 constexpr auto _has_special_token_kind = [] {
-    using kind = std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>;
+    using kind = LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>);
     return !std::is_same_v<kind, lexy::predefined_token_kind> && std::is_enum_v<kind>;
 }();
 
@@ -3683,7 +3685,7 @@ token_kind(TokenKind) -> token_kind<void>;
 template <typename TokenKind, typename = std::enable_if_t<std::is_enum_v<TokenKind>>>
 token_kind(TokenKind) -> token_kind<TokenKind>;
 template <typename TokenRule, typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
-token_kind(TokenRule) -> token_kind<std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>>;
+token_kind(TokenRule) -> token_kind<LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
 } // namespace lexy
 
 namespace lexy
@@ -3742,7 +3744,7 @@ token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
 template <typename TokenRule, typename Reader,
           typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
 token(TokenRule, lexy::lexeme<Reader>)
-    -> token<Reader, std::decay_t<decltype(lexy::token_kind_of<TokenRule>)>>;
+    -> token<Reader, LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;
@@ -5015,9 +5017,9 @@ struct macro_type_string
 #    define LEXY_NTTP_STRING1(Str, I)                                                              \
         ::std::conditional_t<                                                                      \
             (I < LEXY_NTTP_STRING_LENGTH(Str)),                                                    \
-            ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>,                         \
+            ::lexy::_detail::type_string<::LEXY_DECAY_DECLTYPE(Str[0]),                            \
                                          (I >= LEXY_NTTP_STRING_LENGTH(Str) ? Str[0] : Str[I])>,   \
-            ::lexy::_detail::type_string<::std::decay_t<decltype(Str[0])>>>
+            ::lexy::_detail::type_string<::LEXY_DECAY_DECLTYPE(Str[0])>>
 
 // recursively split the string in two
 #    define LEXY_NTTP_STRING2(Str, I)                                                              \
@@ -6377,7 +6379,7 @@ private:
 
 template <typename Iterator, typename Sentinel>
 range_input(Iterator begin, Sentinel end)
-    -> range_input<deduce_encoding<std::decay_t<decltype(*begin)>>, Iterator, Sentinel>;
+    -> range_input<deduce_encoding<LEXY_DECAY_DECLTYPE(*begin)>, Iterator, Sentinel>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
@@ -7195,7 +7197,7 @@ struct _unchecked_code_unit
 ///
 /// By default, it counts code units and newlines.
 template <typename Input, typename TokenColumn = _unchecked_code_unit,
-          typename TokenLine = std::decay_t<decltype(lexy::dsl::newline)>>
+          typename TokenLine = LEXY_DECAY_DECLTYPE(lexy::dsl::newline)>
 class input_location_finder
 {
 public:
@@ -8131,7 +8133,7 @@ struct _lit
 };
 
 template <auto C>
-constexpr auto lit_c = _lit<std::decay_t<decltype(C)>, C>{};
+constexpr auto lit_c = _lit<LEXY_DECAY_DECLTYPE(C), C>{};
 
 template <unsigned char... C>
 constexpr auto lit_b = _lit<unsigned char, C...>{};
@@ -11801,12 +11803,12 @@ constexpr auto keyword(_id<L, T, R...>)
 template <auto C, typename L, typename T, typename... R>
 constexpr auto keyword(_id<L, T, R...>)
 {
-    return _kw<_id<L, T>, std::decay_t<decltype(C)>, C>{};
+    return _kw<_id<L, T>, LEXY_DECAY_DECLTYPE(C), C>{};
 }
 #endif
 
 #define LEXY_KEYWORD(Str, Id)                                                                      \
-    LEXY_NTTP_STRING(::lexyd::_keyword<std::decay_t<decltype(Id)>>::template get, Str) {}
+    LEXY_NTTP_STRING(::lexyd::_keyword<LEXY_DECAY_DECLTYPE(Id)>::template get, Str) {}
 } // namespace lexyd
 
 namespace lexy
@@ -12068,7 +12070,7 @@ public:
 #    endif
     LEXY_CONSTEVAL auto map(Args&&... args) const
     {
-        return map<_detail::type_string<std::decay_t<decltype(C)>, C>>(LEXY_FWD(args)...);
+        return map<_detail::type_string<LEXY_DECAY_DECLTYPE(C), C>>(LEXY_FWD(args)...);
     }
 #endif
 
@@ -12231,8 +12233,8 @@ struct _sym : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator                         end;
-        typename std::decay_t<decltype(Table)>::key_index symbol;
+        typename Reader::iterator end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
         template <typename ControlBlock>
         constexpr bool try_parse(ControlBlock&, const Reader& reader)
@@ -12322,8 +12324,8 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
-        typename std::decay_t<decltype(Table)>::key_index symbol;
-        typename Reader::iterator                         end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
+        typename Reader::iterator end;
 
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock*, Reader reader)
@@ -12407,8 +12409,8 @@ struct _sym<Table, void, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
-        typename std::decay_t<decltype(Table)>::key_index symbol;
-        typename Reader::iterator                         end;
+        typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
+        typename Reader::iterator end;
 
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock*, Reader reader)
@@ -15427,26 +15429,9 @@ LEXY_PUNCT(equal_sign, "=");
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_DSL_RETURN_HPP_INCLUDED
-#define LEXY_DSL_RETURN_HPP_INCLUDED
+#ifndef LEXY_DSL_REPEAT_HPP_INCLUDED
+#define LEXY_DSL_REPEAT_HPP_INCLUDED
 
-
-
-
-namespace lexyd
-{
-struct _ret : rule_base
-{
-    // We unconditionally jump to the final parser.
-    template <typename NextParser>
-    using p = lexy::_detail::final_parser;
-};
-
-/// Finishes parsing a production without considering subsequent rules.
-constexpr auto return_ = _ret{};
-} // namespace lexyd
-
-#endif // LEXY_DSL_RETURN_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -16171,6 +16156,256 @@ struct scan_production
 } // namespace lexy
 
 #endif // LEXY_DSL_SCAN_HPP_INCLUDED
+
+
+
+namespace lexyd
+{
+template <typename Item, typename Sep>
+struct _rep_impl
+{
+    // Sink can either be present or not;
+    // we only use variadic arguments to get rid of code duplication.
+    template <typename Context, typename Reader, typename... Sink>
+    static constexpr bool loop(Context& context, Reader& reader, std::size_t count, Sink&... sink)
+    {
+        using sink_parser
+            = std::conditional_t<sizeof...(Sink) == 0, lexy::pattern_parser<>, lexy::sink_parser>;
+
+        if (count == 0)
+            return true;
+
+        using item_parser = lexy::parser_for<Item, sink_parser>;
+        if (!item_parser::parse(context, reader, sink...))
+            return false;
+
+        for (std::size_t i = 1; i != count; ++i)
+        {
+            using sep_parser = lexy::parser_for<typename Sep::rule, sink_parser>;
+            if (!sep_parser::parse(context, reader, sink...))
+                return false;
+
+            if (!item_parser::parse(context, reader, sink...))
+                return false;
+        }
+
+        using trailing_parser = lexy::parser_for<typename Sep::trailing_rule, sink_parser>;
+        return trailing_parser::parse(context, reader, sink...);
+    }
+};
+template <typename Item>
+struct _rep_impl<Item, void>
+{
+    // Sink can either be present or not;
+    // we only use variadic arguments to get rid of code duplication.
+    template <typename Context, typename Reader, typename... Sink>
+    static constexpr bool loop(Context& context, Reader& reader, std::size_t count, Sink&... sink)
+    {
+        using sink_parser
+            = std::conditional_t<sizeof...(Sink) == 0, lexy::pattern_parser<>, lexy::sink_parser>;
+
+        if (count == 0)
+            return true;
+
+        using item_parser = lexy::parser_for<Item, sink_parser>;
+        if (!item_parser::parse(context, reader, sink...))
+            return false;
+
+        for (std::size_t i = 1; i != count; ++i)
+        {
+            if (!item_parser::parse(context, reader, sink...))
+                return false;
+        }
+
+        return true;
+    }
+};
+
+template <typename Item, typename Sep>
+struct _repd : rule_base // repeat, discard
+{
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, std::size_t count,
+                                           Args&&... args)
+        {
+            if (!_rep_impl<Item, Sep>::loop(context, reader, count))
+                return false;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+        }
+    };
+};
+template <typename Item, typename Sep>
+struct _repl : rule_base // repeat, list
+{
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, std::size_t count,
+                                           Args&&... args)
+        {
+            auto sink = context.value_callback().sink();
+            if (!_rep_impl<Item, Sep>::loop(context, reader, count, sink))
+                return false;
+
+            return lexy::sink_finish_parser<NextParser>::parse(context, reader, sink,
+                                                               LEXY_FWD(args)...);
+        }
+    };
+};
+template <typename Item, typename Sep>
+struct _repc : rule_base // repeat, capture
+{
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, std::size_t count,
+                                           Args&&... args)
+        {
+            auto begin = reader.position();
+            if (!_rep_impl<Item, Sep>::loop(context, reader, count))
+                return false;
+
+            return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                     lexy::lexeme(reader, begin));
+        }
+    };
+};
+
+template <typename Count, typename Loop>
+struct _rep : _copy_base<Count>
+{
+    template <typename Reader>
+    struct bp
+    {
+        lexy::branch_parser_for<Count, Reader> count_parser;
+
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock* cb, const Reader& reader)
+        {
+            return count_parser.try_parse(cb, reader);
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            // No need to use the special context here; it doesn't produce any values.
+            count_parser.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::_detail::lazy_init<std::size_t> count;
+
+            // Parse the count using a scan context to ensure that it always produces a value.
+            if (lexy::_detail::spc scan_context(count, context);
+                !count_parser.template finish<lexy::_detail::final_parser>(scan_context, reader))
+                return false;
+
+            // Parse the actual loop.
+            return lexy::parser_for<Loop, NextParser>::parse(context, reader, *count,
+                                                             LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::_detail::lazy_init<std::size_t> count;
+
+            // Parse the count using a scan context to ensure that it always produces a value.
+            if (lexy::_detail::spc scan_context(count, context);
+                !lexy::parser_for<Count, lexy::_detail::final_parser>::parse(scan_context, reader))
+                return false;
+
+            // Parse the actual loop.
+            return lexy::parser_for<Loop, NextParser>::parse(context, reader, *count,
+                                                             LEXY_FWD(args)...);
+        }
+    };
+};
+
+template <typename Count>
+struct _rep_dsl
+{
+    template <typename Item>
+    constexpr auto operator()(Item) const
+    {
+        return _rep<Count, _repd<Item, void>>{};
+    }
+    template <typename Item, typename Sep>
+    constexpr auto operator()(Item, Sep) const
+    {
+        return _rep<Count, _repd<Item, Sep>>{};
+    }
+
+    template <typename Item>
+    constexpr auto list(Item) const
+    {
+        return _rep<Count, _repl<Item, void>>{};
+    }
+    template <typename Item, typename Sep>
+    constexpr auto list(Item, Sep) const
+    {
+        return _rep<Count, _repl<Item, Sep>>{};
+    }
+
+    template <typename Item>
+    constexpr auto capture(Item) const
+    {
+        return _rep<Count, _repc<Item, void>>{};
+    }
+    template <typename Item, typename Sep>
+    constexpr auto capture(Item, Sep) const
+    {
+        return _rep<Count, _repc<Item, Sep>>{};
+    }
+};
+
+/// Parses a rule `n` times, where `n` is the value produced by `Count`.
+template <typename Count>
+constexpr auto repeat(Count)
+{
+    return _rep_dsl<Count>{};
+}
+} // namespace lexyd
+
+#endif // LEXY_DSL_REPEAT_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_RETURN_HPP_INCLUDED
+#define LEXY_DSL_RETURN_HPP_INCLUDED
+
+
+
+
+namespace lexyd
+{
+struct _ret : rule_base
+{
+    // We unconditionally jump to the final parser.
+    template <typename NextParser>
+    using p = lexy::_detail::final_parser;
+};
+
+/// Finishes parsing a production without considering subsequent rules.
+constexpr auto return_ = _ret{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_RETURN_HPP_INCLUDED
+
 
 
 
@@ -17115,7 +17350,7 @@ buffer(const CharT*, const CharT*) -> buffer<deduce_encoding<CharT>>;
 template <typename CharT>
 buffer(const CharT*, std::size_t) -> buffer<deduce_encoding<CharT>>;
 template <typename View>
-buffer(const View&) -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>>;
+buffer(const View&) -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>>;
 
 template <typename CharT, typename MemoryResource>
 buffer(const CharT*, const CharT*, MemoryResource*)
@@ -17125,7 +17360,7 @@ buffer(const CharT*, std::size_t, MemoryResource*)
     -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
-    -> buffer<deduce_encoding<std::decay_t<decltype(*LEXY_DECLVAL(View).data())>>, MemoryResource>;
+    -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>, MemoryResource>;
 
 //=== make_buffer ===//
 template <typename Encoding, encoding_endianness Endian>
