@@ -88,7 +88,7 @@ TEST_CASE("_detail::write_error")
             CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello world
-     |     ^ expected 'class' character
+     |     ^ expected class
 )*");
         }
     }

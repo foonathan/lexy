@@ -205,10 +205,9 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     {
         out = writer.write_annotation(out, annotation_kind::primary, location, error.position(),
                                       [&](OutputIt out, lexy::visualization_options) {
-                                          out = lexy::_detail::write_str(out, "expected '");
+                                          out = lexy::_detail::write_str(out, "expected ");
                                           out = lexy::_detail::write_str(out,
                                                                          error.character_class());
-                                          out = lexy::_detail::write_str(out, "' character");
                                           return out;
                                       });
     }
