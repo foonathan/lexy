@@ -77,3 +77,45 @@ TEST_CASE("callback from sink")
     CHECK(callback(1, 2, 3) == 6);
 }
 
+TEST_CASE("mem_fn")
+{
+    struct foo
+    {
+        int member;
+
+        int do_sth(int i) volatile& noexcept
+        {
+            return member + i;
+        }
+    };
+
+    SUBCASE("member function")
+    {
+        constexpr auto callback = lexy::mem_fn(&foo::do_sth);
+        CHECK(std::is_same_v<decltype(callback)::return_type, int>);
+
+        foo f{42};
+        CHECK(callback(f, 11) == 53);
+    }
+    SUBCASE("member data")
+    {
+        constexpr auto callback = lexy::mem_fn(&foo::member);
+        CHECK(std::is_same_v<decltype(callback)::return_type, int>);
+
+        CHECK(callback(foo{42}) == 42);
+    }
+
+    SUBCASE("nested member data")
+    {
+        struct weird
+        {
+            int foo::*ptr;
+        };
+
+        constexpr auto callback = lexy::mem_fn(&weird::ptr);
+        CHECK(std::is_same_v<decltype(callback)::return_type, int foo::*>);
+
+        CHECK(callback(weird{&foo::member}) == &foo::member);
+    }
+}
+

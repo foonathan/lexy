@@ -80,6 +80,8 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
 .Adapters and composition:
 {{% docref "lexy::callback" %}}::
   Turn an overload set of function objects into a callback.
+{{% docref "lexy::mem_fn" %}}::
+  Turn a member function/data pointer into a callback.
 {{% docref "lexy::operator|" %}} and {{% docref "lexy::operator>>" %}}::
   Combine callbacks and sinks.
 {{% docref "lexy::bind" %}} and {{% docref "lexy::bind_sink" %}}::

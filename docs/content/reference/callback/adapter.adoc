@@ -2,6 +2,7 @@
 header: "lexy/callback/adapter.hpp"
 entities:
   "lexy::callback": callback
+  "lexy::mem_fn": mem_fn
 ---
 
 [.lead]
@@ -49,4 +50,24 @@ The finished result is returned by the callback.
 {{% godbolt-example "callback-fold" "Turn a sink into a callback" %}}
 
 NOTE: See {{% docref "lexy::collect" %}} for the inverse operation that turns a callback into a sink.
+
+[#mem_fn]
+== Callback `lexy::mem_fn`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename Member, typename ClassT>
+    constexpr _callback_ auto mem_fn(Member ClassT::* mem_ptr);
+}
+----
+
+[.lead]
+Turns a member function or data pointer into a callback.
+
+It is equivalent to `lexy::callback<ReturnType>(mem_ptr)`, where `ReturnType` is deduced from the type of `mem_ptr`.
+
+NOTE: `mem_fn` is not necessary for passing a member function pointer to e.g. {{% docref "lexy::callback" %}};
+they all use INVOKE internally.
 

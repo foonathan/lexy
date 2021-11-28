@@ -130,5 +130,68 @@ LEXY_DEPRECATED_SINK constexpr auto sink(Fns&&... fns)
 }
 } // namespace lexy
 
+namespace lexy
+{
+template <typename MemFn>
+struct _mem_fn_traits // MemFn is member data
+{
+    using return_type = MemFn;
+};
+
+#define LEXY_MAKE_MEM_FN_TRAITS(...)                                                               \
+    template <typename ReturnType, typename... Args>                                               \
+    struct _mem_fn_traits<ReturnType(Args...) __VA_ARGS__>                                         \
+    {                                                                                              \
+        using return_type = ReturnType;                                                            \
+    };                                                                                             \
+    template <typename ReturnType, typename... Args>                                               \
+    struct _mem_fn_traits<ReturnType(Args..., ...) __VA_ARGS__>                                    \
+    {                                                                                              \
+        using return_type = ReturnType;                                                            \
+    };
+
+#define LEXY_MAKE_MEM_FN_TRAITS_CV(...)                                                            \
+    LEXY_MAKE_MEM_FN_TRAITS(__VA_ARGS__)                                                           \
+    LEXY_MAKE_MEM_FN_TRAITS(const __VA_ARGS__)                                                     \
+    LEXY_MAKE_MEM_FN_TRAITS(volatile __VA_ARGS__)                                                  \
+    LEXY_MAKE_MEM_FN_TRAITS(const volatile __VA_ARGS__)
+
+#define LEXY_MAKE_MEM_FN_TRAITS_CV_REF(...)                                                        \
+    LEXY_MAKE_MEM_FN_TRAITS_CV(__VA_ARGS__)                                                        \
+    LEXY_MAKE_MEM_FN_TRAITS_CV(&__VA_ARGS__)                                                       \
+    LEXY_MAKE_MEM_FN_TRAITS_CV(&&__VA_ARGS__)
+
+LEXY_MAKE_MEM_FN_TRAITS_CV_REF()
+LEXY_MAKE_MEM_FN_TRAITS_CV_REF(noexcept)
+
+#undef LEXY_MAKE_MEM_FN_TRAITS_CV_REF
+#undef LEXY_MAKE_MEM_FN_TRAITS_CV
+#undef LEXY_MAKE_MEM_FN_TRAITS
+
+template <typename Fn>
+struct _mem_fn;
+template <typename MemFn, typename T>
+struct _mem_fn<MemFn T::*>
+{
+    MemFn T::*_fn;
+
+    using return_type = typename _mem_fn_traits<MemFn>::return_type;
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::_mem_invoker<MemFn T::*>::invoke(_fn, LEXY_FWD(args)...))
+    {
+        return _detail::_mem_invoker<MemFn T::*>::invoke(_fn, LEXY_FWD(args)...);
+    }
+};
+
+/// Creates a callback from a member function.
+template <typename MemFn, typename T>
+constexpr auto mem_fn(MemFn T::*fn)
+{
+    return _mem_fn<MemFn T::*>{fn};
+}
+} // namespace lexy
+
 #endif // LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
 
