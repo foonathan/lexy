@@ -7,9 +7,9 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/action/base.hpp>
+#include <lexy/input_location.hpp>
 #include <lexy/token.hpp>
 #include <lexy/visualize.hpp>
-#include <lexy_ext/input_location.hpp> // implementation detail only
 
 //=== debug event ===//
 namespace lexy::parse_events
@@ -250,7 +250,7 @@ private:
             *_out++ = '\n';
 
         _out = _detail::write_color<_detail::color::faint>(_out, _opts);
-        _out = _detail::write_format(_out, "%2zu:%3zu", loc.line_nr(), loc.column_nr());
+        _out = _detail::write_format(_out, "%2u:%3u", loc.line_nr(), loc.column_nr());
         _out = _detail::write_str(_out, ": ");
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
 
@@ -289,13 +289,10 @@ namespace lexy
 template <typename OutputIt, typename Input, typename TokenKind = void>
 class trace_handler
 {
-    using location_finder = lexy_ext::input_location_finder<Input>;
-    using location        = typename location_finder::location;
-
 public:
     explicit trace_handler(OutputIt out, const Input& input,
                            visualization_options opts = {}) noexcept
-    : _writer(out, opts), _locations(input), _anchor(_locations.beginning())
+    : _writer(out, opts), _input(&input), _anchor(input)
     {
         LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
     }
@@ -308,21 +305,21 @@ public:
     public:
         void on(trace_handler& handler, parse_events::production_start, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_production_start(loc, Production{});
 
             // All events for the production are after the initial event.
             _previous_anchor.emplace(handler._anchor);
-            handler._anchor = loc;
+            handler._anchor = loc.anchor();
         }
         void on(trace_handler& handler, parse_events::production_finish, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
         void on(trace_handler& handler, parse_events::production_cancel, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
 
             // We've backtracked, so we need to restore the anchor.
@@ -332,49 +329,49 @@ public:
         template <typename TK>
         void on(trace_handler& handler, parse_events::token, TK kind, iterator begin, iterator end)
         {
-            auto loc = handler.find_location(begin);
+            auto loc = handler.get_location(begin);
             handler._writer.write_token(loc, token_kind<TokenKind>(kind),
                                         lexeme_for<Input>(begin, end));
         }
         void on(trace_handler& handler, parse_events::backtracked, iterator begin, iterator end)
         {
-            auto loc = handler.find_location(begin);
+            auto loc = handler.get_location(begin);
             handler._writer.write_backtrack(loc, lexeme_for<Input>(begin, end));
         }
 
         template <typename Error>
         void on(trace_handler& handler, parse_events::error, const Error& error)
         {
-            auto loc = handler.find_location(error.position());
+            auto loc = handler.get_location(error.position());
             handler._writer.write_error(loc, error);
         }
 
         void on(trace_handler& handler, parse_events::recovery_start, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_recovery_start(loc);
         }
         void on(trace_handler& handler, parse_events::recovery_finish, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
         void on(trace_handler& handler, parse_events::recovery_cancel, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
         }
 
         void on(trace_handler& handler, parse_events::debug, iterator pos, const char* str)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_debug(loc, str);
         }
 
     private:
         // The beginning of the previous production.
         // If the current production gets canceled, it needs to be restored.
-        _detail::lazy_init<location> _previous_anchor;
+        _detail::lazy_init<input_location_anchor<Input>> _previous_anchor;
     };
 
     template <typename Production, typename State>
@@ -386,15 +383,15 @@ public:
     }
 
 private:
-    location find_location(typename lexy::input_reader<Input>::iterator pos)
+    input_location<Input> get_location(typename lexy::input_reader<Input>::iterator pos)
     {
-        return _locations.find(pos, _anchor);
+        return get_input_location(*_input, pos, _anchor);
     }
 
     _detail::trace_writer<OutputIt, TokenKind> _writer;
 
-    location_finder _locations;
-    location        _anchor;
+    const Input*                 _input;
+    input_location_anchor<Input> _anchor;
 };
 
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>

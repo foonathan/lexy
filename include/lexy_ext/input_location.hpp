@@ -10,6 +10,14 @@
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
+namespace lexy_ext::_detail
+{
+[[deprecated(
+    "`<lexy_ext/input_location.hpp>` is deprecated; migrate to `<lexy/input_location.hpp>`")]] //
+static int input_location_hpp_is_deprecated;
+static int trigger_input_locatoin_hpp_deprecated = input_location_hpp_is_deprecated;
+} // namespace lexy_ext::_detail
+
 namespace lexy_ext
 {
 // Fake token that counts code units without verification.

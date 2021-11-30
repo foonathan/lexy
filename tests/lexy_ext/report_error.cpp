@@ -130,7 +130,7 @@ TEST_CASE("_detail::write_error")
         CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello\r\n
-     |        ^^ error tag
+     |      ^^^^ error tag
 )*");
     }
     SUBCASE("error at eof")
@@ -179,8 +179,8 @@ TEST_CASE("_detail::write_error")
         lexy::string_error<error_tag> error(input.data(), input.data() + 8);
         CHECK(write(context, error) == R"*(error: while parsing production
      |
-   1 | hello
-     | ^^^^^ error tag
+   1 | hello\n
+     | ^^^^^^^ error tag
 )*");
     }
 }

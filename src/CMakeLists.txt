@@ -111,10 +111,8 @@ set(header_files
         )
 set(ext_header_files
         ${ext_include_dir}/compiler_explorer.hpp
-        ${ext_include_dir}/input_location.hpp
         ${ext_include_dir}/parse_tree_algorithm.hpp
         ${ext_include_dir}/parse_tree_doctest.hpp
-        ${ext_include_dir}/parse_tree_dump.hpp
         ${ext_include_dir}/report_error.hpp
         ${ext_include_dir}/shell.hpp
         )
