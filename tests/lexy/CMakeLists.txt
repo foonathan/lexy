@@ -99,6 +99,7 @@ set(tests
         encoding.cpp
         error.cpp
         grammar.cpp
+        input_location.cpp
         lexeme.cpp
         parse_tree.cpp
         token.cpp

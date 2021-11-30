@@ -31,6 +31,8 @@ Nevertheless, lexy defines some link:#infrastructure[infrastructure] types that 
   A parse tree.
 {{% headerref "error" %}}::
   The parse errors.
+{{% headerref "input_location" %}}::
+  Compute human readable line/column numbers for a position of the input.
 {{% headerref "visualize" %}}::
   Visualize the data structures.
 
