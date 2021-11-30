@@ -5043,15 +5043,12 @@ struct macro_type_string
 #endif // LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
 
 
-
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef LEXY_VISUALIZE_HPP_INCLUDED
-#define LEXY_VISUALIZE_HPP_INCLUDED
-
-#include <cstdio>
+#ifndef LEXY_INPUT_LOCATION_HPP_INCLUDED
+#define LEXY_INPUT_LOCATION_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -6331,6 +6328,537 @@ inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
+#define LEXY_DSL_NEWLINE_HPP_INCLUDED
+
+
+
+
+namespace lexy::_detail
+{
+template <typename Reader>
+constexpr bool match_newline(Reader& reader)
+{
+    using encoding = typename Reader::encoding;
+
+    if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+    {
+        reader.bump();
+        return true;
+    }
+    else if (reader.peek() == lexy::_char_to_int_type<encoding>('\r'))
+    {
+        reader.bump();
+        if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+        {
+            reader.bump();
+            return true;
+        }
+    }
+
+    return false;
+}
+} // namespace lexy::_detail
+
+namespace lexyd
+{
+struct _nl : token_base<_nl>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            auto result = lexy::_detail::match_newline(reader);
+            end         = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "newline");
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
+/// Matches a newline character.
+constexpr auto newline = _nl{};
+} // namespace lexyd
+
+namespace lexyd
+{
+struct _eol : token_base<_eol>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            auto result = (reader.peek() == Reader::encoding::eof())
+                          || lexy::_detail::match_newline(reader);
+            end = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "EOL");
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
+/// Matches the end of line (EOF or newline).
+constexpr auto eol = _eol{};
+} // namespace lexyd
+
+namespace lexy
+{
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_nl> = lexy::newline_token_kind;
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_eol> = lexy::eol_token_kind;
+} // namespace lexy
+
+#endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
+
+
+
+
+//=== input_location_anchor ===//
+namespace lexy
+{
+/// Anchor for the location search.
+template <typename Input>
+struct input_location_anchor
+{
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
+    constexpr explicit input_location_anchor(const Input& input)
+    : _line_begin(input.reader().position()), _line_nr(1)
+    {}
+
+    // implementation detail
+    constexpr explicit input_location_anchor(iterator line_begin, unsigned line_nr)
+    : _line_begin(line_begin), _line_nr(line_nr)
+    {}
+
+    iterator _line_begin;
+    unsigned _line_nr;
+};
+} // namespace lexy
+
+//=== counting strategies ===//
+namespace lexy
+{
+/// Counts code units for columns, newlines for lines.
+class code_unit_location_counting
+{
+public:
+    template <typename Reader>
+    constexpr bool try_match_newline(Reader& reader)
+    {
+        return lexy::try_match_token(lexy::dsl::newline, reader);
+    }
+
+    template <typename Reader>
+    constexpr void match_column(Reader& reader)
+    {
+        reader.bump();
+    }
+};
+
+/// Counts code points for columns, newlines for lines.
+class code_point_location_counting
+{
+public:
+    template <typename Reader>
+    constexpr bool try_match_newline(Reader& reader)
+    {
+        return lexy::try_match_token(lexy::dsl::newline, reader);
+    }
+
+    template <typename Reader>
+    constexpr void match_column(Reader& reader)
+    {
+        if (!lexy::try_match_token(lexy::dsl::code_point, reader))
+            reader.bump();
+    }
+};
+
+/// Counts bytes for columns, lines end after LineWidth bytes.
+template <std::size_t LineWidth = 16>
+class byte_location_counting
+{
+public:
+    template <typename Reader>
+    constexpr bool try_match_newline(Reader&)
+    {
+        LEXY_PRECONDITION(_cur_index <= LineWidth);
+        if (_cur_index == LineWidth)
+        {
+            _cur_index = 0;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    template <typename Reader>
+    constexpr void match_column(Reader& reader)
+    {
+        static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+
+        reader.bump();
+        ++_cur_index;
+    }
+
+private:
+    std::size_t _cur_index = 0;
+};
+
+template <typename Input>
+using _default_location_counting = std::conditional_t<
+    std::is_same_v<typename lexy::input_reader<Input>::encoding, lexy::byte_encoding>,
+    byte_location_counting<>, code_unit_location_counting>;
+} // namespace lexy
+
+//=== input_location ===//
+namespace lexy
+{
+/// A location in the input.
+template <typename Input, typename Counting = _default_location_counting<Input>>
+class input_location
+{
+    using iterator = typename lexy::input_reader<Input>::iterator;
+
+public:
+    /// The closest previous anchor.
+    constexpr input_location_anchor<Input> anchor() const
+    {
+        return input_location_anchor<Input>(_line_begin, _line_nr);
+    }
+
+    constexpr unsigned line_nr() const
+    {
+        return _line_nr;
+    }
+    constexpr unsigned column_nr() const
+    {
+        return _column_nr;
+    }
+
+    /// The corresponding position, rounded down to the previous column start.
+    constexpr iterator position() const
+    {
+        return _column_begin;
+    }
+
+    friend constexpr bool operator==(const input_location& lhs, const input_location& rhs)
+    {
+        return lhs._line_nr == rhs._line_nr && lhs._column_nr == rhs._column_nr;
+    }
+    friend constexpr bool operator!=(const input_location& lhs, const input_location& rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    friend constexpr bool operator<(const input_location& lhs, const input_location& rhs)
+    {
+        if (lhs._line_nr != rhs._line_nr)
+            return lhs._line_nr < rhs._line_nr;
+        return lhs._column_nr < rhs._colum_nr;
+    }
+    friend constexpr bool operator<=(const input_location& lhs, const input_location& rhs)
+    {
+        return !(rhs < lhs);
+    }
+    friend constexpr bool operator>(const input_location& lhs, const input_location& rhs)
+    {
+        return rhs < lhs;
+    }
+    friend constexpr bool operator>=(const input_location& lhs, const input_location& rhs)
+    {
+        return !(rhs > lhs);
+    }
+
+private:
+    constexpr input_location(iterator line_begin, unsigned line_nr, iterator column_begin,
+                             unsigned column_nr)
+    : _line_begin(line_begin), _column_begin(column_begin), _line_nr(line_nr), _column_nr(column_nr)
+    {}
+
+    iterator _line_begin, _column_begin;
+    unsigned _line_nr, _column_nr;
+
+    template <typename C, typename I>
+    friend constexpr auto get_input_location(const I&                                 input,
+                                             typename lexy::input_reader<I>::iterator position,
+                                             input_location_anchor<I>                 anchor)
+        -> input_location<I, C>;
+};
+
+/// The location for a position in the input; search starts at the anchor.
+template <typename Counting, typename Input>
+constexpr auto get_input_location(const Input&                                 input,
+                                  typename lexy::input_reader<Input>::iterator position,
+                                  input_location_anchor<Input>                 anchor)
+    -> input_location<Input, Counting>
+{
+    auto reader = input.reader();
+    reader.set_position(anchor._line_begin);
+
+    auto line_begin   = anchor._line_begin;
+    auto line_nr      = anchor._line_nr;
+    auto column_begin = line_begin;
+    auto column_nr    = 1u;
+
+    Counting counting;
+    while (true)
+    {
+        if (reader.peek() == lexy::input_reader<Input>::encoding::eof())
+        {
+            if (reader.position() == position)
+                break;
+
+            LEXY_ASSERT(false, "invalid position + anchor combination");
+        }
+        else if (counting.try_match_newline(reader))
+        {
+            // [column_begin, newline_end) covers the newline.
+            auto newline_end = reader.position();
+            if (lexy::_detail::min_range_end(column_begin, newline_end, position) != newline_end)
+                break;
+
+            // Advance to the next line.
+            ++line_nr;
+            line_begin   = newline_end;
+            column_nr    = 1;
+            column_begin = line_begin;
+        }
+        else
+        {
+            counting.match_column(reader);
+
+            // [column_begin, column_end) covers the column.
+            auto column_end = reader.position();
+            if (lexy::_detail::min_range_end(column_begin, column_end, position) != column_end)
+                break;
+
+            // Advance to the next column.
+            ++column_nr;
+            column_begin = column_end;
+        }
+    }
+
+    return {line_begin, line_nr, column_begin, column_nr};
+}
+
+template <typename Counting, typename Input>
+constexpr auto get_input_location(const Input&                                 input,
+                                  typename lexy::input_reader<Input>::iterator position)
+{
+    return get_input_location<Counting>(input, position, input_location_anchor(input));
+}
+template <typename Input>
+constexpr auto get_input_location(const Input&                                 input,
+                                  typename lexy::input_reader<Input>::iterator position,
+                                  input_location_anchor<Input>                 anchor)
+{
+    return get_input_location<_default_location_counting<Input>>(input, position, anchor);
+}
+template <typename Input>
+constexpr auto get_input_location(const Input&                                 input,
+                                  typename lexy::input_reader<Input>::iterator position)
+{
+    return get_input_location<_default_location_counting<Input>>(input, position,
+                                                                 input_location_anchor(input));
+}
+} // namespace lexy
+
+//=== input_line_annotation ===//
+namespace lexy::_detail
+{
+template <typename Counting, typename Input>
+constexpr auto get_input_line(const Input&                                 input,
+                              typename lexy::input_reader<Input>::iterator line_begin)
+{
+    auto reader = input.reader();
+    reader.set_position(line_begin);
+
+    auto line_end = reader.position();
+    for (Counting counting;
+         reader.peek() != decltype(reader)::encoding::eof() && !counting.try_match_newline(reader);
+         line_end = reader.position())
+    {
+        counting.match_column(reader);
+    }
+    auto newline_end = reader.position();
+
+    struct result_t
+    {
+        lexy::lexeme_for<Input> line;
+        lexy::lexeme_for<Input> newline;
+    };
+    return result_t{{line_begin, line_end}, {line_end, newline_end}};
+}
+
+// Advances the iterator to the beginning of the next code point.
+template <typename Encoding, typename Iterator>
+constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
+{
+    auto is_cp_continuation = [](auto c) {
+        if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+            return (c & 0b1100'0000) == (0b10 << 6);
+        else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
+            return 0xDC00 <= c && c <= 0xDFFF;
+        else
+        {
+            // This encoding doesn't have continuation code units.
+            (void)c;
+            return std::false_type{};
+        }
+    };
+
+    while (cur != end && is_cp_continuation(*cur))
+        ++cur;
+    return cur;
+}
+} // namespace lexy::_detail
+
+namespace lexy
+{
+template <typename Input>
+struct input_line_annotation
+{
+    /// Everything of the line before the range.
+    lexy::lexeme_for<Input> before;
+    /// The annotated part.
+    lexy::lexeme_for<Input> annotated;
+    /// Everything of the line after the annotated range.
+    lexy::lexeme_for<Input> after;
+
+    /// true if the the range was spanning multiple line and needed to be truncated.
+    bool truncated_multiline;
+    /// true if end needed to be moved to a code point boundary.
+    bool rounded_end;
+};
+
+/// Computes the annotation for e.g. an error message covering [begin_location, end).
+template <typename Input, typename Counting>
+constexpr auto get_input_line_annotation(const Input&                           input,
+                                         const input_location<Input, Counting>& begin_location,
+                                         typename lexy::input_reader<Input>::iterator end)
+    -> input_line_annotation<Input>
+{
+    input_line_annotation<Input> result{};
+
+    auto [line, newline]
+        = _detail::get_input_line<Counting>(input, begin_location.anchor()._line_begin);
+
+    // We first normalize the range.
+    auto begin = begin_location.position();
+    if (begin == end)
+    {
+        if (end == newline.begin())
+        {
+            // Empty range at the newline; make it cover the entire newline.
+            end = newline.end();
+        }
+        else if (end != newline.end())
+        {
+            // Empty range before end of newline; extend by one code unit.
+            ++end;
+        }
+        else
+        {
+            // begin == end == newline.end()
+        }
+    }
+    else if (lexy::_detail::min_range_end(begin, end, newline.end()) != end)
+    {
+        // Truncate a multiline range to a single line.
+        // Note that we can't have both an empty range and a multiline range.
+        end                        = newline.end();
+        result.truncated_multiline = true;
+    }
+
+    // At this point there are two cases:
+    // Either line.begin() <= begin < end <= newline.end()),
+    // or line.begin() <= begin == end == newline.end().
+
+    // We then round end to the code point boundary.
+    // Note that we don't round begin.
+    {
+        auto old_end = end;
+
+        using encoding = typename lexy::input_reader<Input>::encoding;
+        end            = _detail::find_cp_boundary<encoding>(end, line.end());
+
+        result.rounded_end = end != old_end;
+    }
+
+    // Now we can compute the annotation.
+    if (lexy::_detail::min_range_end(line.begin(), line.end(), end) == end)
+    {
+        // We have end <= line.end(),
+        // so line.end() is the end of after.
+        result.before    = {line.begin(), begin};
+        result.annotated = {begin, end};
+        result.after     = {end, line.end()};
+    }
+    else
+    {
+        // We have end > line.end(),
+        // so newline.end() is the end of annotated.
+        result.before    = {line.begin(), begin};
+        result.annotated = {begin, newline.end()};
+        result.after     = {newline.end(), newline.end()};
+    }
+
+    return result;
+}
+
+template <typename Input, typename Counting>
+constexpr auto get_input_line_annotation(const Input&                           input,
+                                         const input_location<Input, Counting>& location,
+                                         std::size_t                            size)
+{
+    return get_input_line_annotation(input, location,
+                                     lexy::_detail::next(location.position(), size));
+}
+} // namespace lexy
+
+#endif // LEXY_INPUT_LOCATION_HPP_INCLUDED
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_VISUALIZE_HPP_INCLUDED
+#define LEXY_VISUALIZE_HPP_INCLUDED
+
+#include <cstdio>
+
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
 #define LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
 
@@ -7043,343 +7571,6 @@ std::size_t visualization_display_width(const T& obj, visualization_options opts
 
 #endif // LEXY_VISUALIZE_HPP_INCLUDED
 
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
-#define LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
-
-
-// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
-
-#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
-#define LEXY_DSL_NEWLINE_HPP_INCLUDED
-
-
-
-
-namespace lexy::_detail
-{
-template <typename Reader>
-constexpr bool match_newline(Reader& reader)
-{
-    using encoding = typename Reader::encoding;
-
-    if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
-    {
-        reader.bump();
-        return true;
-    }
-    else if (reader.peek() == lexy::_char_to_int_type<encoding>('\r'))
-    {
-        reader.bump();
-        if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
-        {
-            reader.bump();
-            return true;
-        }
-    }
-
-    return false;
-}
-} // namespace lexy::_detail
-
-namespace lexyd
-{
-struct _nl : token_base<_nl>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            auto result = lexy::_detail::match_newline(reader);
-            end         = reader.position();
-            return result;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "newline");
-            context.on(_ev::error{}, err);
-        }
-    };
-};
-
-/// Matches a newline character.
-constexpr auto newline = _nl{};
-} // namespace lexyd
-
-namespace lexyd
-{
-struct _eol : token_base<_eol>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            auto result = (reader.peek() == Reader::encoding::eof())
-                          || lexy::_detail::match_newline(reader);
-            end = reader.position();
-            return result;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "EOL");
-            context.on(_ev::error{}, err);
-        }
-    };
-};
-
-/// Matches the end of line (EOF or newline).
-constexpr auto eol = _eol{};
-} // namespace lexyd
-
-namespace lexy
-{
-template <>
-inline constexpr auto token_kind_of<lexy::dsl::_nl> = lexy::newline_token_kind;
-template <>
-inline constexpr auto token_kind_of<lexy::dsl::_eol> = lexy::eol_token_kind;
-} // namespace lexy
-
-#endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
-
-
-
-
-namespace lexy_ext
-{
-// Fake token that counts code units without verification.
-struct _unchecked_code_unit
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            if (reader.peek() == Reader::encoding::eof())
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-    };
-};
-
-/// Converts positions (iterators) into locations (line/column nr).
-///
-/// The unit for line and column numbers can be customized.
-/// Every time the corresponding token matches, is the corresponding number increased.
-///
-/// See https://foonathan.net/2021/02/column/ for a discussion of potential units.
-/// Use e.g. `lexy::dsl::code_point` and `lexy::dsl::newline` to count code points.
-///
-/// By default, it counts code units and newlines.
-template <typename Input, typename TokenColumn = _unchecked_code_unit,
-          typename TokenLine = LEXY_DECAY_DECLTYPE(lexy::dsl::newline)>
-class input_location_finder
-{
-public:
-    using iterator = typename lexy::input_reader<Input>::iterator;
-
-    /// The location in the input.
-    class location
-    {
-    public:
-        constexpr std::size_t line_nr() const noexcept
-        {
-            return _line;
-        }
-        constexpr std::size_t column_nr() const noexcept
-        {
-            return _column;
-        }
-
-        /// The entire line that contains the position.
-        constexpr lexy::lexeme_for<Input> context() const
-        {
-            auto eol = _reader.position();
-            for (auto reader = _reader; true; reader.bump())
-            {
-                eol = reader.position();
-                if (reader.peek() == decltype(reader)::encoding::eof()
-                    || lexy::try_match_token(TokenLine{}, reader))
-                    break;
-            }
-
-            return {_reader.position(), eol};
-        }
-
-        /// The newline after the line, if there is any.
-        constexpr lexy::lexeme_for<Input> newline() const
-        {
-            // Advance to EOl.
-            for (auto reader = _reader; true; reader.bump())
-            {
-                auto pos = reader.position();
-                if (reader.peek() == decltype(reader)::encoding::eof())
-                    return {pos, pos};
-                else if (lexy::try_match_token(TokenLine{}, reader))
-                    return {pos, reader.position()};
-            }
-
-            return {}; // unreachable
-        }
-
-    private:
-        constexpr location(lexy::input_reader<Input> reader, std::size_t line, std::size_t column)
-        : _reader(LEXY_MOV(reader)), _line(line), _column(column)
-        {}
-
-        // The reader starts at the beginning of the given line.
-        lexy::input_reader<Input> _reader;
-        std::size_t               _line, _column;
-
-        friend input_location_finder;
-    };
-
-    constexpr explicit input_location_finder(const Input& input) : _reader(input.reader()) {}
-    constexpr explicit input_location_finder(const Input& input, TokenColumn, TokenLine)
-    : _reader(input.reader())
-    {}
-
-    /// The starting location.
-    constexpr location beginning() const
-    {
-        return location(_reader, 1, 1);
-    }
-
-    /// Finds the given position, starting at the anchor location.
-    /// This is an optimization if you know the position is after the anchor.
-    constexpr location find(iterator pos, const location& anchor) const
-    {
-        auto reader = anchor._reader;
-
-        // We start at the given line in the initial column.
-        std::size_t cur_line   = anchor._line;
-        std::size_t cur_column = 1;
-        auto        line_start = reader;
-
-        // Find the given position.
-        while (true)
-        {
-            if (reader.position() == pos)
-            {
-                // We found the position of the error.
-                break;
-            }
-            else if (lexy::token_parser_for<TokenLine, decltype(reader)> nl(reader);
-                     nl.try_parse(reader))
-            {
-                LEXY_ASSERT(reader.position() != nl.end, "TokenLine must consume input");
-                reader.bump();
-
-                // Check whether our location points inside the newline.
-                auto found = false;
-                while (reader.position() != nl.end)
-                {
-                    found |= reader.position() == pos;
-                    reader.bump();
-                }
-
-                // We pretend the location is at the beginning of the newline.
-                if (found)
-                    break;
-
-                // We're at a new line.
-                ++cur_line;
-                cur_column = 1;
-                line_start = reader;
-            }
-            else if (lexy::token_parser_for<TokenColumn, decltype(reader)> column(reader);
-                     column.try_parse(reader))
-            {
-                LEXY_ASSERT(reader.position() != column.end, "TokenColumn must consume input");
-                reader.bump();
-
-                // Check whether our location points inside a column.
-                auto found = false;
-                while (reader.position() != column.end)
-                {
-                    found |= reader.position() == pos;
-                    reader.bump();
-                }
-
-                // We pretend the location is at the beginning of the column.
-                if (found)
-                    break;
-
-                // Next column.
-                ++cur_column;
-            }
-            else if (reader.peek() == decltype(reader)::encoding::eof())
-            {
-                // We have an OOB error position.
-                LEXY_PRECONDITION(false);
-                break;
-            }
-            else
-            {
-                // Invalid column, just ignore it in the column count.
-                reader.bump();
-            }
-        }
-
-        // Return where we ended up.
-        return location(line_start, cur_line, cur_column);
-    }
-
-    /// Finds the location of the position.
-    constexpr location find(iterator pos) const
-    {
-        // We start at the beginning of the file with the search.
-        auto anchor = beginning();
-        return find(pos, anchor);
-    }
-
-private:
-    lexy::input_reader<Input> _reader;
-};
-
-/// Convenience function to find a single location.
-template <typename Input, typename TokenColumn, typename TokenLine>
-constexpr auto find_input_location(const Input&                                 input,
-                                   typename lexy::input_reader<Input>::iterator pos, TokenColumn,
-                                   TokenLine)
-{
-    return input_location_finder<Input, TokenColumn, TokenLine>(input).find(pos);
-}
-template <typename Input>
-constexpr auto find_input_location(const Input&                                 input,
-                                   typename lexy::input_reader<Input>::iterator pos)
-{
-    return input_location_finder<Input>(input).find(pos);
-}
-} // namespace lexy_ext
-
-#endif // LEXY_EXT_INPUT_LOCATION_HPP_INCLUDED
- // implementation detail only
 
 //=== debug event ===//
 namespace lexy::parse_events
@@ -7620,7 +7811,7 @@ private:
             *_out++ = '\n';
 
         _out = _detail::write_color<_detail::color::faint>(_out, _opts);
-        _out = _detail::write_format(_out, "%2zu:%3zu", loc.line_nr(), loc.column_nr());
+        _out = _detail::write_format(_out, "%2u:%3u", loc.line_nr(), loc.column_nr());
         _out = _detail::write_str(_out, ": ");
         _out = _detail::write_color<_detail::color::reset>(_out, _opts);
 
@@ -7659,13 +7850,10 @@ namespace lexy
 template <typename OutputIt, typename Input, typename TokenKind = void>
 class trace_handler
 {
-    using location_finder = lexy_ext::input_location_finder<Input>;
-    using location        = typename location_finder::location;
-
 public:
     explicit trace_handler(OutputIt out, const Input& input,
                            visualization_options opts = {}) noexcept
-    : _writer(out, opts), _locations(input), _anchor(_locations.beginning())
+    : _writer(out, opts), _input(&input), _anchor(input)
     {
         LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
     }
@@ -7678,21 +7866,21 @@ public:
     public:
         void on(trace_handler& handler, parse_events::production_start, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_production_start(loc, Production{});
 
             // All events for the production are after the initial event.
             _previous_anchor.emplace(handler._anchor);
-            handler._anchor = loc;
+            handler._anchor = loc.anchor();
         }
         void on(trace_handler& handler, parse_events::production_finish, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
         void on(trace_handler& handler, parse_events::production_cancel, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
 
             // We've backtracked, so we need to restore the anchor.
@@ -7702,49 +7890,49 @@ public:
         template <typename TK>
         void on(trace_handler& handler, parse_events::token, TK kind, iterator begin, iterator end)
         {
-            auto loc = handler.find_location(begin);
+            auto loc = handler.get_location(begin);
             handler._writer.write_token(loc, token_kind<TokenKind>(kind),
                                         lexeme_for<Input>(begin, end));
         }
         void on(trace_handler& handler, parse_events::backtracked, iterator begin, iterator end)
         {
-            auto loc = handler.find_location(begin);
+            auto loc = handler.get_location(begin);
             handler._writer.write_backtrack(loc, lexeme_for<Input>(begin, end));
         }
 
         template <typename Error>
         void on(trace_handler& handler, parse_events::error, const Error& error)
         {
-            auto loc = handler.find_location(error.position());
+            auto loc = handler.get_location(error.position());
             handler._writer.write_error(loc, error);
         }
 
         void on(trace_handler& handler, parse_events::recovery_start, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_recovery_start(loc);
         }
         void on(trace_handler& handler, parse_events::recovery_finish, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
         void on(trace_handler& handler, parse_events::recovery_cancel, iterator pos)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
         }
 
         void on(trace_handler& handler, parse_events::debug, iterator pos, const char* str)
         {
-            auto loc = handler.find_location(pos);
+            auto loc = handler.get_location(pos);
             handler._writer.write_debug(loc, str);
         }
 
     private:
         // The beginning of the previous production.
         // If the current production gets canceled, it needs to be restored.
-        _detail::lazy_init<location> _previous_anchor;
+        _detail::lazy_init<input_location_anchor<Input>> _previous_anchor;
     };
 
     template <typename Production, typename State>
@@ -7756,15 +7944,15 @@ public:
     }
 
 private:
-    location find_location(typename lexy::input_reader<Input>::iterator pos)
+    input_location<Input> get_location(typename lexy::input_reader<Input>::iterator pos)
     {
-        return _locations.find(pos, _anchor);
+        return get_input_location(*_input, pos, _anchor);
     }
 
     _detail::trace_writer<OutputIt, TokenKind> _writer;
 
-    location_finder _locations;
-    location        _anchor;
+    const Input*                 _input;
+    input_location_anchor<Input> _anchor;
 };
 
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>
@@ -17560,114 +17748,6 @@ using compiler_explorer_error_context = lexy::buffer_error_context<Production, l
 
 namespace lexy_ext::_detail
 {
-// Advances the iterator to the beginning of the next code point.
-template <typename Encoding, typename Iterator>
-constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
-{
-    // [maybe_unused] c breaks MSVC builds targetting C++17
-    auto is_cp_boundary = [](auto c) {
-        (void)c;
-        if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
-            return (c & 0b1100'0000) != (0b10 << 6);
-        else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
-            return (c & 0b1111'1100'0000'0000) != (0b110111 << 10);
-        else
-            // This encoding doesn't have continuation code units, so everything is a boundary.
-            return std::true_type{};
-    };
-
-    while (cur != end && !is_cp_boundary(*cur))
-        ++cur;
-    return cur;
-}
-
-// Split the context of the location into three parts: the one before underlined, the underlined
-// one, and the one after. If underlined covers multiple lines, limit to the one of the context or
-// the newline afterwards.
-template <typename Location, typename Reader>
-constexpr auto split_context(const Location& location, const lexy::lexeme<Reader>& underlined)
-{
-    using encoding     = typename Reader::encoding;
-    const auto context = location.context();
-
-    struct result_t
-    {
-        lexy::lexeme<Reader> before;
-        lexy::lexeme<Reader> underlined;
-        lexy::lexeme<Reader> after;
-    } result;
-
-    // The before part starts at the context and continues until the beginning of the underline.
-    // We do not advance the beginning of the underline to the next code point boundary:
-    // If the error occurs inside a code point, this should be visible.
-    result.before = {context.begin(), underlined.begin()};
-
-    // Check whether we have underlined.begin() > context.end().
-    auto underline_after_end
-        = lexy::_detail::min_range_end(context.begin(), underlined.begin(), context.end())
-          == context.end();
-    if (underline_after_end)
-    {
-        // The underlined part is inside the newline.
-        auto newline = location.newline();
-        LEXY_PRECONDITION(lexy::_detail::precedes(newline.begin(), underlined.begin()));
-
-        auto underlined_end = [&] {
-            if (underlined.empty())
-            {
-                // Our underlined part is empty, extend it to cover one code unit.
-                // For simplicity, we extend it further so that it covers the entire newline.
-                return newline.end();
-            }
-            else
-            {
-                // The end of the underlined part is either the end of the underline or the newline.
-                // Due to the nature of newlines, we don't need to advance to the next code point
-                // boundary.
-                return lexy::_detail::min_range_end(underlined.begin(), underlined.end(),
-                                                    newline.end());
-            }
-        }();
-
-        // Use the trimmed/extended underline, and nothing comes after it.
-        result.underlined = {underlined.begin(), underlined_end};
-        result.after      = {underlined_end, underlined_end};
-    }
-    else
-    {
-        auto underlined_end = [&] {
-            if (underlined.empty())
-            {
-                LEXY_ASSERT(underlined.end() != context.end(),
-                            "we would have triggered underline_after_end");
-                return find_cp_boundary<encoding>(lexy::_detail::next(underlined.end()),
-                                                  context.end());
-            }
-            else
-            {
-                // Trim the underlined part, so it does not extend the context.
-                auto trimmed = lexy::_detail::min_range_end(underlined.begin(), underlined.end(),
-                                                            context.end());
-                if (trimmed == context.end())
-                    return trimmed;
-
-                // If we haven't trimmed it, we need to advance it to the next code point boundary.
-                // This also prevents an empty underline.
-                // (We assume the context ends at a code point boundary, so don't need to trim it
-                // above.)
-                return find_cp_boundary<encoding>(underlined.end(), context.end());
-            }
-        }();
-
-        // Use the trimmed/extended underline, everything that remains (if any) is part of the
-        // context.
-        result.underlined = {underlined.begin(), underlined_end};
-        result.after      = {underlined_end, context.end()};
-    }
-
-    return result;
-}
-
 enum class annotation_kind
 {
     primary,
@@ -17677,6 +17757,7 @@ enum class annotation_kind
 template <typename Input>
 struct error_writer
 {
+    const Input*                input;
     lexy::visualization_options opts;
 
     const auto* column() const
@@ -17727,9 +17808,9 @@ struct error_writer
     }
 
     template <typename OutputIt, typename Location, typename Writer>
-    OutputIt write_annotation(OutputIt out, annotation_kind kind, const Location& location,
-                              const lexy::lexeme_for<Input>& _underlined,
-                              const Writer&                  message) const
+    OutputIt write_annotation(OutputIt out, annotation_kind kind, const Location& begin_location,
+                              typename lexy::input_reader<Input>::iterator end,
+                              const Writer&                                message) const
     {
         using namespace lexy::_detail;
 
@@ -17745,34 +17826,34 @@ struct error_writer
             return out;
         };
 
-        auto [before, underlined, after] = split_context(location, _underlined);
+        auto line = lexy::get_input_line_annotation(*input, begin_location, end);
 
         //=== Line with file contents ===//
         // Location column.
-        out    = write_format(out, "%4zd ", location.line_nr());
+        out    = write_format(out, "%4zd ", begin_location.line_nr());
         out    = write_str(out, column());
         *out++ = ' ';
 
         // Print before underlined normally.
-        out = lexy::visualize_to(out, before, opts);
+        out = lexy::visualize_to(out, line.before, opts);
 
         // Print underlined colored.
         out = colorize_underline(out);
-        out = lexy::visualize_to(out, underlined, opts.reset(lexy::visualize_use_color));
+        out = lexy::visualize_to(out, line.annotated, opts.reset(lexy::visualize_use_color));
         out = write_color<color::reset>(out, opts);
 
         // Print after underlined normally.
-        out    = lexy::visualize_to(out, after, opts);
+        out    = lexy::visualize_to(out, line.after, opts);
         *out++ = '\n';
 
-        //==== Line with annotation ===//
+        //=== Line with annotation ===//
         // Initial column.
         out    = write_str(out, "     ");
         out    = write_str(out, column());
         *out++ = ' ';
 
         // Indent until the underline.
-        auto indent_count = lexy::visualization_display_width(before, opts);
+        auto indent_count = lexy::visualization_display_width(line.before, opts);
         for (auto i = 0u; i != indent_count; ++i)
             *out++ = ' ';
 
@@ -17780,7 +17861,7 @@ struct error_writer
         out = colorize_underline(out);
 
         // Then underline.
-        auto underline_count = lexy::visualization_display_width(underlined, opts);
+        auto underline_count = lexy::visualization_display_width(line.annotated, opts);
         if (underline_count == 0)
             // This is only possible if we have an error right at EOF.
             underline_count = 1;
@@ -17803,13 +17884,12 @@ template <typename OutputIt, typename Production, typename Input, typename Reade
 OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>& context,
                      const lexy::error<Reader, Tag>& error, lexy::visualization_options opts)
 {
-    _detail::error_writer<Input> writer{opts};
+    _detail::error_writer<Input> writer{&context.input(), opts};
 
     // Convert the context location and error location into line/column information.
-    lexy_ext::input_location_finder finder(context.input());
-
-    auto context_location = finder.find(context.position());
-    auto location         = finder.find(error.position(), context_location);
+    auto context_location = lexy::get_input_location(context.input(), context.position());
+    auto location
+        = lexy::get_input_location(context.input(), error.position(), context_location.anchor());
 
     // Write the main error headline.
     out = writer.write_message(out, [&](OutputIt out, lexy::visualization_options) {
@@ -17823,7 +17903,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     if (location.line_nr() != context_location.line_nr())
     {
         out = writer.write_annotation(out, annotation_kind::secondary, context_location,
-                                      {context.position(), 1},
+                                      lexy::_detail::next(context.position()),
                                       [&](OutputIt out, lexy::visualization_options) {
                                           return lexy::_detail::write_str(out, "beginning here");
                                       });
@@ -17834,9 +17914,9 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
-        auto underlined = lexy::lexeme_for<Input>(error.position(), error.index() + 1);
 
-        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
+        out = writer.write_annotation(out, annotation_kind::primary, location,
+                                      lexy::_detail::next(error.position(), error.index() + 1),
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -17847,9 +17927,8 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
-        auto underlined = lexy::lexeme_for<Input>(error.begin(), error.end());
 
-        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
+        out = writer.write_annotation(out, annotation_kind::primary, location, error.end(),
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected keyword '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -17859,8 +17938,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
     {
-        auto underlined = lexy::lexeme_for<Input>(error.position(), error.position());
-        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
+        out = writer.write_annotation(out, annotation_kind::primary, location, error.position(),
                                       [&](OutputIt out, lexy::visualization_options) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::_detail::write_str(out,
@@ -17871,8 +17949,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else
     {
-        auto underlined = lexy::lexeme_for<Input>(error.begin(), error.end());
-        out = writer.write_annotation(out, annotation_kind::primary, location, underlined,
+        out = writer.write_annotation(out, annotation_kind::primary, location, error.end(),
                                       [&](OutputIt out, lexy::visualization_options) {
                                           return lexy::_detail::write_str(out, error.message());
                                       });
