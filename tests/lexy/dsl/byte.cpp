@@ -27,21 +27,22 @@ TEST_CASE("dsl::bytes")
 
     auto one = LEXY_VERIFY(lexy::byte_encoding{}, 42);
     CHECK(one.status == test_result::fatal_error);
-    CHECK(one.trace == test_trace().expected_char_class(1, "byte").error_token("2A").cancel());
+    CHECK(one.trace == test_trace().expected_char_class(1, "byte").error_token("\\2A").cancel());
     auto two = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11);
     CHECK(two.status == test_result::fatal_error);
-    CHECK(two.trace == test_trace().expected_char_class(2, "byte").error_token("2A 0B").cancel());
+    CHECK(two.trace
+          == test_trace().expected_char_class(2, "byte").error_token("\\2A\\0B").cancel());
     auto three = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11, 0x42);
     CHECK(three.status == test_result::fatal_error);
     CHECK(three.trace
-          == test_trace().expected_char_class(3, "byte").error_token("2A 0B 42").cancel());
+          == test_trace().expected_char_class(3, "byte").error_token("\\2A\\0B\\42").cancel());
 
     auto four = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11, 0x42, 0x11);
     CHECK(four.status == test_result::success);
-    CHECK(four.trace == test_trace().token("any", "2A 0B 42 11"));
+    CHECK(four.trace == test_trace().token("any", "\\2A\\0B\\42\\11"));
     auto five = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11, 0x42, 0x11, 0);
     CHECK(five.status == test_result::success);
-    CHECK(five.trace == test_trace().token("any", "2A 0B 42 11"));
+    CHECK(five.trace == test_trace().token("any", "\\2A\\0B\\42\\11"));
 }
 
 TEST_CASE("dsl::padding_bytes")
@@ -61,22 +62,23 @@ TEST_CASE("dsl::padding_bytes")
 
         auto one = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
         CHECK(one.status == test_result::fatal_error);
-        CHECK(one.trace == test_trace().expected_char_class(1, "byte").error_token("AA").cancel());
+        CHECK(one.trace
+              == test_trace().expected_char_class(1, "byte").error_token("\\AA").cancel());
 
         auto two = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xAA);
         CHECK(two.status == test_result::success);
-        CHECK(two.trace == test_trace().token("any", "AA AA"));
+        CHECK(two.trace == test_trace().token("any", "\\AA\\AA"));
         auto three = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xAA, 0xAA);
         CHECK(three.status == test_result::success);
-        CHECK(three.trace == test_trace().token("any", "AA AA"));
+        CHECK(three.trace == test_trace().token("any", "\\AA\\AA"));
 
         auto bad = LEXY_VERIFY(lexy::byte_encoding{}, 0xBB, 0xBB);
         CHECK(bad.status == test_result::recovered_error);
         CHECK(bad.trace
               == test_trace()
-                     .token("any", "BB BB")
-                     .expected_literal(0, "AA", 0)
-                     .expected_literal(1, "AA", 0));
+                     .token("any", "\\BB\\BB")
+                     .expected_literal(0, "\\AA", 0)
+                     .expected_literal(1, "\\AA", 0));
     }
     SUBCASE("as branch rule")
     {
@@ -92,18 +94,18 @@ TEST_CASE("dsl::padding_bytes")
 
         auto two = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xAA);
         CHECK(two.status == test_result::success);
-        CHECK(two.trace == test_trace().token("any", "AA AA"));
+        CHECK(two.trace == test_trace().token("any", "\\AA\\AA"));
         auto three = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xAA, 0xAA);
         CHECK(three.status == test_result::success);
-        CHECK(three.trace == test_trace().token("any", "AA AA"));
+        CHECK(three.trace == test_trace().token("any", "\\AA\\AA"));
 
         auto bad = LEXY_VERIFY(lexy::byte_encoding{}, 0xBB, 0xBB);
         CHECK(bad.status == test_result::recovered_error);
         CHECK(bad.trace
               == test_trace()
-                     .token("any", "BB BB")
-                     .expected_literal(0, "AA", 0)
-                     .expected_literal(1, "AA", 0));
+                     .token("any", "\\BB\\BB")
+                     .expected_literal(0, "\\AA", 0)
+                     .expected_literal(1, "\\AA", 0));
     }
 }
 
@@ -163,12 +165,15 @@ TEST_CASE("dsl::bint")
             auto not_enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3);
             CHECK(not_enough.status == test_result::fatal_error);
             CHECK(not_enough.trace
-                  == test_trace().expected_char_class(3, "byte").error_token("01 02 03").cancel());
+                  == test_trace()
+                         .expected_char_class(3, "byte")
+                         .error_token("\\01\\02\\03")
+                         .cancel());
 
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);
             CHECK(enough.status == test_result::success);
             CHECK(enough.value == 0x01020304);
-            CHECK(enough.trace == test_trace().token("any", "01 02 03 04"));
+            CHECK(enough.trace == test_trace().token("any", "\\01\\02\\03\\04"));
         }
         SUBCASE("as branch")
         {
@@ -187,7 +192,7 @@ TEST_CASE("dsl::bint")
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);
             CHECK(enough.status == test_result::success);
             CHECK(enough.value == 0x01020304);
-            CHECK(enough.trace == test_trace().token("any", "01 02 03 04"));
+            CHECK(enough.trace == test_trace().token("any", "\\01\\02\\03\\04"));
         }
     }
     SUBCASE("little")
@@ -206,12 +211,15 @@ TEST_CASE("dsl::bint")
             auto not_enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3);
             CHECK(not_enough.status == test_result::fatal_error);
             CHECK(not_enough.trace
-                  == test_trace().expected_char_class(3, "byte").error_token("01 02 03").cancel());
+                  == test_trace()
+                         .expected_char_class(3, "byte")
+                         .error_token("\\01\\02\\03")
+                         .cancel());
 
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);
             CHECK(enough.status == test_result::success);
             CHECK(enough.value == 0x04030201);
-            CHECK(enough.trace == test_trace().token("any", "01 02 03 04"));
+            CHECK(enough.trace == test_trace().token("any", "\\01\\02\\03\\04"));
         }
         SUBCASE("as branch")
         {
@@ -230,7 +238,7 @@ TEST_CASE("dsl::bint")
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);
             CHECK(enough.status == test_result::success);
             CHECK(enough.value == 0x04030201);
-            CHECK(enough.trace == test_trace().token("any", "01 02 03 04"));
+            CHECK(enough.trace == test_trace().token("any", "\\01\\02\\03\\04"));
         }
     }
 
@@ -251,17 +259,20 @@ TEST_CASE("dsl::bint")
             auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
             CHECK(a.status == test_result::fatal_error);
             CHECK(a.trace
-                  == test_trace().token("AA").error(0, 1, "mismatched byte count").cancel());
+                  == test_trace().token("\\AA").error(0, 1, "mismatched byte count").cancel());
 
             auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB);
             CHECK(ab.status == test_result::success);
             CHECK(ab.value == 0xAABB);
-            CHECK(ab.trace == test_trace().token("AA BB"));
+            CHECK(ab.trace == test_trace().token("\\AA\\BB"));
 
             auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB, 0xCC);
             CHECK(abc.status == test_result::fatal_error);
             CHECK(abc.trace
-                  == test_trace().token("AA BB CC").error(0, 3, "mismatched byte count").cancel());
+                  == test_trace()
+                         .token("\\AA\\BB\\CC")
+                         .error(0, 3, "mismatched byte count")
+                         .cancel());
         }
         SUBCASE("as branch")
         {
@@ -274,17 +285,20 @@ TEST_CASE("dsl::bint")
             auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
             CHECK(a.status == test_result::fatal_error);
             CHECK(a.trace
-                  == test_trace().token("AA").error(0, 1, "mismatched byte count").cancel());
+                  == test_trace().token("\\AA").error(0, 1, "mismatched byte count").cancel());
 
             auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB);
             CHECK(ab.status == test_result::success);
             CHECK(ab.value == 0xAABB);
-            CHECK(ab.trace == test_trace().token("AA BB"));
+            CHECK(ab.trace == test_trace().token("\\AA\\BB"));
 
             auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB, 0xCC);
             CHECK(abc.status == test_result::fatal_error);
             CHECK(abc.trace
-                  == test_trace().token("AA BB CC").error(0, 3, "mismatched byte count").cancel());
+                  == test_trace()
+                         .token("\\AA\\BB\\CC")
+                         .error(0, 3, "mismatched byte count")
+                         .cancel());
         }
     }
 }

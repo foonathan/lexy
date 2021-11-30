@@ -140,11 +140,11 @@ TEST_CASE("visualize lexeme")
     }
     SUBCASE("byte encoding")
     {
-        CHECK(visualize(lexy::byte_encoding{}, "abc") == R"(61 62 63)");
-        CHECK(visualize(lexy::byte_encoding{}, "\n\t\\") == R"(0A 09 5C)");
-        CHECK(visualize(lexy::byte_encoding{}, "\x11\x42") == R"(11 42)");
+        CHECK(visualize(lexy::byte_encoding{}, "abc") == R"(\61\62\63)");
+        CHECK(visualize(lexy::byte_encoding{}, "\n\t\\") == R"(\0A\09\5C)");
+        CHECK(visualize(lexy::byte_encoding{}, "\x11\x42") == R"(\11\42)");
 
-        CHECK(visualize(lexy::byte_encoding{}, "abc", 2) == R"(61 62...)");
+        CHECK(visualize(lexy::byte_encoding{}, "abc", 2) == R"(\61\62...)");
     }
 }
 

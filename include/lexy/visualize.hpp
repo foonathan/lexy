@@ -465,13 +465,13 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
     }
     else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
     {
-        // Write each byte.
         auto count = 0u;
         for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
         {
-            if (iter != lexeme.begin())
-                *out++ = ' ';
-            out = _detail::write_format(out, "%02X", *iter);
+            // Write each byte.
+            out = _detail::write_special_char(out, opts, [c = *iter](OutputIt out) {
+                return _detail::write_format(out, "%02X", c);
+            });
 
             ++count;
             if (count == opts.max_lexeme_width)
