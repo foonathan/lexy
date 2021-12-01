@@ -77,6 +77,9 @@ Unicode support::
   Want to match any Unicode alphabetic or whitespace character, or a Unicode-aware identifier?
   You can do so out of the box.
 
+Byte parsing::
+  Rules for parsing `N` bytes, an Nbit big/little endian integer, and related utilities for binary formats.
+
 Keyword and identifier parsing::
   Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss[Try it online].
 
@@ -99,9 +102,6 @@ The following features are in various stages of development and will be added be
 
 Operator parsing::
   Parse operators with different precedences using Pratt parsing.
-
-Byte parsing::
-  Rules for parsing `N` bytes, an Nbit BE/LE integer, and related utilities for binary formats.
 
 NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
 All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
