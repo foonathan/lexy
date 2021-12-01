@@ -23,7 +23,7 @@ Matching::
 Errors::
   {{% docref "lexy::expected_char_class" %}} (`"EOF"`): at the unchanged reader position.
 Parse tree::
-  Single token type whose range is empty with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eof_token_kind`.
+  Single token node whose range is empty with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eof_token_kind`.
 
 Parsing `eof` multiple times in sequence has no additional effect:
 they all succeed if the first one succeeded and they all fail if the first one failed.

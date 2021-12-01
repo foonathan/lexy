@@ -120,7 +120,7 @@ Errors::
   {{% docref "lexy::expected_char_class" %}} (`"argv-separator"`): at the unchanged reader position.
   The rule then fails.
 Parse tree::
-  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
+  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 The rule can only succeed on a {{% docref "lexy::argv_input" %}}.
 There is no argument separator before the first command-line argument, or after the last one.

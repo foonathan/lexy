@@ -56,7 +56,7 @@ Errors::
   This includes surrogates, overlong UTF-8 sequences, or out of range code points (especially for ASCII).
   The rule then fails.
 Parse tree::
-  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::any_token_kind`.
+  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::any_token_kind`.
 
 {{% playground-example code_point "Parse one code point in the inputs encoding" %}}
 
@@ -88,7 +88,7 @@ Errors::
   {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
   Its `.string()` is the encoded version of `CodePoint`, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
 Parse tree::
-  Single token type with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
+  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding `CodePoint` in the encoding of the input.
 
