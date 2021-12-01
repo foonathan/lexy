@@ -1782,19 +1782,19 @@ struct _deduce_encoding<std::byte>
 } // namespace lexy
 
 //=== impls ===//
-namespace lexy
+namespace lexy::_detail
 {
 template <typename Encoding, typename CharT>
-constexpr bool _is_compatible_char_type
+constexpr bool is_compatible_char_type
     = std::is_same_v<typename Encoding::char_type,
                      CharT> || Encoding::template is_secondary_char_type<CharT>();
 
 template <typename Encoding, typename CharT>
-using _require_secondary_char_type
+using require_secondary_char_type
     = std::enable_if_t<Encoding::template is_secondary_char_type<CharT>()>;
 
 template <typename CharT>
-constexpr bool _is_ascii(CharT c)
+constexpr bool is_ascii(CharT c)
 {
     if constexpr (std::is_signed_v<CharT>)
         return 0 <= c && c <= 0x7F;
@@ -1802,36 +1802,38 @@ constexpr bool _is_ascii(CharT c)
         return c <= 0x7F;
 }
 
-template <typename Encoding, typename CharT>
-LEXY_CONSTEVAL auto _char_to_int_type(CharT c)
+template <typename TargetCharT, typename CharT>
+LEXY_CONSTEVAL TargetCharT transcode_char(CharT c)
 {
-    using encoding_char_type = typename Encoding::char_type;
-
-    if constexpr (std::is_same_v<CharT, encoding_char_type>)
-        return Encoding::to_int_type(c);
-    else if constexpr (std::is_same_v<CharT, unsigned char> && sizeof(encoding_char_type) == 1)
+    if constexpr (std::is_same_v<CharT, TargetCharT>)
     {
-        // We allow using unsigned char to express raw bytes, if we have a byte-only input.
-        // This enables the BOM rule.
-        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+        return c;
     }
 #if !LEXY_HAS_CHAR8_T
-    else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<Encoding, lexy::utf8_encoding>)
+    else if constexpr (std::is_same_v<CharT, char> && std::is_same_v<TargetCharT, LEXY_CHAR8_T>)
     {
         // If we don't have char8_t, `LEXY_LIT(u8"ä")` would have the type char, not LEXY_CHAR8_T
         // (which is unsigned char). So we disable checking in that case, to allow such usage. Note
         // that this prevents catching `LEXY_LIT("ä")`, but there is nothing we can do.
-        return Encoding::to_int_type(static_cast<LEXY_CHAR8_T>(c));
+        return static_cast<LEXY_CHAR8_T>(c);
     }
 #endif
     else
     {
-        LEXY_ASSERT(_is_ascii(c), "character type of string literal didn't match, "
-                                  "so only ASCII characters are supported");
-        return Encoding::to_int_type(static_cast<encoding_char_type>(c));
+        LEXY_ASSERT(is_ascii(c), "character type of string literal didn't match, "
+                                 "so only ASCII characters are supported");
+        // Note that we don't need to worry about signed/unsigned conversion, all ASCII values are
+        // positive.
+        return static_cast<TargetCharT>(c);
     }
 }
-} // namespace lexy
+
+template <typename Encoding, typename CharT>
+LEXY_CONSTEVAL auto transcode_int(CharT c) -> typename Encoding::int_type
+{
+    return Encoding::to_int_type(transcode_char<typename Encoding::char_type>(c));
+}
+} // namespace lexy::_detail
 
 #endif // LEXY_ENCODING_HPP_INCLUDED
 
@@ -4905,6 +4907,7 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 
 
 
+
 namespace lexy::_detail
 {
 // Note: we can't use type_string<auto...>, it doesn't work on older GCC.
@@ -4919,7 +4922,7 @@ struct type_string
     static constexpr auto size = sizeof...(Cs);
 
     template <typename T = char_type>
-    static constexpr T c_str[sizeof...(Cs) + 1] = {T(Cs)..., T()};
+    static constexpr T c_str[sizeof...(Cs) + 1] = {transcode_char<T>(Cs)..., T()};
 };
 } // namespace lexy::_detail
 
@@ -5783,6 +5786,7 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
 
 
 
+
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
@@ -6049,22 +6053,37 @@ template <char32_t Cp>
 struct _cpl : token_base<_cpl<Cp>>
 {
     template <typename Encoding>
-    struct _literal_t
+    static auto _string_impl()
     {
         using char_type = typename Encoding::char_type;
-        char_type   str[4];
-        std::size_t length;
 
-        constexpr _literal_t()
-        : str{}, length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
-        {}
-    };
-    template <typename Reader>
-    static constexpr _literal_t<typename Reader::encoding> _literal
-        = _literal_t<typename Reader::encoding>{};
+        constexpr struct data_t
+        {
+            char_type   str[4];
+            std::size_t length;
+
+            constexpr data_t()
+            : str{},
+              length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
+            {}
+        } data;
+
+        if constexpr (data.length == 1)
+            return lexy::_detail::type_string<char_type, data.str[0]>{};
+        else if constexpr (data.length == 2)
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1]>{};
+        else if constexpr (data.length == 3)
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2]>{};
+        else
+            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2],
+                                              data.str[3]>{};
+    }
+    template <typename Encoding>
+    using _string = decltype(_string_impl<Encoding>());
 
     template <typename Reader,
-              typename Indices = lexy::_detail::make_index_sequence<_literal<Reader>.length>>
+              typename Indices
+              = lexy::_detail::make_index_sequence<_string<typename Reader::encoding>::size>>
     struct tp;
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
@@ -6075,13 +6094,13 @@ struct _cpl : token_base<_cpl<Cp>>
 
         constexpr bool try_parse(Reader reader)
         {
-            constexpr auto str = _literal<Reader>.str;
+            using encoding     = typename Reader::encoding;
+            constexpr auto str = _string<encoding>::template c_str<>;
 
             auto result
                 // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(str[Idx])
-                        ? (reader.bump(), true)
-                        : false)
+                = ((reader.peek() == encoding::to_int_type(str[Idx]) ? (reader.bump(), true)
+                                                                     : false)
                    && ...);
             end = reader.position();
             return result;
@@ -6090,7 +6109,8 @@ struct _cpl : token_base<_cpl<Cp>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            constexpr auto str = _literal<Reader>.str;
+            using encoding     = typename Reader::encoding;
+            constexpr auto str = _string<encoding>::template c_str<>;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);
@@ -6341,15 +6361,15 @@ constexpr bool match_newline(Reader& reader)
 {
     using encoding = typename Reader::encoding;
 
-    if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+    if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
     {
         reader.bump();
         return true;
     }
-    else if (reader.peek() == lexy::_char_to_int_type<encoding>('\r'))
+    else if (reader.peek() == lexy::_detail::transcode_int<encoding>('\r'))
     {
         reader.bump();
-        if (reader.peek() == lexy::_char_to_int_type<encoding>('\n'))
+        if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
         {
             reader.bump();
             return true;
@@ -7279,7 +7299,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         {
             // If the character is in fact ASCII, visualize the code point.
             // Otherwise, visualize as byte.
-            if (lexy::_is_ascii(c))
+            if (lexy::_detail::is_ascii(c))
                 out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
             else
                 out = write_escaped_byte(out, static_cast<unsigned char>(c));
@@ -7368,13 +7388,13 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
     }
     else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
     {
-        // Write each byte.
         auto count = 0u;
         for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
         {
-            if (iter != lexeme.begin())
-                *out++ = ' ';
-            out = _detail::write_format(out, "%02X", *iter);
+            // Write each byte.
+            out = _detail::write_special_char(out, opts, [c = *iter](OutputIt out) {
+                return _detail::write_format(out, "%02X", c);
+            });
 
             ++count;
             if (count == opts.max_lexeme_width)
@@ -8016,7 +8036,7 @@ void trace(std::FILE* file, const Input& input, const State& state, visualizatio
 
 namespace lexy::_detail
 {
-template <typename CharT, std::size_t NodeCount>
+template <typename Encoding, std::size_t NodeCount>
 struct _trie
 {
     static_assert(NodeCount > 0);
@@ -8065,11 +8085,10 @@ struct _trie
         return std::size_t(end - begin);
     }
 
-    template <typename Encoding>
-    LEXY_CONSTEVAL auto transition_char(std::size_t node, std::size_t transition) const
+    LEXY_CONSTEVAL auto transition_int(std::size_t node, std::size_t transition) const
     {
         auto begin = node == 0 ? 0 : std::size_t(_node_transition_idx[node - 1]);
-        return lexy::_char_to_int_type<Encoding>(_transition_char[begin + transition]);
+        return Encoding::to_int_type(_transition_char[begin + transition]);
     }
     LEXY_CONSTEVAL std::size_t transition_next(std::size_t node, std::size_t transition) const
     {
@@ -8084,13 +8103,16 @@ struct _trie
     index_type _node_transition_idx[NodeCount];
 
     // Shared array for all transitions.
-    index_type _transition_node[NodeCount == 1 ? 1 : NodeCount - 1];
-    CharT      _transition_char[NodeCount == 1 ? 1 : NodeCount - 1];
+    index_type                   _transition_node[NodeCount == 1 ? 1 : NodeCount - 1];
+    typename Encoding::char_type _transition_char[NodeCount == 1 ? 1 : NodeCount - 1];
 };
 
-template <typename CharT, typename... Strings, std::size_t... Idxs>
+template <typename Encoding, typename... Strings, std::size_t... Idxs>
 LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 {
+    using char_type = typename Encoding::char_type;
+    using int_type  = typename Encoding::int_type;
+
     // We can estimate the number of nodes in the trie by adding all strings together.
     // This is the worst case where the strings don't share any nodes.
     // The plus one comes from the additional root node.
@@ -8100,18 +8122,24 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // So we use this temporary representation using an adjacency matrix.
     struct builder_t
     {
-        std::size_t node_count = 1;
+        std::size_t node_count;
 
-        std::size_t node_value[node_count_upper_bound] = {std::size_t(-1)};
-        CharT       node_transition[node_count_upper_bound][node_count_upper_bound] = {};
+        std::size_t node_value[node_count_upper_bound];
+        int_type    node_transition[node_count_upper_bound][node_count_upper_bound];
 
-        constexpr void insert(std::size_t value, const CharT* str, std::size_t size)
+        constexpr builder_t() : node_count(1), node_value{std::size_t(-1)}, node_transition{}
+        {
+            for (auto from = 0u; from != node_count_upper_bound; ++from)
+                for (auto to = 0u; to != node_count_upper_bound; ++to)
+                    node_transition[from][to] = Encoding::eof();
+        }
+
+        constexpr void insert(std::size_t value, const char_type* str, std::size_t size)
         {
             auto cur_node = std::size_t(0);
             for (auto ptr = str; ptr != str + size; ++ptr)
             {
-                auto c = *ptr;
-                LEXY_PRECONDITION(c);
+                auto c = Encoding::to_int_type(*ptr);
 
                 auto found = false;
                 for (auto next_node = cur_node + 1; next_node < node_count; ++next_node)
@@ -8145,12 +8173,12 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
     // We build the trie by inserting all strings.
     constexpr auto builder = [] {
         builder_t builder;
-        (builder.insert(Idxs, Strings::template c_str<CharT>, Strings::size), ...);
+        (builder.insert(Idxs, Strings::template c_str<char_type>, Strings::size), ...);
         return builder;
     }();
 
     // Now we also now the exact number of nodes in the trie.
-    _trie<CharT, builder.node_count> result{};
+    _trie<Encoding, builder.node_count> result{};
     using index_type = typename decltype(result)::index_type;
 
     // Translate the adjacency matrix representation into the actual trie representation.
@@ -8162,11 +8190,11 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
             = value == std::size_t(-1) ? result.invalid_value : index_type(value);
 
         for (auto next_node = node + 1; next_node != builder.node_count; ++next_node)
-            if (auto c = builder.node_transition[node][next_node])
+            if (auto c = builder.node_transition[node][next_node]; c != Encoding::eof())
             {
                 // We've found a transition, add it to the shared transition array.
                 result._transition_node[transition_idx] = index_type(next_node);
-                result._transition_char[transition_idx] = c;
+                result._transition_char[transition_idx] = static_cast<char_type>(c);
                 ++transition_idx;
             }
 
@@ -8178,12 +8206,14 @@ LEXY_CONSTEVAL auto _make_trie(lexy::_detail::index_sequence<Idxs...>)
 }
 
 /// A trie containing the given strings.
-template <typename CharT, typename... Strings>
+template <typename Encoding, typename... Strings>
 constexpr auto trie
-    = _make_trie<CharT, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
+    = _make_trie<Encoding, Strings...>(lexy::_detail::index_sequence_for<Strings...>{});
 
-template <const auto& Trie, typename Reader>
-struct trie_parser
+template <const auto& Trie>
+struct trie_parser;
+template <typename Encoding, std::size_t NodeCount, const _trie<Encoding, NodeCount>& Trie>
+struct trie_parser<Trie>
 {
     // 0 ... number-of-transitions-of-Node
     template <std::size_t Node>
@@ -8194,10 +8224,9 @@ struct trie_parser
     template <std::size_t Node, std::size_t... Transitions>
     struct handle_node<Node, lexy::_detail::index_sequence<Transitions...>>
     {
+        template <typename Reader>
         static constexpr std::size_t parse(Reader& reader)
         {
-            using encoding = typename Reader::encoding;
-
             constexpr auto cur_value = Trie.node_value(Node);
             auto           cur_pos   = reader.position();
 
@@ -8206,8 +8235,8 @@ struct trie_parser
                 auto result = Trie.invalid_value;
 
                 // Find a transition that would match.
-                auto next_char = reader.peek();
-                (void)((next_char == Trie.template transition_char<encoding>(Node, Transitions)
+                auto next = reader.peek();
+                (void)((next == Trie.transition_int(Node, Transitions)
                         ? // We did find a transition that matches, consume the character and take.
                         reader.bump(),
                         result
@@ -8231,6 +8260,7 @@ struct trie_parser
     template <std::size_t Node>
     struct handle_node<Node, lexy::_detail::index_sequence<>>
     {
+        template <typename Reader>
         static constexpr std::size_t parse(Reader&)
         {
             // We don't have any transitions, so we always return the current value.
@@ -8238,6 +8268,7 @@ struct trie_parser
         }
     };
 
+    template <typename Reader>
     static constexpr std::size_t parse([[maybe_unused]] Reader& reader)
     {
         if constexpr (Trie.empty())
@@ -8247,6 +8278,7 @@ struct trie_parser
             return handle_node<0>::parse(reader);
     }
 
+    template <typename Reader>
     static constexpr auto try_match([[maybe_unused]] Reader& reader)
     {
         if constexpr (Trie.empty())
@@ -8297,7 +8329,7 @@ struct _lit
             {
                 auto result
                     // Compare each code unit, bump on success, cancel on failure.
-                    = ((reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>(C)
+                    = ((reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>(C)
                             ? (reader.bump(), true)
                             : false)
                        && ...);
@@ -8346,6 +8378,66 @@ inline constexpr auto token_kind_of<lexy::dsl::_lit<CharT, C...>> = lexy::litera
 
 
 
+namespace lexyd
+{
+template <char32_t Cp>
+struct _cpl;
+}
+
+namespace lexy::_detail
+{
+template <typename... Tokens>
+struct partition_alt;
+
+template <>
+struct partition_alt<>
+{
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens = Templ<Strings...>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = Templ<Tokens...>;
+};
+
+template <typename H, typename... T>
+struct partition_alt<H, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens = typename _tail::template trie_tokens<Encoding, Templ, Strings...>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename _tail::template other_tokens<Templ, Tokens..., H>;
+};
+template <typename CharT, CharT... C, typename... T>
+struct partition_alt<lexyd::_lit<CharT, C...>, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens =
+        typename _tail::template trie_tokens<Encoding, Templ, Strings..., type_string<CharT, C...>>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename _tail::template other_tokens<Templ, Tokens...>;
+};
+template <char32_t Cp, typename... T>
+struct partition_alt<lexyd::_cpl<Cp>, T...>
+{
+    using _tail = partition_alt<T...>;
+
+    template <typename Encoding>
+    using _string = typename lexyd::_cpl<Cp>::template _string<Encoding>;
+    template <typename Encoding, template <typename...> typename Templ, typename... Strings>
+    using trie_tokens =
+        typename _tail::template trie_tokens<Encoding, Templ, Strings..., _string<Encoding>>;
+
+    template <template <typename...> typename Templ, typename... Tokens>
+    using other_tokens = typename partition_alt<T...>::template other_tokens<Templ, Tokens...>;
+};
+} // namespace lexy::_detail
+
 namespace lexy
 {
 struct exhausted_alternatives
@@ -8357,109 +8449,59 @@ struct exhausted_alternatives
 };
 } // namespace lexy
 
-namespace lexy::_detail
-{
-template <typename... Tokens>
-struct build_token_trie;
-
-template <>
-struct build_token_trie<>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        if constexpr (sizeof...(Strings) == 0)
-            return lexy::_detail::trie<char>;
-        else
-            return lexy::_detail::trie<std::common_type_t<typename Strings::char_type...>,
-                                       Strings...>;
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens = Templ<Tokens...>;
-};
-
-template <typename H, typename... T>
-struct build_token_trie<H, T...>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        return build_token_trie<T...>::template trie<Strings...>();
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens =
-        typename build_token_trie<T...>::template other_tokens<Templ, Tokens..., H>;
-};
-template <typename CharT, CharT... C, typename... T>
-struct build_token_trie<lexyd::_lit<CharT, C...>, T...>
-{
-    template <typename... Strings>
-    static constexpr auto trie()
-    {
-        return build_token_trie<T...>::template trie<Strings..., type_string<CharT, C...>>();
-    }
-
-    template <template <typename...> typename Templ, typename... Tokens>
-    using other_tokens = typename build_token_trie<T...>::template other_tokens<Templ, Tokens...>;
-};
-} // namespace lexy::_detail
-
 namespace lexyd
 {
-template <typename... Tokens>
-struct _malt : token_base<_malt<Tokens...>>
+template <typename Partition, typename Encoding>
+struct _token_trie
 {
-    template <typename Reader,
-              typename Indices = lexy::_detail::make_index_sequence<sizeof...(Tokens)>>
-    struct tp;
-    template <typename Reader, std::size_t... Idx>
-    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
+    template <typename... Strings>
+    struct _impl
     {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr auto try_parse([[maybe_unused]] const Reader& reader)
+        static constexpr auto get()
         {
-            if constexpr (sizeof...(Tokens) == 0)
-                return std::false_type{};
-            else
-            {
-                auto result = false;
-                auto impl   = [&](auto token, Reader local_reader) {
-                    // Try to match the current token.
-                    if (!lexy::try_match_token(token, local_reader))
-                        return;
-
-                    // Update end to longest match.
-                    end    = lexy::_detail::max_range_end(reader.position(), end,
-                                                            local_reader.position());
-                    result = true;
-                };
-
-                // Need to try everything.
-                (impl(Tokens{}, reader), ...);
-                return result;
-            }
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::exhausted_alternatives>(reader.position());
-            context.on(_ev::error{}, err);
+            return lexy::_detail::trie<Encoding, Strings...>;
         }
     };
+
+    static constexpr auto get = Partition::template trie_tokens<Encoding, _impl>::get();
+    using parser              = lexy::_detail::trie_parser<get>;
+};
+
+template <typename Partition>
+struct _malt
+{
+    template <typename... Tokens>
+    struct _impl
+    {
+        template <typename Reader>
+        static constexpr bool try_match(Reader& reader)
+        {
+            auto result = false;
+
+            auto                  begin   = reader.position();
+            auto                  end     = begin;
+            [[maybe_unused]] auto process = [&](auto token, Reader local_reader) {
+                // Try to match the current token.
+                if (!lexy::try_match_token(token, local_reader))
+                    return;
+
+                // Update end to longest match.
+                end    = lexy::_detail::max_range_end(begin, end, local_reader.position());
+                result = true;
+            };
+            (process(Tokens{}, reader), ...);
+
+            reader.set_position(end);
+            return result;
+        }
+    };
+
+    using parser = typename Partition::template other_tokens<_impl>;
 };
 
 template <typename... Tokens>
 struct _alt : token_base<_alt<Tokens...>>
 {
-    using _builder              = lexy::_detail::build_token_trie<typename Tokens::token_type...>;
-    static constexpr auto _trie = _builder::trie();
-
     template <typename Reader>
     struct tp
     {
@@ -8469,31 +8511,35 @@ struct _alt : token_base<_alt<Tokens...>>
 
         constexpr bool try_parse(const Reader& reader)
         {
-            lexy::token_parser_for<typename _builder::template other_tokens<_malt>, Reader>
-                manual_parser(reader);
+            using encoding = typename Reader::encoding;
+
+            using partition     = lexy::_detail::partition_alt<typename Tokens::token_type...>;
+            using trie_parser   = typename _token_trie<partition, encoding>::parser;
+            using manual_parser = typename _malt<partition>::parser;
 
             // We check the trie as a baseline.
             // This gives us a first end position.
-            if (auto trie_reader = reader;
-                lexy::_detail::trie_parser<_trie, Reader>::try_match(trie_reader))
+            if (auto trie_reader = reader; trie_parser::try_match(trie_reader))
             {
                 end = trie_reader.position();
 
-                if (trie_reader.peek() == Reader::encoding::eof())
+                if (trie_reader.peek() == encoding::eof())
                     // Exit early, there can't be a longer match.
                     return true;
 
                 // Check the remaining tokens to see if we have a longer match.
-                if (manual_parser.try_parse(reader))
-                    end = lexy::_detail::max_range_end(reader.position(), end, manual_parser.end);
+                if (auto manual_reader = reader; manual_parser::try_match(manual_reader))
+                    end = lexy::_detail::max_range_end(reader.position(), end,
+                                                       manual_reader.position());
 
                 return true;
             }
             else
             {
                 // Check the remaining tokens only.
-                auto result = manual_parser.try_parse(reader);
-                end         = manual_parser.end;
+                auto manual_reader = reader;
+                auto result        = manual_parser::try_match(manual_reader);
+                end                = manual_reader.position();
                 return result;
             }
         }
@@ -8710,8 +8756,8 @@ public:
     {
         constexpr auto mask = ((1 << Cats) | ...);
 
-        if (i < lexy::_char_to_int_type<Encoding>(0x00)
-            || lexy::_char_to_int_type<Encoding>(0x7F) < i)
+        if (i < lexy::_detail::transcode_int<Encoding>(0x00)
+            || lexy::_detail::transcode_int<Encoding>(0x7F) < i)
             return false;
 
         // NOLINTNEXTLINE: We've checked that we're positive in the condition above.
@@ -8800,8 +8846,8 @@ struct _blank : _ascii<_blank>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>(' ')
-               || i == lexy::_char_to_int_type<Encoding>('\t');
+        return i == lexy::_detail::transcode_int<Encoding>(' ')
+               || i == lexy::_detail::transcode_int<Encoding>('\t');
     }
 };
 inline constexpr auto blank = _blank{};
@@ -8816,8 +8862,8 @@ struct _newline : _ascii<_newline>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('\n')
-               || i == lexy::_char_to_int_type<Encoding>('\r');
+        return i == lexy::_detail::transcode_int<Encoding>('\n')
+               || i == lexy::_detail::transcode_int<Encoding>('\r');
     }
 };
 inline constexpr auto newline = _newline{};
@@ -8832,8 +8878,8 @@ struct _other_space : _ascii<_other_space>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('\f')
-               || i == lexy::_char_to_int_type<Encoding>('\v');
+        return i == lexy::_detail::transcode_int<Encoding>('\f')
+               || i == lexy::_detail::transcode_int<Encoding>('\v');
     }
 };
 inline constexpr auto other_space = _other_space{};
@@ -8865,8 +8911,8 @@ struct _lower : _ascii<_lower>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('a') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('z');
+        return lexy::_detail::transcode_int<Encoding>('a') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('z');
     }
 };
 inline constexpr auto lower = _lower{};
@@ -8881,8 +8927,8 @@ struct _upper : _ascii<_upper>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('A') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('Z');
+        return lexy::_detail::transcode_int<Encoding>('A') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('Z');
     }
 };
 inline constexpr auto upper = _upper{};
@@ -8999,8 +9045,8 @@ struct _graph : _ascii<_graph>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x21') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7E');
+        return lexy::_detail::transcode_int<Encoding>('\x21') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
     }
 };
 inline constexpr auto graph = _graph{};
@@ -9015,8 +9061,8 @@ struct _print : _ascii<_print>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x20') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7E');
+        return lexy::_detail::transcode_int<Encoding>('\x20') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
     }
 };
 inline constexpr auto print = _print{};
@@ -9031,8 +9077,8 @@ struct _char : _ascii<_char>
     template <typename Encoding>
     static constexpr bool ascii_match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('\x00') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('\x7F');
+        return lexy::_detail::transcode_int<Encoding>('\x00') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('\x7F');
     }
 };
 inline constexpr auto character = _char{};
@@ -9055,7 +9101,7 @@ struct _alt : token_base<_alt<C...>>
         constexpr bool try_parse(Reader reader)
         {
             auto cur = reader.peek();
-            if (((cur != lexy::_char_to_int_type<typename Reader::encoding>(C)) && ...))
+            if (((cur != lexy::_detail::transcode_int<typename Reader::encoding>(C)) && ...))
                 return false;
 
             reader.bump();
@@ -9077,7 +9123,7 @@ struct _alt : token_base<_alt<C...>>
 template <typename CharT, CharT... C>
 struct _one_of
 {
-    static_assert((std::is_same_v<CharT, char> && ... && lexy::_is_ascii(C)),
+    static_assert((std::is_same_v<CharT, char> && ... && lexy::_detail::is_ascii(C)),
                   "only ASCII characters are supported");
 
     using rule = _alt<C...>;
@@ -9094,6 +9140,159 @@ constexpr auto one_of = typename lexy::_detail::to_type_string<_one_of, Str>::ru
 } // namespace lexyd::ascii
 
 #endif // LEXY_DSL_ASCII_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef LEXY_DSL_BITS_HPP_INCLUDED
+#define LEXY_DSL_BITS_HPP_INCLUDED
+
+
+
+
+//=== bit rules ===//
+namespace lexyd::bit
+{
+struct _bit_pattern
+{
+    unsigned mask;
+    unsigned value;
+};
+
+struct _bit_rule
+{};
+
+struct _b0 : _bit_rule
+{
+    static constexpr auto size = 1u;
+
+    static constexpr void apply(_bit_pattern& p)
+    {
+        p.mask <<= 1;
+        p.value <<= 1;
+
+        p.mask |= 1;
+    }
+};
+
+/// Matches a 0 bit.
+inline constexpr auto _0 = _b0{};
+
+struct _b1 : _bit_rule
+{
+    static constexpr auto size = 1u;
+
+    static constexpr void apply(_bit_pattern& p)
+    {
+        p.mask <<= 1;
+        p.value <<= 1;
+
+        p.mask |= 1;
+        p.value |= 1;
+    }
+};
+
+/// Matches a 1 bit.
+inline constexpr auto _1 = _b1{};
+
+template <unsigned Value>
+struct _n : _bit_rule
+{
+    static_assert(Value <= 0xF);
+
+    static constexpr auto size = 4u;
+
+    static constexpr void apply(_bit_pattern& p)
+    {
+        p.mask <<= 4;
+        p.value <<= 4;
+
+        p.mask |= 0b1111;
+        p.value |= Value;
+    }
+};
+
+/// Matches a specific nibble, i.e. four bits.
+template <unsigned Value>
+constexpr auto nibble = _n<Value>{};
+
+template <unsigned N>
+struct _b : _bit_rule
+{
+    static_assert(N > 0);
+
+    static constexpr auto size = N;
+
+    static constexpr void apply(_bit_pattern& p)
+    {
+        p.mask <<= N;
+        p.value <<= N;
+    }
+};
+
+/// Matches any bit.
+inline constexpr auto _ = _b<1>{};
+
+/// Matches N arbitrary bits.
+template <unsigned N>
+constexpr auto any = _b<N>{};
+} // namespace lexyd::bit
+
+//=== bits ===//
+namespace lexyd
+{
+template <unsigned Mask, unsigned Value>
+struct _bits : token_base<_bits<Mask, Value>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+
+            auto byte = reader.peek();
+            if (byte == Reader::encoding::eof()
+                || ((static_cast<unsigned char>(byte) & Mask) != Value))
+                return false;
+
+            reader.bump();
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader&)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, "bits");
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
+/// Matches the specific bit pattern.
+template <typename... Bits>
+constexpr auto bits(Bits...)
+{
+    static_assert((std::is_base_of_v<bit::_bit_rule, Bits> && ...), "bits() requires bit rules");
+    static_assert((0 + ... + Bits::size) == 8, "must specify 8 bit at a time");
+
+    constexpr auto pattern = [] {
+        bit::_bit_pattern result{0, 0};
+        (Bits::apply(result), ...);
+        return result;
+    }();
+
+    return _bits<pattern.mask, pattern.value>{};
+}
+} // namespace lexyd
+
+#endif // LEXY_DSL_BITS_HPP_INCLUDED
 
 // Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
@@ -10763,6 +10962,320 @@ constexpr auto parenthesized = round_bracketed;
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#ifndef LEXY_DSL_BYTE_HPP_INCLUDED
+#define LEXY_DSL_BYTE_HPP_INCLUDED
+
+#include <cstdint>
+
+
+
+
+//=== byte ===//
+namespace lexyd
+{
+template <std::size_t N>
+struct _b : token_base<_b<N>>
+{
+    static_assert(N > 0);
+
+    template <typename Reader, typename Indices = lexy::_detail::make_index_sequence<N>>
+    struct tp;
+    template <typename Reader, std::size_t... Idx>
+    struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+
+            // Bump N times.
+            auto result = ((reader.peek() == Reader::encoding::eof() ? ((void)Idx, false)
+                                                                     : (reader.bump(), true))
+                           && ...);
+            end         = reader.position();
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader&)
+        {
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, "byte");
+            context.on(_ev::error{}, err);
+        }
+    };
+};
+
+/// Matches an arbitrary byte.
+constexpr auto byte = _b<1>{};
+
+/// Matches N arbitrary bytes.
+template <std::size_t N>
+constexpr auto bytes = _b<N>{};
+} // namespace lexyd
+
+namespace lexy
+{
+template <std::size_t N>
+constexpr auto token_kind_of<lexy::dsl::_b<N>> = lexy::any_token_kind;
+} // namespace lexy
+
+//=== padding bytes ===//
+namespace lexyd
+{
+template <std::size_t N, unsigned char Padding = 0>
+struct _pb : branch_base
+{
+    template <typename Context, typename Reader, typename Iterator>
+    static constexpr void _validate(Context& context, const Reader&, Iterator begin, Iterator end)
+    {
+        constexpr unsigned char str[] = {Padding, 0};
+        for (auto iter = begin; iter != end; ++iter)
+        {
+            if (*iter != Padding)
+            {
+                auto err = lexy::error<Reader, lexy::expected_literal>(iter, str, 0);
+                context.on(_ev::error{}, err);
+            }
+        }
+    }
+
+    template <typename Reader>
+    struct bp
+    {
+        typename Reader::iterator end;
+
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        {
+            lexy::token_parser_for<_b<N>, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            end                                          = parser.end;
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+            context.on(_ev::token{}, lexy::any_token_kind, begin, end);
+            reader.set_position(end);
+
+            _validate(context, reader, begin, end);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+            if (!_b<N>::token_parse(context, reader))
+                return false;
+            auto end = reader.position();
+
+            _validate(context, reader, begin, end);
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
+        }
+    };
+};
+
+/// Matches N bytes set to the padding value.
+/// It is a recoverable error if the byte doesn't have that value.
+template <std::size_t N, unsigned char Padding = 0>
+constexpr auto padding_bytes = _pb<N, Padding>{};
+} // namespace lexyd
+
+//=== bint ===//
+namespace lexy::_detail
+{
+enum bint_endianness
+{
+    bint_little,
+    bint_big,
+
+#if LEXY_IS_LITTLE_ENDIAN
+    bint_native = bint_little,
+#else
+    bint_native = bint_big,
+#endif
+};
+
+template <std::size_t N>
+auto _bint()
+{
+    if constexpr (N == 1)
+        return std::uint_least8_t(0);
+    else if constexpr (N == 2)
+        return std::uint_least16_t(0);
+    else if constexpr (N == 4)
+        return std::uint_least32_t(0);
+    else if constexpr (N == 8)
+        return std::uint_least64_t(0);
+    else
+    {
+        static_assert(N == 1, "invalid byte integer size");
+        return 0;
+    }
+}
+template <std::size_t N>
+using bint = decltype(_bint<N>());
+} // namespace lexy::_detail
+
+namespace lexy
+{
+struct mismatched_byte_count
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "mismatched byte count";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <std::size_t N, int Endianness, typename Rule = void>
+struct _bint : branch_base
+{
+    using _rule = lexy::_detail::type_or<Rule, _b<N>>;
+
+    template <typename NextParser, typename Indices = lexy::_detail::make_index_sequence<N>>
+    struct _pc;
+    template <typename NextParser, std::size_t... Idx>
+    struct _pc<NextParser, lexy::_detail::index_sequence<Idx...>>
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
+                                           typename Reader::iterator begin,
+                                           typename Reader::iterator end, Args&&... args)
+        {
+            if (lexy::_detail::range_size(begin, end) != N)
+            {
+                auto err = lexy::error<Reader, lexy::mismatched_byte_count>(begin, end);
+                context.on(_ev::error{}, err);
+                return false;
+            }
+
+            lexy::_detail::bint<N> result = 0;
+            if constexpr (N == 1)
+            {
+                // For a single byte, endianness doesn't matter.
+                result = static_cast<unsigned char>(*begin);
+            }
+            else if constexpr (Endianness == lexy::_detail::bint_big)
+            {
+                // In big endian, the first byte is shifted the most,
+                // so read in order.
+                ((result = static_cast<decltype(result)>(result << 8),
+                  result = static_cast<decltype(result)>(result | *begin++), (void)Idx),
+                 ...);
+            }
+            else
+            {
+                // In little endian, we need to reverse the order,
+                // so copy into a buffer to do that.
+                unsigned char buffer[N] = {((void)Idx, *begin++)...};
+                ((result = static_cast<decltype(result)>(result << 8),
+                  result = static_cast<decltype(result)>(result | buffer[N - Idx - 1])),
+                 ...);
+            }
+
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)..., result);
+        }
+    };
+
+    template <typename Reader>
+    struct bp
+    {
+        typename Reader::iterator end;
+
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        {
+            lexy::token_parser_for<_rule, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            end                                          = parser.end;
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+            context.on(_ev::token{}, _rule{}, begin, end);
+            reader.set_position(end);
+
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            auto begin = reader.position();
+            if (!_rule::token_parse(context, reader))
+                return false;
+            auto end = reader.position();
+            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
+        }
+    };
+
+    //=== dsl ===//
+    /// Matches a specific token rule instead of arbitrary bytes.
+    template <typename Token>
+    constexpr auto operator()(Token) const
+    {
+        static_assert(lexy::is_token_rule<Token>);
+        static_assert(std::is_void_v<Rule>);
+        return _bint<N, Endianness, Token>{};
+    }
+};
+
+/// Matches one byte and converts it into an 8-bit integer.
+inline constexpr auto bint8 = _bint<1, lexy::_detail::bint_native>{};
+
+/// Matches two bytes and converts it into an 16-bit integer.
+inline constexpr auto bint16        = _bint<2, lexy::_detail::bint_native>{};
+inline constexpr auto little_bint16 = _bint<2, lexy::_detail::bint_little>{};
+inline constexpr auto big_bint16    = _bint<2, lexy::_detail::bint_big>{};
+
+/// Matches four bytes and converts it into an 32-bit integer.
+inline constexpr auto bint32        = _bint<4, lexy::_detail::bint_native>{};
+inline constexpr auto little_bint32 = _bint<4, lexy::_detail::bint_little>{};
+inline constexpr auto big_bint32    = _bint<4, lexy::_detail::bint_big>{};
+
+/// Matches eight bytes and converts it into an 64-bit integer.
+inline constexpr auto bint64        = _bint<8, lexy::_detail::bint_native>{};
+inline constexpr auto little_bint64 = _bint<8, lexy::_detail::bint_little>{};
+inline constexpr auto big_bint64    = _bint<8, lexy::_detail::bint_big>{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_BYTE_HPP_INCLUDED
+
+// Copyright (C) 2020-2021 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef LEXY_DSL_CAPTURE_HPP_INCLUDED
 #define LEXY_DSL_CAPTURE_HPP_INCLUDED
 
@@ -12360,9 +12873,10 @@ public:
     constexpr key_index try_parse(Reader& reader) const
     {
         static_assert(!empty(), "symbol table must not be empty");
+        constexpr auto& trie = _trie<typename Reader::encoding>::object;
 
-        auto result = _detail::trie_parser<_trie::object, Reader>::parse(reader);
-        if (result == _trie::object.invalid_value)
+        auto result = _detail::trie_parser<trie>::parse(reader);
+        if (result == trie.invalid_value)
             return key_index();
         else
             return key_index(result);
@@ -12375,9 +12889,10 @@ public:
     }
 
 private:
+    template <typename Encoding>
     struct _trie
     {
-        static constexpr auto object = lexy::_detail::trie<char_type, Strings...>;
+        static constexpr auto object = lexy::_detail::trie<Encoding, Strings...>;
     };
 
     template <std::size_t... Idx, typename... Args>
@@ -13020,8 +13535,8 @@ struct binary
     template <typename Encoding>
     static constexpr bool match(typename Encoding::int_type i)
     {
-        return i == lexy::_char_to_int_type<Encoding>('0')
-               || i == lexy::_char_to_int_type<Encoding>('1');
+        return i == lexy::_detail::transcode_int<Encoding>('0')
+               || i == lexy::_detail::transcode_int<Encoding>('1');
     }
 
     template <typename CharT>
@@ -13043,8 +13558,8 @@ struct octal
     template <typename Encoding>
     static constexpr bool match(typename Encoding::int_type i)
     {
-        return lexy::_char_to_int_type<Encoding>('0') <= i
-               && i <= lexy::_char_to_int_type<Encoding>('7');
+        return lexy::_detail::transcode_int<Encoding>('0') <= i
+               && i <= lexy::_detail::transcode_int<Encoding>('7');
     }
 
     template <typename CharT>
@@ -13179,7 +13694,7 @@ struct _zero : token_base<_zero>
 
         constexpr bool try_parse(Reader reader)
         {
-            if (reader.peek() != lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() != lexy::_detail::transcode_int<typename Reader::encoding>('0'))
                 return false;
 
             reader.bump();
@@ -13273,7 +13788,7 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
         constexpr bool try_parse(Reader reader)
         {
             // Check for a zero that is followed by a digit or separator.
-            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
             {
                 reader.bump();
                 end = reader.position();
@@ -13410,7 +13925,7 @@ struct _digits_t : token_base<_digits_t<Base>>
         constexpr bool try_parse(Reader reader)
         {
             // Check for a zero that is followed by a digit.
-            if (reader.peek() == lexy::_char_to_int_type<typename Reader::encoding>('0'))
+            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
             {
                 reader.bump();
                 end = reader.position();
@@ -17419,14 +17934,14 @@ public:
     : buffer(begin, std::size_t(end - begin), resource)
     {}
 
-    template <typename CharT, typename = _require_secondary_char_type<encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<encoding, CharT>>
     explicit buffer(const CharT* data, std::size_t size,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     : buffer(reinterpret_cast<const char_type*>(data), size, resource)
     {
         static_assert(sizeof(CharT) == sizeof(char_type));
     }
-    template <typename CharT, typename = _require_secondary_char_type<encoding, CharT>>
+    template <typename CharT, typename = _detail::require_secondary_char_type<encoding, CharT>>
     explicit buffer(const CharT* begin, const CharT* end,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
     : buffer(reinterpret_cast<const char_type*>(begin), reinterpret_cast<const char_type*>(end),
@@ -17940,10 +18455,9 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     {
         out = writer.write_annotation(out, annotation_kind::primary, location, error.position(),
                                       [&](OutputIt out, lexy::visualization_options) {
-                                          out = lexy::_detail::write_str(out, "expected '");
+                                          out = lexy::_detail::write_str(out, "expected ");
                                           out = lexy::_detail::write_str(out,
                                                                          error.character_class());
-                                          out = lexy::_detail::write_str(out, "' character");
                                           return out;
                                       });
     }

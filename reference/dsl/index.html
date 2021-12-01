@@ -231,10 +231,6 @@ the other rule does not have access to context variables, and any context modifi
 <dd>
 <p>combine character classes</p>
 </dd>
-<dt class=hdlist1><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></dt>
-<dd>
-<p>parse a byte-order mark (BOM)</p>
-</dd>
 </dl>
 </div>
 </div>
@@ -500,6 +496,31 @@ the other rule does not have access to context variables, and any context modifi
 <dt class=hdlist1><a href=/reference/dsl/context_identifier/#context_identifier><code>lexy::dsl::context_identifier</code></a></dt>
 <dd>
 <p>an identifier variable</p>
+</dd>
+</dl>
+</div>
+</div>
+</details>
+<details>
+<summary class=title>Byte input</summary>
+<div class=content>
+<div class=dlist>
+<dl>
+<dt class=hdlist1><a href=/reference/dsl/byte/#bytes><code>lexy::dsl::bytes</code></a> and <a href=/reference/dsl/byte/#bytes><code>lexy::dsl::padding_bytes</code></a></dt>
+<dd>
+<p>parse <code>N</code> bytes</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/byte/#int><code>lexy::dsl::bint8</code></a>, <a href=/reference/dsl/byte/#int><code>lexy::dsl::bint16</code></a>, …​ </dt>
+<dd>
+<p>parse a little/big endian integer</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/bits/#bits><code>lexy::dsl::bits</code></a></dt>
+<dd>
+<p>parse a byte with specific bit patterns</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></dt>
+<dd>
+<p>parse a byte-order mark (BOM)</p>
 </dd>
 </dl>
 </div>

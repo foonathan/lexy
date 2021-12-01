@@ -133,6 +133,40 @@ See <a href=/reference/callback/container/#collect><code>lexy::collect</code></a
 </div>
 </div>
 </div>
+<div class=sect1>
+<h2 id=mem_fn>Callback <code>lexy::mem_fn</code></h2>
+<div class=sectionbody>
+<div class=listingblock>
+<div class=title><code>lexy/callback/adapter.hpp</code></div>
+<div class=content>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
+<span class=tok-p>{</span>
+    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Member</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>ClassT</span><span class=tok-o>&gt;</span>
+    <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>mem_fn</span><span class=tok-p>(</span><span class=tok-n>Member</span> <span class=tok-n>ClassT</span><span class=tok-o>::*</span> <span class=tok-n>mem_ptr</span><span class=tok-p>);</span>
+<span class=tok-p>}</span></code></pre>
+</div>
+</div>
+<div class="paragraph lead">
+<p>Turns a member function or data pointer into a callback.</p>
+</div>
+<div class=paragraph>
+<p>It is equivalent to <code>lexy::callback&lt;ReturnType>(mem_ptr)</code>, where <code>ReturnType</code> is deduced from the type of <code>mem_ptr</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody><tr>
+<td class=icon>
+<div class=title>Note</div>
+</td>
+<td class=content>
+<code>mem_fn</code> is not necessary for passing a member function pointer to e.g. <a href=/reference/callback/adapter/#callback><code>lexy::callback</code></a>;
+they all use INVOKE internally.
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
 </section><section id=see-also>
 <h2>See also</h2>
 <ul><li><a href=/reference/callback/container/#collect><code>lexy::collect</code></a></li></ul>

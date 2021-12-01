@@ -98,7 +98,7 @@ Its <code>.string()</code> is <code>Str</code>, its <code>.index()</code> is the
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
+<p>Single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -248,7 +248,7 @@ Literals that match common <a href=/reference/dsl/punctuator/#doc><code>punctuat
 <dl>
 <dt class=hdlist1>Requires</dt>
 <dd>
-<p>The <a href=/reference/encoding/#doc>encoding</a> must be a single-byte encoding, such as <a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a> or <a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a>.</p>
+<p>The input encoding is <a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a> unless all characters are ASCII.</p>
 </dd>
 <dt class=hdlist1>Matching</dt>
 <dd>
@@ -261,7 +261,7 @@ Its <code>.string()</code> is the string of the bytes converted to the correct c
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>Single token type with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
+<p>Single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::literal_token_kind</code>.</p>
 </dd>
 </dl>
 </div>
@@ -281,7 +281,7 @@ Use <a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a> to match a b
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></li><li><a href=/reference/dsl/identifier/#keyword><code>lexy::dsl::keyword</code></a></li><li><a href=/reference/dsl/whitespace/#no_whitespace><code>lexy::dsl::no_whitespace</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/punctuator/#doc><code>punctuators</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/dsl/bom/#bom><code>lexy::dsl::bom</code></a></li><li><a href=/reference/dsl/identifier/#keyword><code>lexy::dsl::keyword</code></a></li><li><a href=/reference/dsl/whitespace/#no_whitespace><code>lexy::dsl::no_whitespace</code></a></li><li><a href=/reference/error/#expected_literal><code>lexy::expected_literal</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/punctuator/#doc><code>punctuators</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
