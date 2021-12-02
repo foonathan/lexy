@@ -15,8 +15,8 @@ TEST_CASE("dsl::bits")
 
         if (expected)
         {
-            char format[4];
-            std::sprintf(format, "\\%02X", byte);
+            char format[16];
+            std::sprintf(format, "\\%02X", static_cast<unsigned char>(byte));
 
             CHECK(result.status == test_result::success);
             CHECK(result.trace == test_trace().token(format));
