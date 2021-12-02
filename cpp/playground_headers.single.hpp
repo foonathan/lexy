@@ -13218,12 +13218,10 @@ struct _del_chars
 
     constexpr _del_chars(const Reader& reader) : parser(reader), begin(reader.position()) {}
 
-    constexpr bool try_parse(Reader& reader)
+    constexpr bool try_parse(const Reader& reader)
     {
-        parser      = lexy::token_parser_for<Char, Reader>(reader);
-        auto result = parser.try_parse(reader);
-        reader.set_position(parser.end);
-        return result;
+        parser = lexy::token_parser_for<Char, Reader>(reader);
+        return parser.try_parse(reader);
     }
 
     template <typename Context, typename Sink>
@@ -13277,10 +13275,10 @@ struct _del : rule_base
                 // It has failed, so finish the current character sequence and report an error.
                 cur_chars.finish(context, sink, begin);
                 cur_chars.parser.report_error(context, reader);
+                auto end = cur_chars.parser.end;
 
                 // Recover from it; this is always possible,.
-                auto end = reader.position();
-                context.on(_ev::recovery_start{}, end);
+                context.on(_ev::recovery_start{}, begin);
 
                 if (begin == end)
                 {
@@ -13289,13 +13287,19 @@ struct _del : rule_base
                                 "EOF should be checked before calling this");
                     reader.bump();
                     end = reader.position();
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                 }
 
+                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                 context.on(_ev::recovery_finish{}, end);
 
                 // We start the next character after error recovery.
                 cur_chars.begin = end;
+                reader.set_position(end);
+            }
+            else
+            {
+                // Consume the character.
+                reader.set_position(cur_chars.parser.end);
             }
         }
 
