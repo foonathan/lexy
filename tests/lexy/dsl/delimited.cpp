@@ -8,6 +8,7 @@
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/if.hpp>
+#include <lexy/dsl/minus.hpp>
 
 namespace
 {
@@ -331,6 +332,84 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(unterminated_mark.status == test_result::fatal_error);
         CHECK(unterminated_mark.trace
               == test_trace().literal("(").token("ab").error(1, 3, "missing delimiter").cancel());
+    }
+    SUBCASE("minus")
+    {
+        constexpr auto rule = delimited(dsl::ascii::character - dsl::lit_c<'X'>);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "(", 0).cancel());
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.value == 0);
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
+        auto one = LEXY_VERIFY("(a)");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == test_trace().literal("(").token("a").literal(")"));
+        auto two = LEXY_VERIFY("(ab)");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == test_trace().literal("(").token("ab").literal(")"));
+        auto three = LEXY_VERIFY("(abc)");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == test_trace().literal("(").token("abc").literal(")"));
+
+        auto invalid = LEXY_VERIFY("(a\x80-c)");
+        CHECK(invalid.status == test_result::recovered_error);
+        CHECK(invalid.value == 3);
+        CHECK(invalid.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .expected_char_class(2, "ASCII")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .token("-c")
+                     .literal(")"));
+        auto invalid_end = LEXY_VERIFY("(a\x80)");
+        CHECK(invalid_end.status == test_result::recovered_error);
+        CHECK(invalid_end.value == 1);
+        CHECK(invalid_end.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .expected_char_class(2, "ASCII")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .literal(")"));
+
+        auto minus = LEXY_VERIFY("(aXc)");
+        CHECK(minus.status == test_result::recovered_error);
+        CHECK(minus.value == 2);
+        CHECK(minus.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .error(2, 3, "minus failure")
+                     .recovery()
+                     .error_token("X")
+                     .finish()
+                     .token("c")
+                     .literal(")"));
+        auto minus_end = LEXY_VERIFY("(aX)");
+        CHECK(minus_end.status == test_result::recovered_error);
+        CHECK(minus_end.value == 1);
+        CHECK(minus_end.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .error(2, 3, "minus failure")
+                     .recovery()
+                     .error_token("X")
+                     .finish()
+                     .literal(")"));
     }
 }
 
