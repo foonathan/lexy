@@ -151,6 +151,11 @@ public:
         constexpr void on(validate_handler&, Event, const Args&...)
         {}
 
+        constexpr iterator production_begin() const
+        {
+            return _begin;
+        }
+
     private:
         iterator _begin = {};
     };

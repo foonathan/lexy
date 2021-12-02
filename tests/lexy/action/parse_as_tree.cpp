@@ -39,12 +39,17 @@ struct string_p : lexy::token_production
     static constexpr auto rule = lexy::dsl::quoted(lexy::dsl::ascii::character);
 };
 
+struct abc_p : lexy::token_production
+{
+    static constexpr auto name = "abc_p";
+    static constexpr auto rule = LEXY_LIT("abc").kind<token_kind::c>;
+};
+
 struct child_p
 {
     static constexpr auto name = "child_p";
     static constexpr auto rule
-        = lexy::dsl::p<string_p> //
-          | lexy::dsl::parenthesized.try_(LEXY_LIT("abc").kind<token_kind::c>);
+        = lexy::dsl::p<string_p> | lexy::dsl::parenthesized.try_(lexy::dsl::p<abc_p>);
 };
 
 struct root_p
@@ -86,7 +91,9 @@ TEST_CASE("parse_as_tree")
             .token(token_kind::a, "123")
             .production(child_p{})
                 .token(token_kind::b, "(")
-                .token(token_kind::c, "abc")
+                .production(abc_p{})
+                    .token(token_kind::c, "abc")
+                    .finish()
                 .token(token_kind::b, ")")
                 .finish()
             .token(token_kind::a, "321")
@@ -128,7 +135,9 @@ TEST_CASE("parse_as_tree")
             .production(child_p{})
                 .token(token_kind::b, "(")
                 .whitespace(" ")
-                .token(token_kind::c, "abc")
+                .production("abc_p")
+                    .token(token_kind::c, "abc")
+                    .finish()
                 .whitespace(" //  \\{a}")
                 .token(token_kind::b, ")")
                 .whitespace(" ")

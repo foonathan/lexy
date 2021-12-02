@@ -50,7 +50,13 @@ public:
             if (--handler._depth == 0)
                 handler._tree->clear();
             else
+            {
+                // Cancelling the production removes all nodes from the tree.
+                // To ensure that the parse tree remains lossless, we add everything consumed by it
+                // as an error token.
                 handler._builder->cancel_production(LEXY_MOV(_marker));
+                handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
+            }
 
             _validate.on(handler._validate, ev, pos);
         }
