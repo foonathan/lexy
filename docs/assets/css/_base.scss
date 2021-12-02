@@ -1,6 +1,5 @@
 :root {
     --white: white;
-    --header-white: rgba(255, 255, 255, .75);
     --background-color: #fdfdfd;
     --default-color: #101010;
     --heading-color: #0A0A0A;
@@ -10,8 +9,7 @@
     --highlight-color: #2861ce;
 
     @media (prefers-color-scheme: dark) {
-        --white: #020202;
-        --header-white: rgba(2, 2, 2, .75);
+        --white: #202020;
         --background-color: #222222;
         --default-color: #efefef;
         --heading-color: #f5f5f5;
@@ -21,7 +19,6 @@
 }
 
 $white: var(--white);
-$header-white: var(--header-white);
 $background-color: var(--background-color);
 $default-color: var(--default-color);
 $heading-color: var(--heading-color);

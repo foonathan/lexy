@@ -39,6 +39,7 @@ int main(int, char* argv[])
             = lexy::parse_as_tree<LEXY_PLAYGROUND_PRODUCTION>(tree, input, lexy_ext::report_error);
 
         std::puts("graph \"Parse Tree\" {");
+        std::puts("bgcolor=transparent");
         for (auto [event, node] : tree.traverse())
         {
             switch (event)
