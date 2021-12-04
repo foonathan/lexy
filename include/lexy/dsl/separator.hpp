@@ -11,13 +11,6 @@
 #include <lexy/dsl/recover.hpp>
 #include <lexy/error.hpp>
 
-#ifdef LEXY_IGNORE_DEPRECATED_SEP
-#    define LEXY_DEPRECATED_SEP
-#else
-#    define LEXY_DEPRECATED_SEP                                                                    \
-        [[deprecated("no_trailing_sep() has been deprecated; use sep() instead")]]
-#endif
-
 namespace lexy
 {
 struct unexpected_trailing_separator
@@ -77,13 +70,6 @@ constexpr auto trailing_sep(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>);
     return _tsep<Branch>{};
-}
-
-template <typename Branch>
-LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
-{
-    static_assert(lexy::is_branch_rule<Branch>);
-    return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 } // namespace lexyd
 
