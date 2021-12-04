@@ -6,7 +6,6 @@
 #define LEXY_DSL_TIMES_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/separator.hpp>
 #include <lexy/dsl/sequence.hpp>
 
 namespace lexyd
@@ -50,6 +49,7 @@ template <std::size_t N, typename Rule, typename Sep>
 constexpr auto times(Rule, Sep)
 {
     static_assert(N > 0);
+    static_assert(lexy::is_separator<Sep>);
     return _times<N, Rule, Sep>{};
 }
 

@@ -66,6 +66,7 @@ struct _term
     template <typename Rule, typename Sep>
     constexpr auto list(Rule, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>{};
     }
 
@@ -76,10 +77,11 @@ struct _term
     {
         return _optt<Terminator, _lstt<Terminator, Rule, void, decltype(recovery_rule())>>{};
     }
-    template <typename Rule, typename S>
-    constexpr auto opt_list(Rule, S) const
+    template <typename Rule, typename Sep>
+    constexpr auto opt_list(Rule, Sep) const
     {
-        return _optt<Terminator, _lstt<Terminator, Rule, S, decltype(recovery_rule())>>{};
+        static_assert(lexy::is_separator<Sep>);
+        return _optt<Terminator, _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>>{};
     }
 
     //=== access ===//

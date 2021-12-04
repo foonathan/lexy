@@ -195,6 +195,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto operator()(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repd<Item, Sep>>{};
     }
 
@@ -206,6 +207,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto list(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repl<Item, Sep>>{};
     }
 
@@ -217,6 +219,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto capture(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repc<Item, Sep>>{};
     }
 };

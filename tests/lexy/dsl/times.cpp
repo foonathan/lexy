@@ -6,6 +6,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/separator.hpp>
 
 TEST_CASE("dsl::times<N>(rule)")
 {

@@ -67,7 +67,7 @@ struct _nsep : rule_base
 };
 
 template <typename Branch, typename Tag>
-struct _sep
+struct _sep : _sep_base
 {
     using rule          = Branch;
     using trailing_rule = _nsep<Branch, Tag>;
@@ -96,7 +96,7 @@ constexpr auto sep(Branch)
 }
 
 template <typename Branch>
-struct _tsep
+struct _tsep : _sep_base
 {
     using rule          = Branch;
     using trailing_rule = decltype(lexyd::if_(Branch{}));
