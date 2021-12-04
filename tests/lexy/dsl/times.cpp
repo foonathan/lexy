@@ -127,7 +127,7 @@ TEST_CASE("dsl::times<N>(rule, dsl::sep())")
                              .literal(",")
                              .literal("abc")
                              .literal(",")
-                             .error(12, 12, "unexpected trailing separator");
+                             .error(11, 12, "unexpected trailing separator");
     CHECK(three_c.status == test_result::recovered_error);
     CHECK(three_c.trace == three_c_trace);
 }

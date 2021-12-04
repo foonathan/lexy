@@ -8,18 +8,58 @@
 
 TEST_CASE("dsl::sep()")
 {
-    constexpr auto default_error = dsl::try_(dsl::error<lexy::unexpected_trailing_separator>);
+    struct tag
+    {
+        static constexpr auto name()
+        {
+            return "tag";
+        }
+    };
 
     constexpr auto basic = dsl::sep(LEXY_LIT("abc"));
     CHECK(equivalent_rules(decltype(basic)::rule{}, LEXY_LIT("abc")));
-    CHECK(equivalent_rules(decltype(basic)::trailing_rule{},
-                           dsl::if_(LEXY_LIT("abc") >> default_error)));
-
-    constexpr auto my_error      = dsl::try_(dsl::error<struct my_error_tag>);
-    constexpr auto specify_error = basic.trailing_error<my_error_tag>;
+    constexpr auto specify_error = basic.trailing_error<tag>;
     CHECK(equivalent_rules(decltype(specify_error)::rule{}, LEXY_LIT("abc")));
-    CHECK(equivalent_rules(decltype(specify_error)::trailing_rule{},
-                           dsl::if_(LEXY_LIT("abc") >> my_error)));
+
+    SUBCASE("trailing rule, default error")
+    {
+        constexpr auto rule = decltype(basic)::trailing_rule{};
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        constexpr auto callback = token_callback;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
+
+        auto sep = LEXY_VERIFY("abc");
+        CHECK(sep.status == test_result::recovered_error);
+        CHECK(sep.trace
+              == test_trace().literal("abc").error(0, 3, "unexpected trailing separator"));
+
+        auto partial_sep = LEXY_VERIFY("ab");
+        CHECK(partial_sep.status == test_result::success);
+        CHECK(partial_sep.trace == test_trace());
+    }
+    SUBCASE("trailing rule, custom error")
+    {
+        constexpr auto rule = decltype(specify_error)::trailing_rule{};
+        CHECK(lexy::is_rule<decltype(rule)>);
+
+        constexpr auto callback = token_callback;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.trace == test_trace());
+
+        auto sep = LEXY_VERIFY("abc");
+        CHECK(sep.status == test_result::recovered_error);
+        CHECK(sep.trace == test_trace().literal("abc").error(0, 3, "tag"));
+
+        auto partial_sep = LEXY_VERIFY("ab");
+        CHECK(partial_sep.status == test_result::success);
+        CHECK(partial_sep.trace == test_trace());
+    }
 }
 
 TEST_CASE("dsl::trailing_sep()")

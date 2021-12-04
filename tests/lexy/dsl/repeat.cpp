@@ -103,7 +103,7 @@ TEST_CASE("dsl::repeat()")
                      .literal(",")
                      .literal("a")
                      .literal(",")
-                     .error(5, 5, "unexpected trailing separator"));
+                     .error(4, 5, "unexpected trailing separator"));
         auto fewer = LEXY_VERIFY("2a,b");
         CHECK(fewer.status == test_result::fatal_error);
         CHECK(fewer.trace

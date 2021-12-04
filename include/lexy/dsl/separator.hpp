@@ -6,9 +6,7 @@
 #define LEXY_DSL_SEPARATOR_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/recover.hpp>
 #include <lexy/error.hpp>
 
 namespace lexy
@@ -24,18 +22,63 @@ struct unexpected_trailing_separator
 
 namespace lexyd
 {
+// Reports the trailing sep error.
+template <typename Branch, typename Tag>
+struct _nsep : rule_base
+{
+    template <typename NextParser>
+    struct p
+    {
+        struct _pc
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
+                                               typename Reader::iterator sep_begin, Args&&... args)
+            {
+                auto sep_end = reader.position();
+
+                using tag = lexy::_detail::type_or<Tag, lexy::unexpected_trailing_separator>;
+                auto err  = lexy::error<Reader, tag>(sep_begin, sep_end);
+                context.on(_ev::error{}, err);
+
+                // Trivially recover.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (lexy::branch_parser_for<Branch, Reader> parser{};
+                !parser.try_parse(context.control_block, reader))
+            {
+                // Didn't have the separator, everything is okay.
+                parser.cancel(context);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                // Did have the separator, report error.
+                return parser.template finish<_pc>(context, reader, reader.position(),
+                                                   LEXY_FWD(args)...);
+            }
+        }
+    };
+};
+
 template <typename Branch, typename Tag>
 struct _sep
 {
     using rule          = Branch;
-    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::try_(lexyd::error<Tag>)));
+    using trailing_rule = _nsep<Branch, Tag>;
 
     template <typename Context, typename Reader>
     static constexpr void report_trailing_error(Context&                  context, Reader&,
                                                 typename Reader::iterator sep_begin,
                                                 typename Reader::iterator sep_end)
     {
-        auto err = lexy::error<Reader, Tag>(sep_begin, sep_end);
+        using tag = lexy::_detail::type_or<Tag, lexy::unexpected_trailing_separator>;
+        auto err  = lexy::error<Reader, tag>(sep_begin, sep_end);
         context.on(_ev::error{}, err);
     }
 
@@ -49,7 +92,7 @@ template <typename Branch>
 constexpr auto sep(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>);
-    return _sep<Branch, lexy::unexpected_trailing_separator>{};
+    return _sep<Branch, void>{};
 }
 
 template <typename Branch>
