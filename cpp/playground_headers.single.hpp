@@ -1035,6 +1035,8 @@ struct unconditional_branch_base : branch_base
 
 struct _token_base
 {};
+struct _sep_base
+{};
 } // namespace lexyd
 
 namespace lexy
@@ -1051,6 +1053,9 @@ constexpr bool is_unconditional_branch_rule = std::is_base_of_v<dsl::uncondition
 
 template <typename T>
 constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
+
+template <typename T>
+constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
 } // namespace lexy
 
 //=== predefined_token_kind ===//
@@ -10818,6 +10823,7 @@ struct _term
     template <typename Rule, typename Sep>
     constexpr auto list(Rule, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>{};
     }
 
@@ -10828,10 +10834,11 @@ struct _term
     {
         return _optt<Terminator, _lstt<Terminator, Rule, void, decltype(recovery_rule())>>{};
     }
-    template <typename Rule, typename S>
-    constexpr auto opt_list(Rule, S) const
+    template <typename Rule, typename Sep>
+    constexpr auto opt_list(Rule, Sep) const
     {
-        return _optt<Terminator, _lstt<Terminator, Rule, S, decltype(recovery_rule())>>{};
+        static_assert(lexy::is_separator<Sep>);
+        return _optt<Terminator, _lstt<Terminator, Rule, Sep, decltype(recovery_rule())>>{};
     }
 
     //=== access ===//
@@ -14846,15 +14853,6 @@ struct _optt : rule_base
 
 
 
-
-
-#ifdef LEXY_IGNORE_DEPRECATED_SEP
-#    define LEXY_DEPRECATED_SEP
-#else
-#    define LEXY_DEPRECATED_SEP                                                                    \
-        [[deprecated("no_trailing_sep() has been deprecated; use sep() instead")]]
-#endif
-
 namespace lexy
 {
 struct unexpected_trailing_separator
@@ -14868,18 +14866,63 @@ struct unexpected_trailing_separator
 
 namespace lexyd
 {
+// Reports the trailing sep error.
 template <typename Branch, typename Tag>
-struct _sep
+struct _nsep : rule_base
+{
+    template <typename NextParser>
+    struct p
+    {
+        struct _pc
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
+                                               typename Reader::iterator sep_begin, Args&&... args)
+            {
+                auto sep_end = reader.position();
+
+                using tag = lexy::_detail::type_or<Tag, lexy::unexpected_trailing_separator>;
+                auto err  = lexy::error<Reader, tag>(sep_begin, sep_end);
+                context.on(_ev::error{}, err);
+
+                // Trivially recover.
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+        };
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            if (lexy::branch_parser_for<Branch, Reader> parser{};
+                !parser.try_parse(context.control_block, reader))
+            {
+                // Didn't have the separator, everything is okay.
+                parser.cancel(context);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                // Did have the separator, report error.
+                return parser.template finish<_pc>(context, reader, reader.position(),
+                                                   LEXY_FWD(args)...);
+            }
+        }
+    };
+};
+
+template <typename Branch, typename Tag>
+struct _sep : _sep_base
 {
     using rule          = Branch;
-    using trailing_rule = decltype(lexyd::if_(Branch{} >> lexyd::try_(lexyd::error<Tag>)));
+    using trailing_rule = _nsep<Branch, Tag>;
 
     template <typename Context, typename Reader>
     static constexpr void report_trailing_error(Context&                  context, Reader&,
                                                 typename Reader::iterator sep_begin,
                                                 typename Reader::iterator sep_end)
     {
-        auto err = lexy::error<Reader, Tag>(sep_begin, sep_end);
+        using tag = lexy::_detail::type_or<Tag, lexy::unexpected_trailing_separator>;
+        auto err  = lexy::error<Reader, tag>(sep_begin, sep_end);
         context.on(_ev::error{}, err);
     }
 
@@ -14893,11 +14936,11 @@ template <typename Branch>
 constexpr auto sep(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>);
-    return _sep<Branch, lexy::unexpected_trailing_separator>{};
+    return _sep<Branch, void>{};
 }
 
 template <typename Branch>
-struct _tsep
+struct _tsep : _sep_base
 {
     using rule          = Branch;
     using trailing_rule = decltype(lexyd::if_(Branch{}));
@@ -14914,13 +14957,6 @@ constexpr auto trailing_sep(Branch)
 {
     static_assert(lexy::is_branch_rule<Branch>);
     return _tsep<Branch>{};
-}
-
-template <typename Branch>
-LEXY_DEPRECATED_SEP constexpr auto no_trailing_sep(Branch)
-{
-    static_assert(lexy::is_branch_rule<Branch>);
-    return _sep<Branch, lexy::unexpected_trailing_separator>{};
 }
 } // namespace lexyd
 
@@ -17063,6 +17099,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto operator()(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repd<Item, Sep>>{};
     }
 
@@ -17074,6 +17111,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto list(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repl<Item, Sep>>{};
     }
 
@@ -17085,6 +17123,7 @@ struct _rep_dsl
     template <typename Item, typename Sep>
     constexpr auto capture(Item, Sep) const
     {
+        static_assert(lexy::is_separator<Sep>);
         return _rep<Count, _repc<Item, Sep>>{};
     }
 };
@@ -17197,7 +17236,6 @@ constexpr auto sign
 
 
 
-
 namespace lexyd
 {
 template <std::size_t N, typename Rule, typename Sep>
@@ -17239,6 +17277,7 @@ template <std::size_t N, typename Rule, typename Sep>
 constexpr auto times(Rule, Sep)
 {
     static_assert(N > 0);
+    static_assert(lexy::is_separator<Sep>);
     return _times<N, Rule, Sep>{};
 }
 
