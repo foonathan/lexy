@@ -110,8 +110,13 @@ namespace dsl = lexy::dsl;
 constexpr auto identifier = dsl::identifier(dsl::ascii::alnum);
 
 //=== The arguments ===//
+struct invalid_str_char
+{
+    static constexpr auto name = "invalid string character";
+};
+
 // The content of a string literal: any unicode code point except for control characters.
-constexpr auto str_char = dsl::code_point - dsl::unicode::control;
+constexpr auto str_char = (dsl::code_point - dsl::unicode::control).error<invalid_str_char>;
 
 // An unquoted sequence of characters.
 struct arg_bare
@@ -154,7 +159,7 @@ struct arg_quoted
         // Interpolation.
         auto dollar_escape = dsl::dollar_escape.rule(dsl::p<interpolation>);
 
-        return dsl::quoted(str_char, backslash_escape, dollar_escape);
+        return dsl::quoted.limit(dsl::ascii::newline)(str_char, backslash_escape, dollar_escape);
     }();
     static constexpr auto value = lexy::as_string<std::string>;
 };
