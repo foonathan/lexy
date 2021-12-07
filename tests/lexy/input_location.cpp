@@ -323,5 +323,22 @@ TEST_CASE("get_input_line_annotation()")
         CHECK(annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
     }
+
+    SUBCASE("error at end")
+    {
+        char str[] = {'0', '1', '2', '3', '4', '\n'};
+        auto input = lexy::string_input(str, sizeof(str));
+
+        auto begin      = lexy::get_input_location(input, input.data() + 5);
+        auto annotation = lexy::get_input_line_annotation(input, begin, 1);
+        CHECK(annotation.before.begin() == input.data());
+        CHECK(annotation.before.end() == input.data() + 5);
+        CHECK(annotation.annotated.begin() == input.data() + 5);
+        CHECK(annotation.annotated.end() == input.data() + 6);
+        CHECK(annotation.after.begin() == input.data() + 6);
+        CHECK(annotation.after.end() == input.data() + 6);
+        CHECK(!annotation.rounded_end);
+        CHECK(!annotation.truncated_multiline);
+    }
 }
 

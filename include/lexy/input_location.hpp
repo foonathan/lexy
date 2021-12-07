@@ -380,7 +380,7 @@ constexpr auto get_input_line_annotation(const Input&                           
         auto old_end = end;
 
         using encoding = typename lexy::input_reader<Input>::encoding;
-        end            = _detail::find_cp_boundary<encoding>(end, line.end());
+        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
 
         result.rounded_end = end != old_end;
     }
