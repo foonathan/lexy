@@ -44,7 +44,7 @@ TEST_CASE("dsl::if_()")
     auto abc = LEXY_VERIFY("abc");
     CHECK(abc.status == test_result::fatal_error);
     CHECK(abc.trace
-          == test_trace().literal("ab").expected_literal(2, "cd", 1).error_token("c").cancel());
+          == test_trace().literal("ab").error_token("c").expected_literal(2, "cd", 1).cancel());
 
     auto abcd = LEXY_VERIFY("abcd");
     CHECK(abcd.status == test_result::success);

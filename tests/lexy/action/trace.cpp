@@ -181,8 +181,8 @@ TEST_CASE("trace")
  1:  7: - object:
  1:  7:   - alphabet:
  1:  7:     - backtracked: ab
- 1:  7:     - error: expected 'abcd'
  1:  7:     - error token: abc
+ 1:  7:     - error: expected 'abcd'
  1: 10:     -x
  1: 10:   -x
  1: 10: -x
@@ -353,8 +353,8 @@ TEST_CASE("trace")
  1:  7: ├──object:
  1:  7: │  ├──alphabet:
  1:  7: │  │  ├──backtracked: ab
- 1:  7: │  │  ├──error: expected 'abcd'
  1:  7: │  │  ├──error token: abc
+ 1:  7: │  │  ├──error: expected 'abcd'
  1: 10: │  │  └╳
  1: 10: │  └╳
  1: 10: └╳

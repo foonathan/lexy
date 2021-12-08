@@ -232,7 +232,7 @@ TEST_CASE("dsl::digits<>.no_leading_zero()")
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::fatal_error);
     CHECK(zero_zero_seven.trace
-          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
+          == test_trace().error_token("0").error(0, 1, "forbidden leading zero").cancel());
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
@@ -277,7 +277,7 @@ TEST_CASE("dsl::digits<>.sep()")
     auto trailing_sep = LEXY_VERIFY("1_");
     CHECK(trailing_sep.status == test_result::fatal_error);
     CHECK(trailing_sep.trace
-          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
+          == test_trace().error_token("1_").expected_char_class(2, "digit.decimal").cancel());
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
@@ -312,11 +312,11 @@ TEST_CASE("dsl::digits<>.sep().no_leading_zero")
     auto zero_zero_seven = LEXY_VERIFY("007");
     CHECK(zero_zero_seven.status == test_result::fatal_error);
     CHECK(zero_zero_seven.trace
-          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
+          == test_trace().error_token("0").error(0, 1, "forbidden leading zero").cancel());
     auto zero_sep_zero_seven = LEXY_VERIFY("0_07");
     CHECK(zero_sep_zero_seven.status == test_result::fatal_error);
     CHECK(zero_sep_zero_seven.trace
-          == test_trace().error(0, 1, "forbidden leading zero").error_token("0").cancel());
+          == test_trace().error_token("0").error(0, 1, "forbidden leading zero").cancel());
 
     auto with_sep = LEXY_VERIFY("1_2_3");
     CHECK(with_sep.status == test_result::success);
@@ -328,7 +328,7 @@ TEST_CASE("dsl::digits<>.sep().no_leading_zero")
     auto trailing_sep = LEXY_VERIFY("1_");
     CHECK(trailing_sep.status == test_result::fatal_error);
     CHECK(trailing_sep.trace
-          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
+          == test_trace().error_token("1_").expected_char_class(2, "digit.decimal").cancel());
 
     auto utf16 = LEXY_VERIFY(u"11");
     CHECK(utf16.status == test_result::success);
@@ -355,11 +355,11 @@ TEST_CASE("dsl::n_digits")
     auto one = LEXY_VERIFY("1");
     CHECK(one.status == test_result::fatal_error);
     CHECK(one.trace
-          == test_trace().expected_char_class(1, "digit.decimal").error_token("1").cancel());
+          == test_trace().error_token("1").expected_char_class(1, "digit.decimal").cancel());
     auto two = LEXY_VERIFY("12");
     CHECK(two.status == test_result::fatal_error);
     CHECK(two.trace
-          == test_trace().expected_char_class(2, "digit.decimal").error_token("12").cancel());
+          == test_trace().error_token("12").expected_char_class(2, "digit.decimal").cancel());
 
     auto three = LEXY_VERIFY("123");
     CHECK(three.status == test_result::success);
@@ -383,11 +383,11 @@ TEST_CASE("dsl::n_digits.sep()")
     auto one = LEXY_VERIFY("1");
     CHECK(one.status == test_result::fatal_error);
     CHECK(one.trace
-          == test_trace().expected_char_class(1, "digit.decimal").error_token("1").cancel());
+          == test_trace().error_token("1").expected_char_class(1, "digit.decimal").cancel());
     auto two = LEXY_VERIFY("12");
     CHECK(two.status == test_result::fatal_error);
     CHECK(two.trace
-          == test_trace().expected_char_class(2, "digit.decimal").error_token("12").cancel());
+          == test_trace().error_token("12").expected_char_class(2, "digit.decimal").cancel());
 
     auto three = LEXY_VERIFY("123");
     CHECK(three.status == test_result::success);
@@ -406,6 +406,6 @@ TEST_CASE("dsl::n_digits.sep()")
     auto trailing_sep = LEXY_VERIFY("1_");
     CHECK(trailing_sep.status == test_result::fatal_error);
     CHECK(trailing_sep.trace
-          == test_trace().expected_char_class(2, "digit.decimal").error_token("1_").cancel());
+          == test_trace().error_token("1_").expected_char_class(2, "digit.decimal").cancel());
 }
 

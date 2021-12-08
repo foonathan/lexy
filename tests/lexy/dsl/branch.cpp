@@ -40,7 +40,7 @@ TEST_CASE("dsl::operator>>")
         CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::fatal_error);
-        CHECK(ab.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+        CHECK(ab.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::recovered_error);

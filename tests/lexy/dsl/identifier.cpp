@@ -294,7 +294,7 @@ TEST_CASE("dsl::keyword")
         auto Integer = LEXY_VERIFY("Integer");
         CHECK(Integer.status == test_result::fatal_error);
         CHECK(Integer.trace
-              == test_trace().expected_keyword(0, 7, "Int").error_token("Int").cancel());
+              == test_trace().error_token("Int").expected_keyword(0, 7, "Int").cancel());
     }
     SUBCASE("char")
     {

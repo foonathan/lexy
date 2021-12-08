@@ -33,7 +33,7 @@ TEST_CASE("dsl::operator-")
 
         auto two = LEXY_VERIFY("aa!");
         CHECK(two.status == test_result::fatal_error);
-        CHECK(two.trace == test_trace().error(0, 3, "minus failure").error_token("aa!").cancel());
+        CHECK(two.trace == test_trace().error_token("aa!").error(0, 3, "minus failure").cancel());
     }
     SUBCASE("prefix")
     {
@@ -76,7 +76,7 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
     }
     SUBCASE("contains")
     {
@@ -97,10 +97,10 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
         auto ab = LEXY_VERIFY("ab!");
         CHECK(ab.status == test_result::fatal_error);
-        CHECK(ab.trace == test_trace().error(0, 3, "minus failure").error_token("ab!").cancel());
+        CHECK(ab.trace == test_trace().error_token("ab!").error(0, 3, "minus failure").cancel());
     }
     SUBCASE("prefix")
     {
@@ -121,7 +121,7 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
     }
     SUBCASE("prefix")
     {
@@ -142,7 +142,7 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
     }
     SUBCASE("prefix")
     {
@@ -163,7 +163,7 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
     }
     SUBCASE("prefix")
     {
@@ -184,7 +184,7 @@ TEST_CASE("dsl::operator-")
 
         auto b = LEXY_VERIFY("b!");
         CHECK(b.status == test_result::fatal_error);
-        CHECK(b.trace == test_trace().error(0, 2, "minus failure").error_token("b!").cancel());
+        CHECK(b.trace == test_trace().error_token("b!").error(0, 2, "minus failure").cancel());
     }
     SUBCASE("multiple subtractions")
     {
@@ -242,6 +242,6 @@ TEST_CASE("dsl::contains")
 
     auto bc = LEXY_VERIFY("bc");
     CHECK(bc.status == test_result::fatal_error);
-    CHECK(bc.trace == test_trace().expected_literal(2, "a", 0).error_token("bc").cancel());
+    CHECK(bc.trace == test_trace().error_token("bc").expected_literal(2, "a", 0).cancel());
 }
 

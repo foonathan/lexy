@@ -33,7 +33,7 @@ TEST_CASE("dsl::until()")
     auto unterminated = LEXY_VERIFY("abc");
     CHECK(unterminated.status == test_result::fatal_error);
     CHECK(unterminated.trace
-          == test_trace().expected_literal(3, "!", 0).error_token("abc").cancel());
+          == test_trace().error_token("abc").expected_literal(3, "!", 0).cancel());
 
     auto invalid_utf8 = LEXY_VERIFY(lexy::utf8_encoding{}, 'a', 'b', 'c', 0x80, '!');
     CHECK(invalid_utf8.status == test_result::success);

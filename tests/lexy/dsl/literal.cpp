@@ -33,17 +33,17 @@ TEST_CASE("dsl::lit_b")
 
     auto a = LEXY_VERIFY("a");
     CHECK(a.status == test_result::fatal_error);
-    CHECK(a.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+    CHECK(a.trace == test_trace().error_token("a").expected_literal(0, "abc", 1).cancel());
     auto ad = LEXY_VERIFY("ad");
     CHECK(ad.status == test_result::fatal_error);
-    CHECK(ad.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+    CHECK(ad.trace == test_trace().error_token("a").expected_literal(0, "abc", 1).cancel());
 
     auto ab = LEXY_VERIFY("ab");
     CHECK(ab.status == test_result::fatal_error);
-    CHECK(ab.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+    CHECK(ab.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
     auto abd = LEXY_VERIFY("abd");
     CHECK(abd.status == test_result::fatal_error);
-    CHECK(abd.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+    CHECK(abd.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
 
     auto ABC = LEXY_VERIFY("ABC");
     CHECK(ABC.status == test_result::fatal_error);
@@ -80,17 +80,17 @@ TEST_CASE("dsl::lit")
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::fatal_error);
-        CHECK(a.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+        CHECK(a.trace == test_trace().error_token("a").expected_literal(0, "abc", 1).cancel());
         auto ad = LEXY_VERIFY("ad");
         CHECK(ad.status == test_result::fatal_error);
-        CHECK(ad.trace == test_trace().expected_literal(0, "abc", 1).error_token("a").cancel());
+        CHECK(ad.trace == test_trace().error_token("a").expected_literal(0, "abc", 1).cancel());
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::fatal_error);
-        CHECK(ab.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+        CHECK(ab.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
         auto abd = LEXY_VERIFY("abd");
         CHECK(abd.status == test_result::fatal_error);
-        CHECK(abd.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+        CHECK(abd.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
 
         auto ABC = LEXY_VERIFY("ABC");
         CHECK(ABC.status == test_result::fatal_error);

@@ -44,8 +44,8 @@ TEST_CASE("dsl::operator+")
     auto ab_trace = test_trace()
                         .literal("a")
                         .position()
-                        .expected_literal(1, "bc", 1)
                         .error_token("b")
+                        .expected_literal(1, "bc", 1)
                         .expected_literal(2, "de", 0)
                         .cancel();
     CHECK(ab.status == test_result::fatal_error);
@@ -62,8 +62,8 @@ TEST_CASE("dsl::operator+")
                           .literal("a")
                           .position()
                           .literal("bc")
-                          .expected_literal(3, "de", 1)
                           .error_token("d")
+                          .expected_literal(3, "de", 1)
                           .cancel();
     CHECK(abcd.status == test_result::fatal_error);
     CHECK(abcd.trace == abcd_trace);

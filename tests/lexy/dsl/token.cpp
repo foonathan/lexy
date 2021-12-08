@@ -38,7 +38,7 @@ TEST_CASE("token whitespace")
     CHECK(leading_ws.trace == test_trace().expected_literal(0, "abc", 0).cancel());
     auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
     CHECK(inner_ws.status == test_result::fatal_error);
-    CHECK(inner_ws.trace == test_trace().expected_literal(0, "abc", 2).error_token("ab").cancel());
+    CHECK(inner_ws.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());
     auto trailing_ws = LEXY_VERIFY_P(production, "abc..");
     CHECK(trailing_ws.status == test_result::success);
     CHECK(trailing_ws.trace == test_trace().literal("abc").whitespace(".."));
@@ -80,7 +80,7 @@ TEST_CASE("token.error<Tag>")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error(0, 1, "my_error").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
 }
 
 namespace
@@ -121,7 +121,7 @@ TEST_CASE("token.kind<Tag>")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().expected_char_class(0, "EOL").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").expected_char_class(0, "EOL").cancel());
 }
 
 TEST_CASE("token.kind<Tag>.error<Tag>")
@@ -148,7 +148,7 @@ TEST_CASE("token.kind<Tag>.error<Tag>")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error(0, 1, "my_error").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
 }
 
 TEST_CASE("token.error<Tag>.kind<Tag>")
@@ -175,7 +175,7 @@ TEST_CASE("token.error<Tag>.kind<Tag>")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error(0, 1, "my_error").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
 }
 
 TEST_CASE("dsl::token()")
@@ -205,17 +205,17 @@ TEST_CASE("dsl::token()")
 
     auto a = LEXY_VERIFY("a");
     CHECK(a.status == test_result::fatal_error);
-    CHECK(a.trace == test_trace().error(0, 1, "missing token").error_token("a").cancel());
+    CHECK(a.trace == test_trace().error_token("a").error(0, 1, "missing token").cancel());
     auto ab = LEXY_VERIFY("ab");
     CHECK(ab.status == test_result::fatal_error);
-    CHECK(ab.trace == test_trace().error(0, 2, "missing token").error_token("ab").cancel());
+    CHECK(ab.trace == test_trace().error_token("ab").error(0, 2, "missing token").cancel());
     auto abd = LEXY_VERIFY("abd");
     CHECK(abd.status == test_result::fatal_error);
-    CHECK(abd.trace == test_trace().error(0, 2, "missing token").error_token("ab").cancel());
+    CHECK(abd.trace == test_trace().error_token("ab").error(0, 2, "missing token").cancel());
 
     auto abcabd = LEXY_VERIFY("abcabd");
     CHECK(abcabd.status == test_result::fatal_error);
-    CHECK(abcabd.trace == test_trace().error(0, 5, "missing token").error_token("abcab").cancel());
+    CHECK(abcabd.trace == test_trace().error_token("abcab").error(0, 5, "missing token").cancel());
 }
 
 TEST_CASE("dsl::token(token)")

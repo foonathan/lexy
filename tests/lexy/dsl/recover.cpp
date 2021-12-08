@@ -180,16 +180,16 @@ TEST_CASE("dsl::try_(rule)")
         CHECK(a.status == test_result::fatal_error);
         CHECK(a.trace
               == test_trace()
-                     .expected_literal(0, "abc", 1)
                      .error_token("a")
+                     .expected_literal(0, "abc", 1)
                      .expected_literal(1, "!", 0)
                      .cancel());
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::fatal_error);
         CHECK(ab.trace
               == test_trace()
-                     .expected_literal(0, "abc", 2)
                      .error_token("ab")
+                     .expected_literal(0, "abc", 2)
                      .expected_literal(2, "!", 0)
                      .cancel());
 
@@ -208,7 +208,7 @@ TEST_CASE("dsl::try_(rule)")
         auto ab_mark = LEXY_VERIFY("ab!");
         CHECK(ab_mark.status == test_result::recovered_error);
         CHECK(ab_mark.trace
-              == test_trace().expected_literal(0, "abc", 2).error_token("ab").literal("!"));
+              == test_trace().error_token("ab").expected_literal(0, "abc", 2).literal("!"));
     }
     SUBCASE("rule")
     {
@@ -228,8 +228,8 @@ TEST_CASE("dsl::try_(rule)")
         CHECK(a.status == test_result::fatal_error);
         CHECK(a.trace
               == test_trace()
-                     .expected_literal(0, "ab", 1)
                      .error_token("a")
+                     .expected_literal(0, "ab", 1)
                      .expected_literal(1, "!", 0)
                      .cancel());
 
@@ -344,8 +344,8 @@ TEST_CASE("dsl::try_(rule, recover)")
 
         auto a       = LEXY_VERIFY("a");
         auto a_trace = test_trace()
-                           .expected_literal(0, "ab", 1)
                            .error_token("a")
+                           .expected_literal(0, "ab", 1)
                            .recovery()
                            .cancel()
                            .cancel();
@@ -419,8 +419,8 @@ TEST_CASE("dsl::try_(rule, recover)")
 
         auto a       = LEXY_VERIFY("a");
         auto a_trace = test_trace()
-                           .expected_literal(0, "ab", 1)
                            .error_token("a")
+                           .expected_literal(0, "ab", 1)
                            .recovery()
                            .error(1, 1, "missing token")
                            .cancel()

@@ -27,15 +27,15 @@ TEST_CASE("dsl::bytes")
 
     auto one = LEXY_VERIFY(lexy::byte_encoding{}, 42);
     CHECK(one.status == test_result::fatal_error);
-    CHECK(one.trace == test_trace().expected_char_class(1, "byte").error_token("\\2A").cancel());
+    CHECK(one.trace == test_trace().error_token("\\2A").expected_char_class(1, "byte").cancel());
     auto two = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11);
     CHECK(two.status == test_result::fatal_error);
     CHECK(two.trace
-          == test_trace().expected_char_class(2, "byte").error_token("\\2A\\0B").cancel());
+          == test_trace().error_token("\\2A\\0B").expected_char_class(2, "byte").cancel());
     auto three = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11, 0x42);
     CHECK(three.status == test_result::fatal_error);
     CHECK(three.trace
-          == test_trace().expected_char_class(3, "byte").error_token("\\2A\\0B\\42").cancel());
+          == test_trace().error_token("\\2A\\0B\\42").expected_char_class(3, "byte").cancel());
 
     auto four = LEXY_VERIFY(lexy::byte_encoding{}, 42, 11, 0x42, 0x11);
     CHECK(four.status == test_result::success);
@@ -63,7 +63,7 @@ TEST_CASE("dsl::padding_bytes")
         auto one = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
         CHECK(one.status == test_result::fatal_error);
         CHECK(one.trace
-              == test_trace().expected_char_class(1, "byte").error_token("\\AA").cancel());
+              == test_trace().error_token("\\AA").expected_char_class(1, "byte").cancel());
 
         auto two = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xAA);
         CHECK(two.status == test_result::success);
@@ -166,8 +166,8 @@ TEST_CASE("dsl::bint")
             CHECK(not_enough.status == test_result::fatal_error);
             CHECK(not_enough.trace
                   == test_trace()
-                         .expected_char_class(3, "byte")
                          .error_token("\\01\\02\\03")
+                         .expected_char_class(3, "byte")
                          .cancel());
 
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);
@@ -212,8 +212,8 @@ TEST_CASE("dsl::bint")
             CHECK(not_enough.status == test_result::fatal_error);
             CHECK(not_enough.trace
                   == test_trace()
-                         .expected_char_class(3, "byte")
                          .error_token("\\01\\02\\03")
+                         .expected_char_class(3, "byte")
                          .cancel());
 
             auto enough = LEXY_VERIFY(lexy::byte_encoding{}, 1, 2, 3, 4);

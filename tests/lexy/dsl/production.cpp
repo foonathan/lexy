@@ -69,8 +69,8 @@ TEST_CASE("dsl::p")
                             .production("production")
                             .literal("a")
                             .position()
-                            .expected_literal(1, "bc", 1)
-                            .error_token("b");
+                            .error_token("b")
+                            .expected_literal(1, "bc", 1);
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
@@ -116,8 +116,8 @@ TEST_CASE("dsl::p")
                             .production("production")
                             .literal("a")
                             .position()
-                            .expected_literal(1, "bc", 1)
-                            .error_token("b");
+                            .error_token("b")
+                            .expected_literal(1, "bc", 1);
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
@@ -174,8 +174,8 @@ TEST_CASE("dsl::p")
                             .production("production")
                             .literal("a")
                             .position()
-                            .expected_literal(1, "bc", 1)
-                            .error_token("b");
+                            .error_token("b")
+                            .expected_literal(1, "bc", 1);
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);

@@ -500,8 +500,8 @@ TEST_CASE("dsl::code_point.lit()")
         CHECK(not_multi.status == test_result::fatal_error);
         CHECK(not_multi.trace
               == test_trace()
-                     .expected_literal(0, "\\U0001F642", 1)
                      .error_token("\\xD8\\x3D")
+                     .expected_literal(0, "\\U0001F642", 1)
                      .cancel());
 
         auto twice = LEXY_VERIFY(u"🙂🙂");
@@ -545,7 +545,7 @@ TEST_CASE("dsl::code_point.if_()")
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::fatal_error);
     CHECK(bmp.trace
-          == test_trace().expected_char_class(0, "predicate").error_token("\\u00E4").cancel());
+          == test_trace().error_token("\\u00E4").expected_char_class(0, "predicate").cancel());
 }
 
 TEST_CASE("dsl::code_point.ascii()")
@@ -571,13 +571,13 @@ TEST_CASE("dsl::code_point.ascii()")
     CHECK(bmp.status == test_result::fatal_error);
     CHECK(
         bmp.trace
-        == test_trace().expected_char_class(0, "code-point.ASCII").error_token("\\u00E4").cancel());
+        == test_trace().error_token("\\u00E4").expected_char_class(0, "code-point.ASCII").cancel());
     auto outside_bmp = LEXY_VERIFY(u"🙂");
     CHECK(outside_bmp.status == test_result::fatal_error);
     CHECK(outside_bmp.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.ASCII")
                  .error_token("\\U0001F642")
+                 .expected_char_class(0, "code-point.ASCII")
                  .cancel());
 }
 
@@ -608,8 +608,8 @@ TEST_CASE("dsl::code_point.bmp()")
     CHECK(outside_bmp.status == test_result::fatal_error);
     CHECK(outside_bmp.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.BMP")
                  .error_token("\\U0001F642")
+                 .expected_char_class(0, "code-point.BMP")
                  .cancel());
 }
 
@@ -628,22 +628,22 @@ TEST_CASE("dsl::code_point.noncharacter()")
     CHECK(a.status == test_result::fatal_error);
     CHECK(a.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.non-character")
                  .error_token("a")
+                 .expected_char_class(0, "code-point.non-character")
                  .cancel());
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::fatal_error);
     CHECK(bmp.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.non-character")
                  .error_token("\\u00E4")
+                 .expected_char_class(0, "code-point.non-character")
                  .cancel());
     auto outside_bmp = LEXY_VERIFY(u"🙂");
     CHECK(outside_bmp.status == test_result::fatal_error);
     CHECK(outside_bmp.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.non-character")
                  .error_token("\\U0001F642")
+                 .expected_char_class(0, "code-point.non-character")
                  .cancel());
 
     auto noncharacter = LEXY_VERIFY(u"\uFDDF");
@@ -689,36 +689,36 @@ TEST_CASE("dsl::code_point.general_category()")
     CHECK(A.status == test_result::fatal_error);
     CHECK(A.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.lowercase-letter")
                  .error_token("A")
+                 .expected_char_class(0, "code-point.lowercase-letter")
                  .cancel());
     auto Umlaut = LEXY_VERIFY(u"Ä");
     CHECK(Umlaut.status == test_result::fatal_error);
     CHECK(Umlaut.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.lowercase-letter")
                  .error_token("\\u00C4")
+                 .expected_char_class(0, "code-point.lowercase-letter")
                  .cancel());
     auto Cyrillic = LEXY_VERIFY(u"Ҁ");
     CHECK(Cyrillic.status == test_result::fatal_error);
     CHECK(Cyrillic.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.lowercase-letter")
                  .error_token("\\u0480")
+                 .expected_char_class(0, "code-point.lowercase-letter")
                  .cancel());
     auto Greek = LEXY_VERIFY(u"Φ");
     CHECK(Greek.status == test_result::fatal_error);
     CHECK(Greek.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.lowercase-letter")
                  .error_token("\\u03A6")
+                 .expected_char_class(0, "code-point.lowercase-letter")
                  .cancel());
     auto Math = LEXY_VERIFY(u"𝐀");
     CHECK(Math.status == test_result::fatal_error);
     CHECK(Math.trace
           == test_trace()
-                 .expected_char_class(0, "code-point.lowercase-letter")
                  .error_token("\\U0001D400")
+                 .expected_char_class(0, "code-point.lowercase-letter")
                  .cancel());
 
     auto ab = LEXY_VERIFY(u"a");
@@ -779,7 +779,7 @@ TEST_CASE("dsl::code_point.general_category() group")
     auto digit = LEXY_VERIFY(u"1");
     CHECK(digit.status == test_result::fatal_error);
     CHECK(digit.trace
-          == test_trace().expected_char_class(0, "code-point.letter").error_token("1").cancel());
+          == test_trace().error_token("1").expected_char_class(0, "code-point.letter").cancel());
 
     auto ab = LEXY_VERIFY(u"a");
     CHECK(ab.status == test_result::success);
@@ -810,7 +810,7 @@ TEST_CASE("dsl::code_point.range()")
     auto d = LEXY_VERIFY(u"d");
     CHECK(d.status == test_result::fatal_error);
     CHECK(d.trace
-          == test_trace().expected_char_class(0, "code-point.range").error_token("d").cancel());
+          == test_trace().error_token("d").expected_char_class(0, "code-point.range").cancel());
 
     auto ab = LEXY_VERIFY(u"a");
     CHECK(ab.status == test_result::success);

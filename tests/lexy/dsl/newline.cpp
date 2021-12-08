@@ -30,7 +30,7 @@ TEST_CASE("dsl::newline")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().expected_char_class(0, "newline").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").expected_char_class(0, "newline").cancel());
 
     auto nr = LEXY_VERIFY("\n\r");
     CHECK(nr.status == test_result::success);
@@ -71,7 +71,7 @@ TEST_CASE("dsl::eol")
 
     auto r = LEXY_VERIFY("\r");
     CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().expected_char_class(0, "EOL").error_token("\\r").cancel());
+    CHECK(r.trace == test_trace().error_token("\\r").expected_char_class(0, "EOL").cancel());
 
     auto nr = LEXY_VERIFY("\n\r");
     CHECK(nr.status == test_result::success);

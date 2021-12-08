@@ -158,7 +158,7 @@ TEST_CASE("dsl::capture()")
         CHECK(ab.value == 0);
         CHECK(
             ab.trace
-            == test_trace().literal("a").position().expected_literal(1, "bc", 1).error_token("b"));
+            == test_trace().literal("a").position().error_token("b").expected_literal(1, "bc", 1));
 
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::success);

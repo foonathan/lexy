@@ -37,8 +37,8 @@ void test(const char* name, Rule rule, AsciiRule arule)
             CHECK(result.status == test_result::fatal_error);
             CHECK(result.trace
                   == test_trace()
-                         .expected_char_class(0, name)
                          .error_token(spelling.c_str())
+                         .expected_char_class(0, name)
                          .cancel());
         }
     }
