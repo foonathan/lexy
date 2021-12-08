@@ -113,7 +113,6 @@ TEST_CASE("dsl::scan")
                              .literal("abc")
                              .production("integer")
                                  .expected_char_class(3, "digit.decimal")
-                                 .recovery().cancel()
                                  .cancel()
                              .cancel());
         // clang-format on

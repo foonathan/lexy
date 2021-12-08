@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2021-12-08
+
+`dsl::integer` now uses `lexy::digits_token_kind` instead of `lexy::error_token_kind` during recovery.
+
 == 2021-12-01
 
 `dsl::bom` and `dsl::lit_b` now require `lexy::byte_encoding`.

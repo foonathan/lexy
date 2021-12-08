@@ -34,8 +34,7 @@ TEST_CASE("dsl::repeat()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
         auto zero = LEXY_VERIFY("0");
         CHECK(zero.status == test_result::success);
@@ -70,8 +69,7 @@ TEST_CASE("dsl::repeat()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
         auto zero = LEXY_VERIFY("0");
         CHECK(zero.status == test_result::success);
@@ -130,8 +128,7 @@ TEST_CASE("dsl::repeat()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
         auto zero = LEXY_VERIFY("0");
         CHECK(zero.status == test_result::success);
@@ -189,8 +186,7 @@ TEST_CASE("dsl::repeat()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
         auto zero = LEXY_VERIFY("0");
         CHECK(zero.status == test_result::success);
@@ -246,8 +242,7 @@ TEST_CASE("dsl::repeat()")
 
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace
-              == test_trace().expected_char_class(0, "digit.decimal").recovery().cancel().cancel());
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
 
         auto zero = LEXY_VERIFY("0");
         CHECK(zero.status == test_result::success);
@@ -325,8 +320,6 @@ TEST_CASE("dsl::repeat()")
               == test_trace()
                      .production("count")
                      .expected_char_class(0, "digit.decimal")
-                     .recovery()
-                     .cancel()
                      .cancel()
                      .cancel());
 
