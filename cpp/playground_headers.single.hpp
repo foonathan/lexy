@@ -5940,9 +5940,8 @@ struct token_base : _token_base, BranchKind
         {
             if (!parser.try_parse(reader))
             {
-                parser.report_error(context, reader);
-
                 context.on(_ev::token{}, lexy::error_token_kind, reader.position(), parser.end);
+                parser.report_error(context, reader);
                 reader.set_position(parser.end);
 
                 return false;
@@ -6842,7 +6841,7 @@ constexpr auto get_input_line_annotation(const Input&                           
         auto old_end = end;
 
         using encoding = typename lexy::input_reader<Input>::encoding;
-        end            = _detail::find_cp_boundary<encoding>(end, line.end());
+        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
 
         result.rounded_end = end != old_end;
     }
@@ -14642,25 +14641,33 @@ struct _int : _copy_base<Token>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            if (!Token::token_parse(context, reader))
+            if (lexy::token_parser_for<Token, Reader> parser(reader); parser.try_parse(reader))
             {
-                auto recovery_begin = reader.position();
-                context.on(_ev::recovery_start{}, recovery_begin);
+                context.on(_ev::token{}, typename Token::token_type{}, begin, parser.end);
+                reader.set_position(parser.end);
+            }
+            else
+            {
+                parser.report_error(context, reader);
+                reader.set_position(parser.end);
 
                 // To recover we try and skip additional digits.
                 while (lexy::try_match_token(digit<typename IntParser::base>, reader))
                 {}
 
                 auto recovery_end = reader.position();
-                if (begin == recovery_begin && recovery_begin == recovery_end)
+                if (begin == recovery_end)
                 {
-                    // We didn't get any digits; don't recover.
-                    context.on(_ev::recovery_cancel{}, recovery_end);
+                    // We didn't get any digits; couldn't recover.
+                    // We don't report error recovery events as nothing was done;
+                    // we don't need to create an error token as nothing was consumed.
                     return false;
                 }
                 else
                 {
-                    context.on(_ev::token{}, lexy::error_token_kind, recovery_begin, recovery_end);
+                    // We've succesfully recovered, mark everything as digits.
+                    context.on(_ev::recovery_start{}, begin);
+                    context.on(_ev::token{}, lexy::digits_token_kind, begin, recovery_end);
                     context.on(_ev::recovery_finish{}, recovery_end);
                 }
             }
