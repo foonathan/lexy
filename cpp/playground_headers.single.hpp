@@ -6538,11 +6538,16 @@ class byte_location_counting
 {
 public:
     template <typename Reader>
-    constexpr bool try_match_newline(Reader&)
+    constexpr bool try_match_newline(Reader& reader)
     {
-        LEXY_PRECONDITION(_cur_index <= LineWidth);
-        if (_cur_index == LineWidth)
+        LEXY_PRECONDITION(_cur_index <= LineWidth - 1);
+        if (_cur_index == LineWidth - 1)
         {
+            // Consider the last byte to be the "newline".
+            // We need to consume something if possible;
+            // the logic in the function breaks otherwise.
+            if (reader.peek() != Reader::encoding::eof())
+                reader.bump();
             _cur_index = 0;
             return true;
         }
@@ -6664,11 +6669,17 @@ constexpr auto get_input_location(const Input&                                 i
     Counting counting;
     while (true)
     {
-        if (reader.peek() == lexy::input_reader<Input>::encoding::eof())
+        if (reader.position() == position)
         {
-            if (reader.position() == position)
-                break;
-
+            // We've already found the position; it's at the beginning of a colum nor newline.
+            // No need to do the expensive checks.
+            //
+            // This also allows `lexy_ext::shell` to work properly, if position is at EOF,
+            // the reader.peek() call will ask for more input.
+            break;
+        }
+        else if (reader.peek() == lexy::input_reader<Input>::encoding::eof())
+        {
             LEXY_ASSERT(false, "invalid position + anchor combination");
         }
         else if (counting.try_match_newline(reader))
