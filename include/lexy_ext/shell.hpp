@@ -120,14 +120,19 @@ struct default_prompt
 
     struct write_message_callback
     {
+        bool _last_was_newline = true; // If we printed nothing, it's a newline.
+
         void operator()(const char_type* buffer, std::size_t size)
         {
             std::fprintf(stdout, "%.*s", int(size), reinterpret_cast<const char*>(buffer));
+            if (size > 0)
+                _last_was_newline = buffer[size - 1] == '\n';
         }
 
         void done() &&
         {
-            std::putchar('\n');
+            if (!_last_was_newline)
+                std::putchar('\n');
         }
     };
     auto write_message()
