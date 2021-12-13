@@ -333,6 +333,73 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(unterminated_mark.trace
               == test_trace().literal("(").token("ab").error(1, 3, "missing delimiter").cancel());
     }
+    SUBCASE(".limit() with error")
+    {
+        struct tag
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "error";
+            }
+        };
+
+        constexpr auto rule
+            = delimited.limit<tag>(dsl::lit_c<'\n'>, dsl::lit_c<'!'>)(dsl::ascii::character);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "(", 0).cancel());
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.value == 0);
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
+        auto three = LEXY_VERIFY("(abc)");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == test_trace().literal("(").token("abc").literal(")"));
+
+        auto invalid = LEXY_VERIFY("(a\x80-c)");
+        CHECK(invalid.status == test_result::recovered_error);
+        CHECK(invalid.value == 3);
+        CHECK(invalid.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .expected_char_class(2, "ASCII")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .token("-c")
+                     .literal(")"));
+        auto invalid_limit = LEXY_VERIFY("(a\x80\nc)");
+        CHECK(invalid_limit.status == test_result::fatal_error);
+        CHECK(invalid_limit.trace
+              == test_trace()
+                     .literal("(")
+                     .token("a")
+                     .expected_char_class(2, "ASCII")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .error(1, 3, "error")
+                     .cancel());
+
+        auto unterminated = LEXY_VERIFY("(ab");
+        CHECK(unterminated.status == test_result::fatal_error);
+        CHECK(unterminated.trace
+              == test_trace().literal("(").token("ab").error(1, 3, "error").cancel());
+
+        auto unterminated_nl = LEXY_VERIFY("(ab\nc)");
+        CHECK(unterminated_nl.status == test_result::fatal_error);
+        CHECK(unterminated_nl.trace
+              == test_trace().literal("(").token("ab").error(1, 3, "error").cancel());
+        auto unterminated_mark = LEXY_VERIFY("(ab!c)");
+        CHECK(unterminated_mark.status == test_result::fatal_error);
+        CHECK(unterminated_mark.trace
+              == test_trace().literal("(").token("ab").error(1, 3, "error").cancel());
+    }
     SUBCASE("minus")
     {
         constexpr auto rule = delimited(dsl::ascii::character - dsl::lit_c<'X'>);
