@@ -454,13 +454,22 @@ using void_t = void;
 
 template <template <typename...> typename Op, typename Void, typename... Args>
 struct _detector : std::false_type
-{};
+{
+    template <typename Fallback>
+    using type_or = Fallback;
+};
 template <template <typename...> typename Op, typename... Args>
 struct _detector<Op, void_t<Op<Args...>>, Args...> : std::true_type
-{};
+{
+    template <typename Fallback>
+    using type_or = Op<Args...>;
+};
 
 template <template <typename...> typename Op, typename... Args>
 constexpr bool is_detected = _detector<Op, void, Args...>::value;
+
+template <typename Fallback, template <typename...> typename Op, typename... Args>
+using detected_or = typename _detector<Op, void, Args...>::template type_or<Fallback>;
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_DETECT_HPP_INCLUDED
@@ -13263,6 +13272,15 @@ struct _del_chars
     }
 };
 
+template <typename Token, typename Error>
+struct _del_limit : Token
+{
+    using missing_delimiter_error = Error;
+};
+
+template <typename Limit>
+using _detect_delimiter_error = typename Limit::missing_delimiter_error;
+
 template <typename Close, typename Char, typename Limit, typename... Escapes>
 struct _del : rule_base
 {
@@ -13276,14 +13294,16 @@ struct _del : rule_base
             close.cancel(context);
 
             // Check for missing delimiter.
-            if (lexy::branch_parser_for<Limit, Reader> limit{};
+            if (lexy::branch_parser_for<lexy::_detail::type_or<Limit, _eof>, Reader> limit{};
                 limit.try_parse(context.control_block, reader))
             {
                 // We're done, so finish the current characters.
                 auto end = reader.position();
                 cur_chars.finish(context, sink, end);
 
-                auto err = lexy::error<Reader, lexy::missing_delimiter>(del_begin, end);
+                using tag = lexy::_detail::detected_or<lexy::missing_delimiter,
+                                                       _detect_delimiter_error, Limit>;
+                auto err  = lexy::error<Reader, tag>(del_begin, end);
                 context.on(_ev::error{}, err);
                 return false;
             }
@@ -13367,16 +13387,26 @@ struct _del : rule_base
 struct _escape_base
 {};
 
-template <typename Open, typename Close, typename Limit = lexyd::_eof>
+template <typename Open, typename Close, typename Limit = void>
 struct _delim_dsl
 {
     /// Add tokens that will limit the delimited to detect a missing terminator.
     template <typename... Tokens>
     constexpr auto limit(Tokens...) const
     {
-        static_assert(sizeof...(Tokens) > 0);
+        static_assert(std::is_void_v<Limit>);
         static_assert((lexy::is_token_rule<Tokens> && ...));
-        return _delim_dsl<Open, Close, decltype((Limit{} / ... / Tokens{}))>{};
+        return _delim_dsl<Open, Close, decltype((lexy::dsl::eof / ... / Tokens{}))>{};
+    }
+
+    /// Add tokens that will limit the delimited and specify the error.
+    template <typename Error, typename... Tokens>
+    constexpr auto limit(Tokens...) const
+    {
+        static_assert(std::is_void_v<Limit>);
+        static_assert((lexy::is_token_rule<Tokens> && ...));
+        using token = decltype((lexy::dsl::eof / ... / Tokens{}));
+        return _delim_dsl<Open, Close, _del_limit<token, Error>>{};
     }
 
     //=== rules ===//
