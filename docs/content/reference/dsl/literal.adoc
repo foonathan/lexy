@@ -5,6 +5,7 @@ entities:
   "LEXY_LIT": lit
   "lexy::dsl::lit_c": lit_c
   "lexy::dsl::lit_b": lit_b
+  "lexy::dsl::lit_cp": lit_cp
 ---
 
 [.lead]
@@ -102,4 +103,38 @@ Parse tree::
   Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
 
 TIP: Use {{% docref "lexy::dsl::bom" %}} to match a byte-order mark.
+
+[#lit_cp]
+== Token rule `lexy::dsl::lit_cp`
+
+{{% interface %}}
+----
+template <char32_t CodePoint>
+constexpr _token-rule_ auto lit_cp;
+----
+
+[.lead]
+`lit_cp` is a {{% token-rule %}} that matches the specific `CodePoint`.
+
+Requires::
+  * `CodePoint` is the value of a scalar code point (i.e. non-surrogate and not out of bounds).
+  * The input {{% encoding %}} is ASCII, UTF-8, UTF-16, or UTF-32.
+    If it is ASCII, `CodePoint` is an ASCII character.
+Matching::
+  Matches and consumes the code units that encode `CodePoint` in the encoding of the input.
+  For ASCII and UTF-32, this is a single code unit, for UTF-8 up to four code units, and for UTF-16 up to two code units.
+Errors::
+  {{% docref "lexy::expected_literal" %}}: if one code unit did not compare equal or the reader reached the end of the input.
+  Its `.string()` is the encoded version of `CodePoint`, its `.index()` is the index of the code unit where the mismatch/missing one occurred, and its `.position()` is the reader position where it started to match the literal.
+Parse tree::
+  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
+
+It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding `CodePoint` in the encoding of the input.
+
+{{% playground-example "code_point_lit" "Match a smiley face" %}}
+
+NOTE: The caveats of {{% docref "lexy::dsl::lit" %}} regarding whitespace skipping and keywords apply here as well.
+
+CAUTION: If the input contains an ill-formed code unit sequence, this is not checked by this rule;
+it simply compares each code unit.
 

@@ -10,12 +10,6 @@
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 
-namespace lexyd
-{
-template <char32_t Cp>
-struct _cpl;
-}
-
 namespace lexy::_detail
 {
 template <typename... Tokens>
@@ -55,12 +49,12 @@ struct partition_alt<lexyd::_lit<CharT, C...>, T...>
     using other_tokens = typename _tail::template other_tokens<Templ, Tokens...>;
 };
 template <char32_t Cp, typename... T>
-struct partition_alt<lexyd::_cpl<Cp>, T...>
+struct partition_alt<lexyd::_lcp<Cp>, T...>
 {
     using _tail = partition_alt<T...>;
 
     template <typename Encoding>
-    using _string = typename lexyd::_cpl<Cp>::template _string<Encoding>;
+    using _string = typename lexyd::_lcp<Cp>::template _string<Encoding>;
     template <typename Encoding, template <typename...> typename Templ, typename... Strings>
     using trie_tokens =
         typename _tail::template trie_tokens<Encoding, Templ, Strings..., _string<Encoding>>;

@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2022-01-30
+
+* Renamed `dsl::code_point.lit<Cp>()` to `dsl::lit_cp<Cp>` and moved to `dsl/literal.hpp`.
+
 == 2021-12-08
 
 `dsl::integer` now uses `lexy::digits_token_kind` instead of `lexy::error_token_kind` during recovery.

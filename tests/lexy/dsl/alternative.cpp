@@ -5,8 +5,8 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
-#include <lexy/dsl/code_point.hpp>
 #include <lexy/dsl/identifier.hpp>
+#include <lexy/dsl/literal.hpp>
 
 TEST_CASE("dsl::operator/")
 {
@@ -123,8 +123,8 @@ TEST_CASE("dsl::operator/")
 
     SUBCASE("code point")
     {
-        constexpr auto rule = dsl::code_point.lit<'a'>() / dsl::code_point.lit<'b'>()
-                              / dsl::code_point.lit<0x12345>() / dsl::code_point.lit<0x12346>();
+        constexpr auto rule
+            = dsl::lit_cp<'a'> / dsl::lit_cp<'b'> / dsl::lit_cp<0x12345> / dsl::lit_cp<0x12346>;
         CHECK(lexy::is_token_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY(u"");
