@@ -205,7 +205,7 @@ TEST_CASE("trace")
  1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number:
- 1: 13:       - error: expected 'ASCII.digit' character
+ 1: 13:       - error: expected ASCII.digit
  1: 13:       -x
  1: 13:     - error recovery:
  1: 13:       - error token: abc
@@ -234,7 +234,7 @@ TEST_CASE("trace")
  1: 11:     - literal: ,
  1: 12:     - whitespace: \u0020
  1: 13:     - number:
- 1: 13:       - error: expected 'ASCII.digit' character
+ 1: 13:       - error: expected ASCII.digit
  1: 13:       -x
  1: 13:     - error recovery:
  1: 13:       - error token: abc
@@ -377,7 +377,7 @@ TEST_CASE("trace")
  1: 11: │  │  ├──literal: ,
  1: 12: │  │  ├──whitespace: ⟨SP⟩
  1: 13: │  │  ├──number:
- 1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
+ 1: 13: │  │  │  ├──error: expected ASCII.digit
  1: 13: │  │  │  └╳
  1: 13: │  │  ├──error recovery:
  1: 13: │  │  │  ├──error token: abc
@@ -406,7 +406,7 @@ TEST_CASE("trace")
  1: 11: │  │  ├──literal: ,
  1: 12: │  │  ├──whitespace: ⟨SP⟩
  1: 13: │  │  ├──number:
- 1: 13: │  │  │  ├──error: expected 'ASCII.digit' character
+ 1: 13: │  │  │  ├──error: expected ASCII.digit
  1: 13: │  │  │  └╳
  1: 13: │  │  ├──error recovery:
  1: 13: │  │  │  ├──error token: abc

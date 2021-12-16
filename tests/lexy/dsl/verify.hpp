@@ -243,9 +243,8 @@ public:
     {
         prefix();
 
-        _trace += "error: expected '";
+        _trace += "error: expected ";
         _trace += c;
-        _trace += "' character";
 
         _trace += " @";
         _trace += doctest::toString(pos);
