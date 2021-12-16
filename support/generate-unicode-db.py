@@ -136,7 +136,7 @@ def generate_lookup_tables(tables):
         yield '"'
         for idx, value in enumerate(ints):
             if idx > 0 and idx % 1024 == 0:
-                yield '"    \n"'
+                yield '"\n    "'
 
             char = chr(value)
             if char == '"':
