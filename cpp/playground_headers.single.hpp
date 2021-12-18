@@ -1399,6 +1399,29 @@ constexpr Iterator next(Iterator iter, std::size_t n)
     }
 }
 
+template <typename Iterator, typename Sentinel>
+constexpr Iterator next_clamped(Iterator iter, std::size_t n, Sentinel end)
+{
+    if constexpr (is_random_access_iterator<Iterator> && std::is_same_v<Iterator, Sentinel>)
+    {
+        auto remaining = std::size_t(end - iter);
+        if (remaining < n)
+            return end;
+        else
+            return iter + n;
+    }
+    else
+    {
+        for (auto i = 0u; i != n; ++i)
+        {
+            if (iter == end)
+                break;
+            ++iter;
+        }
+        return iter;
+    }
+}
+
 // Used for assertions.
 template <typename Iterator, typename Sentinel>
 constexpr bool precedes([[maybe_unused]] Iterator first, [[maybe_unused]] Sentinel after)
@@ -6808,11 +6831,54 @@ struct input_line_annotation
 
     /// true if the the range was spanning multiple line and needed to be truncated.
     bool truncated_multiline;
+    /// true if annotated includes the newline (this implies after.empty())
+    bool annotated_newline;
     /// true if end needed to be moved to a code point boundary.
     bool rounded_end;
 };
 
-/// Computes the annotation for e.g. an error message covering [begin_location, end).
+template <typename Input>
+constexpr void _get_input_line_annotation(input_line_annotation<Input>&                result,
+                                          lexy::lexeme_for<Input>                      line,
+                                          lexy::lexeme_for<Input>                      newline,
+                                          typename lexy::input_reader<Input>::iterator begin,
+                                          typename lexy::input_reader<Input>::iterator end)
+{
+    // At this point there are two cases:
+    // Either line.begin() <= begin < end <= newline.end()),
+    // or line.begin() <= begin == end == newline.end().
+
+    // We then round end to the code point boundary.
+    // Note that we don't round begin.
+    {
+        auto old_end = end;
+
+        using encoding = typename lexy::input_reader<Input>::encoding;
+        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
+
+        result.rounded_end = end != old_end;
+    }
+
+    // Now we can compute the annotation.
+    if (lexy::_detail::min_range_end(line.begin(), line.end(), end) == end)
+    {
+        // We have end <= line.end(),
+        // so line.end() is the end of after.
+        result.before    = {line.begin(), begin};
+        result.annotated = {begin, end};
+        result.after     = {end, line.end()};
+    }
+    else
+    {
+        // We have end > line.end(),
+        // so newline.end() is the end of annotated.
+        result.before            = {line.begin(), begin};
+        result.annotated         = {begin, newline.end()};
+        result.after             = {newline.end(), newline.end()};
+        result.annotated_newline = true;
+    }
+}
+
 template <typename Input, typename Counting>
 constexpr auto get_input_line_annotation(const Input&                           input,
                                          const input_location<Input, Counting>& begin_location,
@@ -6851,49 +6917,33 @@ constexpr auto get_input_line_annotation(const Input&                           
         result.truncated_multiline = true;
     }
 
-    // At this point there are two cases:
-    // Either line.begin() <= begin < end <= newline.end()),
-    // or line.begin() <= begin == end == newline.end().
-
-    // We then round end to the code point boundary.
-    // Note that we don't round begin.
-    {
-        auto old_end = end;
-
-        using encoding = typename lexy::input_reader<Input>::encoding;
-        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
-
-        result.rounded_end = end != old_end;
-    }
-
-    // Now we can compute the annotation.
-    if (lexy::_detail::min_range_end(line.begin(), line.end(), end) == end)
-    {
-        // We have end <= line.end(),
-        // so line.end() is the end of after.
-        result.before    = {line.begin(), begin};
-        result.annotated = {begin, end};
-        result.after     = {end, line.end()};
-    }
-    else
-    {
-        // We have end > line.end(),
-        // so newline.end() is the end of annotated.
-        result.before    = {line.begin(), begin};
-        result.annotated = {begin, newline.end()};
-        result.after     = {newline.end(), newline.end()};
-    }
-
+    _get_input_line_annotation(result, line, newline, begin, end);
     return result;
 }
 
+/// Computes the annotation for e.g. an error message covering [location, location + size).
 template <typename Input, typename Counting>
 constexpr auto get_input_line_annotation(const Input&                           input,
                                          const input_location<Input, Counting>& location,
                                          std::size_t                            size)
 {
-    return get_input_line_annotation(input, location,
-                                     lexy::_detail::next(location.position(), size));
+    input_line_annotation<Input> result{};
+    auto [line, newline] = _detail::get_input_line<Counting>(input, location.anchor()._line_begin);
+
+    // We don't want an empty annotation.
+    auto range_size = size == 0 ? 1 : size;
+
+    auto begin = location.position();
+    auto end   = _detail::next_clamped(location.position(), range_size, newline.end());
+    if (_detail::range_size(location.position(), end) < size)
+    {
+        // We didn't have enough of the current line to match the size request.
+        // As such, we needed to truncate it.
+        result.truncated_multiline = true;
+    }
+
+    _get_input_line_annotation(result, line, newline, begin, end);
+    return result;
 }
 } // namespace lexy
 
@@ -18424,10 +18474,9 @@ struct error_writer
         return out;
     }
 
-    template <typename OutputIt, typename Location, typename Writer>
+    template <typename OutputIt, typename Location, typename IteratorOrSize, typename Writer>
     OutputIt write_annotation(OutputIt out, annotation_kind kind, const Location& begin_location,
-                              typename lexy::input_reader<Input>::iterator end,
-                              const Writer&                                message) const
+                              IteratorOrSize end, const Writer& message) const
     {
         using namespace lexy::_detail;
 
@@ -18444,6 +18493,9 @@ struct error_writer
         };
 
         auto line = lexy::get_input_line_annotation(*input, begin_location, end);
+        // If we had to truncate the annotation but don't include the newline,
+        // this is a "multiline" annotation in the last line.
+        auto annotate_eof = line.truncated_multiline && !line.annotated_newline;
 
         //=== Line with file contents ===//
         // Location column.
@@ -18479,10 +18531,9 @@ struct error_writer
 
         // Then underline.
         auto underline_count = lexy::visualization_display_width(line.annotated, opts);
-        if (underline_count == 0)
-            // This is only possible if we have an error right at EOF.
-            underline_count = 1;
         for (auto i = 0u; i != underline_count; ++i)
+            out = write_str(out, underline(kind));
+        if (underline_count == 0 || annotate_eof)
             out = write_str(out, underline(kind));
         *out++ = ' ';
 
@@ -18532,8 +18583,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
 
-        out = writer.write_annotation(out, annotation_kind::primary, location,
-                                      lexy::_detail::next(error.position(), error.index() + 1),
+        out = writer.write_annotation(out, annotation_kind::primary, location, error.index() + 1,
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -18555,7 +18605,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
     {
-        out = writer.write_annotation(out, annotation_kind::primary, location, error.position(),
+        out = writer.write_annotation(out, annotation_kind::primary, location, 1u,
                                       [&](OutputIt out, lexy::visualization_options) {
                                           out = lexy::_detail::write_str(out, "expected ");
                                           out = lexy::_detail::write_str(out,

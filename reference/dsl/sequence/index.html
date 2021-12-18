@@ -96,7 +96,6 @@ The rule fails if either of them has failed.</p>
 <span class=tok-k>struct</span> <span class=tok-nc>production</span>
 <span class=tok-p>{</span>
     <span class=tok-c1>// Allow arbitrary spaces between individual tokens.</span>
-    <span class=tok-c1>// Note that this includes the individual characters of the name.</span>
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>whitespace</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span>
 
     <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
