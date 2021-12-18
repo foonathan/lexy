@@ -9,7 +9,6 @@ struct name
 struct production
 {
     // Allow arbitrary spaces between individual tokens.
-    // Note that this includes the individual characters of the name.
     static constexpr auto whitespace = dsl::ascii::space;
 
     static constexpr auto rule = [] {
