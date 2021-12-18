@@ -10,6 +10,9 @@ endLevel = 3
 [markup.asciidocExt.attributes]
 source-highlighter = "pygments"
 
+[security.exec]
+allow = ['^asciidoctor$']
+
 [params]
 tagline = "C++ parser combinator library"
 github = "https://github.com/foonathan/lexy"
