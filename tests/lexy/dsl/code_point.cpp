@@ -11,9 +11,9 @@ namespace
 {
 struct parse_result
 {
-    std::size_t      count;
-    cp_error         ec;
-    lexy::code_point value;
+    std::size_t count;
+    cp_error    ec;
+    char32_t    value;
 
     constexpr explicit operator bool() const
     {
@@ -55,7 +55,7 @@ TEST_CASE("ASCII code point parsing")
         constexpr auto a = parse("a");
         CHECK(a);
         CHECK(a.count == 1);
-        CHECK(a.value.value() == 'a');
+        CHECK(a.value == 'a');
 
         constexpr auto out_of_range = parse("\x90");
         CHECK(!out_of_range);
@@ -72,7 +72,7 @@ TEST_CASE("ASCII code point parsing")
             auto       result = parse(str);
             CHECK(result);
             CHECK(result.count == 1);
-            CHECK(result.value.value() == i);
+            CHECK(result.value == i);
         }
     }
     SUBCASE("non ASCII")
@@ -108,19 +108,19 @@ TEST_CASE("UTF-8 code point parsing")
         constexpr auto a = parse(LEXY_CHAR8_STR("a"));
         CHECK(a);
         CHECK(a.count == 1);
-        CHECK(a.value.value() == 'a');
+        CHECK(a.value == 'a');
         constexpr auto umlaut = parse(LEXY_CHAR8_STR("ä"));
         CHECK(umlaut);
         CHECK(umlaut.count == 2);
-        CHECK(umlaut.value.value() == 0xE4);
+        CHECK(umlaut.value == 0xE4);
         constexpr auto euro = parse(LEXY_CHAR8_STR("€"));
         CHECK(euro);
         CHECK(euro.count == 3);
-        CHECK(euro.value.value() == 0x20AC);
+        CHECK(euro.value == 0x20AC);
         constexpr auto emojii = parse(LEXY_CHAR8_STR("🙂"));
         CHECK(emojii);
         CHECK(emojii.count == 4);
-        CHECK(emojii.value.value() == 0x1F642);
+        CHECK(emojii.value == 0x1F642);
 
         constexpr auto leads_with_trailing = parse_seq(0b1000'0001);
         CHECK(!leads_with_trailing);
@@ -213,7 +213,7 @@ TEST_CASE("UTF-8 code point parsing")
             auto               result = parse(str);
             CHECK(result);
             CHECK(result.count == 1);
-            CHECK(result.value.value() == i);
+            CHECK(result.value == i);
         }
     }
 }
@@ -232,19 +232,19 @@ TEST_CASE("UTF-16 code point parsing")
         constexpr auto a = parse(u"a");
         CHECK(a);
         CHECK(a.count == 1);
-        CHECK(a.value.value() == 'a');
+        CHECK(a.value == 'a');
         constexpr auto umlaut = parse(u"ä");
         CHECK(umlaut);
         CHECK(umlaut.count == 1);
-        CHECK(umlaut.value.value() == 0xE4);
+        CHECK(umlaut.value == 0xE4);
         constexpr auto euro = parse(u"€");
         CHECK(euro);
         CHECK(euro.count == 1);
-        CHECK(euro.value.value() == 0x20AC);
+        CHECK(euro.value == 0x20AC);
         constexpr auto emojii = parse(u"🙂");
         CHECK(emojii);
         CHECK(emojii.count == 2);
-        CHECK(emojii.value.value() == 0x1F642);
+        CHECK(emojii.value == 0x1F642);
 
         constexpr char16_t leads_with_trailing_str[] = {0xDC44, 0x0};
         constexpr auto     leads_with_trailing       = parse(leads_with_trailing_str);
@@ -268,7 +268,7 @@ TEST_CASE("UTF-16 code point parsing")
             auto           result = parse(str);
             CHECK(result);
             CHECK(result.count == 1);
-            CHECK(result.value.value() == i);
+            CHECK(result.value == i);
         }
     }
     SUBCASE("BMP")
@@ -298,7 +298,7 @@ TEST_CASE("UTF-16 code point parsing")
             {
                 CHECK(result);
                 CHECK(result.count == 1);
-                CHECK(result.value.value() == i);
+                CHECK(result.value == i);
             }
         }
     }
@@ -318,19 +318,19 @@ TEST_CASE("UTF-32 code point parsing")
         constexpr auto a = parse(U"a");
         CHECK(a);
         CHECK(a.count == 1);
-        CHECK(a.value.value() == 'a');
+        CHECK(a.value == 'a');
         constexpr auto umlaut = parse(U"ä");
         CHECK(umlaut);
         CHECK(umlaut.count == 1);
-        CHECK(umlaut.value.value() == 0xE4);
+        CHECK(umlaut.value == 0xE4);
         constexpr auto euro = parse(U"€");
         CHECK(euro);
         CHECK(euro.count == 1);
-        CHECK(euro.value.value() == 0x20AC);
+        CHECK(euro.value == 0x20AC);
         constexpr auto emojii = parse(U"🙂");
         CHECK(emojii);
         CHECK(emojii.count == 1);
-        CHECK(emojii.value.value() == 0x1F642);
+        CHECK(emojii.value == 0x1F642);
 
         constexpr char32_t surrogate_str[] = {0xD844, 0x0};
         constexpr auto     surrogate       = parse(surrogate_str);
@@ -354,7 +354,7 @@ TEST_CASE("UTF-32 code point parsing")
             auto           result = parse(str);
             CHECK(result);
             CHECK(result.count == 1);
-            CHECK(result.value.value() == i);
+            CHECK(result.value == i);
         }
     }
     SUBCASE("BMP")
@@ -376,7 +376,7 @@ TEST_CASE("UTF-32 code point parsing")
             {
                 CHECK(result);
                 CHECK(result.count == 1);
-                CHECK(result.value.value() == i);
+                CHECK(result.value == i);
             }
         }
     }

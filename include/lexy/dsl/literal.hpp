@@ -98,8 +98,7 @@ struct _lcp : token_base<_lcp<Cp>>
             std::size_t length;
 
             constexpr data_t()
-            : str{},
-              length(lexy::_detail::encode_code_point<Encoding>(lexy::code_point(Cp), str, 4))
+            : str{}, length(lexy::_detail::encode_code_point<Encoding>(Cp, str, 4))
             {}
         } data;
 

@@ -6,6 +6,7 @@
 
 #include <lexy/_detail/code_point.hpp>
 #include <lexy/callback/base.hpp>
+#include <lexy/code_point.hpp>
 #include <lexy/encoding.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -62,14 +63,14 @@ struct _as_string
     constexpr String operator()(code_point cp) const
     {
         typename Encoding::char_type buffer[4] = {};
-        auto                         size = _detail::encode_code_point<Encoding>(cp, buffer, 4);
+        auto size = _detail::encode_code_point<Encoding>(cp.value(), buffer, 4);
         return String(buffer, buffer + size);
     }
     template <typename Str = String>
     constexpr String operator()(const typename Str::allocator_type& allocator, code_point cp) const
     {
         typename Encoding::char_type buffer[4] = {};
-        auto                         size = _detail::encode_code_point<Encoding>(cp, buffer, 4);
+        auto size = _detail::encode_code_point<Encoding>(cp.value(), buffer, 4);
         return String(buffer, buffer + size, allocator);
     }
 
@@ -101,7 +102,7 @@ struct _as_string
         void operator()(code_point cp)
         {
             typename Encoding::char_type buffer[4] = {};
-            auto                         size = _detail::encode_code_point<Encoding>(cp, buffer, 4);
+            auto size = _detail::encode_code_point<Encoding>(cp.value(), buffer, 4);
             _result.append(buffer, buffer + size);
         }
 

@@ -4,54 +4,50 @@
 #ifndef LEXY_DETAIL_CODE_POINT_HPP_INCLUDED
 #define LEXY_DETAIL_CODE_POINT_HPP_INCLUDED
 
-#include <lexy/code_point.hpp>
 #include <lexy/input/base.hpp>
 
 //=== encoding ===//
 namespace lexy::_detail
 {
 template <typename Encoding>
-constexpr std::size_t encode_code_point(code_point cp, typename Encoding::char_type* buffer,
+constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_type* buffer,
                                         std::size_t size)
 {
     if constexpr (std::is_same_v<Encoding, lexy::ascii_encoding>)
     {
-        LEXY_PRECONDITION(cp.is_ascii());
         LEXY_PRECONDITION(size >= 1);
 
-        *buffer = char(cp.value());
+        *buffer = char(cp);
         return 1;
     }
     else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
     {
-        LEXY_PRECONDITION(cp.is_valid());
-
         // Taken from http://www.herongyang.com/Unicode/UTF-8-UTF-8-Encoding-Algorithm.html.
-        if (cp.is_ascii())
+        if (cp <= 0x7F)
         {
             LEXY_PRECONDITION(size >= 1);
 
-            buffer[0] = LEXY_CHAR8_T(cp.value());
+            buffer[0] = LEXY_CHAR8_T(cp);
             return 1;
         }
-        else if (cp.value() <= 0x07'FF)
+        else if (cp <= 0x07'FF)
         {
             LEXY_PRECONDITION(size >= 2);
 
-            auto first  = (cp.value() >> 6) & 0x1F;
-            auto second = (cp.value() >> 0) & 0x3F;
+            auto first  = (cp >> 6) & 0x1F;
+            auto second = (cp >> 0) & 0x3F;
 
             buffer[0] = LEXY_CHAR8_T(0xC0 | first);
             buffer[1] = LEXY_CHAR8_T(0x80 | second);
             return 2;
         }
-        else if (cp.value() <= 0xFF'FF)
+        else if (cp <= 0xFF'FF)
         {
             LEXY_PRECONDITION(size >= 3);
 
-            auto first  = (cp.value() >> 12) & 0x0F;
-            auto second = (cp.value() >> 6) & 0x3F;
-            auto third  = (cp.value() >> 0) & 0x3F;
+            auto first  = (cp >> 12) & 0x0F;
+            auto second = (cp >> 6) & 0x3F;
+            auto third  = (cp >> 0) & 0x3F;
 
             buffer[0] = LEXY_CHAR8_T(0xE0 | first);
             buffer[1] = LEXY_CHAR8_T(0x80 | second);
@@ -62,10 +58,10 @@ constexpr std::size_t encode_code_point(code_point cp, typename Encoding::char_t
         {
             LEXY_PRECONDITION(size >= 4);
 
-            auto first  = (cp.value() >> 18) & 0x07;
-            auto second = (cp.value() >> 12) & 0x3F;
-            auto third  = (cp.value() >> 6) & 0x3F;
-            auto fourth = (cp.value() >> 0) & 0x3F;
+            auto first  = (cp >> 18) & 0x07;
+            auto second = (cp >> 12) & 0x3F;
+            auto third  = (cp >> 6) & 0x3F;
+            auto fourth = (cp >> 0) & 0x3F;
 
             buffer[0] = LEXY_CHAR8_T(0xF0 | first);
             buffer[1] = LEXY_CHAR8_T(0x80 | second);
@@ -76,13 +72,11 @@ constexpr std::size_t encode_code_point(code_point cp, typename Encoding::char_t
     }
     else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
     {
-        LEXY_PRECONDITION(cp.is_valid());
-
-        if (cp.is_bmp())
+        if (cp <= 0xFF'FF)
         {
             LEXY_PRECONDITION(size >= 1);
 
-            buffer[0] = char16_t(cp.value());
+            buffer[0] = char16_t(cp);
             return 1;
         }
         else
@@ -91,7 +85,7 @@ constexpr std::size_t encode_code_point(code_point cp, typename Encoding::char_t
             // https://en.wikipedia.org/wiki/UTF-16#Code_points_from_U+010000_to_U+10FFFF.
             LEXY_PRECONDITION(size >= 2);
 
-            auto u_prime       = cp.value() - 0x1'0000;
+            auto u_prime       = cp - 0x1'0000;
             auto high_ten_bits = u_prime >> 10;
             auto low_ten_bits  = u_prime & 0b0000'0011'1111'1111;
 
@@ -102,10 +96,9 @@ constexpr std::size_t encode_code_point(code_point cp, typename Encoding::char_t
     }
     else if constexpr (std::is_same_v<Encoding, lexy::utf32_encoding>)
     {
-        LEXY_PRECONDITION(cp.is_valid());
         LEXY_PRECONDITION(size >= 1);
 
-        *buffer = char32_t(cp.value());
+        *buffer = char32_t(cp);
         return 1;
     }
     else
@@ -138,7 +131,7 @@ enum class cp_error
 template <typename Reader>
 struct cp_result
 {
-    lexy::code_point          cp;
+    char32_t                  cp;
     cp_error                  error;
     typename Reader::iterator end;
 };
@@ -154,8 +147,8 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         auto cur = reader.peek();
         reader.bump();
 
-        auto cp = lexy::code_point(static_cast<char32_t>(cur));
-        if (cp.is_ascii())
+        auto cp = static_cast<char32_t>(cur);
+        if (cp <= 0x7F)
             return {cp, cp_error::success, reader.position()};
         else
             return {cp, cp_error::out_of_range, reader.position()};
@@ -179,7 +172,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             // ASCII character.
             reader.bump();
-            return {lexy::code_point(first), cp_error::success, reader.position()};
+            return {first, cp_error::success, reader.position()};
         }
         else if ((first & ~payload_cont) == pattern_cont)
         {
@@ -200,9 +193,9 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             // C0 and C1 are overlong ASCII.
             if (first == 0xC0 || first == 0xC1)
-                return {lexy::code_point(result), cp_error::overlong_sequence, reader.position()};
+                return {result, cp_error::overlong_sequence, reader.position()};
             else
-                return {lexy::code_point(result), cp_error::success, reader.position()};
+                return {result, cp_error::success, reader.position()};
         }
         else if ((first & ~payload_lead3) == pattern_lead3)
         {
@@ -224,8 +217,8 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
             result <<= 6;
             result |= char32_t(third & payload_cont);
 
-            auto cp = lexy::code_point(result);
-            if (cp.is_surrogate())
+            auto cp = result;
+            if (0xD800 <= cp && cp <= 0xDFFF)
                 return {cp, cp_error::surrogate, reader.position()};
             else if (first == 0xE0 && second < 0xA0)
                 return {cp, cp_error::overlong_sequence, reader.position()};
@@ -259,8 +252,8 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
             result <<= 6;
             result |= char32_t(fourth & payload_cont);
 
-            auto cp = lexy::code_point(result);
-            if (!cp.is_valid())
+            auto cp = result;
+            if (cp > 0x10'FFFF)
                 return {cp, cp_error::out_of_range, reader.position()};
             else if (first == 0xF0 && second < 0x90)
                 return {cp, cp_error::overlong_sequence, reader.position()};
@@ -300,7 +293,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
             result <<= 10;
             result |= char32_t(second & payload2);
             result |= 0x10000;
-            return {lexy::code_point(result), cp_error::success, reader.position()};
+            return {result, cp_error::success, reader.position()};
         }
         else if ((first & ~payload2) == pattern2)
         {
@@ -310,7 +303,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             // Single code unit code point; always valid.
             reader.bump();
-            return {lexy::code_point(first), cp_error::success, reader.position()};
+            return {first, cp_error::success, reader.position()};
         }
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf32_encoding>)
@@ -321,10 +314,10 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         auto cur = reader.peek();
         reader.bump();
 
-        auto cp = lexy::code_point(cur);
-        if (!cp.is_valid())
+        auto cp = cur;
+        if (cp > 0x10'FFFF)
             return {cp, cp_error::out_of_range, reader.position()};
-        else if (cp.is_surrogate())
+        else if (0xD800 <= cp && cp <= 0xDFFF)
             return {cp, cp_error::surrogate, reader.position()};
         else
             return {cp, cp_error::success, reader.position()};

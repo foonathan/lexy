@@ -5,6 +5,7 @@
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
 #include <lexy/_detail/code_point.hpp>
+#include <lexy/code_point.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 
@@ -45,7 +46,7 @@ struct _cp : token_base<_cp<Predicate>>
             // Check whether it matches the predicate.
             if constexpr (!std::is_void_v<Predicate>)
             {
-                if (!Predicate()(result.cp))
+                if (!Predicate()(lexy::code_point(result.cp)))
                 {
                     ec = cp_error::predicate_failure;
                     return false;

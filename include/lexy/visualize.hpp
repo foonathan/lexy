@@ -410,7 +410,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
             {
                 // Consume and visualize.
                 reader.set_position(result.end);
-                out = visualize_to(out, result.cp, opts);
+                out = visualize_to(out, lexy::code_point(result.cp), opts);
             }
             else
             {
