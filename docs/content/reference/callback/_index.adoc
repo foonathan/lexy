@@ -21,7 +21,7 @@ template <typename T, typename ... Args>
 concept callback-for = callback<T>
   && requires(const T& cb, Args&&... args) {
       { cb(std::forward<Args>(args)...) }
-        -> std::same_as<typename T::return_type;
+        -> std::same_as<typename T::return_type>;
     };
 
 template <typename T, typename State, typename ... Args>
