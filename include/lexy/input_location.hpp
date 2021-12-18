@@ -338,11 +338,54 @@ struct input_line_annotation
 
     /// true if the the range was spanning multiple line and needed to be truncated.
     bool truncated_multiline;
+    /// true if annotated includes the newline (this implies after.empty())
+    bool annotated_newline;
     /// true if end needed to be moved to a code point boundary.
     bool rounded_end;
 };
 
-/// Computes the annotation for e.g. an error message covering [begin_location, end).
+template <typename Input>
+constexpr void _get_input_line_annotation(input_line_annotation<Input>&                result,
+                                          lexy::lexeme_for<Input>                      line,
+                                          lexy::lexeme_for<Input>                      newline,
+                                          typename lexy::input_reader<Input>::iterator begin,
+                                          typename lexy::input_reader<Input>::iterator end)
+{
+    // At this point there are two cases:
+    // Either line.begin() <= begin < end <= newline.end()),
+    // or line.begin() <= begin == end == newline.end().
+
+    // We then round end to the code point boundary.
+    // Note that we don't round begin.
+    {
+        auto old_end = end;
+
+        using encoding = typename lexy::input_reader<Input>::encoding;
+        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
+
+        result.rounded_end = end != old_end;
+    }
+
+    // Now we can compute the annotation.
+    if (lexy::_detail::min_range_end(line.begin(), line.end(), end) == end)
+    {
+        // We have end <= line.end(),
+        // so line.end() is the end of after.
+        result.before    = {line.begin(), begin};
+        result.annotated = {begin, end};
+        result.after     = {end, line.end()};
+    }
+    else
+    {
+        // We have end > line.end(),
+        // so newline.end() is the end of annotated.
+        result.before            = {line.begin(), begin};
+        result.annotated         = {begin, newline.end()};
+        result.after             = {newline.end(), newline.end()};
+        result.annotated_newline = true;
+    }
+}
+
 template <typename Input, typename Counting>
 constexpr auto get_input_line_annotation(const Input&                           input,
                                          const input_location<Input, Counting>& begin_location,
@@ -381,49 +424,33 @@ constexpr auto get_input_line_annotation(const Input&                           
         result.truncated_multiline = true;
     }
 
-    // At this point there are two cases:
-    // Either line.begin() <= begin < end <= newline.end()),
-    // or line.begin() <= begin == end == newline.end().
-
-    // We then round end to the code point boundary.
-    // Note that we don't round begin.
-    {
-        auto old_end = end;
-
-        using encoding = typename lexy::input_reader<Input>::encoding;
-        end            = _detail::find_cp_boundary<encoding>(end, newline.end());
-
-        result.rounded_end = end != old_end;
-    }
-
-    // Now we can compute the annotation.
-    if (lexy::_detail::min_range_end(line.begin(), line.end(), end) == end)
-    {
-        // We have end <= line.end(),
-        // so line.end() is the end of after.
-        result.before    = {line.begin(), begin};
-        result.annotated = {begin, end};
-        result.after     = {end, line.end()};
-    }
-    else
-    {
-        // We have end > line.end(),
-        // so newline.end() is the end of annotated.
-        result.before    = {line.begin(), begin};
-        result.annotated = {begin, newline.end()};
-        result.after     = {newline.end(), newline.end()};
-    }
-
+    _get_input_line_annotation(result, line, newline, begin, end);
     return result;
 }
 
+/// Computes the annotation for e.g. an error message covering [location, location + size).
 template <typename Input, typename Counting>
 constexpr auto get_input_line_annotation(const Input&                           input,
                                          const input_location<Input, Counting>& location,
                                          std::size_t                            size)
 {
-    return get_input_line_annotation(input, location,
-                                     lexy::_detail::next(location.position(), size));
+    input_line_annotation<Input> result{};
+    auto [line, newline] = _detail::get_input_line<Counting>(input, location.anchor()._line_begin);
+
+    // We don't want an empty annotation.
+    auto range_size = size == 0 ? 1 : size;
+
+    auto begin = location.position();
+    auto end   = _detail::next_clamped(location.position(), range_size, newline.end());
+    if (_detail::range_size(location.position(), end) < size)
+    {
+        // We didn't have enough of the current line to match the size request.
+        // As such, we needed to truncate it.
+        result.truncated_multiline = true;
+    }
+
+    _get_input_line_annotation(result, line, newline, begin, end);
+    return result;
 }
 } // namespace lexy
 

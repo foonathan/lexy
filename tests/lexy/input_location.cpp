@@ -215,20 +215,36 @@ TEST_CASE("_detail::find_cp_boundary()")
 
 TEST_CASE("get_input_line_annotation()")
 {
+    auto get_annotation = [](const auto& input, const auto& location, std::size_t size) {
+        auto a = lexy::get_input_line_annotation(input, location, size);
+        auto b = lexy::get_input_line_annotation(input, location, location.position() + size);
+        CHECK(a.before.begin() == b.before.begin());
+        CHECK(a.before.end() == b.before.end());
+        CHECK(a.annotated.begin() == b.annotated.begin());
+        CHECK(a.annotated.end() == b.annotated.end());
+        CHECK(a.after.begin() == b.after.begin());
+        CHECK(a.after.end() == b.after.end());
+        CHECK(a.truncated_multiline == b.truncated_multiline);
+        CHECK(a.annotated_newline == b.annotated_newline);
+        CHECK(a.rounded_end == b.rounded_end);
+        return a;
+    };
+
     SUBCASE("basic")
     {
         auto input = lexy::zstring_input("0123456789\n");
 
         auto begin      = lexy::get_input_location(input, input.data() + 3);
-        auto annotation = lexy::get_input_line_annotation(input, begin, 3);
+        auto annotation = get_annotation(input, begin, 3);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 3);
         CHECK(annotation.annotated.begin() == input.data() + 3);
         CHECK(annotation.annotated.end() == input.data() + 6);
         CHECK(annotation.after.begin() == input.data() + 6);
         CHECK(annotation.after.end() == input.data() + 10);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
 
     SUBCASE("empty before newline")
@@ -236,45 +252,48 @@ TEST_CASE("get_input_line_annotation()")
         auto input = lexy::zstring_input("0123456789\n");
 
         auto begin      = lexy::get_input_location(input, input.data() + 3);
-        auto annotation = lexy::get_input_line_annotation(input, begin, begin.position());
+        auto annotation = get_annotation(input, begin, 0);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 3);
         CHECK(annotation.annotated.begin() == input.data() + 3);
         CHECK(annotation.annotated.end() == input.data() + 4);
         CHECK(annotation.after.begin() == input.data() + 4);
         CHECK(annotation.after.end() == input.data() + 10);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
     SUBCASE("empty at newline")
     {
         auto input = lexy::zstring_input("0123456789\n");
 
         auto begin      = lexy::get_input_location(input, input.data() + 10);
-        auto annotation = lexy::get_input_line_annotation(input, begin, begin.position());
+        auto annotation = get_annotation(input, begin, 0);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 10);
         CHECK(annotation.annotated.begin() == input.data() + 10);
         CHECK(annotation.annotated.end() == input.data() + 11);
         CHECK(annotation.after.begin() == input.data() + 11);
         CHECK(annotation.after.end() == input.data() + 11);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
     SUBCASE("empty after newline")
     {
         auto input = lexy::zstring_input("0123456789\n");
 
         auto begin      = lexy::get_input_location(input, input.data() + 11);
-        auto annotation = lexy::get_input_line_annotation(input, begin, begin.position());
+        auto annotation = get_annotation(input, begin, 0);
         CHECK(annotation.before.begin() == input.data() + 11);
         CHECK(annotation.before.end() == input.data() + 11);
         CHECK(annotation.annotated.begin() == input.data() + 11);
         CHECK(annotation.annotated.end() == input.data() + 11);
         CHECK(annotation.after.begin() == input.data() + 11);
         CHECK(annotation.after.end() == input.data() + 11);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
 
     SUBCASE("multiline")
@@ -282,30 +301,48 @@ TEST_CASE("get_input_line_annotation()")
         auto input = lexy::zstring_input("01234\n6789");
 
         auto begin      = lexy::get_input_location(input, input.data() + 3);
-        auto annotation = lexy::get_input_line_annotation(input, begin, 5);
+        auto annotation = get_annotation(input, begin, 5);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 3);
         CHECK(annotation.annotated.begin() == input.data() + 3);
         CHECK(annotation.annotated.end() == input.data() + 6);
         CHECK(annotation.after.begin() == input.data() + 6);
         CHECK(annotation.after.end() == input.data() + 6);
-        CHECK(!annotation.rounded_end);
         CHECK(annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
     SUBCASE("including newline")
     {
         auto input = lexy::zstring_input("01234\n6789");
 
         auto begin      = lexy::get_input_location(input, input.data() + 3);
-        auto annotation = lexy::get_input_line_annotation(input, begin, 3);
+        auto annotation = get_annotation(input, begin, 3);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 3);
         CHECK(annotation.annotated.begin() == input.data() + 3);
         CHECK(annotation.annotated.end() == input.data() + 6);
         CHECK(annotation.after.begin() == input.data() + 6);
         CHECK(annotation.after.end() == input.data() + 6);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
+    }
+    SUBCASE("only newline")
+    {
+        auto input = lexy::zstring_input("01234\n6789");
+
+        auto begin      = lexy::get_input_location(input, input.data() + 5);
+        auto annotation = get_annotation(input, begin, 1);
+        CHECK(annotation.before.begin() == input.data());
+        CHECK(annotation.before.end() == input.data() + 5);
+        CHECK(annotation.annotated.begin() == input.data() + 5);
+        CHECK(annotation.annotated.end() == input.data() + 6);
+        CHECK(annotation.after.begin() == input.data() + 6);
+        CHECK(annotation.after.end() == input.data() + 6);
+        CHECK(!annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
 
     SUBCASE("rounding")
@@ -313,32 +350,84 @@ TEST_CASE("get_input_line_annotation()")
         auto input = lexy::zstring_input<lexy::utf8_encoding>(u8"0123\U0010FFFF456");
 
         auto begin      = lexy::get_input_location(input, input.data() + 3);
-        auto annotation = lexy::get_input_line_annotation(input, begin, 2);
+        auto annotation = get_annotation(input, begin, 2);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 3);
         CHECK(annotation.annotated.begin() == input.data() + 3);
         CHECK(annotation.annotated.end() == input.data() + 8);
         CHECK(annotation.after.begin() == input.data() + 8);
         CHECK(annotation.after.end() == input.data() + 11);
-        CHECK(annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(annotation.rounded_end);
     }
 
-    SUBCASE("error at end")
+    SUBCASE("error at end without newline")
     {
-        char str[] = {'0', '1', '2', '3', '4', '\n'};
+        char str[] = {'0', '1', '2', '3', '4', '5'};
         auto input = lexy::string_input(str, sizeof(str));
 
         auto begin      = lexy::get_input_location(input, input.data() + 5);
-        auto annotation = lexy::get_input_line_annotation(input, begin, 1);
+        auto annotation = get_annotation(input, begin, 1);
         CHECK(annotation.before.begin() == input.data());
         CHECK(annotation.before.end() == input.data() + 5);
         CHECK(annotation.annotated.begin() == input.data() + 5);
         CHECK(annotation.annotated.end() == input.data() + 6);
         CHECK(annotation.after.begin() == input.data() + 6);
         CHECK(annotation.after.end() == input.data() + 6);
-        CHECK(!annotation.rounded_end);
         CHECK(!annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
+    }
+    SUBCASE("error at end with newline")
+    {
+        char str[] = {'0', '1', '2', '3', '4', '\n'};
+        auto input = lexy::string_input(str, sizeof(str));
+
+        auto begin      = lexy::get_input_location(input, input.data() + 5);
+        auto annotation = get_annotation(input, begin, 1);
+        CHECK(annotation.before.begin() == input.data());
+        CHECK(annotation.before.end() == input.data() + 5);
+        CHECK(annotation.annotated.begin() == input.data() + 5);
+        CHECK(annotation.annotated.end() == input.data() + 6);
+        CHECK(annotation.after.begin() == input.data() + 6);
+        CHECK(annotation.after.end() == input.data() + 6);
+        CHECK(!annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
+    }
+
+    SUBCASE("clamp size without newline")
+    {
+        auto input = lexy::zstring_input("0123456789A");
+
+        auto begin      = lexy::get_input_location(input, input.data() + 3);
+        auto annotation = lexy::get_input_line_annotation(input, begin, 10);
+        CHECK(annotation.before.begin() == input.data());
+        CHECK(annotation.before.end() == input.data() + 3);
+        CHECK(annotation.annotated.begin() == input.data() + 3);
+        CHECK(annotation.annotated.end() == input.data() + 11);
+        CHECK(annotation.after.begin() == input.data() + 11);
+        CHECK(annotation.after.end() == input.data() + 11);
+        CHECK(annotation.truncated_multiline);
+        CHECK(!annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
+    }
+    SUBCASE("clamp size with newline")
+    {
+        auto input = lexy::zstring_input("0123456789\n");
+
+        auto begin      = lexy::get_input_location(input, input.data() + 3);
+        auto annotation = lexy::get_input_line_annotation(input, begin, 10);
+        CHECK(annotation.before.begin() == input.data());
+        CHECK(annotation.before.end() == input.data() + 3);
+        CHECK(annotation.annotated.begin() == input.data() + 3);
+        CHECK(annotation.annotated.end() == input.data() + 11);
+        CHECK(annotation.after.begin() == input.data() + 11);
+        CHECK(annotation.after.end() == input.data() + 11);
+        CHECK(annotation.truncated_multiline);
+        CHECK(annotation.annotated_newline);
+        CHECK(!annotation.rounded_end);
     }
 }
 

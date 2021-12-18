@@ -133,9 +133,11 @@ TEST_CASE("_detail::write_error")
      |      ^^^^ error tag
 )*");
     }
+
     SUBCASE("error at eof")
     {
-        auto input = lexy::zstring_input("hello");
+        const char str[] = {'h', 'e', 'l', 'l', 'o'};
+        auto       input = lexy::string_input(str, sizeof(str));
 
         auto context = lexy::error_context(production{}, input, input.data());
         lexy::string_error<error_tag> error(input.data() + 5);
@@ -143,6 +145,32 @@ TEST_CASE("_detail::write_error")
      |
    1 | hello
      |      ^ error tag
+)*");
+    }
+    SUBCASE("expected literal at eof")
+    {
+        const char str[] = {'h', 'e', 'l', 'l', 'o'};
+        auto       input = lexy::string_input(str, sizeof(str));
+
+        auto context = lexy::error_context(production{}, input, input.data());
+        lexy::string_error<lexy::expected_literal> error(input.data() + 5, "abc", 0);
+        CHECK(write(context, error) == R"*(error: while parsing production
+     |
+   1 | hello
+     |      ^ expected 'abc'
+)*");
+    }
+    SUBCASE("expected literal spanning eof")
+    {
+        const char str[] = {'h', 'e', 'l', 'l', 'o'};
+        auto       input = lexy::string_input(str, sizeof(str));
+
+        auto context = lexy::error_context(production{}, input, input.data());
+        lexy::string_error<lexy::expected_literal> error(input.data() + 4, "abc", 1);
+        CHECK(write(context, error) == R"*(error: while parsing production
+     |
+   1 | hello
+     |     ^^ expected 'abc'
 )*");
     }
 

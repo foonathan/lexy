@@ -55,6 +55,29 @@ constexpr Iterator next(Iterator iter, std::size_t n)
     }
 }
 
+template <typename Iterator, typename Sentinel>
+constexpr Iterator next_clamped(Iterator iter, std::size_t n, Sentinel end)
+{
+    if constexpr (is_random_access_iterator<Iterator> && std::is_same_v<Iterator, Sentinel>)
+    {
+        auto remaining = std::size_t(end - iter);
+        if (remaining < n)
+            return end;
+        else
+            return iter + n;
+    }
+    else
+    {
+        for (auto i = 0u; i != n; ++i)
+        {
+            if (iter == end)
+                break;
+            ++iter;
+        }
+        return iter;
+    }
+}
+
 // Used for assertions.
 template <typename Iterator, typename Sentinel>
 constexpr bool precedes([[maybe_unused]] Iterator first, [[maybe_unused]] Sentinel after)

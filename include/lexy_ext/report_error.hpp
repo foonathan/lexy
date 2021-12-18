@@ -72,10 +72,9 @@ struct error_writer
         return out;
     }
 
-    template <typename OutputIt, typename Location, typename Writer>
+    template <typename OutputIt, typename Location, typename IteratorOrSize, typename Writer>
     OutputIt write_annotation(OutputIt out, annotation_kind kind, const Location& begin_location,
-                              typename lexy::input_reader<Input>::iterator end,
-                              const Writer&                                message) const
+                              IteratorOrSize end, const Writer& message) const
     {
         using namespace lexy::_detail;
 
@@ -92,6 +91,9 @@ struct error_writer
         };
 
         auto line = lexy::get_input_line_annotation(*input, begin_location, end);
+        // If we had to truncate the annotation but don't include the newline,
+        // this is a "multiline" annotation in the last line.
+        auto annotate_eof = line.truncated_multiline && !line.annotated_newline;
 
         //=== Line with file contents ===//
         // Location column.
@@ -127,10 +129,9 @@ struct error_writer
 
         // Then underline.
         auto underline_count = lexy::visualization_display_width(line.annotated, opts);
-        if (underline_count == 0)
-            // This is only possible if we have an error right at EOF.
-            underline_count = 1;
         for (auto i = 0u; i != underline_count; ++i)
+            out = write_str(out, underline(kind));
+        if (underline_count == 0 || annotate_eof)
             out = write_str(out, underline(kind));
         *out++ = ' ';
 
@@ -180,8 +181,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     {
         auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
 
-        out = writer.write_annotation(out, annotation_kind::primary, location,
-                                      lexy::_detail::next(error.position(), error.index() + 1),
+        out = writer.write_annotation(out, annotation_kind::primary, location, error.index() + 1,
                                       [&](OutputIt out, lexy::visualization_options opts) {
                                           out = lexy::_detail::write_str(out, "expected '");
                                           out = lexy::visualize_to(out, string, opts);
@@ -203,7 +203,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
     {
-        out = writer.write_annotation(out, annotation_kind::primary, location, error.position(),
+        out = writer.write_annotation(out, annotation_kind::primary, location, 1u,
                                       [&](OutputIt out, lexy::visualization_options) {
                                           out = lexy::_detail::write_str(out, "expected ");
                                           out = lexy::_detail::write_str(out,

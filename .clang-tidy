@@ -2,6 +2,7 @@ Checks: >
     -*,
     bugprone-*,
     -bugprone-exception-escape,
+    -bugprone-easily-swappable-parameters,
     clang-analyzer-*,
     misc-*,
     -misc-definitions-in-headers,
