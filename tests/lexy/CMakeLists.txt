@@ -48,6 +48,7 @@ set(tests
         dsl/branch.cpp
         dsl/byte.cpp
         dsl/capture.cpp
+        dsl/char_class.cpp
         dsl/choice.cpp
         dsl/code_point.cpp
         dsl/combination.cpp
@@ -66,7 +67,6 @@ set(tests
         dsl/if.cpp
         dsl/integer.cpp
         dsl/member.cpp
-        dsl/minus.cpp
         dsl/newline.cpp
         dsl/option.cpp
         dsl/peek.cpp

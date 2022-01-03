@@ -55,58 +55,45 @@ The tag types `binary`, `octal`, `decimal`, `hex_lower`, `hex_upper`, and `hex` 
 ====
 
 [#zero]
-== Token rule `lexy::dsl::zero`
+== Char class rule `lexy::dsl::zero`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
-    constexpr _token-rule_ auto zero;
+    constexpr _char-class-rule_ auto zero;
 }
 ----
 
 [.lead]
-`zero` is a {{% token-rule %}} that matches `0`.
+`zero` is a {{% char-class-rule %}} that matches `0`.
 
-Matching::
-  Matches and consumes {{% docref "lexy::dsl::lit_c" "`lexy::dsl::lit_c<'0'>`" %}}, i.e. `0`.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"digit.zero"`): instead of {{% docref "lexy::expected_literal" %}}; at the starting reader position.
-  The rule then fails.
-Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
+Its name is `digit.zero`.
+In the parse tree, it creates a single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example zero "The number zero" %}}
 
 [#digit]
-== Token rule `lexy::dsl::digit`
+== Char class rule `lexy::dsl::digit`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
     template <typename Base = decimal>
-    constexpr _token-rule_ auto digit;
+    constexpr _char-class-rule_ auto digit;
 }
 ----
 
 [.lead]
-`digit` is a {{% token-rule %}} that matches one digit of the specified `Base`.
+`digit` is a {{% char-class-rule %}} that matches one digit of the specified `Base`.
 
-Requires::
-  `Base` must be one of the <<bases>>.
-Matching::
-  Matches and consumes one of the digits of `Base` specified in the table above.
-  Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"digit.<base>"`): at the starting reader position.
-  The rule then fails.
-Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
+Its name is `digit.<base>`.
+In the parse tree, it creates a single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::digit_token_kind`.
 
 {{% playground-example digit "A hexadecimal digit, upper-case letters only" %}}
 
-NOTE: The only difference between `lexy::dsl::digit<decimal>` and {{% docref "lexy::dsl::ascii::digit" %}} is the name of the character class in the error.
+NOTE: The only difference between `lexy::dsl::digit<decimal>` and {{% docref "lexy::dsl::ascii::digit" %}} is the name of the char class.
 
 [#digits]
 == Token rule `lexy::dsl::digits`

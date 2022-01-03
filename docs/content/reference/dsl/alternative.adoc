@@ -45,3 +45,5 @@ Use {{% docref choice %}} with a branch condition as an optimization.
 NOTE: Unlike {{% docref choice %}}, the ordering of rules in an alternative does not matter.
 It will always consume the longest match.
 
+NOTE: If either alternative is a {{% char-class-rule %}}, it will use {{% docref "lexy::dsl::operator/ (char class)" %}} instead.
+

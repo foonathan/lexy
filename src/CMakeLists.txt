@@ -4,7 +4,6 @@
 set(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy)
 set(ext_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext)
 set(header_files
-        ${include_dir}/_detail/ascii_table.hpp
         ${include_dir}/_detail/assert.hpp
         ${include_dir}/_detail/buffer_builder.hpp
         ${include_dir}/_detail/code_point.hpp
@@ -54,6 +53,7 @@ set(header_files
         ${include_dir}/dsl/branch.hpp
         ${include_dir}/dsl/byte.hpp
         ${include_dir}/dsl/capture.hpp
+        ${include_dir}/dsl/char_class.hpp
         ${include_dir}/dsl/choice.hpp
         ${include_dir}/dsl/code_point.hpp
         ${include_dir}/dsl/combination.hpp
@@ -70,7 +70,6 @@ set(header_files
         ${include_dir}/dsl/lookahead.hpp
         ${include_dir}/dsl/loop.hpp
         ${include_dir}/dsl/member.hpp
-        ${include_dir}/dsl/minus.hpp
         ${include_dir}/dsl/newline.hpp
         ${include_dir}/dsl/option.hpp
         ${include_dir}/dsl/peek.hpp

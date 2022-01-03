@@ -5,113 +5,6 @@
 
 #include "verify.hpp"
 
-namespace
-{
-template <typename Radix, typename... Digits>
-void radix_match(Digits... digits)
-{
-    for (auto c = 0; c <= 255; ++c)
-    {
-        auto valid = ((c == digits) || ...);
-        CHECK(Radix::template match<lexy::ascii_encoding>(char(c)) == valid);
-
-        if (valid)
-        {
-            CHECK(0 <= Radix::value(c));
-            CHECK(Radix::value(c) < Radix::radix);
-        }
-        else
-        {
-            INFO(char(c));
-            CHECK(Radix::value(c) >= Radix::radix);
-        }
-    }
-}
-} // namespace
-
-TEST_CASE("dsl::binary")
-{
-    using radix = lexy::dsl::binary;
-    CHECK(radix::radix == 2);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.binary"));
-
-    for (auto digit = 0; digit < 2; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-
-    radix_match<radix>('0', '1');
-}
-
-TEST_CASE("dsl::octal")
-{
-    using radix = lexy::dsl::octal;
-    CHECK(radix::radix == 8);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.octal"));
-
-    for (auto digit = 0; digit < 8; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-
-    radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7');
-}
-
-TEST_CASE("dsl::decimal")
-{
-    using radix = lexy::dsl::decimal;
-    CHECK(radix::radix == 10);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.decimal"));
-
-    for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-
-    radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-}
-
-TEST_CASE("dsl::hex_lower")
-{
-    using radix = lexy::dsl::hex_lower;
-    CHECK(radix::radix == 16);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.hex-lower"));
-
-    for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-    for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value('a' + digit) == 10 + digit);
-
-    radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-                       'f');
-}
-
-TEST_CASE("dsl::hex_upper")
-{
-    using radix = lexy::dsl::hex_upper;
-    CHECK(radix::radix == 16);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.hex-upper"));
-
-    for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-    for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value('A' + digit) == 10 + digit);
-
-    radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-                       'F');
-}
-
-TEST_CASE("dsl::hex")
-{
-    using radix = lexy::dsl::hex;
-    CHECK(radix::radix == 16);
-    CHECK(radix::name() == lexy::_detail::string_view("digit.hex"));
-
-    for (auto digit = 0; digit < 10; ++digit)
-        CHECK(radix::value('0' + digit) == digit);
-    for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value('A' + digit) == 10 + digit);
-    for (auto digit = 0; digit < 6; ++digit)
-        CHECK(radix::value('a' + digit) == 10 + digit);
-
-    radix_match<radix>('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-                       'f', 'A', 'B', 'C', 'D', 'E', 'F');
-}
-
 TEST_CASE("dsl::zero")
 {
     constexpr auto rule = dsl::zero;
@@ -141,34 +34,117 @@ TEST_CASE("dsl::zero")
 
 TEST_CASE("dsl::digit")
 {
-    // Exhaustive tests of base done above.
-    constexpr auto rule = dsl::digit<dsl::octal>;
-    CHECK(lexy::is_token_rule<decltype(rule)>);
-
     constexpr auto callback = token_callback;
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "digit.octal").cancel());
+    auto check_valid = [&](auto rule, auto... _digits) {
+        char digits[] = {_digits...};
+        auto value    = 0;
+        for (auto digit : digits)
+        {
+            auto result = LEXY_VERIFY_RUNTIME(lexy::ascii_encoding{}, digit, digit, digit);
+            CHECK(result.status == test_result::success);
+            CHECK(result.trace == test_trace().token("digits", doctest::String(&digit, 1).c_str()));
+            CHECK(rule.digit_value(digit) == value);
+            ++value;
+        }
+    };
+    auto check_invalid = [&](auto rule, const char* name, auto... _digits) {
+        char digits[] = {_digits...};
+        for (auto digit : digits)
+        {
+            auto result = LEXY_VERIFY_RUNTIME(lexy::ascii_encoding{}, digit, digit, digit);
+            CHECK(result.status == test_result::fatal_error);
+            CHECK(result.trace == test_trace().expected_char_class(0, name).cancel());
+            CHECK(rule.digit_value(digit) >= rule.digit_radix);
+        }
+    };
 
-    auto zero = LEXY_VERIFY("0");
-    CHECK(zero.status == test_result::success);
-    CHECK(zero.trace == test_trace().token("digits", "0"));
-    auto six = LEXY_VERIFY("6");
-    CHECK(six.status == test_result::success);
-    CHECK(six.trace == test_trace().token("digits", "6"));
+    SUBCASE("binary")
+    {
+        constexpr auto rule = dsl::digit<dsl::binary>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 2);
 
-    auto nine = LEXY_VERIFY("9");
-    CHECK(nine.status == test_result::fatal_error);
-    CHECK(nine.trace == test_trace().expected_char_class(0, "digit.octal").cancel());
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.binary").cancel());
 
-    auto three_seven = LEXY_VERIFY("37");
-    CHECK(three_seven.status == test_result::success);
-    CHECK(three_seven.trace == test_trace().token("digits", "3"));
+        check_valid(rule, '0', '1');
+        check_invalid(rule, "digit.binary", '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
+                      'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F');
+    }
+    SUBCASE("octal")
+    {
+        constexpr auto rule = dsl::digit<dsl::octal>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 8);
 
-    auto utf16 = LEXY_VERIFY(u"0");
-    CHECK(utf16.status == test_result::success);
-    CHECK(utf16.trace == test_trace().token("digits", "0"));
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.octal").cancel());
+
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7');
+        check_invalid(rule, "digit.octal", '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C',
+                      'D', 'E', 'F');
+    }
+    SUBCASE("decimal")
+    {
+        constexpr auto rule = dsl::digit<dsl::decimal>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 10);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.decimal").cancel());
+
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+        check_invalid(rule, "digit.decimal", 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E',
+                      'F');
+    }
+    SUBCASE("hex_lower")
+    {
+        constexpr auto rule = dsl::digit<dsl::hex_lower>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 16);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.hex-lower").cancel());
+
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+                    'f');
+        check_invalid(rule, "digit.hex-lower", 'A', 'B', 'C', 'D', 'E', 'F');
+    }
+    SUBCASE("hex_upper")
+    {
+        constexpr auto rule = dsl::digit<dsl::hex_upper>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 16);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.hex-upper").cancel());
+
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+                    'F');
+        check_invalid(rule, "digit.hex-upper", 'a', 'b', 'c', 'd', 'e', 'f');
+    }
+    SUBCASE("hex")
+    {
+        constexpr auto rule = dsl::digit<dsl::hex>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(rule.digit_radix == 16);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.hex").cancel());
+
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+                    'f');
+        check_valid(rule, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+                    'F');
+        check_invalid(rule, "digit.hex", 'g', 'x', 'y', 'z');
+    }
 }
 
 TEST_CASE("dsl::digits<>")

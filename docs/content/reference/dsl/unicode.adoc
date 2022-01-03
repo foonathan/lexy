@@ -23,10 +23,10 @@ entities:
 ---
 
 [.lead]
-Token rules for matching Unicode character classes.
+Char class rules for matching Unicode char classes.
 
 [#class]
-== Unicode character classes
+== Unicode char classes
 
 {{% interface %}}
 ----
@@ -34,45 +34,43 @@ namespace lexy::dsl
 {
     namespace unicode
     {
-        constexpr _token-rule_ auto control;
+        constexpr _char-class-rule_ auto control;
 
-        constexpr _token-rule_ auto blank;
-        constexpr _token-rule_ auto newline;
-        constexpr _token-rule_ auto other_space;
-        constexpr _token-rule_ auto space;
+        constexpr _char-class-rule_ auto blank;
+        constexpr _char-class-rule_ auto newline;
+        constexpr _char-class-rule_ auto other_space;
+        constexpr _char-class-rule_ auto space;
 
-        constexpr _token-rule_ auto digit;
+        constexpr _char-class-rule_ auto digit;
 
-        constexpr _token-rule_ auto lower;
-        constexpr _token-rule_ auto upper;
-        constexpr _token-rule_ auto alpha;
+        constexpr _char-class-rule_ auto lower;
+        constexpr _char-class-rule_ auto upper;
+        constexpr _char-class-rule_ auto alpha;
 
-        constexpr _token-rule_ auto alpha_digit;
-        constexpr _token-rule_ auto alnum = alpha_digit;
+        constexpr _char-class-rule_ auto alpha_digit;
+        constexpr _char-class-rule_ auto alnum = alpha_digit;
 
-        constexpr _token-rule_ auto word;
+        constexpr _char-class-rule_ auto word;
 
-        constexpr _token-rule_ auto graph;
-        constexpr _token-rule_ auto print;
+        constexpr _char-class-rule_ auto graph;
+        constexpr _char-class-rule_ auto print;
 
-        constexpr _token-rule_ auto character;
+        constexpr _char-class-rule_ auto character;
     }
 }
 ----
 
 [.lead]
-These {{% token-rule %}}s match one Unicode code point from a character class.
+These {{% char-class-rule %}}s match one Unicode code point from a char class, as specified in the table below.
 
-They are implemented using {{% docref "lexy::dsl::code_point.if_" %}} using an appropriate predicate (see the table below).
+Each class is a superset of the corresponding rule in {{% docref "lexy::dsl::ascii" %}}.
 They require the Unicode database.
 
-Each rule matches a superset of the corresponding rule in {{% docref "lexy::dsl::ascii" %}}.
-
 [%collapsible]
-.The character classes
+.The char classes
 ====
 |===
-| Token Rule                | Character Class
+| Token Rule                | Char Class
 
 | `control`                 | link:https://unicode.org/reports/tr18/#cntrl[`Cc` (Other, control)]
 | `blank`                   | link:https://unicode.org/reports/tr18/#blank[`Zs` (Separator, space) or `\t`]
@@ -112,18 +110,16 @@ namespace lexy::dsl
 {
     namespace unicode
     {
-        constexpr _token-rule_ auto xid_start;
-        constexpr _token-rule_ auto xid_start_underscore;
-        constexpr _token-rule_ auto xid_continue;
+        constexpr _char-class-rule_ auto xid_start;
+        constexpr _char-class-rule_ auto xid_start_underscore;
+        constexpr _char-class-rule_ auto xid_continue;
     }
 }
 ----
 
 [.lead]
-These {{% token-rule %}}s match one Unicode code point from the link:https://unicode.org/reports/tr31/[`XID_Start`/`XID_Continue`] character classes.
+These {{% char-class-rule %}}s match one Unicode code point from the link:https://unicode.org/reports/tr31/[`XID_Start`/`XID_Continue`] character classes.
 They are used to parse Unicode-aware {{% docref "lexy::dsl::identifier" %}}.
-
-They are implemented using {{% docref "lexy::dsl::code_point.if_" %}} using an appropriate predicate and require the Unicode database:
 
 * `xid_start` matches any Unicode character that can occur at the beginning of an identifier.
   It is a superset of {{% docref "lexy::dsl::ascii::alpha" %}}.
@@ -131,6 +127,8 @@ They are implemented using {{% docref "lexy::dsl::code_point.if_" %}} using an a
   It is a superset of {{% docref "lexy::dsl::ascii::alpha_underscore" %}}.
 * `xid_continue` matches any Unicode character that can occur after the initial character of an identifier.
   It is a superset of {{% docref "lexy::dsl::ascii::alpha_digit_underscore" %}}.
+
+They require the Unicode database.
 
 {{% playground-example identifier-unicode "Parse a Unicode-aware C-like identifier" %}}
 

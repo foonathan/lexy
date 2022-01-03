@@ -2,25 +2,25 @@
 header: "lexy/dsl/code_point.hpp"
 entities:
   "lexy::dsl::code_point": code_point
-  "lexy::dsl::code_point.if_": code_point-if
 ---
 
-[.lead]
-Rules for matching (specific) code points.
-
 [#code_point]
-== Token rule `lexy::dsl::code_point`
+== Char class rule `lexy::dsl::code_point`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
-    class _code-point-dsl_ // models _token-rule_
+    class _code-point-dsl_ // models _char-class-rule_
     {
     public:
-        // see below for member functions
         template <typename Predicate>
         constexpr _token-rule_ auto if_() const;
+
+        template <char32_t ... CPs>
+        constexpr _token-rule_ auto set() const;
+        template <char32_t Low, char32_t High>
+        constexpr _token-rule_ auto range() const;
 
         constexpr _token-rule_ auto ascii() const;
         constexpr _token-rule_ auto bmp() const;
@@ -30,9 +30,6 @@ namespace lexy::dsl
         constexpr _token-rule_ auto general_category() const;
         template <lexy::code_point::_gc-group_ CategoryGroup>
         constexpr _token-rule_ auto general_category() const;
-
-        template <char32_t Low, char32_t High>
-        constexpr _token-rule_ auto range() const;
     };
 
     constexpr _code-point-dsl_ auto code_point;
@@ -40,125 +37,47 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`code_point` is a {{% token-rule %}} that matches a single scalar Unicode https://en.wikipedia.org/wiki/Code_point[code point].
+`code_point` is a {{% char-class-rule %}} that matches a specified set of Unicode code points.
 
-Requires::
-  The input {{% encoding %}} is ASCII, UTF-8, UTF-16, or UTF-32.
-  In particular, {{% docref "lexy::default_encoding" %}} and {{% docref "lexy::byte_encoding" %}} are not supported.
-Matching::
-  Matches and consumes all code points that form a code point in this encoding.
-  For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"<encoding>.code_point"`): if the current code unit(s) do not form a valid code point; at the starting reader position.
-  This includes surrogates, overlong UTF-8 sequences, or out of range code points (especially for ASCII).
-  The rule then fails.
-Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::any_token_kind`.
+`code_point`::
+  matches an arbitrary scalar code point
+  Its char class name is `code-point`.
+`code_point.if_()`::
+  matches all code points where the predicate returns `true`.
+  The predicate must have a `constexpr bool operator()(lexy::code_point)`.
+  Its char class name is the type name of `P`.
+`code_point.set()`::
+  matches the specified code points.
+  Its name is `code-point.set`.
+`code_point.range()`::
+  matches the code points in the range `[Low, High]` (both sides inclusive).
+  Its name is `code-point.range`.
+`code_point.ascii()`::
+  matches all ASCII code points.
+  Its name is `code-point.ASCII`.
+`code_point.bmp()`::
+  matches all code points in the BMP.
+  Its name is `code-point.BMP`.
+`code_point.noncharacter()`::
+  matches all non-character code points.
+  Its name is `code-point.noncharacter`.
+`code_point.general_category()`::
+  matches all code points with the specified category or category group.
+  Its name is the name of the category.
+  This requires the Unicode database, except for `Cc`, `Cs`, and `Co`, which are fixed.
 
 {{% playground-example code_point "Parse one code point in the inputs encoding" %}}
+
+{{% playground-example code_point_if "Parse even code points only" %}}
 
 CAUTION: As a token rule, it matches {{% docref whitespace whitespace %}} immediately following the code point.
 As such, the rule is best used in contexts where automatic whitespace skipping is disabled.
 
-NOTE: If the input has been validated, the rule only fails if the reader is at the end of the input.
-
-[#code_point-if]
-== Token rule `lexy::dsl::code_point.if_`
-
-{{% interface %}}
-----
-template <std::predicate<lexy::code_point> Predicate>
-  requires std::is_default_constructible_v<Predicate>
-constexpr _token-rule_ auto if_() const;
-----
-
-[.lead]
-`code_point.if_` is a {{% token-rule %}} that matches a code point fulfilling a given predicate.
-
-Matches::
-  Matches and consumes the normal `code_point` rule.
-Errors::
-  * {{% docref "lexy::expected_char_class" %}} (`"<type name of Predicate>"`): if `Predicate{}(cp) == false`, where `cp` is the code point we have just consumed; at the starting reader position.
-    The rule then fails.
-  * All errors raised by the normal `code_point` rule. The rule then fails.
-
-{{% playground-example code_point_if "Parse even code points only" %}}
-
-NOTE: As the rule uses the type name of `Predicate` in the error, it does not accept a lambda as predicate, but should be called with a named type instead.
-
-CAUTION: The same caveat about {{% docref whitespace whitespace %}} as for `code_point` applies here as well.
-
 NOTE: See {{% docref "lexy::dsl::unicode" %}} for common predefined predicates.
 
-[#code_point-classification]
-== Token rule `lexy::dsl::code_point.ascii`/`bmp`/`noncharacter`
-
-{{% interface %}}
-----
-constexpr _token-rule_ auto ascii() const;
-constexpr _token-rule_ auto bmp() const;
-constexpr _token-rule_ auto noncharacter() const;
-----
-
-[.lead]
-`code_point.range` is a {{% token-rule %}} that matches a code point with the specified classification.
-
-Matches::
-  Matches and consumes the normal `code_point` rule to get a `lexy::code_point cp` and checks that `cp.is_ascii()`/`cp.is_bmp()`/`cp.is_noncharacter()`.
-Errors::
-  * {{% docref "lexy::expected_char_class" %}} (`"<name>"`):
-    if the code point does not have the classification; at the starting reader position.
-    The rule then fails.
-  * All errors raised by the normal `code_point` rule. The rule then fails.
-
-NOTE: The other classification functions don't have rules:
+NOTE: `.ascii()`, `.bmp()`, and `.noncharacter()` corresponds to the corresponding member function of {{% docref "lexy::code_point" %}}.
+The other classification functions don't have rules:
 * `cp.is_valid()` and `cp.is_scalar()` is always `true`; `cp.is_surrogate()` is never `true`.
 * `cp.is_control()` is general category `Cc`.
 * `cp.is_private_use()` is general category `Co`.
-
-[#code_point-general_category]
-== Token rule `lexy::dsl::code_point.general_category`
-
-{{% interface %}}
-----
-template <lexy::code_point::general_category_t Category>
-constexpr _token-rule_ auto general_category() const;
-
-template <lexy::code_point::_gc-group_ CategoryGroup>
-constexpr _token-rule_ auto general_category() const;
-----
-
-[.lead]
-`code_point.range` is a {{% token-rule %}} that matches a code point with the specified {{% docref "lexy::code_point::general_category_t" %}} or group of categories.
-
-Matches::
-  Matches and consumes the normal `code_point` rule to get a `lexy::code_point cp` and checks that `cp.general_category() == Category` or `cp.general_category() == CategoryGroup`.
-Errors::
-  * {{% docref "lexy::expected_char_class" %}} (`"<name of Category>"`):
-    if the code point is not in the category; at the starting reader position.
-    The rule then fails.
-  * All errors raised by the normal `code_point` rule. The rule then fails.
-
-NOTE: While `cp.general_category()` requires the Unicode database, `Cc` (Other, control) and `Co` (Other, private use) are fixed.
-As an optimization, `cp.is_control()`/`cp.is_private_use()` are used instead, so they don't require the Unicode database.
-
-[#code_point-range]
-== Token rule `lexy::dsl::code_point.range`
-
-{{% interface %}}
-----
-template <char32_t Low, char32_t High>
-constexpr _token-rule_ auto range() const;
-----
-
-[.lead]
-`code_point.range` is a {{% token-rule %}} that matches a code point in the range `[Low, High]`.
-
-Matches::
-  Matches and consumes the normal `code_point` rule to get a `lexy::code_point cp` and checks that `Low \<= cp \<= High`.
-Errors::
-  * {{% docref "lexy::expected_char_class" %}} (`"code-point.range"`):
-    if the code point is not in the range; at the starting reader position.
-    The rule then fails.
-  * All errors raised by the normal `code_point` rule. The rule then fails.
 

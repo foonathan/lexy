@@ -15,7 +15,7 @@ void test(const char* name, Rule rule, AsciiRule arule)
 {
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, name).cancel());
 
     for (auto c = 0; c <= 127; ++c)
     {
@@ -34,11 +34,7 @@ void test(const char* name, Rule rule, AsciiRule arule)
             auto spelling = doctest::toString(cp);
 
             CHECK(result.status == test_result::fatal_error);
-            CHECK(result.trace
-                  == test_trace()
-                         .error_token(spelling.c_str())
-                         .expected_char_class(0, name)
-                         .cancel());
+            CHECK(result.trace == test_trace().expected_char_class(0, name).cancel());
         }
     }
 }

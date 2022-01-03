@@ -20,7 +20,7 @@ namespace lexy::dsl
 
 Matching::
   Consumes the entire input.
-  If the rule is matched in a context where the reader has been artificially delimited (e.g. during {{% docref minus %}}),
+  If the rule is matched in a context where the reader has been artificially delimited,
   consumes only until the end of the partial input is reached.
 Errors::
   None.

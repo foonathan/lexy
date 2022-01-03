@@ -7,6 +7,7 @@
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/_detail/trie.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 
@@ -179,24 +180,27 @@ struct _alt : token_base<_alt<Tokens...>>
     };
 };
 
-template <typename R, typename S>
-constexpr auto operator/(R, S)
-{
-    static_assert(lexy::is_token_rule<R> && lexy::is_token_rule<S>);
-    return _alt<R, S>{};
-}
+// The generic operator/ overload is in char_class.hpp.
 
 template <typename... R, typename S>
 constexpr auto operator/(_alt<R...>, S)
 {
     static_assert(lexy::is_token_rule<S>);
-    return _alt<R..., S>{};
+    if constexpr ((lexy::is_char_class_rule<S> && ... && _is_convertible_char_class<R>))
+        // If we add a char class, we attempt to turn it into a character class alternative.
+        return _calt<decltype(_make_char_class(R{}))..., decltype(_make_char_class(S{}))>{};
+    else
+        return _alt<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator/(R, _alt<S...>)
 {
     static_assert(lexy::is_token_rule<R>);
-    return _alt<R, S...>{};
+    if constexpr ((lexy::is_char_class_rule<R> && ... && _is_convertible_char_class<S>))
+        // If we add a char class, we attempt to turn it into a character class alternative.
+        return _calt<decltype(_make_char_class(R{})), decltype(_make_char_class(S{}))...>{};
+    else
+        return _alt<R, S...>{};
 }
 template <typename... R, typename... S>
 constexpr auto operator/(_alt<R...>, _alt<S...>)

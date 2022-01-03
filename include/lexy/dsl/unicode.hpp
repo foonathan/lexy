@@ -4,247 +4,359 @@
 #ifndef LEXY_DSL_UNICODE_HPP_INCLUDED
 #define LEXY_DSL_UNICODE_HPP_INCLUDED
 
+#include <lexy/code_point.hpp>
+#include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/code_point.hpp>
-
-#if LEXY_HAS_UNICODE_DATABASE
-#    define LEXY_UNICODE_PROPERTY_PREDICATE(Prop)                                                  \
-        constexpr bool operator()(lexy::code_point cp) const                                       \
-        {                                                                                          \
-            using namespace lexy::_unicode_db;                                                     \
-            auto idx  = property_index(cp.value());                                                \
-            auto mask = binary_properties[idx];                                                    \
-                                                                                                   \
-            return (mask & (1 << lexy::_unicode_db::Prop)) != 0;                                   \
-        }
-#else
-#    define LEXY_UNICODE_PROPERTY_PREDICATE(Prop) bool operator()(lexy::code_point cp) const;
-#endif
+#include <lexy/dsl/char_class.hpp>
 
 namespace lexyd::unicode
 {
-inline constexpr auto control = code_point.general_category<lexy::code_point::control>();
+struct _control : char_class_base<_control>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "code-point.control";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_control::char_class_ascii();
+    }
+
+    static constexpr bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::code_point(cp).is_control();
+    }
+};
+inline constexpr auto control = _control{};
 
 //=== whitespace ===//
-struct _blank
+struct _blank : char_class_base<_blank>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.blank";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        if (cp.value() == '\t')
-            return true;
-        return cp.general_category() == lexy::code_point::space_separator;
+        return ascii::_blank::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        // tab already handled as part of ASCII
+        return lexy::code_point(cp).general_category() == lexy::code_point::space_separator;
     }
 };
-inline constexpr auto blank = code_point.if_<_blank>();
+inline constexpr auto blank = _blank{};
 
-struct _newline
+struct _newline : char_class_base<_newline>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.newline";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        // ASCII newlines.
-        return cp.value() == '\n'
-               || cp.value() == '\r'
-               // NEL, PARAGRAPH SEPARATOR, LINE SEPARATOR
-               || cp.value() == 0x85 || cp.value() == 0x2029 || cp.value() == 0x2028;
+        return ascii::_newline::char_class_ascii();
+    }
+
+    static constexpr bool char_class_match_cp(char32_t cp)
+    {
+        // NEL, PARAGRAPH SEPARATOR, LINE SEPARATOR
+        return cp == 0x85 || cp == 0x2029 || cp == 0x2028;
     }
 };
-inline constexpr auto newline = code_point.if_<_newline>();
+inline constexpr auto newline = _newline{};
 
-struct _other_space
+struct _other_space : char_class_base<_other_space>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.other-space";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        // The same as in ASCII.
-        return cp.value() == '\f' || cp.value() == '\v';
+        return ascii::_other_space::char_class_ascii();
     }
-};
-inline constexpr auto other_space = code_point.if_<_other_space>();
 
-struct _space
+    // The same as in ASCII, so no match function needed.
+};
+inline constexpr auto other_space = _other_space{};
+
+struct _space : char_class_base<_space>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.whitespace";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(whitespace)
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_space::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(whitespace)>(cp);
+    }
 };
-inline constexpr auto space = code_point.if_<_space>();
+inline constexpr auto space = _space{};
 
 //=== alpha ===//
-struct _lower
+struct _lower : char_class_base<_lower>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.lowercase";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(lowercase)
-};
-inline constexpr auto lower = code_point.if_<_lower>();
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_lower::char_class_ascii();
+    }
 
-struct _upper
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(lowercase)>(cp);
+    }
+};
+inline constexpr auto lower = _lower{};
+
+struct _upper : char_class_base<_upper>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.uppercase";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(uppercase)
-};
-inline constexpr auto upper = code_point.if_<_upper>();
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_upper::char_class_ascii();
+    }
 
-struct _alpha
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(uppercase)>(cp);
+    }
+};
+inline constexpr auto upper = _upper{};
+
+struct _alpha : char_class_base<_alpha>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.alphabetic";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(alphabetic)
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_alpha::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic)>(cp);
+    }
 };
-inline constexpr auto alpha = code_point.if_<_alpha>();
+inline constexpr auto alpha = _alpha{};
 
 //=== digit ===//
-inline constexpr auto digit = code_point.general_category<lexy::code_point::decimal_number>();
-
-struct _alnum
+struct _digit : char_class_base<_digit>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "code-point.decimal-number";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_digit::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::code_point(cp).general_category() == lexy::code_point::decimal_number;
+    }
+};
+inline constexpr auto digit = _digit{};
+
+struct _alnum : char_class_base<_alnum>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.alphabetic-decimal";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return _alpha{}(cp) || cp.general_category() == lexy::code_point::decimal_number;
+        return ascii::_alnum::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic)>(cp)
+               || lexy::code_point(cp).general_category() == lexy::code_point::decimal_number;
     }
 };
-inline constexpr auto alnum       = code_point.if_<_alnum>();
+inline constexpr auto alnum       = _alnum{};
 inline constexpr auto alpha_digit = alnum;
 
-struct _word
+struct _word : char_class_base<_word>
 {
-    struct _join
-    {
-        LEXY_UNICODE_PROPERTY_PREDICATE(join_control)
-    };
-
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.word";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return _alnum{}(cp) || cp.general_category() == lexy::code_point::mark
-               || cp.general_category() == lexy::code_point::connector_punctuation || _join{}(cp);
+        return ascii::_word::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        auto cat = lexy::code_point(cp).general_category();
+        if (cat == lexy::code_point::mark || cat == lexy::code_point::connector_punctuation
+            || cat == lexy::code_point::decimal_number)
+            return true;
+
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic),
+                                                        LEXY_UNICODE_PROPERTY(join_control)>(cp);
     }
 };
-inline constexpr auto word = code_point.if_<_word>();
+inline constexpr auto word = _word{};
 
 //=== categories ===//
-struct _graph
+struct _graph : char_class_base<_graph>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.graph";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        // everything that isn't control, surrogate, unassigned, or space.
+        return ascii::_graph::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t _cp)
+    {
+        auto cp = lexy::code_point(_cp);
+
+        // Everything that isn't control, surrogate, unassigned, or space.
         return !cp.is_control() && !cp.is_surrogate()
-               && cp.general_category() != lexy::code_point::unassigned && !_space{}(cp);
+               && cp.general_category() != lexy::code_point::unassigned
+               && !_space::char_class_match_cp(cp.value());
     }
 };
-inline constexpr auto graph = code_point.if_<_graph>();
+inline constexpr auto graph = _graph{};
 
-struct _print
+struct _print : char_class_base<_print>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.print";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        // blank or graph without control
-        return !cp.is_control() && (_blank{}(cp) || _graph{}(cp));
+        return ascii::_print::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        // blank or graph without control.
+        return !_control::char_class_match_cp(cp)
+               && (_blank::char_class_match_cp(cp) || _graph::char_class_match_cp(cp));
     }
 };
-inline constexpr auto print = code_point.if_<_print>();
+inline constexpr auto print = _print{};
 
-struct _char
+struct _char : char_class_base<_char>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.character";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return cp.general_category() != lexy::code_point::unassigned;
+        return ascii::_char::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::code_point(cp).general_category() != lexy::code_point::unassigned;
     }
 };
-inline constexpr auto character = code_point.if_<_char>();
+inline constexpr auto character = _char{};
 } // namespace lexyd::unicode
 
 namespace lexyd::unicode
 {
-struct _xid_start
+struct _xid_start : char_class_base<_xid_start>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.XID-start";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(xid_start)
-};
-inline constexpr auto xid_start = code_point.if_<_xid_start>();
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_alpha::char_class_ascii();
+    }
 
-struct _xid_start_underscore
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_start)>(cp);
+    }
+};
+inline constexpr auto xid_start = _xid_start{};
+
+struct _xid_start_underscore : char_class_base<_xid_start_underscore>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.XID-start-underscore";
     }
 
-    LEXY_UNICODE_CONSTEXPR bool operator()(lexy::code_point cp) const
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return cp.value() == '_' || _xid_start{}(cp);
+        return ascii::_alphau::char_class_ascii();
+    }
+
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        // underscore handled as part of ASCII.
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_start)>(cp);
     }
 };
-inline constexpr auto xid_start_underscore = code_point.if_<_xid_start_underscore>();
+inline constexpr auto xid_start_underscore = _xid_start_underscore{};
 
-struct _xid_continue
+struct _xid_continue : char_class_base<_xid_continue>
 {
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "code-point.XID-continue";
     }
 
-    LEXY_UNICODE_PROPERTY_PREDICATE(xid_continue)
-};
-inline constexpr auto xid_continue = code_point.if_<_xid_continue>();
-} // namespace lexyd::unicode
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_word::char_class_ascii();
+    }
 
-#undef LEXY_UNICODE_PROPERTY_PREDICATE
+    static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
+    {
+        // underscore handled as part of ASCII.
+        return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_continue)>(cp);
+    }
+};
+inline constexpr auto xid_continue = _xid_continue{};
+} // namespace lexyd::unicode
 
 #endif // LEXY_DSL_UNICODE_HPP_INCLUDED
 

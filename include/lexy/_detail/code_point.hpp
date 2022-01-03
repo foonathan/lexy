@@ -125,7 +125,6 @@ enum class cp_error
     surrogate,
     overlong_sequence,
     out_of_range,
-    predicate_failure,
 };
 
 template <typename Reader>
@@ -352,7 +351,6 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
     case cp_error::surrogate:
     case cp_error::out_of_range:
     case cp_error::overlong_sequence:
-    case cp_error::predicate_failure:
         // Consume all the invalid code units to recover.
         reader.set_position(result.end);
         break;

@@ -4,304 +4,314 @@
 #ifndef LEXY_DSL_ASCII_HPP_INCLUDED
 #define LEXY_DSL_ASCII_HPP_INCLUDED
 
-#include <lexy/_detail/ascii_table.hpp>
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/token.hpp>
+#include <lexy/dsl/char_class.hpp>
 
 namespace lexyd::ascii
 {
-template <typename Derived>
-struct _ascii : token_base<Derived>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            if (!Derived::template ascii_match<typename Reader::encoding>(reader.peek()))
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
-                                                                      Derived::ascii_name());
-            context.on(_ev::error{}, err);
-        }
-    };
-};
-
 //=== control ===//
-struct _control : _ascii<_control>
+struct _control : char_class_base<_control>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.control";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::control>(i);
+        lexy::_detail::ascii_set result;
+        result.insert(0x00, 0x1F);
+        result.insert(0x7F);
+        return result;
     }
 };
 inline constexpr auto control = _control{};
 
 //=== whitespace ===//
-struct _blank : _ascii<_blank>
+struct _blank : char_class_base<_blank>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.blank";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return i == lexy::_detail::transcode_int<Encoding>(' ')
-               || i == lexy::_detail::transcode_int<Encoding>('\t');
+        lexy::_detail::ascii_set result;
+        result.insert(' ');
+        result.insert('\t');
+        return result;
     }
 };
 inline constexpr auto blank = _blank{};
 
-struct _newline : _ascii<_newline>
+struct _newline : char_class_base<_newline>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.newline";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return i == lexy::_detail::transcode_int<Encoding>('\n')
-               || i == lexy::_detail::transcode_int<Encoding>('\r');
+        lexy::_detail::ascii_set result;
+        result.insert('\n');
+        result.insert('\r');
+        return result;
     }
 };
 inline constexpr auto newline = _newline{};
 
-struct _other_space : _ascii<_other_space>
+struct _other_space : char_class_base<_other_space>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.other-space";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return i == lexy::_detail::transcode_int<Encoding>('\f')
-               || i == lexy::_detail::transcode_int<Encoding>('\v');
+        lexy::_detail::ascii_set result;
+        result.insert('\f');
+        result.insert('\v');
+        return result;
     }
 };
 inline constexpr auto other_space = _other_space{};
 
-struct _space : _ascii<_space>
+struct _space : char_class_base<_space>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.space";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::space>(i);
+        lexy::_detail::ascii_set result;
+        result.insert(_blank::char_class_ascii());
+        result.insert(_newline::char_class_ascii());
+        result.insert(_other_space::char_class_ascii());
+        return result;
     }
 };
 inline constexpr auto space = _space{};
 
 //=== alpha ===//
-struct _lower : _ascii<_lower>
+struct _lower : char_class_base<_lower>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.lower";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('a') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('z');
+        lexy::_detail::ascii_set result;
+        result.insert('a', 'z');
+        return result;
     }
 };
 inline constexpr auto lower = _lower{};
 
-struct _upper : _ascii<_upper>
+struct _upper : char_class_base<_upper>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.upper";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('A') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('Z');
+        lexy::_detail::ascii_set result;
+        result.insert('A', 'Z');
+        return result;
     }
 };
 inline constexpr auto upper = _upper{};
 
-struct _alpha : _ascii<_alpha>
+struct _alpha : char_class_base<_alpha>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.alpha";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::alpha>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('a', 'z');
+        result.insert('A', 'Z');
+        return result;
     }
 };
 inline constexpr auto alpha = _alpha{};
 
-struct _alphau : _ascii<_alphau>
+struct _alphau : char_class_base<_alphau>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.alpha-underscore";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::alpha_underscore>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('a', 'z');
+        result.insert('A', 'Z');
+        result.insert('_');
+        return result;
     }
 };
 inline constexpr auto alpha_underscore = _alphau{};
 
 //=== digit ===//
-struct _digit : _ascii<_digit>
+struct _digit : char_class_base<_digit>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.digit";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::digit>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        return result;
     }
 };
 inline constexpr auto digit = _digit{};
 
-struct _alnum : _ascii<_alnum>
+struct _alnum : char_class_base<_alnum>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.alpha-digit";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::alpha, ascii_table_t::digit>(i);
+        lexy::_detail::ascii_set result;
+        result.insert(_alpha::char_class_ascii());
+        result.insert(_digit::char_class_ascii());
+        return result;
     }
 };
 inline constexpr auto alnum       = _alnum{};
 inline constexpr auto alpha_digit = _alnum{};
 
-struct _word : _ascii<_word>
+struct _word : char_class_base<_word>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.word";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table
-            .contains<Encoding, ascii_table_t::alpha_underscore, ascii_table_t::digit>(i);
+        lexy::_detail::ascii_set result;
+        result.insert(_alphau::char_class_ascii());
+        result.insert(_digit::char_class_ascii());
+        return result;
     }
 };
 inline constexpr auto word                   = _word{};
 inline constexpr auto alpha_digit_underscore = _word{};
 
 //=== punct ===//
-struct _punct : _ascii<_punct>
+struct _punct : char_class_base<_punct>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.punct";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::punct>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('!');
+        result.insert('"');
+        result.insert('#');
+        result.insert('$');
+        result.insert('%');
+        result.insert('&');
+        result.insert('\'');
+        result.insert('(');
+        result.insert(')');
+        result.insert('*');
+        result.insert('+');
+        result.insert(',');
+        result.insert('-');
+        result.insert('.');
+        result.insert('/');
+        result.insert(':');
+        result.insert(';');
+        result.insert('<');
+        result.insert('=');
+        result.insert('>');
+        result.insert('?');
+        result.insert('@');
+        result.insert('[');
+        result.insert('\\');
+        result.insert(']');
+        result.insert('^');
+        result.insert('_');
+        result.insert('`');
+        result.insert('{');
+        result.insert('|');
+        result.insert('}');
+        result.insert('~');
+        return result;
     }
 };
 inline constexpr auto punct = _punct{};
 
 //=== categories ===//
-struct _graph : _ascii<_graph>
+struct _graph : char_class_base<_graph>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.graph";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('\x21') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
+        lexy::_detail::ascii_set result;
+        result.insert(0x21, 0x7E);
+        return result;
     }
 };
 inline constexpr auto graph = _graph{};
 
-struct _print : _ascii<_print>
+struct _print : char_class_base<_print>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII.print";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('\x20') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('\x7E');
+        lexy::_detail::ascii_set result;
+        result.insert(0x20, 0x7E);
+        return result;
     }
 };
 inline constexpr auto print = _print{};
 
-struct _char : _ascii<_char>
+struct _char : char_class_base<_char>
 {
-    static LEXY_CONSTEVAL auto ascii_name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "ASCII";
     }
 
-    template <typename Encoding>
-    static constexpr bool ascii_match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('\x00') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('\x7F');
+        lexy::_detail::ascii_set result;
+        result.insert(0x00, 0x7F);
+        return result;
     }
 };
 inline constexpr auto character = _char{};
@@ -310,37 +320,21 @@ inline constexpr auto character = _char{};
 namespace lexyd::ascii
 {
 template <char... C>
-struct _alt : token_base<_alt<C...>>
+struct _alt : char_class_base<_alt<C...>>
 {
     static_assert(sizeof...(C) > 0);
 
-    template <typename Reader>
-    struct tp
+    static LEXY_CONSTEVAL auto char_class_name()
     {
-        typename Reader::iterator end;
+        return lexy::_detail::type_string<char, C...>::template c_str<char>;
+    }
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            auto cur = reader.peek();
-            if (((cur != lexy::_detail::transcode_int<typename Reader::encoding>(C)) && ...))
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            constexpr auto str = lexy::_detail::type_string<char, C...>::template c_str<char>;
-
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), str);
-            context.on(_ev::error{}, err);
-        }
-    };
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        (result.insert(C), ...);
+        return result;
+    }
 };
 
 template <typename CharT, CharT... C>

@@ -267,6 +267,31 @@ constexpr lexy::code_point::general_category_t lexy::code_point::general_categor
     auto idx = _unicode_db::property_index(_value);
     return _unicode_db::category[idx];
 }
+
+namespace lexy::_detail
+{
+template <lexy::_unicode_db::binary_properties_t... Props>
+LEXY_FORCE_INLINE constexpr bool code_point_has_properties(char32_t cp)
+{
+    constexpr auto mask = ((1 << Props) | ...);
+
+    auto idx   = _unicode_db::property_index(cp);
+    auto props = _unicode_db::binary_properties[idx];
+    return (props & mask) != 0;
+}
+} // namespace lexy::_detail
+
+#    define LEXY_UNICODE_PROPERTY(Name) ::lexy::_unicode_db::Name
+
+#else
+namespace lexy::_detail
+{
+template <int... Props>
+bool code_point_has_properties(char32_t cp); // not implemented
+} // namespace lexy::_detail
+
+#    define LEXY_UNICODE_PROPERTY(Name) 0
+
 #endif
 
 #endif // LEXY_CODE_POINT_HPP_INCLUDED

@@ -27,8 +27,19 @@ struct _toke;
 template <auto Kind, typename Token>
 struct _tokk;
 
-template <typename Derived, typename BranchKind = branch_base>
-struct token_base : _token_base, BranchKind
+template <typename ImplOrTag, bool IsImpl = lexy::is_token_rule<ImplOrTag>>
+struct _token_inherit;
+template <typename Impl>
+struct _token_inherit<Impl, true> : Impl // no need to inherit from _token_base
+{};
+template <typename Tag>
+struct _token_inherit<Tag, false> : _token_base, Tag // need to turn it into a token
+{};
+
+// ImplOrTag is either a branch base that indicates whether the token is an unconditional branch,
+// or an actual token rule whose implementation will be used.
+template <typename Derived, typename ImplOrTag = branch_base>
+struct token_base : _token_inherit<ImplOrTag>
 {
     using token_type = Derived;
 
@@ -111,11 +122,22 @@ struct token_base : _token_base, BranchKind
     static constexpr _tokk<Kind, Derived> kind = _tokk<Kind, Derived>{};
 };
 
+// We forward all implementation to Token.
+// We cannot directly inherit from Token as that wouldn't override the token_type.
 template <auto Kind, typename Token>
-struct _tokk : token_base<_tokk<Kind, Token>>
+struct _tokk : token_base<_tokk<Kind, Token>, Token>
 {
-    template <typename Reader>
-    using tp = lexy::token_parser_for<Token, Reader>;
+    // Char classes override .error, so we inherit the one from Token.
+#if defined(_MSC_VER)
+    // MSVC wants auto on the left-hand side.
+    // If there's a type, it fails to compile.
+    template <typename Tag>
+    static constexpr auto error = _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)>{};
+#else
+    // clang-tidy wants a type on the left-hande side.
+    template <typename Tag>
+    static constexpr _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)> error = {};
+#endif
 };
 
 template <typename Tag, typename Token>

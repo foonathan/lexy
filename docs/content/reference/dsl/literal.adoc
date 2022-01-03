@@ -131,7 +131,7 @@ Parse tree::
 
 It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding `CodePoint` in the encoding of the input.
 
-{{% playground-example "code_point_lit" "Match a smiley face" %}}
+{{% playground-example "lit_cp" "Match a smiley face" %}}
 
 NOTE: The caveats of {{% docref "lexy::dsl::lit" %}} regarding whitespace skipping and keywords apply here as well.
 

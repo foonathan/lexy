@@ -28,12 +28,15 @@ namespace lexy
     constexpr bool is_branch_rule; <3>
     template <typename T>
     constexpr bool is_token_rule;  <4>
+    template <typename T>
+    constexpr bool is_char_class_rule; <5>
 }
 ----
 <1> Whether or not `T` is a production, i.e. it has a `::rule` member.
 <2> Whether or not `T` is a {{% rule %}}.
 <3> Whether or not `T` is a {{% branch-rule %}}.
 <4> Whether or not `T` is a {{% token-rule %}}.
+<5> Whether or not `T` is a {{% char-class-rule %}}.
 
 [#production_name]
 == Function `lexy::production_name`

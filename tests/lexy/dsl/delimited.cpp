@@ -7,7 +7,6 @@
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/if.hpp>
-#include <lexy/dsl/minus.hpp>
 
 namespace
 {
@@ -432,7 +431,7 @@ TEST_CASE("dsl::delimited(open, close)")
               == test_trace()
                      .literal("(")
                      .token("a")
-                     .expected_char_class(2, "ASCII")
+                     .expected_char_class(2, "minus")
                      .recovery()
                      .error_token("\\x80")
                      .finish()
@@ -445,7 +444,7 @@ TEST_CASE("dsl::delimited(open, close)")
               == test_trace()
                      .literal("(")
                      .token("a")
-                     .expected_char_class(2, "ASCII")
+                     .expected_char_class(2, "minus")
                      .recovery()
                      .error_token("\\x80")
                      .finish()
@@ -458,7 +457,7 @@ TEST_CASE("dsl::delimited(open, close)")
               == test_trace()
                      .literal("(")
                      .token("a")
-                     .error(2, 3, "minus failure")
+                     .expected_char_class(2, "minus")
                      .recovery()
                      .error_token("X")
                      .finish()
@@ -471,7 +470,7 @@ TEST_CASE("dsl::delimited(open, close)")
               == test_trace()
                      .literal("(")
                      .token("a")
-                     .error(2, 3, "minus failure")
+                     .expected_char_class(2, "minus")
                      .recovery()
                      .error_token("X")
                      .finish()

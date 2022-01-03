@@ -4,10 +4,9 @@
 #ifndef LEXY_DSL_CODE_POINT_HPP_INCLUDED
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
-#include <lexy/_detail/code_point.hpp>
 #include <lexy/code_point.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/token.hpp>
+#include <lexy/dsl/char_class.hpp>
 
 #include <lexy/dsl/literal.hpp>
 #ifdef LEXY_IGNORE_DEPRECATED_CODE_POINT_LITERAL
@@ -19,76 +18,43 @@
 namespace lexyd
 {
 template <typename Predicate>
-struct _cp : token_base<_cp<Predicate>>
+struct _cp : char_class_base<_cp<Predicate>>
 {
-    template <typename Reader>
-    struct tp
+    static LEXY_CONSTEVAL auto char_class_name()
     {
-        typename Reader::iterator end;
-        lexy::_detail::cp_error   ec;
+        if constexpr (std::is_void_v<Predicate>)
+            return "code-point";
+        else
+            return lexy::_detail::type_name<Predicate>();
+    }
 
-        constexpr explicit tp(const Reader& reader)
-        : end(reader.position()), ec(lexy::_detail::cp_error::success)
-        {}
-
-        constexpr bool try_parse(Reader reader)
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        if constexpr (std::is_void_v<Predicate>)
         {
-            using lexy::_detail::cp_error;
+            lexy::_detail::ascii_set result;
+            result.insert(0x00, 0x7F);
+            return result;
+        }
+        else
+        {
+            lexy::_detail::ascii_set result;
+            for (auto c = 0; c <= 0x7F; ++c)
+                if (Predicate{}(lexy::code_point(char32_t(c))))
+                    result.insert(c);
+            return result;
+        }
+    }
 
-            // Parse one code point.
-            auto result = lexy::_detail::parse_code_point(reader);
-            end         = result.end;
-            ec          = result.error;
-
-            if (ec != cp_error::success)
-                return false;
-
-            // Check whether it matches the predicate.
-            if constexpr (!std::is_void_v<Predicate>)
-            {
-                if (!Predicate()(lexy::code_point(result.cp)))
-                {
-                    ec = cp_error::predicate_failure;
-                    return false;
-                }
-            }
+    static constexpr bool char_class_match_cp([[maybe_unused]] char32_t cp)
+    {
+        if constexpr (std::is_void_v<Predicate>)
             return true;
-        }
+        else
+            return Predicate{}(lexy::code_point(cp));
+    }
 
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            using lexy::_detail::cp_error;
-
-            if (ec == cp_error::predicate_failure)
-            {
-                constexpr auto name = lexy::_detail::type_name<Predicate>();
-
-                auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), name);
-                context.on(_ev::error{}, err);
-            }
-            else
-            {
-                constexpr auto name = [] {
-                    using encoding = typename Reader::encoding;
-                    if constexpr (std::is_same_v<encoding, lexy::ascii_encoding>)
-                        return "ASCII.code-point";
-                    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
-                        return "UTF-8.code-point";
-                    else if constexpr (std::is_same_v<encoding, lexy::utf16_encoding>)
-                        return "UTF-16.code-point";
-                    else if constexpr (std::is_same_v<encoding, lexy::utf32_encoding>)
-                        return "UTF-32.code-point";
-                    else
-                        return "code-point";
-                }();
-
-                auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), name);
-                context.on(_ev::error{}, err);
-            }
-        }
-    };
-
+    //=== dsl ===//
     template <char32_t CodePoint>
     LEXY_DEPRECATED_CODE_POINT_LITERAL constexpr auto lit() const
     {
@@ -100,6 +66,44 @@ struct _cp : token_base<_cp<Predicate>>
     {
         static_assert(std::is_void_v<Predicate>);
         return _cp<P>{};
+    }
+
+    template <char32_t Low, char32_t High>
+    constexpr auto range() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.range";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return Low <= cp.value() && cp.value() <= High;
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <char32_t... CPs>
+    constexpr auto set() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.set";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return ((cp.value() == CPs) || ...);
+            }
+        };
+
+        return if_<predicate>();
     }
 
     constexpr auto ascii() const
@@ -202,25 +206,6 @@ struct _cp : token_base<_cp<Predicate>>
     constexpr auto general_category() const
     {
         return if_<_group_pred<GcGroup>>();
-    }
-
-    template <char32_t Low, char32_t High>
-    constexpr auto range() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.range";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return Low <= cp.value() && cp.value() <= High;
-            }
-        };
-
-        return if_<predicate>();
     }
 };
 

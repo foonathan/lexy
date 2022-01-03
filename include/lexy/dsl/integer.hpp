@@ -214,7 +214,7 @@ struct _unbounded_integer_parser
     using result_type = typename traits::type;
     using base        = Base;
 
-    static constexpr auto radix = Base::radix;
+    static constexpr auto radix = Base::digit_radix;
 
     template <typename Iterator>
     static constexpr bool parse(result_type& result, Iterator cur, Iterator end)
@@ -222,8 +222,8 @@ struct _unbounded_integer_parser
         // Just parse digits until we've run out of digits.
         while (cur != end)
         {
-            auto digit = Base::value(*cur++);
-            if (digit >= Base::radix)
+            auto digit = Base::digit_value(*cur++);
+            if (digit >= Base::digit_radix)
                 // Skip digit separator.
                 continue;
 
@@ -242,7 +242,7 @@ struct _bounded_integer_parser
     using result_type = typename traits::type;
     using base        = Base;
 
-    static constexpr auto radix = Base::radix;
+    static constexpr auto radix = Base::digit_radix;
 
     template <typename Iterator>
     static constexpr unsigned find_digit(Iterator& cur, Iterator end)
@@ -252,7 +252,7 @@ struct _bounded_integer_parser
             if (cur == end)
                 return unsigned(-1);
             else
-                return Base::value(*cur++);
+                return Base::digit_value(*cur++);
         }
         else
         {
@@ -262,8 +262,8 @@ struct _bounded_integer_parser
                 if (cur == end)
                     return unsigned(-1);
 
-                digit = Base::value(*cur++);
-            } while (digit >= Base::radix);
+                digit = Base::digit_value(*cur++);
+            } while (digit >= Base::digit_radix);
             return digit;
         }
     }
@@ -281,7 +281,7 @@ struct _bounded_integer_parser
             if (cur == end)
                 return true; // We only had zeroes.
 
-            const auto digit = Base::value(*cur++);
+            const auto digit = Base::digit_value(*cur++);
             if (digit == 0 || digit >= radix)
                 continue; // Zero or digit separator.
 
@@ -347,16 +347,16 @@ struct _integer_parser_digits<T, _digits_st<Base, Sep>>
 template <typename T, std::size_t N, typename Base>
 struct _integer_parser_digits<T, _ndigits<N, Base>>
 {
-    using value_type
-        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
-    using type = _integer_parser<value_type, Base, true>;
+    using value_type = std::conditional_t<_ndigits_can_overflow<T, N, Base::digit_radix>(), T,
+                                          lexy::unbounded<T>>;
+    using type       = _integer_parser<value_type, Base, true>;
 };
 template <typename T, std::size_t N, typename Base, typename Sep>
 struct _integer_parser_digits<T, _ndigits_s<N, Base, Sep>>
 {
-    using value_type
-        = std::conditional_t<_ndigits_can_overflow<T, N, Base::radix>(), T, lexy::unbounded<T>>;
-    using type = _integer_parser<value_type, Base, false>;
+    using value_type = std::conditional_t<_ndigits_can_overflow<T, N, Base::digit_radix>(), T,
+                                          lexy::unbounded<T>>;
+    using type       = _integer_parser<value_type, Base, false>;
 };
 
 template <typename T, typename Digits>
@@ -492,7 +492,7 @@ namespace lexyd
 /// Matches the number of a code point.
 template <std::size_t N, typename Base = hex>
 constexpr auto code_point_id = [] {
-    using type   = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::radix>(),
+    using type = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::digit_radix>(),
                                     lexy::code_point, lexy::unbounded<lexy::code_point>>;
     using parser = _integer_parser<type, Base, true>;
     return _int<_ndigits<N, Base>, parser, lexy::invalid_code_point>{};

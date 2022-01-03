@@ -25,6 +25,7 @@ void test(const char* name, Rule rule, Predicate pred)
     {
         const char input[] = {char(c), char(c)};
         auto       cp      = lexy::code_point(static_cast<char32_t>(c));
+        INFO(cp);
 
         auto result = verify(rule, lexy::string_input(input, 2), callback);
         if (pred(c))

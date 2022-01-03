@@ -25,10 +25,10 @@ entities:
 ---
 
 [.lead]
-Token rules for matching the ASCII character classes.
+Char class rules for matching the ASCII char classes.
 
 [#class]
-== ASCII character classes
+== ASCII char classes
 
 {{% interface %}}
 ----
@@ -36,51 +36,45 @@ namespace lexy::dsl
 {
     namespace ascii
     {
-        constexpr _token-rule_ auto control;
+        constexpr _char-class-rule_ auto control;
 
-        constexpr _token-rule_ auto blank;
-        constexpr _token-rule_ auto newline;
-        constexpr _token-rule_ auto other_space;
-        constexpr _token-rule_ auto space;
+        constexpr _char-class-rule_ auto blank;
+        constexpr _char-class-rule_ auto newline;
+        constexpr _char-class-rule_ auto other_space;
+        constexpr _char-class-rule_ auto space;
 
-        constexpr _token-rule_ auto digit;
+        constexpr _char-class-rule_ auto digit;
 
-        constexpr _token-rule_ auto lower;
-        constexpr _token-rule_ auto upper;
-        constexpr _token-rule_ auto alpha;
-        constexpr _token-rule_ auto alpha_underscore;
+        constexpr _char-class-rule_ auto lower;
+        constexpr _char-class-rule_ auto upper;
+        constexpr _char-class-rule_ auto alpha;
+        constexpr _char-class-rule_ auto alpha_underscore;
 
-        constexpr _token-rule_ auto alpha_digit;
-        constexpr _token-rule_ auto alnum = alpha_digit;
+        constexpr _char-class-rule_ auto alpha_digit;
+        constexpr _char-class-rule_ auto alnum = alpha_digit;
 
-        constexpr _token-rule_ auto word;
-        constexpr _token-rule_ auto alpha_digit_underscore = word;
+        constexpr _char-class-rule_ auto word;
+        constexpr _char-class-rule_ auto alpha_digit_underscore = word;
 
-        constexpr _token-rule_ auto punct;
+        constexpr _char-class-rule_ auto punct;
 
-        constexpr _token-rule_ auto graph;
-        constexpr _token-rule_ auto print;
+        constexpr _char-class-rule_ auto graph;
+        constexpr _char-class-rule_ auto print;
 
-        constexpr _token-rule_ auto character;
-
+        constexpr _char-class-rule_ auto character;
     }
 }
 ----
 
 [.lead]
-These {{% token-rule %}}s match one ASCII character from a character class.
-
-Matching::
-  Matches and consumes one character from the character class given in the table below.
-  Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"ASCII.<name>"`): at the unchanged reader position. The rule then fails.
+These {{% char-class-rule %}}s match one ASCII character from a char class,
+as specified in the table below.
 
 [%collapsible]
-.The character classes
+.The char classes
 ====
 |===
-| Token Rule                | Character Class                   | `<cctype>` function (C locale)
+| Token Rule                | Char Class                        | `<cctype>` function (C locale)
 
 | `control`                 | `0x00-0x1F`, `\x7F`               | `std::iscntrl()`
 | `blank`                   | `' '` (space) or `'\t'`           | `std::isblank()`
@@ -118,29 +112,22 @@ TIP: The equivalent of `std::isxdigit()` is {{% docref "lexy::dsl::digit" "`lexy
 TIP: Use {{% docref "lexy::dsl::unicode" %}} for the equivalent Unicode character classes.
 
 [#one_of]
-== Token rule `lexy::dsl::ascii::one_of`
+== Char class rule `lexy::dsl::ascii::one_of`
 
 {{% interface %}}
 ----
 namespace lexy::dsl::ascii
 {
     template <auto Str>
-    constexpr _token-rule_ auto one_of;
+    constexpr _char-class-rule_ auto one_of;
 }
 
 #define LEXY_ASCII_ONE_OF(Str) lexy::dsl::ascii::one_of<Str>
 ----
 
 [.lead]
-`one_of` is a {{% token-rule %}} that matches one of the specified ASCII characters.
-
-Requires::
-  `Str` contains only ASCII characters and has type `char`.
-Matching::
-  Matches and consumes one of the characters of `Str` (excluding the final null terminator).
-  Any transcoding from ASCII to the input {{% encoding %}} for the comparison is done by a simple `static_cast`.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`Str` is the name): at the unchanged reader position. The rule then fails.
+`one_of` is a {{% char-class-rule %}} that matches one of the specified ASCII characters.
+Its name is `Str`.
 
 The macro `LEXY_ASCII_ONE_OF(Str)` is equivalent to `one_of<Str>`, except that it also works on older compilers that do not support C++20's extended NTTPs.
 Use this instead of `one_of<Str>` if you need to support them.

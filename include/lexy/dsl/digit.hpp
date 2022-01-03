@@ -4,131 +4,117 @@
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
 #define LEXY_DSL_DIGIT_HPP_INCLUDED
 
-#include <lexy/_detail/ascii_table.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 
 //=== bases ===//
 namespace lexyd
 {
-struct binary
-{
-    static constexpr unsigned radix = 2;
+template <int Radix>
+struct _d;
 
-    static LEXY_CONSTEVAL auto name()
+template <>
+struct _d<2> : char_class_base<_d<2>>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "digit.binary";
     }
 
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return i == lexy::_detail::transcode_int<Encoding>('0')
-               || i == lexy::_detail::transcode_int<Encoding>('1');
+        lexy::_detail::ascii_set result;
+        result.insert('0', '1');
+        return result;
     }
 
+    static constexpr unsigned digit_radix = 2;
+
     template <typename CharT>
-    static constexpr unsigned value(CharT c)
+    static constexpr unsigned digit_value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
 };
+using binary = _d<2>;
 
-struct octal
+template <>
+struct _d<8> : char_class_base<_d<8>>
 {
-    static constexpr unsigned radix = 8;
-
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "digit.octal";
     }
 
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        return lexy::_detail::transcode_int<Encoding>('0') <= i
-               && i <= lexy::_detail::transcode_int<Encoding>('7');
+        lexy::_detail::ascii_set result;
+        result.insert('0', '7');
+        return result;
     }
 
+    static constexpr unsigned digit_radix = 8;
+
     template <typename CharT>
-    static constexpr unsigned value(CharT c)
+    static constexpr unsigned digit_value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
 };
+using octal = _d<8>;
 
-struct decimal
+template <>
+struct _d<10> : char_class_base<_d<10>>
 {
-    static constexpr unsigned radix = 10;
-
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
         return "digit.decimal";
     }
 
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::digit>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        return result;
     }
 
+    static constexpr unsigned digit_radix = 10;
+
     template <typename CharT>
-    static constexpr unsigned value(CharT c)
+    static constexpr unsigned digit_value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
     }
 };
+using decimal = _d<10>;
 
-struct hex_lower
+template <>
+struct _d<16> : char_class_base<_d<16>>
 {
-    static constexpr unsigned radix = 16;
-
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
-        return "digit.hex-lower";
+        return "digit.hex";
     }
 
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::hex_lower>(i);
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        result.insert('a', 'f');
+        result.insert('A', 'F');
+        return result;
     }
+
+    static constexpr unsigned digit_radix = 16;
 
     template <typename CharT>
-    static constexpr unsigned value(CharT c)
+    static constexpr unsigned digit_value(CharT c)
     {
         if (c >= 'a')
             return static_cast<unsigned>(c) - 'a' + 10;
-        else if (c <= '9')
-            return static_cast<unsigned>(c) - '0';
-        else
-            return unsigned(-1);
-    }
-};
-
-struct hex_upper
-{
-    static constexpr unsigned radix = 16;
-
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "digit.hex-upper";
-    }
-
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
-    {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::hex_upper>(i);
-    }
-
-    template <typename CharT>
-    static constexpr unsigned value(CharT c)
-    {
-        if (c >= 'A')
+        else if (c >= 'A')
             return static_cast<unsigned>(c) - 'A' + 10;
         else if (c <= '9')
             return static_cast<unsigned>(c) - '0';
@@ -136,30 +122,58 @@ struct hex_upper
             return unsigned(-1);
     }
 };
+using hex = _d<16>;
 
-struct hex
+struct hex_lower : char_class_base<hex_lower>
 {
-    static constexpr unsigned radix = 16;
-
-    static LEXY_CONSTEVAL auto name()
+    static LEXY_CONSTEVAL auto char_class_name()
     {
-        return "digit.hex";
+        return "digit.hex-lower";
     }
 
-    template <typename Encoding>
-    static constexpr bool match(typename Encoding::int_type i)
+    static LEXY_CONSTEVAL auto char_class_ascii()
     {
-        using namespace lexy::_detail;
-        return ascii_table.contains<Encoding, ascii_table_t::hex_lower, ascii_table_t::hex_upper>(
-            i);
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        result.insert('a', 'f');
+        return result;
     }
+
+    static constexpr unsigned digit_radix = 16;
 
     template <typename CharT>
-    static constexpr unsigned value(CharT c)
+    static constexpr unsigned digit_value(CharT c)
     {
         if (c >= 'a')
             return static_cast<unsigned>(c) - 'a' + 10;
-        else if (c >= 'A')
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
+        else
+            return unsigned(-1);
+    }
+};
+
+struct hex_upper : char_class_base<hex_upper>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "digit.hex-upper";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        result.insert('A', 'F');
+        return result;
+    }
+
+    static constexpr unsigned digit_radix = 16;
+
+    template <typename CharT>
+    static constexpr unsigned digit_value(CharT c)
+    {
+        if (c >= 'A')
             return static_cast<unsigned>(c) - 'A' + 10;
         else if (c <= '9')
             return static_cast<unsigned>(c) - '0';
@@ -172,79 +186,40 @@ struct hex
 //=== digit ===//
 namespace lexyd
 {
-struct _zero : token_base<_zero>
+struct _zero : char_class_base<_zero>
 {
-    template <typename Reader>
-    struct tp
+    static LEXY_CONSTEVAL auto char_class_name()
     {
-        typename Reader::iterator end;
+        return "digit.zero";
+    }
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            if (reader.peek() != lexy::_detail::transcode_int<typename Reader::encoding>('0'))
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "digit.zero");
-            context.on(_ev::error{}, err);
-        }
-    };
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        result.insert('0');
+        return result;
+    }
 };
 
 /// Matches the zero digit.
 constexpr auto zero = _zero{};
 
-template <typename Base>
-struct _digit : token_base<_digit<Base>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            if (!Base::template match<typename Reader::encoding>(reader.peek()))
-                return false;
-
-            reader.bump();
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
-            context.on(_ev::error{}, err);
-        }
-    };
-};
-
 /// Matches a single digit.
-template <typename Base = decimal>
-constexpr auto digit = _digit<Base>{};
+template <typename Base = decimal, int = Base::digit_radix>
+constexpr auto digit = Base{};
 } // namespace lexyd
 
 namespace lexy
 {
 template <>
 inline constexpr auto token_kind_of<lexy::dsl::_zero> = lexy::digits_token_kind;
-template <typename Base>
-constexpr auto token_kind_of<lexy::dsl::_digit<Base>> = lexy::digits_token_kind;
+
+template <int Radix>
+constexpr auto token_kind_of<lexy::dsl::_d<Radix>> = lexy::digits_token_kind;
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::hex_lower> = lexy::digits_token_kind;
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::hex_upper> = lexy::digits_token_kind;
 } // namespace lexy
 
 //=== digits ===//
@@ -335,7 +310,8 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
             }
             else
             {
-                auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
+                auto err
+                    = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
                 context.on(_ev::error{}, err);
             }
         }
@@ -387,7 +363,7 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -456,7 +432,7 @@ struct _digits_t : token_base<_digits_t<Base>>
             else
             {
                 auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
-                                                                          Base::name());
+                                                                          Base::char_class_name());
                 context.on(_ev::error{}, err);
             }
         }
@@ -497,8 +473,8 @@ struct _digits : token_base<_digits<Base>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            auto err
-                = lexy::error<Reader, lexy::expected_char_class>(reader.position(), Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(),
+                                                                      Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -571,7 +547,7 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -602,7 +578,7 @@ struct _ndigits : token_base<_ndigits<N, Base>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };

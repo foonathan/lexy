@@ -392,7 +392,7 @@ TEST_CASE("dsl::code_point")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point").cancel());
 
     auto ascii = LEXY_VERIFY(u"a");
     CHECK(ascii.status == test_result::success);
@@ -429,7 +429,7 @@ TEST_CASE("dsl::code_point.if_()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "predicate").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -441,8 +441,7 @@ TEST_CASE("dsl::code_point.if_()")
 
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::fatal_error);
-    CHECK(bmp.trace
-          == test_trace().error_token("\\u00E4").expected_char_class(0, "predicate").cancel());
+    CHECK(bmp.trace == test_trace().expected_char_class(0, "predicate").cancel());
 }
 
 TEST_CASE("dsl::code_point.ascii()")
@@ -454,7 +453,7 @@ TEST_CASE("dsl::code_point.ascii()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.ASCII").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -466,16 +465,10 @@ TEST_CASE("dsl::code_point.ascii()")
 
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::fatal_error);
-    CHECK(
-        bmp.trace
-        == test_trace().error_token("\\u00E4").expected_char_class(0, "code-point.ASCII").cancel());
+    CHECK(bmp.trace == test_trace().expected_char_class(0, "code-point.ASCII").cancel());
     auto outside_bmp = LEXY_VERIFY(u"🙂");
     CHECK(outside_bmp.status == test_result::fatal_error);
-    CHECK(outside_bmp.trace
-          == test_trace()
-                 .error_token("\\U0001F642")
-                 .expected_char_class(0, "code-point.ASCII")
-                 .cancel());
+    CHECK(outside_bmp.trace == test_trace().expected_char_class(0, "code-point.ASCII").cancel());
 }
 
 TEST_CASE("dsl::code_point.bmp()")
@@ -487,7 +480,7 @@ TEST_CASE("dsl::code_point.bmp()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.BMP").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -503,11 +496,7 @@ TEST_CASE("dsl::code_point.bmp()")
 
     auto outside_bmp = LEXY_VERIFY(u"🙂");
     CHECK(outside_bmp.status == test_result::fatal_error);
-    CHECK(outside_bmp.trace
-          == test_trace()
-                 .error_token("\\U0001F642")
-                 .expected_char_class(0, "code-point.BMP")
-                 .cancel());
+    CHECK(outside_bmp.trace == test_trace().expected_char_class(0, "code-point.BMP").cancel());
 }
 
 TEST_CASE("dsl::code_point.noncharacter()")
@@ -519,29 +508,18 @@ TEST_CASE("dsl::code_point.noncharacter()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.non-character").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::fatal_error);
-    CHECK(a.trace
-          == test_trace()
-                 .error_token("a")
-                 .expected_char_class(0, "code-point.non-character")
-                 .cancel());
+    CHECK(a.trace == test_trace().expected_char_class(0, "code-point.non-character").cancel());
     auto bmp = LEXY_VERIFY(u"ä");
     CHECK(bmp.status == test_result::fatal_error);
-    CHECK(bmp.trace
-          == test_trace()
-                 .error_token("\\u00E4")
-                 .expected_char_class(0, "code-point.non-character")
-                 .cancel());
+    CHECK(bmp.trace == test_trace().expected_char_class(0, "code-point.non-character").cancel());
     auto outside_bmp = LEXY_VERIFY(u"🙂");
     CHECK(outside_bmp.status == test_result::fatal_error);
     CHECK(outside_bmp.trace
-          == test_trace()
-                 .error_token("\\U0001F642")
-                 .expected_char_class(0, "code-point.non-character")
-                 .cancel());
+          == test_trace().expected_char_class(0, "code-point.non-character").cancel());
 
     auto noncharacter = LEXY_VERIFY(u"\uFDDF");
     CHECK(noncharacter.status == test_result::success);
@@ -557,7 +535,8 @@ TEST_CASE("dsl::code_point.general_category()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace
+          == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -584,39 +563,23 @@ TEST_CASE("dsl::code_point.general_category()")
 
     auto A = LEXY_VERIFY(u"A");
     CHECK(A.status == test_result::fatal_error);
-    CHECK(A.trace
-          == test_trace()
-                 .error_token("A")
-                 .expected_char_class(0, "code-point.lowercase-letter")
-                 .cancel());
+    CHECK(A.trace == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
     auto Umlaut = LEXY_VERIFY(u"Ä");
     CHECK(Umlaut.status == test_result::fatal_error);
     CHECK(Umlaut.trace
-          == test_trace()
-                 .error_token("\\u00C4")
-                 .expected_char_class(0, "code-point.lowercase-letter")
-                 .cancel());
+          == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
     auto Cyrillic = LEXY_VERIFY(u"Ҁ");
     CHECK(Cyrillic.status == test_result::fatal_error);
     CHECK(Cyrillic.trace
-          == test_trace()
-                 .error_token("\\u0480")
-                 .expected_char_class(0, "code-point.lowercase-letter")
-                 .cancel());
+          == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
     auto Greek = LEXY_VERIFY(u"Φ");
     CHECK(Greek.status == test_result::fatal_error);
     CHECK(Greek.trace
-          == test_trace()
-                 .error_token("\\u03A6")
-                 .expected_char_class(0, "code-point.lowercase-letter")
-                 .cancel());
+          == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
     auto Math = LEXY_VERIFY(u"𝐀");
     CHECK(Math.status == test_result::fatal_error);
     CHECK(Math.trace
-          == test_trace()
-                 .error_token("\\U0001D400")
-                 .expected_char_class(0, "code-point.lowercase-letter")
-                 .cancel());
+          == test_trace().expected_char_class(0, "code-point.lowercase-letter").cancel());
 
     auto ab = LEXY_VERIFY(u"a");
     CHECK(ab.status == test_result::success);
@@ -632,7 +595,7 @@ TEST_CASE("dsl::code_point.general_category() group")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.letter").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -675,8 +638,7 @@ TEST_CASE("dsl::code_point.general_category() group")
 
     auto digit = LEXY_VERIFY(u"1");
     CHECK(digit.status == test_result::fatal_error);
-    CHECK(digit.trace
-          == test_trace().error_token("1").expected_char_class(0, "code-point.letter").cancel());
+    CHECK(digit.trace == test_trace().expected_char_class(0, "code-point.letter").cancel());
 
     auto ab = LEXY_VERIFY(u"a");
     CHECK(ab.status == test_result::success);
@@ -692,7 +654,7 @@ TEST_CASE("dsl::code_point.range()")
 
     auto empty = LEXY_VERIFY(u"");
     CHECK(empty.status == test_result::fatal_error);
-    CHECK(empty.trace == test_trace().expected_char_class(0, "UTF-16.code-point").cancel());
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.range").cancel());
 
     auto a = LEXY_VERIFY(u"a");
     CHECK(a.status == test_result::success);
@@ -706,8 +668,37 @@ TEST_CASE("dsl::code_point.range()")
 
     auto d = LEXY_VERIFY(u"d");
     CHECK(d.status == test_result::fatal_error);
-    CHECK(d.trace
-          == test_trace().error_token("d").expected_char_class(0, "code-point.range").cancel());
+    CHECK(d.trace == test_trace().expected_char_class(0, "code-point.range").cancel());
+
+    auto ab = LEXY_VERIFY(u"a");
+    CHECK(ab.status == test_result::success);
+    CHECK(ab.trace == test_trace().token("a"));
+}
+
+TEST_CASE("dsl::code_point.set()")
+{
+    constexpr auto rule = lexy::dsl::code_point.set<'a', 'b', 'c'>();
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    constexpr auto callback = token_callback;
+
+    auto empty = LEXY_VERIFY(u"");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "code-point.set").cancel());
+
+    auto a = LEXY_VERIFY(u"a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.trace == test_trace().token("a"));
+    auto b = LEXY_VERIFY(u"b");
+    CHECK(b.status == test_result::success);
+    CHECK(b.trace == test_trace().token("b"));
+    auto c = LEXY_VERIFY(u"c");
+    CHECK(c.status == test_result::success);
+    CHECK(c.trace == test_trace().token("c"));
+
+    auto d = LEXY_VERIFY(u"d");
+    CHECK(d.status == test_result::fatal_error);
+    CHECK(d.trace == test_trace().expected_char_class(0, "code-point.set").cancel());
 
     auto ab = LEXY_VERIFY(u"a");
     CHECK(ab.status == test_result::success);

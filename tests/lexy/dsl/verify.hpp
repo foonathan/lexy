@@ -549,16 +549,30 @@ constexpr auto _get_input(Encoding)
 }
 template <typename Encoding, typename... CharT,
           typename
-          = std::enable_if_t<(std::is_convertible_v<CharT, typename Encoding::char_type> && ...)>>
+          = std::enable_if_t<(std::is_convertible_v<CharT, typename Encoding::char_type> && ...)
+                             || (std::is_same_v<CharT, lexy::code_point> && ...)>>
 constexpr auto _get_input(Encoding, CharT... cs)
 {
     using char_type = typename Encoding::char_type;
 
     struct input
     {
-        char_type array[sizeof...(CharT)];
+        char_type   array[sizeof...(CharT) * 4];
+        std::size_t size;
 
-        constexpr input(CharT... c) : array{char_type(c)...} {}
+        constexpr input(CharT... cs) : array{}, size{}
+        {
+            auto ptr = array;
+            if constexpr ((std::is_same_v<CharT, lexy::code_point> && ...))
+            {
+                ((ptr += lexy::_detail::encode_code_point<Encoding>(cs.value(), ptr, 4)), ...);
+            }
+            else
+            {
+                ((*ptr++ = static_cast<char_type>(cs)), ...);
+            }
+            size = static_cast<std::size_t>(ptr - array);
+        }
 
         input(const input&) = delete;
         input& operator=(const input&) = delete;

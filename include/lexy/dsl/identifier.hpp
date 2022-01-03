@@ -6,10 +6,10 @@
 
 #include <lexy/_detail/nttp_string.hpp>
 #include <lexy/dsl/alternative.hpp>
+#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/literal.hpp>
-#include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -59,6 +59,96 @@ struct _idp : token_base<_idp<Leading, Trailing>>
         constexpr void report_error(Context& context, const Reader& reader)
         {
             leading.report_error(context, reader);
+        }
+    };
+};
+
+template <typename Token>
+struct _prefix : token_base<_prefix<Token>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        lexy::token_parser_for<Token, Reader> token;
+        typename Reader::iterator             end;
+
+        constexpr explicit tp(const Reader& reader) : token(reader), end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            // Match the token.
+            if (!token.try_parse(reader))
+                return false;
+            reader.set_position(token.end);
+
+            // Consume the rest of the input.
+            lexy::try_match_token(lexy::dsl::any, reader);
+            end = reader.position();
+
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, const Reader& reader)
+        {
+            // Only the token part can fail.
+            token.report_error(context, reader);
+        }
+    };
+};
+
+template <typename Token>
+struct _contains : token_base<_contains<Token>>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::iterator end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            while (true)
+            {
+                if (lexy::try_match_token(Token{}, reader))
+                {
+                    // We've found it.
+                    break;
+                }
+                else if (reader.peek() == Reader::encoding::eof())
+                {
+                    // Haven't found it.
+                    end = reader.position();
+                    return false;
+                }
+                else
+                {
+                    // Try again.
+                    reader.bump();
+                }
+            }
+
+            // Consume everything else.
+            lexy::try_match_token(lexy::dsl::any, reader);
+
+            end = reader.position();
+            return true;
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            // Trigger an error by parsing the token at the end of the input.
+            reader.set_position(end);
+
+            LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
+                        "forgot to set end in try_parse()");
+
+            lexy::token_parser_for<Token, Reader> parser(reader);
+            auto                                  result = parser.try_parse(reader);
+            LEXY_ASSERT(!result, "token shouldn't have matched?!");
+            parser.report_error(context, reader);
         }
     };
 };
@@ -182,14 +272,14 @@ struct _id : branch_base
     template <typename... R>
     constexpr auto reserve_prefix(R... r) const
     {
-        return reserve(prefix(_make_reserve(r))...);
+        return reserve(_prefix<decltype(_make_reserve(r))>{}...);
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
     constexpr auto reserve_containing(R... r) const
     {
-        return reserve(contains(_make_reserve(r))...);
+        return reserve(_contains<decltype(_make_reserve(r))>{}...);
     }
 
     /// Matches every identifier, ignoring reserved ones.

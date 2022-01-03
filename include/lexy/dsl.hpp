@@ -13,6 +13,7 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/byte.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/code_point.hpp>
 #include <lexy/dsl/combination.hpp>
@@ -31,7 +32,6 @@
 #include <lexy/dsl/lookahead.hpp>
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/member.hpp>
-#include <lexy/dsl/minus.hpp>
 #include <lexy/dsl/newline.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/peek.hpp>

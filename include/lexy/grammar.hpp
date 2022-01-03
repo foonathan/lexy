@@ -25,6 +25,8 @@ struct unconditional_branch_base : branch_base
 
 struct _token_base
 {};
+struct _char_class_base
+{};
 struct _sep_base
 {};
 } // namespace lexyd
@@ -43,6 +45,9 @@ constexpr bool is_unconditional_branch_rule = std::is_base_of_v<dsl::uncondition
 
 template <typename T>
 constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
+
+template <typename T>
+constexpr bool is_char_class_rule = std::is_base_of_v<dsl::_char_class_base, T>;
 
 template <typename T>
 constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
