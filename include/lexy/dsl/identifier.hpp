@@ -9,6 +9,7 @@
 #include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 #include <lexy/lexeme.hpp>
@@ -34,18 +35,15 @@ struct _idp : token_base<_idp<Leading, Trailing>>
     template <typename Reader>
     struct tp
     {
-        lexy::token_parser_for<Leading, Reader> leading;
-        typename Reader::iterator               end;
+        typename Reader::iterator end;
 
-        constexpr explicit tp(const Reader& reader) : leading(reader), end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             // Need to match Leading character.
-            if (!leading.try_parse(reader))
+            if (!lexy::try_match_token(Leading{}, reader))
                 return false;
-            reader.set_position(leading.end);
-            end = leading.end;
 
             // Match zero or more trailing characters.
             while (lexy::try_match_token(Trailing{}, reader))
@@ -58,7 +56,7 @@ struct _idp : token_base<_idp<Leading, Trailing>>
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            leading.report_error(context, reader);
+            Leading::template char_class_report_error<Reader>(context, reader.position());
         }
     };
 };
@@ -301,19 +299,22 @@ struct _id : branch_base
     }
 };
 
-/// Creates an identifier that consists of one or more of the given tokens.
-template <typename Token>
-constexpr auto identifier(Token)
+/// Creates an identifier that consists of one or more of the given characters.
+template <typename CharClass>
+constexpr auto identifier(CharClass)
 {
-    return _id<Token, Token>{};
+    static_assert(lexy::is_char_class_rule<CharClass>);
+    return _id<CharClass, CharClass>{};
 }
 
 /// Creates an identifier that consists of one leading token followed by zero or more trailing
 /// tokens.
-template <typename LeadingToken, typename TrailingToken>
-constexpr auto identifier(LeadingToken, TrailingToken)
+template <typename LeadingClass, typename TrailingClass>
+constexpr auto identifier(LeadingClass, TrailingClass)
 {
-    return _id<LeadingToken, TrailingToken>{};
+    static_assert(
+        lexy::is_char_class_rule<LeadingClass> && lexy::is_char_class_rule<TrailingClass>);
+    return _id<LeadingClass, TrailingClass>{};
 }
 } // namespace lexyd
 

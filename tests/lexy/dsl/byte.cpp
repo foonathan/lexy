@@ -4,6 +4,8 @@
 #include <lexy/dsl/byte.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/if.hpp>
 
 TEST_CASE("dsl::byte")
@@ -243,8 +245,7 @@ TEST_CASE("dsl::bint")
 
     SUBCASE("token rule")
     {
-        constexpr auto bint = dsl::big_bint16(
-            dsl::token(dsl::lit_b<0xAA> + dsl::if_(dsl::lit_b<0xBB>) + dsl::if_(dsl::lit_b<0xCC>)));
+        constexpr auto bint = dsl::big_bint16(dsl::identifier(dsl::ascii::lower).pattern());
         CHECK(lexy::is_branch_rule<decltype(bint)>);
 
         SUBCASE("as rule")
@@ -253,23 +254,26 @@ TEST_CASE("dsl::bint")
 
             auto empty = LEXY_VERIFY(lexy::byte_encoding{});
             CHECK(empty.status == test_result::fatal_error);
-            CHECK(empty.trace == test_trace().error(0, 0, "missing token").cancel());
+            CHECK(empty.trace == test_trace().expected_char_class(0, "ASCII.lower").cancel());
 
-            auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
+            auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0x61);
             CHECK(a.status == test_result::fatal_error);
             CHECK(a.trace
-                  == test_trace().token("\\AA").error(0, 1, "mismatched byte count").cancel());
+                  == test_trace()
+                         .token("identifier", "\\61")
+                         .error(0, 1, "mismatched byte count")
+                         .cancel());
 
-            auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB);
+            auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0x61, 0x62);
             CHECK(ab.status == test_result::success);
-            CHECK(ab.value == 0xAABB);
-            CHECK(ab.trace == test_trace().token("\\AA\\BB"));
+            CHECK(ab.value == 0x6162);
+            CHECK(ab.trace == test_trace().token("identifier", "\\61\\62"));
 
-            auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB, 0xCC);
+            auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0x61, 0x62, 0x63);
             CHECK(abc.status == test_result::fatal_error);
             CHECK(abc.trace
                   == test_trace()
-                         .token("\\AA\\BB\\CC")
+                         .token("identifier", "\\61\\62\\63")
                          .error(0, 3, "mismatched byte count")
                          .cancel());
         }
@@ -281,21 +285,24 @@ TEST_CASE("dsl::bint")
             CHECK(empty.status == test_result::success);
             CHECK(empty.trace == test_trace());
 
-            auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA);
+            auto a = LEXY_VERIFY(lexy::byte_encoding{}, 0x61);
             CHECK(a.status == test_result::fatal_error);
             CHECK(a.trace
-                  == test_trace().token("\\AA").error(0, 1, "mismatched byte count").cancel());
+                  == test_trace()
+                         .token("identifier", "\\61")
+                         .error(0, 1, "mismatched byte count")
+                         .cancel());
 
-            auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB);
+            auto ab = LEXY_VERIFY(lexy::byte_encoding{}, 0x61, 0x62);
             CHECK(ab.status == test_result::success);
-            CHECK(ab.value == 0xAABB);
-            CHECK(ab.trace == test_trace().token("\\AA\\BB"));
+            CHECK(ab.value == 0x6162);
+            CHECK(ab.trace == test_trace().token("identifier", "\\61\\62"));
 
-            auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0xAA, 0xBB, 0xCC);
+            auto abc = LEXY_VERIFY(lexy::byte_encoding{}, 0x61, 0x62, 0x63);
             CHECK(abc.status == test_result::fatal_error);
             CHECK(abc.trace
                   == test_trace()
-                         .token("\\AA\\BB\\CC")
+                         .token("identifier", "\\61\\62\\63")
                          .error(0, 3, "mismatched byte count")
                          .cancel());
         }

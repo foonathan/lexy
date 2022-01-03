@@ -38,8 +38,8 @@ namespace lexy::dsl
         constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
 
         //=== rules ===//
-        constexpr _rule_ auto operator()(_token-rule_ c) const;
-        constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ ... escapes) const;
+        constexpr _rule_ auto operator()(_char-class-rule_ c) const;
+        constexpr _rule_ auto operator()(_char-class-rule_ c, _escape-dsl_ ... escapes) const;
     };
 
     constexpr _delimited-dsl_ delimited(_branch-rule_ auto open,
@@ -103,12 +103,12 @@ CAUTION: The limit must be a character that must not be allowed inside the delim
 
 {{% interface %}}
 ----
-constexpr _rule_ auto operator()(_token-rule_ c) const;
-constexpr _rule_ auto operator()(_token-rule_ c, _escape-dsl_ ... escapes) const;
+constexpr _rule_ auto operator()(_char-class-rule_ c) const;
+constexpr _rule_ auto operator()(_char-class-rule_ c, _escape-dsl_ ... escapes) const;
 ----
 
 [.lead]
-`.operator()` returns a rule that parses zero or more occurrences of `c` inside the delimited,
+`.operator()` returns a rule that parses zero or more occurrences of the {{% char-class-rule %}} `c` inside the delimited,
 with optional `escape` sequences.
 
 Requires::

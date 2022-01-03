@@ -7,6 +7,7 @@
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/symbol.hpp>
@@ -27,18 +28,68 @@ struct missing_delimiter
 
 namespace lexyd
 {
-template <typename Char, typename Reader>
+template <typename CharClass, typename Reader>
 struct _del_chars
 {
-    lexy::token_parser_for<Char, Reader> parser;
-    typename Reader::iterator            begin;
+    typename Reader::iterator begin;
 
-    constexpr _del_chars(const Reader& reader) : parser(reader), begin(reader.position()) {}
+    constexpr _del_chars(const Reader& reader) : begin(reader.position()) {}
 
-    constexpr bool try_parse(const Reader& reader)
+    template <typename Context>
+    constexpr void _recover(Context& context, typename Reader::iterator recover_begin,
+                            typename Reader::iterator recover_end)
     {
-        parser = lexy::token_parser_for<Char, Reader>(reader);
-        return parser.try_parse(reader);
+        CharClass::template char_class_report_error<Reader>(context, recover_begin);
+
+        // We recovery by discarding the ASCII character.
+        // (We've checked for EOF before, so that's not the error.)
+        context.on(_ev::recovery_start{}, recover_begin);
+        context.on(_ev::token{}, lexy::error_token_kind, recover_begin, recover_end);
+        context.on(_ev::recovery_finish{}, recover_end);
+
+        // Restart the next character here.
+        begin = recover_end;
+    }
+
+    template <typename Context, typename Sink>
+    constexpr void parse(Context& context, Reader& reader, Sink& sink)
+    {
+        // First try to match the ASCII characters.
+        using matcher = lexy::_detail::ascii_set_matcher<_cas<CharClass>>;
+        if (matcher::template match<typename Reader::encoding>(reader.peek()))
+        {
+            reader.bump();
+        }
+        // Otherwise, try to match Unicode characters.
+        else if constexpr (!std::is_same_v<decltype(CharClass::char_class_match_cp(char32_t())),
+                                           std::false_type>)
+        {
+            auto result = lexy::_detail::parse_code_point(reader);
+            if (result.error == lexy::_detail::cp_error::success
+                && CharClass::char_class_match_cp(result.cp))
+            {
+                reader.set_position(result.end);
+            }
+            else
+            {
+                finish(context, sink, reader.position());
+                _recover(context, reader.position(), result.end);
+                reader.set_position(result.end);
+            }
+        }
+        // It doesn't match Unicode characters.
+        else
+        {
+            // We can just discard the invalid ASCII character.
+            LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+                        "EOF should be checked before calling this");
+            auto recover_begin = reader.position();
+            reader.bump();
+            auto recover_end = reader.position();
+
+            finish(context, sink, recover_begin);
+            _recover(context, recover_begin, recover_end);
+        }
     }
 
     template <typename Context, typename Sink>
@@ -47,7 +98,7 @@ struct _del_chars
         if (begin == end)
             return;
 
-        context.on(_ev::token{}, typename Char::token_type{}, begin, end);
+        context.on(_ev::token{}, typename CharClass::token_type{}, begin, end);
         sink(lexy::lexeme<Reader>(begin, end));
     }
 };
@@ -98,37 +149,7 @@ struct _del : rule_base
                 continue;
 
             // Parse the next character.
-            if (auto begin = reader.position(); !cur_chars.try_parse(reader))
-            {
-                // It has failed, so finish the current character sequence and report an error.
-                cur_chars.finish(context, sink, begin);
-                cur_chars.parser.report_error(context, reader);
-                auto end = cur_chars.parser.end;
-
-                // Recover from it; this is always possible,.
-                context.on(_ev::recovery_start{}, begin);
-
-                if (begin == end)
-                {
-                    // The character didn't consume anything, so we manually discard one code unit.
-                    LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
-                                "EOF should be checked before calling this");
-                    reader.bump();
-                    end = reader.position();
-                }
-
-                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-                context.on(_ev::recovery_finish{}, end);
-
-                // We start the next character after error recovery.
-                cur_chars.begin = end;
-                reader.set_position(end);
-            }
-            else
-            {
-                // Consume the character.
-                reader.set_position(cur_chars.parser.end);
-            }
+            cur_chars.parse(context, reader, sink);
         }
 
         // Finish the currently active character sequence.
@@ -194,7 +215,7 @@ struct _delim_dsl
     template <typename Char, typename... Escapes>
     constexpr auto operator()(Char, Escapes...) const
     {
-        static_assert(lexy::is_token_rule<Char>);
+        static_assert(lexy::is_char_class_rule<Char>);
         static_assert((std::is_base_of_v<_escape_base, Escapes> && ...));
         return no_whitespace(open() >> _del<Close, Char, Limit, Escapes...>{});
     }

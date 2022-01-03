@@ -35,12 +35,12 @@ namespace lexy::dsl
         constexpr _token-rule_ auto trailing_pattern() const;
     };
 
-    constexpr _identifier-dsl_ identifier(_token-rule_ auto leading,
-                                        _token-rule_ auto trailing);
+    constexpr _identifier-dsl_ identifier(_char-class-rule_ auto leading,
+                                        _char-class-rule_ auto trailing);
 
-    constexpr _identifier-dsl_ identifier(_token-rule_ auto pattern)
+    constexpr _identifier-dsl_ identifier(_char-class-rule_ auto c)
     {
-        return identifier(pattern, pattern);
+        return identifier(c, c);
     }
 
 }
@@ -50,9 +50,9 @@ namespace lexy::dsl
 `identifier` is a rule that parses an identifier.
 
 It can be created using two overloads.
-The first overload takes a {{% token-rule %}} that matches the `leading` character of the identifier,
+The first overload takes a {{% char-class-rule %}} that matches the `leading` character of the identifier,
 and one that matches all `trailing` characters after the first.
-The second overload takes just one {{% token-rule %}} and uses it both as `leading` and `trailing` characters.
+The second overload takes just one {{% char-class-rule %}} and uses it both as `leading` and `trailing` characters.
 
 Parsing::
   Matches and consumes the token `.pattern()` (see below).

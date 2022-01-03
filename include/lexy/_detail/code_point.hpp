@@ -335,7 +335,8 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
     switch (result.error)
     {
     case cp_error::success:
-        LEXY_PRECONDITION(false);
+        // Consume the entire code point.
+        reader.set_position(result.end);
         break;
     case cp_error::eof:
         // We don't need to do anything to "recover" from EOF.

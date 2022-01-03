@@ -400,7 +400,7 @@ TEST_CASE("dsl::delimited(open, close)")
     }
     SUBCASE("minus")
     {
-        constexpr auto rule = delimited(dsl::ascii::character - dsl::lit_c<'X'>);
+        constexpr auto rule = delimited(dsl::ascii::character - LEXY_ASCII_ONE_OF("X"));
         CHECK(lexy::is_branch_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");
