@@ -180,7 +180,7 @@ public:
 
     constexpr _iterator_ position() const noexcept;
 
-    constexpr const char* character_class() const noexcept;
+    constexpr const char* name() const noexcept;
 };
 ----
 

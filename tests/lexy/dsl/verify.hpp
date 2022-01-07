@@ -410,7 +410,7 @@ public:
                 const lexy::error<Reader, lexy::expected_char_class>& error)
         {
             auto pos = lexy::_detail::range_size(handler._begin, error.position());
-            handler._trace.expected_char_class(pos, error.character_class());
+            handler._trace.expected_char_class(pos, error.name());
 
             handler._had_error = true;
         }

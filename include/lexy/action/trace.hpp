@@ -157,7 +157,7 @@ public:
         else if constexpr (std::is_same_v<Tag, lexy::expected_char_class>)
         {
             _out = _detail::write_str(_out, "expected ");
-            _out = _detail::write_str(_out, error.character_class());
+            _out = _detail::write_str(_out, error.name());
         }
         else
         {

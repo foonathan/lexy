@@ -138,7 +138,7 @@ public:
         return _pos;
     }
 
-    constexpr const char* character_class() const noexcept
+    constexpr const char* name() const noexcept
     {
         return _name;
     }
