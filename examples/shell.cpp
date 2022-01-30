@@ -115,7 +115,7 @@ struct invalid_str_char
 };
 
 // The content of a string literal: any unicode code point except for control characters.
-constexpr auto str_char = (dsl::code_point - dsl::unicode::control).error<invalid_str_char>;
+constexpr auto str_char = (-dsl::unicode::control).error<invalid_str_char>;
 
 // An unquoted sequence of characters.
 struct arg_bare

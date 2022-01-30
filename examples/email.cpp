@@ -77,11 +77,12 @@ namespace dsl = lexy::dsl;
 constexpr auto ws = dsl::whitespace(dsl::ascii::blank);
 
 //=== https://tools.ietf.org/html/rfc5322#section-3.2.3 ===//
-constexpr auto atext = dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / LEXY_LIT("#")
-                       / LEXY_LIT("$") / LEXY_LIT("%") / LEXY_LIT("&") / LEXY_LIT("'")
-                       / LEXY_LIT("*") / LEXY_LIT("+") / LEXY_LIT("-") / LEXY_LIT("/")
-                       / LEXY_LIT("=") / LEXY_LIT("?") / LEXY_LIT("^") / LEXY_LIT("_")
-                       / LEXY_LIT("`") / LEXY_LIT("{") / LEXY_LIT("|") / LEXY_LIT("}");
+constexpr auto atext
+    = LEXY_CHAR_CLASS("atext", dsl::ascii::alpha / dsl::ascii::digit / LEXY_LIT("!") / LEXY_LIT("#")
+                                   / LEXY_LIT("$") / LEXY_LIT("%") / LEXY_LIT("&") / LEXY_LIT("'")
+                                   / LEXY_LIT("*") / LEXY_LIT("+") / LEXY_LIT("-") / LEXY_LIT("/")
+                                   / LEXY_LIT("=") / LEXY_LIT("?") / LEXY_LIT("^") / LEXY_LIT("_")
+                                   / LEXY_LIT("`") / LEXY_LIT("{") / LEXY_LIT("|") / LEXY_LIT("}"));
 
 // Text of the specified characters.
 // In the grammar it is always surrounded by whitespace.
