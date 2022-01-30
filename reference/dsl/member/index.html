@@ -54,24 +54,24 @@ lexy/dsl/member.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/member.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Fn</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>member</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Fn</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>member</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>class</span> <span class=tok-nc><em>member</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// note: not a <em>rule</em> itself</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span>        <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-    <span class=tok-p>};</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc><em>member</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// note: not a <em>rule</em> itself</span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>rule</em></span><span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>=</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>MemberPtr</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>member</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>member</span><span class=tok-p>;</span>
-<span class=tok-p>}</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>MemberPtr</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>member</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>member</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
 <span class=tok-cp>#define LEXY_MEM(Name) lexy::dsl::member&lt;...&gt;</span></code></pre>
 </div>
@@ -130,26 +130,26 @@ The resulting <code>Fn</code> can take an arbitrary aggregate type and will assi
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IjQyLDExIiwic3RkaW5WaXNpYmxlIjp0cnVlfV0sImlkIjoxLCJsYW5ndWFnZSI6ImMrKyIsInNvdXJjZSI6IiNpbmNsdWRlIFx1MDAzY2xleHkvYWN0aW9uL3BhcnNlLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9jYWxsYmFjay5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHkvZHNsLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eV9leHQvY29tcGlsZXJfZXhwbG9yZXIuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5X2V4dC9yZXBvcnRfZXJyb3IuaHBwXHUwMDNlXG5cbm5hbWVzcGFjZSBkc2wgPSBsZXh5Ojpkc2w7XG5cbnN0cnVjdCBwb2ludFxue1xuICAgIGludCB4LCB5O1xufTtcblxuc3RydWN0IHByb2R1Y3Rpb25cbntcbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gcnVsZSA9IFtdIHtcbiAgICAgICAgYXV0byB2YWx1ZSA9IGRzbDo6aW50ZWdlclx1MDAzY2ludFx1MDAzZShkc2w6OmRpZ2l0c1x1MDAzY1x1MDAzZSk7XG5cbiAgICAgICAgLy8gUGFyc2UgYW4gaW50ZWdlciBpbnRvIHRoZSB4L3kgbWVtYmVyIG9mIHBvaW50LlxuICAgICAgICBhdXRvIHhfY29vcmQgPSAoZHNsOjptZW1iZXJcdTAwM2NcdTAwMjYgcG9pbnQ6OnhcdTAwM2UgPSB2YWx1ZSk7XG4gICAgICAgIGF1dG8geV9jb29yZCA9IChkc2w6Om1lbWJlclx1MDAzY1x1MDAyNiBwb2ludDo6eVx1MDAzZSA9IHZhbHVlKTtcblxuICAgICAgICByZXR1cm4geF9jb29yZCArIGRzbDo6Y29tbWEgKyB5X2Nvb3JkO1xuICAgIH0oKTtcblxuICAgIC8vIGBsZXh5Ojphc19hZ2dyZWdhdGVgIGFjY2VwdHMgdGhlIGBsZXh5OjptZW1iZXJcdTAwM2NGblx1MDAzZWAgKyB2YWx1ZSBwYWlycy5cbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gdmFsdWUgPSBsZXh5Ojphc19hZ2dyZWdhdGVcdTAwM2Nwb2ludFx1MDAzZTtcbn07XG5cbmludCBtYWluKClcbntcbiAgICBhdXRvIGlucHV0ICA9IGxleHlfZXh0Ojpjb21waWxlcl9leHBsb3Jlcl9pbnB1dCgpO1xuICAgIGF1dG8gcmVzdWx0ID0gbGV4eTo6cGFyc2VcdTAwM2Nwcm9kdWN0aW9uXHUwMDNlKGlucHV0LCBsZXh5X2V4dDo6cmVwb3J0X2Vycm9yKTtcbiAgICBpZiAoIXJlc3VsdClcbiAgICAgICAgcmV0dXJuIDE7XG5cbiAgICBzdGQ6OnByaW50ZihcIlRoZSB2YWx1ZSBpczogKCVkLCAlZClcXG5cIiwgcmVzdWx0LnZhbHVlKCkueCwgcmVzdWx0LnZhbHVlKCkueSk7XG59In1dfQ==" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>point</span>
-<span class=tok-p>{</span>
-    <span class=tok-kt>int</span> <span class=tok-n>x</span><span class=tok-p>,</span> <span class=tok-n>y</span><span class=tok-p>;</span>
-<span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>point</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>x</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>y</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>value</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span>
+<span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Parse an integer into the x/y member of point.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>x_coord</span> <span class=tok-o>=</span> <span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>member</span><span class=tok-o>&lt;&amp;</span> <span class=tok-n>point</span><span class=tok-o>::</span><span class=tok-n>x</span><span class=tok-o>&gt;</span> <span class=tok-o>=</span> <span class=tok-n>value</span><span class=tok-p>);</span>
-        <span class=tok-k>auto</span> <span class=tok-n>y_coord</span> <span class=tok-o>=</span> <span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>member</span><span class=tok-o>&lt;&amp;</span> <span class=tok-n>point</span><span class=tok-o>::</span><span class=tok-n>y</span><span class=tok-o>&gt;</span> <span class=tok-o>=</span> <span class=tok-n>value</span><span class=tok-p>);</span>
+<span class=tok-w>        </span><span class=tok-c1>// Parse an integer into the x/y member of point.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>x_coord</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>member</span><span class=tok-o>&lt;&amp;</span><span class=tok-w> </span><span class=tok-n>point</span><span class=tok-o>::</span><span class=tok-n>x</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>y_coord</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>member</span><span class=tok-o>&lt;&amp;</span><span class=tok-w> </span><span class=tok-n>point</span><span class=tok-o>::</span><span class=tok-n>y</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>);</span><span class=tok-w></span>
 
-        <span class=tok-k>return</span> <span class=tok-n>x_coord</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>comma</span> <span class=tok-o>+</span> <span class=tok-n>y_coord</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>x_coord</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>comma</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>y_coord</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
 
-    <span class=tok-c1>// `lexy::as_aggregate` accepts the `lexy::member&lt;Fn&gt;` + value pairs.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>as_aggregate</span><span class=tok-o>&lt;</span><span class=tok-n>point</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-c1>// `lexy::as_aggregate` accepts the `lexy::member&lt;Fn&gt;` + value pairs.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>as_aggregate</span><span class=tok-o>&lt;</span><span class=tok-n>point</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -177,7 +177,7 @@ The <code>member</code> rule works good in combination with <a href=/reference/d
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

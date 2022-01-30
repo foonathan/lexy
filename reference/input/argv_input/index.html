@@ -57,14 +57,14 @@ lexy/input/argv_input.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/input/argv_input.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>class</span> <span class=tok-nc>argv_sentinel</span><span class=tok-p>;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>argv_iterator</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>argv_sentinel</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>argv_iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-n>argv_iterator</span> <span class=tok-n>argv_begin</span><span class=tok-p>(</span><span class=tok-kt>int</span> <span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-kt>char</span><span class=tok-o><strong></strong></span><strong> <span class=tok-n>argv</span><span class=tok-p>[])</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n>argv_iterator</span> <span class=tok-n>argv_end</span><span class=tok-p>(</span><span class=tok-kt>int</span> <span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-kt>char</span><span class=tok-o></span></strong> <span class=tok-n>argv</span><span class=tok-p>[])</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>argv_iterator</span><span class=tok-w> </span><span class=tok-nf>argv_begin</span><span class=tok-p>(</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o><strong></strong></span><strong><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>[])</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>argv_iterator</span><span class=tok-w> </span><span class=tok-nf>argv_end</span><span class=tok-p>(</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o></span></strong><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>[])</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -85,20 +85,20 @@ It includes the null character as separator between two arguments, but not after
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJhcmd1bWVudHMiOiJmaXJzdCBzZWNvbmQgdGhpcmQiLCJhcmd1bWVudHNWaXNpYmxlIjp0cnVlLCJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9fV0sImlkIjoxLCJsYW5ndWFnZSI6ImMrKyIsInNvdXJjZSI6IiNpbmNsdWRlIFx1MDAzY2NzdGRpb1x1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9pbnB1dC9hcmd2X2lucHV0LmhwcFx1MDAzZVxuXG5pbnQgbWFpbihpbnQgYXJnYywgY2hhciogYXJndltdKVxue1xuICAgIGF1dG8gYmVnaW4gPSBsZXh5Ojphcmd2X2JlZ2luKGFyZ2MsIGFyZ3YpO1xuICAgIGF1dG8gZW5kICAgPSBsZXh5Ojphcmd2X2VuZChhcmdjLCBhcmd2KTtcblxuICAgIGZvciAoYXV0byBjdXIgPSBiZWdpbjsgY3VyICE9IGVuZDsgKytjdXIpXG4gICAge1xuICAgICAgICBpZiAoKmN1ciA9PSAnXFwwJylcbiAgICAgICAgICAgIHN0ZDo6cHV0cyhcIlxcXFwwXCIpO1xuICAgICAgICBlbHNlXG4gICAgICAgICAgICBzdGQ6OnByaW50ZihcIiVjXCIsICpjdXIpO1xuICAgIH1cbiAgICBzdGQ6OnB1dHMoXCJcXFxcMFwiKTsgLy8gbGFzdCBudWxsIHRlcm1pbmF0b3Igbm90IGluY2x1ZGVkIGluIHRoZSByYW5nZVxufVxuIn1dfQ==" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span> <span class=tok-nf>main</span><span class=tok-p>(</span><span class=tok-kt>int</span> <span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>argv</span><span class=tok-p>[])</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>auto</span> <span class=tok-n>begin</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_begin</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-n>argv</span><span class=tok-p>);</span>
-    <span class=tok-k>auto</span> <span class=tok-n>end</span>   <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_end</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-n>argv</span><span class=tok-p>);</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-nf>main</span><span class=tok-p>(</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>[])</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_begin</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-w>   </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_end</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>);</span><span class=tok-w></span>
 
-    <span class=tok-k>for</span> <span class=tok-p>(</span><span class=tok-k>auto</span> <span class=tok-n>cur</span> <span class=tok-o>=</span> <span class=tok-n>begin</span><span class=tok-p>;</span> <span class=tok-n>cur</span> <span class=tok-o>!=</span> <span class=tok-n>end</span><span class=tok-p>;</span> <span class=tok-o>++</span><span class=tok-n>cur</span><span class=tok-p>)</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>*</span><span class=tok-n>cur</span> <span class=tok-o>==</span> <span class=tok-sc>&#39;\0&#39;</span><span class=tok-p>)</span>
-            <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;</span><span class=tok-se>\\</span><span class=tok-s>0&#34;</span><span class=tok-p>);</span>
-        <span class=tok-k>else</span>
-            <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>printf</span><span class=tok-p>(</span><span class=tok-s>&#34;%c&#34;</span><span class=tok-p>,</span> <span class=tok-o>*</span><span class=tok-n>cur</span><span class=tok-p>);</span>
-    <span class=tok-p>}</span>
-    <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;</span><span class=tok-se>\\</span><span class=tok-s>0&#34;</span><span class=tok-p>);</span> <span class=tok-c1>// last null terminator not included in the range</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>for</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>cur</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-n>cur</span><span class=tok-w> </span><span class=tok-o>!=</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-o>++</span><span class=tok-n>cur</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-o>*</span><span class=tok-n>cur</span><span class=tok-w> </span><span class=tok-o>==</span><span class=tok-w> </span><span class=tok-sc>&#39;\0&#39;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;</span><span class=tok-se>\\</span><span class=tok-s>0&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>else</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>printf</span><span class=tok-p>(</span><span class=tok-s>&#34;%c&#34;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-o>*</span><span class=tok-n>cur</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;</span><span class=tok-se>\\</span><span class=tok-s>0&#34;</span><span class=tok-p>);</span><span class=tok-w> </span><span class=tok-c1>// last null terminator not included in the range</span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -111,25 +111,25 @@ It includes the null character as separator between two arguments, but not after
 <div class=listingblock>
 <div class=title><code>lexy/input/argv_input.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>argv_input</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>encoding</span>  <span class=tok-o>=</span> <span class=tok-n>Encoding</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>argv_input</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>encoding</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-nf>argv_input</span><span class=tok-p>();</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>argv_input</span><span class=tok-p>();</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-nf>argv_input</span><span class=tok-p>(</span><span class=tok-n>argv_iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>argv_iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>argv_input</span><span class=tok-p>(</span><span class=tok-kt>int</span> <span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>argv</span><span class=tok-p>[])</span> <span class=tok-k>noexcept</span>
-        <span class=tok-o>:</span> <span class=tok-n>argv_input</span><span class=tok-p>(</span><span class=tok-n>argv_begin</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-n>argv</span><span class=tok-p>),</span> <span class=tok-n>argv_end</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-n>argv</span><span class=tok-p>))</span>
-        <span class=tok-p>{}</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>argv_input</span><span class=tok-p>(</span><span class=tok-n>argv_iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv_iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>argv_input</span><span class=tok-p>(</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>[])</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-o>:</span><span class=tok-w> </span><span class=tok-n>argv_input</span><span class=tok-p>(</span><span class=tok-n>argv_begin</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>),</span><span class=tok-w> </span><span class=tok-n>argv_end</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>{}</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>reader</em></span> <span class=tok-k>auto</span> <span class=tok-n>reader</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-o>&amp;</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>reader</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -145,18 +145,18 @@ The range <code>[begin, end)</code> of the <a href=/reference/input/argv_input/#
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJhcmd1bWVudHMiOiJIaSIsImFyZ3VtZW50c1Zpc2libGUiOnRydWUsImNvbXBpbGVyIjp7ImlkIjoiY2xhbmdfdHJ1bmsiLCJsaWJzIjpbeyJpZCI6ImxleHkiLCJ2ZXJzaW9uIjoidHJ1bmsifV0sIm9wdGlvbnMiOiItc3RkPWMrKzIwIn19XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjY3N0ZGlvXHUwMDNlXG5cbiNpbmNsdWRlIFx1MDAzY2xleHkvYWN0aW9uL21hdGNoLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9kc2wuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2lucHV0L2FyZ3ZfaW5wdXQuaHBwXHUwMDNlXG5cbnN0cnVjdCBwcm9kdWN0aW9uXG57XG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIHJ1bGUgPSBMRVhZX0xJVChcIkhpXCIpO1xufTtcblxuaW50IG1haW4oaW50IGFyZ2MsIGNoYXIqIGFyZ3ZbXSlcbntcbiAgICAvLyBDcmVhdGUgdGhlIGlucHV0LlxuICAgIGxleHk6OmFyZ3ZfaW5wdXQgaW5wdXQoYXJnYywgYXJndik7XG5cbiAgICAvLyBVc2UgdGhlIGlucHV0LlxuICAgIGlmICghbGV4eTo6bWF0Y2hcdTAwM2Nwcm9kdWN0aW9uXHUwMDNlKGlucHV0KSlcbiAgICB7XG4gICAgICAgIHN0ZDo6cHV0cyhcIkVycm9yIVxcblwiKTtcbiAgICAgICAgcmV0dXJuIDE7XG4gICAgfVxufVxuIn1dfQ==" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span> <span class=tok-nf>main</span><span class=tok-p>(</span><span class=tok-kt>int</span> <span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>argv</span><span class=tok-p>[])</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// Create the input.</span>
-    <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_input</span> <span class=tok-n>input</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span> <span class=tok-n>argv</span><span class=tok-p>);</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-nf>main</span><span class=tok-p>(</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>[])</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// Create the input.</span>
+<span class=tok-w>    </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>argv_input</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-p>(</span><span class=tok-n>argc</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv</span><span class=tok-p>);</span><span class=tok-w></span>
 
-    <span class=tok-c1>// Use the input.</span>
-    <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>))</span>
-    <span class=tok-p>{</span>
-        <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;Error!</span><span class=tok-se>\n</span><span class=tok-s>&#34;</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-mi>1</span><span class=tok-p>;</span>
-    <span class=tok-p>}</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-c1>// Use the input.</span>
+<span class=tok-w>    </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;Error!</span><span class=tok-se>\n</span><span class=tok-s>&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-mi>1</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -182,17 +182,17 @@ Use the rule <a href=/reference/input/argv_input/#argv_separator><code>lexy::dsl
 <div class=listingblock>
 <div class=title><code>lexy/input/argv_input.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>argv_lexeme</span> <span class=tok-o>=</span> <span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>argv_lexeme</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-p>,</span> <span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>argv_error</span> <span class=tok-o>=</span> <span class=tok-n>error_for</span><span class=tok-o>&lt;</span><span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;</span><span class=tok-p>,</span> <span class=tok-n>Tag</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n><em>encoding</em></span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>argv_error</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>error_for</span><span class=tok-o>&lt;</span><span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Tag</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Production</span><span class=tok-p>,</span> <span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span> <span class=tok-o>=</span> <span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>argv_error_context</span> <span class=tok-o>=</span> <span class=tok-n>error_context</span><span class=tok-o>&lt;</span><span class=tok-n>Production</span><span class=tok-p>,</span> <span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Production</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n><em>encoding</em></span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>default_encoding</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>argv_error_context</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>error_context</span><span class=tok-o>&lt;</span><span class=tok-n>Production</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>argv_input</span><span class=tok-o>&lt;</span><span class=tok-n>Encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -206,10 +206,10 @@ Use the rule <a href=/reference/input/argv_input/#argv_separator><code>lexy::dsl
 <div class=listingblock>
 <div class=title><code>lexy/input/argv_input.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>argv_separator</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>argv_separator</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -247,7 +247,7 @@ There is no argument separator before the first command-line argument, or after 
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

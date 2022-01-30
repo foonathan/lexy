@@ -8,7 +8,7 @@ struct production
 
     static constexpr auto rule = [] {
         // Arbitrary code points that aren't control characters.
-        auto c = (dsl::code_point - dsl::ascii::control).error<invalid_character>;
+        auto c = (-dsl::ascii::control).error<invalid_character>;
 
         return dsl::quoted(c);
     }();

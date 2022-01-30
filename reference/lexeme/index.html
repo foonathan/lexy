@@ -54,37 +54,37 @@ lexy/lexeme.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/lexeme.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>reader</em></span> <span class=tok-n>Reader</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>lexeme</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>encoding</span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>iterator</span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>reader</em></span><span class=tok-w> </span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>lexeme</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>encoding</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== constructors ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span> <span class=tok-n>pos</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Reader</span><span class=tok-o>&amp;</span> <span class=tok-n>reader</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== constructors ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>pos</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>size</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== access ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>empty</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>empty</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>begin</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>end</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== iterator-specific access ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-n>char_type</span><span class=tok-o>*</span> <span class=tok-n>data</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>char_type</span> <span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>idx</span><span class=tok-p>)</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== iterator-specific access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-nf>data</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>size</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>idx</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>lexeme_for</span> <span class=tok-o>=</span> <span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>lexeme_for</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -100,10 +100,10 @@ The alias <code>lexeme_for</code> instantiates the <code>lexeme</code> with the 
 <div class=listingblock>
 <div class=title><code>lexy/lexeme.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>                                              <b class=conum>(1)</b>
-<span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>                  <b class=conum>(2)</b>
-  <span class=tok-k>constexpr</span> <span class=tok-nf>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span> <span class=tok-n>pos</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>              <b class=conum>(3)</b>
-<span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Reader</span><span class=tok-o>&amp;</span> <span class=tok-n>reader</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span> <b class=conum>(4)</b></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>                                              </span><b class=conum>(1)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>                  </span><b class=conum>(2)</b>
+<span class=tok-w>  </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>pos</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>size</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>              </span><b class=conum>(3)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(4)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -128,9 +128,9 @@ The alias <code>lexeme_for</code> instantiates the <code>lexeme</code> with the 
 <div class=listingblock>
 <div class=title><code>lexy/lexeme.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-n>char_type</span><span class=tok-o>*</span> <span class=tok-n>data</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>               <b class=conum>(1)</b>
-<span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>                    <b class=conum>(2)</b>
-<span class=tok-k>constexpr</span> <span class=tok-n>char_type</span> <span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>idx</span><span class=tok-p>)</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span> <b class=conum>(3)</b></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-nf>data</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>               </span><b class=conum>(1)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>size</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>                    </span><b class=conum>(2)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>idx</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(3)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -158,7 +158,7 @@ Requires that the iterator is a random access iterator.</p>
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

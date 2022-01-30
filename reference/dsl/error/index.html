@@ -57,14 +57,14 @@ lexy/dsl/error.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/error.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>error</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -101,17 +101,17 @@ The rule then fails.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=choice_error&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>unknown_greeting</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>name</span> <span class=tok-o>=</span> <span class=tok-s>&#34;unknown greeting&#34;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>unknown_greeting</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-s>&#34;unknown greeting&#34;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// Generate a custom error for an unknown greeting.</span>
-        <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hi&#34;</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>unknown_greeting</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Generate a custom error for an unknown greeting.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hi&#34;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>unknown_greeting</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -122,18 +122,18 @@ The rule then fails.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=choice_error_range&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>unknown_greeting</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>name</span> <span class=tok-o>=</span> <span class=tok-s>&#34;unknown greeting&#34;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>unknown_greeting</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-s>&#34;unknown greeting&#34;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// Generate a custom error for an unknown greeting.</span>
-        <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hi&#34;</span><span class=tok-p>)</span>
-          <span class=tok-o>|</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>unknown_greeting</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>));</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Generate a custom error for an unknown greeting.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hi&#34;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>unknown_greeting</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>while_</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>));</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -183,20 +183,20 @@ Automatic <a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a> ski
 <div class=listingblock>
 <div class=title><code>lexy/dsl/error.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>class</span> <span class=tok-nc><em>must</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// note: not a <em>rule</em> itself</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>error</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc><em>must</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// note: not a <em>rule</em> itself</span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>capture</span><span class=tok-p>);</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>capture</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>must</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>must</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>must</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>must</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -245,26 +245,26 @@ Its range covers anything consumed by the optional <code>capture</code> rule, ju
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=must&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>expected_sep</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>name</span> <span class=tok-o>=</span> <span class=tok-s>&#34;expected separator&#34;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>expected_sep</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-s>&#34;expected separator&#34;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-c1>// A separator is either blank or \ + newline.</span>
-        <span class=tok-c1>// If a separator is not present, raise the specific error.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>blank</span>      <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>blank</span><span class=tok-p>;</span>
-        <span class=tok-k>auto</span> <span class=tok-n>escaped_nl</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>backslash</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>newline</span><span class=tok-p>;</span>
-        <span class=tok-k>auto</span> <span class=tok-n>sep</span>        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>must</span><span class=tok-p>(</span><span class=tok-n>blank</span> <span class=tok-o>|</span> <span class=tok-n>escaped_nl</span><span class=tok-p>).</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>expected_sep</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// A separator is either blank or \ + newline.</span>
+<span class=tok-w>        </span><span class=tok-c1>// If a separator is not present, raise the specific error.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>blank</span><span class=tok-w>      </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>blank</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>escaped_nl</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>backslash</span><span class=tok-w> </span><span class=tok-o>&gt;&gt;</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>newline</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>sep</span><span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>must</span><span class=tok-p>(</span><span class=tok-n>blank</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>escaped_nl</span><span class=tok-p>).</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>expected_sep</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>return</span> <span class=tok-nf>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;echo&#34;</span><span class=tok-p>)</span> <span class=tok-o>+</span> <span class=tok-n>sep</span>
-               <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>)</span>
-               <span class=tok-c1>// Allow an optional separator before EOL.</span>
-               <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>if_</span><span class=tok-p>(</span><span class=tok-n>sep</span><span class=tok-p>)</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eol</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;echo&#34;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>sep</span><span class=tok-w></span>
+<span class=tok-w>               </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>               </span><span class=tok-c1>// Allow an optional separator before EOL.</span>
+<span class=tok-w>               </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>if_</span><span class=tok-p>(</span><span class=tok-n>sep</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eol</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -334,7 +334,7 @@ If <code>rule</code> is a <a href=/reference/dsl/token/#doc>token rule</a>, <cod
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

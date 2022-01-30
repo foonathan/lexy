@@ -57,21 +57,21 @@ lexy/dsl/peek.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/peek.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>peek_failure</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>peek_failure</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc><em>peek</em></span> <span class=tok-c1>// models <em>branch-rule</em></span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>peek</em></span> <span class=tok-n>error</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>peek</em></span><span class=tok-w> </span><span class=tok-c1>// models <em>branch-rule</em></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>peek</em></span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>peek</em></span> <span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>peek</em></span><span class=tok-w> </span><span class=tok-nf>peek</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -106,17 +106,17 @@ It then recovers without consuming additional input.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=peek&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-c1>// Number with optional minus sign.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>number</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>minus_sign</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Number with optional minus sign.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>number</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>minus_sign</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Only parse a number if we have a minus or digit.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>condition</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digit</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>if_</span><span class=tok-p>(</span><span class=tok-n>condition</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>number</span><span class=tok-p>);</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>        </span><span class=tok-c1>// Only parse a number if we have a minus or digit.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>condition</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>peek</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>/</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digit</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>if_</span><span class=tok-p>(</span><span class=tok-n>condition</span><span class=tok-w> </span><span class=tok-o>&gt;&gt;</span><span class=tok-w> </span><span class=tok-n>number</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -165,21 +165,21 @@ This rule requires backtracking, which can slow down parsing.
 <div class=listingblock>
 <div class=title><code>lexy/dsl/peek.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>unexpected</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>unexpected</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc><em>peek_not</em></span> <span class=tok-c1>// models <em>branch-rule</em></span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>peek_not</em></span> <span class=tok-n>error</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>peek_not</em></span><span class=tok-w> </span><span class=tok-c1>// models <em>branch-rule</em></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>peek_not</em></span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>peek_not</em></span> <span class=tok-n>peek_not</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>rule</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>peek_not</em></span><span class=tok-w> </span><span class=tok-nf>peek_not</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -214,17 +214,17 @@ It then recovers without having consumed any input.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=peek_not&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>trailing_spaces</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>name</span> <span class=tok-o>=</span> <span class=tok-s>&#34;trailing spaces&#34;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>trailing_spaces</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-s>&#34;trailing spaces&#34;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello World&#34;</span><span class=tok-p>)</span>
-          <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>peek_not</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>).</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>trailing_spaces</span><span class=tok-o>&gt;</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello World&#34;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>peek_not</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>).</span><span class=tok-n>error</span><span class=tok-o>&lt;</span><span class=tok-n>trailing_spaces</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -276,7 +276,7 @@ This rule requires backtracking, which can slow down parsing.
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

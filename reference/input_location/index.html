@@ -57,23 +57,23 @@ lexy/input_location.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/input_location.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Counting</span> <span class=tok-o>=</span> <span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>input_location</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>input_location_anchor</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span> <span class=tok-n>anchor</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>input_location</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>input_location_anchor</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>anchor</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-kt>unsigned</span> <span class=tok-n>line_nr</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>unsigned</span> <span class=tok-n>column_nr</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>unsigned</span><span class=tok-w> </span><span class=tok-nf>line_nr</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>unsigned</span><span class=tok-w> </span><span class=tok-nf>column_nr</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>position</span><span class=tok-p>()</span> <span class=tok-k>const</span>
-          <span class=tok-o>-&gt;</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>position</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// operator==, operator!=, operator&lt;, operator&lt;=, operator&gt;=, operator&gt;</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>        </span><span class=tok-c1>// operator==, operator!=, operator&lt;, operator&lt;=, operator&gt;=, operator&gt;</span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -106,22 +106,22 @@ Use <a href=/reference/input_location/#get_input_location><code>lexy::get_input_
 <div class=listingblock>
 <div class=title><code>lexy/input_location.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>input_location_anchor</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-c1>// Anchor to the beginning.</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>input_location_anchor</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Input</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>);</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>input_location_anchor</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Anchor to the beginning.</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>input_location_anchor</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Counting</span> <span class=tok-o>=</span> <span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>get_input_location</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n><em>input</em></span> <span class=tok-k>auto</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
-                                <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span> <span class=tok-n>position</span><span class=tok-p>,</span>
-                                <span class=tok-n>input_location_anchor</span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-o>&gt;</span> <span class=tok-n>anchor</span> <span class=tok-o>=</span> <span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-p>)</span>
-        <span class=tok-o>-&gt;</span> <span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-n>Counting</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>get_input_location</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>position</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                </span><span class=tok-n>input_location_anchor</span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>anchor</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>see</em></span><em><span class=tok-o>-</span><span class=tok-n>below</span></em><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Counting</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -157,14 +157,14 @@ If <code>position</code> points inside a <code>\r\n</code> sequence, for example
 <div class=listingblock>
 <div class=title><code>lexy/input_location.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>code_unit_location_counting</span> <span class=tok-p>{};</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>code_point_location_counting</span> <span class=tok-p>{};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>code_unit_location_counting</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>code_point_location_counting</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>LineWidth</span> <span class=tok-o>=</span> <span class=tok-mi>16</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>byte_location_counting</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>LineWidth</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>16</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>byte_location_counting</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -201,35 +201,35 @@ This is the default for byte input.</p>
 <div class=listingblock>
 <div class=title><code>lexy/input_location.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>input_line_annotation</span>
-    <span class=tok-p>{</span>
-        <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span> <span class=tok-n>before</span><span class=tok-p>;</span>
-        <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span> <span class=tok-n>annotated</span><span class=tok-p>;</span>
-        <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span> <span class=tok-n>after</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>input_line_annotation</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>before</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>annotated</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme_for</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>after</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-kt>bool</span> <span class=tok-n>truncated_multiline</span><span class=tok-p>;</span>
-        <span class=tok-kt>bool</span> <span class=tok-n>rounded_end</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>truncated_multiline</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>rounded_end</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Input</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
-                                 <span class=tok-k>const</span> <span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-n>Counting</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>begin_location</span><span class=tok-p>,</span>
-                                 <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span>
-      <span class=tok-o>-&gt;</span> <span class=tok-n>input_line_annotation</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Counting</span><span class=tok-o>&gt;&amp;</span><span class=tok-w> </span><span class=tok-n>begin_location</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;::</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>input_line_annotation</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Input</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-k>const</span> <span class=tok-n>Input</span><span class=tok-o>&amp;</span> <span class=tok-n>input</span><span class=tok-p>,</span>
-                                 <span class=tok-k>const</span> <span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-n>Counting</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>location</span><span class=tok-p>,</span>
-                                 <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span>                            <span class=tok-n>size</span><span class=tok-p>)</span>
-      <span class=tok-o>-&gt;</span> <span class=tok-n>input_line_annotation</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>end</span> <span class=tok-o>=</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>next</span><span class=tok-p>(</span><span class=tok-n>location</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>(),</span> <span class=tok-n>size</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-nf>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>,</span> <span class=tok-n>location</span><span class=tok-p>,</span> <span class=tok-n>end</span><span class=tok-p>);</span>
-    <span class=tok-p>}</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Counting</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>input_location</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Counting</span><span class=tok-o>&gt;&amp;</span><span class=tok-w> </span><span class=tok-n>location</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w>                            </span><span class=tok-n>size</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>input_line_annotation</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>next</span><span class=tok-p>(</span><span class=tok-n>location</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>(),</span><span class=tok-w> </span><span class=tok-n>size</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>get_input_line_annotation</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>location</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -306,7 +306,7 @@ and <a href=/reference/visualize/#visualization_display_width><code>lexy::visual
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

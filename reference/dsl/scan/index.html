@@ -57,28 +57,28 @@ lexy/dsl/scan.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/scan.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Context</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>rule_scanner</span>
-    <span class=tok-o>:</span> <span class=tok-k>public</span> <span class=tok-n><em>scanner</em></span><em><span class=tok-o>-</span><span class=tok-n>common</span></em>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>production</span>      <span class=tok-o>=</span> <span class=tok-n><em>current</em></span><em><span class=tok-o>-</span><span class=tok-n>production</span></em><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>root_production</span> <span class=tok-o>=</span> <span class=tok-n><em>current</em></span><em><span class=tok-o>-</span><span class=tok-n>root</span><span class=tok-o>-</span><span class=tok-n>production</span></em><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Context</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>rule_scanner</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-o>:</span><span class=tok-w> </span><span class=tok-k>public</span><span class=tok-w> </span><span class=tok-n><em>scanner</em></span><em><span class=tok-o>-</span><span class=tok-n>common</span></em><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>production</span><span class=tok-w>      </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>current</em></span><em><span class=tok-o>-</span><span class=tok-n>production</span></em><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>root_production</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>current</em></span><em><span class=tok-o>-</span><span class=tok-n>root</span><span class=tok-o>-</span><span class=tok-n>production</span></em><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Current recursion depth.</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>recursion_depth</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>// Current recursion depth.</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>recursion_depth</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Position where <code>dsl::scan</code> was reached.</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>begin</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span> <span class=tok-o>-&gt;</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span>
+<span class=tok-w>        </span><span class=tok-c1>// Position where <code>dsl::scan</code> was reached.</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w> </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>scan</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>scan</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -127,67 +127,67 @@ Regardless of the top-level parse action, the overloads of <code>.parse()</code>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=scan&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
 <span class=tok-c1>// We produce a UTF-8 lexeme (i.e. a string view) of the contents.</span>
-<span class=tok-o>:</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_production</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer_lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf8_encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>,</span>
-  <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>unterminated</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>name</span> <span class=tok-o>=</span> <span class=tok-s>&#34;unterminated raw string literal&#34;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-o>:</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_production</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer_lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf8_encoding</span><span class=tok-o>&gt;&gt;</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>  </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>unterminated</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-s>&#34;unterminated raw string literal&#34;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Context</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n>scan_result</span> <span class=tok-n>scan</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>rule_scanner</span><span class=tok-o>&lt;</span><span class=tok-n>Context</span><span class=tok-p>,</span> <span class=tok-n>Reader</span><span class=tok-o>&gt;&amp;</span> <span class=tok-n>scanner</span><span class=tok-p>)</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>open_hash_count</span> <span class=tok-o>=</span> <span class=tok-mi>0</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Context</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>scan_result</span><span class=tok-w> </span><span class=tok-n>scan</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>rule_scanner</span><span class=tok-o>&lt;</span><span class=tok-n>Context</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Reader</span><span class=tok-o>&gt;&amp;</span><span class=tok-w> </span><span class=tok-n>scanner</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>open_hash_count</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>0</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Parse the opening delimiter.</span>
-        <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;r&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-        <span class=tok-k>while</span> <span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;#&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span>
-            <span class=tok-o>++</span><span class=tok-n>open_hash_count</span><span class=tok-p>;</span>
-        <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-        <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>scanner</span><span class=tok-p>)</span>
-            <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>// Parse the opening delimiter.</span>
+<span class=tok-w>        </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;r&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>while</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;#&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-o>++</span><span class=tok-n>open_hash_count</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>scanner</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Parse the contents of the string.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>content_begin</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>();</span>
-        <span class=tok-k>for</span> <span class=tok-p>(</span><span class=tok-k>auto</span> <span class=tok-n>closing_hash_count</span> <span class=tok-o>=</span> <span class=tok-mi>-1</span><span class=tok-p>;</span> <span class=tok-n>closing_hash_count</span> <span class=tok-o>!=</span> <span class=tok-n>open_hash_count</span><span class=tok-p>;)</span>
-        <span class=tok-p>{</span>
-            <span class=tok-c1>// Handle the next character.</span>
-            <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span>
-            <span class=tok-p>{</span>
-                <span class=tok-c1>// We have a quote, count the next hashes.</span>
-                <span class=tok-n>closing_hash_count</span> <span class=tok-o>=</span> <span class=tok-mi>0</span><span class=tok-p>;</span>
-            <span class=tok-p>}</span>
-            <span class=tok-k>else</span> <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;#&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span>
-            <span class=tok-p>{</span>
-                <span class=tok-c1>// Count a hash if necessary.</span>
-                <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-n>closing_hash_count</span> <span class=tok-o>!=</span> <span class=tok-mi>-1</span><span class=tok-p>)</span>
-                    <span class=tok-o>++</span><span class=tok-n>closing_hash_count</span><span class=tok-p>;</span>
-            <span class=tok-p>}</span>
-            <span class=tok-k>else</span> <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>is_at_eof</span><span class=tok-p>())</span>
-            <span class=tok-p>{</span>
-                <span class=tok-c1>// Report an error for an unterminated literal.</span>
-                <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>fatal_error</span><span class=tok-p>(</span><span class=tok-n>unterminated</span><span class=tok-p>{},</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>begin</span><span class=tok-p>(),</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>());</span>
-                <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span>
-            <span class=tok-p>}</span>
-            <span class=tok-k>else</span>
-            <span class=tok-p>{</span>
-                <span class=tok-c1>// Parse any other code point, and invalidate hash count.</span>
-                <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-p>);</span>
-                <span class=tok-n>closing_hash_count</span> <span class=tok-o>=</span> <span class=tok-mi>-1</span><span class=tok-p>;</span>
-            <span class=tok-p>}</span>
+<span class=tok-w>        </span><span class=tok-c1>// Parse the contents of the string.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>content_begin</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>();</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>for</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>closing_hash_count</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>-1</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-n>closing_hash_count</span><span class=tok-w> </span><span class=tok-o>!=</span><span class=tok-w> </span><span class=tok-n>open_hash_count</span><span class=tok-p>;)</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-c1>// Handle the next character.</span>
+<span class=tok-w>            </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-c1>// We have a quote, count the next hashes.</span>
+<span class=tok-w>                </span><span class=tok-n>closing_hash_count</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>0</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>else</span><span class=tok-w> </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>branch</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;#&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-c1>// Count a hash if necessary.</span>
+<span class=tok-w>                </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>closing_hash_count</span><span class=tok-w> </span><span class=tok-o>!=</span><span class=tok-w> </span><span class=tok-mi>-1</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                    </span><span class=tok-o>++</span><span class=tok-n>closing_hash_count</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>else</span><span class=tok-w> </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>is_at_eof</span><span class=tok-p>())</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-c1>// Report an error for an unterminated literal.</span>
+<span class=tok-w>                </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>fatal_error</span><span class=tok-p>(</span><span class=tok-n>unterminated</span><span class=tok-p>{},</span><span class=tok-w> </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>begin</span><span class=tok-p>(),</span><span class=tok-w> </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>());</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>else</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-c1>// Parse any other code point, and invalidate hash count.</span>
+<span class=tok-w>                </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>parse</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>code_point</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-n>closing_hash_count</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>-1</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-p>}</span><span class=tok-w></span>
 
-            <span class=tok-c1>// Check for any errors we might have gotten.</span>
-            <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>scanner</span><span class=tok-p>)</span>
-                <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span>
-        <span class=tok-p>}</span>
-        <span class=tok-k>auto</span> <span class=tok-n>content_end</span> <span class=tok-o>=</span> <span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>();</span>
+<span class=tok-w>            </span><span class=tok-c1>// Check for any errors we might have gotten.</span>
+<span class=tok-w>            </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>scanner</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_failed</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>content_end</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>scanner</span><span class=tok-p>.</span><span class=tok-n>position</span><span class=tok-p>();</span><span class=tok-w></span>
 
-        <span class=tok-k>return</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer_lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf8_encoding</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>content_begin</span><span class=tok-p>,</span> <span class=tok-n>content_end</span><span class=tok-p>);</span>
-    <span class=tok-p>}</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>buffer_lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>utf8_encoding</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>content_begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>content_end</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -237,18 +237,18 @@ this parse state must be passed to all actions that are used with the grammar.
 <div class=listingblock>
 <div class=title><code>lexy/dsl/scan.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>scan_production</span>
-    <span class=tok-p>{</span>
-        <span class=tok-c1>// The return type of the scan() function.</span>
-        <span class=tok-k>using</span> <span class=tok-n>scan_result</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>scan_production</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// The return type of the scan() function.</span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>scan_result</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>scan_result</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>  <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>scan</span><span class=tok-p>;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>scan</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -265,7 +265,7 @@ this parse state must be passed to all actions that are used with the grammar.
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

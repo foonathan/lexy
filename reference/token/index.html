@@ -57,26 +57,26 @@ lexy/token.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>enum</span> <span class=tok-nc>predefined_token_kind</span>
-    <span class=tok-p>{</span>
-        <span class=tok-n>unknown_token_kind</span><span class=tok-p>,</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>enum</span> <span class=tok-nc>predefined_token_kind</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>unknown_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
 
-        <span class=tok-n>error_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>whitespace_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>any_token_kind</span><span class=tok-p>,</span>
+<span class=tok-w>        </span><span class=tok-n>error_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>whitespace_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>any_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
 
-        <span class=tok-n>literal_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>position_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>eof_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>eol_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>newline_token_kind</span><span class=tok-p>,</span>
+<span class=tok-w>        </span><span class=tok-n>literal_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>position_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>eof_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>eol_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>newline_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
 
-        <span class=tok-n>identifier_token_kind</span><span class=tok-p>,</span>
-        <span class=tok-n>digits_token_kind</span><span class=tok-p>,</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>        </span><span class=tok-n>identifier_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>digits_token_kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -151,39 +151,39 @@ lexy/token.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>token_kind</span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>using</span> <span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em>
-          <span class=tok-o>=</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>conditional_t</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_void_v</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>,</span> <span class=tok-kt>int</span><span class=tok-p>,</span> <span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>token_kind</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>conditional_t</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_void_v</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>int</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-c1>//=== constructors ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>token_kind</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n>predefined_token_kind</span> <span class=tok-n>value</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>//=== constructors ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>predefined_token_kind</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em> <span class=tok-n>value</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token_rule</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token_rule</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//== access ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-k>operator</span> <span class=tok-kt>bool</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_predefined</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>ignore_if_empty</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//== access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>is_predefined</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>ignore_if_empty</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em> <span class=tok-n>get</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em><span class=tok-w> </span><span class=tok-n>get</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>name</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-nf>name</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint_least16_t</span> <span class=tok-n>to_raw</span><span class=tok-p>(</span><span class=tok-n>token_kind</span> <span class=tok-n>kind</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n>token_kind</span> <span class=tok-n>from_raw</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint_least16_t</span> <span class=tok-n>kind</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint_least16_t</span><span class=tok-w> </span><span class=tok-nf>to_raw</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-nf>from_raw</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint_least16_t</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>token_kind</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>token_kind</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>token_kind</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>token_kind</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>        </span><span class=tok-k>friend</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-n>lhs</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-n>rhs</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>friend</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-n>lhs</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-w> </span><span class=tok-n>rhs</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -207,11 +207,11 @@ For all others, the token kind is unknown by default.</p>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span>
-<span class=tok-o>:</span> <span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>unknown_token_kind</span><span class=tok-p>)</span>
-<span class=tok-p>{}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w></span>
+<span class=tok-o>:</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>unknown_token_kind</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-p>{}</span><span class=tok-w></span>
 
-<span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n>predefined_token_kind</span> <span class=tok-n>value</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>predefined_token_kind</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -220,12 +220,12 @@ For all others, the token kind is unknown by default.</p>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em> <span class=tok-n>value</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>requires</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_enum_v</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span>
-<span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>T</span> <span class=tok-n>value</span><span class=tok-p>)</span>                  <span class=tok-o>-&gt;</span> <span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>integral</span> <span class=tok-k>auto</span> <span class=tok-n>value</span><span class=tok-p>)</span> <span class=tok-o>-&gt;</span> <span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-p>;</span></code></pre>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_enum_v</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>T</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w>                  </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>integral</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -240,7 +240,7 @@ Otherwise, deduces the specified information type.</p>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-nf>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token_rule</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token_rule</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -277,11 +277,11 @@ else, a user-defined token kind is compatible if it has the same enumeration typ
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-k>operator</span> <span class=tok-kt>bool</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span> <b class=conum>(1)</b>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(1)</b>
 
-<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>is_predefined</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>     <b class=conum>(2)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>is_predefined</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>     </span><b class=conum>(2)</b>
 
-<span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>ignore_if_empty</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>   <b class=conum>(3)</b></code></pre>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>ignore_if_empty</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>   </span><b class=conum>(3)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -301,7 +301,7 @@ It currently returns <code>true</code> for <code>lexy::unknown_token_kind</code>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em> <span class=tok-n>get</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>underlying</em></span><em><span class=tok-o>-</span><span class=tok-n>type</span></em><span class=tok-w> </span><span class=tok-n>get</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -320,7 +320,7 @@ but it must not be passed to the constructor taking a user-defined token kind.</
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>name</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-nf>name</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -353,20 +353,20 @@ ADL only works if the <code>TokenKind</code> is an enumeration and not <code>voi
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>class</span> <span class=tok-nc><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>consteval</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token_rule</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>consteval</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em><span class=tok-w> </span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token_rule</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>token_kind_map</span> <span class=tok-o>=</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em><span class=tok-p>();</span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token_kind_map</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>kind</span><span class=tok-o>-</span><span class=tok-n>map</span></em><span class=tok-p>();</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>token_kind_map_for</span> <span class=tok-o>=</span> <span class=tok-n>token_kind_map</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token_kind_map_for</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>token_kind_map</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -389,20 +389,20 @@ This specialization is used by the <a href=/reference/token/#token_kind><code>le
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IkhlbGxvIFdvcmxkISIsInN0ZGluVmlzaWJsZSI6dHJ1ZX1dLCJpZCI6MSwibGFuZ3VhZ2UiOiJjKysiLCJzb3VyY2UiOiIjaW5jbHVkZSBcdTAwM2NsZXh5L2FjdGlvbi9wYXJzZV9hc190cmVlLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9kc2wuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L3Zpc3VhbGl6ZS5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHlfZXh0L2NvbXBpbGVyX2V4cGxvcmVyLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eV9leHQvcmVwb3J0X2Vycm9yLmhwcFx1MDAzZVxuXG5uYW1lc3BhY2UgZHNsID0gbGV4eTo6ZHNsO1xuXG5zdHJ1Y3QgbmFtZVxue1xuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byBydWxlXG4gICAgICAgIC8vIE9uZSBvciBtb3JlIGFscGhhIG51bWVyaWMgY2hhcmFjdGVycywgdW5kZXJzY29yZXMgb3IgaHlwaGVucy5cbiAgICAgICAgPSBkc2w6OmlkZW50aWZpZXIoZHNsOjphc2NpaTo6YWxudW0gLyBkc2w6OmxpdF9jXHUwMDNjJ18nXHUwMDNlIC8gZHNsOjpsaXRfY1x1MDAzYyctJ1x1MDAzZSk7XG59O1xuXG5zdHJ1Y3QgcHJvZHVjdGlvblxue1xuICAgIC8vIEFsbG93IGFyYml0cmFyeSBzcGFjZXMgYmV0d2VlbiBpbmRpdmlkdWFsIHRva2Vucy5cbiAgICAvLyBOb3RlIHRoYXQgdGhpcyBpbmNsdWRlcyB0aGUgaW5kaXZpZHVhbCBjaGFyYWN0ZXJzIG9mIHRoZSBuYW1lLlxuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byB3aGl0ZXNwYWNlID0gZHNsOjphc2NpaTo6c3BhY2U7XG5cbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gcnVsZSA9IFtdIHtcbiAgICAgICAgYXV0byBncmVldGluZyA9IExFWFlfTElUKFwiSGVsbG9cIik7XG4gICAgICAgIHJldHVybiBncmVldGluZyArIGRzbDo6cFx1MDAzY25hbWVcdTAwM2UgKyBkc2w6OmV4Y2xhbWF0aW9uX21hcmsgKyBkc2w6OmVvZjtcbiAgICB9KCk7XG59O1xuXG5lbnVtIGNsYXNzIG15X3Rva2VuX2tpbmRcbntcbiAgICBncmVldGluZyxcbiAgICBleGNsYW1hdGlvbl9tYXJrLFxufTtcblxudGVtcGxhdGUgXHUwMDNjXHUwMDNlXG5jb25zdGV4cHIgYXV0byBsZXh5Ojp0b2tlbl9raW5kX21hcF9mb3JcdTAwM2NteV90b2tlbl9raW5kXHUwMDNlXG4gICAgLy8gU3RhcnQgd2l0aCB0aGUgZW1wdHkgbWFwLlxuICAgID0gbGV4eTo6dG9rZW5fa2luZF9tYXBcbiAgICAgICAgICAvLyBNYXAgdGhlIGdyZWV0aW5nIHRva2VuLlxuICAgICAgICAgIC5tYXBcdTAwM2NteV90b2tlbl9raW5kOjpncmVldGluZ1x1MDAzZShMRVhZX0xJVChcIkhlbGxvXCIpKVxuICAgICAgICAgIC8vIE1hcCB0aGUgZXhjbGFtYXRpb24gdG9rZW4uXG4gICAgICAgICAgLm1hcFx1MDAzY215X3Rva2VuX2tpbmQ6OmV4Y2xhbWF0aW9uX21hcmtcdTAwM2UoZHNsOjpleGNsYW1hdGlvbl9tYXJrKTtcblxuY29uc3QgY2hhciogdG9rZW5fa2luZF9uYW1lKG15X3Rva2VuX2tpbmQga2luZClcbntcbiAgICBzd2l0Y2ggKGtpbmQpXG4gICAge1xuICAgIGNhc2UgbXlfdG9rZW5fa2luZDo6Z3JlZXRpbmc6XG4gICAgICAgIHJldHVybiBcImdyZWV0aW5nXCI7XG4gICAgY2FzZSBteV90b2tlbl9raW5kOjpleGNsYW1hdGlvbl9tYXJrOlxuICAgICAgICByZXR1cm4gXCJleGNsYW1hdGlvbl9tYXJrXCI7XG4gICAgfVxuXG4gICAgcmV0dXJuIFwiXCI7XG59XG5cbmludCBtYWluKClcbntcbiAgICBhdXRvIGlucHV0ID0gbGV4eV9leHQ6OmNvbXBpbGVyX2V4cGxvcmVyX2lucHV0KCk7XG5cbiAgICAvLyBOZWVkIHRvIHNwZWNpZnkgdGhlIHRva2VuIGtpbmQgd2Ugd2FudCBoZXJlLlxuICAgIGxleHk6OnBhcnNlX3RyZWVfZm9yXHUwMDNjZGVjbHR5cGUoaW5wdXQpLCBteV90b2tlbl9raW5kXHUwMDNlIHRyZWU7XG4gICAgYXV0byByZXN1bHQgPSBsZXh5OjpwYXJzZV9hc190cmVlXHUwMDNjcHJvZHVjdGlvblx1MDAzZSh0cmVlLCBpbnB1dCwgbGV4eV9leHQ6OnJlcG9ydF9lcnJvcik7XG5cbiAgICBsZXh5Ojp2aXN1YWxpemUoc3Rkb3V0LCB0cmVlLCB7bGV4eTo6dmlzdWFsaXplX2ZhbmN5fSk7XG5cbiAgICBpZiAoIXJlc3VsdClcbiAgICAgICAgcmV0dXJuIDE7XG59In1dfQ==" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>enum</span> <span class=tok-k>class</span> <span class=tok-nc>my_token_kind</span>
-<span class=tok-p>{</span>
-    <span class=tok-n>greeting</span><span class=tok-p>,</span>
-    <span class=tok-n>exclamation_mark</span><span class=tok-p>,</span>
-<span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>enum</span> <span class=tok-k>class</span><span class=tok-w> </span><span class=tok-nc>my_token_kind</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-n>greeting</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-n>exclamation_mark</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_kind_map_for</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>&gt;</span>
-    <span class=tok-c1>// Start with the empty map.</span>
-    <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_kind_map</span>
-          <span class=tok-c1>// Map the greeting token.</span>
-          <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>::</span><span class=tok-n>greeting</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>))</span>
-          <span class=tok-c1>// Map the exclamation token.</span>
-          <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-p>);</span></code></pre>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_kind_map_for</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// Start with the empty map.</span>
+<span class=tok-w>    </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>token_kind_map</span><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-c1>// Map the greeting token.</span>
+<span class=tok-w>          </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>::</span><span class=tok-n>greeting</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>          </span><span class=tok-c1>// Map the exclamation token.</span>
+<span class=tok-w>          </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>my_token_kind</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-p>);</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -440,40 +440,40 @@ It is usually better to specify the token kind inline in the grammar using <a hr
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>reader</em></span> <span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>token</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>encoding</span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>iterator</span>  <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>reader</em></span><span class=tok-w> </span><span class=tok-n>Reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>token</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>encoding</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>encoding</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>::</span><span class=tok-n>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== constructors ===//</span>
-        <span class=tok-k>explicit</span> <span class=tok-k>constexpr</span> <span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span> <span class=tok-n>kind</span><span class=tok-p>,</span>
-                                 <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span> <span class=tok-n>lexeme</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>explicit</span> <span class=tok-k>constexpr</span> <span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span> <span class=tok-n>kind</span><span class=tok-p>,</span>
-                                 <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== constructors ===//</span>
+<span class=tok-w>        </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                                 </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== access ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span> <span class=tok-n>kind</span><span class=tok-p>()</span>   <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span>  <span class=tok-n>lexeme</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>()</span><span class=tok-w>   </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-w>  </span><span class=tok-n>lexeme</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-kt>char</span><span class=tok-o>*</span> <span class=tok-n>name</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span>
-        <span class=tok-p>{</span>
-            <span class=tok-k>return</span> <span class=tok-nf>kind</span><span class=tok-p>().</span><span class=tok-n>name</span><span class=tok-p>();</span>
-        <span class=tok-p>}</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-kt>char</span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-nf>name</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>().</span><span class=tok-n>name</span><span class=tok-p>();</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>}</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>position</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span>
-        <span class=tok-p>{</span>
-            <span class=tok-k>return</span> <span class=tok-nf>lexeme</span><span class=tok-p>().</span><span class=tok-n>begin</span><span class=tok-p>();</span>
-        <span class=tok-p>}</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>position</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>().</span><span class=tok-n>begin</span><span class=tok-p>();</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span> <span class=tok-n>Input</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>using</span> <span class=tok-n>token_for</span> <span class=tok-o>=</span> <span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>,</span> <span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>input</em></span><span class=tok-w> </span><span class=tok-n>Input</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>token_for</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>input_reader</span><span class=tok-o>&lt;</span><span class=tok-n>Input</span><span class=tok-o>&gt;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -489,18 +489,18 @@ while the former is the concrete realization of the rule (e.g. the number <code>
 <div class=listingblock>
 <div class=title><code>lexy/token.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>explicit</span> <span class=tok-k>constexpr</span> <span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span> <span class=tok-n>kind</span><span class=tok-p>,</span>
-                         <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span> <span class=tok-n>lexeme</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-<span class=tok-k>explicit</span> <span class=tok-k>constexpr</span> <span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span> <span class=tok-n>kind</span><span class=tok-p>,</span>
-                         <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                         </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>lexeme</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                         </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>,</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span> <span class=tok-o>-&gt;</span> <span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>requires</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_enum_v</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span>
-<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>T</span> <span class=tok-n>kind</span><span class=tok-p>,</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span> <span class=tok-o>-&gt;</span> <span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>integral</span> <span class=tok-k>auto</span> <span class=tok-n>kind</span><span class=tok-p>,</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span> <span class=tok-o>-&gt;</span> <span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span> <span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-p>;</span></code></pre>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>TokenKind</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>token_kind</span><span class=tok-o>&lt;</span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>TokenKind</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>is_enum_v</span><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>T</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-n>token</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>integral</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>kind</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>lexeme</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-o>&gt;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-o>&lt;</span><span class=tok-n>Reader</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>void</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -521,7 +521,7 @@ while the former is the concrete realization of the rule (e.g. the number <code>
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

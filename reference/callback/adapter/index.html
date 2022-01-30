@@ -57,11 +57,11 @@ lexy/callback/adapter.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/callback/adapter.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>ReturnType</span> <span class=tok-o>=</span> <span class=tok-kt>void</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-p>...</span> <span class=tok-n>Fns</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n>Fns</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>fns</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>ReturnType</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-kt>void</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>Fns</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>callback</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n>Fns</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>fns</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -78,10 +78,10 @@ The result must return an object of the specified <code>ReturnType</code>.</p>
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IiIsInN0ZGluVmlzaWJsZSI6ZmFsc2V9XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjY3N0ZGlvXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2NhbGxiYWNrL2FkYXB0ZXIuaHBwXHUwMDNlXG5cbmNvbnN0ZXhwciBhdXRvIG15X2NhbGxiYWNrXG4gICAgLy8gVGhlIHJldHVybiB0eXBlIGlzIGludC5cbiAgICA9IGxleHk6OmNhbGxiYWNrXHUwMDNjaW50XHUwMDNlKFtdKGludCBpKSB7IHJldHVybiAyICogaTsgfSwgLy9cbiAgICAgICAgICAgICAgICAgICAgICAgICAgW10oaW50IGEsIGludCBiKSB7IHJldHVybiBhICsgYjsgfSk7XG5cbmludCBtYWluKClcbntcbiAgICBzdGQ6OnByaW50ZihcIm9uZSBhcmd1bWVudDogJWRcXG5cIiwgbXlfY2FsbGJhY2soMTEpKTtcbiAgICBzdGQ6OnByaW50ZihcInR3byBhcmd1bWVudHM6ICVkXFxuXCIsIG15X2NhbGxiYWNrKDExLCA0MikpO1xufSJ9XX0=" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>my_callback</span>
-    <span class=tok-c1>// The return type is int.</span>
-    <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-kt>int</span> <span class=tok-n>i</span><span class=tok-p>)</span> <span class=tok-p>{</span> <span class=tok-k>return</span> <span class=tok-mi>2</span> <span class=tok-o>*</span> <span class=tok-n>i</span><span class=tok-p>;</span> <span class=tok-p>},</span> <span class=tok-c1>//</span>
-                          <span class=tok-p>[](</span><span class=tok-kt>int</span> <span class=tok-n>a</span><span class=tok-p>,</span> <span class=tok-kt>int</span> <span class=tok-n>b</span><span class=tok-p>)</span> <span class=tok-p>{</span> <span class=tok-k>return</span> <span class=tok-n>a</span> <span class=tok-o>+</span> <span class=tok-n>b</span><span class=tok-p>;</span> <span class=tok-p>});</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>my_callback</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// The return type is int.</span>
+<span class=tok-w>    </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>i</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w> </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-mi>2</span><span class=tok-w> </span><span class=tok-o>*</span><span class=tok-w> </span><span class=tok-n>i</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-p>},</span><span class=tok-w> </span><span class=tok-c1>//</span>
+<span class=tok-w>                          </span><span class=tok-p>[](</span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>a</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-n>b</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w> </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>a</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>b</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-p>});</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -94,10 +94,10 @@ The result must return an object of the specified <code>ReturnType</code>.</p>
 <div class=listingblock>
 <div class=title><code>lexy/callback/adapter.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n><em>sink</em></span><span class=tok-o>&lt;&gt;</span> <span class=tok-k>auto</span><span class=tok-o>&amp;&amp;</span> <span class=tok-n>sink</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>callback</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n><em>sink</em></span><span class=tok-o>&lt;&gt;</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-o>&amp;&amp;</span><span class=tok-w> </span><span class=tok-n>sink</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -114,7 +114,7 @@ The finished result is returned by the callback.</p>
 <div class="listingblock godbolt-example">
 <div class=title><a href=https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IiIsInN0ZGluVmlzaWJsZSI6ZmFsc2V9XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjY3N0ZGlvXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NmdW5jdGlvbmFsXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2NhbGxiYWNrL2FkYXB0ZXIuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2NhbGxiYWNrL2ZvbGQuaHBwXHUwMDNlXG5cbmNvbnN0ZXhwciBhdXRvIG15X2NhbGxiYWNrID0gbGV4eTo6Y2FsbGJhY2sobGV4eTo6Zm9sZFx1MDAzY2ludFx1MDAzZSgwLCBzdGQ6OnBsdXNcdTAwM2NpbnRcdTAwM2V7fSkpO1xuXG5pbnQgbWFpbigpXG57XG4gICAgc3RkOjpwcmludGYoXCJzdW06ICVkXFxuXCIsIG15X2NhbGxiYWNrKDEsIDIsIDMpKTtcbn0ifV19 , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>my_callback</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>fold</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-mi>0</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>plus</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>{}));</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>my_callback</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-p>(</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>fold</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-mi>0</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>plus</span><span class=tok-o>&lt;</span><span class=tok-kt>int</span><span class=tok-o>&gt;</span><span class=tok-p>{}));</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -139,11 +139,11 @@ See <a href=/reference/callback/container/#collect><code>lexy::collect</code></a
 <div class=listingblock>
 <div class=title><code>lexy/callback/adapter.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Member</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>ClassT</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>callback</em></span> <span class=tok-k>auto</span> <span class=tok-n>mem_fn</span><span class=tok-p>(</span><span class=tok-n>Member</span> <span class=tok-n>ClassT</span><span class=tok-o>::*</span> <span class=tok-n>mem_ptr</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Member</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>ClassT</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>callback</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>mem_fn</span><span class=tok-p>(</span><span class=tok-n>Member</span><span class=tok-w> </span><span class=tok-n>ClassT</span><span class=tok-o>::*</span><span class=tok-w> </span><span class=tok-n>mem_ptr</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -176,7 +176,7 @@ they all use INVOKE internally.
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

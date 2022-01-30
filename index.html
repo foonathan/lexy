@@ -1,6 +1,6 @@
 <!doctype html><html lang=en-us>
 <head>
-<meta name=generator content="Hugo 0.91.0">
+<meta name=generator content="Hugo 0.92.1">
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>
@@ -51,29 +51,29 @@ which gives you all the flexibility and control of a handwritten parser without 
 <div class=listingblock>
 <div class=title>IPv4 address parser</div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-cp>#include</span> <span class=tok-cpf>&lt;lexy/callback.hpp&gt;</span><span class=tok-cp></span>
-<span class=tok-cp>#include</span> <span class=tok-cpf>&lt;lexy/dsl.hpp&gt;</span><span class=tok-cp></span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-cp>#include</span><span class=tok-w> </span><span class=tok-cpf>&lt;lexy/callback.hpp&gt;</span><span class=tok-cp></span>
+<span class=tok-cp>#include</span><span class=tok-w> </span><span class=tok-cpf>&lt;lexy/dsl.hpp&gt;</span><span class=tok-cp></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>dsl</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span><span class=tok-p>;</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>dsl</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-c1>// Parse an IPv4 address into a `std::uint32_t`.</span>
-<span class=tok-k>struct</span> <span class=tok-nc>ipv4_address</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// What is being matched.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]{</span>
-        <span class=tok-c1>// Match a sequence of (decimal) digits and convert it into a std::uint8_t.</span>
-        <span class=tok-k>auto</span> <span class=tok-n>octet</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span>
+<span class=tok-k>struct</span> <span class=tok-nc>ipv4_address</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// What is being matched.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Match a sequence of (decimal) digits and convert it into a std::uint8_t.</span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>octet</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>integer</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>digits</span><span class=tok-o>&lt;&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
 
-        <span class=tok-c1>// Match four of them separated by periods.</span>
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>times</span><span class=tok-o>&lt;</span><span class=tok-mi>4</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>octet</span><span class=tok-p>,</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>period</span><span class=tok-p>))</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
+<span class=tok-w>        </span><span class=tok-c1>// Match four of them separated by periods.</span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>times</span><span class=tok-o>&lt;</span><span class=tok-mi>4</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>octet</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>sep</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>period</span><span class=tok-p>))</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
 
-    <span class=tok-c1>// How the matched output is being stored.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span>
-        <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>a</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>b</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>c</span><span class=tok-p>,</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span> <span class=tok-n>d</span><span class=tok-p>)</span> <span class=tok-p>{</span>
-            <span class=tok-k>return</span> <span class=tok-p>(</span><span class=tok-n>a</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>24</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-p>(</span><span class=tok-n>b</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>16</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-p>(</span><span class=tok-n>c</span> <span class=tok-o>&lt;&lt;</span> <span class=tok-mi>8</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>d</span><span class=tok-p>;</span>
-        <span class=tok-p>});</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-c1>// How the matched output is being stored.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>a</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>b</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>c</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>d</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>a</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>24</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>b</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>16</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>c</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>8</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>d</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>});</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=paragraph>
@@ -303,7 +303,7 @@ It requires C++17 support, but works best with C++20.</p>
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

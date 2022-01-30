@@ -54,36 +54,36 @@ lexy/input/range_input.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/input/range_input.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span> <span class=tok-n>Encoding</span><span class=tok-p>,</span>
-              <span class=tok-k>typename</span> <span class=tok-nc>Iterator</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Sentinel</span> <span class=tok-o>=</span> <span class=tok-n>Iterator</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc>range_input</span>
-        <span class=tok-k>requires</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>forward_iterator</span><span class=tok-o>&lt;</span><span class=tok-n>Iterator</span><span class=tok-o>&gt;</span>
-              <span class=tok-o>&amp;&amp;</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>sentinel_for</span><span class=tok-o>&lt;</span><span class=tok-n>Sentinel</span><span class=tok-p>,</span> <span class=tok-n>Iterator</span><span class=tok-o>&gt;</span>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>encoding</span>  <span class=tok-o>=</span> <span class=tok-n>Encoding</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span> <span class=tok-o>=</span> <span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>encoding</em></span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>              </span><span class=tok-k>typename</span> <span class=tok-nc>Iterator</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Sentinel</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>Iterator</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc>range_input</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>forward_iterator</span><span class=tok-o>&lt;</span><span class=tok-n>Iterator</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>              </span><span class=tok-o>&amp;&amp;</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>sentinel_for</span><span class=tok-o>&lt;</span><span class=tok-n>Sentinel</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Iterator</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>encoding</span><span class=tok-w>  </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>Encoding</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>encoding</span><span class=tok-o>::</span><span class=tok-n>char_type</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>using</span> <span class=tok-n>iterator</span> <span class=tok-o>=</span> <span class=tok-n>Iterator</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>sentinel</span> <span class=tok-o>=</span> <span class=tok-n>Sentinel</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>Iterator</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>sentinel</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>Sentinel</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== constructors ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>range_input</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-nf>range_input</span><span class=tok-p>(</span><span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>sentinel</span> <span class=tok-n>end</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== constructors ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>range_input</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>range_input</span><span class=tok-p>(</span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>sentinel</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== access ===//</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>()</span>   <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>begin</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>end</span><span class=tok-p>()</span><span class=tok-w>   </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>reader</em></span> <span class=tok-k>auto</span> <span class=tok-n>reader</span><span class=tok-p>()</span> <span class=tok-k>const</span><span class=tok-o>&amp;</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>reader</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Iterator</span><span class=tok-p>,</span> <span class=tok-k>typename</span> <span class=tok-nc>Sentinel</span><span class=tok-o>&gt;</span>
-    <span class=tok-n>range_input</span><span class=tok-p>(</span><span class=tok-n>Iterator</span> <span class=tok-n>begin</span><span class=tok-p>,</span> <span class=tok-n>Sentinel</span> <span class=tok-n>end</span><span class=tok-p>)</span>
-      <span class=tok-o>-&gt;</span> <span class=tok-n>range_input</span><span class=tok-o>&lt;</span><span class=tok-n><em>deduce</em></span><em><span class=tok-o>-</span><span class=tok-n>encoding</span></em><span class=tok-p>,</span> <span class=tok-n>Iterator</span><span class=tok-p>,</span> <span class=tok-n>Sentinel</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Iterator</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span> <span class=tok-nc>Sentinel</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-n>range_input</span><span class=tok-p>(</span><span class=tok-n>Iterator</span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Sentinel</span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-o>-&gt;</span><span class=tok-w> </span><span class=tok-n>range_input</span><span class=tok-o>&lt;</span><span class=tok-n><em>deduce</em></span><em><span class=tok-o>-</span><span class=tok-n>encoding</span></em><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Iterator</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>Sentinel</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -99,20 +99,20 @@ If no template arguments are specified, CTAD is used to deduce the encoding from
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6IiIsInN0ZGluVmlzaWJsZSI6ZmFsc2V9XSwiaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiI2luY2x1ZGUgXHUwMDNjY3N0ZGlvXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsaXN0XHUwMDNlXG5cbiNpbmNsdWRlIFx1MDAzY2xleHkvYWN0aW9uL21hdGNoLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eS9kc2wuaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2lucHV0L3JhbmdlX2lucHV0LmhwcFx1MDAzZVxuXG5zdHJ1Y3QgcHJvZHVjdGlvblxue1xuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byBydWxlID0gTEVYWV9MSVQoXCJIaVwiKTtcbn07XG5cbmludCBtYWluKClcbntcbiAgICBzdGQ6Omxpc3RcdTAwM2NjaGFyMTZfdFx1MDAzZSBsaXN0e3UnSCcsIHUnaSd9O1xuXG4gICAgLy8gQ3JlYXRlIHRoZSBpbnB1dCwgZGVkdWNpbmcgdGhlIGVuY29kaW5nLlxuICAgIGF1dG8gaW5wdXQgPSBsZXh5OjpyYW5nZV9pbnB1dChsaXN0LmJlZ2luKCksIGxpc3QuZW5kKCkpO1xuXG4gICAgLy8gVXNlIHRoZSBpbnB1dC5cbiAgICBpZiAoIWxleHk6Om1hdGNoXHUwMDNjcHJvZHVjdGlvblx1MDAzZShpbnB1dCkpXG4gICAge1xuICAgICAgICBzdGQ6OnB1dHMoXCJFcnJvciFcXG5cIik7XG4gICAgICAgIHJldHVybiAxO1xuICAgIH1cbn1cbiJ9XX0=" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span> <span class=tok-nf>main</span><span class=tok-p>()</span>
-<span class=tok-p>{</span>
-    <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>list</span><span class=tok-o>&lt;</span><span class=tok-kt>char16_t</span><span class=tok-o>&gt;</span> <span class=tok-n>list</span><span class=tok-p>{</span><span class=tok-sa>u</span><span class=tok-sc>&#39;H&#39;</span><span class=tok-p>,</span> <span class=tok-sa>u</span><span class=tok-sc>&#39;i&#39;</span><span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-kt>int</span><span class=tok-w> </span><span class=tok-nf>main</span><span class=tok-p>()</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>list</span><span class=tok-o>&lt;</span><span class=tok-kt>char16_t</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-n>list</span><span class=tok-p>{</span><span class=tok-sa>u</span><span class=tok-sc>&#39;H&#39;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-sa>u</span><span class=tok-sc>&#39;i&#39;</span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-c1>// Create the input, deducing the encoding.</span>
-    <span class=tok-k>auto</span> <span class=tok-n>input</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>range_input</span><span class=tok-p>(</span><span class=tok-n>list</span><span class=tok-p>.</span><span class=tok-n>begin</span><span class=tok-p>(),</span> <span class=tok-n>list</span><span class=tok-p>.</span><span class=tok-n>end</span><span class=tok-p>());</span>
+<span class=tok-w>    </span><span class=tok-c1>// Create the input, deducing the encoding.</span>
+<span class=tok-w>    </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>input</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>range_input</span><span class=tok-p>(</span><span class=tok-n>list</span><span class=tok-p>.</span><span class=tok-n>begin</span><span class=tok-p>(),</span><span class=tok-w> </span><span class=tok-n>list</span><span class=tok-p>.</span><span class=tok-n>end</span><span class=tok-p>());</span><span class=tok-w></span>
 
-    <span class=tok-c1>// Use the input.</span>
-    <span class=tok-k>if</span> <span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>))</span>
-    <span class=tok-p>{</span>
-        <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;Error!</span><span class=tok-se>\n</span><span class=tok-s>&#34;</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-mi>1</span><span class=tok-p>;</span>
-    <span class=tok-p>}</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-c1>// Use the input.</span>
+<span class=tok-w>    </span><span class=tok-k>if</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-o>!</span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>match</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>input</span><span class=tok-p>))</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-n>puts</span><span class=tok-p>(</span><span class=tok-s>&#34;Error!</span><span class=tok-se>\n</span><span class=tok-s>&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-mi>1</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -140,7 +140,7 @@ If the iterators are pointers, use <a href=/reference/input/string_input/#string
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

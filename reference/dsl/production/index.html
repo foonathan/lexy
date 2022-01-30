@@ -57,19 +57,19 @@ lexy/dsl/production.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/production.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>inline_</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>inline_</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-      <span class=tok-k>requires</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>inline_</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>inline_</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-      <span class=tok-k>requires</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>inline_</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>inline_</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -106,24 +106,24 @@ The rule then fails if <code>P::rule</code> has failed.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=inline&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>name</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// One or more alpha numeric characters, underscores or hyphens.</span>
-        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;_&#39;</span><span class=tok-o>&gt;</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-<span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>name</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// One or more alpha numeric characters, underscores or hyphens.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-w> </span><span class=tok-o>/</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;_&#39;</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>/</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// Allow arbitrary spaces between individual tokens.</span>
-    <span class=tok-c1>// Note that this includes the individual characters of the name.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>whitespace</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span>
+<span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// Allow arbitrary spaces between individual tokens.</span>
+<span class=tok-w>    </span><span class=tok-c1>// Note that this includes the individual characters of the name.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>whitespace</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>greeting</span> <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-n>greeting</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>inline_</span><span class=tok-o>&lt;</span><span class=tok-n>name</span><span class=tok-o>&gt;</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>greeting</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>greeting</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>inline_</span><span class=tok-o>&lt;</span><span class=tok-n>name</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -148,15 +148,15 @@ Use <code>inline_</code> when you need to parse a production as part of the whit
 <div class=listingblock>
 <div class=title><code>lexy/dsl/production.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>rule</em></span> <span class=tok-k>auto</span> <span class=tok-n>p</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>p</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-      <span class=tok-k>requires</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>p</span><span class=tok-p>;</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>      </span><span class=tok-k>requires</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-o>&lt;</span><span class=tok-n>production_rule</span><span class=tok-o>&lt;</span><span class=tok-n>P</span><span class=tok-o>&gt;&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>p</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -204,23 +204,23 @@ Its children are all the nodes generated by <code>P::rule</code>.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=default&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>name</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// One or more alpha numeric characters, underscores or hyphens.</span>
-        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;_&#39;</span><span class=tok-o>&gt;</span> <span class=tok-o>/</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span>
-<span class=tok-p>};</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>name</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// One or more alpha numeric characters, underscores or hyphens.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alnum</span><span class=tok-w> </span><span class=tok-o>/</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;_&#39;</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>/</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;-&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// Allow arbitrary spaces between individual tokens.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>whitespace</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span>
+<span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// Allow arbitrary spaces between individual tokens.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>whitespace</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>greeting</span> <span class=tok-o>=</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-n>greeting</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>name</span><span class=tok-o>&gt;</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>greeting</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;Hello&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>greeting</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>name</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>exclamation_mark</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -231,31 +231,31 @@ Its children are all the nodes generated by <code>P::rule</code>.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=choice_production&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>id</span>          <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>);</span>
-<span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>kw_function</span> <span class=tok-o>=</span> <span class=tok-n>LEXY_KEYWORD</span><span class=tok-p>(</span><span class=tok-s>&#34;function&#34;</span><span class=tok-p>,</span> <span class=tok-n>id</span><span class=tok-p>);</span>
-<span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>kw_type</span>     <span class=tok-o>=</span> <span class=tok-n>LEXY_KEYWORD</span><span class=tok-p>(</span><span class=tok-s>&#34;type&#34;</span><span class=tok-p>,</span> <span class=tok-n>id</span><span class=tok-p>);</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-w>          </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>kw_function</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_KEYWORD</span><span class=tok-p>(</span><span class=tok-s>&#34;function&#34;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>kw_type</span><span class=tok-w>     </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>LEXY_KEYWORD</span><span class=tok-p>(</span><span class=tok-s>&#34;type&#34;</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-p>);</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>function_decl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>arguments</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;...&#34;</span><span class=tok-p>));</span>
-        <span class=tok-k>auto</span> <span class=tok-n>body</span>      <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>curly_bracketed</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;...&#34;</span><span class=tok-p>));</span>
+<span class=tok-k>struct</span> <span class=tok-nc>function_decl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>arguments</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;...&#34;</span><span class=tok-p>));</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>body</span><span class=tok-w>      </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>curly_bracketed</span><span class=tok-p>(</span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;...&#34;</span><span class=tok-p>));</span><span class=tok-w></span>
 
-        <span class=tok-k>return</span> <span class=tok-n>kw_function</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>id</span> <span class=tok-o>+</span> <span class=tok-n>arguments</span> <span class=tok-o>+</span> <span class=tok-n>body</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
-<span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>kw_function</span><span class=tok-w> </span><span class=tok-o>&gt;&gt;</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>arguments</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>body</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>type_decl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-c1>//</span>
-        <span class=tok-o>=</span> <span class=tok-n>kw_type</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>id</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;=&#39;</span><span class=tok-o>&gt;</span> <span class=tok-o>+</span> <span class=tok-n>id</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>semicolon</span><span class=tok-p>;</span>
-<span class=tok-p>};</span>
+<span class=tok-k>struct</span> <span class=tok-nc>type_decl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-c1>//</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>kw_type</span><span class=tok-w> </span><span class=tok-o>&gt;&gt;</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;=&#39;</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>id</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>semicolon</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>whitespace</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>       <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>function_decl</span><span class=tok-o>&gt;</span> <span class=tok-o>|</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>type_decl</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>whitespace</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>space</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w>       </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>function_decl</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>p</span><span class=tok-o>&lt;</span><span class=tok-n>type_decl</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -296,24 +296,24 @@ it is still disabled, unless <code>P</code> explicitly defines a new whitespace 
 <div class=listingblock>
 <div class=title><code>lexy/dsl/production.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>max_recursion_depth_exceeded</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>max_recursion_depth_exceeded</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc><em>recurse</em></span> <span class=tok-c1>// models <em>rule</em> or <em>branch-rule</em></span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-n>max_depth_error</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>recurse</em></span><span class=tok-w> </span><span class=tok-c1>// models <em>rule</em> or <em>branch-rule</em></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>recurse</em></span><span class=tok-w> </span><span class=tok-n>max_depth_error</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-k>auto</span> <span class=tok-n>recurse</span><span class=tok-p>;</span>        <span class=tok-c1>// <em>rule</em></span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span> <span class=tok-n>P</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>recurse</em></span> <span class=tok-k>auto</span> <span class=tok-n>recurse_branch</span><span class=tok-p>;</span> <span class=tok-c1>// <em>branch-rule</em></span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>recurse</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>recurse</span><span class=tok-p>;</span><span class=tok-w>        </span><span class=tok-c1>// <em>rule</em></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-n><em>production</em></span><span class=tok-w> </span><span class=tok-n>P</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>recurse</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>recurse_branch</span><span class=tok-p>;</span><span class=tok-w> </span><span class=tok-c1>// <em>branch-rule</em></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -362,12 +362,12 @@ It then fails without recovering.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=recurse&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// Either we parse ourselves surrounded by expressions, or an atom.</span>
-        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>recurse</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;atom&#34;</span><span class=tok-p>);</span>
-<span class=tok-p>};</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Either we parse ourselves surrounded by expressions, or an atom.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>recurse</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;atom&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -378,16 +378,16 @@ It then fails without recovering.</p>
 <div class="listingblock playground-example">
 <div class=title><a href="/playground?example=recurse_limit&mode=tree" title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// We define a (tiny) maximum recursion depth.</span>
-    <span class=tok-c1>// This prevents unbounded recursion which can cause a stack overflow.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>max_recursion_depth</span> <span class=tok-o>=</span> <span class=tok-mi>3</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// We define a (tiny) maximum recursion depth.</span>
+<span class=tok-w>    </span><span class=tok-c1>// This prevents unbounded recursion which can cause a stack overflow.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>max_recursion_depth</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-mi>3</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span>
-        <span class=tok-c1>// Either we parse ourselves surrounded by expressions, or an atom.</span>
-        <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>recurse</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>)</span> <span class=tok-o>|</span> <span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;atom&#34;</span><span class=tok-p>);</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-c1>// Either we parse ourselves surrounded by expressions, or an atom.</span>
+<span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>parenthesized</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>recurse</span><span class=tok-o>&lt;</span><span class=tok-n>production</span><span class=tok-o>&gt;</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>LEXY_LIT</span><span class=tok-p>(</span><span class=tok-s>&#34;atom&#34;</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -429,7 +429,7 @@ In particular, the nesting level of <code>p</code> rules, which is statically de
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>

@@ -57,50 +57,50 @@ lexy/dsl/symbol.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span> <span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>class</span> <span class=tok-nc><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em>
-    <span class=tok-p>{</span>
-    <span class=tok-k>public</span><span class=tok-o>:</span>
-        <span class=tok-k>using</span> <span class=tok-n>char_type</span>   <span class=tok-o>=</span> <span class=tok-p>...;</span>
-        <span class=tok-k>using</span> <span class=tok-n>key_type</span>    <span class=tok-o>=</span> <span class=tok-n>char_type</span><span class=tok-p>;</span>
-        <span class=tok-k>using</span> <span class=tok-n>mapped_type</span> <span class=tok-o>=</span> <span class=tok-n>T</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-w> </span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>class</span> <span class=tok-nc><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-w>   </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>...;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>key_type</span><span class=tok-w>    </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>using</span><span class=tok-w> </span><span class=tok-n>mapped_type</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>T</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>struct</span> <span class=tok-nc>value_type</span>
-        <span class=tok-p>{</span>
-            <span class=tok-k>const</span> <span class=tok-n>char_type</span><span class=tok-o>*</span>   <span class=tok-n>symbol</span><span class=tok-p>;</span>
-            <span class=tok-k>const</span> <span class=tok-n>mapped_type</span><span class=tok-o>&amp;</span> <span class=tok-n>value</span><span class=tok-p>;</span>
-        <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>struct</span> <span class=tok-nc>value_type</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>char_type</span><span class=tok-o>*</span><span class=tok-w>   </span><span class=tok-n>symbol</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>            </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>mapped_type</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-p>};</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== modifiers ===//</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>SymbolString</span><span class=tok-p>,</span> <span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== modifiers ===//</span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>SymbolString</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-w> </span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>args</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>C</span><span class=tok-p>,</span> <span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>C</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-w> </span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>args</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-c1>//=== access ===//</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>empty</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-c1>//=== access ===//</span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>empty</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>size</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>class</span> <span class=tok-nc>iterator</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>class</span> <span class=tok-nc>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>begin</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>end</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>class</span> <span class=tok-nc>key_index</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>class</span> <span class=tok-nc>key_index</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>constexpr</span> <span class=tok-n>key_index</span> <span class=tok-n>try_parse</span><span class=tok-p>(</span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span> <span class=tok-n>reader</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>try_parse</span><span class=tok-p>(</span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-        <span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-n>T</span><span class=tok-o>&amp;</span> <span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>key_index</span> <span class=tok-n>idx</span><span class=tok-p>)</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>T</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>idx</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>symbol_table</span> <span class=tok-o>=</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>();</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>symbol_table</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&lt;</span><span class=tok-n>T</span><span class=tok-o>&gt;</span><span class=tok-p>();</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -114,11 +114,11 @@ lexy/dsl/symbol.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>SymbolString</span><span class=tok-p>,</span> <span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>SymbolString</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-w> </span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>args</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>auto</span> <span class=tok-n>C</span><span class=tok-p>,</span> <span class=tok-k>typename</span><span class=tok-p>...</span> <span class=tok-n>Args</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em> <span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span> <span class=tok-n>args</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>C</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-k>typename</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>Args</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-w> </span><span class=tok-n>map</span><span class=tok-p>(</span><span class=tok-n>Args</span><span class=tok-o>&amp;&amp;</span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>args</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -138,9 +138,9 @@ use <code>LEXY_SYMBOL("Str")</code> instead of <code>"Str"</code> as the templat
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-n>empty</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>        <b class=conum>(1)</b>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-nf>empty</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>        </span><b class=conum>(1)</b>
 
-<span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>size</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>  <b class=conum>(2)</b></code></pre>
+<span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>size</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w>  </span><b class=conum>(2)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -156,10 +156,10 @@ use <code>LEXY_SYMBOL("Str")</code> instead of <code>"Str"</code> as the templat
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>class</span> <span class=tok-nc>iterator</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>class</span> <span class=tok-nc>iterator</span><span class=tok-p>;</span><span class=tok-w></span>
 
-<span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>begin</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n>iterator</span> <span class=tok-n>end</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>begin</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>iterator</span><span class=tok-w> </span><span class=tok-nf>end</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -171,17 +171,17 @@ use <code>LEXY_SYMBOL("Str")</code> instead of <code>"Str"</code> as the templat
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>class</span> <span class=tok-nc>key_index</span>
-<span class=tok-p>{</span>
-<span class=tok-k>public</span><span class=tok-o>:</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n>key_index</span><span class=tok-p>()</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-n>key_index</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span> <span class=tok-n>idx</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>class</span> <span class=tok-nc>key_index</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-p>(</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>idx</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>constexpr</span> <span class=tok-k>explicit</span> <span class=tok-k>operator</span> <span class=tok-kt>bool</span><span class=tok-p>()</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>key_index</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>key_index</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-    <span class=tok-k>friend</span> <span class=tok-k>constexpr</span> <span class=tok-kt>bool</span> <span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>key_index</span> <span class=tok-n>lhs</span><span class=tok-p>,</span> <span class=tok-n>key_index</span> <span class=tok-n>rhs</span><span class=tok-p>)</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>friend</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>==</span><span class=tok-p>(</span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>lhs</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>rhs</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>friend</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-o>!=</span><span class=tok-p>(</span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>lhs</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>rhs</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -195,8 +195,8 @@ Two indices can be compared for equality.</p>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n>key_index</span> <span class=tok-n>try_parse</span><span class=tok-p>(</span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span> <span class=tok-n>reader</span><span class=tok-p>)</span> <span class=tok-k>const</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Reader</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>try_parse</span><span class=tok-p>(</span><span class=tok-n>Reader</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>reader</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -209,7 +209,7 @@ Otherwise, returns an invalid key index and consumes nothing.</p>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span> <span class=tok-k>const</span> <span class=tok-n>T</span><span class=tok-o>&amp;</span> <span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>key_index</span> <span class=tok-n>idx</span><span class=tok-p>)</span> <span class=tok-k>const</span> <span class=tok-k>noexcept</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n>T</span><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-k>operator</span><span class=tok-p>[](</span><span class=tok-n>key_index</span><span class=tok-w> </span><span class=tok-n>idx</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -227,27 +227,27 @@ Otherwise, returns an invalid key index and consumes nothing.</p>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span> <span class=tok-n>lexy</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc>unknown_symbol</span> <span class=tok-p>{};</span>
-<span class=tok-p>}</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>unknown_symbol</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-k>namespace</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>dsl</span>
-<span class=tok-p>{</span>
-    <span class=tok-k>struct</span> <span class=tok-nc><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-c1>// models <em>branch-rule</em></span>
-    <span class=tok-p>{</span>
-        <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span>
-        <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>error</span><span class=tok-p>;</span>
-    <span class=tok-p>};</span>
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// models <em>branch-rule</em></span>
+<span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>Tag</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>;</span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>;</span><span class=tok-w></span>
 
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token</span><span class=tok-p>);</span>
-    <span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-    <span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>identifier</span><span class=tok-p>);</span>
-<span class=tok-p>}</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -258,8 +258,8 @@ Otherwise, returns an invalid key index and consumes nothing.</p>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>;</span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>;</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=dlist>
@@ -311,11 +311,11 @@ This version behaves like the other version if passed a non-deterministic token 
 <div class=listingblock>
 <div class=title><code>lexy/dsl/symbol.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em> <span class=tok-k>auto</span> <span class=tok-n>token</span><span class=tok-p>);</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>token</span><span class=tok-p>);</span><span class=tok-w></span>
 
-<span class=tok-k>template</span> <span class=tok-o>&lt;</span><span class=tok-k>const</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span> <span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span>
-<span class=tok-k>constexpr</span> <span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em> <span class=tok-n>identifier</span><span class=tok-p>);</span></code></pre>
+<span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>table</span></em><span class=tok-o>&amp;</span><span class=tok-w> </span><span class=tok-n>SymbolTable</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>symbol</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>symbol</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class=dlist>
@@ -374,24 +374,24 @@ The tag can be overridden by specifying a different <code>Tag</code> with <code>
 <div class="listingblock godbolt-example">
 <div class=title><a href="https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siY29tcGlsZXJzIjpbXSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImNsYW5nX3RydW5rIiwibGlicyI6W3siaWQiOiJsZXh5IiwidmVyc2lvbiI6InRydW5rIn1dLCJvcHRpb25zIjoiLXN0ZD1jKysyMCJ9LCJzdGRpbiI6Ilx1MDAyNmx0OyIsInN0ZGluVmlzaWJsZSI6dHJ1ZX1dLCJpZCI6MSwibGFuZ3VhZ2UiOiJjKysiLCJzb3VyY2UiOiIjaW5jbHVkZSBcdTAwM2NsZXh5L2FjdGlvbi9wYXJzZS5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHkvY2FsbGJhY2suaHBwXHUwMDNlXG4jaW5jbHVkZSBcdTAwM2NsZXh5L2RzbC5ocHBcdTAwM2VcbiNpbmNsdWRlIFx1MDAzY2xleHlfZXh0L2NvbXBpbGVyX2V4cGxvcmVyLmhwcFx1MDAzZVxuI2luY2x1ZGUgXHUwMDNjbGV4eV9leHQvcmVwb3J0X2Vycm9yLmhwcFx1MDAzZVxuXG5uYW1lc3BhY2UgZHNsID0gbGV4eTo6ZHNsO1xuXG5zdHJ1Y3QgcHJvZHVjdGlvblxue1xuICAgIC8vIE1hcCBuYW1lcyBvZiB0aGUgZW50aXRpZXMgdG8gdGhlaXIgcmVwbGFjZW1lbnQgdmFsdWUuXG4gICAgc3RhdGljIGNvbnN0ZXhwciBhdXRvIGVudGl0aWVzID0gbGV4eTo6c3ltYm9sX3RhYmxlXHUwMDNjY2hhclx1MDAzZVxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAubWFwXHUwMDNjTEVYWV9TWU1CT0woXCJxdW90XCIpXHUwMDNlKCdcIicpXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC5tYXBcdTAwM2NMRVhZX1NZTUJPTChcImFtcFwiKVx1MDAzZSgnXHUwMDI2JylcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLm1hcFx1MDAzY0xFWFlfU1lNQk9MKFwiYXBvc1wiKVx1MDAzZSgnXFwnJylcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLm1hcFx1MDAzY0xFWFlfU1lNQk9MKFwibHRcIilcdTAwM2UoJ1x1MDAzYycpXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC5tYXBcdTAwM2NMRVhZX1NZTUJPTChcImd0XCIpXHUwMDNlKCdcdTAwM2UnKTtcblxuICAgIHN0YXRpYyBjb25zdGV4cHIgYXV0byBydWxlID0gW10ge1xuICAgICAgICBhdXRvIG5hbWUgICAgICA9IGRzbDo6aWRlbnRpZmllcihkc2w6OmFzY2lpOjphbHBoYSk7XG4gICAgICAgIGF1dG8gcmVmZXJlbmNlID0gZHNsOjpzeW1ib2xcdTAwM2NlbnRpdGllc1x1MDAzZShuYW1lKTtcbiAgICAgICAgcmV0dXJuIGRzbDo6bGl0X2NcdTAwM2MnXHUwMDI2J1x1MDAzZSBcdTAwM2VcdTAwM2UgcmVmZXJlbmNlICsgZHNsOjpsaXRfY1x1MDAzYyc7J1x1MDAzZTtcbiAgICB9KCk7XG5cbiAgICBzdGF0aWMgY29uc3RleHByIGF1dG8gdmFsdWUgPSBsZXh5Ojpmb3J3YXJkXHUwMDNjY2hhclx1MDAzZTtcbn07XG5cbmludCBtYWluKClcbntcbiAgICBhdXRvIGlucHV0ICA9IGxleHlfZXh0Ojpjb21waWxlcl9leHBsb3Jlcl9pbnB1dCgpO1xuICAgIGF1dG8gcmVzdWx0ID0gbGV4eTo6cGFyc2VcdTAwM2Nwcm9kdWN0aW9uXHUwMDNlKGlucHV0LCBsZXh5X2V4dDo6cmVwb3J0X2Vycm9yKTtcbiAgICBpZiAoIXJlc3VsdClcbiAgICAgICAgcmV0dXJuIDE7XG5cbiAgICBzdGQ6OnByaW50ZihcIlRoZSByZXBsYWNlbWVudCBpczogJyVjJ1xcblwiLCByZXN1bHQudmFsdWUoKSk7XG59In1dfQ==" , title="Try it online"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="play" class="svg-inline--fa fa-play fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentcolor" d="M424.4 214.7 72.4 6.6C43.8-10.3.0 6.1.0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1.0-82.6z"/></svg></a></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span>
-<span class=tok-p>{</span>
-    <span class=tok-c1>// Map names of the entities to their replacement value.</span>
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>entities</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>symbol_table</span><span class=tok-o>&lt;</span><span class=tok-kt>char</span><span class=tok-o>&gt;</span>
-                                         <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;quot&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-p>)</span>
-                                         <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;amp&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&amp;&#39;</span><span class=tok-p>)</span>
-                                         <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;apos&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;\&#39;&#39;</span><span class=tok-p>)</span>
-                                         <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;lt&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&lt;&#39;</span><span class=tok-p>)</span>
-                                         <span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;gt&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&gt;&#39;</span><span class=tok-p>);</span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>struct</span> <span class=tok-nc>production</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-c1>// Map names of the entities to their replacement value.</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>entities</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>symbol_table</span><span class=tok-o>&lt;</span><span class=tok-kt>char</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>                                         </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;quot&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&#34;&#39;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                                         </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;amp&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&amp;&#39;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                                         </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;apos&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;\&#39;&#39;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                                         </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;lt&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&lt;&#39;</span><span class=tok-p>)</span><span class=tok-w></span>
+<span class=tok-w>                                         </span><span class=tok-p>.</span><span class=tok-n>map</span><span class=tok-o>&lt;</span><span class=tok-n>LEXY_SYMBOL</span><span class=tok-p>(</span><span class=tok-s>&#34;gt&#34;</span><span class=tok-p>)</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-sc>&#39;&gt;&#39;</span><span class=tok-p>);</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>rule</span> <span class=tok-o>=</span> <span class=tok-p>[]</span> <span class=tok-p>{</span>
-        <span class=tok-k>auto</span> <span class=tok-n>name</span>      <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>);</span>
-        <span class=tok-k>auto</span> <span class=tok-n>reference</span> <span class=tok-o>=</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>symbol</span><span class=tok-o>&lt;</span><span class=tok-n>entities</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>name</span><span class=tok-p>);</span>
-        <span class=tok-k>return</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&amp;&#39;</span><span class=tok-o>&gt;</span> <span class=tok-o>&gt;&gt;</span> <span class=tok-n>reference</span> <span class=tok-o>+</span> <span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-    <span class=tok-p>}();</span>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>rule</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-p>[]</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>name</span><span class=tok-w>      </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>identifier</span><span class=tok-p>(</span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>ascii</span><span class=tok-o>::</span><span class=tok-n>alpha</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>reference</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>symbol</span><span class=tok-o>&lt;</span><span class=tok-n>entities</span><span class=tok-o>&gt;</span><span class=tok-p>(</span><span class=tok-n>name</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;&amp;&#39;</span><span class=tok-o>&gt;</span><span class=tok-w> </span><span class=tok-o>&gt;&gt;</span><span class=tok-w> </span><span class=tok-n>reference</span><span class=tok-w> </span><span class=tok-o>+</span><span class=tok-w> </span><span class=tok-n>dsl</span><span class=tok-o>::</span><span class=tok-n>lit_c</span><span class=tok-o>&lt;</span><span class=tok-sc>&#39;;&#39;</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-p>}();</span><span class=tok-w></span>
 
-    <span class=tok-k>static</span> <span class=tok-k>constexpr</span> <span class=tok-k>auto</span> <span class=tok-n>value</span> <span class=tok-o>=</span> <span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-kt>char</span><span class=tok-o>&gt;</span><span class=tok-p>;</span>
-<span class=tok-p>};</span></code></pre>
+<span class=tok-w>    </span><span class=tok-k>static</span><span class=tok-w> </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>value</span><span class=tok-w> </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>forward</span><span class=tok-o>&lt;</span><span class=tok-kt>char</span><span class=tok-o>&gt;</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 </div>
@@ -423,7 +423,7 @@ for an XML parser.
 </main>
 <footer id=page-footer>
 <section class=copyright>
-&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2021</a>
+&copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
 </section>
 <section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>
