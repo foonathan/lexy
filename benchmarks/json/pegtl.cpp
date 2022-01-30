@@ -6,7 +6,7 @@
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/json.hpp>
 
-namespace pegtl = TAO_PEGTL_NAMESPACE;
+namespace pegtl = tao::pegtl;
 
 bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& _input)
 {
