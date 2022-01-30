@@ -6018,19 +6018,7 @@ struct token_base : _token_inherit<ImplOrTag>
 // We cannot directly inherit from Token as that wouldn't override the token_type.
 template <auto Kind, typename Token>
 struct _tokk : token_base<_tokk<Kind, Token>, Token>
-{
-    // Char classes override .error, so we inherit the one from Token.
-#if defined(_MSC_VER)
-    // MSVC wants auto on the left-hand side.
-    // If there's a type, it fails to compile.
-    template <typename Tag>
-    static constexpr auto error = _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)>{};
-#else
-    // clang-tidy wants a type on the left-hande side.
-    template <typename Tag>
-    static constexpr _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)> error = {};
-#endif
-};
+{};
 
 template <typename Tag, typename Token>
 struct _toke : token_base<_toke<Tag, Token>>
@@ -6270,6 +6258,8 @@ constexpr auto _cas = lexy::_detail::compress_ascii_set<CharSet>();
 
 template <typename Class, typename Error>
 struct _cerr;
+template <typename Class, auto Kind>
+struct _ckind;
 
 template <typename Derived>
 struct char_class_base : token_base<Derived>, _char_class_base
@@ -6341,6 +6331,36 @@ struct char_class_base : token_base<Derived>, _char_class_base
     // We override `.error` to keep it a character class.
     template <typename Error>
     static constexpr _cerr<Derived, Error> error = {};
+
+    // For the same reason we also need to override `.kind`.
+    template <auto Kind>
+    static constexpr _ckind<Derived, Kind> kind = _ckind<Derived, Kind>{};
+};
+
+template <typename Class, auto Kind>
+struct _ckind : char_class_base<_ckind<Class, Kind>>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return Class::char_class_name();
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return Class::char_class_ascii();
+    }
+
+    static constexpr auto char_class_match_cp(char32_t cp)
+    {
+        return Class::char_class_match_cp(cp);
+    }
+
+    template <typename Reader, typename Context>
+    static constexpr void char_class_report_error(Context&                  context,
+                                                  typename Reader::iterator position)
+    {
+        Class::template char_class_report_error<Reader>(context, position);
+    }
 };
 
 template <typename Class, typename Error>
@@ -6370,6 +6390,14 @@ struct _cerr : char_class_base<_cerr<Class, Error>>
     }
 };
 } // namespace lexyd
+
+namespace lexy
+{
+template <typename Class, auto Kind>
+constexpr auto token_kind_of<dsl::_ckind<Class, Kind>> = Kind;
+template <typename Class, typename Error>
+constexpr auto token_kind_of<dsl::_cerr<Class, Error>> = token_kind_of<Class>;
+} // namespace lexy
 
 #define LEXY_CHAR_CLASS(Name, Rule)                                                                \
     [] {                                                                                           \
