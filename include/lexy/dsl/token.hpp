@@ -126,19 +126,7 @@ struct token_base : _token_inherit<ImplOrTag>
 // We cannot directly inherit from Token as that wouldn't override the token_type.
 template <auto Kind, typename Token>
 struct _tokk : token_base<_tokk<Kind, Token>, Token>
-{
-    // Char classes override .error, so we inherit the one from Token.
-#if defined(_MSC_VER)
-    // MSVC wants auto on the left-hand side.
-    // If there's a type, it fails to compile.
-    template <typename Tag>
-    static constexpr auto error = _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)>{};
-#else
-    // clang-tidy wants a type on the left-hande side.
-    template <typename Tag>
-    static constexpr _tokk<Kind, LEXY_DECAY_DECLTYPE(Token::template error<Tag>)> error = {};
-#endif
-};
+{};
 
 template <typename Tag, typename Token>
 struct _toke : token_base<_toke<Tag, Token>>
