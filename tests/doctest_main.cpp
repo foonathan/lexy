@@ -1,6 +1,5 @@
 // Copyright (C) 2020-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// SPDX-License-Identifier: BSL-1.0
 
 #include <lexy/_detail/config.hpp>
 
