@@ -31,6 +31,7 @@ LEXY_PUNCT(ampersand, "&");
 LEXY_PUNCT(caret, "^");
 LEXY_PUNCT(asterisk, "*");
 LEXY_PUNCT(tilde, "~");
+LEXY_PUNCT(vbar, "|");
 
 LEXY_PUNCT(hash_sign, "#");
 LEXY_PUNCT(dollar_sign, "$");

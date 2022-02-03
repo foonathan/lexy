@@ -17,6 +17,7 @@ entities:
   "lexy::dsl::caret": doc
   "lexy::dsl::asterisk": doc
   "lexy::dsl::tilde": doc
+  "lexy::dsl::vbar": doc
   "lexy::dsl::hash_sign": doc
   "lexy::dsl::dollar_sign": doc
   "lexy::dsl::at_sign": doc
@@ -49,6 +50,7 @@ namespace lexy::dsl
     constexpr _token-rule_ auto caret       = lit<"^">;
     constexpr _token-rule_ auto asterisk    = lit<"*">;
     constexpr _token-rule_ auto tilde       = lit<"~">;
+    constexpr _token-rule_ auto vbar        = lit<"|">;
 
     constexpr _token-rule_ auto hash_sign    = lit<"#">;
     constexpr _token-rule_ auto dollar_sign  = lit<"$">;

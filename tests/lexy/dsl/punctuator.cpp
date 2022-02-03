@@ -125,6 +125,14 @@ TEST_CASE("dsl::tilde")
     CHECK(equivalent_rules(rule, dsl::lit_c<'~'>));
 }
 
+TEST_CASE("dsl::vbar")
+{
+    constexpr auto rule = dsl::vbar;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    CHECK(equivalent_rules(rule, dsl::lit_c<'|'>));
+}
+
 TEST_CASE("dsl::hash_sign")
 {
     constexpr auto rule = dsl::hash_sign;
