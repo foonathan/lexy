@@ -63,6 +63,7 @@ set(header_files
         ${include_dir}/dsl/digit.hpp
         ${include_dir}/dsl/eof.hpp
         ${include_dir}/dsl/error.hpp
+        ${include_dir}/dsl/expression.hpp
         ${include_dir}/dsl/follow.hpp
         ${include_dir}/dsl/identifier.hpp
         ${include_dir}/dsl/if.hpp
@@ -72,6 +73,7 @@ set(header_files
         ${include_dir}/dsl/member.hpp
         ${include_dir}/dsl/newline.hpp
         ${include_dir}/dsl/option.hpp
+        ${include_dir}/dsl/operator.hpp
         ${include_dir}/dsl/peek.hpp
         ${include_dir}/dsl/position.hpp
         ${include_dir}/dsl/production.hpp

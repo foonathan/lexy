@@ -58,6 +58,7 @@ set(tests
         dsl/digit.cpp
         dsl/eof.cpp
         dsl/error.cpp
+        dsl/expression.cpp
         dsl/follow.cpp
         dsl/list.cpp
         dsl/literal.cpp
@@ -68,6 +69,7 @@ set(tests
         dsl/integer.cpp
         dsl/member.cpp
         dsl/newline.cpp
+        dsl/operator.cpp
         dsl/option.cpp
         dsl/peek.cpp
         dsl/position.cpp

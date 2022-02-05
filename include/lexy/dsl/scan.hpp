@@ -173,9 +173,9 @@ struct spc_child
     }
 
     template <typename Event, typename... Args>
-    constexpr void on(Event ev, Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
+        return handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
     }
 };
 
@@ -212,9 +212,9 @@ struct spc
     }
 
     template <typename Event, typename... Args>
-    constexpr void on(Event ev, Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
+        return handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
     }
 };
 

@@ -132,7 +132,7 @@ public:
     {
         prefix();
         _trace += name;
-        _trace += ":\n";
+        _trace += "\n";
 
         ++_level;
 
@@ -162,6 +162,10 @@ public:
     {
         return token("literal", spelling);
     }
+    test_trace& digits(const char* spelling)
+    {
+        return token("digits", spelling);
+    }
     test_trace& whitespace(const char* spelling)
     {
         return token("whitespace", spelling);
@@ -177,6 +181,15 @@ public:
     test_trace& position()
     {
         return token("position", "");
+    }
+
+    test_trace& operation_chain()
+    {
+        return production("operation chain");
+    }
+    test_trace& operation(const char* name)
+    {
+        return token("operation", name);
     }
 
     test_trace& backtracked(const char* spelling)
@@ -262,7 +275,6 @@ public:
     test_trace& finish()
     {
         --_level;
-
         return *this;
     }
     test_trace& cancel()
@@ -345,6 +357,26 @@ public:
         {
             CHECK(handler._last_token == pos);
             handler._trace.cancel();
+        }
+
+        auto on(test_handler& handler, lexy::parse_events::operation_chain_start, iterator pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.operation_chain();
+            return 0;
+        }
+        template <typename Operation>
+        void on(test_handler& handler, lexy::parse_events::operation_chain_op, Operation,
+                iterator      pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.operation(lexy::production_name<Operation>());
+        }
+        void on(test_handler& handler, lexy::parse_events::operation_chain_finish, int&&,
+                iterator      pos)
+        {
+            CHECK(handler._last_token == pos);
+            handler._trace.finish();
         }
 
         template <typename TK>

@@ -12,17 +12,31 @@
 //=== parse_events ===//
 namespace lexy::parse_events
 {
-/// Start of the given production.
+/// Start of the current production.
 /// Arguments: position
 struct production_start
 {};
-/// End of the given production.
+/// End of the current production.
 /// Arguments: position
 struct production_finish
 {};
 /// Production is canceled.
 /// Arguments: position
 struct production_cancel
+{};
+
+/// Start of a chain of left-associative operations.
+/// Arguments: position
+/// Returns: a handle that needs to be passed to finish.
+struct operation_chain_start
+{};
+/// Operation inside a chain.
+/// Arguments: operation, position
+struct operation_chain_op
+{};
+/// End of a chain of operations.
+/// Arguments: handle, position
+struct operation_chain_finish
 {};
 
 /// A token was consumed.
@@ -46,13 +60,11 @@ struct error
 /// Arguments: position
 struct recovery_start
 {};
-
 /// Non-trivial error recovery succeeded.
 /// It will now continue with normal parsing.
 /// Arguments: position
 struct recovery_finish
 {};
-
 /// Non-trivial error recovery failed because it reaches the limit.
 /// It will now cancel until the next recovery point.
 /// Arguments: position

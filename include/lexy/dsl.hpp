@@ -24,6 +24,7 @@
 #include <lexy/dsl/digit.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/error.hpp>
+#include <lexy/dsl/expression.hpp>
 #include <lexy/dsl/follow.hpp>
 #include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/if.hpp>
@@ -34,6 +35,7 @@
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/member.hpp>
 #include <lexy/dsl/newline.hpp>
+#include <lexy/dsl/operator.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>

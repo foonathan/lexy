@@ -34,20 +34,20 @@ public:
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_finish ev, iterator pos)
+        void on(parse_tree_handler& handler, parse_events::production_finish, iterator)
         {
             if (--handler._depth == 0)
                 *handler._tree = LEXY_MOV(*handler._builder).finish();
             else
                 handler._builder->finish_production(LEXY_MOV(_marker));
-
-            _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_cancel ev, iterator pos)
+        void on(parse_tree_handler& handler, parse_events::production_cancel, iterator pos)
         {
             if (--handler._depth == 0)
+            {
                 handler._tree->clear();
+            }
             else
             {
                 // Cancelling the production removes all nodes from the tree.
@@ -56,16 +56,34 @@ public:
                 handler._builder->cancel_production(LEXY_MOV(_marker));
                 handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
             }
+        }
 
-            _validate.on(handler._validate, ev, pos);
+        auto on(parse_tree_handler& handler, lexy::parse_events::operation_chain_start, iterator)
+        {
+            // As we don't know the production yet (or whether it is actually an operation),
+            // we create a container node to decide later.
+            return handler._builder->start_container();
+        }
+        template <typename Operation>
+        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_op, Operation op,
+                iterator)
+        {
+            // We set the production of the current container.
+            // This will do a "left rotation" on the parse tree, making a new container the parent.
+            handler._builder->set_container_production(op);
+        }
+        template <typename Marker>
+        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_finish,
+                Marker&&            marker, iterator)
+        {
+            handler._builder->finish_container(LEXY_MOV(marker));
         }
 
         template <typename TokenKind>
-        void on(parse_tree_handler& handler, parse_events::token ev, TokenKind kind, iterator begin,
+        void on(parse_tree_handler& handler, parse_events::token, TokenKind kind, iterator begin,
                 iterator end)
         {
             handler._builder->token(kind, begin, end);
-            _validate.on(handler._validate, ev, kind, begin, end);
         }
 
         template <typename Error>
@@ -75,9 +93,9 @@ public:
         }
 
         template <typename Event, typename... Args>
-        void on(parse_tree_handler& handler, Event ev, Args&&... args)
+        auto on(parse_tree_handler& handler, Event ev, Args&&... args)
         {
-            _validate.on(handler._validate, ev, LEXY_FWD(args)...);
+            return _validate.on(handler._validate, ev, LEXY_FWD(args)...);
         }
 
     private:
@@ -91,6 +109,7 @@ public:
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {
+        LEXY_PRECONDITION(_depth == 0);
         return LEXY_MOV(_validate).get_result_void(rule_parse_result);
     }
 

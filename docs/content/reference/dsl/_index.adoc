@@ -265,6 +265,17 @@ the other rule does not have access to context variables, and any context modifi
 ====
 
 [%collapsible]
+.Operator precedence parsing
+====
+{{% docref "lexy::dsl::op" %}}::
+  parse an operator
+{{% docref "lexy::dsl::operator/ (operator)" %}}::
+  parse one of multiple operators
+{{% docref "expression" %}}::
+  parse an expression consisting of multiple operators
+====
+
+[%collapsible]
 .Context-sensitive parsing
 ====
 {{% docref "lexy::dsl::context_flag" %}}::

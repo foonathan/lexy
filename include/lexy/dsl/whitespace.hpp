@@ -46,8 +46,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(whitespace_handler&, Event, const Args&...)
-        {}
+        constexpr int on(whitespace_handler&, Event, const Args&...)
+        {
+            return 0; // an operation_start event returns something
+        }
     };
 
     template <typename Production, typename State>

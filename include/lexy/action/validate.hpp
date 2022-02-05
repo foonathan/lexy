@@ -147,8 +147,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(validate_handler&, Event, const Args&...)
-        {}
+        constexpr auto on(validate_handler&, Event, const Args&...)
+        {
+            return 0; // operation_chain_start must return something
+        }
 
         constexpr iterator production_begin() const
         {

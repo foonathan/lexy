@@ -24,8 +24,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(match_handler&, Event, const Args&...)
-        {}
+        constexpr int on(match_handler&, Event, const Args&...)
+        {
+            return 0; // operation_chain_start needs to return something
+        }
     };
 
     template <typename Production, typename State>

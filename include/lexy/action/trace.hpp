@@ -57,15 +57,15 @@ public:
     : _out(out), _opts(opts), _cur_depth(0)
     {}
 
-    template <typename Location, typename Production>
-    void write_production_start(const Location& loc, Production)
+    template <typename Location>
+    void write_production_start(const Location& loc, const char* name)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {
             write_prefix(loc, prefix::event);
 
             _out = _detail::write_color<_detail::color::bold>(_out, _opts);
-            _out = _detail::write_str(_out, lexy::production_name<Production>());
+            _out = _detail::write_str(_out, name);
             _out = _detail::write_color<_detail::color::reset>(_out, _opts);
 
             if (_cur_depth == _opts.max_tree_depth)
@@ -195,6 +195,22 @@ public:
     }
 
     template <typename Location>
+    void write_operation(const Location& loc, const char* name)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        write_prefix(loc, prefix::event);
+
+        _out = _detail::write_color<_detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "operation");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_str(_out, ": ");
+        _out = _detail::write_str(_out, name);
+    }
+
+    template <typename Location>
     void write_debug(const Location& loc, const char* str)
     {
         if (_cur_depth > _opts.max_tree_depth)
@@ -306,7 +322,7 @@ public:
         void on(trace_handler& handler, parse_events::production_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
-            handler._writer.write_production_start(loc, Production{});
+            handler._writer.write_production_start(loc, lexy::production_name<Production>());
 
             // All events for the production are after the initial event.
             _previous_anchor.emplace(handler._anchor);
@@ -324,6 +340,24 @@ public:
 
             // We've backtracked, so we need to restore the anchor.
             handler._anchor = *_previous_anchor;
+        }
+
+        int on(trace_handler& handler, parse_events::operation_chain_start, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_production_start(loc, "operation chain");
+            return 0; // need to return something
+        }
+        template <typename Operation>
+        void on(trace_handler& handler, parse_events::operation_chain_op, Operation, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_operation(loc, lexy::production_name<Operation>());
+        }
+        void on(trace_handler& handler, parse_events::operation_chain_finish, int, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_finish(loc);
         }
 
         template <typename TK>
