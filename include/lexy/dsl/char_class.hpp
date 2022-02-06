@@ -343,7 +343,9 @@ struct _calt : char_class_base<_calt<Cs...>>
     }
 };
 
-template <typename R1, typename R2>
+template <typename R1, typename R2,
+          typename
+          = std::enable_if_t<!lexy::is_literal_set_rule<R1> && !lexy::is_literal_set_rule<R2>>>
 constexpr auto operator/(R1, R2)
 {
     static_assert(lexy::is_token_rule<R1> && lexy::is_token_rule<R2>);

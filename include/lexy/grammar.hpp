@@ -27,6 +27,10 @@ struct _token_base
 {};
 struct _char_class_base
 {};
+struct _lset_base
+{};
+struct _lit_base
+{};
 struct _sep_base
 {};
 } // namespace lexyd
@@ -48,6 +52,10 @@ constexpr bool is_token_rule = std::is_base_of_v<dsl::_token_base, T>;
 
 template <typename T>
 constexpr bool is_char_class_rule = std::is_base_of_v<dsl::_char_class_base, T>;
+template <typename T>
+constexpr bool is_literal_rule = std::is_base_of_v<dsl::_lit_base, T>;
+template <typename T>
+constexpr bool is_literal_set_rule = std::is_base_of_v<dsl::_lset_base, T>;
 
 template <typename T>
 constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;

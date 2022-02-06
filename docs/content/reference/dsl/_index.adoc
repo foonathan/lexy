@@ -90,18 +90,31 @@ the other rule does not have access to context variables, and any context modifi
 == The rule DSL
 
 [%collapsible]
-.Primitive tokens
+.Primitive rules
 ====
-{{% docref "lexy::dsl::lit" %}} and {{% docref "lexy::dsl::lit_c" %}}::
-  match character sequences
 {{% docref "lexy::dsl::any" %}}::
   match anything
 {{% docref "lexy::dsl::eof" %}}::
   match EOF
 {{% docref "lexy::dsl::newline" %}} and {{% docref "lexy::dsl::eol" %}}::
   match the end of a line
-{{% docref "lexy::dsl::token" %}}::
-  turn a rule into a token
+====
+
+[%collapsible]
+.Literal rules
+====
+{{% docref "lexy::dsl::lit_c" %}}::
+  match a single character
+{{% docref "lexy::dsl::lit" %}} and {{% docref "LEXY_LIT" %}}::
+  match character sequences
+{{% docref "lexy::dsl::lit_b" %}}::
+  match a sequence of bytes
+{{% docref "lexy::dsl::lit_cp" %}}::
+  match a code point with the specified value
+{{% docref "punctuators" %}}::
+  match common punctuation
+{{% docref "lexy::dsl::literal_set" %}} and {{% docref "LEXY_LITERAL_SET" %}}::
+  match one of the specified literals
 ====
 
 [%collapsible]
@@ -135,6 +148,8 @@ the other rule does not have access to context variables, and any context modifi
 [%collapsible]
 .Combinators
 =====
+{{% docref "lexy::dsl::token" %}}::
+  turn a rule into a token
 {{% docref "lexy::dsl::operator+" %}}::
   parse a sequence of rules
 {{% docref "lexy::dsl::operator|" %}}::

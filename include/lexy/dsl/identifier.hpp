@@ -313,8 +313,8 @@ constexpr auto identifier(CharClass)
 template <typename LeadingClass, typename TrailingClass>
 constexpr auto identifier(LeadingClass, TrailingClass)
 {
-    static_assert(
-        lexy::is_char_class_rule<LeadingClass> && lexy::is_char_class_rule<TrailingClass>);
+    static_assert(lexy::is_char_class_rule<LeadingClass> //
+                  && lexy::is_char_class_rule<TrailingClass>);
     return _id<LeadingClass, TrailingClass>{};
 }
 } // namespace lexyd
@@ -329,8 +329,23 @@ constexpr auto token_kind_of<lexy::dsl::_idp<Leading, Trailing>> = lexy::identif
 namespace lexyd
 {
 template <typename Id, typename CharT, CharT... C>
-struct _kw : token_base<_kw<Id, CharT, C...>>
+struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
 {
+    static constexpr auto lit_max_char_count = sizeof...(C);
+
+    // We must not end on a trailing character.
+    static constexpr auto lit_char_classes
+        = lexy::_detail::char_class_list<decltype(Id{}.trailing_pattern())>{};
+
+    template <typename Trie>
+    static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
+                                                 std::size_t char_class)
+    {
+        auto end                  = ((pos = trie.insert(pos, C)), ...);
+        trie.node_char_class[end] = char_class;
+        return end;
+    }
+
     template <typename Reader>
     struct tp
     {
@@ -353,8 +368,8 @@ struct _kw : token_base<_kw<Id, CharT, C...>>
         template <typename Context>
         constexpr void report_error(Context& context, Reader reader)
         {
-            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<
-                typename Reader::encoding::char_type>;
+            using char_type    = typename Reader::encoding::char_type;
+            constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<char_type>;
 
             // Match the entire identifier.
             auto begin = reader.position();

@@ -59,7 +59,7 @@ namespace lexy::dsl
 ----
 
 [.lead]
-The various punctuator {{% token-rule %}}s are convenience aliases for {{% docref "lexy::dsl::lit" %}}.
+The various punctuator {{% literal-rule %}}s are convenience aliases for {{% docref "lexy::dsl::lit" %}}.
 
 ****
 A _punctuator_ is a token that is used as a delimiter in the grammar without having any actual meaning in the program, like an operator (e.g. `+`) would.

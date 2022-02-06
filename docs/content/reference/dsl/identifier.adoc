@@ -145,23 +145,23 @@ constexpr _token-rule_ auto trailing_pattern() const;
 They simply return `leading`/`trailing` from the arguments passed to `identifier()`.
 
 [#keyword]
-== Token rule `lexy::dsl::keyword`
+== Literal rule `lexy::dsl::keyword`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
     template <auto Char>
-    constexpr _token-rule_ auto keyword(_identifier-dsl_ identifier);
+    constexpr _literal-rule_ auto keyword(_identifier-dsl_ identifier);
     template <auto Str>
-    constexpr _token-rule_ auto keyword(_identifier-dsl_ identifier);
+    constexpr _literal-rule_ auto keyword(_identifier-dsl_ identifier);
 }
 
 #define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword<Str>(identifier)
 ----
 
 [.lead]
-`keyword` is a {{% token-rule %}} that matches a keyword.
+`keyword` is a {{% literal-rule %}} that matches a keyword.
 
 Matching::
   Tries to match and consume `identifier.pattern()`,
@@ -185,5 +185,5 @@ NOTE: While {{% docref "lexy::dsl::lit" %}}`<"int">` would happily consume a pre
 
 NOTE: A keyword does not necessarily need to be a reserved identifier or vice-versa.
 
-NOTE: The same {{% encoding %}} caveats of {{% docref "lexy::dsl::lit" %}} apply here as well.
+NOTE: The {{% encoding %}} caveats of {{% literal-rule %}}s apply here as well.
 

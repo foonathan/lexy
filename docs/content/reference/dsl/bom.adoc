@@ -5,19 +5,19 @@ entities:
 ---
 
 [#bom]
-== Token rule `lexy::dsl::bom`
+== Literal rule `lexy::dsl::bom`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
     template <typename Encoding, lexy::encoding_endianness Endianness>
-    constexpr _token-rule_ auto bom;
+    constexpr _literal-rule_ auto bom;
 }
 ----
 
 [.lead]
-`bom` is a {{% token-rule %}} that matches the https://en.wikipedia.org/wiki/Byte_order_mark[byte order mark (BOM)] of the given {{% encoding %}} in the given {{% docref "lexy::encoding_endianness" %}}.
+`bom` is a {{% literal-rule %}} that matches the https://en.wikipedia.org/wiki/Byte_order_mark[byte order mark (BOM)] of the given {{% encoding %}} in the given {{% docref "lexy::encoding_endianness" %}}.
 
 It is equivalent to the {{% docref "lexy::dsl::lit_b" %}} rule given in the table above.
 If the combination of `Encoding` and `Endianness` is not listed, it succeeds without matching anything.
