@@ -4,12 +4,9 @@
 #ifndef LEXY_DSL_SYMBOL_HPP_INCLUDED
 #define LEXY_DSL_SYMBOL_HPP_INCLUDED
 
-#include <lexy/_detail/integer_sequence.hpp>
-#include <lexy/_detail/iterator.hpp>
-#include <lexy/_detail/nttp_string.hpp>
-#include <lexy/_detail/trie.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/literal.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -170,10 +167,10 @@ public:
     constexpr key_index try_parse(Reader& reader) const
     {
         static_assert(!empty(), "symbol table must not be empty");
-        constexpr auto& trie = _trie<typename Reader::encoding>::object;
+        using encoding = typename Reader::encoding;
 
-        auto result = _detail::trie_parser<trie>::parse(reader);
-        if (result == trie.invalid_value)
+        auto result = _detail::lit_trie_matcher<_trie<encoding>, 0>::try_match(reader);
+        if (result == _trie<encoding>.node_no_match)
             return key_index();
         else
             return key_index(result);
@@ -197,11 +194,21 @@ public:
     }
 
 private:
+    static constexpr auto _max_char_count = (0 + ... + Strings::size);
+
     template <typename Encoding>
-    struct _trie
+    static LEXY_CONSTEVAL auto _build_trie()
     {
-        static constexpr auto object = lexy::_detail::trie<Encoding, Strings...>;
-    };
+        lexy::_detail::lit_trie<Encoding, _max_char_count> result;
+
+        auto idx = 0u;
+        ((result.node_value[result.insert(0, Strings{})] = idx++), ...);
+
+        return result;
+    }
+    template <typename Encoding>
+    static constexpr lexy::_detail::lit_trie<Encoding, _max_char_count> _trie
+        = _build_trie<Encoding>();
 
     template <std::size_t... Idx, typename... Args>
     constexpr explicit _symbol_table(lexy::_detail::index_sequence<Idx...>, const T* data,
