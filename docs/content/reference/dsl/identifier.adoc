@@ -24,9 +24,9 @@ namespace lexy::dsl
     struct _identifier-dsl_ // models _branch-rule_
     {
         //=== modifiers ===//
-        constexpr _identifier-dsl_ reserve(_rule_ auto ... rules) const;
-        constexpr _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const;
-        constexpr _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const;
+        constexpr _identifier-dsl_ reserve(auto ... rules) const;
+        constexpr _identifier-dsl_ reserve_prefix(auto ... rules) const;
+        constexpr _identifier-dsl_ reserve_containing(auto ... rules) const;
 
         //=== sub-rules ===//
         constexpr _token-rule_ auto pattern() const;
@@ -83,16 +83,16 @@ TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref
 
 {{% interface %}}
 ----
-constexpr _identifier-dsl_ reserve(_rule_ auto ... rules) const; <1>
-constexpr _identifier-dsl_ reserve_prefix(_rule_ auto ... rules) const; <2>
-constexpr _identifier-dsl_ reserve_containing(_rule_ auto ... rules) const; <3>
+constexpr _identifier-dsl_ reserve(auto ... rules) const; <1>
+constexpr _identifier-dsl_ reserve_prefix(auto ... rules) const; <2>
+constexpr _identifier-dsl_ reserve_containing(auto ... rules) const; <3>
 ----
 
 [.lead]
 Reserves an identifier.
 
 Initially, no identifier is reserved.
-Identifiers are reserved by calling `.reserve()` or its variants.
+Identifiers are reserved by calling `.reserve()` or its variants passing it a {{% literal-rule %}} or {{% docref "lexy::dsl::literal_set" %}}.
 If this has happened, parsing the `identifier` rule creates a partial input from the lexeme and matches it against the specified rules as follows:
 
 * (1) `.reserve()`: All rules specified here are matched against the partial input.
@@ -107,8 +107,6 @@ If this has happened, parsing the `identifier` rule creates a partial input from
 CAUTION: The `identifier` rule doesn't magically learn about the keywords you have created.
 They are only reserved if you actually pass them to `.reserve()`.
 This design allows you to use a different set of reserved identifiers in different places in the grammar.
-
-NOTE: The common case of passing keywords or literals to `.reserve()` is optimized using a https://en.wikipedia.org/wiki/Trie[trie].
 
 === Token rule `.pattern()`
 

@@ -4,11 +4,7 @@
 #ifndef LEXY_DSL_IDENTIFIER_HPP_INCLUDED
 #define LEXY_DSL_IDENTIFIER_HPP_INCLUDED
 
-#include <lexy/_detail/nttp_string.hpp>
-#include <lexy/dsl/alternative.hpp>
-#include <lexy/dsl/any.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
@@ -29,6 +25,9 @@ struct reserved_identifier
 
 namespace lexyd
 {
+template <typename Id, typename CharT, CharT... C>
+struct _kw;
+
 template <typename Leading, typename Trailing>
 struct _idp : token_base<_idp<Leading, Trailing>>
 {
@@ -61,126 +60,51 @@ struct _idp : token_base<_idp<Leading, Trailing>>
     };
 };
 
-template <typename Token>
-struct _prefix : token_base<_prefix<Token>>
+template <typename Set>
+struct _idrp // reserve predicate
 {
-    template <typename Reader>
-    struct tp
+    template <typename Input>
+    static constexpr bool is_reserved(const Input& input)
     {
-        lexy::token_parser_for<Token, Reader> token;
-        typename Reader::iterator             end;
-
-        constexpr explicit tp(const Reader& reader) : token(reader), end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
+        auto reader = input.reader();
+        return lexy::try_match_token(Set{}, reader)
+               && reader.peek() == decltype(reader)::encoding::eof();
+    }
+};
+template <typename Set>
+struct _idpp // reserve prefix predicate
+{
+    template <typename Input>
+    static constexpr bool is_reserved(const Input& input)
+    {
+        auto reader = input.reader();
+        return lexy::try_match_token(Set{}, reader);
+    }
+};
+template <typename Set>
+struct _idcp // reserve contains predicate
+{
+    template <typename Input>
+    static constexpr bool is_reserved(const Input& input)
+    {
+        auto reader = input.reader();
+        while (true)
         {
-            // Match the token.
-            if (!token.try_parse(reader))
+            if (lexy::try_match_token(Set{}, reader))
+                return true;
+            else if (reader.peek() == decltype(reader)::encoding::eof())
                 return false;
-            reader.set_position(token.end);
-
-            // Consume the rest of the input.
-            lexy::try_match_token(lexy::dsl::any, reader);
-            end = reader.position();
-
-            return true;
+            else
+                reader.bump();
         }
 
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            // Only the token part can fail.
-            token.report_error(context, reader);
-        }
-    };
+        // unreachable
+    }
 };
 
-template <typename Token>
-struct _contains : token_base<_contains<Token>>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            while (true)
-            {
-                if (lexy::try_match_token(Token{}, reader))
-                {
-                    // We've found it.
-                    break;
-                }
-                else if (reader.peek() == Reader::encoding::eof())
-                {
-                    // Haven't found it.
-                    end = reader.position();
-                    return false;
-                }
-                else
-                {
-                    // Try again.
-                    reader.bump();
-                }
-            }
-
-            // Consume everything else.
-            lexy::try_match_token(lexy::dsl::any, reader);
-
-            end = reader.position();
-            return true;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, Reader reader)
-        {
-            // Trigger an error by parsing the token at the end of the input.
-            reader.set_position(end);
-
-            LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
-                        "forgot to set end in try_parse()");
-
-            lexy::token_parser_for<Token, Reader> parser(reader);
-            auto                                  result = parser.try_parse(reader);
-            LEXY_ASSERT(!result, "token shouldn't have matched?!");
-            parser.report_error(context, reader);
-        }
-    };
-};
-
-template <typename Id, typename CharT, CharT... C>
-struct _kw;
-
-template <typename Leading, typename Trailing, typename... Reserved>
+template <typename Leading, typename Trailing, typename... ReservedPredicate>
 struct _id : branch_base
 {
-    template <typename Reader>
-    constexpr static auto _is_reserved(const Reader& reader, typename Reader::iterator begin,
-                                       typename Reader::iterator end)
-    {
-        if constexpr (sizeof...(Reserved) == 0)
-        {
-            (void)reader;
-            (void)begin;
-            (void)end;
-
-            // No reserved patterns, never reserved.
-            return std::false_type{};
-        }
-        else
-        {
-            auto id_input  = lexy::partial_input(reader, begin, end);
-            auto id_reader = id_input.reader();
-            // Need to match any of the reserved tokens.
-            return lexy::try_match_token((Reserved{} / ...), id_reader)
-                   // And fully match it.
-                   && id_reader.position() == end;
-        }
-    }
-
     template <typename NextParser>
     struct p
     {
@@ -194,7 +118,8 @@ struct _id : branch_base
             auto end = reader.position();
 
             // Check for a reserved identifier.
-            if (_is_reserved(reader, begin, end))
+            [[maybe_unused]] auto input = lexy::partial_input(reader, begin, end);
+            if ((ReservedPredicate::is_reserved(input) || ...))
             {
                 // It is reserved, report an error but trivially recover.
                 auto err = lexy::error<Reader, lexy::reserved_identifier>(begin, end);
@@ -223,7 +148,8 @@ struct _id : branch_base
             end = parser.end;
 
             // We only succeed if it's not a reserved identifier.
-            return !_is_reserved(reader, reader.position(), end);
+            [[maybe_unused]] auto input = lexy::partial_input(reader, reader.position(), end);
+            return !(ReservedPredicate::is_reserved(input) || ...);
         }
 
         template <typename Context>
@@ -247,14 +173,15 @@ struct _id : branch_base
     template <typename R>
     constexpr auto _make_reserve(R r) const
     {
-        return lexyd::token(r);
+        static_assert(lexy::is_literal_rule<R> || lexy::is_literal_set_rule<R>);
+        return r;
     }
     template <typename Id, typename CharT, CharT... C>
     constexpr auto _make_reserve(_kw<Id, CharT, C...>) const
     {
         static_assert(std::is_same_v<decltype(Id{}.pattern()), decltype(pattern())>,
                       "must not reserve keywords from another identifier");
-        // We turn the keyword into a literal to be able to use a trie for matching.
+        // No need to remember that it was a keyword originally.
         return _lit<CharT, C...>{};
     }
 
@@ -264,21 +191,26 @@ struct _id : branch_base
     constexpr auto reserve(R... r) const
     {
         static_assert(sizeof...(R) > 0);
-        return _id<Leading, Trailing, Reserved..., decltype(_make_reserve(r))...>{};
+        auto set = (lexyd::literal_set() / ... / _make_reserve(r));
+        return _id<Leading, Trailing, ReservedPredicate..., _idrp<decltype(set)>>{};
     }
 
     /// Reserves everything starting with the given rule.
     template <typename... R>
     constexpr auto reserve_prefix(R... r) const
     {
-        return reserve(_prefix<decltype(_make_reserve(r))>{}...);
+        static_assert(sizeof...(R) > 0);
+        auto set = (lexyd::literal_set() / ... / _make_reserve(r));
+        return _id<Leading, Trailing, ReservedPredicate..., _idpp<decltype(set)>>{};
     }
 
     /// Reservers everything containing the given rule.
     template <typename... R>
     constexpr auto reserve_containing(R... r) const
     {
-        return reserve(_contains<decltype(_make_reserve(r))>{}...);
+        static_assert(sizeof...(R) > 0);
+        auto set = (lexyd::literal_set() / ... / _make_reserve(r));
+        return _id<Leading, Trailing, ReservedPredicate..., _idcp<decltype(set)>>{};
     }
 
     /// Matches every identifier, ignoring reserved ones.
