@@ -179,6 +179,17 @@ public:
             return key_index(result);
     }
 
+    template <typename Input>
+    constexpr key_index parse(const Input& input) const
+    {
+        auto reader = input.reader();
+        auto result = try_parse(reader);
+        if (reader.peek() == decltype(reader)::encoding::eof())
+            return result;
+        else
+            return key_index();
+    }
+
     constexpr const T& operator[](key_index idx) const noexcept
     {
         LEXY_PRECONDITION(idx);
@@ -246,12 +257,8 @@ struct _sym : branch_base
             end = parser.end;
 
             // Check whether this is a symbol.
-            auto content = lexy::partial_reader(reader, end);
-            symbol       = Table.try_parse(content);
-
-            // We need to consume everything.
-            if (content.position() != end)
-                return false;
+            auto content = lexy::partial_input(reader, end);
+            symbol       = Table.parse(content);
 
             // Only succeed if it is a symbol.
             return static_cast<bool>(symbol);
@@ -285,9 +292,9 @@ struct _sym : branch_base
                                                lexy::lexeme<Reader> lexeme)
             {
                 // Check whether the captured lexeme is a symbol.
-                auto content = lexy::partial_reader(reader, lexeme.begin(), lexeme.end());
-                auto symbol  = Table.try_parse(content);
-                if (!symbol || content.position() != lexeme.end())
+                auto content = lexy::partial_input(reader, lexeme.begin(), lexeme.end());
+                auto symbol  = Table.parse(content);
+                if (!symbol)
                 {
                     // Unknown symbol.
                     using tag = lexy::_detail::type_or<Tag, lexy::unknown_symbol>;

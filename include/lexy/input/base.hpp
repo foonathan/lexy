@@ -137,17 +137,30 @@ constexpr bool char_type_compatible_with_reader
       || Reader::encoding::template is_secondary_char_type<CharT>();
 
 template <typename Reader>
-constexpr auto partial_reader(const Reader&, typename Reader::iterator begin,
-                              typename Reader::iterator end)
+struct _partial_input
 {
-    return _range_reader<typename Reader::encoding>(begin, end);
+    Reader _reader;
+
+    constexpr explicit _partial_input(Reader r) : _reader(r) {}
+
+    constexpr Reader reader() const&
+    {
+        return _reader;
+    }
+};
+
+template <typename Reader>
+constexpr auto partial_input(const Reader&, typename Reader::iterator begin,
+                             typename Reader::iterator end)
+{
+    return _partial_input(_range_reader<typename Reader::encoding>(begin, end));
 }
 
-/// Creates a reader that only reads until the given end.
+/// Creates an input that only reads until the given end.
 template <typename Reader>
-constexpr auto partial_reader(const Reader& reader, typename Reader::iterator end)
+constexpr auto partial_input(const Reader& reader, typename Reader::iterator end)
 {
-    return partial_reader(reader, reader.position(), end);
+    return partial_input(reader, reader.position(), end);
 }
 } // namespace lexy
 

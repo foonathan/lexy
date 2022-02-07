@@ -50,6 +50,8 @@ The `symbol` rule.
 
         template <typename Reader>
         constexpr key_index try_parse(Reader& reader) const;
+        template <_input_ Input>
+        constexpr key_index parse(const Input& input) const;
 
         constexpr const T& operator[](key_index idx) const noexcept;
     };
@@ -137,10 +139,25 @@ constexpr key_index try_parse(Reader& reader) const;
 ----
 
 [.lead]
-Matches one of the strings in the table.
+Matches one of the strings in the table using a reader.
 
 If `reader` begins with one of the strings in the table, consumes them and returns a `key_index` to that entry.
 Otherwise, returns an invalid key index and consumes nothing.
+
+{{% interface %}}
+----
+template <_input_ Input>
+constexpr key_index parse(const Input& input) const;
+----
+
+[.lead]
+Matches one of the strings in the table against the input.
+
+If `input` is one of the strings, returns a `key_index` to that entry.
+Otherwise, returns an invalid key index.
+
+If `input` only begins with one of the strings but then is followed by other characters,
+it does not match.
 
 {{% interface %}}
 ----

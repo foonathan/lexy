@@ -6,12 +6,13 @@
 #include <doctest/doctest.h>
 #include <lexy/input/string_input.hpp>
 
-TEST_CASE("partial_reader()")
+TEST_CASE("partial_input()")
 {
     auto input = lexy::zstring_input("abc");
     auto end   = input.data() + 2;
 
-    auto partial = lexy::partial_reader(input.reader(), end);
+    auto partial_input = lexy::partial_input(input.reader(), end);
+    auto partial       = partial_input.reader();
     CHECK(partial.position() == input.data());
     CHECK(partial.peek() == 'a');
 

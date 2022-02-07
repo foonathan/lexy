@@ -172,7 +172,8 @@ struct _id : branch_base
         }
         else
         {
-            auto id_reader = lexy::partial_reader(reader, begin, end);
+            auto id_input  = lexy::partial_input(reader, begin, end);
+            auto id_reader = id_input.reader();
             // Need to match any of the reserved tokens.
             return lexy::try_match_token((Reserved{} / ...), id_reader)
                    // And fully match it.
