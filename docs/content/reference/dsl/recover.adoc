@@ -77,27 +77,29 @@ namespace lexy::dsl
 {
     struct _find-dsl_ // models _rule_
     {
-        _rule_ auto limit(_token-rule_ auto ... limits);
+        _rule_ auto limit(auto ... limits);
     };
 
-    constexpr _find-dsl_ find(_token-rule_ auto ... tokens);
+    constexpr _find-dsl_ find(auto ... literals);
 }
 ----
 
 [.lead]
 `find` is a recovery rule that skips input until a synchronization {{% token-rule %}} is reached.
 
+Requires::
+  `literals` and `limits` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
 Parsing::
-  Tries to match any of the `tokens` anywhere in the remaining input;
-  consumes everything until but not including the first of `tokens`.
-  Fails if EOF is reached first or one of `limits` matches,
-  if they were specified.
+  Tries to match {{% docref "lexy::dsl::lookahead" %}}`(literal_set, limit_set)`,
+  where `literals` and `limits` have been collected into a single literal set.
+  If that was successful, consumes everything until the beginning of the found literal and succeeds.
+  Otherwise, fails after consuming everything until the beginning of the found limit (or EOF).
 Errors::
   None. It can fail, but does so without raising errors.
 Values::
   None.
 Parse tree::
-  A single token node whose range covers everything consumed before the token.
+  A single token node whose range covers everything consumed before the token that was found.
   Its {{% docref "lexy::predefined_token_kind" %}} is `lexy::error_token_kind`.
 
 If recovery is successful, the reader has been advanced to the position just before the first of the `tokens`.
@@ -115,7 +117,7 @@ namespace lexy::dsl
 {
     struct _recover-dsl_ // models _rule_
     {
-        _rule_ auto limit(_token-rule_ auto ... limits);
+        _rule_ auto limit(auto ... limits);
     };
 
     constexpr _recover-dsl_ find(_branch-rule_ auto ... branches);
@@ -125,6 +127,8 @@ namespace lexy::dsl
 [.lead]
 `recover` is a recovery rule that skip input until a follow-up {{% branch-rule %}} can be parsed.
 
+Requires::
+  `limits` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
 Parsing::
   Tries to parse any of `branches` anywhere in the remaining input;
   consumes everything before the selected branch and then the branch itself.

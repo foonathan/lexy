@@ -7,7 +7,8 @@
 #include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
-#include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/literal.hpp>
+#include <lexy/dsl/lookahead.hpp>
 
 namespace lexyd
 {
@@ -62,23 +63,30 @@ struct _find : _recovery_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            // Note that we can't use lookahead() directly as it's end position includes Needle/End,
+            // here we want to exclude it, however.
+            constexpr const auto& trie
+                = _look_trie<typename Reader::encoding, Token, decltype(get_limit())>;
+            using matcher = lexy::_detail::lit_trie_matcher<trie, 0>;
+
             auto begin = reader.position();
             context.on(_ev::recovery_start{}, begin);
-
             while (true)
             {
-                if (lexy::token_parser_for<Token, Reader> token(reader); token.try_parse(reader))
+                auto end    = reader.position(); // *before* we've consumed Token/Limit
+                auto result = matcher::try_match(reader);
+                if (result == 0)
                 {
-                    // We've found it.
-                    break;
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+                    context.on(_ev::recovery_finish{}, end);
+                    reader.set_position(end); // reset to before the token
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 }
-                else if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
-                         limit.try_parse(reader))
+                else if (result == 1 || reader.peek() == Reader::encoding::eof())
                 {
-                    // Haven't found it, recovery fails.
-                    auto end = reader.position();
                     context.on(_ev::token{}, lexy::error_token_kind, begin, end);
                     context.on(_ev::recovery_cancel{}, end);
+                    reader.set_position(end); // reset to before the limit
                     return false;
                 }
                 else
@@ -88,43 +96,37 @@ struct _find : _recovery_base
                 }
             }
 
-            auto end = reader.position();
-            context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-            context.on(_ev::recovery_finish{}, end);
-
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            // unreachable
         }
     };
 
     //=== dsl ===//
-    /// Fail error recovery if limiting token is found first.
-    template <typename... Tokens>
-    constexpr auto limit(Tokens... tokens) const
+    /// Fail error recovery if limiting literal tokens is found first.
+    template <typename... Literals>
+    constexpr auto limit(Literals... literals) const
     {
-        static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
+        static_assert(sizeof...(Literals) > 0);
 
-        auto l = (get_limit() / ... / tokens);
+        auto l = (get_limit() / ... / literals);
         return _find<Token, decltype(l)>{};
     }
 
     static constexpr auto get_limit()
     {
         if constexpr (std::is_void_v<Limit>)
-            return eof;
+            return literal_set();
         else
             return Limit{};
     }
 };
 
-/// Recovers once it finds one of the given tokens (without consuming them).
-template <typename... Tokens>
-constexpr auto find(Tokens... tokens)
+/// Recovers once it finds one of the given literal tokens (without consuming them).
+template <typename... Literals>
+constexpr auto find(Literals... literals)
 {
-    static_assert(sizeof...(Tokens) > 0);
-    static_assert((lexy::is_token_rule<Tokens> && ...));
+    static_assert(sizeof...(Literals) > 0);
 
-    auto needle = (tokens / ...);
+    auto needle = (literal_set() / ... / literals);
     return _find<decltype(needle), void>{};
 }
 } // namespace lexyd
@@ -150,7 +152,7 @@ struct _reco : _recovery_base
                 recovery.cancel(context);
 
                 if (lexy::token_parser_for<decltype(get_limit()), Reader> limit(reader);
-                    limit.try_parse(reader))
+                    limit.try_parse(reader) || reader.peek() == Reader::encoding::eof())
                 {
                     // We've failed to recover as we've reached the limit.
                     auto end = reader.position();
@@ -175,21 +177,20 @@ struct _reco : _recovery_base
     };
 
     //=== dsl ===//
-    /// Fail error recovery if Token is found before any of R.
-    template <typename... Tokens>
-    constexpr auto limit(Tokens... tokens) const
+    /// Fail error recovery if limiting literal tokens is found first.
+    template <typename... Literals>
+    constexpr auto limit(Literals... literals) const
     {
-        static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
+        static_assert(sizeof...(Literals) > 0);
 
-        auto l = (get_limit() / ... / tokens);
+        auto l = (get_limit() / ... / literals);
         return _reco<decltype(l), R...>{};
     }
 
     static constexpr auto get_limit()
     {
         if constexpr (std::is_void_v<Limit>)
-            return eof;
+            return literal_set();
         else
             return Limit{};
     }

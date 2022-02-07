@@ -382,8 +382,9 @@ struct _lstt : rule_base
 
                     // At this point, we couldn't detect the next item or a terminator.
                     // Recovery fails when we reach the limit.
-                    lexy::branch_parser_for<decltype(Recover{}.get_limit()), Reader> limit{};
-                    if (limit.try_parse(context.control_block, reader))
+                    using limit_rule = decltype(Recover{}.get_limit());
+                    if (lexy::token_parser_for<limit_rule, Reader> limit(reader);
+                        limit.try_parse(reader) || reader.peek() == Reader::encoding::eof())
                     {
                         // Recovery has failed, propagate error.
                         auto recovery_end = reader.position();
@@ -391,10 +392,6 @@ struct _lstt : rule_base
                                    recovery_end);
                         context.on(_ev::recovery_cancel{}, recovery_end);
                         return false;
-                    }
-                    else
-                    {
-                        limit.cancel(context);
                     }
 
                     // Consume one code unit and try again.

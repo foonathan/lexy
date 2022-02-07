@@ -6,8 +6,8 @@ Until the first release is done, breaking changes -- but not new features -- are
 == 2022-02-08
 
 * Require a char class rule in `.limit()` of `dsl::delimited()`: instead of `dsl::eol` or `dsl::newline`, use `dsl::ascii::newline`.
+* Require literal rules in `dsl::lookahead()`, `dsl::find()`, and `.limit()` of error recovery rules.
 * Require literal rules in `.reserve()` and variants of `dsl::identifier`.
-* Require literal rules in `dsl::lookahead()`.
 * `dsl::bom` now generates a `lexy::expected_literal` error instead of `lexy::expected_char_class`.
 
 == 2022-01-30

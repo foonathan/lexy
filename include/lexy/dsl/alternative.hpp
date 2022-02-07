@@ -182,7 +182,7 @@ struct _alt : token_base<_alt<Tokens...>>
 
 // The generic operator/ overload is in char_class.hpp.
 
-template <typename... R, typename S>
+template <typename... R, typename S, typename = std::enable_if_t<!lexy::is_literal_set_rule<S>>>
 constexpr auto operator/(_alt<R...>, S)
 {
     static_assert(lexy::is_token_rule<S>);
@@ -192,7 +192,7 @@ constexpr auto operator/(_alt<R...>, S)
     else
         return _alt<R..., S>{};
 }
-template <typename R, typename... S>
+template <typename R, typename... S, typename = std::enable_if_t<!lexy::is_literal_set_rule<R>>>
 constexpr auto operator/(R, _alt<S...>)
 {
     static_assert(lexy::is_token_rule<R>);

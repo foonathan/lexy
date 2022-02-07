@@ -26,7 +26,7 @@ namespace lexy::dsl
 
         constexpr _terminator-dsl_ as_terminator() const;
 
-        constexpr _brackets-dsl_   limit(_token-rule_ auto ... tokens);
+        constexpr _brackets-dsl_   limit(auto ... limit);
         constexpr _rule_ auto      recovery_rule() const;
 
         //=== rules ===//
@@ -76,7 +76,7 @@ constexpr _branch-rule_ auto close() const; <2>
 ----
 constexpr _terminator-dsl_ as_terminator() const;             <1>
 
-constexpr _brackets-dsl_   limit(_token-rule_ auto ... tokens); <2>
+constexpr _brackets-dsl_   limit(auto ... limit); <2>
 constexpr _rule_ auto      recovery_rule() const;             <3>
 ----
 <1> Returns the corresponding `terminator`.

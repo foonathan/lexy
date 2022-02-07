@@ -10,16 +10,17 @@
 
 namespace lexyd
 {
-template <typename Open, typename Close, typename... RecoveryLimit>
+template <typename Open, typename Close, typename RecoveryLimit = void>
 struct _brackets
 {
-    /// Adds the tokens to the recovery limit.
-    template <typename... Tokens>
-    constexpr auto limit(Tokens...) const
+    /// Adds the literal tokens to the recovery limit.
+    template <typename... Literals>
+    constexpr auto limit(Literals... literals) const
     {
-        static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
-        return _brackets<Open, Close, RecoveryLimit..., Tokens...>{};
+        static_assert(sizeof...(Literals) > 0);
+
+        auto l = (recovery_rule().get_limit() / ... / literals);
+        return _brackets<Open, Close, decltype(l)>{};
     }
 
     //=== rules ===//
@@ -86,7 +87,7 @@ struct _brackets
     /// Returns an equivalent terminator.
     constexpr auto as_terminator() const
     {
-        return _term<Close, RecoveryLimit...>{};
+        return _term<Close, RecoveryLimit>{};
     }
 
     constexpr auto recovery_rule() const

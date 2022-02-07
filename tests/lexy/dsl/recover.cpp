@@ -13,7 +13,8 @@ TEST_CASE("dsl::find()")
 {
     constexpr auto rule = dsl::find(LEXY_LIT("!"), LEXY_LIT("."), LEXY_LIT(";"));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(equivalent_rules(rule, dsl::find(LEXY_LIT("!") / LEXY_LIT(".") / LEXY_LIT(";"))));
+    CHECK(equivalent_rules(rule, dsl::find(dsl::literal_set(LEXY_LIT("!"), LEXY_LIT("."),
+                                                            LEXY_LIT(";")))));
 
     constexpr auto callback = token_callback;
 
@@ -49,7 +50,7 @@ TEST_CASE("dsl::find().limit()")
     constexpr auto rule
         = dsl::find(LEXY_LIT("!"), LEXY_LIT(".")).limit(LEXY_LIT(";"), LEXY_LIT(","));
     CHECK(lexy::is_rule<decltype(rule)>);
-    CHECK(equivalent_rules(rule, dsl::find(LEXY_LIT("!") / LEXY_LIT("."))
+    CHECK(equivalent_rules(rule, dsl::find(dsl::literal_set(LEXY_LIT("!"), LEXY_LIT(".")))
                                      .limit(LEXY_LIT(";"), LEXY_LIT(","))));
 
     constexpr auto callback = token_callback;

@@ -1500,12 +1500,12 @@ Simply make every dot and number "optional" as shown here:
 [source,cpp]
 ----
 auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt); <1>
-auto dot         = dsl::try_(dsl::period, dsl::find(dsl::digit<>));           <2>
+auto dot         = dsl::try_(dsl::period);                                    <2>
 auto dot_version = dsl::times<3>(number, dsl::sep(dot))
                            + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 ----
 <1> If we don't have an integer, produce `lexy::nullopt` instead.
-<2> If we don't have a dot, discard input until we find a digit, which is not consumed.
+<2> If we don't have a dot, this isn't an issue.
 
 Now if we try to parse something like `1..`, we will create two errors for the missing minor and patch version, but parsing recovers.
 The rule will then produce three values: the major version `1` and two `lexy::nullopt` objects for minor and patch version.

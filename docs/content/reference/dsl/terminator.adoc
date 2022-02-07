@@ -15,7 +15,7 @@ namespace lexy::dsl
     {
         constexpr _branch-rule_ auto terminator() const;
 
-        constexpr _terminator-dsl_ limit(_token-rule_ auto ... tokens);
+        constexpr _terminator-dsl_ limit(auto ... limit);
         constexpr _rule_ auto      recovery_rule() const;
 
         //=== rules ===//
@@ -60,14 +60,14 @@ constexpr _branch-rule_ auto terminator() const;
 
 {{% interface %}}
 ----
-constexpr _terminator-dsl_ limit(_token-rule_ auto ... tokens);
+constexpr _terminator-dsl_ limit(auto ... limit);
 ----
 
 [.lead]
 Provide a limit for error recovery.
 
 `terminator` can also do error recovery after an error by discarding input until the terminator is reached.
-Similar to {{% docref "lexy::dsl::find" %}} or {{% docref "lexy::dsl::recover" %}} one can provide a limit, which is a {{% token-rule %}} or combination of token rules.
+Similar to {{% docref "lexy::dsl::find" %}} or {{% docref "lexy::dsl::recover" %}} one can provide a limit, which is a {{% literal-rule %}} or {{% docref "lexy::dsl::literal_set" %}}.
 If the limit is reached before the terminator, error recovery fails.
 
 {{% playground-example terminator_recovery "Recover while parsing a list of statements" %}}

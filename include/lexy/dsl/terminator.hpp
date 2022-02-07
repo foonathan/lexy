@@ -20,16 +20,17 @@ struct _lstt;
 template <typename Terminator, typename R, typename Sep, typename Recover>
 struct _olstt;
 
-template <typename Terminator, typename... RecoveryLimit>
+template <typename Terminator, typename RecoveryLimit = void>
 struct _term
 {
-    /// Adds the tokens to the recovery limit.
-    template <typename... Tokens>
-    constexpr auto limit(Tokens...) const
+    /// Adds the literal tokens to the recovery limit.
+    template <typename... Literals>
+    constexpr auto limit(Literals... literals) const
     {
-        static_assert(sizeof...(Tokens) > 0);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
-        return _term<Terminator, RecoveryLimit..., Tokens...>{};
+        static_assert(sizeof...(Literals) > 0);
+
+        auto l = (recovery_rule().get_limit() / ... / literals);
+        return _term<Terminator, decltype(l)>{};
     }
 
     //=== rules ===//
@@ -93,10 +94,10 @@ struct _term
     /// Matches the recovery rule alone.
     constexpr auto recovery_rule() const
     {
-        if constexpr (sizeof...(RecoveryLimit) == 0)
+        if constexpr (std::is_void_v<RecoveryLimit>)
             return recover(terminator());
         else
-            return recover(terminator()).limit(RecoveryLimit{}...);
+            return recover(terminator()).limit(RecoveryLimit{});
     }
 };
 
