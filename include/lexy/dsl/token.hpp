@@ -129,7 +129,7 @@ struct _tokk : token_base<_tokk<Kind, Token>, Token>
 {};
 
 template <typename Tag, typename Token>
-struct _toke : token_base<_toke<Tag, Token>>
+struct _toke : token_base<_toke<Tag, Token>, Token>
 {
     template <typename Reader>
     struct tp : lexy::token_parser_for<Token, Reader>
