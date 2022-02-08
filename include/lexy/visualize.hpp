@@ -79,7 +79,7 @@ struct visualization_options
 namespace lexy::_detail
 {
 template <typename Encoding>
-constexpr auto make_literal_lexeme(const typename Encoding::char_type* str)
+constexpr auto make_literal_lexeme(const typename Encoding::char_type* str, std::size_t length)
 {
     struct reader
     {
@@ -87,11 +87,7 @@ constexpr auto make_literal_lexeme(const typename Encoding::char_type* str)
         using iterator = const typename Encoding::char_type*;
     };
 
-    auto end = str;
-    while (*end)
-        ++end;
-
-    return lexy::lexeme<reader>(str, end);
+    return lexy::lexeme<reader>(str, str + length);
 }
 
 template <typename OutIt>

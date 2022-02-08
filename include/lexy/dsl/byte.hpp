@@ -75,7 +75,7 @@ struct _pb : branch_base
         {
             if (*iter != Padding)
             {
-                auto err = lexy::error<Reader, lexy::expected_literal>(iter, str, 0);
+                auto err = lexy::error<Reader, lexy::expected_literal>(iter, str, 0, 1);
                 context.on(_ev::error{}, err);
             }
         }

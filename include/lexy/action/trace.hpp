@@ -140,7 +140,8 @@ public:
 
         if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
         {
-            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                  error.length());
 
             _out = _detail::write_str(_out, "expected '");
             _out = visualize_to(_out, string, _opts);
@@ -148,7 +149,8 @@ public:
         }
         else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
         {
-            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+            auto string = _detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                  error.length());
 
             _out = _detail::write_str(_out, "expected keyword '");
             _out = visualize_to(_out, string, _opts);

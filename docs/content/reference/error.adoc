@@ -101,12 +101,14 @@ class error<Reader, expected_literal>
 
 public:
     constexpr explicit error(_iterator_ pos,
-                             const _char_type_* string, std::size_t index) noexcept;
+                             const _char_type_* string,
+                             std::size_t index, std::size_t length) noexcept;
 
     constexpr _iterator_ position() const noexcept;
 
     constexpr const _char_type_* string() const noexcept;
     constexpr std::size_t index() const noexcept;
+    constexpr std::size_t length() const noexcept;
 
     constexpr _char_type_ character() const noexcept
     {
@@ -118,7 +120,7 @@ public:
 [.lead]
 An error where a given literal string was expected.
 
-The error can be raised while trying to parse `string()` beginning at `position()`;
+The error can be raised while trying to parse `string()` with `length()` beginning at `position()`;
 the code unit at `std::next(position(), index())` did not match `character()`.
 If the remaining input contained fewer code units than `string()`, `index()` indicates the first code unit that was missing.
 
@@ -141,7 +143,7 @@ class error<Reader, expected_keyword>
 
 public:
     constexpr explicit error(_iterator_ begin, _iterator_ end,
-                             const _char_type_* string) noexcept;
+                             const _char_type_* string, std::size_t length) noexcept;
 
     constexpr _iterator_ position() const noexcept;
 
@@ -149,13 +151,14 @@ public:
     constexpr _iterator_ end() const noexcept;
 
     constexpr const _char_type_* string() const noexcept;
+    constexpr std::size_t length() const noexcept;
 };
 ----
 
 [.lead]
 An error where a given keyword was expected.
 
-The error can be raised while trying to parse the keyword `string()` against the identifier `[begin(), end())`,
+The error can be raised while trying to parse the keyword `string()` with `length()` against the identifier `[begin(), end())`,
 but it was a different identifier.
 The `position()` is also `begin()`.
 

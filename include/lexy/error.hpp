@@ -53,9 +53,9 @@ class error<Reader, expected_literal>
 {
 public:
     constexpr explicit error(typename Reader::iterator                   pos,
-                             const typename Reader::encoding::char_type* str,
-                             std::size_t                                 index) noexcept
-    : _pos(pos), _str(str), _idx(index)
+                             const typename Reader::encoding::char_type* str, std::size_t index,
+                             std::size_t length) noexcept
+    : _pos(pos), _str(str), _idx(index), _length(length)
     {}
 
     constexpr auto position() const noexcept
@@ -73,6 +73,11 @@ public:
         return _idx;
     }
 
+    constexpr std::size_t length() const noexcept
+    {
+        return _length;
+    }
+
     constexpr auto character() const noexcept
     {
         return _str[_idx];
@@ -81,7 +86,7 @@ public:
 private:
     typename Reader::iterator                   _pos;
     const typename Reader::encoding::char_type* _str;
-    std::size_t                                 _idx;
+    std::size_t                                 _idx, _length;
 };
 
 /// Expected the given keyword.
@@ -93,8 +98,8 @@ class error<Reader, expected_keyword>
 {
 public:
     constexpr explicit error(typename Reader::iterator begin, typename Reader::iterator end,
-                             const typename Reader::encoding::char_type* str)
-    : _begin(begin), _end(end), _str(str)
+                             const typename Reader::encoding::char_type* str, std::size_t length)
+    : _begin(begin), _end(end), _str(str), _length(length)
     {}
 
     constexpr auto position() const noexcept
@@ -116,10 +121,16 @@ public:
         return _str;
     }
 
+    constexpr std::size_t length() const noexcept
+    {
+        return _length;
+    }
+
 private:
     typename Reader::iterator                   _begin;
     typename Reader::iterator                   _end;
     const typename Reader::encoding::char_type* _str;
+    std::size_t                                 _length;
 };
 
 /// Expected a character of the specified character class.

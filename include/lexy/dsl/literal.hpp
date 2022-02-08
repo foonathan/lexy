@@ -53,7 +53,7 @@ struct _lit
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, this->end);
-            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index);
+            auto err = lexy::error<Reader, lexy::expected_literal>(begin, str, index, sizeof...(C));
             context.on(_ev::error{}, err);
         }
     };
@@ -147,8 +147,9 @@ struct _lcp : token_base<_lcp<Cp>>
             constexpr auto str = _string<encoding>::template c_str<>;
 
             auto begin = reader.position();
-            auto index = lexy::_detail::range_size(begin, this->end);
-            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index);
+            auto index = lexy::_detail::range_size(begin, end);
+            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index,
+                                                                   _string<encoding>::size);
             context.on(_ev::error{}, err);
         }
     };

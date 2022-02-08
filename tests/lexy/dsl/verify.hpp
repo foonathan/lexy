@@ -205,7 +205,7 @@ public:
 
         return *this;
     }
-    test_trace& expected_literal(std::size_t pos, const char* literal, std::size_t index)
+    test_trace& expected_literal(std::size_t pos, const doctest::String& literal, std::size_t index)
     {
         prefix();
 
@@ -221,6 +221,11 @@ public:
         _trace += "\n";
 
         return *this;
+    }
+    template <std::size_t N>
+    test_trace& expected_literal(std::size_t pos, const char (&literal)[N], std::size_t index)
+    {
+        return expected_literal(pos, doctest::String(literal, N - 1), index);
     }
     test_trace& expected_keyword(std::size_t begin, std::size_t end, const char* keyword)
     {
@@ -388,8 +393,9 @@ public:
         {
             auto pos = lexy::_detail::range_size(handler._begin, error.position());
             auto string
-                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
-            handler._trace.expected_literal(pos, doctest::toString(string).c_str(), error.index());
+                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                error.length());
+            handler._trace.expected_literal(pos, doctest::toString(string), error.index());
 
             handler._had_error = true;
         }
@@ -400,7 +406,8 @@ public:
             auto begin = lexy::_detail::range_size(handler._begin, error.begin());
             auto end   = lexy::_detail::range_size(handler._begin, error.end());
             auto string
-                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+                = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                error.length());
             handler._trace.expected_keyword(begin, end, doctest::toString(string).c_str());
 
             handler._had_error = true;

@@ -360,7 +360,7 @@ struct _kw : token_base<_kw<Id, CharT, C...>>
             lexy::try_match_token(Id{}.pattern(), reader);
             auto end = reader.position();
 
-            auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, str);
+            auto err = lexy::error<Reader, lexy::expected_keyword>(begin, end, str, sizeof...(C));
             context.on(_ev::error{}, err);
         }
     };

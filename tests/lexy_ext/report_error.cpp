@@ -55,7 +55,7 @@ TEST_CASE("_detail::write_error")
         }
         SUBCASE("expected literal, first character")
         {
-            lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 0);
+            lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 0, 3);
             CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello world
@@ -64,7 +64,7 @@ TEST_CASE("_detail::write_error")
         }
         SUBCASE("expected literal, other characters")
         {
-            lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 1);
+            lexy::string_error<lexy::expected_literal> error(input.data() + 2, "abc", 1, 3);
             CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello world
@@ -74,7 +74,7 @@ TEST_CASE("_detail::write_error")
         SUBCASE("expected keyword")
         {
             lexy::string_error<lexy::expected_keyword> error(input.data() + 2, input.data() + 7,
-                                                             "abc");
+                                                             "abc", 3);
             CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello world
@@ -152,7 +152,7 @@ TEST_CASE("_detail::write_error")
         auto       input = lexy::string_input(str, sizeof(str));
 
         auto context = lexy::error_context(production{}, input, input.data());
-        lexy::string_error<lexy::expected_literal> error(input.data() + 5, "abc", 0);
+        lexy::string_error<lexy::expected_literal> error(input.data() + 5, "abc", 0, 3);
         CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello
@@ -165,7 +165,7 @@ TEST_CASE("_detail::write_error")
         auto       input = lexy::string_input(str, sizeof(str));
 
         auto context = lexy::error_context(production{}, input, input.data());
-        lexy::string_error<lexy::expected_literal> error(input.data() + 4, "abc", 1);
+        lexy::string_error<lexy::expected_literal> error(input.data() + 4, "abc", 1, 3);
         CHECK(write(context, error) == R"*(error: while parsing production
      |
    1 | hello

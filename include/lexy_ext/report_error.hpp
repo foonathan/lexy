@@ -178,7 +178,8 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     // Write the main annotation.
     if constexpr (std::is_same_v<Tag, lexy::expected_literal>)
     {
-        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                    error.length());
 
         out = writer.write_annotation(out, annotation_kind::primary, location, error.index() + 1,
                                       [&](OutputIt out, lexy::visualization_options opts) {
@@ -190,7 +191,8 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
     }
     else if constexpr (std::is_same_v<Tag, lexy::expected_keyword>)
     {
-        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string());
+        auto string = lexy::_detail::make_literal_lexeme<typename Reader::encoding>(error.string(),
+                                                                                    error.length());
 
         out = writer.write_annotation(out, annotation_kind::primary, location, error.end(),
                                       [&](OutputIt out, lexy::visualization_options opts) {
