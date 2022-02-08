@@ -33,9 +33,9 @@ namespace lexy::dsl
         constexpr _branch-rule_ auto open() const;
         constexpr _branch-rule_ auto close() const;
 
-        constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+        constexpr _delimited-dsl_ limit(_char-class-rule_ limit);
         template <typename ErrorTag>
-        constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+        constexpr _delimited-dsl_ limit(_char-class-rule_ limit);
 
         //=== rules ===//
         constexpr _rule_ auto operator()(_char-class-rule_ c) const;
@@ -79,10 +79,10 @@ constexpr _branch-rule_ auto close() const;
 
 {{% interface %}}
 ----
-constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+constexpr _delimited-dsl_ limit(_char-class-rule_ limit);
 
 template <typename ErrorTag>
-constexpr _delimited-dsl_ limit(_token-rule_ auto ... tokens);
+constexpr _delimited-dsl_ limit(_char-class-rule_ limit);
 ----
 
 [.lead]
@@ -90,7 +90,7 @@ Provide a limit to detect a missing closing delimiter.
 
 `delimited` only stops parsing once it matches `close`;
 if `close` is missing in the input it will consume the entire input.
-By specifying a limit, which is a (or an alternative of) {{% token-rule %}}(s),
+By specifying a limit, which is a {{% char-class-rule %}},
 it fails once it matches one of them before the closing delimiter.
 
 The second overload also specifies an `ErrorTag`, which is used instead of `lexy::missing_delimiter`.

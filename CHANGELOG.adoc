@@ -5,7 +5,8 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2022-02-08
 
-`dsl::bom` now generates a `lexy::expected_literal` error instead of `lexy::expected_char_class`.
+* Require a char class rule in `.limit()` of `dsl::delimited()`: instead of `dsl::eol` or `dsl::newline`, use `dsl::ascii::newline`.
+* `dsl::bom` now generates a `lexy::expected_literal` error instead of `lexy::expected_char_class`.
 
 == 2022-01-30
 

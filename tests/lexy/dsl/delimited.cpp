@@ -274,8 +274,7 @@ TEST_CASE("dsl::delimited(open, close)")
     }
     SUBCASE(".limit()")
     {
-        constexpr auto rule
-            = delimited.limit(dsl::lit_c<'\n'>, dsl::lit_c<'!'>)(dsl::ascii::character);
+        constexpr auto rule = delimited.limit(LEXY_ASCII_ONE_OF("\n!"))(dsl::ascii::character);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");
@@ -341,8 +340,7 @@ TEST_CASE("dsl::delimited(open, close)")
             }
         };
 
-        constexpr auto rule
-            = delimited.limit<tag>(dsl::lit_c<'\n'>, dsl::lit_c<'!'>)(dsl::ascii::character);
+        constexpr auto rule = delimited.limit<tag>(LEXY_ASCII_ONE_OF("\n!"))(dsl::ascii::character);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");

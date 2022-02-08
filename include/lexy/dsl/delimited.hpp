@@ -4,15 +4,12 @@
 #ifndef LEXY_DSL_DELIMITED_HPP_INCLUDED
 #define LEXY_DSL_DELIMITED_HPP_INCLUDED
 
-#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/char_class.hpp>
-#include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/symbol.hpp>
 #include <lexy/dsl/whitespace.hpp>
-#include <lexy/lexeme.hpp>
 
 namespace lexy
 {
@@ -103,18 +100,35 @@ struct _del_chars
     }
 };
 
-template <typename Token, typename Error>
-struct _del_limit : Token
+template <typename Token, typename Error = lexy::missing_delimiter>
+struct _del_limit
 {
-    using missing_delimiter_error = Error;
-};
+    using error = Error;
 
-template <typename Limit>
-using _detect_delimiter_error = typename Limit::missing_delimiter_error;
+    template <typename Reader>
+    static constexpr bool peek(Reader reader)
+    {
+        return lexy::try_match_token(Token{}, reader) || reader.peek() == Reader::encoding::eof();
+    }
+};
+template <typename Error>
+struct _del_limit<void, Error>
+{
+    using error = Error;
+
+    template <typename Reader>
+    static constexpr bool peek(Reader reader)
+    {
+        return reader.peek() == Reader::encoding::eof();
+    }
+};
 
 template <typename Close, typename Char, typename Limit, typename... Escapes>
 struct _del : rule_base
 {
+    using _limit = std::conditional_t<std::is_void_v<Limit> || lexy::is_token_rule<Limit>,
+                                      _del_limit<Limit>, Limit>;
+
     template <typename CloseParser, typename Context, typename Reader, typename Sink>
     static constexpr bool _loop(CloseParser& close, Context& context, Reader& reader, Sink& sink)
     {
@@ -125,22 +139,15 @@ struct _del : rule_base
             close.cancel(context);
 
             // Check for missing delimiter.
-            if (lexy::branch_parser_for<lexy::_detail::type_or<Limit, _eof>, Reader> limit{};
-                limit.try_parse(context.control_block, reader))
+            if (_limit::peek(reader))
             {
                 // We're done, so finish the current characters.
                 auto end = reader.position();
                 cur_chars.finish(context, sink, end);
 
-                using tag = lexy::_detail::detected_or<lexy::missing_delimiter,
-                                                       _detect_delimiter_error, Limit>;
-                auto err  = lexy::error<Reader, tag>(del_begin, end);
+                auto err = lexy::error<Reader, typename _limit::error>(del_begin, end);
                 context.on(_ev::error{}, err);
                 return false;
-            }
-            else
-            {
-                limit.cancel(context);
             }
 
             // Check for escape sequences.
@@ -191,23 +198,20 @@ struct _escape_base
 template <typename Open, typename Close, typename Limit = void>
 struct _delim_dsl
 {
-    /// Add tokens that will limit the delimited to detect a missing terminator.
-    template <typename... Tokens>
-    constexpr auto limit(Tokens...) const
+    /// Add literal tokens that will limit the delimited to detect a missing terminator.
+    template <typename LimitCharClass>
+    constexpr auto limit(LimitCharClass) const
     {
-        static_assert(std::is_void_v<Limit>);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
-        return _delim_dsl<Open, Close, decltype((lexy::dsl::eof / ... / Tokens{}))>{};
-    }
+        static_assert(std::is_void_v<Limit> && lexy::is_char_class_rule<LimitCharClass>);
 
-    /// Add tokens that will limit the delimited and specify the error.
-    template <typename Error, typename... Tokens>
-    constexpr auto limit(Tokens...) const
+        return _delim_dsl<Open, Close, LimitCharClass>{};
+    }
+    /// Add literal tokens that will limit the delimited and specify the error.
+    template <typename Error, typename LimitCharClass>
+    constexpr auto limit(LimitCharClass) const
     {
-        static_assert(std::is_void_v<Limit>);
-        static_assert((lexy::is_token_rule<Tokens> && ...));
-        using token = decltype((lexy::dsl::eof / ... / Tokens{}));
-        return _delim_dsl<Open, Close, _del_limit<token, Error>>{};
+        static_assert(std::is_void_v<Limit> && lexy::is_char_class_rule<LimitCharClass>);
+        return _delim_dsl<Open, Close, _del_limit<LimitCharClass, Error>>{};
     }
 
     //=== rules ===//
