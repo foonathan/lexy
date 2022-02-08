@@ -7,8 +7,14 @@
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/char_class.hpp>
-#include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
+
+#ifdef LEXY_IGNORE_DEPRECATED_ALTERNATIVE
+#    define LEXY_DEPRECATED_ALTERNATIVE
+#else
+#    define LEXY_DEPRECATED_ALTERNATIVE                                                            \
+        [[deprecated("use dsl::literal_set() or dsl::operator| instead")]]
+#endif
 
 namespace lexy
 {
@@ -27,7 +33,7 @@ template <typename... Tokens>
 struct _alt : token_base<_alt<Tokens...>>
 {
     template <typename Reader>
-    struct tp
+    struct LEXY_DEPRECATED_ALTERNATIVE tp
     {
         typename Reader::iterator end;
 
@@ -65,7 +71,7 @@ struct _alt : token_base<_alt<Tokens...>>
 // The generic operator/ overload is in char_class.hpp.
 
 template <typename... R, typename S, typename = std::enable_if_t<!lexy::is_literal_set_rule<S>>>
-constexpr auto operator/(_alt<R...>, S)
+LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(_alt<R...>, S)
 {
     static_assert(lexy::is_token_rule<S>);
     if constexpr ((lexy::is_char_class_rule<S> && ... && _is_convertible_char_class<R>))
@@ -75,7 +81,7 @@ constexpr auto operator/(_alt<R...>, S)
         return _alt<R..., S>{};
 }
 template <typename R, typename... S, typename = std::enable_if_t<!lexy::is_literal_set_rule<R>>>
-constexpr auto operator/(R, _alt<S...>)
+LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(R, _alt<S...>)
 {
     static_assert(lexy::is_token_rule<R>);
     if constexpr ((lexy::is_char_class_rule<R> && ... && _is_convertible_char_class<S>))
@@ -85,7 +91,7 @@ constexpr auto operator/(R, _alt<S...>)
         return _alt<R, S...>{};
 }
 template <typename... R, typename... S>
-constexpr auto operator/(_alt<R...>, _alt<S...>)
+LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(_alt<R...>, _alt<S...>)
 {
     return _alt<R..., S...>{};
 }

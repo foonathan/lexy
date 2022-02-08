@@ -37,7 +37,6 @@ set(tests
         callback/string.cpp
 
         dsl/verify.hpp
-        dsl/alternative.cpp
         dsl/any.cpp
         dsl/argv_input.cpp
         dsl/ascii.cpp

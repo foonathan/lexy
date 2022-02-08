@@ -43,7 +43,6 @@ set(header_files
         ${include_dir}/callback/object.hpp
         ${include_dir}/callback/string.hpp
 
-        ${include_dir}/dsl/alternative.hpp
         ${include_dir}/dsl/any.hpp
         ${include_dir}/dsl/ascii.hpp
         ${include_dir}/dsl/base.hpp

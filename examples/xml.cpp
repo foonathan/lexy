@@ -153,7 +153,7 @@ struct text
 // The name of a tag or entity.
 constexpr auto name = [] {
     // We only support ASCII here, as I'm too lazy to type all the code point ranges out.
-    auto head_char     = dsl::lit_c<':'> / dsl::lit_c<'_'> / dsl::ascii::alpha;
+    auto head_char     = dsl::ascii::alpha / dsl::lit_c<':'> / dsl::lit_c<'_'>;
     auto trailing_char = head_char / dsl::lit_c<'-'> / dsl::lit_c<'.'> / dsl::ascii::digit;
 
     return dsl::identifier(head_char.error<invalid_character>, trailing_char);

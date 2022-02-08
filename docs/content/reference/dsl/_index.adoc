@@ -154,8 +154,6 @@ the other rule does not have access to context variables, and any context modifi
   parse a sequence of rules
 {{% docref "lexy::dsl::operator|" %}}::
   parse one of the specified (branch) rules
-{{% docref "lexy::dsl::operator/" %}}::
-  parse the longest of the specified token rules
 {{% docref "lexy::dsl::combination" %}} and {{% docref "lexy::dsl::partial_combination" %}}::
   parse all (some) of the (branch) rules in arbitrary order
 {{% docref "lexy::dsl::if_" %}} and {{% docref "lexy::dsl::opt" %}}::

@@ -191,7 +191,7 @@ struct number : lexy::token_production
     struct exponent : lexy::transparent_production
     {
         static constexpr auto rule = [] {
-            auto exp_char = dsl::lit_c<'e'> / dsl::lit_c<'E'>;
+            auto exp_char = dsl::lit_c<'e'> | dsl::lit_c<'E'>;
             return exp_char >> dsl::sign + dsl::integer<std::int16_t>(dsl::digits<>);
         }();
         static constexpr auto value = lexy::as_integer<std::int16_t>;

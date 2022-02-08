@@ -261,7 +261,7 @@ TEST_CASE("character class alternative")
 
     SUBCASE("multiple literals")
     {
-        constexpr auto rule = dsl::lit_c<'a'> / dsl::lit_c<'b'> / dsl::ascii::digit;
+        constexpr auto rule = dsl::ascii::digit / dsl::lit_c<'a'> / dsl::lit_c<'b'>;
 
         verify_empty(rule, "union");
 
