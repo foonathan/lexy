@@ -65,11 +65,11 @@ TEST_CASE("token_kind")
         CHECK(position.name() == lexy::_detail::string_view("position"));
         CHECK(position == lexy::position_token_kind);
 
-        lexy::token_kind eof(lexy::eof_token_kind);
-        CHECK(eof);
-        CHECK(eof.is_predefined());
-        CHECK(eof.name() == lexy::_detail::string_view("EOF"));
-        CHECK(eof == lexy::eof_token_kind);
+        lexy::token_kind literal(lexy::literal_token_kind);
+        CHECK(literal);
+        CHECK(literal.is_predefined());
+        CHECK(literal.name() == lexy::_detail::string_view("literal"));
+        CHECK(literal == lexy::literal_token_kind);
 
         lexy::token_kind value(0);
         CHECK(value);
@@ -113,11 +113,11 @@ TEST_CASE("token_kind")
         CHECK(position.name() == lexy::_detail::string_view("position"));
         CHECK(position == lexy::position_token_kind);
 
-        lexy::token_kind<token_kind> eof(lexy::eof_token_kind);
-        CHECK(eof);
-        CHECK(eof.is_predefined());
-        CHECK(eof.name() == lexy::_detail::string_view("EOF"));
-        CHECK(eof == lexy::eof_token_kind);
+        lexy::token_kind<token_kind> literal(lexy::literal_token_kind);
+        CHECK(literal);
+        CHECK(literal.is_predefined());
+        CHECK(literal.name() == lexy::_detail::string_view("literal"));
+        CHECK(literal == lexy::literal_token_kind);
 
         lexy::token_kind value(token_kind::a);
         CHECK(value);

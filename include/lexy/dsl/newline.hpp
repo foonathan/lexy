@@ -5,60 +5,25 @@
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/token.hpp>
 
-namespace lexy::_detail
+namespace lexy
 {
-template <typename Reader>
-constexpr bool match_newline(Reader& reader)
+struct expected_newline
 {
-    using encoding = typename Reader::encoding;
-
-    if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
+    static LEXY_CONSTEVAL auto name()
     {
-        reader.bump();
-        return true;
+        return "expected newline";
     }
-    else if (reader.peek() == lexy::_detail::transcode_int<encoding>('\r'))
-    {
-        reader.bump();
-        if (reader.peek() == lexy::_detail::transcode_int<encoding>('\n'))
-        {
-            reader.bump();
-            return true;
-        }
-    }
-
-    return false;
-}
-} // namespace lexy::_detail
+};
+} // namespace lexy
 
 namespace lexyd
 {
-struct _nl : token_base<_nl>
-{
-    template <typename Reader>
-    struct tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            auto result = lexy::_detail::match_newline(reader);
-            end         = reader.position();
-            return result;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "newline");
-            context.on(_ev::error{}, err);
-        }
-    };
-};
+struct _nl
+: LEXY_DECAY_DECLTYPE(literal_set(LEXY_LIT("\n"), LEXY_LIT("\r\n")).error<lexy::expected_newline>)
+{};
 
 /// Matches a newline character.
 constexpr auto newline = _nl{};
@@ -66,28 +31,47 @@ constexpr auto newline = _nl{};
 
 namespace lexyd
 {
-struct _eol : token_base<_eol>
+struct _eol : branch_base
 {
     template <typename Reader>
-    struct tp
+    struct bp
     {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
+        template <typename ControlBlock>
+        constexpr bool try_parse(const ControlBlock*, Reader reader)
         {
-            auto result = (reader.peek() == Reader::encoding::eof())
-                          || lexy::_detail::match_newline(reader);
-            end = reader.position();
-            return result;
+            return reader.peek() == Reader::encoding::eof()
+                   || lexy::try_match_token(newline, reader);
         }
 
         template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), "EOL");
-            context.on(_ev::error{}, err);
+            if (reader.peek() == Reader::encoding::eof())
+            {
+                auto pos = reader.position();
+                context.on(_ev::token{}, lexy::eof_token_kind, pos, pos);
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            }
+            else
+            {
+                // Note that we're re-doing the parsing for newline,
+                // this looks at most at two characters, so it doesn't really matter.
+                return lexy::parser_for<_nl, NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            }
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            return bp<Reader>{}.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };
 };
@@ -95,14 +79,6 @@ struct _eol : token_base<_eol>
 /// Matches the end of line (EOF or newline).
 constexpr auto eol = _eol{};
 } // namespace lexyd
-
-namespace lexy
-{
-template <>
-inline constexpr auto token_kind_of<lexy::dsl::_nl> = lexy::newline_token_kind;
-template <>
-inline constexpr auto token_kind_of<lexy::dsl::_eol> = lexy::eol_token_kind;
-} // namespace lexy
 
 #endif // LEXY_DSL_NEWLINE_HPP_INCLUDED
 

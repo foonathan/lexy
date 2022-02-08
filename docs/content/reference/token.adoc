@@ -30,8 +30,6 @@ namespace lexy
         literal_token_kind,
         position_token_kind,
         eof_token_kind,
-        eol_token_kind,
-        newline_token_kind,
 
         identifier_token_kind,
         digits_token_kind,
@@ -55,8 +53,6 @@ Predefined token kinds for special token rules, as given in the table below.
 | `lexy::literal_token_kind`    | {{% docref "lexy::dsl::lit" %}}, {{% docref "lexy::dsl::code_point" %}} (literal version), and other tokens that are fully identified by their spelling
 | `lexy::position_token_kind`   | {{% docref "lexy::dsl::position" %}} (not actually a token rule)
 | `lexy::eof_token_kind`        | {{% docref "lexy::dsl::eof" %}}
-| `lexy::eol_token_kind`        | {{% docref "lexy::dsl::eol" %}}
-| `lexy::newline_token_kind`    | {{% docref "lexy::dsl::newline" %}}
 | `lexy::identifier_token_kind` | {{% docref "lexy::dsl::identifier" %}} and {{% docref "lexy::dsl::symbol" %}}
 | `lexy::digits_token_kind`     | {{% docref "lexy::dsl::digit" %}}, {{% docref "lexy::dsl::digits" %}}, and other rules parsing digits
 |===

@@ -5,7 +5,6 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/list.hpp>
-#include <lexy/dsl/newline.hpp>
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
@@ -56,30 +55,19 @@ struct my_error
 
 TEST_CASE("token.error<Tag>")
 {
-    // We use eol, as it has a pre-defined kind that needs to be maintained.
-    constexpr auto rule = dsl::eol.error<my_error>;
+    // We use literal, as it has a pre-defined kind that needs to be maintained.
+    constexpr auto rule = LEXY_LIT("abc").error<my_error>;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.trace == test_trace().token("EOL", ""));
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().error(0, 0, "my_error").cancel());
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc.status == test_result::fatal_error);
-    CHECK(abc.trace == test_trace().error(0, 0, "my_error").cancel());
-
-    auto n = LEXY_VERIFY("\n");
-    CHECK(n.status == test_result::success);
-    CHECK(n.trace == test_trace().token("EOL", "\\n"));
-    auto rn = LEXY_VERIFY("\r\n");
-    CHECK(rn.status == test_result::success);
-    CHECK(rn.trace == test_trace().token("EOL", "\\r\\n"));
-
-    auto r = LEXY_VERIFY("\r");
-    CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.trace == test_trace().literal("abc"));
 }
 
 namespace
@@ -97,84 +85,47 @@ enum class token_kind
 
 TEST_CASE("token.kind<Tag>")
 {
-    // We use eol, as it has a pre-defined kind that needs to be overriden.
-    constexpr auto rule = dsl::eol.kind<token_kind::my_kind>;
+    // We use literal, as it has a pre-defined kind that needs to be overriden.
+    constexpr auto rule = LEXY_LIT("abc").kind<token_kind::my_kind>;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.trace == test_trace().token("my_kind", ""));
-
-    auto abc = LEXY_VERIFY("abc");
-    CHECK(abc.status == test_result::fatal_error);
-    CHECK(abc.trace == test_trace().expected_char_class(0, "EOL").cancel());
-
-    auto n = LEXY_VERIFY("\n");
-    CHECK(n.status == test_result::success);
-    CHECK(n.trace == test_trace().token("my_kind", "\\n"));
-    auto rn = LEXY_VERIFY("\r\n");
-    CHECK(rn.status == test_result::success);
-    CHECK(rn.trace == test_trace().token("my_kind", "\\r\\n"));
-
-    auto r = LEXY_VERIFY("\r");
-    CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error_token("\\r").expected_char_class(0, "EOL").cancel());
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_literal(0, "abc", 0).cancel());
 }
 
 TEST_CASE("token.kind<Tag>.error<Tag>")
 {
-    constexpr auto rule = dsl::eol.kind<token_kind::my_kind>.error<my_error>;
+    constexpr auto rule = LEXY_LIT("abc").kind<token_kind::my_kind>.error<my_error>;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.trace == test_trace().token("my_kind", ""));
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().error(0, 0, "my_error").cancel());
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc.status == test_result::fatal_error);
-    CHECK(abc.trace == test_trace().error(0, 0, "my_error").cancel());
-
-    auto n = LEXY_VERIFY("\n");
-    CHECK(n.status == test_result::success);
-    CHECK(n.trace == test_trace().token("my_kind", "\\n"));
-    auto rn = LEXY_VERIFY("\r\n");
-    CHECK(rn.status == test_result::success);
-    CHECK(rn.trace == test_trace().token("my_kind", "\\r\\n"));
-
-    auto r = LEXY_VERIFY("\r");
-    CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.trace == test_trace().token("my_kind", "abc"));
 }
 
 TEST_CASE("token.error<Tag>.kind<Tag>")
 {
-    constexpr auto rule = dsl::eol.error<my_error>.kind<token_kind::my_kind>;
+    constexpr auto rule = LEXY_LIT("abc").error<my_error>.kind<token_kind::my_kind>;
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     constexpr auto callback = token_callback;
 
     auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.trace == test_trace().token("my_kind", ""));
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().error(0, 0, "my_error").cancel());
 
     auto abc = LEXY_VERIFY("abc");
-    CHECK(abc.status == test_result::fatal_error);
-    CHECK(abc.trace == test_trace().error(0, 0, "my_error").cancel());
-
-    auto n = LEXY_VERIFY("\n");
-    CHECK(n.status == test_result::success);
-    CHECK(n.trace == test_trace().token("my_kind", "\\n"));
-    auto rn = LEXY_VERIFY("\r\n");
-    CHECK(rn.status == test_result::success);
-    CHECK(rn.trace == test_trace().token("my_kind", "\\r\\n"));
-
-    auto r = LEXY_VERIFY("\r");
-    CHECK(r.status == test_result::fatal_error);
-    CHECK(r.trace == test_trace().error_token("\\r").error(0, 1, "my_error").cancel());
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.trace == test_trace().token("my_kind", "abc"));
 }
 
 TEST_CASE("dsl::token()")

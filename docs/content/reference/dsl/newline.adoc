@@ -13,6 +13,11 @@ The `newline` and `eol` token rules.
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct expected_newline {};
+}
+
 namespace lexy::dsl
 {
     constexpr _token-rule_ auto newline;
@@ -22,13 +27,8 @@ namespace lexy::dsl
 [.lead]
 `newline` is a {{% token-rule %}} that matches a newline.
 
-Matching::
-  Tries to match and consume {{% docref "lexy::dsl::lit" %}}`<"\r\n">` or {{% docref "lexy::dsl::lit" %}}`<"\n">`.
-  Succeeds if one of them matched.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"newline"`): if they both did not match; at the starting reader position.
-Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::newline_token_kind`.
+It is entirely equivalent to {{% docref "lexy::dsl::literal_set" %}}` containing of the literals `"\r\n"` and `"\n"`,
+where the error has been overridden to `lexy::expected_newline`.
 
 {{% playground-example newline "Match a newline at the end" %}}
 
@@ -39,26 +39,27 @@ or where it doesn't include newline characters.
 CAUTION: Differentiate between {{% docref "lexy::dsl::ascii::newline" %}},  which matches `\r` or `\n`, and `lexy::dsl::newline`, which matches `\r\n` or `\n`!
 
 [#eol]
-== Token rule `lexy::dsl::eol`
+== Branch rule `lexy::dsl::eol`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
-    constexpr _token-rule_ auto eol;
+    constexpr _branch-rule_ auto eol;
 }
 ----
 
 [.lead]
-`eol` is a {{% token-rule %}} that matches the end of a line.
+`eol` is a {{% branch-rule %}} that matches the end of a line.
 
-Matching::
-  Tries to match and consume {{% docref "lexy::dsl::lit" %}}`<"\r\n">`, {{% docref "lexy::dsl::lit" %}}`<"\n">`, or {{% docref "lexy::dsl::eof" %}}.
-  Succeeds if one of them matched.
+(Branch) Parsing::
+  If at EOF, succeeds without consuming anything.
+  Otherwise, forwards to {{% docref "lexy::dsl::newline" %}}
 Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"EOF"`): if they all did not match; at the starting reader position.
+  `lexy::expected_newline`: if it could match neither EOF nor a newline; at the starting reader position.
 Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eol_token_kind`.
+  If at EOF, single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eof_token_kind` whose range is empty.
+  Otherwise, the token node created by {{% docref "lexy::dsl::newline" %}}.
 
 {{% playground-example eol "Match a newline or EOF at the end" %}}
 

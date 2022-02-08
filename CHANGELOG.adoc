@@ -5,6 +5,9 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2022-02-08
 
+* BEHAVIOR CHANGE: `dsl::newline` (and `dsl::eol` in the newline case) generate a token node with the `lexy::literal_token_kind`;
+  `lexy::newline_token_kind` and `lexy::eol_token_kind` have been removed.
+* `dsl::eof` and `dsl::eol` are now branch rules: replace `dsl::until(dsl::eol)` by `dsl::until(dsl::newline).or_eof()`.
 * Require a char class rule in `.limit()` of `dsl::delimited()`: instead of `dsl::eol` or `dsl::newline`, use `dsl::ascii::newline`.
 * Require literal rules in `dsl::lookahead()`, `dsl::find()`, and `.limit()` of error recovery rules.
 * Require literal rules in `.reserve()` and variants of `dsl::identifier`.

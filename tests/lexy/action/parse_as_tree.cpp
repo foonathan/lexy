@@ -55,7 +55,7 @@ struct root_p
 {
     static constexpr auto name = "root_p";
     static constexpr auto whitespace
-        = lexy::dsl::ascii::space | LEXY_LIT("//") >> lexy::dsl::until(lexy::dsl::eol);
+        = lexy::dsl::ascii::space | LEXY_LIT("//") >> lexy::dsl::until(lexy::dsl::newline).or_eof();
 
     static constexpr auto rule = [] {
         auto digits = lexy::dsl::digits<>.kind<token_kind::a>;

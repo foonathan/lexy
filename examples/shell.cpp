@@ -247,7 +247,7 @@ struct command
 
         // Allow an optional argument separator after the final command,
         // but then there should not be any other arguments after that.
-        return commands + dsl::if_(arg_sep) + dsl::eol.error<trailing_args>;
+        return commands + dsl::if_(arg_sep) + dsl::peek(dsl::eol).error<trailing_args>;
     }();
     static constexpr auto value = lexy::forward<shell::command>;
 };

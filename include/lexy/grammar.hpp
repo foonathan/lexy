@@ -75,11 +75,9 @@ enum predefined_token_kind : std::uint_least16_t
     literal_token_kind  = UINT_LEAST16_MAX - 4,
     position_token_kind = UINT_LEAST16_MAX - 5,
     eof_token_kind      = UINT_LEAST16_MAX - 6,
-    eol_token_kind      = UINT_LEAST16_MAX - 7,
-    newline_token_kind  = UINT_LEAST16_MAX - 8,
 
-    identifier_token_kind = UINT_LEAST16_MAX - 9,
-    digits_token_kind     = UINT_LEAST16_MAX - 10,
+    identifier_token_kind = UINT_LEAST16_MAX - 7,
+    digits_token_kind     = UINT_LEAST16_MAX - 8,
 
     _smallest_predefined_token_kind = digits_token_kind,
 };
@@ -104,10 +102,6 @@ constexpr const char* _kind_name(predefined_token_kind kind) noexcept
         return "position";
     case eof_token_kind:
         return "EOF";
-    case eol_token_kind:
-        return "EOL";
-    case newline_token_kind:
-        return "newline";
 
     case identifier_token_kind:
         return "identifier";

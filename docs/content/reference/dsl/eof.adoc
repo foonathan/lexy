@@ -5,23 +5,28 @@ entities:
 ---
 
 [#eof]
-== Token rule `lexy::dsl::eof`
+== Branch rule `lexy::dsl::eof`
 
 {{% interface %}}
 ----
+namespace lexy
+{
+    struct expected_eof {};
+}
+
 namespace lexy::dsl
 {
-    constexpr _token-rule_ auto eof;
+    constexpr _branch-rule_ auto eof;
 }
 ----
 
 [.lead]
-`eof` is a {{% token-rule %}} that matches the end of input (EOF).
+`eof` is a {{% branch-rule %}} that matches the end of input (EOF).
 
-Matching::
+(Branch) Parsing::
   Succeeds if the reader is at the end of the input, without consuming anything.
 Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"EOF"`): at the unchanged reader position.
+  `lexy::expected_eof`: at the unchanged reader position. It then recovers immediately.
 Parse tree::
   Single token node whose range is empty with the {{% docref "lexy::predefined_token_kind" %}} `lexy::eof_token_kind`.
 
