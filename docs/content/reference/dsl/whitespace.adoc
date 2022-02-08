@@ -40,9 +40,6 @@ namespace lexy::dsl
 
     constexpr _ws-rule_ operator|(_ws-rule_ rhs, _rule_ auto lhs) const;
     constexpr _ws-rule_ operator|(_rule_ auto rhs, _ws-rule_ lhs) const;
-
-    constexpr _ws-rule_ operator/(_ws-rule_ rhs, _token-rule_ auto lhs) const;
-    constexpr _ws-rule_ operator/(_token-rule_ auto rhs, _ws-rule_ lhs) const;
 }
 ----
 
@@ -62,7 +59,7 @@ Parse tree::
   all individual token nodes of the whitespace rules are merged into this one.
   It is only added to the parse tree if it is not empty.
 
-For convenience, `operator|` and `operator/` are overloaded for the whitespace rule.
+For convenience, `operator|` are overloaded for the whitespace rule.
 Here, `whitespace(a) | b` is entirely equivalent to `whitespace(a | b)`, and likewise for the other overloads.
 They simply allow adding more whitespace to a rule after it has already been wrapped in `whitespace`.
 

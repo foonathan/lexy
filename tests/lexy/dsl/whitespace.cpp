@@ -137,13 +137,6 @@ TEST_CASE("dsl::whitespace(rule)")
         CHECK(equivalent_rules(dsl::lit_c<'a'> | dsl::whitespace(dsl::lit_c<'b'>),
                                dsl::whitespace(dsl::lit_c<'a'> | dsl::lit_c<'b'>)));
     }
-    SUBCASE("operator/")
-    {
-        CHECK(equivalent_rules(dsl::whitespace(dsl::lit_c<'a'>) / dsl::lit_c<'b'>,
-                               dsl::whitespace(dsl::lit_c<'a'> / dsl::lit_c<'b'>)));
-        CHECK(equivalent_rules(dsl::lit_c<'a'> / dsl::whitespace(dsl::lit_c<'b'>),
-                               dsl::whitespace(dsl::lit_c<'a'> / dsl::lit_c<'b'>)));
-    }
 }
 
 TEST_CASE("dsl::whitespace")

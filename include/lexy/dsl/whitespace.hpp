@@ -149,17 +149,6 @@ struct _wsr : rule_base
     {
         return _wsr<decltype(r | Rule{})>{};
     }
-
-    template <typename R>
-    friend constexpr auto operator/(_wsr<Rule>, R r)
-    {
-        return _wsr<decltype(Rule{} / r)>{};
-    }
-    template <typename R>
-    friend constexpr auto operator/(R r, _wsr<Rule>)
-    {
-        return _wsr<decltype(r / Rule{})>{};
-    }
 };
 
 struct _ws : rule_base
