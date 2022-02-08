@@ -38,8 +38,8 @@ struct production
         // no key, just value
         auto value = dsl::nullopt + dsl::p<flag_value>;
 
-        // We have a key if we're having an equal sign before EOL.
-        auto key_condition = dsl::lookahead(dsl::lit_c<'='>, dsl::eol);
+        // We have a key if we're having an equal sign before the newline.
+        auto key_condition = dsl::lookahead(dsl::lit_c<'='>, dsl::newline);
         return (key_condition >> key_value | dsl::else_ >> value) + dsl::eol;
     }();
 

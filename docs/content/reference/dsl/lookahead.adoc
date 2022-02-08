@@ -22,14 +22,15 @@ namespace lexy::dsl
         static constexpr _lookahead_ error;
     };
 
-    constexpr _lookahead_ lookahead(_token-rule_ auto needle,
-                                  _token-rule_ auto end);
+    constexpr _lookahead_ lookahead(auto needle, auto end);
 }
 ----
 
 [.lead]
 `lookahead` is a {{% branch-rule %}} that checks if `needle` is found before `end`.
 
+Requires::
+  `needle` and `end` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
 Parsing::
   If it can match `needle` before `end` is matched or before EOF is reached, the branch is taken without having consumed any input.
   Otherwise, it raises an error.

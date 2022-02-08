@@ -393,23 +393,21 @@ struct _lset : token_base<_lset<Literals...>>, _lset_base
     using as_lset = _lset;
 
     template <typename Encoding>
-    static constexpr auto _t = []() LEXY_CONSTEVAL {
-        constexpr auto max_char_count = (0 + ... + Literals::lit_max_char_count);
+    static LEXY_CONSTEVAL auto _build_trie()
+    {
+        auto result = lexy::_detail::make_empty_trie<Encoding, Literals...>();
 
-        // Merge all mentioned character classes in a single list.
-        constexpr auto char_classes
-            = (lexy::_detail::char_class_list{} + ... + Literals::lit_char_classes);
-        using trie_type =
-            typename decltype(char_classes)::template trie_type<Encoding, max_char_count>;
-
-        trie_type             result;
         [[maybe_unused]] auto char_class = std::size_t(0);
         ((result.node_value[Literals::lit_insert(result, 0, char_class)] = 0,
           // Keep the index correct.
           char_class += Literals::lit_char_classes.size),
          ...);
+
         return result;
-    }();
+    }
+    template <typename Encoding>
+    static constexpr lexy::_detail::lit_trie_for<Encoding, Literals...> _t
+        = _build_trie<Encoding>();
 
     template <typename Reader>
     struct tp

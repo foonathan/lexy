@@ -5,6 +5,7 @@
 #define LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/literal.hpp>
 #include <lexy/error.hpp>
 
 namespace lexy
@@ -21,6 +22,28 @@ struct lookahead_failure
 
 namespace lexyd
 {
+template <typename Encoding, typename... Needle, typename... End>
+LEXY_CONSTEVAL auto _build_look_trie(_lset<Needle...>, _lset<End...>)
+{
+    auto result     = lexy::_detail::make_empty_trie<Encoding, Needle..., End...>();
+    auto char_class = std::size_t(0);
+
+    // We insert all needles with value 0.
+    ((result.node_value[Needle::lit_insert(result, 0, char_class)] = 0,
+      char_class += Needle::lit_char_classes.size),
+     ...);
+
+    // And all ends with value 1.
+    ((result.node_value[End::lit_insert(result, 0, char_class)] = 1,
+      char_class += End::lit_char_classes.size),
+     ...);
+
+    return result;
+}
+template <typename Encoding, typename Needle, typename End>
+static constexpr auto _look_trie
+    = _build_look_trie<Encoding>(typename Needle::as_lset{}, typename End::as_lset{});
+
 template <typename Needle, typename End, typename Tag>
 struct _look : branch_base
 {
@@ -36,15 +59,16 @@ struct _look : branch_base
             begin = reader.position();
 
             auto result = [&] {
+                using matcher = lexy::_detail::lit_trie_matcher<
+                    _look_trie<typename Reader::encoding, Needle, End>, 0>;
+
                 while (true)
                 {
-                    // Try to match Needle.
-                    if (lexy::try_match_token(Needle{}, reader))
-                        // We found it.
+                    auto result = matcher::try_match(reader);
+                    if (result == 0)
+                        // We've found the needle.
                         return true;
-                    // Check whether we've reached the End.
-                    else if (reader.peek() == Reader::encoding::eof()
-                             || lexy::try_match_token(End{}, reader))
+                    else if (result == 1 || reader.peek() == Reader::encoding::eof())
                         // We've failed.
                         return false;
                     else
@@ -102,10 +126,11 @@ struct _look : branch_base
 /// Looks for the Needle before End.
 /// Used as condition to implement arbitrary lookahead.
 template <typename Needle, typename End>
-constexpr auto lookahead(Needle, End)
+constexpr auto lookahead(Needle _needle, End _end)
 {
-    static_assert(lexy::is_token_rule<Needle> && lexy::is_token_rule<End>);
-    return _look<Needle, End, void>{};
+    auto needle = literal_set() / _needle;
+    auto end    = literal_set() / _end;
+    return _look<decltype(needle), decltype(end), void>{};
 }
 } // namespace lexyd
 
