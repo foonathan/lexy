@@ -30,7 +30,7 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY(lexy::byte_encoding{});
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "BOM.UTF-8").cancel());
+        CHECK(empty.trace == test_trace().expected_literal(0, R"(\EF\BB\BF)", 0).cancel());
 
         auto bom = LEXY_VERIFY(lexy::byte_encoding{}, 0xEF, 0xBB, 0xBF);
         CHECK(bom.status == test_result::success);
@@ -44,7 +44,7 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY(lexy::byte_encoding{});
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "BOM.UTF-16-LE").cancel());
+        CHECK(empty.trace == test_trace().expected_literal(0, R"(\FF\FE)", 0).cancel());
 
         auto bom = LEXY_VERIFY(lexy::byte_encoding{}, 0xFF, 0xFE);
         CHECK(bom.status == test_result::success);
@@ -57,7 +57,7 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY(lexy::byte_encoding{});
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "BOM.UTF-16-BE").cancel());
+        CHECK(empty.trace == test_trace().expected_literal(0, R"(\FE\FF)", 0).cancel());
 
         auto bom = LEXY_VERIFY(lexy::byte_encoding{}, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);
@@ -71,7 +71,7 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY(lexy::byte_encoding{});
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "BOM.UTF-32-LE").cancel());
+        CHECK(empty.trace == test_trace().expected_literal(0, R"(\FF\FE\00\00)", 0).cancel());
 
         auto bom = LEXY_VERIFY(lexy::byte_encoding{}, 0xFF, 0xFE, 0x00, 0x00);
         CHECK(bom.status == test_result::success);
@@ -84,7 +84,7 @@ TEST_CASE("dsl::bom")
 
         auto empty = LEXY_VERIFY(lexy::byte_encoding{});
         CHECK(empty.status == test_result::fatal_error);
-        CHECK(empty.trace == test_trace().expected_char_class(0, "BOM.UTF-32-BE").cancel());
+        CHECK(empty.trace == test_trace().expected_literal(0, R"(\00\00\FE\FF)", 0).cancel());
 
         auto bom = LEXY_VERIFY(lexy::byte_encoding{}, 0x00, 0x00, 0xFE, 0xFF);
         CHECK(bom.status == test_result::success);

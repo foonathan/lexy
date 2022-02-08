@@ -19,17 +19,8 @@ namespace lexy::dsl
 [.lead]
 `bom` is a {{% token-rule %}} that matches the https://en.wikipedia.org/wiki/Byte_order_mark[byte order mark (BOM)] of the given {{% encoding %}} in the given {{% docref "lexy::encoding_endianness" %}}.
 
-Requires::
-  * The combination of `Encoding` and `Endianness` is listed in the table below.
-  * The input encoding is {{% docref "lexy::byte_encoding" %}}.
-Matching::
-  Matches and consumes the byte sequence given in the table below.
-  This is done by repeatedly comparing the code unit against the numeric values.
-Errors::
-  {{% docref "lexy::expected_char_class" %}} (`"BOM.<encoding>-<endianness>"`): at the starting position.
-  The rule then fails.
-Parse tree::
-  Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
+It is equivalent to the {{% docref "lexy::dsl::lit_b" %}} rule given in the table above.
+If the combination of `Encoding` and `Endianness` is not listed, it succeeds without matching anything.
 
 [%collapsible]
 .The possible BOMs
@@ -37,11 +28,11 @@ Parse tree::
 |===
 | Encoding | Endianness | BOM
 
-| UTF-8    | _ignored_  | `0xEF`, `0xBB`, `0xBF`
-| UTF-16   | little     | `0xFF`, `0xFE`
-| UTF-16   | big        | `0xFE`, `0xFF`
-| UTF-32   | little     | `0xFF`, `0xFE`, `0x00`, `0x00`
-| UTF-32   | big        | `0x00`, `0x00`, `0xFE`, `0xFF`
+| UTF-8    | _ignored_  | `lit_b<0xEF, 0xBB, 0xBF>`
+| UTF-16   | little     | `lit_b<0xFF, 0xFE>`
+| UTF-16   | big        | `lit_b<0xFE, 0xFF>`
+| UTF-32   | little     | `lit_b<0xFF, 0xFE, 0x00, 0x00>`
+| UTF-32   | big        | `lit_b<0x00, 0x00, 0xFE, 0xFF>`
 
 |===
 ====
