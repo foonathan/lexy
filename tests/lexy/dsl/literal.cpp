@@ -151,13 +151,13 @@ TEST_CASE("dsl::lit_cp")
     // We're only testing UTF-16 inputs here for simplicity.
     // The actual logic is the code point encoding, which is tested elsewhere.
 
+    constexpr auto callback = token_callback;
+
     SUBCASE("ASCII")
     {
-        constexpr auto rule = lexy::dsl::lit_cp<'a'>;
+        constexpr auto rule = dsl::lit_cp<'a'>;
         CHECK(lexy::is_token_rule<decltype(rule)>);
         CHECK(lexy::is_literal_rule<decltype(rule)>);
-
-        constexpr auto callback = token_callback;
 
         auto empty = LEXY_VERIFY(u"");
         CHECK(empty.status == test_result::fatal_error);
@@ -187,11 +187,9 @@ TEST_CASE("dsl::lit_cp")
     }
     SUBCASE("BMP")
     {
-        constexpr auto rule = lexy::dsl::lit_cp<0x00E4>;
+        constexpr auto rule = dsl::lit_cp<0x00E4>;
         CHECK(lexy::is_token_rule<decltype(rule)>);
         CHECK(lexy::is_literal_rule<decltype(rule)>);
-
-        constexpr auto callback = token_callback;
 
         auto empty = LEXY_VERIFY(u"");
         CHECK(empty.status == test_result::fatal_error);
@@ -217,11 +215,9 @@ TEST_CASE("dsl::lit_cp")
     }
     SUBCASE("multi")
     {
-        constexpr auto rule = lexy::dsl::lit_cp<0x1F642>;
+        constexpr auto rule = dsl::lit_cp<0x1F642>;
         CHECK(lexy::is_token_rule<decltype(rule)>);
         CHECK(lexy::is_literal_rule<decltype(rule)>);
-
-        constexpr auto callback = token_callback;
 
         auto empty = LEXY_VERIFY(u"");
         CHECK(empty.status == test_result::fatal_error);
@@ -248,6 +244,36 @@ TEST_CASE("dsl::lit_cp")
         auto twice = LEXY_VERIFY(u"🙂🙂");
         CHECK(twice.status == test_result::success);
         CHECK(twice.trace == test_trace().literal("\\U0001F642"));
+    }
+
+    SUBCASE("sequence")
+    {
+        constexpr auto rule = dsl::lit_cp<'a', 0x00E4, 0x1F642>;
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(lexy::is_literal_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY(u"");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "a\\u00E4\\U0001F642", 0).cancel());
+
+        auto ok = LEXY_VERIFY(u"aä🙂");
+        CHECK(ok.status == test_result::success);
+        CHECK(ok.trace == test_trace().literal("a\\u00E4\\U0001F642"));
+
+        auto partial_cp = LEXY_VERIFY(u"aä");
+        CHECK(partial_cp.status == test_result::fatal_error);
+        CHECK(partial_cp.trace
+              == test_trace()
+                     .error_token("a\\u00E4")
+                     .expected_literal(0, "a\\u00E4\\U0001F642", 2)
+                     .cancel());
+        auto partial_cu = LEXY_VERIFY(u"aä\U0001F643");
+        CHECK(partial_cu.status == test_result::fatal_error);
+        CHECK(partial_cu.trace
+              == test_trace()
+                     .error_token("a\\u00E4\\xD8\\x3D")
+                     .expected_literal(0, "a\\u00E4\\U0001F642", 3)
+                     .cancel());
     }
 }
 

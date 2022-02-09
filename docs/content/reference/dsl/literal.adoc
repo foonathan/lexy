@@ -122,15 +122,15 @@ TIP: Use {{% docref "lexy::dsl::bom" %}} to match a byte-order mark.
 ----
 namespace lexy::dsl
 {
-    template <char32_t CodePoint>
+    template <char32_t ... CodePoint>
     constexpr _literal-rule_ auto lit_cp;
 }
 ----
 
 [.lead]
-`lit_cp` is a {{% literal-rule %}} that matches the specific `CodePoint` expressed as a sequence of code units in the {{% encoding %}} of the input.
+`lit_cp` is a {{% literal-rule %}} that matches the specific `CodePoint` sequences expressed as a sequence of code units in the {{% encoding %}} of the input.
 
-It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding `CodePoint` in the encoding of the input.
+It behaves identical to {{% docref "lexy::dsl::lit" %}} where `Str` is determined by encoding all `CodePoint`s in the encoding of the input.
 
 {{% playground-example "lit_cp" "Match a smiley face" %}}
 

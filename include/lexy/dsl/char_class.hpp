@@ -258,7 +258,7 @@ namespace lexyd
 {
 template <typename CharT, CharT... C>
 struct _lit;
-template <char32_t Cp>
+template <char32_t... Cp>
 struct _lcp;
 
 // Implementation helper for the literal overloads.

@@ -276,56 +276,40 @@ inline constexpr auto token_kind_of<lexy::dsl::_lit<CharT, C...>> = lexy::litera
 //=== lit_cp ===//
 namespace lexyd
 {
-template <char32_t Cp>
-struct _lcp : token_base<_lcp<Cp>>, _lit_base
+template <char32_t... Cp>
+struct _lcp : token_base<_lcp<Cp...>>, _lit_base
 {
-    static constexpr auto lit_max_char_count = 4;
+    template <typename Encoding>
+    struct _string_t
+    {
+        typename Encoding::char_type data[4 * sizeof...(Cp)];
+        std::size_t                  length = 0;
+
+        constexpr _string_t() : data{}
+        {
+            ((length += lexy::_detail::encode_code_point<Encoding>(Cp, data + length, 4)), ...);
+        }
+    };
+    template <typename Encoding>
+    static constexpr _string_t<Encoding> _string = _string_t<Encoding>{};
+
+    static constexpr auto lit_max_char_count = 4 * sizeof...(Cp);
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
     {
-        using encoding  = typename Trie::encoding;
-        using char_type = typename encoding::char_type;
+        using encoding = typename Trie::encoding;
 
-        char_type buffer[4];
-        auto      length = lexy::_detail::encode_code_point<encoding>(Cp, buffer, 4);
-        for (auto i = 0u; i != length; ++i)
-            pos = trie.insert(pos, buffer[i]);
+        for (auto i = 0u; i != _string<encoding>.length; ++i)
+            pos = trie.insert(pos, _string<encoding>.data[i]);
+
         return pos;
     }
 
-    template <typename Encoding>
-    static auto _string_impl()
-    {
-        using char_type = typename Encoding::char_type;
-
-        constexpr struct data_t
-        {
-            char_type   str[4];
-            std::size_t length;
-
-            constexpr data_t()
-            : str{}, length(lexy::_detail::encode_code_point<Encoding>(Cp, str, 4))
-            {}
-        } data;
-
-        if constexpr (data.length == 1)
-            return lexy::_detail::type_string<char_type, data.str[0]>{};
-        else if constexpr (data.length == 2)
-            return lexy::_detail::type_string<char_type, data.str[0], data.str[1]>{};
-        else if constexpr (data.length == 3)
-            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2]>{};
-        else
-            return lexy::_detail::type_string<char_type, data.str[0], data.str[1], data.str[2],
-                                              data.str[3]>{};
-    }
-    template <typename Encoding>
-    using _string = decltype(_string_impl<Encoding>());
-
     template <typename Reader,
               typename Indices
-              = lexy::_detail::make_index_sequence<_string<typename Reader::encoding>::size>>
+              = lexy::_detail::make_index_sequence<_string<typename Reader::encoding>.length>>
     struct tp;
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
@@ -336,13 +320,13 @@ struct _lcp : token_base<_lcp<Cp>>, _lit_base
 
         constexpr bool try_parse(Reader reader)
         {
-            using encoding     = typename Reader::encoding;
-            constexpr auto str = _string<encoding>::template c_str<>;
+            using encoding = typename Reader::encoding;
 
             auto result
                 // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek() == encoding::to_int_type(str[Idx]) ? (reader.bump(), true)
-                                                                     : false)
+                = ((reader.peek() == encoding::to_int_type(_string<encoding>.data[Idx])
+                        ? (reader.bump(), true)
+                        : false)
                    && ...);
             end = reader.position();
             return result;
@@ -351,26 +335,25 @@ struct _lcp : token_base<_lcp<Cp>>, _lit_base
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            using encoding     = typename Reader::encoding;
-            constexpr auto str = _string<encoding>::template c_str<>;
+            using encoding = typename Reader::encoding;
 
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, end);
-            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, str, index,
-                                                                   _string<encoding>::size);
+            auto err   = lexy::error<Reader, lexy::expected_literal>(begin, _string<encoding>.data,
+                                                                   index, _string<encoding>.length);
             context.on(_ev::error{}, err);
         }
     };
 };
 
-template <char32_t CodePoint>
-constexpr auto lit_cp = _lcp<CodePoint>{};
+template <char32_t... CodePoint>
+constexpr auto lit_cp = _lcp<CodePoint...>{};
 } // namespace lexyd
 
 namespace lexy
 {
-template <char32_t Cp>
-constexpr auto token_kind_of<lexy::dsl::_lcp<Cp>> = lexy::literal_token_kind;
+template <char32_t... Cp>
+constexpr auto token_kind_of<lexy::dsl::_lcp<Cp...>> = lexy::literal_token_kind;
 } // namespace lexy
 
 //=== lit_set ===//
