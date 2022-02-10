@@ -5,8 +5,8 @@ struct production
         // Arbitrary code points that aren't control characters.
         auto c = -dsl::ascii::control;
 
-        // If we have an EOL inside our string, we're missing the closing ".
-        auto quoted = dsl::quoted.limit(dsl::eol);
+        // If we have a newline inside our string, we're missing the closing ".
+        auto quoted = dsl::quoted.limit(dsl::ascii::newline);
         return quoted(c);
     }();
 };

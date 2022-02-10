@@ -67,9 +67,9 @@ lexy/dsl/identifier.hpp — lexy
 <span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// models <em>branch-rule</em></span>
 <span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>        </span><span class=tok-c1>//=== modifiers ===//</span>
-<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
-<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_prefix</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
-<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_containing</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_prefix</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_containing</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>        </span><span class=tok-c1>//=== sub-rules ===//</span>
 <span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>pattern</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
@@ -199,9 +199,9 @@ Use the callback <a href=/reference/callback/string/#as_string><code>lexy::as_st
 <div class=listingblock>
 <div class=title><code>lexy/dsl/identifier.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(1)</b>
-<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_prefix</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(2)</b>
-<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_containing</span><span class=tok-p>(</span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(3)</b></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(1)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_prefix</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(2)</b>
+<span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>reserve_containing</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>rules</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(3)</b></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -209,7 +209,7 @@ Use the callback <a href=/reference/callback/string/#as_string><code>lexy::as_st
 </div>
 <div class=paragraph>
 <p>Initially, no identifier is reserved.
-Identifiers are reserved by calling <code>.reserve()</code> or its variants.
+Identifiers are reserved by calling <code>.reserve()</code> or its variants passing it a <a href=/reference/dsl/literal/#doc>literal rule</a> or <a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a>.
 If this has happened, parsing the <code>identifier</code> rule creates a partial input from the lexeme and matches it against the specified rules as follows:</p>
 </div>
 <div class=ulist>
@@ -275,18 +275,6 @@ This design allows you to use a different set of reserved identifiers in differe
 </tr>
 </tbody></table>
 </div>
-<div class="admonitionblock note">
-<table>
-<tbody><tr>
-<td class=icon>
-<div class=title>Note</div>
-</td>
-<td class=content>
-The common case of passing keywords or literals to <code>.reserve()</code> is optimized using a <a href=https://en.wikipedia.org/wiki/Trie>trie</a>.
-</td>
-</tr>
-</tbody></table>
-</div>
 </div>
 <div class=sect2>
 <h3 id=_token_rule_pattern>Token rule <code>.pattern()</code></h3>
@@ -338,7 +326,7 @@ Its <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token
 </div>
 </div>
 <div class=sect1>
-<h2 id=keyword>Token rule <code>lexy::dsl::keyword</code></h2>
+<h2 id=keyword>Literal rule <code>lexy::dsl::keyword</code></h2>
 <div class=sectionbody>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/identifier.hpp</code></div>
@@ -346,16 +334,16 @@ Its <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
 <span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>Char</span><span class=tok-o>&gt;</span><span class=tok-w></span>
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>keyword</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>literal</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>keyword</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>Str</span><span class=tok-o>&gt;</span><span class=tok-w></span>
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>keyword</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>literal</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>keyword</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span>
 
 <span class=tok-cp>#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword&lt;Str&gt;(identifier)</span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>keyword</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a keyword.</p>
+<p><code>keyword</code> is a <a href=/reference/dsl/literal/#doc>literal rule</a> that matches a keyword.</p>
 </div>
 <div class=dlist>
 <dl>
@@ -436,7 +424,7 @@ A keyword does not necessarily need to be a reserved identifier or vice-versa.
 <div class=title>Note</div>
 </td>
 <td class=content>
-The same <a href=/reference/encoding/#doc>encoding</a> caveats of <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a> apply here as well.
+The <a href=/reference/encoding/#doc>encoding</a> caveats of <a href=/reference/dsl/literal/#doc>literal rule</a>s apply here as well.
 </td>
 </tr>
 </tbody></table>
@@ -445,7 +433,7 @@ The same <a href=/reference/encoding/#doc>encoding</a> caveats of <a href=/refer
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/loop/#while_><code>lexy::dsl::while_</code></a></li><li><a href=/reference/error/#expected_keyword><code>lexy::expected_keyword</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/callback/string/#as_string><code>lexy::as_string</code></a></li><li><a href=/reference/dsl/ascii/#doc><code>lexy::dsl::ascii</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a></li><li><a href=/reference/dsl/loop/#while_><code>lexy::dsl::while_</code></a></li><li><a href=/reference/error/#expected_keyword><code>lexy::expected_keyword</code></a></li><li><a href=/reference/lexeme/#lexeme><code>lexy::lexeme</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/literal/#doc>literal rules</a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

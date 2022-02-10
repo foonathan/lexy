@@ -189,12 +189,14 @@ This can be overridden by <code>Tag::name()</code> or <code>Tag::name</code>.</p
 
 <span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-n>pos</span><span class=tok-p>,</span><span class=tok-w></span>
-<span class=tok-w>                             </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o><strong></strong></span><strong><span class=tok-w> </span><span class=tok-n>string</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>index</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>                             </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o><strong></strong></span><strong><span class=tok-w> </span><span class=tok-n>string</span><span class=tok-p>,</span><span class=tok-w></span>
+<span class=tok-w>                             </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>index</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>length</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-nf>position</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o></span></strong><span class=tok-w> </span><span class=tok-nf>string</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>index</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>length</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-w> </span><span class=tok-nf>character</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
@@ -207,7 +209,7 @@ This can be overridden by <code>Tag::name()</code> or <code>Tag::name</code>.</p
 <p>An error where a given literal string was expected.</p>
 </div>
 <div class=paragraph>
-<p>The error can be raised while trying to parse <code>string()</code> beginning at <code>position()</code>;
+<p>The error can be raised while trying to parse <code>string()</code> with <code>length()</code> beginning at <code>position()</code>;
 the code unit at <code>std::next(position(), index())</code> did not match <code>character()</code>.
 If the remaining input contained fewer code units than <code>string()</code>, <code>index()</code> indicates the first code unit that was missing.</p>
 </div>
@@ -244,7 +246,7 @@ If the remaining input contained fewer code units than <code>string()</code>, <c
 
 <span class=tok-k>public</span><span class=tok-o>:</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>explicit</span><span class=tok-w> </span><span class=tok-n>error</span><span class=tok-p>(</span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-n>begin</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-n>end</span><span class=tok-p>,</span><span class=tok-w></span>
-<span class=tok-w>                             </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o><strong></strong></span><strong><span class=tok-w> </span><span class=tok-n>string</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>                             </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o><strong></strong></span><strong><span class=tok-w> </span><span class=tok-n>string</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-n>length</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-nf>position</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
@@ -252,6 +254,7 @@ If the remaining input contained fewer code units than <code>string()</code>, <c
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>iterator</em></span><span class=tok-w> </span><span class=tok-nf>end</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-n><em>char_type</em></span><span class=tok-o></span></strong><span class=tok-w> </span><span class=tok-nf>string</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>size_t</span><span class=tok-w> </span><span class=tok-nf>length</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-w> </span><span class=tok-k>noexcept</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-p>};</span><span class=tok-w></span></code></pre>
 </div>
 </div>
@@ -259,7 +262,7 @@ If the remaining input contained fewer code units than <code>string()</code>, <c
 <p>An error where a given keyword was expected.</p>
 </div>
 <div class=paragraph>
-<p>The error can be raised while trying to parse the keyword <code>string()</code> against the identifier <code>[begin(), end())</code>,
+<p>The error can be raised while trying to parse the keyword <code>string()</code> with <code>length()</code> against the identifier <code>[begin(), end())</code>,
 but it was a different identifier.
 The <code>position()</code> is also <code>begin()</code>.</p>
 </div>

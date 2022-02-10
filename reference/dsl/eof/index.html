@@ -49,29 +49,34 @@ lexy/dsl/eof.hpp — lexy
 </header>
 <section>
 <div class=sect1>
-<h2 id=eof>Token rule <code>lexy::dsl::eof</code></h2>
+<h2 id=eof>Branch rule <code>lexy::dsl::eof</code></h2>
 <div class=sectionbody>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/eof.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
 <span class=tok-p>{</span><span class=tok-w></span>
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>expected_eof</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
+
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>eof</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>eof</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches the end of input (EOF).</p>
+<p><code>eof</code> is a <a href=/reference/dsl/branch/#doc>branch rule</a> that matches the end of input (EOF).</p>
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Matching</dt>
+<dt class=hdlist1>(Branch) Parsing</dt>
 <dd>
 <p>Succeeds if the reader is at the end of the input, without consuming anything.</p>
 </dd>
 <dt class=hdlist1>Errors</dt>
 <dd>
-<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"EOF"</code>): at the unchanged reader position.</p>
+<p><code>lexy::expected_eof</code>: at the unchanged reader position. It then recovers immediately.</p>
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
@@ -139,7 +144,7 @@ It does not skip whitespace before checking for EOF. Use <a href=/reference/dsl/
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

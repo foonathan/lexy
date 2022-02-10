@@ -181,10 +181,10 @@ for a more complete version number parser.
 <span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>find</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// models <em>rule</em></span>
 <span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
-<span class=tok-w>        </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limits</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limits</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>find</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>find</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>tokens</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>find</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>find</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>literals</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
@@ -193,12 +193,16 @@ for a more complete version number parser.
 </div>
 <div class=dlist>
 <dl>
+<dt class=hdlist1>Requires</dt>
+<dd>
+<p><code>literals</code> and <code>limits</code> are <a href=/reference/dsl/literal/#doc>literal rule</a>s or <a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a>.</p>
+</dd>
 <dt class=hdlist1>Parsing</dt>
 <dd>
-<p>Tries to match any of the <code>tokens</code> anywhere in the remaining input;
-consumes everything until but not including the first of <code>tokens</code>.
-Fails if EOF is reached first or one of <code>limits</code> matches,
-if they were specified.</p>
+<p>Tries to match <a href=/reference/dsl/lookahead/#lookahead><code>lexy::dsl::lookahead</code></a><code>(literal_set, limit_set)</code>,
+where <code>literals</code> and <code>limits</code> have been collected into a single literal set.
+If that was successful, consumes everything until the beginning of the found literal and succeeds.
+Otherwise, fails after consuming everything until the beginning of the found limit (or EOF).</p>
 </dd>
 <dt class=hdlist1>Errors</dt>
 <dd>
@@ -210,7 +214,7 @@ if they were specified.</p>
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>A single token node whose range covers everything consumed before the token.
+<p>A single token node whose range covers everything consumed before the token that was found.
 Its <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> is <code>lexy::error_token_kind</code>.</p>
 </dd>
 </dl>
@@ -275,7 +279,7 @@ If recovery fails, no additional error is raised but parsing is canceled, to try
 <span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc><em>recover</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-c1>// models <em>rule</em></span>
 <span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
-<span class=tok-w>        </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limits</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limits</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-p>};</span><span class=tok-w></span>
 
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>recover</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>find</span><span class=tok-p>(</span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>branches</span><span class=tok-p>);</span><span class=tok-w></span>
@@ -287,6 +291,10 @@ If recovery fails, no additional error is raised but parsing is canceled, to try
 </div>
 <div class=dlist>
 <dl>
+<dt class=hdlist1>Requires</dt>
+<dd>
+<p><code>limits</code> are <a href=/reference/dsl/literal/#doc>literal rule</a>s or <a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a>.</p>
+</dd>
 <dt class=hdlist1>Parsing</dt>
 <dd>
 <p>Tries to parse any of <code>branches</code> anywhere in the remaining input;
@@ -372,7 +380,7 @@ If recovery fails, no additional error is raised but parsing is canceled, to try
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a></li><li><a href=/reference/dsl/lookahead/#lookahead><code>lexy::dsl::lookahead</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/literal/#doc>literal rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

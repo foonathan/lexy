@@ -178,14 +178,10 @@ the other rule does not have access to context variables, and any context modifi
 <h2 id=_the_rule_dsl>The rule DSL</h2>
 <div class=sectionbody>
 <details>
-<summary class=title>Primitive tokens</summary>
+<summary class=title>Primitive rules</summary>
 <div class=content>
 <div class=dlist>
 <dl>
-<dt class=hdlist1><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a> and <a href=/reference/dsl/literal/#lit_c><code>lexy::dsl::lit_c</code></a></dt>
-<dd>
-<p>match character sequences</p>
-</dd>
 <dt class=hdlist1><a href=/reference/dsl/any/#any><code>lexy::dsl::any</code></a></dt>
 <dd>
 <p>match anything</p>
@@ -198,9 +194,38 @@ the other rule does not have access to context variables, and any context modifi
 <dd>
 <p>match the end of a line</p>
 </dd>
-<dt class=hdlist1><a href=/reference/dsl/token/#token><code>lexy::dsl::token</code></a></dt>
+</dl>
+</div>
+</div>
+</details>
+<details>
+<summary class=title>Literal rules</summary>
+<div class=content>
+<div class=dlist>
+<dl>
+<dt class=hdlist1><a href=/reference/dsl/literal/#lit_c><code>lexy::dsl::lit_c</code></a></dt>
 <dd>
-<p>turn a rule into a token</p>
+<p>match a single character</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a> and <a href=/reference/dsl/literal/#lit><code>LEXY_LIT</code></a></dt>
+<dd>
+<p>match character sequences</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/literal/#lit_b><code>lexy::dsl::lit_b</code></a></dt>
+<dd>
+<p>match a sequence of bytes</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/literal/#lit_cp><code>lexy::dsl::lit_cp</code></a></dt>
+<dd>
+<p>match a code point with the specified value</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/punctuator/#doc><code>punctuators</code></a></dt>
+<dd>
+<p>match common punctuation</p>
+</dd>
+<dt class=hdlist1><a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a> and <a href=/reference/dsl/literal/#literal_set><code>LEXY_LITERAL_SET</code></a></dt>
+<dd>
+<p>match one of the specified literals</p>
 </dd>
 </dl>
 </div>
@@ -265,6 +290,10 @@ the other rule does not have access to context variables, and any context modifi
 <div class=content>
 <div class=dlist>
 <dl>
+<dt class=hdlist1><a href=/reference/dsl/token/#token><code>lexy::dsl::token</code></a></dt>
+<dd>
+<p>turn a rule into a token</p>
+</dd>
 <dt class=hdlist1><a href=/reference/dsl/sequence/#sequence><code>lexy::dsl::operator+</code></a></dt>
 <dd>
 <p>parse a sequence of rules</p>
@@ -272,10 +301,6 @@ the other rule does not have access to context variables, and any context modifi
 <dt class=hdlist1><a href=/reference/dsl/choice/#choice><code>lexy::dsl::operator|</code></a></dt>
 <dd>
 <p>parse one of the specified (branch) rules</p>
-</dd>
-<dt class=hdlist1><a href=/reference/dsl/alternative/#alternative><code>lexy::dsl::operator/</code></a></dt>
-<dd>
-<p>parse the longest of the specified token rules</p>
 </dd>
 <dt class=hdlist1><a href=/reference/dsl/combination/#combination><code>lexy::dsl::combination</code></a> and <a href=/reference/dsl/combination/#partial_combination><code>lexy::dsl::partial_combination</code></a></dt>
 <dd>

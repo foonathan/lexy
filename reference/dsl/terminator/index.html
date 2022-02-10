@@ -60,7 +60,7 @@ lexy/dsl/terminator.hpp — lexy
 <span class=tok-w>    </span><span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n>_branch</span><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>terminator</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
-<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>terminator</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>tokens</span><span class=tok-p>);</span><span class=tok-w></span>
+<span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>terminator</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-w>        </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>rule</em></span><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w>      </span><span class=tok-n>recovery_rule</span><span class=tok-p>()</span><span class=tok-w> </span><span class=tok-k>const</span><span class=tok-p>;</span><span class=tok-w></span>
 
 <span class=tok-w>        </span><span class=tok-c1>//=== rules ===//</span>
@@ -119,7 +119,7 @@ See <a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></
 <div class=listingblock>
 <div class=title><code>lexy/dsl/terminator.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>terminator</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>tokens</span><span class=tok-p>);</span><span class=tok-w></span></code></pre>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>terminator</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>(</span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-p>...</span><span class=tok-w> </span><span class=tok-n>limit</span><span class=tok-p>);</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
@@ -127,7 +127,7 @@ See <a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></
 </div>
 <div class=paragraph>
 <p><code>terminator</code> can also do error recovery after an error by discarding input until the terminator is reached.
-Similar to <a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a> or <a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a> one can provide a limit, which is a <a href=/reference/dsl/token/#doc>token rule</a> or combination of token rules.
+Similar to <a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a> or <a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a> one can provide a limit, which is a <a href=/reference/dsl/literal/#doc>literal rule</a> or <a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a>.
 If the limit is reached before the terminator, error recovery fails.</p>
 </div>
 <div class=exampleblock>
@@ -495,7 +495,7 @@ Apart from that, it behaves identically.
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a></li><li><a href=/reference/dsl/option/#nullopt><code>lexy::dsl::nullopt</code></a></li><li><a href=/reference/dsl/option/#opt><code>lexy::dsl::opt</code></a></li><li><a href=/reference/dsl/peek/#peek_not><code>lexy::dsl::peek_not</code></a></li><li><a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></li><li><a href=/reference/dsl/separator/#doc><code>separator</code></a></li><li><a href=/reference/dsl/sequence/#sequence><code>sequence</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/brackets/#brackets><code>lexy::dsl::brackets</code></a></li><li><a href=/reference/dsl/recover/#find><code>lexy::dsl::find</code></a></li><li><a href=/reference/dsl/list/#list><code>lexy::dsl::list</code></a></li><li><a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a></li><li><a href=/reference/dsl/option/#nullopt><code>lexy::dsl::nullopt</code></a></li><li><a href=/reference/dsl/option/#opt><code>lexy::dsl::opt</code></a></li><li><a href=/reference/dsl/peek/#peek_not><code>lexy::dsl::peek_not</code></a></li><li><a href=/reference/dsl/recover/#recover><code>lexy::dsl::recover</code></a></li><li><a href=/reference/dsl/literal/#doc>literal rules</a></li><li><a href=/reference/dsl/separator/#doc><code>separator</code></a></li><li><a href=/reference/dsl/sequence/#sequence><code>sequence</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

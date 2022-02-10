@@ -57,7 +57,12 @@ lexy/dsl/newline.hpp — lexy
 <div class=listingblock>
 <div class=title><code>lexy/dsl/newline.hpp</code></div>
 <div class=content>
-<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
+<pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-w></span>
+<span class=tok-p>{</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>struct</span> <span class=tok-nc>expected_newline</span><span class=tok-w> </span><span class=tok-p>{};</span><span class=tok-w></span>
+<span class=tok-p>}</span><span class=tok-w></span>
+
+<span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
 <span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>newline</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span></code></pre>
@@ -66,22 +71,9 @@ lexy/dsl/newline.hpp — lexy
 <div class="paragraph lead">
 <p><code>newline</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches a newline.</p>
 </div>
-<div class=dlist>
-<dl>
-<dt class=hdlist1>Matching</dt>
-<dd>
-<p>Tries to match and consume <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a><code>&lt;"\r\n"></code> or <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a><code>&lt;"\n"></code>.
-Succeeds if one of them matched.</p>
-</dd>
-<dt class=hdlist1>Errors</dt>
-<dd>
-<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"newline"</code>): if they both did not match; at the starting reader position.</p>
-</dd>
-<dt class=hdlist1>Parse tree</dt>
-<dd>
-<p>Single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::newline_token_kind</code>.</p>
-</dd>
-</dl>
+<div class=paragraph>
+<p>It is entirely equivalent to <a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a>` containing of the literals <code>"\r\n"</code> and <code>"\n"</code>,
+where the error has been overridden to <code>lexy::expected_newline</code>.</p>
 </div>
 <div class=exampleblock>
 <div class=title>Example 1. Match a newline at the end</div>
@@ -126,34 +118,35 @@ Differentiate between <a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii
 </div>
 </div>
 <div class=sect1>
-<h2 id=eol>Token rule <code>lexy::dsl::eol</code></h2>
+<h2 id=eol>Branch rule <code>lexy::dsl::eol</code></h2>
 <div class=sectionbody>
 <div class=listingblock>
 <div class=title><code>lexy/dsl/newline.hpp</code></div>
 <div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-k>namespace</span><span class=tok-w> </span><span class=tok-nn>lexy</span><span class=tok-o>::</span><span class=tok-nn>dsl</span><span class=tok-w></span>
 <span class=tok-p>{</span><span class=tok-w></span>
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>token</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>eol</span><span class=tok-p>;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>branch</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>eol</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
 <div class="paragraph lead">
-<p><code>eol</code> is a <a href=/reference/dsl/token/#doc>token rule</a> that matches the end of a line.</p>
+<p><code>eol</code> is a <a href=/reference/dsl/branch/#doc>branch rule</a> that matches the end of a line.</p>
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Matching</dt>
+<dt class=hdlist1>(Branch) Parsing</dt>
 <dd>
-<p>Tries to match and consume <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a><code>&lt;"\r\n"></code>, <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a><code>&lt;"\n"></code>, or <a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a>.
-Succeeds if one of them matched.</p>
+<p>If at EOF, succeeds without consuming anything.
+Otherwise, forwards to <a href=/reference/dsl/newline/#newline><code>lexy::dsl::newline</code></a></p>
 </dd>
 <dt class=hdlist1>Errors</dt>
 <dd>
-<p><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a> (<code>"EOF"</code>): if they all did not match; at the starting reader position.</p>
+<p><code>lexy::expected_newline</code>: if it could match neither EOF nor a newline; at the starting reader position.</p>
 </dd>
 <dt class=hdlist1>Parse tree</dt>
 <dd>
-<p>Single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::eol_token_kind</code>.</p>
+<p>If at EOF, single token node with the <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a> <code>lexy::eof_token_kind</code> whose range is empty.
+Otherwise, the token node created by <a href=/reference/dsl/newline/#newline><code>lexy::dsl::newline</code></a>.</p>
 </dd>
 </dl>
 </div>
@@ -187,7 +180,7 @@ The same caveat about <a href=/reference/dsl/whitespace/#doc><code>whitespace</c
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::newline</code></a></li><li><a href=/reference/dsl/eof/#eof><code>lexy::dsl::eof</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/ascii/#class><code>lexy::dsl::ascii::newline</code></a></li><li><a href=/reference/dsl/literal/#literal_set><code>lexy::dsl::literal_set</code></a></li><li><a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token_kind</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>

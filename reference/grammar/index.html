@@ -68,8 +68,11 @@ lexy/grammar.hpp — lexy
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>is_branch_rule</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(3)</b>
 <span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>is_token_rule</span><span class=tok-p>;</span><span class=tok-w>  </span><b class=conum>(4)</b>
+
 <span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
-<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>is_char_class_rule</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(5)</b>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>is_literal_rule</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(5)</b>
+<span class=tok-w>    </span><span class=tok-k>template</span><span class=tok-w> </span><span class=tok-o>&lt;</span><span class=tok-k>typename</span> <span class=tok-nc>T</span><span class=tok-o>&gt;</span><span class=tok-w></span>
+<span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-kt>bool</span><span class=tok-w> </span><span class=tok-n>is_char_class_rule</span><span class=tok-p>;</span><span class=tok-w> </span><b class=conum>(6)</b>
 <span class=tok-p>}</span><span class=tok-w></span></code></pre>
 </div>
 </div>
@@ -86,6 +89,9 @@ lexy/grammar.hpp — lexy
 </li>
 <li>
 <p>Whether or not <code>T</code> is a <a href=/reference/dsl/token/#doc>token rule</a>.</p>
+</li>
+<li>
+<p>Whether or not <code>T</code> is a <a href=/reference/dsl/literal/#doc>literal rule</a>.</p>
 </li>
 <li>
 <p>Whether or not <code>T</code> is a <a href=/reference/dsl/char_class/#doc>char class rule</a>.</p>
@@ -302,7 +308,7 @@ Instead, all child nodes of <code>Production</code> are added to its parent node
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/callback/composition/#compose-sink><code>lexy::operator>></code></a></li><li><a href=/reference/dsl/#doc>rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
+<ul><li><a href=/reference/dsl/branch/#doc>branch rules</a></li><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/dsl/production/#recurse><code>lexy::dsl::recurse</code></a></li><li><a href=/reference/dsl/whitespace/#whitespace-manual><code>lexy::dsl::whitespace</code></a></li><li><a href=/reference/callback/composition/#compose-sink><code>lexy::operator>></code></a></li><li><a href=/reference/dsl/literal/#doc>literal rules</a></li><li><a href=/reference/dsl/#doc>rules</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li><li><a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
