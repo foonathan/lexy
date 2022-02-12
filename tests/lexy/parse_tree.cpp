@@ -374,6 +374,7 @@ TEST_CASE("parse_tree::node")
         auto children = child.children();
         CHECK(children.empty());
         CHECK(children.size() == 0);
+        CHECK(children.begin() == children.end());
     }
 
     ++iter;

@@ -15,14 +15,14 @@
 namespace lexy::_detail
 {
 template <typename Reader>
-struct pt_node;
+class pt_node;
 template <typename Reader>
 struct pt_node_token;
 template <typename Reader>
 struct pt_node_production;
 
 template <typename Reader>
-class pt_node_ptr
+class pt_node
 {
 public:
     static constexpr auto type_token      = 0b0u;
@@ -31,84 +31,65 @@ public:
     static constexpr auto role_sibling = 0b0u;
     static constexpr auto role_parent  = 0b1u;
 
-    // nullptr is a parent pointer to a non-existing parent.
-    // This means that it is automatically an empty child range.
-    pt_node_ptr() noexcept : pt_node_ptr(nullptr, type_token, role_parent) {}
-
-    void set_sibling(pt_node<Reader>* ptr, unsigned type)
-    {
-        *this = pt_node_ptr(ptr, type, role_sibling);
-    }
-    void set_sibling(pt_node_token<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_token, role_sibling);
-    }
-    void set_sibling(pt_node_production<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_production, role_sibling);
-    }
-
-    void set_parent(pt_node_production<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_production, role_parent);
-    }
-
-    //=== access ===//
-    explicit operator bool() const noexcept
-    {
-        return base() != nullptr;
-    }
-
+    //=== information about the current node ===//
     unsigned type() const noexcept
     {
         return _value & 0b1;
     }
 
-    auto* base() const noexcept
+    auto as_token() noexcept
+    {
+        return type() == type_token ? static_cast<pt_node_token<Reader>*>(this) : nullptr;
+    }
+    auto as_production() noexcept
+    {
+        return type() == type_production ? static_cast<pt_node_production<Reader>*>(this) : nullptr;
+    }
+
+    //=== information about the next node ===//
+    void set_sibling(pt_node<Reader>* sibling) noexcept
+    {
+        _value = _make_packed_ptr(sibling, type(), role_sibling);
+    }
+    void set_parent(pt_node_production<Reader>* parent) noexcept
+    {
+        _value = _make_packed_ptr(parent, type(), role_parent);
+    }
+
+    unsigned next_role() const noexcept
+    {
+        return (_value & 0b10) >> 1;
+    }
+
+    pt_node<Reader>* next_node() const noexcept
     {
         // NOLINTNEXTLINE: We need pointer conversion.
         return reinterpret_cast<pt_node<Reader>*>(_value & ~std::uintptr_t(0b11));
     }
 
-    auto token() const noexcept
-    {
-        return type() == type_token ? static_cast<pt_node_token<Reader>*>(base()) : nullptr;
-    }
-    auto production() const noexcept
-    {
-        return type() == type_production ? static_cast<pt_node_production<Reader>*>(base())
-                                         : nullptr;
-    }
-
-    bool is_sibling_ptr() const noexcept
-    {
-        return ((_value & 0b10) >> 1) == role_sibling;
-    }
-    bool is_parent_ptr() const noexcept
-    {
-        return ((_value & 0b10) >> 1) == role_parent;
-    }
+protected:
+    explicit pt_node(unsigned type)
+    // We initializy it to a null parent pointer.
+    // This means it is automatically an empty child range.
+    : _value(_make_packed_ptr(nullptr, type, role_parent))
+    {}
 
 private:
-    explicit pt_node_ptr(pt_node<Reader>* ptr, unsigned type, unsigned role)
-    : _value(reinterpret_cast<std::uintptr_t>(ptr))
+    static std::uintptr_t _make_packed_ptr(pt_node<Reader>* ptr, unsigned type, unsigned role)
     {
-        LEXY_PRECONDITION((reinterpret_cast<std::uintptr_t>(ptr) & 0b11) == 0);
+        auto result = reinterpret_cast<std::uintptr_t>(ptr);
+        LEXY_PRECONDITION((result & 0b11) == 0);
 
-        _value |= (role & 0b1) << 1;
-        _value |= (type & 0b1);
+        result |= (role & 0b1) << 1;
+        result |= (type & 0b1);
+
+        return result;
     }
 
+    // Stores an address of the "next" node in the tree.
+    // Stores a bit that remembers whether the next node is a sibling or parent (the role).
+    // Stores a bit that remembers whether *this* node is a token or production.
     std::uintptr_t _value;
-};
-
-template <typename Reader>
-struct pt_node
-{
-    // Either points back to the next child of the parent node (the sibling),
-    // or back to the parent node if it is its last child.
-    // It is only null for the root node.
-    pt_node_ptr<Reader> ptr;
 };
 
 template <typename Reader>
@@ -127,7 +108,7 @@ struct pt_node_token : pt_node<Reader>
 
     explicit pt_node_token(std::uint_least16_t kind, typename Reader::iterator begin,
                            typename Reader::iterator end) noexcept
-    : begin(begin), kind(kind)
+    : pt_node<Reader>(pt_node<Reader>::type_token), begin(begin), kind(kind)
     {
         update_end(end);
     }
@@ -162,45 +143,40 @@ struct pt_node_token : pt_node<Reader>
 template <typename Reader>
 struct pt_node_production : pt_node<Reader>
 {
-    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 3;
+    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 2;
 
     const char* name;
     std::size_t child_count : child_count_bits;
     std::size_t token_production : 1;
     std::size_t first_child_adjacent : 1;
-    std::size_t first_child_type : 1;
 
     template <typename Production>
     explicit pt_node_production(Production) noexcept
-    : child_count(0), token_production(lexy::is_token_production<Production>),
-      first_child_adjacent(true), first_child_type(pt_node_ptr<Reader>::type_token)
+    : pt_node<Reader>(pt_node<Reader>::type_production), child_count(0),
+      token_production(lexy::is_token_production<Production>), first_child_adjacent(true)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
 
         name = lexy::production_name<Production>();
     }
 
-    pt_node_ptr<Reader> first_child()
+    pt_node<Reader>* first_child()
     {
         auto memory = static_cast<void*>(this + 1);
         if (child_count == 0)
         {
             // We don't have a child at all.
-            pt_node_ptr<Reader> result;
-            result.set_parent(this);
-            return result;
+            return nullptr;
         }
         else if (first_child_adjacent)
         {
             // The first child is stored immediately afterwards.
-            pt_node_ptr<Reader> result;
-            result.set_sibling(static_cast<pt_node<Reader>*>(memory), first_child_type);
-            return result;
+            return static_cast<pt_node<Reader>*>(memory);
         }
         else
         {
             // We're only storing a pointer to the first child immediately afterwards.
-            return *static_cast<pt_node_ptr<Reader>*>(memory);
+            return *static_cast<pt_node<Reader>**>(memory);
         }
     }
 };
@@ -304,11 +280,12 @@ public:
     {
         static_assert(std::is_trivially_copyable_v<T>);
         static_assert(alignof(T) == alignof(void*));
-        LEXY_PRECONDITION(_cur_block);                        // Forgot to call .init().
-        LEXY_PRECONDITION(remaining_capacity() >= sizeof(T)); // Forgot to call .reserve().
+        constexpr auto size = sizeof(T);
+        LEXY_PRECONDITION(_cur_block);                   // Forgot to call .init().
+        LEXY_PRECONDITION(remaining_capacity() >= size); // Forgot to call .reserve().
 
         auto memory = _cur_pos;
-        _cur_pos += sizeof(T);
+        _cur_pos += size;
         return ::new (static_cast<void*>(memory)) T(LEXY_FWD(args)...);
     }
 
@@ -447,7 +424,7 @@ public:
         // The depth of the current production.
         std::size_t depth = 0;
         // The last child of the current production.
-        _detail::pt_node_ptr<Reader> last_child;
+        _detail::pt_node<Reader>* last_child = nullptr;
 
         marker() = default;
 
@@ -455,28 +432,26 @@ public:
         : prod(prod), depth(depth)
         {}
 
-        template <typename T>
-        void append(T* child)
+        void append(_detail::pt_node<Reader>* child)
         {
             ++prod->child_count;
 
             if (last_child)
             {
                 // Add a sibling to the last child.
-                last_child.base()->ptr.set_sibling(child);
+                last_child->set_sibling(child);
                 // child is now the last child.
-                last_child.set_sibling(child);
+                last_child = child;
             }
             else
             {
                 // We're adding the first child of a node, which is also the last child.
-                last_child.set_sibling(child);
+                last_child = child;
 
-                if (last_child.base() == prod + 1)
+                if (last_child == prod + 1)
                 {
                     // The first child is stored adjacent.
                     prod->first_child_adjacent = true;
-                    prod->first_child_type     = last_child.type() & 0b1;
                 }
                 else
                 {
@@ -484,7 +459,7 @@ public:
                     // This only happens when a new block had to be started.
                     // In that case, we've saved enough space after the production to add a pointer.
                     auto memory = static_cast<void*>(prod + 1);
-                    ::new (memory) _detail::pt_node_ptr<Reader>(last_child);
+                    ::new (memory) _detail::pt_node<Reader>*(last_child);
 
                     prod->first_child_adjacent = false;
                 }
@@ -495,7 +470,7 @@ public:
         {
             if (last_child)
                 // The pointer of the last child needs to point back to prod.
-                last_child.base()->ptr.set_parent(prod);
+                last_child->set_parent(prod);
 
             // Update the size.
             size += prod->child_count;
@@ -517,7 +492,7 @@ public:
         // Allocate a node for the production and append it to the current child list.
         // We reserve enough memory to allow for a trailing pointer.
         _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
-                                + sizeof(_detail::pt_node_ptr<Reader>));
+                                + sizeof(_detail::pt_node<Reader>*));
         auto node
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
         // Note: don't append the node yet, we might still backtrack.
@@ -536,12 +511,12 @@ public:
 
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
-        if (auto token = _cur.last_child.token();
-            // We merge error tokens.
-            token && token->kind == kind && kind == lexy::error_token_kind)
+        // We merge error tokens.
+        if (kind == lexy::error_token_kind && _cur.last_child && _cur.last_child->as_token()
+            && _cur.last_child->as_token()->kind == lexy::error_token_kind)
         {
             // No need to allocate a new node, just extend the previous node.
-            token->update_end(end);
+            _cur.last_child->as_token()->update_end(end);
         }
         else
         {
@@ -564,6 +539,7 @@ public:
         _cur.finish(_result._size, _result._depth);
         // Append to previous production.
         m.append(_cur.prod);
+
         // Continue with the previous production.
         _cur = LEXY_MOV(m);
     }
@@ -598,28 +574,28 @@ class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
 public:
     bool is_token() const noexcept
     {
-        return _ptr.token() != nullptr;
+        return _ptr->as_token() != nullptr;
     }
     bool is_production() const noexcept
     {
-        return _ptr.production() != nullptr;
+        return _ptr->as_production() != nullptr;
     }
 
     bool is_root() const noexcept
     {
-        // Root node has no next pointer.
-        return !_ptr.base()->ptr;
+        // Root node has no next node.
+        return _ptr->next_node() == nullptr;
     }
     bool is_token_production() const noexcept
     {
-        return is_production() && _ptr.production()->token_production;
+        return is_production() && _ptr->as_production()->token_production;
     }
 
     const char* name() const noexcept
     {
-        if (auto prod = _ptr.production())
+        if (auto prod = _ptr->as_production())
             return prod->name;
-        else if (auto token = _ptr.token())
+        else if (auto token = _ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind).name();
         else
         {
@@ -631,10 +607,10 @@ public:
     friend bool operator==(node_kind lhs, node_kind rhs)
     {
         if (lhs.is_token() && rhs.is_token())
-            return lhs._ptr.token()->kind == rhs._ptr.token()->kind;
+            return lhs._ptr->as_token()->kind == rhs._ptr->as_token()->kind;
         else
             // See the `operator==` for productions for rationale why this works.
-            return lhs._ptr.production()->name == rhs._ptr.production()->name;
+            return lhs._ptr->as_production()->name == rhs._ptr->as_production()->name;
     }
     friend bool operator!=(node_kind lhs, node_kind rhs)
     {
@@ -643,7 +619,7 @@ public:
 
     friend bool operator==(node_kind nk, token_kind<TokenKind> tk)
     {
-        if (auto token = nk._ptr.token())
+        if (auto token = nk._ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind) == tk;
         else
             return false;
@@ -672,7 +648,7 @@ public:
         // This only fails if we have different productions with the same name and the compiler does
         // string interning. But as the production name corresponds to the qualified C++ name (by
         // default), this is only possible if the user does something weird.
-        return nk.is_production() && nk._ptr.production()->name == name;
+        return nk.is_production() && nk._ptr->as_production()->name == name;
     }
     template <typename Production, typename = lexy::production_rule<Production>>
     friend bool operator==(Production p, node_kind nk)
@@ -691,9 +667,9 @@ public:
     }
 
 private:
-    explicit node_kind(_detail::pt_node_ptr<Reader> ptr) : _ptr(ptr) {}
+    explicit node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
 
-    _detail::pt_node_ptr<Reader> _ptr;
+    _detail::pt_node<Reader>* _ptr;
 
     friend parse_tree::node;
 };
@@ -704,7 +680,7 @@ class parse_tree<Reader, TokenKind, MemoryResource>::node
 public:
     void* address() const noexcept
     {
-        return _ptr.base();
+        return _ptr;
     }
 
     auto kind() const noexcept
@@ -719,92 +695,84 @@ public:
             return *this;
 
         // If we follow the sibling pointer, we reach a parent pointer.
-        auto cur = _ptr.base()->ptr;
-        while (cur.is_sibling_ptr())
-            cur = cur.base()->ptr;
-        return node(cur);
+        auto cur = _ptr;
+        while (cur->next_role() == _detail::pt_node<Reader>::role_sibling)
+            cur = cur->next_node();
+        return node(cur->next_node());
     }
 
     class children_range
     {
     public:
-        class iterator;
-        struct sentinel : _detail::sentinel_base<sentinel, iterator>
-        {};
-
         class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
         {
         public:
-            iterator() noexcept : _cur() {}
+            iterator() noexcept : _cur(nullptr) {}
 
             node deref() const noexcept
             {
-                LEXY_PRECONDITION(*this != sentinel{});
                 return node(_cur);
             }
 
             void increment() noexcept
             {
-                LEXY_PRECONDITION(*this != sentinel{});
-                _cur = _cur.base()->ptr;
+                _cur = _cur->next_node();
             }
 
             bool equal(iterator rhs) const noexcept
             {
-                return _cur.base() == rhs._cur.base();
-            }
-            bool is_end() const noexcept
-            {
-                // We're at the end of the children, if the current pointer is a parent pointer.
-                // For a default constructed iterator, nullptr is a parent pointer, so this works as
-                // well.
-                return _cur.is_parent_ptr();
+                return _cur == rhs._cur;
             }
 
         private:
-            explicit iterator(_detail::pt_node_ptr<Reader> ptr) noexcept : _cur(ptr) {}
+            explicit iterator(_detail::pt_node<Reader>* ptr) noexcept : _cur(ptr) {}
 
-            _detail::pt_node_ptr<Reader> _cur;
+            _detail::pt_node<Reader>* _cur;
 
             friend children_range;
         };
 
         bool empty() const noexcept
         {
-            return _count == 0;
+            return size() == 0;
         }
 
         std::size_t size() const noexcept
         {
-            return _count;
+            if (auto prod = _node->as_production())
+                return prod->child_count;
+            else
+                return 0;
         }
 
         iterator begin() const noexcept
         {
-            return iterator(_begin);
+            if (auto prod = _node->as_production(); prod && prod->first_child())
+                return iterator(prod->first_child());
+            else
+                return end();
         }
-        sentinel end() const noexcept
+        iterator end() const noexcept
         {
-            return {};
+            // The last child has a next pointer back to the parent,
+            // so if we keep following it, we'll end up here.
+            return iterator(_node);
         }
 
     private:
-        explicit children_range(_detail::pt_node_ptr<Reader> begin, std::size_t count)
-        : _begin(begin), _count(count)
-        {}
+        explicit children_range(_detail::pt_node<Reader>* node) : _node(node)
+        {
+            LEXY_PRECONDITION(node);
+        }
 
-        _detail::pt_node_ptr<Reader> _begin;
-        std::size_t                  _count;
+        _detail::pt_node<Reader>* _node;
 
         friend node;
     };
 
     auto children() const noexcept
     {
-        if (auto prod = _ptr.production())
-            return children_range(prod->first_child(), prod->child_count);
-        else
-            return children_range(_detail::pt_node_ptr<Reader>{}, 0);
+        return children_range(_ptr);
     }
 
     class sibling_range
@@ -822,23 +790,23 @@ public:
 
             void increment() noexcept
             {
-                if (_cur.base()->ptr.is_parent_ptr())
+                if (_cur->next_role() == _detail::pt_node<Reader>::role_parent)
                     // We're pointing to the parent, go to first child instead.
-                    _cur = _cur.base()->ptr.production()->first_child();
+                    _cur = _cur->next_node()->as_production()->first_child();
                 else
                     // We're pointing to a sibling, go there.
-                    _cur = _cur.base()->ptr;
+                    _cur = _cur->next_node();
             }
 
             bool equal(iterator rhs) const noexcept
             {
-                return _cur.base() == rhs._cur.base();
+                return _cur == rhs._cur;
             }
 
         private:
-            explicit iterator(_detail::pt_node_ptr<Reader> ptr) noexcept : _cur(ptr) {}
+            explicit iterator(_detail::pt_node<Reader>* ptr) noexcept : _cur(ptr) {}
 
-            _detail::pt_node_ptr<Reader> _cur;
+            _detail::pt_node<Reader>* _cur;
 
             friend sibling_range;
         };
@@ -861,9 +829,9 @@ public:
         }
 
     private:
-        explicit sibling_range(_detail::pt_node_ptr<Reader> node) noexcept : _node(node) {}
+        explicit sibling_range(_detail::pt_node<Reader>* node) noexcept : _node(node) {}
 
-        _detail::pt_node_ptr<Reader> _node;
+        _detail::pt_node<Reader>* _node;
 
         friend node;
     };
@@ -876,12 +844,12 @@ public:
     bool is_last_child() const noexcept
     {
         // We're the last child if our pointer points to the parent.
-        return _ptr.base()->ptr.is_parent_ptr();
+        return _ptr->next_role() == _detail::pt_node<Reader>::role_parent;
     }
 
     auto lexeme() const noexcept
     {
-        if (auto token = _ptr.token())
+        if (auto token = _ptr->as_token())
             return lexy::lexeme<Reader>(token->begin, token->end());
         else
             return lexy::lexeme<Reader>();
@@ -891,29 +859,24 @@ public:
     {
         LEXY_PRECONDITION(kind().is_token());
 
-        auto token = _ptr.token();
+        auto token = _ptr->as_token();
         auto kind  = token_kind<TokenKind>::from_raw(token->kind);
         return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
     }
 
     friend bool operator==(node lhs, node rhs) noexcept
     {
-        return lhs._ptr.base() == rhs._ptr.base();
+        return lhs._ptr == rhs._ptr;
     }
     friend bool operator!=(node lhs, node rhs) noexcept
     {
-        return lhs._ptr.base() != rhs._ptr.base();
+        return lhs._ptr != rhs._ptr;
     }
 
 private:
-    explicit node(_detail::pt_node_ptr<Reader> ptr) noexcept : _ptr(ptr) {}
-    explicit node(_detail::pt_node_production<Reader>* ptr) noexcept
-    {
-        // It doesn't matter whether the pointer is a parent or sibling.
-        _ptr.set_parent(ptr);
-    }
+    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
 
-    _detail::pt_node_ptr<Reader> _ptr;
+    _detail::pt_node<Reader>* _ptr;
 
     friend parse_tree;
 };
@@ -947,45 +910,56 @@ public:
 
         _value_type deref() const noexcept
         {
-            if (_cur.token())
-                // We're only visiting tokens once.
-                return {traverse_event::leaf, node(_cur)};
-            else if (_cur.is_sibling_ptr())
-                // If it's a sibling pointer, we're entering the production for the first time.
-                return {traverse_event::enter, node(_cur)};
-            else if (_cur.is_parent_ptr())
-                // If it's a parent pointer, we're revisiting the production after all the children.
-                return {traverse_event::exit, node(_cur)};
-            else
-            {
-                LEXY_ASSERT(false, "unreachable");
-                return {{}, node(_cur)};
-            }
+            return {_ev, node(_cur)};
         }
 
         void increment() noexcept
         {
-            if (_cur.token() || _cur.is_parent_ptr())
-                // We're currently pointing to a token or back to the parent production.
-                // Continue with its sibling.
-                _cur = _cur.base()->ptr;
-            else if (_cur.is_sibling_ptr())
-                // We're currently pointing to a production for the first time.
-                // Continue to the first child.
-                _cur = _cur.production()->first_child();
+            if (_ev == traverse_event::enter)
+            {
+                auto child = _cur->as_production()->first_child();
+                if (child)
+                {
+                    // We go to the first child next.
+                    if (child->as_token())
+                        _ev = traverse_event::leaf;
+                    else
+                        _ev = traverse_event::enter;
+
+                    _cur = child;
+                }
+                else
+                {
+                    // Don't have children, exit.
+                    _ev = traverse_event::exit;
+                }
+            }
             else
-                LEXY_ASSERT(false, "unreachable");
+            {
+                // We follow the next pointer.
+
+                if (_cur->next_role() == _detail::pt_node<Reader>::role_parent)
+                    // We go back to a production for the second time.
+                    _ev = traverse_event::exit;
+                else if (_cur->next_node()->as_production())
+                    // We're having a production as sibling.
+                    _ev = traverse_event::enter;
+                else
+                    // Token as sibling.
+                    _ev = traverse_event::leaf;
+
+                _cur = _cur->next_node();
+            }
         }
 
         bool equal(iterator rhs) const noexcept
         {
-            // We need to point to the same node and in the same role.
-            return _cur.base() == rhs._cur.base()
-                   && _cur.is_parent_ptr() == rhs._cur.is_parent_ptr();
+            return _ev == rhs._ev && _cur == rhs._cur;
         }
 
     private:
-        _detail::pt_node_ptr<Reader> _cur;
+        _detail::pt_node<Reader>* _cur = nullptr;
+        traverse_event            _ev;
 
         friend traverse_range;
     };
@@ -1011,17 +985,20 @@ private:
     {
         if (n.kind().is_token())
         {
-            _begin._cur.set_sibling(n._ptr.token());
-            _end = _begin;
+            _begin._cur = n._ptr;
+            _begin._ev  = traverse_event::leaf;
+
+            _end = _detail::next(_begin);
         }
         else
         {
-            _begin._cur.set_sibling(n._ptr.production());
-            _end._cur.set_parent(n._ptr.production());
-        }
+            _begin._cur = n._ptr;
+            _begin._ev  = traverse_event::enter;
 
-        // Turn it into a half-open range.
-        ++_end;
+            _end._cur = n._ptr;
+            _end._ev  = traverse_event::exit;
+            ++_end; // half-open range
+        }
     }
 
     iterator _begin, _end;

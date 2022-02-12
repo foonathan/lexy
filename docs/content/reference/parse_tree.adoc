@@ -328,10 +328,9 @@ class parse_tree::node::children_range
 {
 public:
     class iterator; // value_type = node
-    class sentinel;
 
     iterator begin() const noexcept;
-    sentinel end()   const noexcept;
+    iterator end()   const noexcept;
 
     bool empty() const noexcept;
     std::size_t size() const noexcept;
