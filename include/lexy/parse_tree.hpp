@@ -280,13 +280,18 @@ public:
     {
         static_assert(std::is_trivially_copyable_v<T>);
         static_assert(alignof(T) == alignof(void*));
-        constexpr auto size = sizeof(T);
-        LEXY_PRECONDITION(_cur_block);                   // Forgot to call .init().
+        constexpr auto size = sizeof(T); // NOLINT: It's fine, we want to allocate for a pointer.
+        LEXY_PRECONDITION(_cur_block);   // Forgot to call .init().
         LEXY_PRECONDITION(remaining_capacity() >= size); // Forgot to call .reserve().
 
         auto memory = _cur_pos;
         _cur_pos += size;
         return ::new (static_cast<void*>(memory)) T(LEXY_FWD(args)...);
+    }
+
+    void* top()
+    {
+        return _cur_pos;
     }
 
     void unwind(void* marker) noexcept
@@ -398,6 +403,123 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::builder
 {
 public:
+    class marker
+    {
+    public:
+        marker() : marker(nullptr, 0) {}
+
+    private:
+        // Where to unwind when done.
+        void* unwind_pos;
+        // The current production node.
+        // nullptr if using the container API.
+        _detail::pt_node_production<Reader>* prod;
+        // The number of children we've already added.
+        std::size_t child_count;
+        // The first and last child of the container.
+        _detail::pt_node<Reader>* first_child;
+        _detail::pt_node<Reader>* last_child;
+
+        // For a production node, depth of the production node.
+        // For a container node, depth of the children.
+        std::size_t cur_depth;
+        // The maximum local depth seen in the subtree beginning at the marker.
+        std::size_t local_max_depth;
+
+        explicit marker(void* unwind_pos, std::size_t cur_depth,
+                        _detail::pt_node_production<Reader>* prod = nullptr)
+        : unwind_pos(unwind_pos), prod(prod), child_count(0), first_child(nullptr),
+          last_child(nullptr), cur_depth(cur_depth), local_max_depth(cur_depth)
+        {}
+
+        void clear()
+        {
+            first_child = nullptr;
+            last_child  = nullptr;
+            child_count = 0;
+        }
+
+        void insert(_detail::pt_node<Reader>* child)
+        {
+            if (first_child == nullptr)
+            {
+                // Initialize the pointers.
+                first_child = last_child = child;
+            }
+            else
+            {
+                // last_child gets a sibling pointer.
+                last_child->set_sibling(child);
+                // child is now the last child.
+                last_child = child;
+            }
+
+            ++child_count;
+        }
+        void insert_list(std::size_t length, _detail::pt_node<Reader>* first,
+                         _detail::pt_node<Reader>* last)
+        {
+            if (length == 0)
+                return;
+
+            if (first_child == nullptr)
+            {
+                first_child = first;
+                last_child  = last;
+            }
+            else
+            {
+                last_child->set_sibling(first);
+                last_child = last;
+            }
+
+            child_count += length;
+        }
+
+        void insert_children_into(_detail::pt_node_production<Reader>* parent)
+        {
+            LEXY_PRECONDITION(parent->child_count == 0);
+            if (child_count == 0)
+                return;
+
+            if (first_child == parent + 1)
+            {
+                parent->first_child_adjacent = true;
+            }
+            else
+            {
+                // This case happens either if the first child is in a new block or if we're
+                // dealing with a container node. In either case, we've already reserved memory
+                // for a pointer.
+                auto memory = static_cast<void*>(parent + 1);
+                ::new (memory) _detail::pt_node<Reader>*(first_child);
+                parent->first_child_adjacent = false;
+            }
+
+            // last_child needs a pointer to the production.
+            last_child->set_parent(parent);
+
+            constexpr auto mask
+                = ((std::size_t(1) << _detail::pt_node_production<Reader>::child_count_bits) - 1);
+            parent->child_count = child_count & mask;
+        }
+
+        void update_size_depth(std::size_t& size, std::size_t& max_depth)
+        {
+            size += child_count;
+
+            if (cur_depth == local_max_depth && child_count > 0)
+                // We have children we haven't yet accounted for.
+                ++local_max_depth;
+
+            if (max_depth < local_max_depth)
+                max_depth = local_max_depth;
+        }
+
+        friend builder;
+    };
+
+    //=== root node ===//
     template <typename Production>
     explicit builder(parse_tree&& tree, Production production) : _result(LEXY_MOV(tree))
     {
@@ -408,101 +530,161 @@ public:
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _result._size = 1;
+        _result._size  = 1;
+        _result._depth = 0;
 
         // Begin construction at the root.
-        _cur = marker(_result._root, 0);
+        _cur = marker(_result._buffer.top(), 0, _result._root);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
     {}
 
-    struct marker
+    parse_tree&& finish() &&
     {
-        // The current production all tokens are appended to.
-        _detail::pt_node_production<Reader>* prod = nullptr;
-        // The depth of the current production.
-        std::size_t depth = 0;
-        // The last child of the current production.
-        _detail::pt_node<Reader>* last_child = nullptr;
+        LEXY_PRECONDITION(_cur.prod == _result._root);
+        _cur.insert_children_into(_cur.prod);
+        _cur.update_size_depth(_result._size, _result._depth);
+        return LEXY_MOV(_result);
+    }
 
-        marker() = default;
-
-        explicit marker(_detail::pt_node_production<Reader>* prod, std::size_t depth)
-        : prod(prod), depth(depth)
-        {}
-
-        void append(_detail::pt_node<Reader>* child)
-        {
-            ++prod->child_count;
-
-            if (last_child)
-            {
-                // Add a sibling to the last child.
-                last_child->set_sibling(child);
-                // child is now the last child.
-                last_child = child;
-            }
-            else
-            {
-                // We're adding the first child of a node, which is also the last child.
-                last_child = child;
-
-                if (last_child == prod + 1)
-                {
-                    // The first child is stored adjacent.
-                    prod->first_child_adjacent = true;
-                }
-                else
-                {
-                    // The child is not stored immediately afterwards.
-                    // This only happens when a new block had to be started.
-                    // In that case, we've saved enough space after the production to add a pointer.
-                    auto memory = static_cast<void*>(prod + 1);
-                    ::new (memory) _detail::pt_node<Reader>*(last_child);
-
-                    prod->first_child_adjacent = false;
-                }
-            }
-        }
-
-        void finish(std::size_t& size, std::size_t& max_depth)
-        {
-            if (last_child)
-                // The pointer of the last child needs to point back to prod.
-                last_child->set_parent(prod);
-
-            // Update the size.
-            size += prod->child_count;
-
-            // And update the depth.
-            auto local_max_depth = prod->child_count > 0 ? depth + 1 : depth;
-            if (max_depth < local_max_depth)
-                max_depth = local_max_depth;
-        }
-    };
-
+    //=== production nodes ===//
     template <typename Production>
     auto start_production(Production production)
     {
         if constexpr (lexy::is_transparent_production<Production>)
             // Don't need to add a new node for a transparent production.
-            return marker();
+            return _cur;
 
         // Allocate a node for the production and append it to the current child list.
         // We reserve enough memory to allow for a trailing pointer.
+        // This is only necessary if the first child is in a new block,
+        // in which case we won't overwrite it.
         _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
                                 + sizeof(_detail::pt_node<Reader>*));
         auto node
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
         // Note: don't append the node yet, we might still backtrack.
 
-        // Subsequent inertions are to the new node, so update marker and return old one.
+        // Subsequent insertions are to the new node, so update marker and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = marker(node, old.depth + 1);
+        _cur     = marker(node, old.cur_depth + 1, node);
         return old;
     }
 
+    void finish_production(marker&& m)
+    {
+        LEXY_PRECONDITION(_cur.prod || m.prod == _cur.prod);
+        if (m.prod == _cur.prod)
+            // We're finishing with a transparent production, do nothing.
+            return;
+
+        _cur.update_size_depth(_result._size, m.local_max_depth);
+        _cur.insert_children_into(_cur.prod);
+
+        // Insert the production node into the parent and continue with it.
+        m.insert(_cur.prod);
+        _cur = LEXY_MOV(m);
+    }
+
+    void cancel_production(marker&& m)
+    {
+        LEXY_PRECONDITION(_cur.prod);
+        if (_cur.prod == m.prod)
+            // We're backtracking a transparent production, do nothing.
+            return;
+
+        _result._buffer.unwind(_cur.unwind_pos);
+        // Continue with parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    //=== container nodes ===//
+    marker start_container()
+    {
+        auto unwind_pos = _result._buffer.top();
+        if (_cur.prod && _cur.child_count == 0)
+        {
+            // If our parent production doesn't have any children,
+            // we might need space for a first child pointer.
+            //
+            // If our parent is another container, its start_container() function took care of it.
+            // If our parent already has a child, the first_child pointer is taken care of.
+            _result._buffer.template allocate<_detail::pt_node<Reader>*>(nullptr);
+        }
+
+        // Create a new container marker and activate it.
+        auto old = LEXY_MOV(_cur);
+        _cur     = marker(unwind_pos, old.cur_depth);
+        return old;
+    }
+
+    template <typename Production>
+    void set_container_production(Production production)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+        if constexpr (lexy::is_transparent_production<Production>)
+            // If the production is transparent, we do nothing.
+            return;
+
+        // Allocate a new node for the production.
+        // We definitely need space for node pointer at this point,
+        // as the first child precedes it.
+        _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
+                                + sizeof(_detail::pt_node<Reader>*));
+        auto node
+            = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
+        _result._buffer.template allocate<_detail::pt_node<Reader>*>(nullptr);
+
+        // Create a new container that will contain the production as its only child.
+        // As such, it logically starts at the same position and depth as the current container.
+        auto new_container = marker(_cur.unwind_pos, _cur.cur_depth);
+        new_container.insert(node);
+
+        // The production contains all the children.
+        _cur.insert_children_into(node);
+
+        // The local_max_depth of the new container is determined by the old maximum depth + 1.
+        new_container.local_max_depth = [&] {
+            if (_cur.cur_depth == _cur.local_max_depth && _cur.child_count > 0)
+                // There are children we haven't yet accounted for.
+                return _cur.local_max_depth + 1 + 1;
+            else
+                return _cur.local_max_depth + 1;
+        }();
+        _result._size += _cur.child_count;
+
+        // And we continue with the current container.
+        _cur = new_container;
+    }
+
+    void finish_container(marker&& m)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+
+        // Insert the children of our container into the parent.
+        m.insert_list(_cur.child_count, _cur.first_child, _cur.last_child);
+
+        // We can't update size yet, it would be double counted.
+        // We do need to update the max depth if necessary, however.
+        std::size_t size = 0;
+        _cur.update_size_depth(size, m.local_max_depth);
+
+        // Continue with the parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    void cancel_container(marker&& m)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+
+        // Deallocate everything we've inserted.
+        _result._buffer.unwind(_cur.unwind_pos);
+        // Continue with parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    //=== token nodes ===//
     void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
                typename Reader::iterator end)
     {
@@ -525,42 +707,8 @@ public:
             auto node
                 = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin,
                                                                                     end);
-            _cur.append(node);
+            _cur.insert(node);
         }
-    }
-
-    void finish_production(marker&& m)
-    {
-        if (!m.prod)
-            // We're finishing with a transparent production, do nothing.
-            return;
-
-        // We're done with the current production.
-        _cur.finish(_result._size, _result._depth);
-        // Append to previous production.
-        m.append(_cur.prod);
-
-        // Continue with the previous production.
-        _cur = LEXY_MOV(m);
-    }
-
-    void cancel_production(marker&& m)
-    {
-        if (!m.prod)
-            // We're backtracking a transparent production, do nothing.
-            return;
-
-        // Deallocate everything from the backtracked production.
-        _result._buffer.unwind(_cur.prod);
-        // Continue with previous production.
-        _cur = LEXY_MOV(m);
-    }
-
-    parse_tree&& finish() &&
-    {
-        LEXY_PRECONDITION(_cur.prod == _result._root);
-        _cur.finish(_result._size, _result._depth);
-        return LEXY_MOV(_result);
     }
 
 private:

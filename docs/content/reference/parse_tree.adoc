@@ -115,23 +115,35 @@ class parse_tree::builder
     using _iterator_ = typename Reader::iterator;
 
 public:
-    //=== constructors ===//
+    struct marker
+    {
+        marker();
+    };
+
+    //=== root node ===//
     explicit builder(parse_tree&& tree, _production_ auto root);
     explicit builder(_production_ auto root)
     : builder(parse_tree{}, root)
     {}
 
-    //=== building ===//
-    struct marker;
+    parse_tree&& finish() &&;
 
+    //=== production node ===//
     marker start_production(_production_ auto production);
-
-    void token(token_kind<TokenKind> kind, _iterator_ begin, _iterator _end);
 
     void finish_production(marker&& m);
     void cancel_production(marker&& m);
 
-    parse_tree&& finish() &&;
+    //=== container node ===//
+    marker start_container();
+
+    void set_container_production(_production_ auto production);
+
+    void finish_container(marker&& m);
+    void cancel_container(marker&& m);
+
+    //=== token node ===//
+    void token(token_kind<TokenKind> kind, _iterator_ begin, _iterator _end);
 };
 ----
 
@@ -145,19 +157,17 @@ which is the active node (see below).
 
 Then the tree can be built using the following methods:
 
+`finish`::
+  Finishes the construction of the entire tree and returns it.
+  The active node must be the root node.
+
 `start_production`::
-  Start construction for a new production node for `production` and push it the active node's list of children.
+  Start construction for a new production node for `production` and pushes it to the active node's list of children.
   It returns a `marker` object, which must eventually be passed to `finish_production` or `cancel_production`.
   The new production node will be the active node.
 +
 If `production` is a {{% docref "lexy::transparent_production" %}}, no new node is created.
 However, the `marker` object must still be passed to `finish_production` or `cancel_production`.
-
-`token`::
-  Construct a new token node and push it to the active node's list of children.
-  The node will have the specified {{% docref "lexy::token_kind" %}} and the lexeme `[begin, end)` of the input.
-+
-If `kind.ignore_if_empty() == true` and `begin == end`, no token node is constructed.
 
 `finish_production`::
   Finishes the production node of the corresponding `marker` object,
@@ -170,9 +180,34 @@ If `kind.ignore_if_empty() == true` and `begin == end`, no token node is constru
   The node and all children already added to it will be removed from the parse tree;
   it is returned to the same state it had before the corresponding `start_production` call.
 
-`finish`::
-  Finishes the construction of the entire tree and returns it.
-  The active node must be the root node.
+`start_container`::
+  Starts a container of more nodes.
+  This can then later be turned into a production node, if desired.
+  It returns a `marker` object, which must eventually be passed to `finish_container` or `cancel_container`.
+  The container will be the active node.
+
+`set_container_production`::
+  If the passed production is transparent, does nothing.
+  Otherwise, creates a new production node and adds all children from the currently active container to it.
+  It then creates a new container whose only child is the newly added production node.
+  The new container will be the active node, everything added to it will become a sibling of the production node.
+
+`finish_container`::
+  Finishes a container of the corresponding `marker` object, which must be the active node.
+  Adds all child nodes to the parent without adding an intermediate node.
+  This results in the same tree as if `start_container()` had never been called, and all children just added directly.
+  The parent node will become active node again.
+
+`cancel_container`::
+  Cancels construction of a container of the corresponding `marker` object, which must be the active node.
+  All children of the container will be removed from the parse tree;
+  it is returned to the same state it had before the corresponding `cancel_container` call.
+
+`token`::
+  Construct a new token node and push it to the active node's list of children.
+  The node will have the specified {{% docref "lexy::token_kind" %}} and the lexeme `[begin, end)` of the input.
++
+If `kind.ignore_if_empty() == true` and `begin == end`, no token node is constructed.
 
 === Container interface
 
