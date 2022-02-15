@@ -168,10 +168,12 @@ TEST_CASE("dsl::delimited(open, close)")
         auto custom = LEXY_VERIFY("(a\xE4-c)");
         CHECK(custom.status == test_result::success);
         CHECK(custom.value == 4);
+        CHECK(custom.trace == test_trace().literal("(").token("a\\xE4-c").literal(")"));
 
         auto custom_end = LEXY_VERIFY("(a\xE4)");
         CHECK(custom_end.status == test_result::success);
         CHECK(custom_end.value == 2);
+        CHECK(custom_end.trace == test_trace().literal("(").token("a\\xE4").literal(")"));
 
         auto unterminated = LEXY_VERIFY("(ab");
         CHECK(unterminated.status == test_result::fatal_error);

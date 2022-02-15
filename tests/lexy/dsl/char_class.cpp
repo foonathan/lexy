@@ -272,6 +272,9 @@ TEST_CASE("character class alternative")
         // It should match in byte and default encodings though
         auto default_ = LEXY_VERIFY(lexy::default_encoding{}, "\xE4");
         CHECK(default_.status == test_result::success);
+
+        auto byte_ = LEXY_VERIFY(lexy::byte_encoding{}, 0xE4);
+        CHECK(byte_.status == test_result::success);
     }
 
     SUBCASE("multiple literals")
