@@ -64,11 +64,6 @@ Each char class rule has the same parsing behavior:</p>
 </div>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Requires</dt>
-<dd>
-<p>If the char class contains non-ASCII characters, the input <a href=/reference/encoding/#doc>encoding</a> has to be ASCII, UTF-8, UTF-16, or UTF-32.
-In particular, <a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a> and <a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a> are not supported in that case.</p>
-</dd>
 <dt class=hdlist1>Matching</dt>
 <dd>
 <div class=ulist>
@@ -79,7 +74,7 @@ Checks if that character is part of the char class.</p>
 </li>
 <li>
 <p>Otherwise, if the char class contains non-ASCII characters, matches and consumes all code points that form a code point in this encoding.
-For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
+For ASCII, UTF-32, <a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a> and <a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a>, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
 Checks if that code point is part of the char class.</p>
 </li>
 </ul>
@@ -358,7 +353,7 @@ Its name is <code>intersection</code>.</p>
 </div>
 </section><section id=see-also>
 <h2>See also</h2>
-<ul><li><a href=/reference/dsl/token/#error><code>.error</code></a></li><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/literal/#lit_c><code>lexy::dsl::lit_c</code></a></li><li><a href=/reference/dsl/literal/#lit_cp><code>lexy::dsl::lit_cp</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/encoding/#doc>input encodings</a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
+<ul><li><a href=/reference/dsl/token/#error><code>.error</code></a></li><li><a href=/reference/dsl/token/#kind><code>.kind</code></a></li><li><a href=/reference/dsl/char_class/#doc>char class rules</a></li><li><a href=/reference/encoding/#encoding><code>lexy::byte_encoding</code></a></li><li><a href=/reference/encoding/#encoding><code>lexy::default_encoding</code></a></li><li><a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a></li><li><a href=/reference/dsl/literal/#lit_c><code>lexy::dsl::lit_c</code></a></li><li><a href=/reference/dsl/literal/#lit_cp><code>lexy::dsl::lit_cp</code></a></li><li><a href=/reference/error/#expected_char_class><code>lexy::expected_char_class</code></a></li><li><a href=/reference/dsl/token/#doc>token rules</a></li></ul>
 </section></article>
 <datalist id=dsl-goto-data></datalist>
 <script>window.addEventListener('load',async function(){var a=await(await fetch("/reference/index.json")).json(),c=document.getElementById('dsl-goto-data'),d=document.getElementById('dsl-goto-form'),b=document.getElementById('dsl-goto-search');for(let b in a){let d=document.createElement('option');b.startsWith("lexy_")?d.value=b.toUpperCase():d.value=b,c.appendChild(d)}d.addEventListener('submit',function(d){d.preventDefault();let c=a[b.value.toLowerCase()];return c?window.location.href=c:b.value="",!1})})</script>
