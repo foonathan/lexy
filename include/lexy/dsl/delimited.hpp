@@ -57,6 +57,26 @@ struct _del_chars
         {
             reader.bump();
         }
+        // Then, try to match any code point in default_encoding or byte_encoding
+        else if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> ||
+                           std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
+        {
+            LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+                        "EOF should be checked before calling this");
+
+            auto recover_begin = reader.position();
+            auto cp =  static_cast<char32_t>(reader.peek());
+            reader.bump();
+
+            if (CharClass::char_class_match_cp(cp))
+            {
+                reader.set_position(reader.position());
+            } else {
+                finish(context, sink, recover_begin);
+                _recover(context, recover_begin, reader.position());
+                reader.set_position(reader.position());
+            }
+        }
         // Otherwise, try to match Unicode characters.
         else if constexpr (!std::is_same_v<decltype(CharClass::char_class_match_cp(char32_t())),
                                            std::false_type>)
