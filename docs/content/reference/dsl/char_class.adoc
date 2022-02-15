@@ -22,14 +22,11 @@ concept _char-class-rule_ = _token-rule_<T> && …;
 A _char class rule_ is a special {{% token-rule %}} that matches a single code point from a given set, the _char class_.
 Each char class rule has the same parsing behavior:
 
-Requires::
-  If the char class contains non-ASCII characters, the input {{% encoding %}} has to be ASCII, UTF-8, UTF-16, or UTF-32.
-  In particular, {{% docref "lexy::default_encoding" %}} and {{% docref "lexy::byte_encoding" %}} are not supported in that case.
 Matching::
   * If the current code unit is an ASCII character, matches and consumes it.
     Checks if that character is part of the char class.
   * Otherwise, if the char class contains non-ASCII characters, matches and consumes all code points that form a code point in this encoding.
-    For ASCII and UTF-32, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
+    For ASCII, UTF-32, {{% docref "lexy::default_encoding" %}} and {{% docref "lexy::byte_encoding" %}}, this is always a single code unit, for UTF-8, this is up to 4 code units, and for UTF-16, this is up to 2 code units.
     Checks if that code point is part of the char class.
 Errors::
   {{% docref "lexy::expected_char_class" %}} with the name of the char class, at the starting reader position if

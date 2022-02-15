@@ -57,21 +57,41 @@ struct _del_chars
         {
             reader.bump();
         }
-        // Otherwise, try to match Unicode characters.
         else if constexpr (!std::is_same_v<decltype(CharClass::char_class_match_cp(char32_t())),
                                            std::false_type>)
         {
-            auto result = lexy::_detail::parse_code_point(reader);
-            if (result.error == lexy::_detail::cp_error::success
-                && CharClass::char_class_match_cp(result.cp))
+            // Try to match any code point in default_encoding or byte_encoding.
+            if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> ||
+                          std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
             {
-                reader.set_position(result.end);
+                LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+                            "EOF should be checked before calling this");
+
+                auto recover_begin = reader.position();
+                auto cp =  static_cast<char32_t>(reader.peek());
+                reader.bump();
+
+                if (!CharClass::char_class_match_cp(cp))
+                {
+                    finish(context, sink, recover_begin);
+                    _recover(context, recover_begin, reader.position());
+                }
             }
+            // Otherwise, try to match Unicode characters.
             else
             {
-                finish(context, sink, reader.position());
-                _recover(context, reader.position(), result.end);
-                reader.set_position(result.end);
+                auto result = lexy::_detail::parse_code_point(reader);
+                if (result.error == lexy::_detail::cp_error::success
+                    && CharClass::char_class_match_cp(result.cp))
+                {
+                    reader.set_position(result.end);
+                }
+                else
+                {
+                    finish(context, sink, reader.position());
+                    _recover(context, reader.position(), result.end);
+                    reader.set_position(result.end);
+                }
             }
         }
         // It doesn't match Unicode characters.

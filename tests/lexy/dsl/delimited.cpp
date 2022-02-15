@@ -138,6 +138,57 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(whitespace.trace
               == test_trace().literal("(").token(".abc.").literal(")").whitespace("."));
     }
+    SUBCASE("as rule with custom char class")
+    {
+        constexpr auto class_ = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::ascii::punct / dsl::lit_cp<0xE4>);
+        constexpr auto rule = delimited(class_);
+        CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_literal(0, "(", 0).cancel());
+
+        auto zero = LEXY_VERIFY("()");
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.value == 0);
+        CHECK(zero.trace == test_trace().literal("(").literal(")"));
+        auto one = LEXY_VERIFY("(a)");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace == test_trace().literal("(").token("a").literal(")"));
+        auto two = LEXY_VERIFY("(ab)");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace == test_trace().literal("(").token("ab").literal(")"));
+        auto three = LEXY_VERIFY("(abc)");
+        CHECK(three.status == test_result::success);
+        CHECK(three.value == 3);
+        CHECK(three.trace == test_trace().literal("(").token("abc").literal(")"));
+
+        auto custom = LEXY_VERIFY("(a\xE4-c)");
+        CHECK(custom.status == test_result::success);
+        CHECK(custom.value == 4);
+        CHECK(custom.trace == test_trace().literal("(").token("a\\xE4-c").literal(")"));
+
+        auto custom_end = LEXY_VERIFY("(a\xE4)");
+        CHECK(custom_end.status == test_result::success);
+        CHECK(custom_end.value == 2);
+        CHECK(custom_end.trace == test_trace().literal("(").token("a\\xE4").literal(")"));
+
+        auto unterminated = LEXY_VERIFY("(ab");
+        CHECK(unterminated.status == test_result::fatal_error);
+        CHECK(unterminated.trace
+              == test_trace().literal("(").token("ab").error(1, 3, "missing delimiter").cancel());
+
+        struct production : test_production_for<decltype(rule)>, with_whitespace
+        {};
+
+        auto whitespace = LEXY_VERIFY_P(production, "(.abc.).");
+        CHECK(whitespace.status == test_result::success);
+        CHECK(whitespace.value == 5);
+        CHECK(whitespace.trace
+              == test_trace().literal("(").token(".abc.").literal(")").whitespace("."));
+    }
     SUBCASE("as branch")
     {
         constexpr auto rule = dsl::if_(delimited(dsl::ascii::character));

@@ -259,6 +259,24 @@ TEST_CASE("character class alternative")
         verify_failure<0x00E5, 0x00DF>(rule, "union");
     }
 
+    SUBCASE("arbitrary 8-bit code points")
+    {
+        static constexpr auto rule = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::lit_cp<0xE4>);
+        constexpr auto callback = token_callback;
+
+        // The rule should not match in ascii encoding
+        auto ascii = LEXY_VERIFY(lexy::ascii_encoding{}, "\xE4");
+        CHECK(ascii.status == test_result::fatal_error);
+        CHECK(ascii.trace == test_trace().expected_char_class(0, "my class").cancel());
+
+        // It should match in byte and default encodings though
+        auto default_ = LEXY_VERIFY(lexy::default_encoding{}, "\xE4");
+        CHECK(default_.status == test_result::success);
+
+        auto byte_ = LEXY_VERIFY(lexy::byte_encoding{}, 0xE4);
+        CHECK(byte_.status == test_result::success);
+    }
+
     SUBCASE("multiple literals")
     {
         constexpr auto rule = dsl::ascii::digit / dsl::lit_c<'a'> / dsl::lit_c<'b'>;
