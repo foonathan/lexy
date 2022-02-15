@@ -215,7 +215,7 @@ struct char_class_base : token_base<Derived>, _char_class_base
                 if (reader.peek() == Reader::encoding::eof())
                     return false;
 
-                auto cp = reader.peek();
+                auto cp = static_cast<char32_t>(reader.peek());
                 reader.bump();
 
                 if (!Derived::char_class_match_cp(cp))
