@@ -82,7 +82,7 @@ jobs:
         toolset: ['v142', 'ClangCL']
         build_type: [Debug, Release]
 
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - uses: actions/checkout@v2
