@@ -15,6 +15,8 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(LEXY_BUILD_TESTS      "whether or not tests should be built" ON)
     option(LEXY_BUILD_DOCS       "whether or not docs should be built" OFF)
 
+    option(LEXY_FORCE_CPP17      "whether or not Lexy should use C++17 even if compiler supports C++20" OFF)
+
     if(LEXY_BUILD_EXAMPLES)
         add_subdirectory(examples)
     endif()

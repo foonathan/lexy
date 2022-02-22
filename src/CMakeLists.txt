@@ -120,7 +120,15 @@ set(ext_header_files
 # Base target for common options.
 add_library(_lexy_base INTERFACE)
 target_sources(_lexy_base INTERFACE ${header_files})
-target_compile_features(_lexy_base INTERFACE cxx_std_17)
+if(LEXY_FORCE_CPP17)
+    target_compile_features(_lexy_base INTERFACE cxx_std_17)
+else()
+    if("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        target_compile_features(_lexy_base INTERFACE cxx_std_20)
+    else()
+        target_compile_features(_lexy_base INTERFACE cxx_std_17)
+    endif()
+endif()
 
 if (LEXY_USER_CONFIG_HEADER)
     if(EXISTS ${LEXY_USER_CONFIG_HEADER})
