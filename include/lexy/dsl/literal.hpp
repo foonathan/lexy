@@ -168,26 +168,40 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
     template <typename Reader>
     LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
     {
-        constexpr auto        cur_value = Trie.node_value[CurNode];
-        auto                  cur_pos   = reader.position();
-        [[maybe_unused]] auto cur_char  = reader.peek();
+        constexpr auto cur_value = Trie.node_value[CurNode];
+        if constexpr (((Trie.transition_from[CurNode + Indices] == CurNode) || ...))
+        {
+            auto                  cur_pos  = reader.position();
+            [[maybe_unused]] auto cur_char = reader.peek();
 
-        auto next_value = Trie.node_no_match;
-        (void)(_try_transition<Indices>(next_value, reader, cur_char) || ...);
-        if (next_value != Trie.node_no_match)
-            // We prefer a longer match.
-            return next_value;
+            auto next_value = Trie.node_no_match;
+            (void)(_try_transition<Indices>(next_value, reader, cur_char) || ...);
+            if (next_value != Trie.node_no_match)
+                // We prefer a longer match.
+                return next_value;
 
-        // We haven't found a longer match, return our match.
-        reader.set_position(cur_pos);
+            // We haven't found a longer match, return our match.
+            reader.set_position(cur_pos);
 
-        // But first, we need to check that we don't match that nodes char class.
-        constexpr auto char_class = Trie.node_char_class[CurNode];
-        if (_node_char_class<char_class, CharClasses...>::match(reader))
-            // The char class matched, so we can't match anymore.
-            return Trie.node_no_match;
+            // But first, we need to check that we don't match that nodes char class.
+            constexpr auto char_class = Trie.node_char_class[CurNode];
+            if (_node_char_class<char_class, CharClasses...>::match(reader))
+                // The char class matched, so we can't match anymore.
+                return Trie.node_no_match;
+            else
+                return cur_value;
+        }
         else
-            return cur_value;
+        {
+            // We don't have any matching transition, so return our value unconditionally.
+            // This prevents an unecessary `reader.peek()` call which breaks `lexy_ext::shell`.
+            // But first, we need to check that we don't match that nodes char class.
+            constexpr auto char_class = Trie.node_char_class[CurNode];
+            if (_node_char_class<char_class, CharClasses...>::match(reader))
+                return Trie.node_no_match;
+            else
+                return cur_value;
+        }
     }
 };
 } // namespace lexy::_detail
