@@ -7,12 +7,16 @@
 
 TEST_CASE("fold")
 {
-    constexpr auto cb = lexy::fold<int>({}, [](int lhs, auto rhs) { return lhs + int(rhs); });
+    constexpr auto cb = lexy::fold<int>(
+        {}, [](int lhs, int rhs) { return lhs + rhs; },
+        [](int lhs, float rhs) {
+            return lhs + int(rhs + 0.5); // NOLINT
+        });
 
     auto sink_cb = cb.sink();
     sink_cb(1);
     sink_cb(2);
-    sink_cb(3.14f);
+    sink_cb(2.72f);
     CHECK(LEXY_MOV(sink_cb).finish() == 6);
 }
 

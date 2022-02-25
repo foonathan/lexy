@@ -37,5 +37,43 @@ template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy
 
+namespace lexy
+{
+template <typename Fn>
+struct _fn_holder
+{
+    Fn fn;
+
+    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    {
+        return _detail::invoke(fn, LEXY_FWD(args)...);
+    }
+};
+
+template <typename Fn>
+using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
+
+template <typename... Fns>
+struct _overloaded : _fn_as_base<Fns>...
+{
+    constexpr explicit _overloaded(Fns... fns) : _fn_as_base<Fns>(LEXY_MOV(fns))... {}
+
+    using _fn_as_base<Fns>::operator()...;
+};
+
+template <typename... Op>
+constexpr auto _make_overloaded(Op&&... op)
+{
+    if constexpr (sizeof...(Op) == 1)
+        return (LEXY_FWD(op), ...);
+    else
+        return _overloaded(LEXY_FWD(op)...);
+}
+} // namespace lexy
+
 #endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
 

@@ -43,18 +43,20 @@ struct _fold
 };
 
 /// Sink that folds all the arguments with the binary operation op.
-template <typename T, typename Arg = T, typename Op>
-constexpr auto fold(Arg&& init, Op&& op)
+template <typename T, typename Arg = T, typename... Op>
+constexpr auto fold(Arg&& init, Op&&... op)
 {
-    return _fold<T, std::decay_t<Arg>, false, std::decay_t<Op>>{LEXY_FWD(init), LEXY_FWD(op)};
+    auto fn = _make_overloaded(LEXY_FWD(op)...);
+    return _fold<T, std::decay_t<Arg>, false, decltype(fn)>{LEXY_FWD(init), LEXY_MOV(fn)};
 }
 
 /// Sink that folds all the arguments with the binary operation op that modifies the
 /// result in-place.
-template <typename T, typename Arg = T, typename Op>
-constexpr auto fold_inplace(Arg&& init, Op&& op)
+template <typename T, typename Arg = T, typename... Op>
+constexpr auto fold_inplace(Arg&& init, Op&&... op)
 {
-    return _fold<T, std::decay_t<Arg>, true, std::decay_t<Op>>{LEXY_FWD(init), LEXY_FWD(op)};
+    auto fn = _make_overloaded(LEXY_FWD(op)...);
+    return _fold<T, std::decay_t<Arg>, true, decltype(fn)>{LEXY_FWD(init), LEXY_MOV(fn)};
 }
 } // namespace lexy
 

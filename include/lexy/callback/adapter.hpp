@@ -18,35 +18,12 @@
 
 namespace lexy
 {
-template <typename Fn>
-struct _fn_holder
-{
-    Fn fn;
-
-    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
-
-    template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
-    {
-        return _detail::invoke(fn, LEXY_FWD(args)...);
-    }
-};
-
-template <typename Fn>
-using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
-} // namespace lexy
-
-namespace lexy
-{
 template <typename ReturnType, typename... Fns>
-struct _callback : _fn_as_base<Fns>...
+struct _callback : _overloaded<Fns...>
 {
     using return_type = ReturnType;
 
-    constexpr explicit _callback(Fns... fns) : _fn_as_base<Fns>(fns)... {}
-
-    using _fn_as_base<Fns>::operator()...;
+    constexpr explicit _callback(Fns... fns) : _overloaded<Fns...>(LEXY_MOV(fns)...) {}
 };
 
 /// Creates a callback.
