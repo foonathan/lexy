@@ -24,7 +24,7 @@ namespace lexy
 [.lead]
 Sink that folds over all arguments.
 
-When `sink()` is called, creates a `T result` by copy construction from `init`.
+When `sink()` is called, creates a `T result` by constructing it from `T(init)`, if that is well-formed, and invoking `init()` otherwise.
 Every time the sink callback is invoked, folds the arguments via `result = std::invoke(make-overloaded(op...), std::move(result), args...)`.
 The final value of `result` is returned by `finish()`.
 
@@ -51,7 +51,7 @@ namespace lexy
 [.lead]
 Sink that folds over all arguments, modifying the current value.
 
-When `sink()` is called, creates a `T result` by copy construction from `init`.
+When `sink()` is called, creates a `T result` by constructing it from `T(init)`, if that is well-formed, and invoking `init()` otherwise.
 Every time the sink callback is invoked, folds the arguments via `std::invoke(make-overloaded(op...), result, args...)`,
 expecting that `op` modifies `result` to the new value.
 The final value of `result` is returned by `finish()`.

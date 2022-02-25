@@ -7,17 +7,28 @@
 
 TEST_CASE("fold")
 {
-    constexpr auto cb = lexy::fold<int>(
-        {}, [](int lhs, int rhs) { return lhs + rhs; },
-        [](int lhs, float rhs) {
-            return lhs + int(rhs + 0.5); // NOLINT
-        });
+    SUBCASE("initial value")
+    {
+        constexpr auto cb = lexy::fold<int>(
+            {}, [](int lhs, int rhs) { return lhs + rhs; },
+            [](int lhs, float rhs) {
+                return lhs + int(rhs + 0.5); // NOLINT
+            });
 
-    auto sink_cb = cb.sink();
-    sink_cb(1);
-    sink_cb(2);
-    sink_cb(2.72f);
-    CHECK(LEXY_MOV(sink_cb).finish() == 6);
+        auto sink_cb = cb.sink();
+        sink_cb(1);
+        sink_cb(2);
+        sink_cb(2.72f);
+        CHECK(LEXY_MOV(sink_cb).finish() == 6);
+    }
+    SUBCASE("initial callback")
+    {
+        constexpr auto cb
+            = lexy::fold<int>([] { return 42; }, [](int lhs, int rhs) { return lhs + rhs; });
+
+        auto sink_cb = cb.sink();
+        CHECK(LEXY_MOV(sink_cb).finish() == 42);
+    }
 }
 
 TEST_CASE("fold_inplace")

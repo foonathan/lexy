@@ -38,7 +38,10 @@ struct _fold
 
     constexpr auto sink() const
     {
-        return _sink_callback{T(_init), _op};
+        if constexpr (std::is_constructible_v<T, Arg>)
+            return _sink_callback{T(_init), _op};
+        else
+            return _sink_callback{_init(), _op};
     }
 };
 
