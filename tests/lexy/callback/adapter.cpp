@@ -65,6 +65,15 @@ TEST_CASE("callback")
         CHECK(callback(0) == 42);
         CHECK(callback(11) == 53);
     }
+    SUBCASE("from other callbacks")
+    {
+        constexpr auto callback
+            = lexy::callback(lexy::callback<int>([](int arg) { return 2 * arg; }),
+                             lexy::callback<float>([](float f) { return f + 1.5; }));
+        CHECK(std::is_same_v<decltype(callback)::return_type, float>);
+        CHECK(callback(4) == 8);
+        CHECK(callback(2.f) == 3.5);
+    }
 }
 
 TEST_CASE("callback from sink")

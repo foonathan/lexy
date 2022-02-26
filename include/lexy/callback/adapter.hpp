@@ -26,8 +26,25 @@ struct _callback : _overloaded<Fns...>
     constexpr explicit _callback(Fns... fns) : _overloaded<Fns...>(LEXY_MOV(fns)...) {}
 };
 
+template <typename... Fns>
+decltype(auto) _callback_return_type()
+{
+    if constexpr ((lexy::is_callback<Fns> && ...))
+        return std::common_type_t<typename Fns::return_type...>{};
+    else
+        return; // void
+}
+
 /// Creates a callback.
-template <typename ReturnType = void, typename... Fns>
+template <typename... Fns>
+constexpr auto callback(Fns&&... fns)
+{
+    using return_type = decltype(_callback_return_type<std::decay_t<Fns>...>());
+    return _callback<return_type, std::decay_t<Fns>...>(LEXY_FWD(fns)...);
+}
+
+/// Creates a callback.
+template <typename ReturnType, typename... Fns>
 constexpr auto callback(Fns&&... fns)
 {
     return _callback<ReturnType, std::decay_t<Fns>...>(LEXY_FWD(fns)...);

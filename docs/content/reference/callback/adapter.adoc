@@ -15,17 +15,20 @@ Adapt a function object or sink into a callback.
 ----
 namespace lexy
 {
-    template <typename ReturnType = void, typename ... Fns>
+    template <typename ReturnType = _see-below_, typename ... Fns>
     constexpr _callback_ auto callback(Fns&&... fns);
 }
 ----
 
 [.lead]
-Turns a regular invocable into a callback by specifying the return type.
+Turns a regular invocable into a callback by specifying the return type, or creates an overload set of existing callbacks.
 
 The returned callback will take arbitrary arguments and perform overload resolution on the `fns`,
 which must be invocables.
 The result must return an object of the specified `ReturnType`.
+
+If no `ReturnType` is specified and all `fns` are itself _callbacks_, it will be the common type of all their return types.
+Otherwise, it defaults to `void`.
 
 {{% godbolt-example "callback" "Build a callback from lambdas" %}}
 
