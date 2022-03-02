@@ -6,6 +6,11 @@ set_target_properties(lexy_example_tutorial PROPERTIES OUTPUT_NAME "tutorial")
 target_sources(lexy_example_tutorial PRIVATE tutorial.cpp)
 target_link_libraries(lexy_example_tutorial PRIVATE foonathan::lexy::dev foonathan::lexy::file)
 
+add_executable(lexy_example_calculator)
+set_target_properties(lexy_example_calculator PROPERTIES OUTPUT_NAME "calculator")
+target_sources(lexy_example_calculator PRIVATE calculator.cpp)
+target_link_libraries(lexy_example_calculator PRIVATE foonathan::lexy::dev foonathan::lexy::unicode)
+
 add_executable(lexy_example_email)
 set_target_properties(lexy_example_email PROPERTIES OUTPUT_NAME "email")
 target_sources(lexy_example_email PRIVATE email.cpp)
