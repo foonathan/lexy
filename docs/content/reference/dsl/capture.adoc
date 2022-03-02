@@ -1,49 +1,17 @@
 ---
 header: "lexy/dsl/capture.hpp"
 entities:
-  "lexy::dsl::capture_token": capture_token
   "lexy::dsl::capture": capture
 ---
 
 [#capture]
-== Rule `lexy::dsl::capture`
+== Branch rule `lexy::dsl::capture`
 
 {{% interface %}}
 ----
 namespace lexy::dsl
 {
-    constexpr _rule_        auto capture(_rule_        auto rule);
-    constexpr _branch-rule_ auto capture(_branch-rule_ auto rule);
-}
-----
-
-[.lead]
-`capture` is a rule that parses `rule` capturing everything it has consumed as a value.
-
-(Branch) Parsing::
-  Parses `rule` unchanged.
-Errors::
-  All errors raised by `rule`.
-  The rule then fails if `rule` has failed.
-Values::
-  A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `rule`,
-  followed by all values produced by `rule`.
-
-{{% godbolt-example capture "Get a single code point" %}}
-
-CAUTION: If a {{% token-rule %}} is captured, the `lexy::lexeme` includes the automatic whitespace skipped after the token.
-Use {{% docref "lexy::dsl::capture_token" %}} or {{% docref "lexy::dsl::identifier" %}} instead.
-
-TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
-
-[#capture_token]
-== Branch rule `lexy::dsl::capture_token`
-
-{{% interface %}}
-----
-namespace lexy::dsl
-{
-    constexpr _branch-rule_ auto capture_token(_token-rule_ auto token);
+    constexpr _branch-rule_ auto capture(_token-rule_ auto token);
 }
 ----
 
@@ -57,6 +25,8 @@ Errors::
   The rule then fails if `token` has failed.
 Values::
   A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `token` except any trailing whitespace.
+
+{{% godbolt-example capture "Get a single code point" %}}
 
 TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref "lexy::lexeme" %}} to a string.
 

@@ -196,8 +196,8 @@ the other rule does not have access to context variables, and any context modifi
 [%collapsible]
 .Values
 =====
-{{% docref "lexy::dsl::capture" %}} and {{% docref "lexy::dsl::capture_token" %}}::
-  capture everything consumed by a rule
+{{% docref "lexy::dsl::capture" %}}::
+  capture everything consumed by a token rule
 {{% docref "lexy::dsl::position" %}}::
   produce the current input position
 {{% docref "lexy::dsl::nullopt" %}}::

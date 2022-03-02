@@ -319,8 +319,8 @@ struct _sym : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Capture the token and continue with special continuation.
-            return lexy::parser_for<_capt<Token>, _cont<Args...>>::parse(context, reader,
-                                                                         LEXY_FWD(args)...);
+            return lexy::parser_for<_cap<Token>, _cont<Args...>>::parse(context, reader,
+                                                                        LEXY_FWD(args)...);
         }
     };
 

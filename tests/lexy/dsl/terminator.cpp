@@ -170,7 +170,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".list(branch)")
     {
         constexpr auto rule
-            = term.limit(dsl::lit_c<';'>).list(dsl::capture(LEXY_LIT("ab") >> LEXY_LIT("c")));
+            = term.limit(dsl::lit_c<';'>).list(LEXY_LIT("ab") >> dsl::capture(LEXY_LIT("c")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         constexpr auto callback
@@ -276,7 +276,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".list(rule)")
     {
         constexpr auto rule
-            = term.limit(dsl::lit_c<';'>).list(dsl::capture(LEXY_LIT("ab") + LEXY_LIT("c")));
+            = term.limit(dsl::lit_c<';'>).list(LEXY_LIT("ab") + dsl::capture(LEXY_LIT("c")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         constexpr auto callback
@@ -368,7 +368,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".list(branch, sep)")
     {
         constexpr auto rule = term.limit(dsl::lit_c<';'>)
-                                  .list(dsl::capture(LEXY_LIT("ab") >> LEXY_LIT("c")),
+                                  .list(LEXY_LIT("ab") >> dsl::capture(LEXY_LIT("c")),
                                         dsl::sep((dsl::lit_c<','>) >> dsl::lit_c<','>));
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -559,7 +559,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".list(rule, sep)")
     {
         constexpr auto rule = term.limit(dsl::lit_c<';'>)
-                                  .list(dsl::capture(LEXY_LIT("ab") + LEXY_LIT("c")),
+                                  .list(LEXY_LIT("ab") + dsl::capture(LEXY_LIT("c")),
                                         dsl::sep((dsl::lit_c<','>) >> dsl::lit_c<','>));
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -750,7 +750,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".list(branch, trailing_sep)")
     {
         constexpr auto rule = term.limit(dsl::lit_c<';'>)
-                                  .list(dsl::capture(LEXY_LIT("ab") >> LEXY_LIT("c")),
+                                  .list(LEXY_LIT("ab") >> dsl::capture(LEXY_LIT("c")),
                                         dsl::trailing_sep((dsl::lit_c<','>) >> dsl::lit_c<','>));
         CHECK(lexy::is_rule<decltype(rule)>);
 
@@ -783,7 +783,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".opt_list(rule)")
     {
         constexpr auto rule
-            = term.limit(dsl::lit_c<';'>).opt_list(dsl::capture(LEXY_LIT("ab") >> LEXY_LIT("c")));
+            = term.limit(dsl::lit_c<';'>).opt_list(LEXY_LIT("ab") >> dsl::capture(LEXY_LIT("c")));
         CHECK(lexy::is_rule<decltype(rule)>);
 
         constexpr auto callback
@@ -835,7 +835,7 @@ TEST_CASE("dsl::terminator()")
     SUBCASE(".opt_list(rule, sep)")
     {
         constexpr auto rule = term.limit(dsl::lit_c<';'>)
-                                  .opt_list(dsl::capture(LEXY_LIT("ab") >> LEXY_LIT("c")),
+                                  .opt_list(LEXY_LIT("ab") >> dsl::capture(LEXY_LIT("c")),
                                             dsl::sep(dsl::lit_c<','>));
         CHECK(lexy::is_rule<decltype(rule)>);
 

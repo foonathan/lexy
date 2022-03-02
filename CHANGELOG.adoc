@@ -3,6 +3,14 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2022-03-02
+
+BEHAVIOR CHANGE: `dsl::capture_token()` is now `dsl::capture()`, old `dsl::capture()` is removed.
+If you're using `dsl::capture_token()` you need to rename it to `dsl::capture()` (compile error).
+If you're using `dsl::capture()` on a non-token rule, you need to use `dsl::scan` instead and manually produce the value (compile error).
+If you're using `dsl::capture()` on a token, this will no longer capture trailing whitespace (silent behavior change).
+I can't imagine a situation where capturing trailing whitespace was intended.
+
 == 2022-02-09
 
 * BEHAVIOR CHANGE: `dsl::newline` (and `dsl::eol` in the newline case) generate a token node with the `lexy::literal_token_kind`;

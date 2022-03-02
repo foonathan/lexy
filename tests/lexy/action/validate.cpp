@@ -5,7 +5,6 @@
 
 #include <doctest/doctest.h>
 #include <lexy/callback/adapter.hpp>
-#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/production.hpp>
@@ -23,7 +22,7 @@ struct prod_a
 struct prod_b
 {
     static constexpr auto name = "prod_b";
-    static constexpr auto rule = LEXY_LIT("(") + capture(lexy::dsl::p<prod_a>) + LEXY_LIT(")");
+    static constexpr auto rule = LEXY_LIT("(") + lexy::dsl::p<prod_a> + LEXY_LIT(")");
 };
 } // namespace
 

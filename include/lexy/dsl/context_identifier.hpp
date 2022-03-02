@@ -134,8 +134,8 @@ struct _ctx_irem : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Capture the pattern and continue with special continuation.
-            return lexy::parser_for<_capt<_pattern>, _cont<Args...>>::parse(context, reader,
-                                                                            LEXY_FWD(args)...);
+            return lexy::parser_for<_cap<_pattern>, _cont<Args...>>::parse(context, reader,
+                                                                           LEXY_FWD(args)...);
         }
     };
 
