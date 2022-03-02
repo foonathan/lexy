@@ -106,8 +106,8 @@ struct manual_ws_parser<void, NextParser> : NextParser
 {};
 
 template <typename Context>
-using context_whitespace
-    = lexy::production_whitespace<typename Context::production, typename Context::root_production>;
+using context_whitespace = lexy::production_whitespace<typename Context::production,
+                                                       typename Context::whitespace_production>;
 
 template <typename NextParser>
 struct automatic_ws_parser

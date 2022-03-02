@@ -45,10 +45,10 @@ TEST_CASE("production traits simple")
 TEST_CASE("production_whitespace")
 {
     CHECK(std::is_same_v<const lexy::production_whitespace<prod_token, prod_ws>, const void>);
-    CHECK(
-        std::is_same_v<const lexy::production_whitespace<prod, prod_ws>, decltype(lexy::dsl::any)>);
-    CHECK(
-        std::is_same_v<const lexy::production_whitespace<prod_ws, prod>, decltype(lexy::dsl::any)>);
+    CHECK(std::is_same_v<const lexy::production_whitespace<prod, prod_ws>, //
+                         decltype(lexy::dsl::any)>);
+    CHECK(std::is_same_v<const lexy::production_whitespace<prod_ws, prod>, //
+                         decltype(lexy::dsl::any)>);
     CHECK(std::is_same_v<const lexy::production_whitespace<prod, prod>, const void>);
 }
 

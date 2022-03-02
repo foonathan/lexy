@@ -146,9 +146,9 @@ using _value_callback_for = lexy::production_value_callback<
 template <typename Context, typename ValueCallback = _value_callback_for<Context>>
 struct spc_child
 {
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
-    using value_type      = typename ValueCallback::return_type;
+    using production            = typename Context::production;
+    using whitespace_production = typename Context::whitespace_production;
+    using value_type            = typename ValueCallback::return_type;
 
     decltype(Context::handler)       handler;
     decltype(Context::control_block) control_block;
@@ -184,9 +184,9 @@ struct spc_child
 template <typename T, typename Context>
 struct spc
 {
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
-    using value_type      = T;
+    using production            = typename Context::production;
+    using whitespace_production = typename Context::whitespace_production;
+    using value_type            = T;
 
     decltype(Context::handler)&      handler;
     decltype(Context::control_block) control_block;
@@ -499,8 +499,7 @@ template <typename Context, typename Reader>
 class rule_scanner : public _detail::scanner<rule_scanner<Context, Reader>, Reader>
 {
 public:
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
+    using production = typename Context::production;
 
     constexpr std::size_t recursion_depth() const noexcept
     {

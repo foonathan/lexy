@@ -183,6 +183,31 @@ TEST_CASE("dsl::whitespace")
         CHECK(ws.status == test_result::success);
         CHECK(ws.trace == test_trace().production("inner").whitespace(".."));
     }
+    SUBCASE("indirect non-root parent has whitespace")
+    {
+        struct inner : production_for<decltype(rule)>
+        {
+            static constexpr auto name()
+            {
+                return "inner";
+            }
+        };
+
+        struct mid : production_for<decltype(dsl::p<inner>)>, with_whitespace
+        {
+            static constexpr auto name()
+            {
+                return "mid";
+            }
+        };
+
+        struct production : test_production_for<decltype(dsl::p<mid>)>
+        {};
+
+        auto ws = LEXY_VERIFY_P(production, "..abc");
+        CHECK(ws.status == test_result::success);
+        CHECK(ws.trace == test_trace().production("mid").production("inner").whitespace(".."));
+    }
     SUBCASE("token production disables whitespace")
     {
         struct inner : production_for<decltype(rule)>, lexy::token_production

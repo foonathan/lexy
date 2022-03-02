@@ -172,7 +172,11 @@ namespace lexy
 template <typename Production>
 using _detect_whitespace = decltype(Production::whitespace);
 
-template <typename Production, typename Root>
+template <typename Production>
+constexpr auto _production_defines_whitespace
+    = lexy::_detail::is_detected<_detect_whitespace, Production>;
+
+template <typename Production, typename WhitespaceProduction>
 auto _production_whitespace()
 {
     if constexpr (is_token_production<Production>)
@@ -180,21 +184,21 @@ auto _production_whitespace()
         // Token productions don't have whitespace.
         return;
     }
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
+    else if constexpr (_production_defines_whitespace<Production>)
     {
         // We have whitespace defined in the production.
         return Production::whitespace;
     }
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
+    else if constexpr (_production_defines_whitespace<WhitespaceProduction>)
     {
-        // We have whitespace defined in the root.
-        return Root::whitespace;
+        // We have whitespace defined in the whitespace production.
+        return WhitespaceProduction::whitespace;
     }
 
     // If we didn't have any cases, function returns void.
 }
-template <typename Production, typename Root>
-using production_whitespace = decltype(_production_whitespace<Production, Root>());
+template <typename Production, typename WhitespaceProduction>
+using production_whitespace = decltype(_production_whitespace<Production, WhitespaceProduction>());
 } // namespace lexy
 
 namespace lexy

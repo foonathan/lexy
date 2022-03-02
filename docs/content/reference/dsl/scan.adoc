@@ -22,7 +22,6 @@ namespace lexy
     {
     public:
         using production      = _current-production_;
-        using root_production = _current-root-production_;
 
         // Current recursion depth.
         constexpr std::size_t recursion_depth() const noexcept;

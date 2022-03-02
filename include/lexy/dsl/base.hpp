@@ -194,7 +194,7 @@ namespace lexy
 {
 template <typename Context, typename NextParser,
           typename = lexy::production_whitespace<typename Context::production,
-                                                 typename Context::root_production>>
+                                                 typename Context::whitespace_production>>
 struct whitespace_parser : _detail::automatic_ws_parser<NextParser>
 {};
 // If we know the whitespace rule is void, go to NextParser immediately.

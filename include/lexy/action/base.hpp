@@ -82,12 +82,18 @@ namespace _detail
     };
 } // namespace _detail
 
+// If a production doesn't define whitespace, we don't need to pass it and can shorten the template
+// name.
+template <typename Production>
+using _whitespace_production_of
+    = std::conditional_t<_production_defines_whitespace<Production>, Production, void>;
+
 template <typename Handler, typename State, typename Production,
-          typename RootProduction = Production>
+          typename WhitespaceProduction = _whitespace_production_of<Production>>
 struct _pc
 {
-    using production      = Production;
-    using root_production = RootProduction;
+    using production            = Production;
+    using whitespace_production = WhitespaceProduction;
     using value_type = typename Handler::template value_callback<Production, State>::return_type;
 
     typename Handler::template event_handler<Production>  handler;
@@ -101,10 +107,14 @@ struct _pc
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction)
     {
-        // Update the root production if necessary.
-        using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
-                                            ChildProduction, RootProduction>;
-        return _pc<Handler, State, ChildProduction, new_root>(control_block);
+        // Update the whitespace production if necessary.
+        // If the current production is a token or defines whitespace,
+        // we change it to the current production (or void), otherwise keep it.
+        using new_whitespace_production
+            = std::conditional_t<is_token_production<ChildProduction> //
+                                     || _production_defines_whitespace<ChildProduction>,
+                                 _whitespace_production_of<ChildProduction>, WhitespaceProduction>;
+        return _pc<Handler, State, ChildProduction, new_whitespace_production>(control_block);
     }
 
     constexpr auto value_callback()

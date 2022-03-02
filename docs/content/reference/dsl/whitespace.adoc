@@ -86,10 +86,9 @@ It behaves exactly identical to the manual `whitespace(ws)` overload, where `ws`
 1. If automatic whitespace skipping has been disabled (e.g. by using `lexy::dsl::no_whitespace()`),
    `ws` is the rule that matches the empty string.
    As such, `whitespace` does not advance the reader.
-2. If {{% docref "lexy::production_whitespace" %}} for the current production and the root production is non-void, `ws` is that rule.
-   Here, the root production is determined by following any `lexy::dsl::p` or `lexy::dsl::recurse` calls backwards,
-   until either the top-level production originally passed to a parse function or a production inheriting from {{% docref "lexy::token_production" %}} is reached.
-   This is then the root production.
+2. If {{% docref "lexy::production_whitespace" %}} for the current production and the whitespace production is non-void, `ws` is that rule.
+   Here, the whitespace production is determined by following any `lexy::dsl::p` or `lexy::dsl::recurse` calls backwards,
+   until a production that defines a `::whitespace` member, the top-level production originally passed to a parse function, or a production inheriting from {{% docref "lexy::token_production" %}} is reached.
 3. Otherwise (if it is `void`), `ws` is the rule that matches the empty string and `whitespace` does not advance the reader at all.
 
 This rule is automatically parsed after every {{% token-rule %}}, a {{% docref "lexy::dsl::p" %}} or {{% docref "lexy::dsl::recurse" %}} rule that parses a production inheriting from {{% docref "lexy::token_production" %}}, or after a {{% docref "lexy::dsl::no_whitespace" %}} rule.
@@ -104,16 +103,13 @@ Note that unless whitespace has been defined, this has no effect.
 [NOTE]
 =====
 As seen in the example above, directly inside the {{% docref "lexy::token_production" %}} `inner_token_whitespace` all whitespace skipping is disabled, even if it has a `::whitespace` member.
-This is because the last token rule of the production (the `')'`) would skip whitespace according to the current `::whitespace` member (`'_'`).
-However, the `lexy::dsl::p` production of the parent that started the parse (`production`), also skips whitespace, but according to the `::whitespace` member of its root production (`'+'`).
+This is because the last token rule of the production (the `')'` ) would skip whitespace according to the current `::whitespace` member (`'_'`).
+However, the `lexy::dsl::p` production of the parent that started the parse (`production`), also skips whitespace, but according to the `::whitespace` member of its root production (`'+'` ).
 As such, we would skip two different whitespaces directly after each other.
 
 To enable whitespace skipping inside a token production, put all logic into a child production and directly and only parse that one via `lexy::dsl::p`.
 Inside the child production, whitespace is skipped again, as seen by the `inner_inner` production.
 =====
-
-CAUTION: If a non-root production has a `::whitespace` member, this defines whitespace only for this current production.
-Any child productions will not consider this rule, as the algorithm only considers the current production and the root production.
 
 TIP: Use `whitespace` to skip optional whitespace at the beginning of the input.
 

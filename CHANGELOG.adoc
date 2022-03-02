@@ -5,11 +5,13 @@ Until the first release is done, breaking changes -- but not new features -- are
 
 == 2022-03-02
 
-BEHAVIOR CHANGE: `dsl::capture_token()` is now `dsl::capture()`, old `dsl::capture()` is removed.
-If you're using `dsl::capture_token()` you need to rename it to `dsl::capture()` (compile error).
-If you're using `dsl::capture()` on a non-token rule, you need to use `dsl::scan` instead and manually produce the value (compile error).
-If you're using `dsl::capture()` on a token, this will no longer capture trailing whitespace (silent behavior change).
-I can't imagine a situation where capturing trailing whitespace was intended.
+* BEHAVIOR CHANGE: `dsl::capture_token()` is now `dsl::capture()`, old `dsl::capture()` is removed.
+  If you're using `dsl::capture_token()` you need to rename it to `dsl::capture()` (compile error).
+  If you're using `dsl::capture()` on a non-token rule, you need to use `dsl::scan` instead and manually produce the value (compile error).
+  If you're using `dsl::capture()` on a token, this will no longer capture trailing whitespace (silent behavior change).
+  I can't imagine a situation where capturing trailing whitespace was intended.
+* BEHAVIOR CHANGE: if a non-root production defines a `::whitespace` member, it will now also apply to all children.
+  Previously, it would only apply to the production that defined the member, and not it's children (except if it was a token production).
 
 == 2022-02-09
 

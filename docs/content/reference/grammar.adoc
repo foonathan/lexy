@@ -82,19 +82,19 @@ Returns the type of the {{% rule %}} of production, i.e. the type of `Production
 ----
 namespace lexy
 {
-    template <_production_ Production, _production_ RootProduction>
+    template <_production_ Production, _production_ WhitespaceProduction>
     using production_whitespace = _see-below_;
 }
 ----
 
 [.lead]
-Returns the type of the {{% docref "whitespace" %}} rule of `Production` in the context of `RootProduction`.
+Returns the type of the {{% docref "whitespace" %}} rule of `Production` given its last parent `WhitespaceProduction`.
 
 It is determined as follows:
 
 1. If `Production` inherits from {{% docref "lexy::token_production" %}}, the `production_whitespace` is `void`.
 2. If `Production::whitespace` is valid, returns the decayed type of that.
-3. If `RootProduction::whitespace` is valid, returns the decayed type of that.
+3. If `WhitespaceProduction::whitespace` is valid, returns the decayed type of that.
 4. Otherwise, returns `void`.
 
 This is used by {{% docref "lexy::dsl::whitespace" %}} during automatic whitespace skipping.
