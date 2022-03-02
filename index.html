@@ -1,14 +1,11 @@
 <!doctype html><html lang=en-us>
 <head>
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>
 lexy: C++ parser combinator library
-</title>
-<style>:root{--white:white;--background-color:#fdfdfd;--default-color:#101010;--heading-color:#0A0A0A;--link-color:#2A2A2A;--gray-highlight-color:#aaaaaa;--highlight-color:#2861ce}@media(prefers-color-scheme:dark){:root{--white:#202020;--background-color:#222222;--default-color:#efefef;--heading-color:#f5f5f5;--link-color:#d5d5d5;--gray-highlight-color:#555555}}nav#menu div.menu-container,main{max-width:1200px;margin:0 auto;padding:0 10px}@media(min-width:800px){article{max-width:900px;margin:0 auto;padding:0 10px}}html{position:relative;min-height:100%;margin:0;padding:0}body{font-family:serif;font-size:18px;color:var(--default-color);background-color:var(--background-color);width:100%;padding:0;margin:0}main{margin-bottom:75px}h1,h2,h3,h4,h5,h6{font-family:sans-serif;font-weight:700;line-height:1.15em;color:var(--heading-color);margin:0 0 .4em;hyphens:auto}h1{font-size:2em}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h5{font-size:1.15em}h6{font-size:1.1em}a,a svg,button svg{color:var(--link-color);transition:color ease .3s}a:hover,a svg:hover,button svg:hover{color:var(--highlight-color)}a:focus,a svg:focus,button svg:focus{outline:none}br{margin:1em}article p,article ul,article ol,article dl,article td{hyphens:auto;text-align:justify}nav#menu{width:100%;padding:0;background-color:var(--white);border-bottom:2px solid var(--highlight-color);font-family:sans-serif;font-size:1.3em}nav#menu div.menu-container{display:flex}nav#menu div.menu-container ul{display:flex;flex-direction:row;align-items:center;padding:0;list-style:none}nav#menu div.menu-container ul li a{text-decoration:none}nav#menu div.menu-container ul li a svg{height:1em}nav#menu div.menu-container ul li a.active{border-width:0 0 2px;border-style:solid;border-color:var(--highlight-color)}nav#menu div.menu-container ul#home{padding-left:0;padding-right:10px}nav#menu div.menu-container ul#home .title{font-weight:700}nav#menu div.menu-container ul#main{margin-left:auto}nav#menu div.menu-container ul#main li{padding-left:20px}@media(max-width:600px){nav#menu div.menu-container ul#main{flex-direction:column;align-items:flex-end;margin:5px 10px 0 auto}}footer#page-footer{position:absolute;bottom:0;left:0;right:0;height:2em;display:flex;justify-content:space-between;font-size:.8em;font-weight:200;line-height:1em;border-top:1px solid #ccc}footer#page-footer section{padding-left:1em;padding-right:1em;padding-top:.5em;width:100%}footer#page-footer .copyright{text-align:left}footer#page-footer .patreon{text-align:center}footer#page-footer .poweredby{text-align:right}@media(max-width:450px){footer#page-footer{flex-direction:column;align-items:flex-start}footer#page-footer section{text-align:initial!important;width:initial}}aside.toc{display:none}@media(min-width:1100px){aside.toc{display:initial;position:sticky;top:1em;float:left;width:300px}aside.toc header{font-weight:700}aside.toc ul{list-style:none;padding:0}aside.toc ul ul{padding-left:1em;padding-bottom:.5em}aside.toc a{text-decoration:none}aside.toc~article{padding-left:300px}}article header{margin-top:1em;margin-bottom:1em}article header nav{display:flex;flex-wrap:wrap}article header nav a{text-decoration:none;padding-right:7px}article header nav a svg{height:1em;position:relative;top:2px}@media(min-width:700px){article header nav form.search{margin-left:auto}}article header nav form.search input[type=search]{padding:2px;width:250px}article header nav form.search input[type=search]:focus{border-color:var(--highlight-color);outline:solid var(--highlight-color)1px}article header nav form.search button[type=submit]{margin-left:-25px;border:none;background:initial}article header nav form.search button[type=submit] svg{height:1em}article .lead p{font-weight:500;font-size:1.1em}article .admonitionblock{margin-bottom:1em}article .admonitionblock td.icon{font-weight:700}article .admonitionblock td.content div:first-child p{margin-top:0}article .admonitionblock td.content div:last-child p{margin-bottom:0}@media(max-width:600px){article .admonitionblock tr{display:block;float:left;padding-left:.5em;padding-right:.5em}article .admonitionblock tr td{display:block}}@media(min-width:600px){article .admonitionblock td.icon{width:75px;text-align:center;border-right:1px solid var(--gray-highlight-color)}article .admonitionblock td.content{padding-left:.5em}}article .exampleblock{margin-top:1em;margin-bottom:1em}article .exampleblock .title{font-style:italic}article a.github-example{text-decoration:none}article a.github-example svg{height:.8em;position:relative;top:2px}article .playground-example .title,article .godbolt-example .title{position:relative}article .playground-example .title a,article .godbolt-example .title a{position:absolute;top:7px;right:7px}article .playground-example .title a svg,article .godbolt-example .title a svg{height:1em}article details{margin-bottom:1em}article details summary{font-style:italic}article ul p,article ol p{margin:.2em}article div ul:not(:first-child),article div ol:not(:first-child){margin-top:0}article dl dt{margin-top:.5em;font-weight:700}article dl dd p,article dl dd div:only-child ul{margin:0;padding:0}article div dl:not(:first-child){margin-top:0}article table.tableblock{background:var(--white);margin:0 auto;border-collapse:collapse}article table.tableblock td,article table.tableblock th{border:1px solid var(--gray-highlight-color);padding:5px;text-align:left}article table.tableblock td p,article table.tableblock th p{margin:0}article div.sidebarblock{border:1px solid var(--gray-highlight-color);padding:.75em;margin:1em}article div.sidebarblock p{margin:0}article code{font-family:Inconsolata,monospace,sans-serif}article pre{margin:0;overflow:auto;padding:10px;background:var(--white);border:1px solid var(--gray-highlight-color);line-height:1.1}article .colist{margin-top:-.5em}article .colist ol{counter-reset:list}article .colist ol li{counter-increment:list;padding-left:1em}article .colist ol ::marker{content:"(" counter(list)")";font-weight:700}article .colist p{margin:0}.highlight .tok-c,.highlight .tok-cm,.highlight .tok-cp,.highlight .tok-c1,.highlight .tok-cs,.ace_editor .tok-c,.ace_editor .tok-cm,.ace_editor .tok-cp,.ace_editor .tok-c1,.ace_editor .tok-cs{color:#998;font-style:italic;font-weight:initial}.highlight .tok-k,.highlight .tok-kc,.highlight .tok-kd,.highlight .tok-kp,.highlight .tok-kr,.highlight .tok-kt,.highlight .ace_storage,.highlight .ace_keyword,.ace_editor .tok-k,.ace_editor .tok-kc,.ace_editor .tok-kd,.ace_editor .tok-kp,.ace_editor .tok-kr,.ace_editor .tok-kt,.ace_editor .ace_storage,.ace_editor .ace_keyword{color:#458;font-style:initial;font-weight:700}.highlight .tok-o,.highlight .tok-p,.highlight .ace_keyword.ace_operator,.highlight .ace_paren,.highlight .ace_punctuation,.ace_editor .tok-o,.ace_editor .tok-p,.ace_editor .ace_keyword.ace_operator,.ace_editor .ace_paren,.ace_editor .ace_punctuation{color:red;font-style:initial;font-weight:initial}.highlight .ace_dsl,.ace_editor .ace_dsl{pointer-events:auto}.highlight .tok-m,.highlight .tok-mf,.highlight .tok-mh,.highlight .tok-mi,.highlight .tok-mo,.highlight .ace_constant,.ace_editor .tok-m,.ace_editor .tok-mf,.ace_editor .tok-mh,.ace_editor .tok-mi,.ace_editor .tok-mo,.ace_editor .ace_constant{color:#ff8000;font-style:initial;font-weight:initial}.highlight .tok-s,.highlight .tok-sb,.highlight .tok-sc,.highlight .tok-sd,.highlight .tok-s2,.highlight .tok-s3,.highlight .tok-sh,.highlight .tok-si,.highlight .tok-sx,.highlight .tok-sr,.highlight .tok-s1,.highlight .tok-ss,.highlight .tok-se,.highlight .ace_string,.ace_editor .tok-s,.ace_editor .tok-sb,.ace_editor .tok-sc,.ace_editor .tok-sd,.ace_editor .tok-s2,.ace_editor .tok-s3,.ace_editor .tok-sh,.ace_editor .tok-si,.ace_editor .tok-sx,.ace_editor .tok-sr,.ace_editor .tok-s1,.ace_editor .tok-ss,.ace_editor .tok-se,.ace_editor .ace_string{color:green;font-style:initial;font-weight:initial}.highlight .tok-cp,.ace_editor .tok-cp{color:green;font-style:initial;font-weight:700}.highlight .tok-err,.highlight .ace_invalid,.ace_editor .tok-err,.ace_editor .ace_invalid{color:red;font-style:initial;font-weight:initial}.highlight strong,.ace_editor strong{font-weight:initial}.highlight strong:not(:empty)::before,.ace_editor strong:not(:empty)::before{content:"*";color:red}.highlight strong:not(:empty)::after,.ace_editor strong:not(:empty)::after{content:"*";color:red}</style>
-</head>
-<body>
+</title><style>:root{--white:white;--background-color:#fdfdfd;--default-color:#101010;--heading-color:#0A0A0A;--link-color:#2A2A2A;--gray-highlight-color:#aaaaaa;--highlight-color:#2861ce}@media(prefers-color-scheme:dark){:root{--white:#202020;--background-color:#222222;--default-color:#efefef;--heading-color:#f5f5f5;--link-color:#d5d5d5;--gray-highlight-color:#555555}}nav#menu div.menu-container,main{max-width:1200px;margin:0 auto;padding:0 10px}@media(min-width:800px){article{max-width:900px;margin:0 auto;padding:0 10px}}html{position:relative;min-height:100%;margin:0;padding:0}body{font-family:serif;font-size:18px;color:var(--default-color);background-color:var(--background-color);width:100%;padding:0;margin:0}main{margin-bottom:75px}h1,h2,h3,h4,h5,h6{font-family:sans-serif;font-weight:700;line-height:1.15em;color:var(--heading-color);margin:0 0 .4em;hyphens:auto}h1{font-size:2em}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h5{font-size:1.15em}h6{font-size:1.1em}a,a svg,button svg{color:var(--link-color);transition:color ease .3s}a:hover,a svg:hover,button svg:hover{color:var(--highlight-color)}a:focus,a svg:focus,button svg:focus{outline:none}br{margin:1em}article p,article ul,article ol,article dl,article td{hyphens:auto;text-align:justify}nav#menu{width:100%;padding:0;background-color:var(--white);border-bottom:2px solid var(--highlight-color);font-family:sans-serif;font-size:1.3em}nav#menu div.menu-container{display:flex}nav#menu div.menu-container ul{display:flex;flex-direction:row;align-items:center;padding:0;list-style:none}nav#menu div.menu-container ul li a{text-decoration:none}nav#menu div.menu-container ul li a svg{height:1em}nav#menu div.menu-container ul li a.active{border-width:0 0 2px;border-style:solid;border-color:var(--highlight-color)}nav#menu div.menu-container ul#home{padding-left:0;padding-right:10px}nav#menu div.menu-container ul#home .title{font-weight:700}nav#menu div.menu-container ul#main{margin-left:auto}nav#menu div.menu-container ul#main li{padding-left:20px}@media(max-width:600px){nav#menu div.menu-container ul#main{flex-direction:column;align-items:flex-end;margin:5px 10px 0 auto}}footer#page-footer{position:absolute;bottom:0;left:0;right:0;height:2em;display:flex;justify-content:space-between;font-size:.8em;font-weight:200;line-height:1em;border-top:1px solid #ccc}footer#page-footer section{padding-left:1em;padding-right:1em;padding-top:.5em;width:100%}footer#page-footer .copyright{text-align:left}footer#page-footer .patreon{text-align:center}footer#page-footer .poweredby{text-align:right}@media(max-width:450px){footer#page-footer{flex-direction:column;align-items:flex-start}footer#page-footer section{text-align:initial!important;width:initial}}aside.toc{display:none}@media(min-width:1100px){aside.toc{display:initial;position:sticky;top:1em;float:left;width:300px}aside.toc header{font-weight:700}aside.toc ul{list-style:none;padding:0}aside.toc ul ul{padding-left:1em;padding-bottom:.5em}aside.toc a{text-decoration:none}aside.toc~article{padding-left:300px}}article header{margin-top:1em;margin-bottom:1em}article header nav{display:flex;flex-wrap:wrap}article header nav a{text-decoration:none;padding-right:7px}article header nav a svg{height:1em;position:relative;top:2px}@media(min-width:700px){article header nav form.search{margin-left:auto}}article header nav form.search input[type=search]{padding:2px;width:250px}article header nav form.search input[type=search]:focus{border-color:var(--highlight-color);outline:solid var(--highlight-color)1px}article header nav form.search button[type=submit]{margin-left:-25px;border:none;background:initial}article header nav form.search button[type=submit] svg{height:1em}article .lead p{font-weight:500;font-size:1.1em}article .admonitionblock{margin-bottom:1em}article .admonitionblock td.icon{font-weight:700}article .admonitionblock td.content div:first-child p{margin-top:0}article .admonitionblock td.content div:last-child p{margin-bottom:0}@media(max-width:600px){article .admonitionblock tr{display:block;float:left;padding-left:.5em;padding-right:.5em}article .admonitionblock tr td{display:block}}@media(min-width:600px){article .admonitionblock td.icon{width:75px;text-align:center;border-right:1px solid var(--gray-highlight-color)}article .admonitionblock td.content{padding-left:.5em}}article .exampleblock{margin-top:1em;margin-bottom:1em}article .exampleblock .title{font-style:italic}article a.github-example{text-decoration:none}article a.github-example svg{height:.8em;position:relative;top:2px}article .playground-example .title,article .godbolt-example .title{position:relative}article .playground-example .title a,article .godbolt-example .title a{position:absolute;top:7px;right:7px}article .playground-example .title a svg,article .godbolt-example .title a svg{height:1em}article details{margin-bottom:1em}article details summary{font-style:italic}article ul p,article ol p{margin:.2em}article div ul:not(:first-child),article div ol:not(:first-child){margin-top:0}article dl dt{margin-top:.5em;font-weight:700}article dl dd p,article dl dd div:only-child ul{margin:0;padding:0}article div dl:not(:first-child){margin-top:0}article table.tableblock{background:var(--white);margin:0 auto;border-collapse:collapse}article table.tableblock td,article table.tableblock th{border:1px solid var(--gray-highlight-color);padding:5px;text-align:left}article table.tableblock td p,article table.tableblock th p{margin:0}article div.sidebarblock{border:1px solid var(--gray-highlight-color);padding:.75em;margin:1em}article div.sidebarblock p{margin:0}article code{font-family:Inconsolata,monospace,sans-serif}article pre{margin:0;overflow:auto;padding:10px;background:var(--white);border:1px solid var(--gray-highlight-color);line-height:1.1}article .colist{margin-top:-.5em}article .colist ol{counter-reset:list}article .colist ol li{counter-increment:list;padding-left:1em}article .colist ol ::marker{content:"(" counter(list)")";font-weight:700}article .colist p{margin:0}.highlight .tok-c,.highlight .tok-cm,.highlight .tok-cp,.highlight .tok-c1,.highlight .tok-cs,.ace_editor .tok-c,.ace_editor .tok-cm,.ace_editor .tok-cp,.ace_editor .tok-c1,.ace_editor .tok-cs{color:#998;font-style:italic;font-weight:initial}.highlight .tok-k,.highlight .tok-kc,.highlight .tok-kd,.highlight .tok-kp,.highlight .tok-kr,.highlight .tok-kt,.highlight .ace_storage,.highlight .ace_keyword,.ace_editor .tok-k,.ace_editor .tok-kc,.ace_editor .tok-kd,.ace_editor .tok-kp,.ace_editor .tok-kr,.ace_editor .tok-kt,.ace_editor .ace_storage,.ace_editor .ace_keyword{color:#458;font-style:initial;font-weight:700}.highlight .tok-o,.highlight .tok-p,.highlight .ace_keyword.ace_operator,.highlight .ace_paren,.highlight .ace_punctuation,.ace_editor .tok-o,.ace_editor .tok-p,.ace_editor .ace_keyword.ace_operator,.ace_editor .ace_paren,.ace_editor .ace_punctuation{color:red;font-style:initial;font-weight:initial}.highlight .ace_dsl,.ace_editor .ace_dsl{pointer-events:auto}.highlight .tok-m,.highlight .tok-mf,.highlight .tok-mh,.highlight .tok-mi,.highlight .tok-mo,.highlight .ace_constant,.ace_editor .tok-m,.ace_editor .tok-mf,.ace_editor .tok-mh,.ace_editor .tok-mi,.ace_editor .tok-mo,.ace_editor .ace_constant{color:#ff8000;font-style:initial;font-weight:initial}.highlight .tok-s,.highlight .tok-sb,.highlight .tok-sc,.highlight .tok-sd,.highlight .tok-s2,.highlight .tok-s3,.highlight .tok-sh,.highlight .tok-si,.highlight .tok-sx,.highlight .tok-sr,.highlight .tok-s1,.highlight .tok-ss,.highlight .tok-se,.highlight .ace_string,.ace_editor .tok-s,.ace_editor .tok-sb,.ace_editor .tok-sc,.ace_editor .tok-sd,.ace_editor .tok-s2,.ace_editor .tok-s3,.ace_editor .tok-sh,.ace_editor .tok-si,.ace_editor .tok-sx,.ace_editor .tok-sr,.ace_editor .tok-s1,.ace_editor .tok-ss,.ace_editor .tok-se,.ace_editor .ace_string{color:green;font-style:initial;font-weight:initial}.highlight .tok-cp,.ace_editor .tok-cp{color:green;font-style:initial;font-weight:700}.highlight .tok-err,.highlight .ace_invalid,.ace_editor .tok-err,.ace_editor .ace_invalid{color:red;font-style:initial;font-weight:initial}.highlight strong,.ace_editor strong{font-weight:initial}.highlight strong:not(:empty)::before,.ace_editor strong:not(:empty)::before{content:"*";color:red}.highlight strong:not(:empty)::after,.ace_editor strong:not(:empty)::after{content:"*";color:red}</style></head><body>
 <nav id=menu>
 <div class=menu-container>
 <ul id=home>
@@ -16,9 +13,7 @@ lexy: C++ parser combinator library
 <a href=/>
 <span class=title>lexy:</span> C++ parser combinator library
 </a>
-</li>
-</ul>
-<ul id=main><li>
+</li></ul><ul id=main><li>
 <a href=/tutorial/>Tutorial</a>
 </li><li>
 <a href=/reference/>Reference</a>
@@ -27,30 +22,19 @@ lexy: C++ parser combinator library
 </li><li>
 <a href=https://github.com/foonathan/lexy title=GitHub><svg aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github" class="svg-inline--fa fa-github fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentcolor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
 </a>
-</li>
-</ul>
-</div>
-</nav>
-<main>
+</li></ul></div></nav><main>
 <article>
 <div id=preamble>
 <div class=sectionbody>
 <div class=paragraph>
 <p><span class=image><a class=image href=https://www.jonathanmueller.dev/project/><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json" alt="Project Status"></a></span>
 <span class=image><img src=https://github.com/foonathan/lexy/workflows/Main%20CI/badge.svg alt="Build Status"></span>
-<span class=image><a class=image href=https://lexy.foonathan.net/playground><img src=https://img.shields.io/badge/try-online-blue alt=Playground></a></span></p>
-</div>
-<div class=paragraph>
+<span class=image><a class=image href=https://lexy.foonathan.net/playground><img src=https://img.shields.io/badge/try-online-blue alt=Playground></a></span></p></div><div class=paragraph>
 <p><code>lexy</code> is a parser combinator library for C++17 and onwards.
 It allows you to write a parser by specifying it in a convenient C++ DSL,
-which gives you all the flexibility and control of a handwritten parser without all the manual work.</p>
-</div>
-<div class=paragraph>
-<p>Documentation: <a href=https://lexy.foonathan.net/>lexy.foonathan.net</a></p>
-</div>
-<div class=listingblock>
-<div class=title>IPv4 address parser</div>
-<div class=content>
+which gives you all the flexibility and control of a handwritten parser without all the manual work.</p></div><div class=paragraph>
+<p>Documentation: <a href=https://lexy.foonathan.net/>lexy.foonathan.net</a></p></div><div class=listingblock>
+<div class=title>IPv4 address parser</div><div class=content>
 <pre class="pygments highlight"><code data-lang=cpp><span></span><span class=tok-cp>#include</span><span class=tok-w> </span><span class=tok-cpf>&lt;lexy/callback.hpp&gt;</span><span class=tok-cp></span>
 <span class=tok-cp>#include</span><span class=tok-w> </span><span class=tok-cpf>&lt;lexy/dsl.hpp&gt;</span><span class=tok-cp></span>
 
@@ -73,244 +57,109 @@ which gives you all the flexibility and control of a handwritten parser without 
 <span class=tok-w>        </span><span class=tok-o>=</span><span class=tok-w> </span><span class=tok-n>lexy</span><span class=tok-o>::</span><span class=tok-n>callback</span><span class=tok-o>&lt;</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint32_t</span><span class=tok-o>&gt;</span><span class=tok-p>([](</span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>a</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>b</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>c</span><span class=tok-p>,</span><span class=tok-w> </span><span class=tok-n>std</span><span class=tok-o>::</span><span class=tok-kt>uint8_t</span><span class=tok-w> </span><span class=tok-n>d</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-p>{</span><span class=tok-w></span>
 <span class=tok-w>            </span><span class=tok-k>return</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>a</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>24</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>b</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>16</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-p>(</span><span class=tok-n>c</span><span class=tok-w> </span><span class=tok-o>&lt;&lt;</span><span class=tok-w> </span><span class=tok-mi>8</span><span class=tok-p>)</span><span class=tok-w> </span><span class=tok-o>|</span><span class=tok-w> </span><span class=tok-n>d</span><span class=tok-p>;</span><span class=tok-w></span>
 <span class=tok-w>        </span><span class=tok-p>});</span><span class=tok-w></span>
-<span class=tok-p>};</span><span class=tok-w></span></code></pre>
-</div>
-</div>
-<div class=paragraph>
+<span class=tok-p>};</span><span class=tok-w></span></code></pre></div></div><div class=paragraph>
 <p>See <a href=https://github.com/foonathan/lexy/tree/main/examples>examples/</a> for more examples, such as a fully conforming JSON parser,
 a (subset of) XML parser, or an interactive REPL for a bash-like language, among others;
 play with the parsing on the <a href=https://lexy.foonathan.net/playground/>online playground</a>;
-or jump directly to the <a href=https://lexy.foonathan.net/tutorial/>tutorial</a> to learn how to write your own grammars.</p>
-</div>
-</div>
-</div>
-<div class=sect1>
-<h2 id=_features>Features</h2>
-<div class=sectionbody>
+or jump directly to the <a href=https://lexy.foonathan.net/tutorial/>tutorial</a> to learn how to write your own grammars.</p></div></div></div><div class=sect1>
+<h2 id=_features>Features</h2><div class=sectionbody>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Describe the parser, not some abstract grammar</dt>
-<dd>
+<dt class=hdlist1>Describe the parser, not some abstract grammar</dt><dd>
 <p>Unlike parser generators that use some table driven magic for parsing, `lexy’s grammar is just syntax sugar for a hand-written recursive descent parser.
 The parsing algorithm does exactly what you’ve instructed it to do.
-No more ambiguities or weird shift/reduce errors!</p>
-</dd>
-<dt class=hdlist1>A pure C++ DSL</dt>
-<dd>
-<p>No need to use an external grammar file, embed the DSL directly in your C++ using operator overloading and functions.</p>
-</dd>
-<dt class=hdlist1>No implicit backtracking or lookahead</dt>
-<dd>
+No more ambiguities or weird shift/reduce errors!</p></dd><dt class=hdlist1>A pure C++ DSL</dt><dd>
+<p>No need to use an external grammar file, embed the DSL directly in your C++ using operator overloading and functions.</p></dd><dt class=hdlist1>No implicit backtracking or lookahead</dt><dd>
 <p>It will only backtrack when you say it should, and only lookahead when and how far you want it.
-Don’t worry about rules that have side-effects, they won’t be executed unnecessarily thanks to the user-specified lookahead conditions.</p>
-</dd>
-<dt class=hdlist1>Bring your own data structures</dt>
-<dd>
+Don’t worry about rules that have side-effects, they won’t be executed unnecessarily thanks to the user-specified lookahead conditions.</p></dd><dt class=hdlist1>Bring your own data structures</dt><dd>
 <p>The input is parsed into the data structures you’ve provided.
 It will not do heap allocations to store output unless you’ve instructed it to do so.
-You can even evaluate the input on the fly, without storing anything.</p>
-</dd>
-<dt class=hdlist1>Good error reporting</dt>
-<dd>
+You can even evaluate the input on the fly, without storing anything.</p></dd><dt class=hdlist1>Good error reporting</dt><dd>
 <p>On a parse error, it will invoke a user-defined callback with information about what went wrong and during which production.
 Custom error messages can be injected using the special <code>dsl::error</code>, <code>dsl::require</code> and <code>dsl::prevent</code> error.
-Write parse rules that detect common mistakes and issue appropriate diagnostics!</p>
-</dd>
-<dt class=hdlist1>Error recovery</dt>
-<dd>
-<p>Log an error, recover, and continue parsing! <a href="https://lexy.foonathan.net/playground/?example=recover">Try it online</a>.</p>
-</dd>
-<dt class=hdlist1>Unicode support</dt>
-<dd>
+Write parse rules that detect common mistakes and issue appropriate diagnostics!</p></dd><dt class=hdlist1>Error recovery</dt><dd>
+<p>Log an error, recover, and continue parsing! <a href="https://lexy.foonathan.net/playground/?example=recover">Try it online</a>.</p></dd><dt class=hdlist1>Unicode support</dt><dd>
 <p>You can parse UTF-8, UTF-16, or UTF-32 and access (some of) the Unicode character database.
 <code>lexy</code> takes care of code point encoding and decoding as necessary, as well as endianness and byte-order marks.
 Want to match a string literal containing arbitrary Unicode code points or <code>\u21D4</code> and store the result in a <code>std::string</code>?
 Want to match any Unicode alphabetic or whitespace character, or a Unicode-aware identifier?
-You can do so out of the box.</p>
-</dd>
-<dt class=hdlist1>Byte parsing</dt>
-<dd>
-<p>Rules for parsing <code>N</code> bytes, an Nbit big/little endian integer, and related utilities for binary formats.</p>
-</dd>
-<dt class=hdlist1>Keyword and identifier parsing</dt>
-<dd>
-<p>Reserve a set of keywords that won’t be matched as regular identifiers. <a href="https://lexy.foonathan.net/playground/?id=7boh7TGss">Try it online</a>.</p>
-</dd>
-<dt class=hdlist1>Tracing</dt>
-<dd>
-<p>Figure out why the grammar isn’t working the way you want it to. <a href="https://lexy.foonathan.net/playground/?example=trace&mode=trace">Try it online</a>.</p>
-</dd>
-<dt class=hdlist1>Fully <code>constexpr</code> parsing</dt>
-<dd>
-<p>You want to parse a string literal at compile-time? You can do so.</p>
-</dd>
-<dt class=hdlist1>Minimal standard library dependencies</dt>
-<dd>
+You can do so out of the box.</p></dd><dt class=hdlist1>Byte parsing</dt><dd>
+<p>Rules for parsing <code>N</code> bytes, an Nbit big/little endian integer, and related utilities for binary formats.</p></dd><dt class=hdlist1>Keyword and identifier parsing</dt><dd>
+<p>Reserve a set of keywords that won’t be matched as regular identifiers. <a href="https://lexy.foonathan.net/playground/?id=7boh7TGss">Try it online</a>.</p></dd><dt class=hdlist1>Tracing</dt><dd>
+<p>Figure out why the grammar isn’t working the way you want it to. <a href="https://lexy.foonathan.net/playground/?example=trace&mode=trace">Try it online</a>.</p></dd><dt class=hdlist1>Fully <code>constexpr</code> parsing</dt><dd>
+<p>You want to parse a string literal at compile-time? You can do so.</p></dd><dt class=hdlist1>Minimal standard library dependencies</dt><dd>
 <p>The core parsing library only depends on the required headers such as <code>&lt;type_traits></code> or <code>&lt;cstddef></code>.
-Some input classes required <code>&lt;cstdio></code>.</p>
-</dd>
-<dt class=hdlist1>Header-only core library</dt>
-<dd>
-<p>By necessity, not by choice — it’s <code>constexpr</code> after all.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class=sect1>
-<h2 id=_planned_features>Planned features</h2>
-<div class=sectionbody>
+Some input classes required <code>&lt;cstdio></code>.</p></dd><dt class=hdlist1>Header-only core library</dt><dd>
+<p>By necessity, not by choice — it’s <code>constexpr</code> after all.</p></dd></dl></div></div></div><div class=sect1>
+<h2 id=_planned_features>Planned features</h2><div class=sectionbody>
 <div class=paragraph>
-<p>The following features are in various stages of development and will be added before the 1.0.0 release.</p>
-</div>
-<div class=dlist>
+<p>The following features are in various stages of development and will be added before the 1.0.0 release.</p></div><div class=dlist>
 <dl>
-<dt class=hdlist1>Operator parsing</dt>
-<dd>
-<p>Parse operators with different precedences using Pratt parsing.</p>
-</dd>
-</dl>
-</div>
-<div class="admonitionblock note">
+<dt class=hdlist1>Operator parsing</dt><dd>
+<p>Parse operators with different precedences using Pratt parsing.</p></dd></dl></div><div class="admonitionblock note">
 <table>
 <tbody><tr>
 <td class=icon>
-<div class=title>Note</div>
-</td>
-<td class=content>
+<div class=title>Note</div></td><td class=content>
 <code>lexy</code> is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
 All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
-</td>
-</tr>
-</tbody></table>
-</div>
-</div>
-</div>
-<div class=sect1>
-<h2 id=_faq>FAQ</h2>
-<div class=sectionbody>
+</td></tr></tbody></table></div></div></div><div class=sect1>
+<h2 id=_faq>FAQ</h2><div class=sectionbody>
 <div class=dlist>
 <dl>
-<dt class=hdlist1>Why should I use <code>lexy</code> over XYZ?</dt>
-<dd>
+<dt class=hdlist1>Why should I use <code>lexy</code> over XYZ?</dt><dd>
 <p><code>lexy</code> is closest to other PEG parsers.
 However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
 This is not the case for <code>lexy</code>, where backtracking is controlled using branch conditions.
-<code>lexy</code> also gives you a lot of control over error reporting and supports error recovery.</p>
-<div class=dlist>
+<code>lexy</code> also gives you a lot of control over error reporting and supports error recovery.</p><div class=dlist>
 <dl>
-<dt class=hdlist1><a href=http://boost-spirit.com/home/>Boost.Spirit</a></dt>
-<dd>
+<dt class=hdlist1><a href=http://boost-spirit.com/home/>Boost.Spirit</a></dt><dd>
 <p>The main difference: it is not a Boost library.
 Otherwise, it is just a different implementation with a different flavor.
-Use <code>lexy</code> if you like <code>lexy</code> more.</p>
-</dd>
-<dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt>
-<dd>
+Use <code>lexy</code> if you like <code>lexy</code> more.</p></dd><dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt><dd>
 <p>PEGTL is very similar and was a big inspiration.
 The biggest difference is that <code>lexy</code> uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
-depending on your preference this can be an advantage or disadvantage.</p>
-</dd>
-<dt class=hdlist1>Handwritten Parsers</dt>
-<dd>
+depending on your preference this can be an advantage or disadvantage.</p></dd><dt class=hdlist1>Handwritten Parsers</dt><dd>
 <p>Writing a handwritten parser is more manual work and error prone.
 <code>lexy</code> automates that away without having to sacrifice control.
-You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.</p>
-</dd>
-</dl>
-</div>
-</dd>
-<dt class=hdlist1>How bad are the compilation times?</dt>
-<dd>
-<p>They’re not as bad as you might expect (in debug mode, that is).</p>
-<div class=paragraph>
+You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.</p></dd></dl></div></dd><dt class=hdlist1>How bad are the compilation times?</dt><dd>
+<p>They’re not as bad as you might expect (in debug mode, that is).</p><div class=paragraph>
 <p>The example JSON parser compiles in about 2s on my machine.
 If we remove all the lexy specific parts and just benchmark the time it takes for the compiler to process the datastructure (and stdlib includes),
 that takes about 700ms.
-If we validate JSON only instead of parsing it, so remove the data structures and keep only the lexy specific parts, we’re looking at about 840ms.</p>
-</div>
-<div class=paragraph>
+If we validate JSON only instead of parsing it, so remove the data structures and keep only the lexy specific parts, we’re looking at about 840ms.</p></div><div class=paragraph>
 <p>Compile time benchmarks and optimizations are planned.
-Keep in mind, that you can fully isolate <code>lexy</code> in a single translation unit that only needs to be touched when you change the parser.</p>
-</div>
-</dd>
-<dt class=hdlist1>How bad are the C++ error messages if you mess something up?</dt>
-<dd>
+Keep in mind, that you can fully isolate <code>lexy</code> in a single translation unit that only needs to be touched when you change the parser.</p></div></dd><dt class=hdlist1>How bad are the C++ error messages if you mess something up?</dt><dd>
 <p>They’re certainly worse than the error message <code>lexy</code> gives you.
 The big problem here is that the first line gives you the error, followed by dozens of template instantiations, which end at your <code>lexy::parse</code> call.
-Besides providing an external tool to filter those error messages, there is nothing I can do about that.</p>
-</dd>
-<dt class=hdlist1>How fast is it?</dt>
-<dd>
+Besides providing an external tool to filter those error messages, there is nothing I can do about that.</p></dd><dt class=hdlist1>How fast is it?</dt><dd>
 <p>Benchmarks are available in the <code>benchmarks/</code> directory.
-A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available <a href=https://lexy.foonathan.net/benchmark_json/>here</a>.</p>
-</dd>
-<dt class=hdlist1>Why is it called lexy?</dt>
-<dd>
+A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available <a href=https://lexy.foonathan.net/benchmark_json/>here</a>.</p></dd><dt class=hdlist1>Why is it called lexy?</dt><dd>
 <p>I previously had a tokenizer library called <code>foonathan/lex</code>.
 I’ve tried adding a parser to it, but found that the line between pure tokenization and parsing has become increasingly blurred.
-<code>lexy</code> is a re-imagination on of the parser I’ve added to <code>foonathan/lex</code>, and I’ve simply kept a similar name.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class=sect1>
-<h2 id=_building>Building</h2>
-<div class=sectionbody>
+<code>lexy</code> is a re-imagination on of the parser I’ve added to <code>foonathan/lex</code>, and I’ve simply kept a similar name.</p></dd></dl></div></div></div><div class=sect1>
+<h2 id=_building>Building</h2><div class=sectionbody>
 <div class=paragraph>
 <p>The library uses CMake as its build system.
-Simply put it somewhere and use <code>add_subdirectory()</code> to make the following targets available</p>
-</div>
-<div class=dlist>
+Simply put it somewhere and use <code>add_subdirectory()</code> to make the following targets available</p></div><div class=dlist>
 <dl>
-<dt class=hdlist1><code>foonathan::lexy::core</code></dt>
-<dd>
+<dt class=hdlist1><code>foonathan::lexy::core</code></dt><dd>
 <p>This target is required.
-It is an <code>INTERFACE</code> target that sets the required include path and C++ standard flags.</p>
-</dd>
-<dt class=hdlist1><code>foonathan::lexy::file</code></dt>
-<dd>
-<p>Link to this library if you want to use the (not header only) <code>lexy::read_file()</code> functionality.</p>
-</dd>
-<dt class=hdlist1><code>foonathan::lexy::unicode</code></dt>
-<dd>
-<p>Link to this library if you want to use advanced Unicode rules that require the Unicode character database.</p>
-</dd>
-<dt class=hdlist1><code>foonathan::lexy::ext</code></dt>
-<dd>
-<p>Link to this library if you want to use the extension headers in <code>lexy_ext/</code>.</p>
-</dd>
-<dt class=hdlist1><code>foonathan::lexy</code></dt>
-<dd>
-<p>Umbrella target that links to all other targets.</p>
-</dd>
-</dl>
-</div>
-<div class=paragraph>
+It is an <code>INTERFACE</code> target that sets the required include path and C++ standard flags.</p></dd><dt class=hdlist1><code>foonathan::lexy::file</code></dt><dd>
+<p>Link to this library if you want to use the (not header only) <code>lexy::read_file()</code> functionality.</p></dd><dt class=hdlist1><code>foonathan::lexy::unicode</code></dt><dd>
+<p>Link to this library if you want to use advanced Unicode rules that require the Unicode character database.</p></dd><dt class=hdlist1><code>foonathan::lexy::ext</code></dt><dd>
+<p>Link to this library if you want to use the extension headers in <code>lexy_ext/</code>.</p></dd><dt class=hdlist1><code>foonathan::lexy</code></dt><dd>
+<p>Umbrella target that links to all other targets.</p></dd></dl></div><div class=paragraph>
 <p>Configuration is supported by providing a <code>lexy_user_config.hpp</code> somewhere in the include search path,
 or setting the <code>LEXY_USER_CONFIG_HEADER</code> CMake option to a header path.
 This header can then override many of the detections in <code>lexy/_detail/config.hpp</code>.
-Refer to that header for details.</p>
-</div>
-<div class=paragraph>
+Refer to that header for details.</p></div><div class=paragraph>
 <p>The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as MSVC and clang-cl.
-It requires C++17 support, but works best with C++20.</p>
-</div>
-</div>
-</div>
-</article>
-</main>
-<footer id=page-footer>
+It requires C++17 support, but works best with C++20.</p></div></div></div></article></main><footer id=page-footer>
 <section class=copyright>
 &copy; <a target=_blank href=https://github.com/foonathan/lexy/blob/main/LICENSE title=License>2020-2022 Jonathan Müller and lexy contributors</a>
-</section>
-<section class=patreon>
+</section><section class=patreon>
 <a target=_blank href=https://jonathanmueller.dev/support-me/>Support me!</a>
-</section>
-<section class=poweredby>
+</section><section class=poweredby>
 Made with <a target=_blank href=https://gohugo.io>Hugo</a> and <a target=_blank href=https://fontawesome.com/license>Font Awesome</a>.
-</section>
-</footer>
-</body>
-</html>
+</section></footer></body></html>

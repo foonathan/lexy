@@ -1177,7 +1177,11 @@ namespace lexy
 template <typename Production>
 using _detect_whitespace = decltype(Production::whitespace);
 
-template <typename Production, typename Root>
+template <typename Production>
+constexpr auto _production_defines_whitespace
+    = lexy::_detail::is_detected<_detect_whitespace, Production>;
+
+template <typename Production, typename WhitespaceProduction>
 auto _production_whitespace()
 {
     if constexpr (is_token_production<Production>)
@@ -1185,21 +1189,21 @@ auto _production_whitespace()
         // Token productions don't have whitespace.
         return;
     }
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Production>)
+    else if constexpr (_production_defines_whitespace<Production>)
     {
         // We have whitespace defined in the production.
         return Production::whitespace;
     }
-    else if constexpr (lexy::_detail::is_detected<_detect_whitespace, Root>)
+    else if constexpr (_production_defines_whitespace<WhitespaceProduction>)
     {
-        // We have whitespace defined in the root.
-        return Root::whitespace;
+        // We have whitespace defined in the whitespace production.
+        return WhitespaceProduction::whitespace;
     }
 
     // If we didn't have any cases, function returns void.
 }
-template <typename Production, typename Root>
-using production_whitespace = decltype(_production_whitespace<Production, Root>());
+template <typename Production, typename WhitespaceProduction>
+using production_whitespace = decltype(_production_whitespace<Production, WhitespaceProduction>());
 } // namespace lexy
 
 namespace lexy
@@ -2208,7 +2212,7 @@ namespace lexy
 {
 template <typename Context, typename NextParser,
           typename = lexy::production_whitespace<typename Context::production,
-                                                 typename Context::root_production>>
+                                                 typename Context::whitespace_production>>
 struct whitespace_parser : _detail::automatic_ws_parser<NextParser>
 {};
 // If we know the whitespace rule is void, go to NextParser immediately.
@@ -2327,12 +2331,18 @@ namespace _detail
     };
 } // namespace _detail
 
+// If a production doesn't define whitespace, we don't need to pass it and can shorten the template
+// name.
+template <typename Production>
+using _whitespace_production_of
+    = std::conditional_t<_production_defines_whitespace<Production>, Production, void>;
+
 template <typename Handler, typename State, typename Production,
-          typename RootProduction = Production>
+          typename WhitespaceProduction = _whitespace_production_of<Production>>
 struct _pc
 {
-    using production      = Production;
-    using root_production = RootProduction;
+    using production            = Production;
+    using whitespace_production = WhitespaceProduction;
     using value_type = typename Handler::template value_callback<Production, State>::return_type;
 
     typename Handler::template event_handler<Production>  handler;
@@ -2346,10 +2356,14 @@ struct _pc
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction)
     {
-        // Update the root production if necessary.
-        using new_root = std::conditional_t<lexy::is_token_production<ChildProduction>,
-                                            ChildProduction, RootProduction>;
-        return _pc<Handler, State, ChildProduction, new_root>(control_block);
+        // Update the whitespace production if necessary.
+        // If the current production is a token or defines whitespace,
+        // we change it to the current production (or void), otherwise keep it.
+        using new_whitespace_production
+            = std::conditional_t<is_token_production<ChildProduction> //
+                                     || _production_defines_whitespace<ChildProduction>,
+                                 _whitespace_production_of<ChildProduction>, WhitespaceProduction>;
+        return _pc<Handler, State, ChildProduction, new_whitespace_production>(control_block);
     }
 
     constexpr auto value_callback()
@@ -11022,8 +11036,8 @@ struct manual_ws_parser<void, NextParser> : NextParser
 {};
 
 template <typename Context>
-using context_whitespace
-    = lexy::production_whitespace<typename Context::production, typename Context::root_production>;
+using context_whitespace = lexy::production_whitespace<typename Context::production,
+                                                       typename Context::whitespace_production>;
 
 template <typename NextParser>
 struct automatic_ws_parser
@@ -11703,7 +11717,7 @@ inline constexpr auto big_bint64    = _bint<8, lexy::_detail::bint_big>{};
 namespace lexyd
 {
 template <typename Token>
-struct _capt : _copy_base<Token>
+struct _cap : _copy_base<Token>
 {
     template <typename Reader>
     struct bp
@@ -11755,75 +11769,12 @@ struct _capt : _copy_base<Token>
     };
 };
 
-template <typename Rule>
-struct _cap : _copy_base<Rule>
-{
-    template <typename NextParser, typename... PrevArgs>
-    struct _pc
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
-                                           PrevArgs&&... prev_args, typename Reader::iterator begin,
-                                           Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(prev_args)...,
-                                     lexy::lexeme(reader, begin), LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename Reader>
-    struct bp
-    {
-        lexy::branch_parser_for<Rule, Reader> rule;
-
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
-        {
-            return rule.try_parse(cb, reader);
-        }
-
-        template <typename Context>
-        constexpr void cancel(Context& context)
-        {
-            rule.cancel(context);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
-        {
-            // Forward to the rule, but remember the current reader position.
-            using continuation = _pc<NextParser, Args...>;
-            return rule.template finish<continuation>(context, reader, LEXY_FWD(args)...,
-                                                      reader.position());
-        }
-    };
-
-    template <typename NextParser>
-    struct p
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            // Forward to the rule, but remember the current reader position.
-            using parser = lexy::parser_for<Rule, _pc<NextParser, Args...>>;
-            return parser::parse(context, reader, LEXY_FWD(args)..., reader.position());
-        }
-    };
-};
-
 /// Captures whatever the token matches as a lexeme; does not include trailing whitespace.
 template <typename Token>
-constexpr auto capture_token(Token)
+constexpr auto capture(Token)
 {
     static_assert(lexy::is_token_rule<Token>);
-    return _capt<Token>{};
-}
-
-/// Captures whatever the rule matches as a lexeme.
-template <typename Rule>
-constexpr auto capture(Rule)
-{
-    return _cap<Rule>{};
+    return _cap<Token>{};
 }
 } // namespace lexyd
 
@@ -12892,8 +12843,8 @@ struct _ctx_irem : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Capture the pattern and continue with special continuation.
-            return lexy::parser_for<_capt<_pattern>, _cont<Args...>>::parse(context, reader,
-                                                                            LEXY_FWD(args)...);
+            return lexy::parser_for<_cap<_pattern>, _cont<Args...>>::parse(context, reader,
+                                                                           LEXY_FWD(args)...);
         }
     };
 
@@ -13264,8 +13215,8 @@ struct _sym : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             // Capture the token and continue with special continuation.
-            return lexy::parser_for<_capt<Token>, _cont<Args...>>::parse(context, reader,
-                                                                         LEXY_FWD(args)...);
+            return lexy::parser_for<_cap<Token>, _cont<Args...>>::parse(context, reader,
+                                                                        LEXY_FWD(args)...);
         }
     };
 
@@ -16705,9 +16656,9 @@ using _value_callback_for = lexy::production_value_callback<
 template <typename Context, typename ValueCallback = _value_callback_for<Context>>
 struct spc_child
 {
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
-    using value_type      = typename ValueCallback::return_type;
+    using production            = typename Context::production;
+    using whitespace_production = typename Context::whitespace_production;
+    using value_type            = typename ValueCallback::return_type;
 
     decltype(Context::handler)       handler;
     decltype(Context::control_block) control_block;
@@ -16743,9 +16694,9 @@ struct spc_child
 template <typename T, typename Context>
 struct spc
 {
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
-    using value_type      = T;
+    using production            = typename Context::production;
+    using whitespace_production = typename Context::whitespace_production;
+    using value_type            = T;
 
     decltype(Context::handler)&      handler;
     decltype(Context::control_block) control_block;
@@ -17058,8 +17009,7 @@ template <typename Context, typename Reader>
 class rule_scanner : public _detail::scanner<rule_scanner<Context, Reader>, Reader>
 {
 public:
-    using production      = typename Context::production;
-    using root_production = typename Context::root_production;
+    using production = typename Context::production;
 
     constexpr std::size_t recursion_depth() const noexcept
     {
