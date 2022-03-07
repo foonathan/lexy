@@ -58,6 +58,7 @@ set(tests
         dsl/digit.cpp
         dsl/eof.cpp
         dsl/error.cpp
+        dsl/follow.cpp
         dsl/list.cpp
         dsl/literal.cpp
         dsl/lookahead.cpp

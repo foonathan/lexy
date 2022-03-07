@@ -95,6 +95,7 @@ Use this instead of `lit<Str>` if you need to support them.
 TIP: When using non-ASCII characters in a `lit<Str>` rule, it is best to specify code points with the `\uXXXX` escape sequences and normalize the input before passing it to `lexy`.
 
 NOTE: While `lit<"int">` would happily consume a prefix of `"integer"`, {{% docref "lexy::dsl::keyword" %}}`<"int">(id)`, for a matching `id`, would not.
+Similar, `lit<"=">` would also consume a prefix of `==`, {{% docref "lexy::dsl::not_followed_by" %}} can be used to prevent that.
 
 [#lit_b]
 == Literal rule `lexy::dsl::lit_b`

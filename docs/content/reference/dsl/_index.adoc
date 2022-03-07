@@ -115,6 +115,8 @@ the other rule does not have access to context variables, and any context modifi
   match common punctuation
 {{% docref "lexy::dsl::literal_set" %}} and {{% docref "LEXY_LITERAL_SET" %}}::
   match one of the specified literals
+{{% docref "lexy::dsl::followed_by" %}} and {{% docref "lexy::dsl::not_followed_by" %}}::
+  ensure a literal is (not) followed by a char class
 ====
 
 [%collapsible]

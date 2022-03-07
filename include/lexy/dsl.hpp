@@ -24,6 +24,7 @@
 #include <lexy/dsl/digit.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/error.hpp>
+#include <lexy/dsl/follow.hpp>
 #include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
