@@ -51,7 +51,7 @@ Those are
 * a {{% docref "lexy::dsl::lit" %}} (or {{% docref "lexy::dsl::lit_c" %}}) rule matching a single ASCII character,
 * a {{% docref "lexy::dsl::lit" %}} (or {{% docref "lexy::dsl::lit_c" %}}) rule whose char type is `char32_t` matching a single character,
 * a {{% docref "lexy::dsl::lit_cp" %}} rule, and
-* {{% docref "lexy::dsl::operator/" %}} combinations of the above.
+* {{% docref "lexy::dsl::operator/ (char class)" %}} combinations of the above.
 
 Literal char class rules can be used with the char class operators.
 
@@ -72,7 +72,7 @@ It also type-erases the type of `CharClassRule` to shorten it, which can improve
 {{% playground-example char_class_macro "Match an atom of an email address" %}}
 
 [#union]
-== Char class union `lexy::dsl::operator/`
+== Char class union `lexy::dsl::operator/ (char class)`
 
 {{% interface %}}
 ----
@@ -94,8 +94,6 @@ It matches all characters that are contained in at least one of the char classes
 Its name is `union`.
 
 {{% playground-example char_class_union "Match an identifier consisting of upper case characters or digits" %}}
-
-NOTE: There is another overload that combines arbitrary {{% token-rule %}}s, see {{% docref "lexy::dsl::operator/" %}}.
 
 [#complement]
 == Char class complement `lexy::dsl::operator- (unary)`

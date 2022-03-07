@@ -57,7 +57,5 @@ Values::
 TIP: Use {{% docref "lexy::dsl::operator>>" %}} to turn a rule into a branch by giving it a condition.
 Use {{% docref "lexy::dsl::peek" %}} or {{% docref "lexy::dsl::lookahead" %}} as conditions if there is no simple token rule to check the beginning of the branch.
 
-WARNING: Unlike {{% docref alternative %}}, order of branches in a choice matters.
-
 NOTE: If one of the branches is always taken (e.g. because it uses {{% docref "lexy::dsl::else_" %}}), the `lexy::exhausted_choice` error is never raised.
 
