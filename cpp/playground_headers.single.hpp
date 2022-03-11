@@ -966,6 +966,44 @@ template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
 } // namespace lexy
 
+namespace lexy
+{
+template <typename Fn>
+struct _fn_holder
+{
+    Fn fn;
+
+    constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const
+        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    {
+        return _detail::invoke(fn, LEXY_FWD(args)...);
+    }
+};
+
+template <typename Fn>
+using _fn_as_base = std::conditional_t<std::is_class_v<Fn>, Fn, _fn_holder<Fn>>;
+
+template <typename... Fns>
+struct _overloaded : _fn_as_base<Fns>...
+{
+    constexpr explicit _overloaded(Fns... fns) : _fn_as_base<Fns>(LEXY_MOV(fns))... {}
+
+    using _fn_as_base<Fns>::operator()...;
+};
+
+template <typename... Op>
+constexpr auto _make_overloaded(Op&&... op)
+{
+    if constexpr (sizeof...(Op) == 1)
+        return (LEXY_FWD(op), ...);
+    else
+        return _overloaded(LEXY_FWD(op)...);
+}
+} // namespace lexy
+
 #endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
 
 
@@ -2030,17 +2068,31 @@ constexpr auto partial_input(const Reader& reader, typename Reader::iterator end
 //=== parse_events ===//
 namespace lexy::parse_events
 {
-/// Start of the given production.
+/// Start of the current production.
 /// Arguments: position
 struct production_start
 {};
-/// End of the given production.
+/// End of the current production.
 /// Arguments: position
 struct production_finish
 {};
 /// Production is canceled.
 /// Arguments: position
 struct production_cancel
+{};
+
+/// Start of a chain of left-associative operations.
+/// Arguments: position
+/// Returns: a handle that needs to be passed to finish.
+struct operation_chain_start
+{};
+/// Operation inside a chain.
+/// Arguments: operation, position
+struct operation_chain_op
+{};
+/// End of a chain of operations.
+/// Arguments: handle, position
+struct operation_chain_finish
 {};
 
 /// A token was consumed.
@@ -2064,13 +2116,11 @@ struct error
 /// Arguments: position
 struct recovery_start
 {};
-
 /// Non-trivial error recovery succeeded.
 /// It will now continue with normal parsing.
 /// Arguments: position
 struct recovery_finish
 {};
-
 /// Non-trivial error recovery failed because it reaches the limit.
 /// It will now cancel until the next recovery point.
 /// Arguments: position
@@ -2373,9 +2423,9 @@ struct _pc
     }
 
     template <typename Event, typename... Args>
-    constexpr void on(Event ev, Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
+        return handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
     }
 };
 } // namespace lexy
@@ -3221,8 +3271,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(validate_handler&, Event, const Args&...)
-        {}
+        constexpr auto on(validate_handler&, Event, const Args&...)
+        {
+            return 0; // operation_chain_start must return something
+        }
 
         constexpr iterator production_begin() const
         {
@@ -3821,14 +3873,14 @@ using token_for = token<lexy::input_reader<Input>, TokenKind>;
 namespace lexy::_detail
 {
 template <typename Reader>
-struct pt_node;
+class pt_node;
 template <typename Reader>
 struct pt_node_token;
 template <typename Reader>
 struct pt_node_production;
 
 template <typename Reader>
-class pt_node_ptr
+class pt_node
 {
 public:
     static constexpr auto type_token      = 0b0u;
@@ -3837,84 +3889,65 @@ public:
     static constexpr auto role_sibling = 0b0u;
     static constexpr auto role_parent  = 0b1u;
 
-    // nullptr is a parent pointer to a non-existing parent.
-    // This means that it is automatically an empty child range.
-    pt_node_ptr() noexcept : pt_node_ptr(nullptr, type_token, role_parent) {}
-
-    void set_sibling(pt_node<Reader>* ptr, unsigned type)
-    {
-        *this = pt_node_ptr(ptr, type, role_sibling);
-    }
-    void set_sibling(pt_node_token<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_token, role_sibling);
-    }
-    void set_sibling(pt_node_production<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_production, role_sibling);
-    }
-
-    void set_parent(pt_node_production<Reader>* ptr)
-    {
-        *this = pt_node_ptr(ptr, type_production, role_parent);
-    }
-
-    //=== access ===//
-    explicit operator bool() const noexcept
-    {
-        return base() != nullptr;
-    }
-
+    //=== information about the current node ===//
     unsigned type() const noexcept
     {
         return _value & 0b1;
     }
 
-    auto* base() const noexcept
+    auto as_token() noexcept
+    {
+        return type() == type_token ? static_cast<pt_node_token<Reader>*>(this) : nullptr;
+    }
+    auto as_production() noexcept
+    {
+        return type() == type_production ? static_cast<pt_node_production<Reader>*>(this) : nullptr;
+    }
+
+    //=== information about the next node ===//
+    void set_sibling(pt_node<Reader>* sibling) noexcept
+    {
+        _value = _make_packed_ptr(sibling, type(), role_sibling);
+    }
+    void set_parent(pt_node_production<Reader>* parent) noexcept
+    {
+        _value = _make_packed_ptr(parent, type(), role_parent);
+    }
+
+    unsigned next_role() const noexcept
+    {
+        return (_value & 0b10) >> 1;
+    }
+
+    pt_node<Reader>* next_node() const noexcept
     {
         // NOLINTNEXTLINE: We need pointer conversion.
         return reinterpret_cast<pt_node<Reader>*>(_value & ~std::uintptr_t(0b11));
     }
 
-    auto token() const noexcept
-    {
-        return type() == type_token ? static_cast<pt_node_token<Reader>*>(base()) : nullptr;
-    }
-    auto production() const noexcept
-    {
-        return type() == type_production ? static_cast<pt_node_production<Reader>*>(base())
-                                         : nullptr;
-    }
-
-    bool is_sibling_ptr() const noexcept
-    {
-        return ((_value & 0b10) >> 1) == role_sibling;
-    }
-    bool is_parent_ptr() const noexcept
-    {
-        return ((_value & 0b10) >> 1) == role_parent;
-    }
+protected:
+    explicit pt_node(unsigned type)
+    // We initializy it to a null parent pointer.
+    // This means it is automatically an empty child range.
+    : _value(_make_packed_ptr(nullptr, type, role_parent))
+    {}
 
 private:
-    explicit pt_node_ptr(pt_node<Reader>* ptr, unsigned type, unsigned role)
-    : _value(reinterpret_cast<std::uintptr_t>(ptr))
+    static std::uintptr_t _make_packed_ptr(pt_node<Reader>* ptr, unsigned type, unsigned role)
     {
-        LEXY_PRECONDITION((reinterpret_cast<std::uintptr_t>(ptr) & 0b11) == 0);
+        auto result = reinterpret_cast<std::uintptr_t>(ptr);
+        LEXY_PRECONDITION((result & 0b11) == 0);
 
-        _value |= (role & 0b1) << 1;
-        _value |= (type & 0b1);
+        result |= (role & 0b1) << 1;
+        result |= (type & 0b1);
+
+        return result;
     }
 
+    // Stores an address of the "next" node in the tree.
+    // Stores a bit that remembers whether the next node is a sibling or parent (the role).
+    // Stores a bit that remembers whether *this* node is a token or production.
     std::uintptr_t _value;
-};
-
-template <typename Reader>
-struct pt_node
-{
-    // Either points back to the next child of the parent node (the sibling),
-    // or back to the parent node if it is its last child.
-    // It is only null for the root node.
-    pt_node_ptr<Reader> ptr;
 };
 
 template <typename Reader>
@@ -3933,7 +3966,7 @@ struct pt_node_token : pt_node<Reader>
 
     explicit pt_node_token(std::uint_least16_t kind, typename Reader::iterator begin,
                            typename Reader::iterator end) noexcept
-    : begin(begin), kind(kind)
+    : pt_node<Reader>(pt_node<Reader>::type_token), begin(begin), kind(kind)
     {
         update_end(end);
     }
@@ -3968,45 +4001,40 @@ struct pt_node_token : pt_node<Reader>
 template <typename Reader>
 struct pt_node_production : pt_node<Reader>
 {
-    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 3;
+    static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 2;
 
     const char* name;
     std::size_t child_count : child_count_bits;
     std::size_t token_production : 1;
     std::size_t first_child_adjacent : 1;
-    std::size_t first_child_type : 1;
 
     template <typename Production>
     explicit pt_node_production(Production) noexcept
-    : child_count(0), token_production(lexy::is_token_production<Production>),
-      first_child_adjacent(true), first_child_type(pt_node_ptr<Reader>::type_token)
+    : pt_node<Reader>(pt_node<Reader>::type_production), child_count(0),
+      token_production(lexy::is_token_production<Production>), first_child_adjacent(true)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
 
         name = lexy::production_name<Production>();
     }
 
-    pt_node_ptr<Reader> first_child()
+    pt_node<Reader>* first_child()
     {
         auto memory = static_cast<void*>(this + 1);
         if (child_count == 0)
         {
             // We don't have a child at all.
-            pt_node_ptr<Reader> result;
-            result.set_parent(this);
-            return result;
+            return nullptr;
         }
         else if (first_child_adjacent)
         {
             // The first child is stored immediately afterwards.
-            pt_node_ptr<Reader> result;
-            result.set_sibling(static_cast<pt_node<Reader>*>(memory), first_child_type);
-            return result;
+            return static_cast<pt_node<Reader>*>(memory);
         }
         else
         {
             // We're only storing a pointer to the first child immediately afterwards.
-            return *static_cast<pt_node_ptr<Reader>*>(memory);
+            return *static_cast<pt_node<Reader>**>(memory);
         }
     }
 };
@@ -4110,12 +4138,18 @@ public:
     {
         static_assert(std::is_trivially_copyable_v<T>);
         static_assert(alignof(T) == alignof(void*));
-        LEXY_PRECONDITION(_cur_block);                        // Forgot to call .init().
-        LEXY_PRECONDITION(remaining_capacity() >= sizeof(T)); // Forgot to call .reserve().
+        constexpr auto size = sizeof(T); // NOLINT: It's fine, we want to allocate for a pointer.
+        LEXY_PRECONDITION(_cur_block);   // Forgot to call .init().
+        LEXY_PRECONDITION(remaining_capacity() >= size); // Forgot to call .reserve().
 
         auto memory = _cur_pos;
-        _cur_pos += sizeof(T);
+        _cur_pos += size;
         return ::new (static_cast<void*>(memory)) T(LEXY_FWD(args)...);
+    }
+
+    void* top()
+    {
+        return _cur_pos;
     }
 
     void unwind(void* marker) noexcept
@@ -4227,6 +4261,123 @@ template <typename Reader, typename TokenKind, typename MemoryResource>
 class parse_tree<Reader, TokenKind, MemoryResource>::builder
 {
 public:
+    class marker
+    {
+    public:
+        marker() : marker(nullptr, 0) {}
+
+    private:
+        // Where to unwind when done.
+        void* unwind_pos;
+        // The current production node.
+        // nullptr if using the container API.
+        _detail::pt_node_production<Reader>* prod;
+        // The number of children we've already added.
+        std::size_t child_count;
+        // The first and last child of the container.
+        _detail::pt_node<Reader>* first_child;
+        _detail::pt_node<Reader>* last_child;
+
+        // For a production node, depth of the production node.
+        // For a container node, depth of the children.
+        std::size_t cur_depth;
+        // The maximum local depth seen in the subtree beginning at the marker.
+        std::size_t local_max_depth;
+
+        explicit marker(void* unwind_pos, std::size_t cur_depth,
+                        _detail::pt_node_production<Reader>* prod = nullptr)
+        : unwind_pos(unwind_pos), prod(prod), child_count(0), first_child(nullptr),
+          last_child(nullptr), cur_depth(cur_depth), local_max_depth(cur_depth)
+        {}
+
+        void clear()
+        {
+            first_child = nullptr;
+            last_child  = nullptr;
+            child_count = 0;
+        }
+
+        void insert(_detail::pt_node<Reader>* child)
+        {
+            if (first_child == nullptr)
+            {
+                // Initialize the pointers.
+                first_child = last_child = child;
+            }
+            else
+            {
+                // last_child gets a sibling pointer.
+                last_child->set_sibling(child);
+                // child is now the last child.
+                last_child = child;
+            }
+
+            ++child_count;
+        }
+        void insert_list(std::size_t length, _detail::pt_node<Reader>* first,
+                         _detail::pt_node<Reader>* last)
+        {
+            if (length == 0)
+                return;
+
+            if (first_child == nullptr)
+            {
+                first_child = first;
+                last_child  = last;
+            }
+            else
+            {
+                last_child->set_sibling(first);
+                last_child = last;
+            }
+
+            child_count += length;
+        }
+
+        void insert_children_into(_detail::pt_node_production<Reader>* parent)
+        {
+            LEXY_PRECONDITION(parent->child_count == 0);
+            if (child_count == 0)
+                return;
+
+            if (first_child == parent + 1)
+            {
+                parent->first_child_adjacent = true;
+            }
+            else
+            {
+                // This case happens either if the first child is in a new block or if we're
+                // dealing with a container node. In either case, we've already reserved memory
+                // for a pointer.
+                auto memory = static_cast<void*>(parent + 1);
+                ::new (memory) _detail::pt_node<Reader>*(first_child);
+                parent->first_child_adjacent = false;
+            }
+
+            // last_child needs a pointer to the production.
+            last_child->set_parent(parent);
+
+            constexpr auto mask
+                = ((std::size_t(1) << _detail::pt_node_production<Reader>::child_count_bits) - 1);
+            parent->child_count = child_count & mask;
+        }
+
+        void update_size_depth(std::size_t& size, std::size_t& max_depth)
+        {
+            size += child_count;
+
+            if (cur_depth == local_max_depth && child_count > 0)
+                // We have children we haven't yet accounted for.
+                ++local_max_depth;
+
+            if (max_depth < local_max_depth)
+                max_depth = local_max_depth;
+        }
+
+        friend builder;
+    };
+
+    //=== root node ===//
     template <typename Production>
     explicit builder(parse_tree&& tree, Production production) : _result(LEXY_MOV(tree))
     {
@@ -4237,103 +4388,161 @@ public:
         // No need to reserve for the initial node.
         _result._root
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
-        _result._size = 1;
+        _result._size  = 1;
+        _result._depth = 0;
 
         // Begin construction at the root.
-        _cur = marker(_result._root, 0);
+        _cur = marker(_result._buffer.top(), 0, _result._root);
     }
     template <typename Production>
     explicit builder(Production production) : builder(parse_tree(), production)
     {}
 
-    struct marker
+    parse_tree&& finish() &&
     {
-        // The current production all tokens are appended to.
-        _detail::pt_node_production<Reader>* prod = nullptr;
-        // The depth of the current production.
-        std::size_t depth = 0;
-        // The last child of the current production.
-        _detail::pt_node_ptr<Reader> last_child;
+        LEXY_PRECONDITION(_cur.prod == _result._root);
+        _cur.insert_children_into(_cur.prod);
+        _cur.update_size_depth(_result._size, _result._depth);
+        return LEXY_MOV(_result);
+    }
 
-        marker() = default;
-
-        explicit marker(_detail::pt_node_production<Reader>* prod, std::size_t depth)
-        : prod(prod), depth(depth)
-        {}
-
-        template <typename T>
-        void append(T* child)
-        {
-            ++prod->child_count;
-
-            if (last_child)
-            {
-                // Add a sibling to the last child.
-                last_child.base()->ptr.set_sibling(child);
-                // child is now the last child.
-                last_child.set_sibling(child);
-            }
-            else
-            {
-                // We're adding the first child of a node, which is also the last child.
-                last_child.set_sibling(child);
-
-                if (last_child.base() == prod + 1)
-                {
-                    // The first child is stored adjacent.
-                    prod->first_child_adjacent = true;
-                    prod->first_child_type     = last_child.type() & 0b1;
-                }
-                else
-                {
-                    // The child is not stored immediately afterwards.
-                    // This only happens when a new block had to be started.
-                    // In that case, we've saved enough space after the production to add a pointer.
-                    auto memory = static_cast<void*>(prod + 1);
-                    ::new (memory) _detail::pt_node_ptr<Reader>(last_child);
-
-                    prod->first_child_adjacent = false;
-                }
-            }
-        }
-
-        void finish(std::size_t& size, std::size_t& max_depth)
-        {
-            if (last_child)
-                // The pointer of the last child needs to point back to prod.
-                last_child.base()->ptr.set_parent(prod);
-
-            // Update the size.
-            size += prod->child_count;
-
-            // And update the depth.
-            auto local_max_depth = prod->child_count > 0 ? depth + 1 : depth;
-            if (max_depth < local_max_depth)
-                max_depth = local_max_depth;
-        }
-    };
-
+    //=== production nodes ===//
     template <typename Production>
     auto start_production(Production production)
     {
         if constexpr (lexy::is_transparent_production<Production>)
             // Don't need to add a new node for a transparent production.
-            return marker();
+            return _cur;
 
         // Allocate a node for the production and append it to the current child list.
         // We reserve enough memory to allow for a trailing pointer.
+        // This is only necessary if the first child is in a new block,
+        // in which case we won't overwrite it.
         _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
-                                + sizeof(_detail::pt_node_ptr<Reader>));
+                                + sizeof(_detail::pt_node<Reader>*));
         auto node
             = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
         // Note: don't append the node yet, we might still backtrack.
 
-        // Subsequent inertions are to the new node, so update marker and return old one.
+        // Subsequent insertions are to the new node, so update marker and return old one.
         auto old = LEXY_MOV(_cur);
-        _cur     = marker(node, old.depth + 1);
+        _cur     = marker(node, old.cur_depth + 1, node);
         return old;
     }
 
+    void finish_production(marker&& m)
+    {
+        LEXY_PRECONDITION(_cur.prod || m.prod == _cur.prod);
+        if (m.prod == _cur.prod)
+            // We're finishing with a transparent production, do nothing.
+            return;
+
+        _cur.update_size_depth(_result._size, m.local_max_depth);
+        _cur.insert_children_into(_cur.prod);
+
+        // Insert the production node into the parent and continue with it.
+        m.insert(_cur.prod);
+        _cur = LEXY_MOV(m);
+    }
+
+    void cancel_production(marker&& m)
+    {
+        LEXY_PRECONDITION(_cur.prod);
+        if (_cur.prod == m.prod)
+            // We're backtracking a transparent production, do nothing.
+            return;
+
+        _result._buffer.unwind(_cur.unwind_pos);
+        // Continue with parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    //=== container nodes ===//
+    marker start_container()
+    {
+        auto unwind_pos = _result._buffer.top();
+        if (_cur.prod && _cur.child_count == 0)
+        {
+            // If our parent production doesn't have any children,
+            // we might need space for a first child pointer.
+            //
+            // If our parent is another container, its start_container() function took care of it.
+            // If our parent already has a child, the first_child pointer is taken care of.
+            _result._buffer.template allocate<_detail::pt_node<Reader>*>(nullptr);
+        }
+
+        // Create a new container marker and activate it.
+        auto old = LEXY_MOV(_cur);
+        _cur     = marker(unwind_pos, old.cur_depth);
+        return old;
+    }
+
+    template <typename Production>
+    void set_container_production(Production production)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+        if constexpr (lexy::is_transparent_production<Production>)
+            // If the production is transparent, we do nothing.
+            return;
+
+        // Allocate a new node for the production.
+        // We definitely need space for node pointer at this point,
+        // as the first child precedes it.
+        _result._buffer.reserve(sizeof(_detail::pt_node_production<Reader>)
+                                + sizeof(_detail::pt_node<Reader>*));
+        auto node
+            = _result._buffer.template allocate<_detail::pt_node_production<Reader>>(production);
+        _result._buffer.template allocate<_detail::pt_node<Reader>*>(nullptr);
+
+        // Create a new container that will contain the production as its only child.
+        // As such, it logically starts at the same position and depth as the current container.
+        auto new_container = marker(_cur.unwind_pos, _cur.cur_depth);
+        new_container.insert(node);
+
+        // The production contains all the children.
+        _cur.insert_children_into(node);
+
+        // The local_max_depth of the new container is determined by the old maximum depth + 1.
+        new_container.local_max_depth = [&] {
+            if (_cur.cur_depth == _cur.local_max_depth && _cur.child_count > 0)
+                // There are children we haven't yet accounted for.
+                return _cur.local_max_depth + 1 + 1;
+            else
+                return _cur.local_max_depth + 1;
+        }();
+        _result._size += _cur.child_count;
+
+        // And we continue with the current container.
+        _cur = new_container;
+    }
+
+    void finish_container(marker&& m)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+
+        // Insert the children of our container into the parent.
+        m.insert_list(_cur.child_count, _cur.first_child, _cur.last_child);
+
+        // We can't update size yet, it would be double counted.
+        // We do need to update the max depth if necessary, however.
+        std::size_t size = 0;
+        _cur.update_size_depth(size, m.local_max_depth);
+
+        // Continue with the parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    void cancel_container(marker&& m)
+    {
+        LEXY_PRECONDITION(!_cur.prod);
+
+        // Deallocate everything we've inserted.
+        _result._buffer.unwind(_cur.unwind_pos);
+        // Continue with parent.
+        _cur = LEXY_MOV(m);
+    }
+
+    //=== token nodes ===//
     void token(token_kind<TokenKind> _kind, typename Reader::iterator begin,
                typename Reader::iterator end)
     {
@@ -4342,12 +4551,12 @@ public:
 
         auto kind = token_kind<TokenKind>::to_raw(_kind);
 
-        if (auto token = _cur.last_child.token();
-            // We merge error tokens.
-            token && token->kind == kind && kind == lexy::error_token_kind)
+        // We merge error tokens.
+        if (kind == lexy::error_token_kind && _cur.last_child && _cur.last_child->as_token()
+            && _cur.last_child->as_token()->kind == lexy::error_token_kind)
         {
             // No need to allocate a new node, just extend the previous node.
-            token->update_end(end);
+            _cur.last_child->as_token()->update_end(end);
         }
         else
         {
@@ -4356,41 +4565,8 @@ public:
             auto node
                 = _result._buffer.template allocate<_detail::pt_node_token<Reader>>(kind, begin,
                                                                                     end);
-            _cur.append(node);
+            _cur.insert(node);
         }
-    }
-
-    void finish_production(marker&& m)
-    {
-        if (!m.prod)
-            // We're finishing with a transparent production, do nothing.
-            return;
-
-        // We're done with the current production.
-        _cur.finish(_result._size, _result._depth);
-        // Append to previous production.
-        m.append(_cur.prod);
-        // Continue with the previous production.
-        _cur = LEXY_MOV(m);
-    }
-
-    void cancel_production(marker&& m)
-    {
-        if (!m.prod)
-            // We're backtracking a transparent production, do nothing.
-            return;
-
-        // Deallocate everything from the backtracked production.
-        _result._buffer.unwind(_cur.prod);
-        // Continue with previous production.
-        _cur = LEXY_MOV(m);
-    }
-
-    parse_tree&& finish() &&
-    {
-        LEXY_PRECONDITION(_cur.prod == _result._root);
-        _cur.finish(_result._size, _result._depth);
-        return LEXY_MOV(_result);
     }
 
 private:
@@ -4404,28 +4580,28 @@ class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
 public:
     bool is_token() const noexcept
     {
-        return _ptr.token() != nullptr;
+        return _ptr->as_token() != nullptr;
     }
     bool is_production() const noexcept
     {
-        return _ptr.production() != nullptr;
+        return _ptr->as_production() != nullptr;
     }
 
     bool is_root() const noexcept
     {
-        // Root node has no next pointer.
-        return !_ptr.base()->ptr;
+        // Root node has no next node.
+        return _ptr->next_node() == nullptr;
     }
     bool is_token_production() const noexcept
     {
-        return is_production() && _ptr.production()->token_production;
+        return is_production() && _ptr->as_production()->token_production;
     }
 
     const char* name() const noexcept
     {
-        if (auto prod = _ptr.production())
+        if (auto prod = _ptr->as_production())
             return prod->name;
-        else if (auto token = _ptr.token())
+        else if (auto token = _ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind).name();
         else
         {
@@ -4437,10 +4613,10 @@ public:
     friend bool operator==(node_kind lhs, node_kind rhs)
     {
         if (lhs.is_token() && rhs.is_token())
-            return lhs._ptr.token()->kind == rhs._ptr.token()->kind;
+            return lhs._ptr->as_token()->kind == rhs._ptr->as_token()->kind;
         else
             // See the `operator==` for productions for rationale why this works.
-            return lhs._ptr.production()->name == rhs._ptr.production()->name;
+            return lhs._ptr->as_production()->name == rhs._ptr->as_production()->name;
     }
     friend bool operator!=(node_kind lhs, node_kind rhs)
     {
@@ -4449,7 +4625,7 @@ public:
 
     friend bool operator==(node_kind nk, token_kind<TokenKind> tk)
     {
-        if (auto token = nk._ptr.token())
+        if (auto token = nk._ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind) == tk;
         else
             return false;
@@ -4478,7 +4654,7 @@ public:
         // This only fails if we have different productions with the same name and the compiler does
         // string interning. But as the production name corresponds to the qualified C++ name (by
         // default), this is only possible if the user does something weird.
-        return nk.is_production() && nk._ptr.production()->name == name;
+        return nk.is_production() && nk._ptr->as_production()->name == name;
     }
     template <typename Production, typename = lexy::production_rule<Production>>
     friend bool operator==(Production p, node_kind nk)
@@ -4497,9 +4673,9 @@ public:
     }
 
 private:
-    explicit node_kind(_detail::pt_node_ptr<Reader> ptr) : _ptr(ptr) {}
+    explicit node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
 
-    _detail::pt_node_ptr<Reader> _ptr;
+    _detail::pt_node<Reader>* _ptr;
 
     friend parse_tree::node;
 };
@@ -4510,7 +4686,7 @@ class parse_tree<Reader, TokenKind, MemoryResource>::node
 public:
     void* address() const noexcept
     {
-        return _ptr.base();
+        return _ptr;
     }
 
     auto kind() const noexcept
@@ -4525,92 +4701,84 @@ public:
             return *this;
 
         // If we follow the sibling pointer, we reach a parent pointer.
-        auto cur = _ptr.base()->ptr;
-        while (cur.is_sibling_ptr())
-            cur = cur.base()->ptr;
-        return node(cur);
+        auto cur = _ptr;
+        while (cur->next_role() == _detail::pt_node<Reader>::role_sibling)
+            cur = cur->next_node();
+        return node(cur->next_node());
     }
 
     class children_range
     {
     public:
-        class iterator;
-        struct sentinel : _detail::sentinel_base<sentinel, iterator>
-        {};
-
         class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
         {
         public:
-            iterator() noexcept : _cur() {}
+            iterator() noexcept : _cur(nullptr) {}
 
             node deref() const noexcept
             {
-                LEXY_PRECONDITION(*this != sentinel{});
                 return node(_cur);
             }
 
             void increment() noexcept
             {
-                LEXY_PRECONDITION(*this != sentinel{});
-                _cur = _cur.base()->ptr;
+                _cur = _cur->next_node();
             }
 
             bool equal(iterator rhs) const noexcept
             {
-                return _cur.base() == rhs._cur.base();
-            }
-            bool is_end() const noexcept
-            {
-                // We're at the end of the children, if the current pointer is a parent pointer.
-                // For a default constructed iterator, nullptr is a parent pointer, so this works as
-                // well.
-                return _cur.is_parent_ptr();
+                return _cur == rhs._cur;
             }
 
         private:
-            explicit iterator(_detail::pt_node_ptr<Reader> ptr) noexcept : _cur(ptr) {}
+            explicit iterator(_detail::pt_node<Reader>* ptr) noexcept : _cur(ptr) {}
 
-            _detail::pt_node_ptr<Reader> _cur;
+            _detail::pt_node<Reader>* _cur;
 
             friend children_range;
         };
 
         bool empty() const noexcept
         {
-            return _count == 0;
+            return size() == 0;
         }
 
         std::size_t size() const noexcept
         {
-            return _count;
+            if (auto prod = _node->as_production())
+                return prod->child_count;
+            else
+                return 0;
         }
 
         iterator begin() const noexcept
         {
-            return iterator(_begin);
+            if (auto prod = _node->as_production(); prod && prod->first_child())
+                return iterator(prod->first_child());
+            else
+                return end();
         }
-        sentinel end() const noexcept
+        iterator end() const noexcept
         {
-            return {};
+            // The last child has a next pointer back to the parent,
+            // so if we keep following it, we'll end up here.
+            return iterator(_node);
         }
 
     private:
-        explicit children_range(_detail::pt_node_ptr<Reader> begin, std::size_t count)
-        : _begin(begin), _count(count)
-        {}
+        explicit children_range(_detail::pt_node<Reader>* node) : _node(node)
+        {
+            LEXY_PRECONDITION(node);
+        }
 
-        _detail::pt_node_ptr<Reader> _begin;
-        std::size_t                  _count;
+        _detail::pt_node<Reader>* _node;
 
         friend node;
     };
 
     auto children() const noexcept
     {
-        if (auto prod = _ptr.production())
-            return children_range(prod->first_child(), prod->child_count);
-        else
-            return children_range(_detail::pt_node_ptr<Reader>{}, 0);
+        return children_range(_ptr);
     }
 
     class sibling_range
@@ -4628,23 +4796,23 @@ public:
 
             void increment() noexcept
             {
-                if (_cur.base()->ptr.is_parent_ptr())
+                if (_cur->next_role() == _detail::pt_node<Reader>::role_parent)
                     // We're pointing to the parent, go to first child instead.
-                    _cur = _cur.base()->ptr.production()->first_child();
+                    _cur = _cur->next_node()->as_production()->first_child();
                 else
                     // We're pointing to a sibling, go there.
-                    _cur = _cur.base()->ptr;
+                    _cur = _cur->next_node();
             }
 
             bool equal(iterator rhs) const noexcept
             {
-                return _cur.base() == rhs._cur.base();
+                return _cur == rhs._cur;
             }
 
         private:
-            explicit iterator(_detail::pt_node_ptr<Reader> ptr) noexcept : _cur(ptr) {}
+            explicit iterator(_detail::pt_node<Reader>* ptr) noexcept : _cur(ptr) {}
 
-            _detail::pt_node_ptr<Reader> _cur;
+            _detail::pt_node<Reader>* _cur;
 
             friend sibling_range;
         };
@@ -4667,9 +4835,9 @@ public:
         }
 
     private:
-        explicit sibling_range(_detail::pt_node_ptr<Reader> node) noexcept : _node(node) {}
+        explicit sibling_range(_detail::pt_node<Reader>* node) noexcept : _node(node) {}
 
-        _detail::pt_node_ptr<Reader> _node;
+        _detail::pt_node<Reader>* _node;
 
         friend node;
     };
@@ -4682,12 +4850,12 @@ public:
     bool is_last_child() const noexcept
     {
         // We're the last child if our pointer points to the parent.
-        return _ptr.base()->ptr.is_parent_ptr();
+        return _ptr->next_role() == _detail::pt_node<Reader>::role_parent;
     }
 
     auto lexeme() const noexcept
     {
-        if (auto token = _ptr.token())
+        if (auto token = _ptr->as_token())
             return lexy::lexeme<Reader>(token->begin, token->end());
         else
             return lexy::lexeme<Reader>();
@@ -4697,29 +4865,24 @@ public:
     {
         LEXY_PRECONDITION(kind().is_token());
 
-        auto token = _ptr.token();
+        auto token = _ptr->as_token();
         auto kind  = token_kind<TokenKind>::from_raw(token->kind);
         return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
     }
 
     friend bool operator==(node lhs, node rhs) noexcept
     {
-        return lhs._ptr.base() == rhs._ptr.base();
+        return lhs._ptr == rhs._ptr;
     }
     friend bool operator!=(node lhs, node rhs) noexcept
     {
-        return lhs._ptr.base() != rhs._ptr.base();
+        return lhs._ptr != rhs._ptr;
     }
 
 private:
-    explicit node(_detail::pt_node_ptr<Reader> ptr) noexcept : _ptr(ptr) {}
-    explicit node(_detail::pt_node_production<Reader>* ptr) noexcept
-    {
-        // It doesn't matter whether the pointer is a parent or sibling.
-        _ptr.set_parent(ptr);
-    }
+    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
 
-    _detail::pt_node_ptr<Reader> _ptr;
+    _detail::pt_node<Reader>* _ptr;
 
     friend parse_tree;
 };
@@ -4753,45 +4916,56 @@ public:
 
         _value_type deref() const noexcept
         {
-            if (_cur.token())
-                // We're only visiting tokens once.
-                return {traverse_event::leaf, node(_cur)};
-            else if (_cur.is_sibling_ptr())
-                // If it's a sibling pointer, we're entering the production for the first time.
-                return {traverse_event::enter, node(_cur)};
-            else if (_cur.is_parent_ptr())
-                // If it's a parent pointer, we're revisiting the production after all the children.
-                return {traverse_event::exit, node(_cur)};
-            else
-            {
-                LEXY_ASSERT(false, "unreachable");
-                return {{}, node(_cur)};
-            }
+            return {_ev, node(_cur)};
         }
 
         void increment() noexcept
         {
-            if (_cur.token() || _cur.is_parent_ptr())
-                // We're currently pointing to a token or back to the parent production.
-                // Continue with its sibling.
-                _cur = _cur.base()->ptr;
-            else if (_cur.is_sibling_ptr())
-                // We're currently pointing to a production for the first time.
-                // Continue to the first child.
-                _cur = _cur.production()->first_child();
+            if (_ev == traverse_event::enter)
+            {
+                auto child = _cur->as_production()->first_child();
+                if (child)
+                {
+                    // We go to the first child next.
+                    if (child->as_token())
+                        _ev = traverse_event::leaf;
+                    else
+                        _ev = traverse_event::enter;
+
+                    _cur = child;
+                }
+                else
+                {
+                    // Don't have children, exit.
+                    _ev = traverse_event::exit;
+                }
+            }
             else
-                LEXY_ASSERT(false, "unreachable");
+            {
+                // We follow the next pointer.
+
+                if (_cur->next_role() == _detail::pt_node<Reader>::role_parent)
+                    // We go back to a production for the second time.
+                    _ev = traverse_event::exit;
+                else if (_cur->next_node()->as_production())
+                    // We're having a production as sibling.
+                    _ev = traverse_event::enter;
+                else
+                    // Token as sibling.
+                    _ev = traverse_event::leaf;
+
+                _cur = _cur->next_node();
+            }
         }
 
         bool equal(iterator rhs) const noexcept
         {
-            // We need to point to the same node and in the same role.
-            return _cur.base() == rhs._cur.base()
-                   && _cur.is_parent_ptr() == rhs._cur.is_parent_ptr();
+            return _ev == rhs._ev && _cur == rhs._cur;
         }
 
     private:
-        _detail::pt_node_ptr<Reader> _cur;
+        _detail::pt_node<Reader>* _cur = nullptr;
+        traverse_event            _ev;
 
         friend traverse_range;
     };
@@ -4817,17 +4991,20 @@ private:
     {
         if (n.kind().is_token())
         {
-            _begin._cur.set_sibling(n._ptr.token());
-            _end = _begin;
+            _begin._cur = n._ptr;
+            _begin._ev  = traverse_event::leaf;
+
+            _end = _detail::next(_begin);
         }
         else
         {
-            _begin._cur.set_sibling(n._ptr.production());
-            _end._cur.set_parent(n._ptr.production());
-        }
+            _begin._cur = n._ptr;
+            _begin._ev  = traverse_event::enter;
 
-        // Turn it into a half-open range.
-        ++_end;
+            _end._cur = n._ptr;
+            _end._ev  = traverse_event::exit;
+            ++_end; // half-open range
+        }
     }
 
     iterator _begin, _end;
@@ -4865,20 +5042,20 @@ public:
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_finish ev, iterator pos)
+        void on(parse_tree_handler& handler, parse_events::production_finish, iterator)
         {
             if (--handler._depth == 0)
                 *handler._tree = LEXY_MOV(*handler._builder).finish();
             else
                 handler._builder->finish_production(LEXY_MOV(_marker));
-
-            _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_cancel ev, iterator pos)
+        void on(parse_tree_handler& handler, parse_events::production_cancel, iterator pos)
         {
             if (--handler._depth == 0)
+            {
                 handler._tree->clear();
+            }
             else
             {
                 // Cancelling the production removes all nodes from the tree.
@@ -4887,16 +5064,34 @@ public:
                 handler._builder->cancel_production(LEXY_MOV(_marker));
                 handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
             }
+        }
 
-            _validate.on(handler._validate, ev, pos);
+        auto on(parse_tree_handler& handler, lexy::parse_events::operation_chain_start, iterator)
+        {
+            // As we don't know the production yet (or whether it is actually an operation),
+            // we create a container node to decide later.
+            return handler._builder->start_container();
+        }
+        template <typename Operation>
+        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_op, Operation op,
+                iterator)
+        {
+            // We set the production of the current container.
+            // This will do a "left rotation" on the parse tree, making a new container the parent.
+            handler._builder->set_container_production(op);
+        }
+        template <typename Marker>
+        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_finish,
+                Marker&&            marker, iterator)
+        {
+            handler._builder->finish_container(LEXY_MOV(marker));
         }
 
         template <typename TokenKind>
-        void on(parse_tree_handler& handler, parse_events::token ev, TokenKind kind, iterator begin,
+        void on(parse_tree_handler& handler, parse_events::token, TokenKind kind, iterator begin,
                 iterator end)
         {
             handler._builder->token(kind, begin, end);
-            _validate.on(handler._validate, ev, kind, begin, end);
         }
 
         template <typename Error>
@@ -4906,9 +5101,9 @@ public:
         }
 
         template <typename Event, typename... Args>
-        void on(parse_tree_handler& handler, Event ev, Args&&... args)
+        auto on(parse_tree_handler& handler, Event ev, Args&&... args)
         {
-            _validate.on(handler._validate, ev, LEXY_FWD(args)...);
+            return _validate.on(handler._validate, ev, LEXY_FWD(args)...);
         }
 
     private:
@@ -4922,6 +5117,7 @@ public:
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {
+        LEXY_PRECONDITION(_depth == 0);
         return LEXY_MOV(_validate).get_result_void(rule_parse_result);
     }
 
@@ -5904,8 +6100,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(match_handler&, Event, const Args&...)
-        {}
+        constexpr int on(match_handler&, Event, const Args&...)
+        {
+            return 0; // operation_chain_start needs to return something
+        }
     };
 
     template <typename Production, typename State>
@@ -6842,26 +7040,40 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
     template <typename Reader>
     LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
     {
-        constexpr auto        cur_value = Trie.node_value[CurNode];
-        auto                  cur_pos   = reader.position();
-        [[maybe_unused]] auto cur_char  = reader.peek();
+        constexpr auto cur_value = Trie.node_value[CurNode];
+        if constexpr (((Trie.transition_from[CurNode + Indices] == CurNode) || ...))
+        {
+            auto                  cur_pos  = reader.position();
+            [[maybe_unused]] auto cur_char = reader.peek();
 
-        auto next_value = Trie.node_no_match;
-        (void)(_try_transition<Indices>(next_value, reader, cur_char) || ...);
-        if (next_value != Trie.node_no_match)
-            // We prefer a longer match.
-            return next_value;
+            auto next_value = Trie.node_no_match;
+            (void)(_try_transition<Indices>(next_value, reader, cur_char) || ...);
+            if (next_value != Trie.node_no_match)
+                // We prefer a longer match.
+                return next_value;
 
-        // We haven't found a longer match, return our match.
-        reader.set_position(cur_pos);
+            // We haven't found a longer match, return our match.
+            reader.set_position(cur_pos);
 
-        // But first, we need to check that we don't match that nodes char class.
-        constexpr auto char_class = Trie.node_char_class[CurNode];
-        if (_node_char_class<char_class, CharClasses...>::match(reader))
-            // The char class matched, so we can't match anymore.
-            return Trie.node_no_match;
+            // But first, we need to check that we don't match that nodes char class.
+            constexpr auto char_class = Trie.node_char_class[CurNode];
+            if (_node_char_class<char_class, CharClasses...>::match(reader))
+                // The char class matched, so we can't match anymore.
+                return Trie.node_no_match;
+            else
+                return cur_value;
+        }
         else
-            return cur_value;
+        {
+            // We don't have any matching transition, so return our value unconditionally.
+            // This prevents an unecessary `reader.peek()` call which breaks `lexy_ext::shell`.
+            // But first, we need to check that we don't match that nodes char class.
+            constexpr auto char_class = Trie.node_char_class[CurNode];
+            if (_node_char_class<char_class, CharClasses...>::match(reader))
+                return Trie.node_no_match;
+            else
+                return cur_value;
+        }
     }
 };
 } // namespace lexy::_detail
@@ -8662,15 +8874,15 @@ public:
     : _out(out), _opts(opts), _cur_depth(0)
     {}
 
-    template <typename Location, typename Production>
-    void write_production_start(const Location& loc, Production)
+    template <typename Location>
+    void write_production_start(const Location& loc, const char* name)
     {
         if (_cur_depth <= _opts.max_tree_depth)
         {
             write_prefix(loc, prefix::event);
 
             _out = _detail::write_color<_detail::color::bold>(_out, _opts);
-            _out = _detail::write_str(_out, lexy::production_name<Production>());
+            _out = _detail::write_str(_out, name);
             _out = _detail::write_color<_detail::color::reset>(_out, _opts);
 
             if (_cur_depth == _opts.max_tree_depth)
@@ -8800,6 +9012,22 @@ public:
     }
 
     template <typename Location>
+    void write_operation(const Location& loc, const char* name)
+    {
+        if (_cur_depth > _opts.max_tree_depth)
+            return;
+
+        write_prefix(loc, prefix::event);
+
+        _out = _detail::write_color<_detail::color::bold>(_out, _opts);
+        _out = _detail::write_str(_out, "operation");
+        _out = _detail::write_color<_detail::color::reset>(_out, _opts);
+
+        _out = _detail::write_str(_out, ": ");
+        _out = _detail::write_str(_out, name);
+    }
+
+    template <typename Location>
     void write_debug(const Location& loc, const char* str)
     {
         if (_cur_depth > _opts.max_tree_depth)
@@ -8911,7 +9139,7 @@ public:
         void on(trace_handler& handler, parse_events::production_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
-            handler._writer.write_production_start(loc, Production{});
+            handler._writer.write_production_start(loc, lexy::production_name<Production>());
 
             // All events for the production are after the initial event.
             _previous_anchor.emplace(handler._anchor);
@@ -8929,6 +9157,24 @@ public:
 
             // We've backtracked, so we need to restore the anchor.
             handler._anchor = *_previous_anchor;
+        }
+
+        int on(trace_handler& handler, parse_events::operation_chain_start, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_production_start(loc, "operation chain");
+            return 0; // need to return something
+        }
+        template <typename Operation>
+        void on(trace_handler& handler, parse_events::operation_chain_op, Operation, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_operation(loc, lexy::production_name<Operation>());
+        }
+        void on(trace_handler& handler, parse_events::operation_chain_finish, int, iterator pos)
+        {
+            auto loc = handler.get_location(pos);
+            handler._writer.write_finish(loc);
         }
 
         template <typename TK>
@@ -9811,7 +10057,7 @@ struct _seq : rule_base
     using p = lexy::parser_for<_seq_impl<R...>, NextParser>;
 };
 
-template <typename R, typename S>
+template <typename R, typename S, typename = std::enable_if_t<lexy::is_rule<R> && lexy::is_rule<S>>>
 constexpr auto operator+(R, S)
 {
     return _seq<R, S>{};
@@ -10976,8 +11222,10 @@ public:
         }
 
         template <typename Event, typename... Args>
-        constexpr void on(whitespace_handler&, Event, const Args&...)
-        {}
+        constexpr int on(whitespace_handler&, Event, const Args&...)
+        {
+            return 0; // an operation_start event returns something
+        }
     };
 
     template <typename Production, typename State>
@@ -14472,6 +14720,1006 @@ constexpr auto eof = _eof{};
 #endif // LEXY_DSL_EOF_HPP_INCLUDED
 
 
+// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_EXPRESSION_HPP_INCLUDED
+#define LEXY_DSL_EXPRESSION_HPP_INCLUDED
+
+
+
+
+// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_OPERATOR_HPP_INCLUDED
+#define LEXY_DSL_OPERATOR_HPP_INCLUDED
+
+
+
+
+
+
+namespace lexyd
+{
+template <typename Condition, typename... R>
+struct _br;
+template <typename... R>
+struct _seq_impl;
+} // namespace lexyd
+
+//=== tag type ===//
+namespace lexy
+{
+template <typename Literal>
+struct _op
+{};
+// GCC is buggy with auto parameters.
+template <typename T, T Value>
+struct _opv
+{
+    constexpr operator LEXY_DECAY_DECLTYPE(Value)() const
+    {
+        return Value;
+    }
+};
+
+#if LEXY_HAS_NTTP
+template <auto Operator>
+#else
+template <const auto& Operator>
+#endif
+using op = typename LEXY_DECAY_DECLTYPE(Operator)::op_tag_type;
+} // namespace lexy
+
+//=== op rule ===//
+namespace lexy::_detail
+{
+template <typename... Literals>
+struct op_lit_list
+{
+    static constexpr auto size = sizeof...(Literals);
+
+    template <typename Encoding>
+    static LEXY_CONSTEVAL auto _build_trie()
+    {
+        auto result = make_empty_trie<Encoding, Literals...>();
+
+        auto value      = std::size_t(0);
+        auto char_class = std::size_t(0);
+        ((result.node_value[Literals::lit_insert(result, 0, char_class)] = value++,
+          char_class += Literals::lit_char_classes.size),
+         ...);
+
+        return result;
+    }
+    template <typename Encoding>
+    static constexpr lit_trie_for<Encoding, Literals...> trie = _build_trie<Encoding>();
+
+    template <typename... T>
+    constexpr auto operator+(op_lit_list<T...>) const
+    {
+        return op_lit_list<Literals..., T...>{};
+    }
+};
+
+template <typename Reader>
+struct parsed_operator
+{
+    typename Reader::iterator pos;
+    std::size_t               idx;
+};
+
+template <typename OpList, typename Reader>
+constexpr auto parse_operator(Reader& reader)
+{
+    using encoding   = typename Reader::encoding;
+    using op_matcher = lexy::_detail::lit_trie_matcher<OpList::template trie<encoding>, 0>;
+
+    auto begin = reader.position();
+    auto op    = op_matcher::try_match(reader);
+    return parsed_operator<Reader>{begin, op};
+}
+} // namespace lexy::_detail
+
+namespace lexyd
+{
+template <typename Tag, typename Reader>
+using _detect_op_tag_ctor = decltype(Tag(LEXY_DECLVAL(Reader).position()));
+
+template <typename TagType, typename Literal, typename... R>
+struct _op : branch_base
+{
+    using op_tag_type = TagType;
+    using op_literals = lexy::_detail::op_lit_list<Literal>;
+
+    template <typename NextParser, typename Context, typename Reader, typename... Args>
+    LEXY_PARSER_FUNC static bool op_finish(Context& context, Reader& reader,
+                                           lexy::_detail::parsed_operator<Reader> op,
+                                           Args&&... args)
+    {
+        context.on(_ev::token{}, typename Literal::token_type{}, op.pos, reader.position());
+
+        using continuation
+            = lexy::whitespace_parser<Context, lexy::parser_for<_seq_impl<R...>, NextParser>>;
+        if constexpr (std::is_void_v<TagType>)
+            return continuation::parse(context, reader, LEXY_FWD(args)...);
+        else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       op_tag_type(reader.position()));
+        else
+            return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
+    }
+
+    template <typename Reader>
+    struct bp
+    {
+        lexy::branch_parser_for<Literal, Reader> impl;
+
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock* cb, const Reader& reader)
+        {
+            return impl.try_parse(cb, reader);
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context& context)
+        {
+            impl.cancel(context);
+        }
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            using continuation = lexy::parser_for<_seq_impl<R...>, NextParser>;
+
+            if constexpr (std::is_void_v<TagType>)
+                return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...);
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
+                return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...,
+                                                          op_tag_type(reader.position()));
+            else
+                return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...,
+                                                          op_tag_type{});
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            [[maybe_unused]] auto pos = reader.position();
+
+            using continuation
+                = lexy::parser_for<Literal, lexy::parser_for<_seq_impl<R...>, NextParser>>;
+            if constexpr (std::is_void_v<TagType>)
+                return continuation::parse(context, reader, LEXY_FWD(args)...);
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
+                return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(pos));
+            else
+                return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
+        }
+    };
+};
+
+template <typename Literal>
+constexpr auto op(Literal)
+{
+    static_assert(lexy::is_literal_rule<Literal>);
+    return _op<lexy::_op<Literal>, Literal>{};
+}
+template <typename Literal, typename... R>
+constexpr auto op(_br<Literal, R...>)
+{
+    static_assert(lexy::is_literal_rule<Literal>,
+                  "condition in the operator must be a literal rule");
+    return _op<lexy::_op<Literal>, Literal, R...>{};
+}
+
+template <typename Tag, typename Literal>
+constexpr auto op(Literal)
+{
+    static_assert(lexy::is_literal_rule<Literal>);
+    return _op<Tag, Literal>{};
+}
+template <typename Tag, typename Literal, typename... R>
+constexpr auto op(_br<Literal, R...>)
+{
+    static_assert(lexy::is_literal_rule<Literal>,
+                  "condition in the operator must be a literal rule");
+    return _op<Tag, Literal, R...>{};
+}
+
+template <auto Tag, typename Literal>
+constexpr auto op(Literal)
+{
+    static_assert(lexy::is_literal_rule<Literal>);
+    return _op<lexy::_opv<LEXY_DECAY_DECLTYPE(Tag), Tag>, Literal>{};
+}
+template <auto Tag, typename Literal, typename... R>
+constexpr auto op(_br<Literal, R...>)
+{
+    static_assert(lexy::is_literal_rule<Literal>,
+                  "condition in the operator must be a literal rule");
+    return _op<lexy::_opv<LEXY_DECAY_DECLTYPE(Tag), Tag>, Literal, R...>{};
+}
+} // namespace lexyd
+
+//=== op choice ===//
+namespace lexyd
+{
+template <typename... Ops>
+struct _opc : branch_base
+{
+    using op_literals = decltype((typename Ops::op_literals{} + ...));
+
+    template <typename NextParser, typename Context, typename Reader, typename... Args>
+    LEXY_PARSER_FUNC static bool op_finish(Context& context, Reader& reader,
+                                           lexy::_detail::parsed_operator<Reader> op,
+                                           Args&&... args)
+    {
+        auto result = false;
+
+        auto cur_idx = std::size_t(0);
+        (void)((cur_idx == op.idx
+                    ? (result = Ops::template op_finish<NextParser>(context, reader, op,
+                                                                    LEXY_FWD(args)...),
+                       true)
+                    : (++cur_idx, false))
+               || ...);
+
+        return result;
+    }
+
+    template <typename Reader>
+    struct bp
+    {
+        lexy::_detail::parsed_operator<Reader> op;
+        typename Reader::iterator              end;
+
+        template <typename ControlBlock>
+        constexpr auto try_parse(const ControlBlock*, Reader reader)
+        {
+            op  = lexy::_detail::parse_operator<op_literals>(reader);
+            end = reader.position();
+            return op.idx < op_literals::size;
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            reader.set_position(end);
+            return op_finish<NextParser>(context, reader, op, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            bp<Reader> impl{};
+            if (!impl.try_parse(context.control_block, reader))
+            {
+                auto err = lexy::error<Reader, lexy::expected_literal_set>(impl.op.pos);
+                context.on(_ev::error{}, err);
+                return false;
+            }
+            else
+            {
+                return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
+            }
+        }
+    };
+};
+
+template <typename T1, typename L1, typename... R1, typename T2, typename L2, typename... R2>
+constexpr auto operator/(_op<T1, L1, R1...> lhs, _op<T2, L2, R2...> rhs)
+{
+    return _opc<decltype(lhs), decltype(rhs)>{};
+}
+template <typename... Ops, typename T2, typename L2, typename... R2>
+constexpr auto operator/(_opc<Ops...>, _op<T2, L2, R2...> rhs)
+{
+    return _opc<Ops..., decltype(rhs)>{};
+}
+template <typename T1, typename L1, typename... R1, typename... Ops>
+constexpr auto operator/(_op<T1, L1, R1...> lhs, _opc<Ops...>)
+{
+    return _opc<decltype(lhs), Ops...>{};
+}
+template <typename... O1, typename... O2>
+constexpr auto operator/(_opc<O1...>, _opc<O2...>)
+{
+    return _opc<O1..., O2...>{};
+}
+} // namespace lexyd
+
+#endif // LEXY_DSL_OPERATOR_HPP_INCLUDED
+
+
+// Expression parsing algorithm uses an adapted version of Pratt parsing, as described here:
+// https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+// In particular:
+// * precedence specified implicitly by type type hierarchy
+// * support for list and single precedence
+// * support for operator groups that require additional parentheses
+// * generate proper parse tree events
+
+//=== dsl ===//
+namespace lexyd
+{
+/// Tag type to indicate that the operand of an operation is the atom rule.
+struct atom
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "atom";
+    }
+};
+
+/// Tag type to indicate that the operand of an operation is one of multiple.
+template <typename... Operands>
+struct groups
+{};
+
+struct infix_op_left // a ~ b ~ c == (a ~ b) ~ c
+{};
+struct infix_op_right // a ~ b ~ c == a ~ (b ~ c)
+{};
+struct infix_op_list // a ~ b ~ c kept as-is
+{};
+struct infix_op_single // a ~ b ~ c is an error
+{};
+
+struct postfix_op
+{};
+
+struct prefix_op
+{};
+} // namespace lexyd
+
+//=== implementation ===//
+namespace lexy::_detail
+{
+struct binding_power
+{
+    unsigned group;
+    unsigned lhs, rhs;
+
+    static constexpr auto left(unsigned group, unsigned level)
+    {
+        return binding_power{group, 2 * level, 2 * level + 1};
+    }
+    static constexpr auto right(unsigned group, unsigned level)
+    {
+        return binding_power{group, 2 * level + 1, 2 * level};
+    }
+    static constexpr auto prefix(unsigned group, unsigned level)
+    {
+        // prefix is sort of left-associative, so right side odd.
+        return binding_power{group, 0, 2 * level + 1};
+    }
+    static constexpr auto postfix(unsigned group, unsigned level)
+    {
+        // postfix is sort of right-associative, so left side odd.
+        return binding_power{group, 2 * level + 1, 0};
+    }
+
+    constexpr bool is_valid() const
+    {
+        return lhs > 0 || rhs > 0;
+    }
+    constexpr bool is_infix() const
+    {
+        return lhs > 0 && rhs > 0;
+    }
+    constexpr bool is_postfix() const
+    {
+        return lhs > 0 && rhs == 0;
+    }
+    constexpr bool is_prefix() const
+    {
+        return lhs == 0 && rhs > 0;
+    }
+};
+
+template <typename Operation>
+constexpr binding_power get_binding_power(unsigned cur_group, unsigned cur_level)
+{
+    if constexpr (std::is_base_of_v<lexyd::infix_op_left, Operation>
+                  // We treat a list as left associative operator for simplicity here.
+                  // It doesn't really matter, as it will only consider operators from the
+                  // same operation anyway.
+                  || std::is_base_of_v<lexyd::infix_op_list, Operation>
+                  // For the purposes of error recovery, single is left associative.
+                  || std::is_base_of_v<lexyd::infix_op_single, Operation>)
+        return binding_power::left(cur_group, cur_level);
+    else if constexpr (std::is_base_of_v<lexyd::infix_op_right, Operation>)
+        return binding_power::right(cur_group, cur_level);
+    else if constexpr (std::is_base_of_v<lexyd::prefix_op, Operation>)
+        return binding_power::prefix(cur_group, cur_level);
+    else if constexpr (std::is_base_of_v<lexyd::postfix_op, Operation>)
+        return binding_power::postfix(cur_group, cur_level);
+}
+
+template <typename DestOperation>
+struct _binding_power_of
+{
+    static constexpr auto transition(lexyd::atom, unsigned cur_group, unsigned)
+    {
+        // Not found, return an invalid operator, but return the current group.
+        // This is the highest group encountered.
+        return binding_power{cur_group, 0, 0};
+    }
+    template <typename CurOperation>
+    static constexpr auto transition(CurOperation op, unsigned cur_group, unsigned cur_level)
+    {
+        // Normal operation: keep group the same, but increment level.
+        return get(op, cur_group, cur_level + 1);
+    }
+    template <typename... Operations>
+    static constexpr auto transition(lexyd::groups<Operations...>, unsigned cur_group,
+                                     unsigned cur_level)
+    {
+        auto result = binding_power{cur_group, 0, 0};
+        // Try to find the destination in each group.
+        // Before we transition, we increment the group to create a new one,
+        // afterwards we update group to the highest group encountered so far.
+        // That way, we don't re-use group numbers.
+        // Note that we don't increment the level, as that is handled by the overload above.
+        (void)((result    = transition(Operations{}, cur_group + 1, cur_level),
+                cur_group = result.group, result.is_valid())
+               || ...);
+        return result;
+    }
+
+    template <typename CurOperation>
+    static constexpr auto get(CurOperation, unsigned cur_group, unsigned cur_level)
+    {
+        if constexpr (std::is_same_v<DestOperation, CurOperation>)
+            return get_binding_power<CurOperation>(cur_group, cur_level);
+        else
+            return transition(typename CurOperation::operand{}, cur_group, cur_level);
+    }
+};
+
+// Returns the binding power of an operator in an expression.
+template <typename Expr, typename Operation>
+constexpr auto binding_power_of(Operation)
+{
+    return _binding_power_of<Operation>::transition(typename Expr::operation{}, 0, 0);
+}
+} // namespace lexy::_detail
+
+namespace lexy::_detail
+{
+template <typename Operation>
+using op_of = LEXY_DECAY_DECLTYPE(Operation::op);
+
+template <typename... Operations>
+struct operation_list
+{
+    template <typename T>
+    constexpr auto operator+(T) const
+    {
+        return operation_list<Operations..., T>{};
+    }
+    template <typename... T>
+    constexpr auto operator+(operation_list<T...>) const
+    {
+        return operation_list<Operations..., T...>{};
+    }
+
+    static constexpr auto size = sizeof...(Operations);
+
+    using ops = decltype((typename op_of<Operations>::op_literals{} + ... + op_lit_list{}));
+
+    template <template <typename> typename Continuation, typename Context, typename Reader,
+              typename... Args>
+    static constexpr bool apply(Context& context, Reader& reader, parsed_operator<Reader> op,
+                                Args&&... args)
+    {
+        auto result = false;
+
+        auto cur_idx = std::size_t(0);
+        (void)((cur_idx <= op.idx && op.idx < cur_idx + op_of<Operations>::op_literals::size
+                    ? (result
+                       = Continuation<Operations>::parse(context, reader,
+                                                         parsed_operator<Reader>{op.pos,
+                                                                                 op.idx - cur_idx},
+                                                         LEXY_FWD(args)...),
+                       true)
+                    : (cur_idx += op_of<Operations>::op_literals::size, false))
+               || ...);
+
+        return result;
+    }
+};
+
+template <bool Pre, unsigned MinBindingPower>
+struct _operation_list_of
+{
+    template <unsigned CurLevel>
+    static constexpr auto get(lexyd::atom)
+    {
+        return operation_list{};
+    }
+    template <unsigned CurLevel, typename... Operations>
+    static constexpr auto get(lexyd::groups<Operations...>)
+    {
+        return (get<CurLevel>(Operations{}) + ...);
+    }
+    template <unsigned CurLevel, typename Operation>
+    static constexpr auto get(Operation)
+    {
+        constexpr auto bp = get_binding_power<Operation>(0, CurLevel);
+
+        auto tail = get<CurLevel + 1>(typename Operation::operand{});
+        if constexpr (std::is_base_of_v<lexyd::prefix_op, Operation> == Pre
+                      && (bp.is_prefix() || bp.lhs >= MinBindingPower))
+            return tail + Operation{};
+        else
+            return tail;
+    }
+};
+
+// prefix operations: don't care about binding power
+template <typename Expr>
+using pre_operation_list_of
+    = decltype(_operation_list_of<true, 0>::template get<1>(typename Expr::operation{}));
+
+// infix and postfix operations
+template <typename Expr, unsigned MinBindingPower>
+using post_operation_list_of = decltype(_operation_list_of<false, MinBindingPower>::template get<1>(
+    typename Expr::operation{}));
+} // namespace lexy::_detail
+
+//=== expression rule ===//
+namespace lexyd
+{
+struct _expr : rule_base
+{
+    struct _state
+    {
+        unsigned cur_group         = 0;
+        unsigned cur_nesting_level = 0;
+    };
+
+    template <typename Operation>
+    struct _continuation
+    {
+        struct _op_cont
+        {
+            template <typename Context, typename Reader, typename... Args>
+            LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, _state& state,
+                                               Args&&... op_args)
+            {
+                using namespace lexy::_detail;
+
+                constexpr auto value_type_void = std::is_void_v<typename Context::value_type>;
+                constexpr auto binding_power
+                    = binding_power_of<typename Context::production>(Operation{});
+
+                if constexpr (std::is_base_of_v<infix_op_list, Operation>)
+                {
+                    // We need to handle a list infix operator specially,
+                    // and parse an arbitrary amount of lhs.
+                    // For that, we use a loop and a sink.
+                    auto sink = context.value_callback().sink();
+
+                    // We need to pass the initial lhs to the sink.
+                    if constexpr (!value_type_void)
+                        sink(*LEXY_MOV(context.value));
+                    context.value = {};
+
+                    // As well as the operator we've already got.
+                    sink(LEXY_FWD(op_args)...);
+
+                    auto result = true;
+                    while (true)
+                    {
+                        // Parse (another) value.
+                        if (!_parse<binding_power.rhs>(context, reader, state))
+                        {
+                            result = false;
+                            break;
+                        }
+
+                        if constexpr (!value_type_void)
+                            sink(*LEXY_MOV(context.value));
+                        context.value = {};
+
+                        using op_rule = op_of<Operation>;
+                        auto op       = parse_operator<typename op_rule::op_literals>(reader);
+                        if (op.idx >= op_rule::op_literals::size)
+                        {
+                            // The list ends at this point.
+                            reader.set_position(op.pos);
+                            break;
+                        }
+
+                        // Need to finish the operator properly, by passing it to the sink.
+                        if (!op_rule::template op_finish<lexy::sink_parser>(context, reader, op,
+                                                                            sink))
+                        {
+                            result = false;
+                            break;
+                        }
+                    }
+
+                    // We store the final value of the sink no matter the parse result.
+                    if constexpr (value_type_void)
+                    {
+                        LEXY_MOV(sink).finish();
+                        context.value.emplace();
+                    }
+                    else
+                    {
+                        context.value.emplace(LEXY_MOV(sink).finish());
+                    }
+
+                    // If we've failed at any point, propagate failure now.
+                    if (!result)
+                        return false;
+                }
+                else if constexpr (binding_power.is_prefix())
+                {
+                    if (!_parse<binding_power.rhs>(context, reader, state))
+                        return false;
+
+                    auto value    = LEXY_MOV(context.value);
+                    context.value = {};
+
+                    if constexpr (value_type_void)
+                        context.value.emplace_result(context.value_callback(),
+                                                     LEXY_FWD(op_args)...);
+                    else
+                        context.value.emplace_result(context.value_callback(), LEXY_FWD(op_args)...,
+                                                     *LEXY_MOV(value));
+                }
+                else if constexpr (binding_power.is_infix())
+                {
+                    auto lhs      = LEXY_MOV(context.value);
+                    context.value = {};
+
+                    if (!_parse<binding_power.rhs>(context, reader, state))
+                    {
+                        // Put it back, so we can properly recover.
+                        context.value = LEXY_MOV(lhs);
+                        return false;
+                    }
+
+                    auto rhs      = LEXY_MOV(context.value);
+                    context.value = {};
+
+                    if constexpr (value_type_void)
+                        context.value.emplace_result(context.value_callback(),
+                                                     LEXY_FWD(op_args)...);
+                    else
+                        context.value.emplace_result(context.value_callback(), *LEXY_MOV(lhs),
+                                                     LEXY_FWD(op_args)..., *LEXY_MOV(rhs));
+
+                    if constexpr (std::is_base_of_v<infix_op_single, Operation>)
+                    {
+                        using op_rule = op_of<Operation>;
+                        auto op       = parse_operator<typename op_rule::op_literals>(reader);
+                        if (op.idx < op_rule::op_literals::size)
+                        {
+                            using tag = typename Context::production::operator_chain_error;
+                            auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                            context.on(_ev::error{}, err);
+                        }
+                        reader.set_position(op.pos);
+                    }
+                }
+                else if constexpr (binding_power.is_postfix())
+                {
+                    auto value    = LEXY_MOV(context.value);
+                    context.value = {};
+
+                    if constexpr (value_type_void)
+                        context.value.emplace_result(context.value_callback(),
+                                                     LEXY_FWD(op_args)...);
+                    else
+                        context.value.emplace_result(context.value_callback(), *LEXY_MOV(value),
+                                                     LEXY_FWD(op_args)...);
+                }
+
+                context.on(_ev::operation_chain_op{}, Operation{}, reader.position());
+                return true;
+            }
+        };
+
+        template <typename Context, typename Reader>
+        static constexpr bool parse(Context& context, Reader& reader,
+                                    lexy::_detail::parsed_operator<Reader> op, _state& state)
+        {
+            using namespace lexy::_detail;
+            using production = typename Context::production;
+
+            // Check whether we might have nested to far.
+            if (state.cur_nesting_level++ >= production::max_operator_nesting)
+            {
+                using tag = typename production::operator_nesting_error;
+                auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                context.on(_ev::error{}, err);
+
+                // We do not recover, to prevent stack overflow.
+                reader.set_position(op.pos);
+                return false;
+            }
+
+            // If the operator is part of a group, check whether it matches.
+            constexpr auto binding_power = binding_power_of<production>(Operation{});
+            if constexpr (binding_power.group != 0)
+            {
+                if (state.cur_group == 0)
+                {
+                    // We didn't have any operator group yet, set it.
+                    state.cur_group = binding_power.group;
+                }
+                else if (state.cur_group != binding_power.group)
+                {
+                    // Operators can't be grouped.
+                    using tag = typename production::operator_group_error;
+                    auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                    context.on(_ev::error{}, err);
+                    // Trivially recover, but don't update group:
+                    // let the first one stick.
+                }
+            }
+
+            // Finish the operator and parse a RHS, if necessary.
+            return op_of<Operation>::template op_finish<_op_cont>(context, reader, op, state);
+        }
+    };
+
+    template <typename Context, typename Reader>
+    static constexpr bool _parse_lhs(Context& context, Reader& reader, _state& state)
+    {
+        using namespace lexy::_detail;
+
+        using op_list = pre_operation_list_of<typename Context::production>;
+        using atom_parser
+            = lexy::parser_for<LEXY_DECAY_DECLTYPE(Context::production::atom), final_parser>;
+
+        if constexpr (op_list::size == 0)
+        {
+            // We don't have any prefix operators, so parse an atom directly.
+            (void)state;
+            return atom_parser::parse(context, reader);
+        }
+        else
+        {
+            auto op = lexy::_detail::parse_operator<typename op_list::ops>(reader);
+            if (op.idx >= op_list::ops::size)
+            {
+                // We don't have a prefix operator, so it must be an atom.
+                reader.set_position(op.pos);
+                return atom_parser::parse(context, reader);
+            }
+
+            auto start_event = context.on(_ev::operation_chain_start{}, op.pos);
+            auto result      = op_list::template apply<_continuation>(context, reader, op, state);
+            context.on(_ev::operation_chain_finish{}, LEXY_MOV(start_event), reader.position());
+            return result;
+        }
+    }
+
+    template <unsigned MinBindingPower, typename Context, typename Reader>
+    static constexpr bool _parse(Context& context, Reader& reader, _state& state)
+    {
+        using namespace lexy::_detail;
+        using op_list = post_operation_list_of<typename Context::production, MinBindingPower>;
+
+        if constexpr (op_list::size == 0)
+        {
+            // We don't have any post operators, so we only parse the left-hand-side.
+            return _parse_lhs(context, reader, state);
+        }
+        else
+        {
+            auto start_event = context.on(_ev::operation_chain_start{}, reader.position());
+            if (!_parse_lhs(context, reader, state))
+            {
+                context.on(_ev::operation_chain_finish{}, LEXY_MOV(start_event), reader.position());
+                return false;
+            }
+
+            auto result = true;
+            while (true)
+            {
+                auto op = parse_operator<typename op_list::ops>(reader);
+                if (op.idx >= op_list::ops::size)
+                {
+                    reader.set_position(op.pos);
+                    break;
+                }
+
+                result = op_list::template apply<_continuation>(context, reader, op, state);
+                if (!result)
+                    break;
+            }
+
+            context.on(_ev::operation_chain_finish{}, LEXY_MOV(start_event), reader.position());
+            return result;
+        }
+
+        return false; // unreachable
+    }
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader)
+        {
+            static_assert(std::is_same_v<NextParser, lexy::_detail::final_parser>);
+
+            _state state;
+            _parse<0>(context, reader, state);
+            // Regardless of parse errors, we can recover if we already had a value at some point.
+            return !!context.value;
+        }
+    };
+};
+} // namespace lexyd
+
+//=== expression_production ===//
+namespace lexy
+{
+struct max_operator_nesting_exceeded
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "maximum operator nesting level exceeded";
+    }
+};
+
+struct operator_chain_error
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "operator cannot be chained";
+    }
+};
+
+struct operator_group_error
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "operator cannot be mixed with previous operators";
+    }
+};
+
+struct expression_production
+{
+    using operator_nesting_error               = lexy::max_operator_nesting_exceeded;
+    static constexpr auto max_operator_nesting = 256; // arbitrary power of two
+
+    using operator_chain_error = lexy::operator_chain_error;
+    using operator_group_error = lexy::operator_group_error;
+
+    static constexpr auto rule = lexyd::_expr{};
+};
+} // namespace lexy
+
+#endif // LEXY_DSL_EXPRESSION_HPP_INCLUDED
+
+// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_FOLLOW_HPP_INCLUDED
+#define LEXY_DSL_FOLLOW_HPP_INCLUDED
+
+
+
+
+
+namespace lexy
+{
+struct follow_restriction
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "follow restriction";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Literal, typename CharClass>
+struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
+{
+    static constexpr auto lit_max_char_count = Literal::lit_max_char_count;
+
+    static constexpr auto lit_char_classes = lexy::_detail::char_class_list<CharClass>{};
+
+    template <typename Trie>
+    static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
+                                                 std::size_t char_class)
+    {
+        auto end                  = Literal::lit_insert(trie, pos, char_class);
+        trie.node_char_class[end] = char_class;
+        return end;
+    }
+
+    template <typename Reader>
+    struct tp
+    {
+        lexy::token_parser_for<Literal, Reader> impl;
+        typename Reader::iterator               end;
+        bool                                    literal_success;
+
+        constexpr explicit tp(const Reader& reader)
+        : impl(reader), end(reader.position()), literal_success(false)
+        {}
+
+        constexpr bool try_parse(Reader reader)
+        {
+            literal_success = false;
+
+            // Need to match the literal.
+            if (!impl.try_parse(reader))
+                return false;
+            end             = impl.end;
+            literal_success = true;
+
+            // To match, we must not match the char class now.
+            reader.set_position(end);
+            return !lexy::try_match_token(CharClass{}, reader);
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            if (!literal_success)
+            {
+                impl.report_error(context, reader);
+            }
+            else
+            {
+                auto err = lexy::error<Reader, lexy::follow_restriction>(end, end);
+                context.on(_ev::error{}, err);
+            }
+        }
+    };
+};
+
+/// Match a literal but only if not followed by the given char class.
+template <typename Literal, typename CharClass>
+constexpr auto not_followed_by(Literal, CharClass cc)
+{
+    static_assert(lexy::is_literal_rule<Literal> && Literal::lit_char_classes.size == 0);
+    static_assert(lexy::is_char_class_rule<CharClass> || _is_convertible_char_class<CharClass>);
+    return _nf<Literal, decltype(_make_char_class(cc))>{};
+}
+
+/// Match a literal but only if followed by the given char class.
+template <typename Literal, typename CharClass>
+constexpr auto followed_by(Literal lit, CharClass cc)
+{
+    return not_followed_by(lit, -cc);
+}
+} // namespace lexyd
+
+namespace lexy
+{
+template <typename Literal, typename CharClass>
+constexpr auto token_kind_of<lexy::dsl::_nf<Literal, CharClass>> = lexy::literal_token_kind;
+} // namespace lexy
+
+#endif // LEXY_DSL_FOLLOW_HPP_INCLUDED
+
 
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
@@ -15879,6 +17127,7 @@ constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
 
 
 
+
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
@@ -16353,6 +17602,7 @@ LEXY_PUNCT(ampersand, "&");
 LEXY_PUNCT(caret, "^");
 LEXY_PUNCT(asterisk, "*");
 LEXY_PUNCT(tilde, "~");
+LEXY_PUNCT(vbar, "|");
 
 LEXY_PUNCT(hash_sign, "#");
 LEXY_PUNCT(dollar_sign, "$");
@@ -16683,9 +17933,9 @@ struct spc_child
     }
 
     template <typename Event, typename... Args>
-    constexpr void on(Event ev, Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
+        return handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
     }
 };
 
@@ -16722,9 +17972,9 @@ struct spc
     }
 
     template <typename Event, typename... Args>
-    constexpr void on(Event ev, Args&&... args)
+    constexpr auto on(Event ev, Args&&... args)
     {
-        handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
+        return handler.on(control_block->parse_handler, ev, LEXY_FWD(args)...);
     }
 };
 
@@ -17378,28 +18628,18 @@ struct minus_sign : _sign<-1>
 
 namespace lexyd
 {
-template <typename Sign>
-struct _sign : rule_base
-{
-    template <typename NextParser>
-    struct p
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            return NextParser::parse(context, reader, LEXY_FWD(args)..., Sign{});
-        }
-    };
-};
+struct _plus : decltype(op<lexy::plus_sign>(LEXY_LIT("+")))
+{};
+struct _minus : decltype(op<lexy::minus_sign>(LEXY_LIT("-")))
+{};
 
 /// Matches a plus sign or nothing, producing +1.
-constexpr auto plus_sign = if_(LEXY_LIT("+") >> _sign<lexy::plus_sign>{});
+constexpr auto plus_sign = if_(_plus{});
 /// Matches a minus sign or nothing, producing +1 or -1.
-constexpr auto minus_sign = if_(LEXY_LIT("-") >> _sign<lexy::minus_sign>{});
+constexpr auto minus_sign = if_(_minus{});
 
 /// Matches a plus or minus sign or nothing, producing +1 or -1.
-constexpr auto sign
-    = if_(LEXY_LIT("+") >> _sign<lexy::plus_sign>{} | LEXY_LIT("-") >> _sign<lexy::minus_sign>{});
+constexpr auto sign = if_(_plus{} | _minus{});
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
