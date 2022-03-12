@@ -26,7 +26,7 @@ struct production : lexy::expression_production
 
     static constexpr auto value = lexy::callback<int>([](int value) { return value; },
                                                       [](int lhs, plus op, int rhs) {
-                                                          assert(*op.pos == '+');
+                                                          LEXY_PRECONDITION(*op.pos == '+');
                                                           return lhs + rhs;
                                                       });
 };
