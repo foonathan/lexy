@@ -248,8 +248,7 @@ struct _opc : branch_base
         lexy::_detail::parsed_operator<Reader> op;
         typename Reader::iterator              end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, Reader reader)
+        constexpr auto try_parse(const void*, Reader reader)
         {
             op  = lexy::_detail::parse_operator<op_literals>(reader);
             end = reader.position();

@@ -53,8 +53,7 @@ struct _look : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             begin = reader.position();
 

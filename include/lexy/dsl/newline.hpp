@@ -36,8 +36,7 @@ struct _eol : branch_base
     template <typename Reader>
     struct bp
     {
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             return reader.peek() == Reader::encoding::eof()
                    || lexy::try_match_token(newline, reader);

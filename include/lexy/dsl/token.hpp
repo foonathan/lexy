@@ -48,8 +48,7 @@ struct token_base : _token_inherit<ImplOrTag>
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<Derived, Reader> parser(reader);
             auto                                    result = parser.try_parse(reader);

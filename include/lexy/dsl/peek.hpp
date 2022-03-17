@@ -39,8 +39,7 @@ struct _peek : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // We need to match the entire rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
@@ -101,8 +100,7 @@ struct _peekn : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // We must not match the rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);

@@ -106,8 +106,7 @@ using branch_parser_for = typename BranchRule::template bp<Reader>;
 template <typename Rule, typename Reader>
 struct unconditional_branch_parser
 {
-    template <typename ControlBlock>
-    constexpr std::true_type try_parse(const ControlBlock*, const Reader&)
+    constexpr std::true_type try_parse(const void*, const Reader&)
     {
         return {};
     }

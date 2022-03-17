@@ -138,8 +138,7 @@ struct _id : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, const Reader& reader)
+        constexpr bool try_parse(const void*, const Reader& reader)
         {
             // Parse the pattern.
             lexy::token_parser_for<decltype(pattern()), Reader> parser(reader);

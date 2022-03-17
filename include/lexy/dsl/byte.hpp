@@ -86,8 +86,7 @@ struct _pb : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<_b<N>, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -241,8 +240,7 @@ struct _bint : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<_rule, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);

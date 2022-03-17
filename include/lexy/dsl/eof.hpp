@@ -25,8 +25,7 @@ struct _eof : branch_base
     template <typename Reader>
     struct bp
     {
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, const Reader& reader)
+        constexpr bool try_parse(const void*, const Reader& reader)
         {
             return reader.peek() == Reader::encoding::eof();
         }
