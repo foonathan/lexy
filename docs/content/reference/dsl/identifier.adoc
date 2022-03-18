@@ -27,6 +27,7 @@ namespace lexy::dsl
         constexpr _identifier-dsl_ reserve(auto ... rules) const;
         constexpr _identifier-dsl_ reserve_prefix(auto ... rules) const;
         constexpr _identifier-dsl_ reserve_containing(auto ... rules) const;
+        constexpr _identifier-dsl_ reserve_suffix(auto ... rules) const;
 
         //=== sub-rules ===//
         constexpr _token-rule_ auto pattern() const;
@@ -86,6 +87,7 @@ TIP: Use the callback {{% docref "lexy::as_string" %}} to convert the {{% docref
 constexpr _identifier-dsl_ reserve(auto ... rules) const; <1>
 constexpr _identifier-dsl_ reserve_prefix(auto ... rules) const; <2>
 constexpr _identifier-dsl_ reserve_containing(auto ... rules) const; <3>
+constexpr _identifier-dsl_ reserve_suffix(auto ... rules) const; <4>
 ----
 
 [.lead]
@@ -101,6 +103,8 @@ If this has happened, parsing the `identifier` rule creates a partial input from
   If they match a prefix of the partial input, the identifier is reserved.
 * (3) `.reserve_containing()`: All rules specified here are matched against the partial input.
   If they match somewhere in the partial input, the identifier is reserved.
+* (4) `.reserve_suffix()`: All rules specified here are matched against the partial input.
+  If they match a suffix of the partial input, the identifier is reserved.
 
 {{% playground-example reserved_identifier "Parse a C like identifier that is not reserved" %}}
 

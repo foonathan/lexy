@@ -101,6 +101,27 @@ struct _idcp // reserve contains predicate
         // unreachable
     }
 };
+template <typename Set>
+struct _idsp // reserve suffix predicate
+{
+    template <typename Input>
+    static constexpr bool is_reserved(const Input& input)
+    {
+        auto reader = input.reader();
+        while (true)
+        {
+            if (lexy::try_match_token(Set{}, reader)
+                && reader.peek() == decltype(reader)::encoding::eof())
+                return true;
+            else if (reader.peek() == decltype(reader)::encoding::eof())
+                return false;
+            else
+                reader.bump();
+        }
+
+        // unreachable
+    }
+};
 
 template <typename Leading, typename Trailing, typename... ReservedPredicate>
 struct _id : branch_base
@@ -210,6 +231,15 @@ struct _id : branch_base
         static_assert(sizeof...(R) > 0);
         auto set = (lexyd::literal_set() / ... / _make_reserve(r));
         return _id<Leading, Trailing, ReservedPredicate..., _idcp<decltype(set)>>{};
+    }
+
+    /// Reserves everything that ends with the given rule.
+    template <typename... R>
+    constexpr auto reserve_suffix(R... r) const
+    {
+        static_assert(sizeof...(R) > 0);
+        auto set = (lexyd::literal_set() / ... / _make_reserve(r));
+        return _id<Leading, Trailing, ReservedPredicate..., _idsp<decltype(set)>>{};
     }
 
     /// Matches every identifier, ignoring reserved ones.

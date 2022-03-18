@@ -227,6 +227,33 @@ TEST_CASE("dsl::identifier(leading, trailing)")
         CHECK(Abcd.trace
               == test_trace().token("identifier", "Abcd").error(0, 4, "reserved identifier"));
     }
+    SUBCASE(".reserve_suffix()")
+    {
+        constexpr auto rule = id.reserve_suffix(LEXY_LIT("c"));
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "ASCII.upper").cancel());
+
+        auto A = LEXY_VERIFY("A");
+        CHECK(A.status == test_result::success);
+        CHECK(A.value == 1);
+        CHECK(A.trace == test_trace().token("identifier", "A"));
+        auto Ab = LEXY_VERIFY("Ab");
+        CHECK(Ab.status == test_result::success);
+        CHECK(Ab.value == 1);
+        CHECK(Ab.trace == test_trace().token("identifier", "Ab"));
+        auto Abcd = LEXY_VERIFY("Abcd");
+        CHECK(Abcd.status == test_result::success);
+        CHECK(Abcd.value == 1);
+        CHECK(Abcd.trace == test_trace().token("identifier", "Abcd"));
+
+        auto Abc = LEXY_VERIFY("Abc");
+        CHECK(Abc.status == test_result::recovered_error);
+        CHECK(Abc.value == 1);
+        CHECK(Abc.trace
+              == test_trace().token("identifier", "Abc").error(0, 3, "reserved identifier"));
+    }
 
     SUBCASE("as branch")
     {
