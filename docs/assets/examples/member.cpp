@@ -15,7 +15,7 @@ struct point
 struct production
 {
     static constexpr auto rule = [] {
-        auto value = dsl::integer<int>(dsl::digits<>);
+        auto value = dsl::integer<int>;
 
         // Parse an integer into the x/y member of point.
         auto x_coord = (dsl::member<& point::x> = value);

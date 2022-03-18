@@ -247,8 +247,7 @@ constexpr auto escaped_newline = dsl::backslash >> dsl::newline;
 // Supports hexadecimal and decimal literals.
 struct integer : lexy::token_production
 {
-    static constexpr auto rule = LEXY_LIT("0x") >> dsl::integer<int>(dsl::digits<dsl::hex>)
-                                 | dsl::integer<int>(dsl::digits<>);
+    static constexpr auto rule = LEXY_LIT("0x") >> dsl::integer<int, dsl::hex> | dsl::integer<int>;
 
     static constexpr auto value = lexy::forward<int>;
 };

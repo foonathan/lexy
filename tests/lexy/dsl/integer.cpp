@@ -322,6 +322,8 @@ TEST_CASE("dsl::integer(dsl::digits)")
 {
     constexpr auto integer = dsl::integer<int>(dsl::digits<>);
     CHECK(lexy::is_rule<decltype(integer)>);
+    CHECK(equivalent_rules(integer, dsl::integer<int>));
+    CHECK(equivalent_rules(integer, dsl::integer<int, dsl::decimal>));
 
     constexpr auto callback = lexy::callback<int>([](const char*) { return -11; },
                                                   [](const char*, int value) { return value; });

@@ -425,7 +425,7 @@ The following sample production matches a single `int` using `dsl::integer` and 
 struct integer
 {
     // Matches one or more decimal digits, then converts those into an `int`.
-    static constexpr auto rule = dsl::integer<int>(dsl::digits<>)
+    static constexpr auto rule = dsl::integer<int>;
 
     // The rule produces a single value, the parsed `int`.
     // We simply forward that one to use as the result of parsing the `integer` production.
@@ -445,7 +445,7 @@ struct version
 {
     // Match three integers separated by dots.
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
+        auto number = dsl::integer<int>;
         auto dot    = dsl::lit_c<'.'>;
 
         // Each number rule produces an int, each dot rule produces nothing.
@@ -473,7 +473,7 @@ struct version
 {
     // Match three integers separated by dots.
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
+        auto number = dsl::integer<int>;
         auto dot    = dsl::period;
 
         return dsl::times<3>(number, dsl::sep(dot));
@@ -499,7 +499,7 @@ Parsing `unreleased` is easy: just use the `LEXY_LIT("unreleased")` token:
 struct version
 {
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
+        auto number = dsl::integer<int>;
         auto dot    = dsl::period;
         auto dot_version = dsl::times<3>(number, dsl::sep(dot)); <1>
 
@@ -601,7 +601,7 @@ Something like this does not work:
 struct version
 {
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
+        auto number = dsl::integer<int>;
         auto dot    = dsl::period;
 
         auto dot_version = dsl::times<3>(number, dsl::sep(dot));
@@ -631,7 +631,7 @@ This can be done with `dsl::peek()`.
 struct version
 {
     static constexpr auto rule = []{
-        auto number = dsl::integer<int>(dsl::digits<>);
+        auto number = dsl::integer<int>;
         auto dot    = dsl::period;
 
         auto dot_version = dsl::times<3>(number, dsl::sep(dot));
@@ -659,7 +659,7 @@ This branch is called `dsl::else_`.
 struct version
 {
     static constexpr auto rule = []{
-        auto number      = dsl::integer<int>(dsl::digits<>);
+        auto number      = dsl::integer<int>;
         auto dot         = dsl::period;
         auto dot_version = dsl::times<3>(number, dsl::sep(dot));
 
@@ -689,7 +689,7 @@ The second overload takes no arguments and creates a `0.0.0` `PackageVersion` ma
 struct version
 {
     static constexpr auto rule = []{
-        auto number      = dsl::integer<int>(dsl::digits<>);
+        auto number      = dsl::integer<int>;
         auto dot         = dsl::lit_c<'.'>;
         auto dot_version = dsl::times<3>(number, dsl::sep(dot));
 
@@ -921,7 +921,7 @@ This matches a (non-empty) list of `rule` separated by `sep`.
 struct integer_list
 {
     // Match a (non-empty) list of integers separated by commas.
-    static constexpr auto rule = dsl::list(dsl::integer<int>(dsl::digits<>),
+    static constexpr auto rule = dsl::list(dsl::integer<int>,
                                            dsl::sep(dsl::comma)); <1>
 
     // Add them all to a std::vector<int>.
@@ -1499,8 +1499,8 @@ Simply make every dot and number "optional" as shown here:
 
 [source,cpp]
 ----
-auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt); <1>
-auto dot         = dsl::try_(dsl::period);                                    <2>
+auto number      = dsl::try_(dsl::integer<int>, dsl::nullopt); <1>
+auto dot         = dsl::try_(dsl::period);                     <2>
 auto dot_version = dsl::times<3>(number, dsl::sep(dot))
                            + dsl::prevent(dsl::lit_c<'-'>).error<forbidden_build_string>;
 ----

@@ -10,7 +10,7 @@ namespace dsl = lexy::dsl;
 struct production
 {
     // Sign followed by a decimal integer.
-    static constexpr auto rule  = dsl::sign + dsl::integer<int>(dsl::digits<>);
+    static constexpr auto rule  = dsl::sign + dsl::integer<int>;
     static constexpr auto value = lexy::as_integer<int>;
 };
 //}

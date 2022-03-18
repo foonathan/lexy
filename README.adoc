@@ -24,7 +24,7 @@ struct ipv4_address
     // What is being matched.
     static constexpr auto rule = []{
         // Match a sequence of (decimal) digits and convert it into a std::uint8_t.
-        auto octet = dsl::integer<std::uint8_t>(dsl::digits<>);
+        auto octet = dsl::integer<std::uint8_t>;
 
         // Match four of them separated by periods.
         return dsl::times<4>(octet, dsl::sep(dsl::period)) + dsl::eof;

@@ -21,13 +21,10 @@ template <typename Rule, typename Tag>
 struct _peek;
 template <typename Token>
 struct _capt;
+template <typename T, typename Base>
+struct _int_dsl;
 
 struct _scan;
-
-template <typename T, typename Base, typename Digits>
-constexpr auto integer(Digits);
-template <typename T, typename Digits>
-constexpr auto integer(Digits);
 } // namespace lexyd
 
 namespace lexy::_detail
@@ -437,14 +434,14 @@ public:
     constexpr auto integer(Digits digits)
     {
         scan_result<T> result;
-        parse(result, lexyd::integer<T, Base>(digits));
+        parse(result, lexyd::_int_dsl<T, Base>{}(digits));
         return result;
     }
     template <typename T, typename Digits>
     constexpr auto integer(Digits digits)
     {
         scan_result<T> result;
-        parse(result, lexyd::integer<T>(digits));
+        parse(result, lexyd::_int_dsl<T, void>{}(digits));
         return result;
     }
 

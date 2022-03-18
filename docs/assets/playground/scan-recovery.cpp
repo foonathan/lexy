@@ -11,7 +11,7 @@ struct production : lexy::scan_production<int>
 
         // Parse an integer.
         lexy::scan_result<int> integer;
-        scanner.parse(integer, dsl::integer<int>(dsl::digits<>));
+        scanner.parse(integer, dsl::integer<int>);
         if (!scanner)
             return lexy::scan_failed;
 

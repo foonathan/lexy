@@ -14,7 +14,7 @@ struct production
     static constexpr auto whitespace = dsl::ascii::space;
 
     static constexpr auto rule = [] {
-        auto integer = dsl::integer<int>(dsl::digits<>);
+        auto integer = dsl::integer<int>;
 
         return dsl::list(integer, dsl::sep(dsl::comma));
     }();

@@ -19,7 +19,7 @@ struct simple_scan : lexy::scan_production<int>, test_production
     struct integer
     {
         static constexpr auto name  = "integer";
-        static constexpr auto rule  = dsl::integer<int>(dsl::digits<>);
+        static constexpr auto rule  = dsl::integer<int>;
         static constexpr auto value = lexy::forward<int>;
     };
 

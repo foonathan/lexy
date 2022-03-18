@@ -13,7 +13,7 @@ struct production
 
     static constexpr auto rule = [] {
         // An item is a point (x, y)
-        auto integer = dsl::integer<int>(dsl::digits<>);
+        auto integer = dsl::integer<int>;
         auto item    = dsl::parenthesized(dsl::twice(integer, dsl::sep(dsl::comma)));
 
         return dsl::list(item, dsl::sep(dsl::comma));

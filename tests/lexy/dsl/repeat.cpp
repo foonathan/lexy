@@ -12,7 +12,7 @@
 
 namespace
 {
-constexpr auto integer = dsl::integer<int>(dsl::digits<>);
+constexpr auto integer = dsl::integer<int>;
 
 struct count_production
 {

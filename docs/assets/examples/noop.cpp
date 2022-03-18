@@ -8,7 +8,7 @@ namespace dsl = lexy::dsl;
 
 struct production
 {
-    static constexpr auto rule  = dsl::integer<int>(dsl::digits<>);
+    static constexpr auto rule  = dsl::integer<int>;
     static constexpr auto value = lexy::forward<int>;
 };
 

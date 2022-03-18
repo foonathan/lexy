@@ -32,7 +32,7 @@ using test_tree               = lexy_ext::parse_tree_desc<>;
 
 namespace
 {
-constexpr auto integer = dsl::integer<int>(dsl::digits<>);
+constexpr auto integer = dsl::integer<int>;
 }
 
 namespace single_operation

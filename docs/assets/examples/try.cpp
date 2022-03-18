@@ -18,7 +18,7 @@ struct production
 {
     static constexpr auto rule = [] {
         // If we don't have an integer, recover by producing nullopt.
-        auto number = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt);
+        auto number = dsl::try_(dsl::integer<int>, dsl::nullopt);
         auto dot    = dsl::try_(dsl::period);
         return number + dot + number + dot + number;
     }();

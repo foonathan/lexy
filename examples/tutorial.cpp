@@ -61,7 +61,7 @@ struct version : lexy::token_production
 
     // Match three integers separated by dots, or the special tag "unreleased".
     static constexpr auto rule = [] {
-        auto number      = dsl::try_(dsl::integer<int>(dsl::digits<>), dsl::nullopt);
+        auto number      = dsl::try_(dsl::integer<int>, dsl::nullopt);
         auto dot         = dsl::try_(dsl::period);
         auto dot_version = dsl::times<3>(number, dsl::sep(dot))
                            + dsl::peek_not(dsl::lit_c<'-'>).error<forbidden_build_string>;

@@ -10,7 +10,7 @@ namespace dsl = lexy::dsl;
 struct production
 {
     static constexpr auto rule = [] {
-        auto item = dsl::integer<int>(dsl::digits<>);
+        auto item = dsl::integer<int>;
         auto sep  = dsl::trailing_sep(dsl::comma);
         return dsl::times<3>(item, sep);
     }();

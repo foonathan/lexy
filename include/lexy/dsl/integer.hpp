@@ -459,20 +459,31 @@ struct _int : _copy_base<Token>
     };
 };
 
-/// Parses the digits matched by the rule into an integer type.
-template <typename T, typename Base, typename Digits>
-constexpr auto integer(Digits)
+template <typename T, typename Base>
+struct _int_dsl : _int<_digits<lexy::_detail::type_or<Base, decimal>>,
+                       _integer_parser<T, lexy::_detail::type_or<Base, decimal>, true>, void>
 {
-    static_assert(lexy::is_token_rule<Digits>);
-    using parser = _integer_parser<T, Base, false>;
-    return _int<Digits, parser, void>{};
-}
+    template <typename Digits>
+    constexpr auto operator()(Digits) const
+    {
+        static_assert(lexy::is_token_rule<Digits>);
+        if constexpr (std::is_void_v<Base>)
+        {
+            // Digits is a known rule as the user didn't specify Base.
+            return _int<Digits, _integer_parser_for<T, Digits>, void>{};
+        }
+        else
+        {
+            // User has specified a base, so the digits are arbitrary.
+            using parser = _integer_parser<T, Base, false>;
+            return _int<Digits, parser, void>{};
+        }
+    }
+};
 
-template <typename T, typename Digits>
-constexpr auto integer(Digits)
-{
-    return _int<Digits, _integer_parser_for<T, Digits>, void>{};
-}
+/// Parses the digits matched by the rule into an integer type.
+template <typename T, typename Base = void>
+constexpr auto integer = _int_dsl<T, Base>{};
 } // namespace lexyd
 
 namespace lexy

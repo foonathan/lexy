@@ -134,7 +134,7 @@ constexpr auto ipv4_address_condition = dsl::peek(dsl::digits<> + dsl::period);
 // h16 in the specification.
 struct ipv6_piece
 {
-    static constexpr auto rule  = dsl::integer<std::uint16_t>(dsl::digits<dsl::hex>);
+    static constexpr auto rule  = dsl::integer<std::uint16_t, dsl::hex>;
     static constexpr auto value = lexy::as_integer<std::uint16_t>;
 };
 

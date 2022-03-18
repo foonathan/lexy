@@ -12,7 +12,7 @@ constexpr auto op_minus = dsl::op(dsl::lit_c<'-'>);
 
 struct production : lexy::expression_production
 {
-    static constexpr auto atom = dsl::integer<int>(dsl::digits<>);
+    static constexpr auto atom = dsl::integer<int>;
 
     struct operation : dsl::infix_op_left
     {
