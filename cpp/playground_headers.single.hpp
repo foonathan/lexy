@@ -2162,8 +2162,7 @@ using branch_parser_for = typename BranchRule::template bp<Reader>;
 template <typename Rule, typename Reader>
 struct unconditional_branch_parser
 {
-    template <typename ControlBlock>
-    constexpr std::true_type try_parse(const ControlBlock*, const Reader&)
+    constexpr std::true_type try_parse(const void*, const Reader&)
     {
         return {};
     }
@@ -6178,8 +6177,7 @@ struct token_base : _token_inherit<ImplOrTag>
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<Derived, Reader> parser(reader);
             auto                                    result = parser.try_parse(reader);
@@ -7610,8 +7608,7 @@ struct _eol : branch_base
     template <typename Reader>
     struct bp
     {
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             return reader.peek() == Reader::encoding::eof()
                    || lexy::try_match_token(newline, reader);
@@ -10647,8 +10644,7 @@ struct _look : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             begin = reader.position();
 
@@ -11728,8 +11724,7 @@ struct _pb : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<_b<N>, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -11883,8 +11878,7 @@ struct _bint : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<_rule, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -11972,8 +11966,7 @@ struct _cap : _copy_base<Token>
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<Token, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -12716,6 +12709,27 @@ struct _idcp // reserve contains predicate
         // unreachable
     }
 };
+template <typename Set>
+struct _idsp // reserve suffix predicate
+{
+    template <typename Input>
+    static constexpr bool is_reserved(const Input& input)
+    {
+        auto reader = input.reader();
+        while (true)
+        {
+            if (lexy::try_match_token(Set{}, reader)
+                && reader.peek() == decltype(reader)::encoding::eof())
+                return true;
+            else if (reader.peek() == decltype(reader)::encoding::eof())
+                return false;
+            else
+                reader.bump();
+        }
+
+        // unreachable
+    }
+};
 
 template <typename Leading, typename Trailing, typename... ReservedPredicate>
 struct _id : branch_base
@@ -12753,8 +12767,7 @@ struct _id : branch_base
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, const Reader& reader)
+        constexpr bool try_parse(const void*, const Reader& reader)
         {
             // Parse the pattern.
             lexy::token_parser_for<decltype(pattern()), Reader> parser(reader);
@@ -12826,6 +12839,15 @@ struct _id : branch_base
         static_assert(sizeof...(R) > 0);
         auto set = (lexyd::literal_set() / ... / _make_reserve(r));
         return _id<Leading, Trailing, ReservedPredicate..., _idcp<decltype(set)>>{};
+    }
+
+    /// Reserves everything that ends with the given rule.
+    template <typename... R>
+    constexpr auto reserve_suffix(R... r) const
+    {
+        static_assert(sizeof...(R) > 0);
+        auto set = (lexyd::literal_set() / ... / _make_reserve(r));
+        return _id<Leading, Trailing, ReservedPredicate..., _idsp<decltype(set)>>{};
     }
 
     /// Matches every identifier, ignoring reserved ones.
@@ -13485,8 +13507,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
@@ -13570,8 +13591,7 @@ struct _sym<Table, void, Tag> : branch_base
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
@@ -14669,8 +14689,7 @@ struct _eof : branch_base
     template <typename Reader>
     struct bp
     {
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, const Reader& reader)
+        constexpr bool try_parse(const void*, const Reader& reader)
         {
             return reader.peek() == Reader::encoding::eof();
         }
@@ -14979,8 +14998,7 @@ struct _opc : branch_base
         lexy::_detail::parsed_operator<Reader> op;
         typename Reader::iterator              end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, Reader reader)
+        constexpr auto try_parse(const void*, Reader reader)
         {
             op  = lexy::_detail::parse_operator<op_literals>(reader);
             end = reader.position();
@@ -16164,8 +16182,7 @@ struct _int : _copy_base<Token>
     {
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr auto try_parse(const ControlBlock*, const Reader& reader)
+        constexpr auto try_parse(const void*, const Reader& reader)
         {
             lexy::token_parser_for<Token, Reader> parser(reader);
             auto                                  result = parser.try_parse(reader);
@@ -16232,20 +16249,31 @@ struct _int : _copy_base<Token>
     };
 };
 
-/// Parses the digits matched by the rule into an integer type.
-template <typename T, typename Base, typename Digits>
-constexpr auto integer(Digits)
+template <typename T, typename Base>
+struct _int_dsl : _int<_digits<lexy::_detail::type_or<Base, decimal>>,
+                       _integer_parser<T, lexy::_detail::type_or<Base, decimal>, true>, void>
 {
-    static_assert(lexy::is_token_rule<Digits>);
-    using parser = _integer_parser<T, Base, false>;
-    return _int<Digits, parser, void>{};
-}
+    template <typename Digits>
+    constexpr auto operator()(Digits) const
+    {
+        static_assert(lexy::is_token_rule<Digits>);
+        if constexpr (std::is_void_v<Base>)
+        {
+            // Digits is a known rule as the user didn't specify Base.
+            return _int<Digits, _integer_parser_for<T, Digits>, void>{};
+        }
+        else
+        {
+            // User has specified a base, so the digits are arbitrary.
+            using parser = _integer_parser<T, Base, false>;
+            return _int<Digits, parser, void>{};
+        }
+    }
+};
 
-template <typename T, typename Digits>
-constexpr auto integer(Digits)
-{
-    return _int<Digits, _integer_parser_for<T, Digits>, void>{};
-}
+/// Parses the digits matched by the rule into an integer type.
+template <typename T, typename Base = void>
+constexpr auto integer = _int_dsl<T, Base>{};
 } // namespace lexyd
 
 namespace lexy
@@ -17169,8 +17197,7 @@ struct _peek : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // We need to match the entire rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
@@ -17231,8 +17258,7 @@ struct _peekn : branch_base
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock*, Reader reader)
+        constexpr bool try_parse(const void*, Reader reader)
         {
             // We must not match the rule.
             lexy::token_parser_for<decltype(lexy::dsl::token(Rule{})), Reader> parser(reader);
@@ -17781,13 +17807,10 @@ template <typename Rule, typename Tag>
 struct _peek;
 template <typename Token>
 struct _capt;
+template <typename T, typename Base>
+struct _int_dsl;
 
 struct _scan;
-
-template <typename T, typename Base, typename Digits>
-constexpr auto integer(Digits);
-template <typename T, typename Digits>
-constexpr auto integer(Digits);
 } // namespace lexyd
 
 namespace lexy::_detail
@@ -18197,14 +18220,14 @@ public:
     constexpr auto integer(Digits digits)
     {
         scan_result<T> result;
-        parse(result, lexyd::integer<T, Base>(digits));
+        parse(result, lexyd::_int_dsl<T, Base>{}(digits));
         return result;
     }
     template <typename T, typename Digits>
     constexpr auto integer(Digits digits)
     {
         scan_result<T> result;
-        parse(result, lexyd::integer<T>(digits));
+        parse(result, lexyd::_int_dsl<T, void>{}(digits));
         return result;
     }
 
