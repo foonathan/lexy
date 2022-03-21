@@ -181,7 +181,10 @@ constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
 
     context.on(parse_events::production_start{}, reader.position());
 
-    using parser     = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
+    // We parse whitespace, theen the rule, then finish.
+    using parser = lexy::whitespace_parser<
+        decltype(context),
+        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
     auto rule_result = parser::parse(context, reader);
 
     if (rule_result)

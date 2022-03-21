@@ -268,8 +268,7 @@ struct nested_expr : lexy::transparent_production
     // as it's nested, the REPL can properly handle continuation lines.
     static constexpr auto whitespace = dsl::ascii::space | escaped_newline;
     // The rule itself just recurses back to expression, but with the adjusted whitespace now.
-    // We also need to do initial whitespace skipping here, as we've changed it.
-    static constexpr auto rule = dsl::whitespace + dsl::recurse<struct expr>;
+    static constexpr auto rule = dsl::recurse<struct expr>;
 
     static constexpr auto value = lexy::forward<ast::expr_ptr>;
 };

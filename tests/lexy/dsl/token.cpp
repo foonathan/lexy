@@ -32,8 +32,8 @@ TEST_CASE("token whitespace")
     CHECK(abc.trace == test_trace().literal("abc"));
 
     auto leading_ws = LEXY_VERIFY_P(production, "..abc");
-    CHECK(leading_ws.status == test_result::fatal_error);
-    CHECK(leading_ws.trace == test_trace().expected_literal(0, "abc", 0).cancel());
+    CHECK(leading_ws.status == test_result::success);
+    CHECK(leading_ws.trace == test_trace().whitespace("..").literal("abc"));
     auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
     CHECK(inner_ws.status == test_result::fatal_error);
     CHECK(inner_ws.trace == test_trace().error_token("ab").expected_literal(0, "abc", 2).cancel());

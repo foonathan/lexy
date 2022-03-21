@@ -1,4 +1,4 @@
-// INPUT:(+inner+normal+)+,+(-inner-override-)-,+(innertoken)+,+(inner_token_whitespace)+.+
+// INPUT:+(+inner+normal+)+,+(-inner-override-)-,+(innertoken)+,+(_inner_token_whitespace)_+.+
 // An inner production that does not override the whitespace.
 struct inner_normal
 {
@@ -47,8 +47,6 @@ struct inner_token_whitespace : lexy::token_production
 
     static constexpr auto whitespace = dsl::lit_c<'_'>;
 
-    // No whitespace is skipped here, as the current production inherits from
-    // `lexy::token_production`.
     static constexpr auto rule = dsl::parenthesized(dsl::p<inner_inner>);
 };
 

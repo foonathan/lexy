@@ -10,6 +10,13 @@
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/token.hpp>
 
+#ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
+#    define LEXY_DEPRECATED_WHITESPACE
+#else
+#    define LEXY_DEPRECATED_WHITESPACE                                                             \
+        [[deprecated("dsl::whitespace (without arguments) is unecessary now")]]
+#endif
+
 //=== implementation ===//
 namespace lexy::_detail
 {
@@ -156,7 +163,8 @@ struct _wsr : rule_base
 struct _ws : rule_base
 {
     template <typename NextParser>
-    using p = lexy::_detail::automatic_ws_parser<NextParser>;
+    struct LEXY_DEPRECATED_WHITESPACE p : lexy::_detail::automatic_ws_parser<NextParser>
+    {};
 
     /// Overrides implicit whitespace detection.
     template <typename Rule>

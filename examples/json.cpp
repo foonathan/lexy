@@ -318,7 +318,7 @@ struct json
     // Add your comment syntax here.
     static constexpr auto whitespace = dsl::ascii::space / dsl::ascii::newline;
 
-    static constexpr auto rule  = dsl::whitespace + dsl::p<json_value> + dsl::eof;
+    static constexpr auto rule  = dsl::p<json_value> + dsl::eof;
     static constexpr auto value = lexy::forward<ast::json_value>;
 };
 } // namespace grammar

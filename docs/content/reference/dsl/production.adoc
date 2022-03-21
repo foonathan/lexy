@@ -60,7 +60,7 @@ namespace lexy::dsl
     constexpr _rule_ auto p;
 
     template <_production_ P>
-      requires _branch-rule_<production_rule<P>>
+      requires _branch-rule_<production_rule<P>> && !_defines-whitespace_<P>`
     constexpr _branch-rule_ auto p;
 }
 ----
@@ -71,7 +71,7 @@ namespace lexy::dsl
 Requires::
   `P` is a complete type, i.e. `p` cannot be used for recursion.
 (Branch) Parsing::
-  Parses `P::rule` in a new context for `P`.
+  Parses `P::rule` in a new context for `P`, potentially after skipping initial {{% docref "whitespace" %}} if `P::whitespace` has been defined.
 Errors::
   All errors raised by parsing `P::rule`, but forwarded to the new context for `P`.
   The rule fails if `P::rule` has failed.
@@ -93,7 +93,7 @@ CAUTION: While parsing `P::rule`, the {{% docref "whitespace" "current whitespac
 If whitespace parsing has been disabled using {{% docref "lexy::dsl::no_whitespace" %}},
 it is temporarily re-enabled while parsing `P::rule`.
 If whitespace parsing has been disabled because the current production inherits from {{% docref "lexy::token_production" %}},
-it is still disabled, unless `P` explicitly defines a new whitespace rule.
+it is still disabled, unless the current production explicitly defines a new whitespace rule.
 
 [#recurse]
 == Rule `lexy::dsl::recurse`

@@ -92,10 +92,9 @@ Returns the type of the {{% docref "whitespace" %}} rule of `Production` given i
 
 It is determined as follows:
 
-1. If `Production` inherits from {{% docref "lexy::token_production" %}}, the `production_whitespace` is `void`.
-2. If `Production::whitespace` is valid, returns the decayed type of that.
-3. If `WhitespaceProduction::whitespace` is valid, returns the decayed type of that.
-4. Otherwise, returns `void`.
+1. If `Production::whitespace` is valid, returns the decayed type of that.
+2. If `WhitespaceProduction::whitespace` is valid, returns the decayed type of that.
+3. Otherwise, returns `void`.
 
 This is used by {{% docref "lexy::dsl::whitespace" %}} during automatic whitespace skipping.
 

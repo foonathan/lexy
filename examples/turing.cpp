@@ -244,7 +244,7 @@ struct program
         // We produce the value of o (for output) as the parse result.
         auto output = var<'o'>.value();
 
-        return dsl::whitespace + create + run + output;
+        return create + run + output;
     }();
 
     static constexpr auto value = lexy::construct<int>;

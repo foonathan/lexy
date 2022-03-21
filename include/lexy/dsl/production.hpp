@@ -32,7 +32,10 @@ template <typename ProductionParser, typename Context, typename Reader>
 }
 
 template <typename Production>
-struct _prd : _copy_base<lexy::production_rule<Production>>
+struct _prd
+// If the production defines whitespace, it can't be a branch production.
+: std::conditional_t<lexy::_production_defines_whitespace<Production>, rule_base,
+                     _copy_base<lexy::production_rule<Production>>>
 {
     template <typename NextParser>
     struct p
@@ -43,6 +46,17 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
             // Create a context for the production and parse the context there.
             auto sub_context = context.sub_context(Production{});
             sub_context.on(_ev::production_start{}, reader.position());
+
+            // Skip initial whitespace if the rule changed.
+            if constexpr (lexy::_production_defines_whitespace<Production>)
+            {
+                if (!lexy::whitespace_parser<decltype(sub_context),
+                                             lexy::pattern_parser<>>::parse(sub_context, reader))
+                {
+                    sub_context.on(_ev::production_cancel{}, reader.position());
+                    return false;
+                }
+            }
 
             if (_parse_production<Production>(sub_context, reader))
             {
@@ -88,6 +102,8 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(!lexy::_production_defines_whitespace<Production>);
+
             // Finish the production in a new context.
             auto sub_context = context.sub_context(Production{});
             sub_context.on(_ev::production_start{}, begin);

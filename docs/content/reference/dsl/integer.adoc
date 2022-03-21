@@ -121,7 +121,7 @@ Requires::
     If `digits` is some instantiation of {{% docref "lexy::dsl::digits" %}} or {{% docref "lexy::dsl::n_digits" %}},
     `Base` is deduced and must not be specified.
 Parsing::
-  Parses `digits`, which defaults to {{% docref "lexy::dsl::digits" %}}, with the base defaulting to {{% docref "lexy::dsl::decimal" %}}.
+  Parses `digits`, which defaults to {{% docref "lexy::dsl::digits" %}}, with the base defaulting to `lexy::dsl::decimal`.
 Branch parsing::
   Tries to parse `digits`, backtracks if that backtracks.
   It will not backtrack on integer overflow.

@@ -3,6 +3,15 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2022-03-21
+
+* BEHAVIOR CHANGE: `lexy::token_production` that define a `::whitespace` member now skip whitespace in the direct rule as well.
+  Previously, it would only apply the whitespace rule to child productions but not the production itself.
+* BEHAVIOR CHANGE: production rules that define a `::whitespace` member now skip whitespace before parsing.
+  This also applies to the root production, so whitespace at the beginning of the input is now skipped automatically.
+* `dsl::p<Production>` where `Production` defines a `::whitespace` member is now longer a branch rule: as it will now skip whitespace first, it can't be used as a branch condition.
+* Remove `dsl::whitespace` (no arguments); it's now unnecessary as initial whitespace is skipped automatically.
+
 == 2022-03-02
 
 * BEHAVIOR CHANGE: `dsl::capture_token()` is now `dsl::capture()`, old `dsl::capture()` is removed.

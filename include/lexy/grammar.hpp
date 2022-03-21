@@ -179,12 +179,7 @@ constexpr auto _production_defines_whitespace
 template <typename Production, typename WhitespaceProduction>
 auto _production_whitespace()
 {
-    if constexpr (is_token_production<Production>)
-    {
-        // Token productions don't have whitespace.
-        return;
-    }
-    else if constexpr (_production_defines_whitespace<Production>)
+    if constexpr (_production_defines_whitespace<Production>)
     {
         // We have whitespace defined in the production.
         return Production::whitespace;

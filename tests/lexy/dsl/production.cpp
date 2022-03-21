@@ -215,9 +215,9 @@ TEST_CASE("dsl::p")
         CHECK(abc.trace == test_trace().production("inner").literal("ab").literal("c"));
 
         auto leading_ws = LEXY_VERIFY_P(production, "..abc");
-        CHECK(leading_ws.status == test_result::fatal_error);
+        CHECK(leading_ws.status == test_result::success);
         CHECK(leading_ws.trace
-              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+              == test_trace().whitespace("..").production("inner").literal("ab").literal("c"));
         auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
         CHECK(inner_ws.status == test_result::fatal_error);
         CHECK(inner_ws.trace
@@ -352,9 +352,9 @@ TEST_CASE("dsl::recurse")
         CHECK(abc.trace == test_trace().production("inner").literal("ab").literal("c"));
 
         auto leading_ws = LEXY_VERIFY_P(production, "..abc");
-        CHECK(leading_ws.status == test_result::fatal_error);
+        CHECK(leading_ws.status == test_result::success);
         CHECK(leading_ws.trace
-              == test_trace().production("inner").expected_literal(0, "ab", 0).cancel().cancel());
+              == test_trace().whitespace("..").production("inner").literal("ab").literal("c"));
         auto inner_ws = LEXY_VERIFY_P(production, "ab..c");
         CHECK(inner_ws.status == test_result::fatal_error);
         CHECK(inner_ws.trace
