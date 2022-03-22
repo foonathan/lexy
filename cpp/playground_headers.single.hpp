@@ -1222,12 +1222,7 @@ constexpr auto _production_defines_whitespace
 template <typename Production, typename WhitespaceProduction>
 auto _production_whitespace()
 {
-    if constexpr (is_token_production<Production>)
-    {
-        // Token productions don't have whitespace.
-        return;
-    }
-    else if constexpr (_production_defines_whitespace<Production>)
+    if constexpr (_production_defines_whitespace<Production>)
     {
         // We have whitespace defined in the production.
         return Production::whitespace;
@@ -2479,7 +2474,10 @@ constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
 
     context.on(parse_events::production_start{}, reader.position());
 
-    using parser     = lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>;
+    // We parse whitespace, theen the rule, then finish.
+    using parser = lexy::whitespace_parser<
+        decltype(context),
+        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
     auto rule_result = parser::parse(context, reader);
 
     if (rule_result)
@@ -11182,6 +11180,13 @@ constexpr auto do_while(Then then, Condition condition)
 
 
 
+#ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
+#    define LEXY_DEPRECATED_WHITESPACE
+#else
+#    define LEXY_DEPRECATED_WHITESPACE                                                             \
+        [[deprecated("dsl::whitespace (without arguments) is unecessary now")]]
+#endif
+
 //=== implementation ===//
 namespace lexy::_detail
 {
@@ -11328,7 +11333,8 @@ struct _wsr : rule_base
 struct _ws : rule_base
 {
     template <typename NextParser>
-    using p = lexy::_detail::automatic_ws_parser<NextParser>;
+    struct LEXY_DEPRECATED_WHITESPACE p : lexy::_detail::automatic_ws_parser<NextParser>
+    {};
 
     /// Overrides implicit whitespace detection.
     template <typename Rule>
@@ -17394,7 +17400,10 @@ template <typename ProductionParser, typename Context, typename Reader>
 }
 
 template <typename Production>
-struct _prd : _copy_base<lexy::production_rule<Production>>
+struct _prd
+// If the production defines whitespace, it can't be a branch production.
+: std::conditional_t<lexy::_production_defines_whitespace<Production>, rule_base,
+                     _copy_base<lexy::production_rule<Production>>>
 {
     template <typename NextParser>
     struct p
@@ -17405,6 +17414,17 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
             // Create a context for the production and parse the context there.
             auto sub_context = context.sub_context(Production{});
             sub_context.on(_ev::production_start{}, reader.position());
+
+            // Skip initial whitespace if the rule changed.
+            if constexpr (lexy::_production_defines_whitespace<Production>)
+            {
+                if (!lexy::whitespace_parser<decltype(sub_context),
+                                             lexy::pattern_parser<>>::parse(sub_context, reader))
+                {
+                    sub_context.on(_ev::production_cancel{}, reader.position());
+                    return false;
+                }
+            }
 
             if (_parse_production<Production>(sub_context, reader))
             {
@@ -17450,6 +17470,8 @@ struct _prd : _copy_base<lexy::production_rule<Production>>
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(!lexy::_production_defines_whitespace<Production>);
+
             // Finish the production in a new context.
             auto sub_context = context.sub_context(Production{});
             sub_context.on(_ev::production_start{}, begin);
