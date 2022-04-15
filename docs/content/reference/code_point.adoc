@@ -3,7 +3,11 @@ header: "lexy/code_point.hpp"
 entities:
   "lexy::code_point": code_point
   "lexy::code_point::general_category_t": general_category
+  "lexy::simple_case_fold": simple_case_fold
 ---
+
+[.lead]
+Vocabulary types for code points, and simple Unicode algorithms.
 
 [#code_point]
 == Class `lexy::code_point`
@@ -193,4 +197,26 @@ Tag objects to check for a specific Unicode category.
 They have an overloaded `operator==` and `operator!=` with the `general_category_t` and can be used to check that a code point category is in the group.
 
 This can be done without the Unicode database, but the category of a code point requires the Unicode database.
+
+[#simple_case_fold]
+== Function `lexy::simple_case_fold`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    constexpr code_point simple_case_fold(code_point cp) noexcept;
+}
+----
+
+[.lead]
+Returns the code point after performing Unicode simple https://unicode.org/faq/casemap_charprop.html#2[case folding].
+
+Informally, it converts `cp` to its lower case variant if it is a letter with casing, and returns `cp` unchanged otherwise (there are exceptions where a character is case folded to an upper case letter instead).
+This is used for case-insensitive comparison.
+
+Unlike full case folding, simple case folding will always map one code point to another code point.
+This causes different behavior in some situations.
+For example, under full case folding `ẞ` (U+1E9E, LATIN CAPITAL LETTER SHARP S) is folded to `ss`, but to `ß` (U+00DF, LATIN CAPITAL LETTER SMALL S) under simple case folding.
+As such, using full case folding `Maß` and `MASS` are identical, but not under simple case folding.
 

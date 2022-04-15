@@ -22,7 +22,7 @@ Nevertheless, lexy defines some link:#infrastructure[infrastructure] types that 
 == Infrastructure
 
 {{% headerref "code_point" %}}::
-  A Unicode code point.
+  A Unicode code point, and related algorithms.
 {{% headerref "lexeme" %}}::
   A lexeme, i.e. a subrange of the input.
 {{% headerref "token" %}}::

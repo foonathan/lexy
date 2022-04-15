@@ -190,3 +190,37 @@ TEST_CASE("code_point - general category")
     CHECK(count_code_points(lexy::code_point::Cn) == 829768 + 66);
 }
 
+TEST_CASE("lexy::simple_case_fold")
+{
+    // ASCII
+    for (char32_t c = 0; c <= 0x7F; ++c)
+    {
+        auto cp = lexy::code_point(c);
+        if (c >= 'A' && c <= 'Z')
+        {
+            auto lower = lexy::code_point(c + ('a' - 'A'));
+            CHECK(lexy::simple_case_fold(cp) == lower);
+        }
+        else
+            CHECK(lexy::simple_case_fold(cp) == cp);
+    }
+
+    // arbitrary other code points (identity)
+    CHECK(lexy::simple_case_fold(lexy::code_point(0xFF)) == lexy::code_point(0xFF));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0xFFFF)) == lexy::code_point(0xFFFF));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x10FFF)) == lexy::code_point(0x10FFF));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0xABCDEF)) == lexy::code_point(0xABCDEF));
+
+    // arbitrary other code points (canonical)
+    CHECK(lexy::simple_case_fold(lexy::code_point(0xC4)) == lexy::code_point(0xE4));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x1F1)) == lexy::code_point(0x1F3));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x10A0)) == lexy::code_point(0x2D00));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x1F59)) == lexy::code_point(0x1F51));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x10400)) == lexy::code_point(0x10428));
+
+    // arbitrary simple mappings
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x1E9E)) == lexy::code_point(0xDF));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x1FAB)) == lexy::code_point(0x1FA3));
+    CHECK(lexy::simple_case_fold(lexy::code_point(0x1FFC)) == lexy::code_point(0x1FF3));
+}
+

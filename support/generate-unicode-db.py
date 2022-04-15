@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # Generate the header file containing the Unicode database.
 # It uses the three stage approach described e.g. here https://here-be-braces.com/fast-lookup-of-unicode-properties/.
+# For case folding, it stores the offset to the simple case folded code point.
+# This compresses very well.
 # The generated arrays themselves are written as string literals, which are more efficiently represented in compilers.
 
 UNICODE_VERSION = '14.0.0'
@@ -17,6 +19,8 @@ range_pattern   = re.compile(r'([0-9A-F]+)\.\.([0-9A-F]+)')
 class CodePointProperties:
     def __init__(self):
         self.general_category = 'Cn'
+
+        self.case_folding = 0
 
         self.is_whitespace   = False
         self.is_join_control = False
@@ -48,7 +52,7 @@ class CodePointProperties:
             self.is_xid_continue = True
 
     def dict_key(self):
-        return (self.general_category, self.is_whitespace, self.is_join_control,
+        return (self.general_category, self.case_folding, self.is_whitespace, self.is_join_control,
                 self.is_alphabetic, self.is_uppercase, self.is_lowercase, self.is_xid_start, self.is_xid_continue)
 
 def fetch_ucd_file(path):
@@ -77,12 +81,22 @@ def set_database_value(database, path, setter):
             cp = int(row[0], 16)
             setter(database[cp], value)
 
+def set_database_case_folding(database):
+    data = fetch_ucd_data('CaseFolding.txt')
+    for row in csv.reader(data, delimiter=';'):
+        cp = int(row[0], 16)
+        status = row[1].strip()
+        if status == 'C' or status == 'S':
+            mapping = int(row[2], 16)
+            database[cp].case_folding = mapping - cp
+
 def unicode_database():
     database = [CodePointProperties() for cp in range(0, 0x10FFFF + 1)]
 
     set_database_value(database, 'extracted/DerivedGeneralCategory.txt', CodePointProperties.set_general_category)
     set_database_value(database, 'PropList.txt', CodePointProperties.set_core_prop)
     set_database_value(database, 'DerivedCoreProperties.txt', CodePointProperties.set_derived_prop)
+    set_database_case_folding(database)
 
     return database
 
@@ -130,6 +144,22 @@ def build_lookup_tables(database):
             cur_block = []
 
     return result
+
+def estimate_table_size(tables):
+    # one byte each
+    block_starts = len(tables.block_starts)
+    blocks = len(tables.blocks)
+    assert max(tables.block_starts) < 2**8
+    assert max(tables.blocks) < 2**8
+
+    # general category is an int
+    category = len(tables.properties) * 4
+    # binary properties is one byte each
+    binary_properties = len(tables.properties)
+    # case folding is four bytes each
+    case_folding = len(tables.properties) * 4
+
+    return block_starts + blocks + category + binary_properties + case_folding
 
 def generate_lookup_tables(tables):
     def int_array(ints):
@@ -179,7 +209,7 @@ def generate_lookup_tables(tables):
         yield '    xid_continue,\n'
         yield '    _property_count,\n'
         yield '};\n'
-        yield 'static_assert(static_cast<int>(_property_count) <= 8);\n'
+        yield 'static_assert(static_cast<int>(_property_count) <= 8);'
 
     def bprop_array(properties):
         yield '{'
@@ -200,6 +230,12 @@ def generate_lookup_tables(tables):
             if prop.is_xid_continue:
                 mask |= 1 << 6
             yield f'{mask},'
+        yield '}'
+
+    def case_fold_array(properties):
+        yield '{'
+        for prop in properties:
+            yield f'{prop.case_folding},'
         yield '}'
 
     assert max(tables.block_starts) < 2**8
@@ -234,8 +270,14 @@ def generate_lookup_tables(tables):
     yield from bprop_enum()
     yield '\n'
 
+    yield '\n'
     yield 'constexpr std::uint_least8_t binary_properties[] = '
     yield from bprop_array(tables.properties)
+    yield ';\n'
+
+    yield '\n'
+    yield 'constexpr std::int_least32_t case_folding_offset[] = '
+    yield from case_fold_array(tables.properties)
     yield ';\n'
 
     yield '} // namespace lexy::_unicode_db'
@@ -251,6 +293,11 @@ output_path = sys.argv[1]
 
 database = unicode_database()
 tables = build_lookup_tables(database)
+
+print(f"block_starts length: {len(tables.block_starts)}")
+print(f"blocks length: {len(tables.blocks)}")
+print(f"properties length: {len(tables.properties)}")
+print(f"total size estimate: {estimate_table_size(tables)} bytes")
 
 with open(output_path, "w") as output_file:
     print(''.join(generate_lookup_tables(tables)), file=output_file)

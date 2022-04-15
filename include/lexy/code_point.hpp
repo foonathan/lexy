@@ -161,7 +161,7 @@ public:
 
 #undef LEXY_UNICODE_CATEGORY_GROUP
 
-    LEXY_UNICODE_CONSTEXPR general_category_t general_category() const;
+    LEXY_UNICODE_CONSTEXPR general_category_t general_category() const noexcept;
 
     //=== comparision ===//
     friend constexpr bool operator==(code_point lhs, code_point rhs) noexcept
@@ -176,6 +176,8 @@ public:
 private:
     char32_t _value;
 };
+
+LEXY_UNICODE_CONSTEXPR code_point simple_case_fold(code_point cp) noexcept;
 } // namespace lexy
 
 namespace lexy::_detail
@@ -259,13 +261,23 @@ constexpr const char* general_category_name(lexy::code_point::general_category_t
 #if LEXY_HAS_UNICODE_DATABASE
 #    include <lexy/_detail/unicode_database.hpp>
 
-constexpr lexy::code_point::general_category_t lexy::code_point::general_category() const
+constexpr lexy::code_point::general_category_t lexy::code_point::general_category() const noexcept
 {
     if (!is_valid())
         return general_category_t::unassigned;
 
     auto idx = _unicode_db::property_index(_value);
     return _unicode_db::category[idx];
+}
+
+constexpr lexy::code_point lexy::simple_case_fold(code_point cp) noexcept
+{
+    if (!cp.is_valid())
+        return cp;
+
+    auto idx    = _unicode_db::property_index(cp.value());
+    auto offset = _unicode_db::case_folding_offset[idx];
+    return code_point(char32_t(std::int_least32_t(cp.value()) + offset));
 }
 
 namespace lexy::_detail
