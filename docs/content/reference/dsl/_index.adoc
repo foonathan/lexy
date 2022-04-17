@@ -117,6 +117,8 @@ the other rule does not have access to context variables, and any context modifi
   match one of the specified literals
 {{% docref "lexy::dsl::followed_by" %}} and {{% docref "lexy::dsl::not_followed_by" %}}::
   ensure a literal is (not) followed by a char class
+{{% docref "lexy::dsl::ascii::case_folding" %}} and {{% docref "lexy::dsl::unicode::simple_case_folding" %}}::
+  match a literal case-insensitively
 ====
 
 [%collapsible]

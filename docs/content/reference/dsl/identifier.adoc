@@ -106,7 +106,12 @@ If this has happened, parsing the `identifier` rule creates a partial input from
 * (4) `.reserve_suffix()`: All rules specified here are matched against the partial input.
   If they match a suffix of the partial input, the identifier is reserved.
 
+If one `rule` passed to a `.reserve()` call or variant uses case folding (e.g. {{% docref "lexy::dsl::ascii::case_folding" %}}), all other rules in the same call also use that case folding, but not rules in a different call.
+This is because internally each call creates a fresh {{% docref "lexy::dsl::literal_set" %}}, which has that behavior.
+
 {{% playground-example reserved_identifier "Parse a C like identifier that is not reserved" %}}
+
+{{% playground-example reserved_identifier_case_folding "Parse a C like identifier with case-insensitive keywords" %}}
 
 CAUTION: The `identifier` rule doesn't magically learn about the keywords you have created.
 They are only reserved if you actually pass them to `.reserve()`.
@@ -188,4 +193,6 @@ NOTE: While {{% docref "lexy::dsl::lit" %}}`<"int">` would happily consume a pre
 NOTE: A keyword does not necessarily need to be a reserved identifier or vice-versa.
 
 NOTE: The {{% encoding %}} caveats of {{% literal-rule %}}s apply here as well.
+
+TIP: Use {{% docref "lexy::dsl::ascii::case_folding" %}} or its Unicode variants to parse a case insensitive keyword.
 

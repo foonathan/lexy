@@ -13,6 +13,7 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/byte.hpp>
 #include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/code_point.hpp>

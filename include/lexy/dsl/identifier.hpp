@@ -27,6 +27,8 @@ namespace lexyd
 {
 template <typename Id, typename CharT, CharT... C>
 struct _kw;
+template <typename Literal, template <typename> typename CaseFolding>
+struct _cfl;
 
 template <typename Leading, typename Trailing>
 struct _idp : token_base<_idp<Leading, Trailing>>
@@ -204,6 +206,14 @@ struct _id : branch_base
         // No need to remember that it was a keyword originally.
         return _lit<CharT, C...>{};
     }
+    template <typename Id, typename CharT, CharT... C, template <typename> typename CaseFolding>
+    constexpr auto _make_reserve(_cfl<_kw<Id, CharT, C...>, CaseFolding>) const
+    {
+        static_assert(std::is_same_v<decltype(Id{}.pattern()), decltype(pattern())>,
+                      "must not reserve keywords from another identifier");
+        // No need to remember that it was a keyword originally.
+        return _cfl<_lit<CharT, C...>, CaseFolding>{};
+    }
 
     //=== dsl ===//
     /// Adds a set of reserved identifiers.
@@ -297,6 +307,8 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
     // We must not end on a trailing character.
     static constexpr auto lit_char_classes
         = lexy::_detail::char_class_list<decltype(Id{}.trailing_pattern())>{};
+
+    using lit_case_folding = void;
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,

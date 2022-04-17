@@ -28,6 +28,8 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
 
     static constexpr auto lit_char_classes = lexy::_detail::char_class_list<CharClass>{};
 
+    using lit_case_folding = typename Literal::lit_case_folding;
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
                                                  std::size_t char_class)
@@ -60,7 +62,15 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
 
             // To match, we must not match the char class now.
             reader.set_position(end);
-            return !lexy::try_match_token(CharClass{}, reader);
+            if constexpr (std::is_void_v<lit_case_folding>)
+            {
+                return !lexy::try_match_token(CharClass{}, reader);
+            }
+            else
+            {
+                typename lit_case_folding::template reader<Reader> case_folded{reader};
+                return !lexy::try_match_token(CharClass{}, case_folded);
+            }
         }
 
         template <typename Context>

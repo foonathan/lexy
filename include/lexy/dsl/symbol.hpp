@@ -14,7 +14,7 @@ namespace lexy
 {
 #define LEXY_SYMBOL(Str) LEXY_NTTP_STRING(::lexy::_detail::type_string, Str)
 
-template <typename T, typename... Strings>
+template <typename T, template <typename> typename CaseFolding, typename... Strings>
 class _symbol_table
 {
     static auto _char_type()
@@ -39,15 +39,21 @@ public:
     //=== modifiers ===//
     LEXY_CONSTEVAL _symbol_table() : _data{} {}
 
+    template <typename CaseFoldingDSL>
+    LEXY_CONSTEVAL auto case_folding(CaseFoldingDSL) const
+    {
+        return _symbol_table<T, CaseFoldingDSL::template case_folding,
+                             Strings...>(_detail::make_index_sequence<size()>{}, *this);
+    }
+
     template <typename SymbolString, typename... Args>
     LEXY_CONSTEVAL auto map(Args&&... args) const
     {
-        using next_table = _symbol_table<T, Strings..., SymbolString>;
+        using next_table = _symbol_table<T, CaseFolding, Strings..., SymbolString>;
         if constexpr (empty())
-            return next_table(lexy::_detail::make_index_sequence<0>{}, nullptr, LEXY_FWD(args)...);
+            return next_table(_detail::make_index_sequence<0>{}, nullptr, LEXY_FWD(args)...);
         else
-            return next_table(lexy::_detail::make_index_sequence<size()>{}, _data,
-                              LEXY_FWD(args)...);
+            return next_table(_detail::make_index_sequence<size()>{}, _data, LEXY_FWD(args)...);
     }
 
 #if LEXY_HAS_NTTP
@@ -199,7 +205,7 @@ private:
     template <typename Encoding>
     static LEXY_CONSTEVAL auto _build_trie()
     {
-        lexy::_detail::lit_trie<Encoding, _max_char_count> result;
+        lexy::_detail::lit_trie<Encoding, CaseFolding, _max_char_count> result;
 
         auto idx = 0u;
         ((result.node_value[result.insert(0, Strings{})] = idx++), ...);
@@ -207,7 +213,7 @@ private:
         return result;
     }
     template <typename Encoding>
-    static constexpr lexy::_detail::lit_trie<Encoding, _max_char_count> _trie
+    static constexpr lexy::_detail::lit_trie<Encoding, CaseFolding, _max_char_count> _trie
         = _build_trie<Encoding>();
 
     template <std::size_t... Idx, typename... Args>
@@ -216,15 +222,20 @@ private:
     // New data is appended at the end.
     : _data{data[Idx]..., T(LEXY_FWD(args)...)}
     {}
+    template <std::size_t... Idx, template <typename> typename OtherCaseFolding>
+    constexpr explicit _symbol_table(lexy::_detail::index_sequence<Idx...>,
+                                     const _symbol_table<T, OtherCaseFolding, Strings...>& table)
+    : _data{table._data[Idx]...}
+    {}
 
     std::conditional_t<empty(), char, T> _data[empty() ? 1 : size()];
 
-    template <typename, typename...>
+    template <typename, template <typename> typename, typename...>
     friend class _symbol_table;
 };
 
 template <typename T>
-constexpr auto symbol_table = _symbol_table<T>{};
+constexpr auto symbol_table = _symbol_table<T, _detail::lit_no_case_fold>{};
 } // namespace lexy
 
 namespace lexy

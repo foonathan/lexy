@@ -14,11 +14,15 @@
 //=== lit_trie ===//
 namespace lexy::_detail
 {
-template <typename Encoding, std::size_t MaxCharCount, typename... CharClasses>
+template <typename Encoding, template <typename> typename CaseFolding, std::size_t MaxCharCount,
+          typename... CharClasses>
 struct lit_trie
 {
     using encoding  = Encoding;
     using char_type = typename Encoding::char_type;
+
+    template <typename Reader>
+    using reader = CaseFolding<Reader>;
 
     static constexpr auto max_node_count = MaxCharCount + 1; // root node
     static constexpr auto max_transition_count
@@ -81,8 +85,8 @@ struct lit_trie
 template <typename... CharClasses>
 struct char_class_list
 {
-    template <typename Encoding, std::size_t N>
-    using trie_type = lit_trie<Encoding, N, CharClasses...>;
+    template <typename Encoding, template <typename> typename CaseFolding, std::size_t N>
+    using trie_type = lit_trie<Encoding, CaseFolding, N, CharClasses...>;
 
     static constexpr auto size = sizeof...(CharClasses);
 
@@ -93,6 +97,36 @@ struct char_class_list
     }
 };
 
+template <typename CurrentCaseFolding, typename... Literals>
+struct _merge_case_folding;
+template <>
+struct _merge_case_folding<void>
+{
+    template <typename Reader>
+    using case_folding = Reader;
+};
+template <typename CurrentCaseFolding>
+struct _merge_case_folding<CurrentCaseFolding>
+{
+    template <typename Reader>
+    using case_folding = typename CurrentCaseFolding::template reader<Reader>;
+};
+template <typename CurrentCaseFolding, typename H, typename... T>
+struct _merge_case_folding<CurrentCaseFolding, H, T...>
+: _merge_case_folding<std::conditional_t<std::is_void_v<CurrentCaseFolding>,
+                                         typename H::lit_case_folding, CurrentCaseFolding>,
+                      T...>
+{
+    static_assert(
+        std::is_same_v<CurrentCaseFolding,
+                       typename H::lit_case_folding> //
+            || std::is_void_v<CurrentCaseFolding> || std::is_void_v<typename H::lit_case_folding>,
+        "cannot mix literals with different case foldings in a literal_set");
+};
+
+template <typename Reader>
+using lit_no_case_fold = Reader;
+
 template <typename Encoding, typename... Literals>
 LEXY_CONSTEVAL auto make_empty_trie()
 {
@@ -101,7 +135,10 @@ LEXY_CONSTEVAL auto make_empty_trie()
     // Merge all mentioned character classes in a single list.
     constexpr auto char_classes
         = (lexy::_detail::char_class_list{} + ... + Literals::lit_char_classes);
-    return typename decltype(char_classes)::template trie_type<Encoding, max_char_count>{};
+
+    // Need to figure out case folding as well.
+    return typename decltype(char_classes)::template trie_type<
+        Encoding, _merge_case_folding<void, Literals...>::template case_folding, max_char_count>{};
 }
 template <typename Encoding, typename... Literals>
 using lit_trie_for = decltype(make_empty_trie<Encoding, Literals...>());
@@ -135,9 +172,9 @@ template <const auto& Trie, std::size_t CurNode,
           // Same bounds as in the for loop of insert().
           typename Indices = make_index_sequence<(Trie.node_count - 1) - CurNode>>
 struct lit_trie_matcher;
-template <typename Encoding, std::size_t N, typename... CharClasses,
-          const lit_trie<Encoding, N, CharClasses...>& Trie, std::size_t CurNode,
-          std::size_t... Indices>
+template <typename Encoding, template <typename> typename CaseFolding, std::size_t N,
+          typename... CharClasses, const lit_trie<Encoding, CaseFolding, N, CharClasses...>& Trie,
+          std::size_t CurNode, std::size_t... Indices>
 struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
 {
     template <std::size_t Idx, typename Reader, typename IntT>
@@ -153,7 +190,7 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
                 return false;
 
             reader.bump();
-            result = lit_trie_matcher<Trie, Trie.transition_to[trans_idx]>::try_match(reader);
+            result = lit_trie_matcher<Trie, Trie.transition_to[trans_idx]>::_try_match(reader);
             return true;
         }
         else
@@ -166,7 +203,7 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
     }
 
     template <typename Reader>
-    LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
+    LEXY_FORCE_INLINE static constexpr std::size_t _try_match(Reader& reader)
     {
         constexpr auto cur_value = Trie.node_value[CurNode];
         if constexpr (((Trie.transition_from[CurNode + Indices] == CurNode) || ...))
@@ -203,6 +240,22 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
                 return cur_value;
         }
     }
+
+    template <typename Reader>
+    LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& _reader)
+    {
+        if constexpr (std::is_same_v<CaseFolding<Reader>, Reader>)
+        {
+            return _try_match(_reader);
+        }
+        else
+        {
+            CaseFolding<Reader> reader{_reader};
+            auto                result = _try_match(reader);
+            _reader.set_position(reader.position());
+            return result;
+        }
+    }
 };
 } // namespace lexy::_detail
 
@@ -217,6 +270,7 @@ struct _lit
 {
     static constexpr auto lit_max_char_count = sizeof...(C);
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
+    using lit_case_folding                   = void;
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
@@ -309,6 +363,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
 
     static constexpr auto lit_max_char_count = 4 * sizeof...(Cp);
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
+    using lit_case_folding                   = void;
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)

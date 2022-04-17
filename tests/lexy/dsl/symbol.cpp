@@ -5,6 +5,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/identifier.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/whitespace.hpp>
@@ -414,5 +415,54 @@ TEST_CASE("dsl::symbol(identifier)")
         CHECK(Unknown.trace
               == test_trace().token("identifier", "Unknown").error(0, 7, "my error").cancel());
     }
+}
+
+namespace
+{
+constexpr auto symbols_case_folded = lexy::symbol_table<int>.case_folding(dsl::ascii::case_folding)
+                             .map<'a'>(1)
+                             .map<'b'>(2)
+                             .map<'c'>(3)
+                             .map<LEXY_SYMBOL("abc")>(4);
+}
+
+TEST_CASE("dsl::symbol with case folding")
+{
+    constexpr auto rule = lexy::dsl::symbol<symbols_case_folded>;
+    CHECK(lexy::is_branch_rule<decltype(rule)>);
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().error(0, 0, "unknown symbol").cancel());
+
+    auto A = LEXY_VERIFY("A");
+    CHECK(A.status == test_result::success);
+    CHECK(A.value == 1);
+    CHECK(A.trace == test_trace().token("identifier", "A"));
+    auto B = LEXY_VERIFY("B");
+    CHECK(B.status == test_result::success);
+    CHECK(B.value == 2);
+    CHECK(B.trace == test_trace().token("identifier", "B"));
+    auto C = LEXY_VERIFY("C");
+    CHECK(C.status == test_result::success);
+    CHECK(C.value == 3);
+    CHECK(C.trace == test_trace().token("identifier", "C"));
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::success);
+    CHECK(abc.value == 4);
+    CHECK(abc.trace == test_trace().token("identifier", "abc"));
+    auto Abc = LEXY_VERIFY("Abc");
+    CHECK(Abc.status == test_result::success);
+    CHECK(Abc.value == 4);
+    CHECK(Abc.trace == test_trace().token("identifier", "Abc"));
+
+    auto Unknown = LEXY_VERIFY("Unknown");
+    CHECK(Unknown.status == test_result::fatal_error);
+    CHECK(Unknown.trace == test_trace().error(0, 0, "unknown symbol").cancel());
+
+    auto Ab = LEXY_VERIFY("Ab");
+    CHECK(Ab.status == test_result::success);
+    CHECK(Ab.value == 1);
+    CHECK(Ab.trace == test_trace().token("identifier", "A"));
 }
 

@@ -6,6 +6,7 @@
 #include "verify.hpp"
 #include <cctype>
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/whitespace.hpp>
 
@@ -280,12 +281,68 @@ TEST_CASE("dsl::identifier(leading, trailing)")
     }
 }
 
-TEST_CASE("dsl::identifier(pattern)")
+TEST_CASE("dsl::identifier(char class)")
 {
     constexpr auto rule = dsl::identifier(dsl::ascii::alpha);
     CHECK(lexy::is_branch_rule<decltype(rule)>);
 
     CHECK(equivalent_rules(rule, dsl::identifier(dsl::ascii::alpha, dsl::ascii::alpha)));
+}
+
+TEST_CASE("dsl::identifier with case folding")
+{
+    constexpr auto rule = dsl::identifier(dsl::ascii::alpha)
+                              .reserve(LEXY_LIT("ab"), LEXY_LIT("abc"))
+                              .reserve(dsl::ascii::case_folding(LEXY_LIT("int")));
+
+    constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
+                                                  [](const char* begin, lexy::string_lexeme<> lex) {
+                                                      CHECK(lex.begin() == begin);
+                                                      CHECK(lex.size() >= 1);
+                                                      return 1;
+                                                  });
+
+    auto empty = LEXY_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.trace == test_trace().expected_char_class(0, "ASCII.alpha").cancel());
+
+    auto a = LEXY_VERIFY("a");
+    CHECK(a.status == test_result::success);
+    CHECK(a.value == 1);
+    CHECK(a.trace == test_trace().token("identifier", "a"));
+    auto abcd = LEXY_VERIFY("abcd");
+    CHECK(abcd.status == test_result::success);
+    CHECK(abcd.value == 1);
+    CHECK(abcd.trace == test_trace().token("identifier", "abcd"));
+    auto abcd123 = LEXY_VERIFY("abcd123");
+    CHECK(abcd123.status == test_result::success);
+    CHECK(abcd123.value == 1);
+    CHECK(abcd123.trace == test_trace().token("identifier", "abcd"));
+
+    auto ab = LEXY_VERIFY("ab");
+    CHECK(ab.status == test_result::recovered_error);
+    CHECK(ab.value == 1);
+    CHECK(ab.trace == test_trace().token("identifier", "ab").error(0, 2, "reserved identifier"));
+    auto aB = LEXY_VERIFY("aB");
+    CHECK(aB.status == test_result::success);
+    CHECK(aB.value == 1);
+    CHECK(aB.trace == test_trace().token("identifier", "aB"));
+    auto abc = LEXY_VERIFY("abc");
+    CHECK(abc.status == test_result::recovered_error);
+    CHECK(abc.value == 1);
+    CHECK(abc.trace == test_trace().token("identifier", "abc").error(0, 3, "reserved identifier"));
+    auto AbC = LEXY_VERIFY("AbC");
+    CHECK(AbC.status == test_result::success);
+    CHECK(AbC.value == 1);
+    CHECK(AbC.trace == test_trace().token("identifier", "AbC"));
+    auto int_ = LEXY_VERIFY("int");
+    CHECK(int_.status == test_result::recovered_error);
+    CHECK(int_.value == 1);
+    CHECK(int_.trace == test_trace().token("identifier", "int").error(0, 3, "reserved identifier"));
+    auto Int = LEXY_VERIFY("Int");
+    CHECK(Int.status == test_result::recovered_error);
+    CHECK(Int.value == 1);
+    CHECK(Int.trace == test_trace().token("identifier", "Int").error(0, 3, "reserved identifier"));
 }
 
 TEST_CASE("dsl::keyword")
@@ -326,6 +383,32 @@ TEST_CASE("dsl::keyword")
     {
         constexpr auto rule = dsl::keyword<'a'>(id);
         CHECK(equivalent_rules(rule, LEXY_KEYWORD("a", id)));
+    }
+    SUBCASE("case folding")
+    {
+        constexpr auto rule = dsl::ascii::case_folding(LEXY_KEYWORD("int", id));
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+
+        constexpr auto callback = token_callback;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_keyword(0, 0, "int").cancel());
+        auto I = LEXY_VERIFY("I");
+        CHECK(I.status == test_result::fatal_error);
+        CHECK(I.trace == test_trace().expected_keyword(0, 1, "int").cancel());
+        auto In = LEXY_VERIFY("In");
+        CHECK(In.status == test_result::fatal_error);
+        CHECK(In.trace == test_trace().expected_keyword(0, 2, "int").cancel());
+
+        auto Int = LEXY_VERIFY("Int");
+        CHECK(Int.status == test_result::success);
+        CHECK(Int.trace == test_trace().literal("Int"));
+
+        auto Integer = LEXY_VERIFY("Integer");
+        CHECK(Integer.status == test_result::fatal_error);
+        CHECK(Integer.trace
+              == test_trace().error_token("Int").expected_keyword(0, 7, "int").cancel());
     }
 }
 

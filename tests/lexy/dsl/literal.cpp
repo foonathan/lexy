@@ -5,6 +5,7 @@
 
 #include "verify.hpp"
 #include <lexy/dsl/ascii.hpp>
+#include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/identifier.hpp>
 
 TEST_CASE("dsl::lit_c")
@@ -468,6 +469,34 @@ TEST_CASE("dsl::literal_set")
         auto a123 = LEXY_VERIFY("a123");
         CHECK(a123.status == test_result::fatal_error);
         CHECK(a123.trace == test_trace().error(0, 0, "expected literal set").cancel());
+    }
+
+    SUBCASE("case folding")
+    {
+        constexpr auto rule = dsl::literal_set(dsl::ascii::case_folding(LEXY_LIT("abc")),
+                                               LEXY_LIT("123"), LEXY_LIT("hello"));
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(lexy::is_literal_set_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().error(0, 0, "expected literal set").cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().literal("abc"));
+        auto ABC = LEXY_VERIFY("ABC");
+        CHECK(ABC.status == test_result::success);
+        CHECK(ABC.trace == test_trace().literal("ABC"));
+        auto _123 = LEXY_VERIFY("123");
+        CHECK(_123.status == test_result::success);
+        CHECK(_123.trace == test_trace().literal("123"));
+        auto hello = LEXY_VERIFY("hello");
+        CHECK(hello.status == test_result::success);
+        CHECK(hello.trace == test_trace().literal("hello"));
+        auto HellO = LEXY_VERIFY("HellO");
+        CHECK(HellO.status == test_result::success);
+        CHECK(HellO.trace == test_trace().literal("HellO"));
     }
 }
 

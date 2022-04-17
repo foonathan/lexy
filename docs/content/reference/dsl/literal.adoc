@@ -160,9 +160,13 @@ namespace lexy::dsl
 `literal_set` is a {{% token-rule %}} that matches one of the specified literals.
 
 Requires::
-  Each argument is a {{% literal-rule %}}.
+  * Each argument is a {{% literal-rule %}}.
+  * If one literal rule uses case folding (e.g. {{% docref "lexy::dsl::ascii::case_folding" %}}),
+    the other rules either do not use it, or use the same case folding rule;
+    different case foldings cannot be mixed.
 Matching::
   Tries to match each literal rule.
+  If case folding is used, it applies to *all* rules in the set.
   Succeeds, if one of the matched, consuming the longest one.
 Errors::
   `lexy::expected_literal_set`: if none of the literal rules matched; at the original reader position.

@@ -62,6 +62,7 @@ Requires::
 Matching::
   Matches and consumes `lit`.
   Otherwise, tries to match `cc` without consuming it and fails if it does.
+  If `lit` uses case folding (e.g. {{% docref "lexy::dsl::ascii::case_folding" %}}), it also applies to `cc`.
 Errors::
   * All errors raised by `lit` when it fails.
   * `lexy::follow_restriction`: if `cc` matches; at the position where it matched.

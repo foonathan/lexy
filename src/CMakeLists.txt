@@ -52,6 +52,7 @@ set(header_files
         ${include_dir}/dsl/branch.hpp
         ${include_dir}/dsl/byte.hpp
         ${include_dir}/dsl/capture.hpp
+        ${include_dir}/dsl/case_folding.hpp
         ${include_dir}/dsl/char_class.hpp
         ${include_dir}/dsl/choice.hpp
         ${include_dir}/dsl/code_point.hpp

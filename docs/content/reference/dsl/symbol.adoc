@@ -30,11 +30,14 @@ The `symbol` rule.
         };
 
         //=== modifiers ===//
+        template <typename CaseFoldingDSL>
+        consteval _symbol-table_ case_folding(CaseFoldingDSL) const;
+
         template <auto SymbolString, typename... Args>
-        constexpr _symbol-table_ map(Args&&... args) const;
+        consteval _symbol-table_ map(Args&&... args) const;
 
         template <auto C, typename... Args>
-        constexpr _symbol-table_ map(Args&&... args) const;
+        consteval _symbol-table_ map(Args&&... args) const;
 
         //=== access ===//
         static constexpr bool empty() noexcept;
@@ -66,15 +69,35 @@ Defines a compile-time mapping of strings to objects of some type `T`.
 
 It is initially empty.
 
-=== Modifiers
+=== Modifiers: `case_folding`
 
 {{% interface %}}
 ----
+template <typename CaseFoldingDSL>
+consteval _symbol-table_ case_folding(CaseFoldingDSL) const;
+----
+
+[.lead]
+Specifies case folding for the symbol table.
+
+`CaseFoldingDSL` is a function object that specifies a case folding like {{% docref "lexy::dsl::ascii::case_folding" %}} or {{% docref "lexy::dsl::unicode::simple_case_folding" %}}.
+It will be used on the input to parse a symbol.
+
+CAUTION: As with the literal rules, the symbols in the symbol table must only contain lowercase characters if case folding is used.
+This is because all input is case folded prior to matching which makes matching of uppercase characters impossible.
+
+=== Modifiers: `map`
+
+{{% interface %}}
+----
+template <typename CaseFoldingDSL>
+consteval _symbol-table_ case_folding(CaseFoldingDSL) const;
+
 template <auto SymbolString, typename... Args>
-constexpr _symbol-table_ map(Args&&... args) const;
+consteval _symbol-table_ map(Args&&... args) const;
 
 template <auto C, typename... Args>
-constexpr _symbol-table_ map(Args&&... args) const;
+consteval _symbol-table_ map(Args&&... args) const;
 ----
 
 [.lead]
@@ -210,6 +233,7 @@ constexpr _symbol-dsl_ symbol;
 
 Parsing::
   Matches the longest symbol of the `SymbolTable` by consuming characters beginning at the current input.
+  If necessary, performs case folding on the input first.
   Fails if no symbol matches.
   It skips implicit whitespace afterwards.
 Branch Parsing::
@@ -245,6 +269,7 @@ Parsing::
   * The first overload parses the {{% token-rule %}} `token`.
   * The second overload parses `identifier.pattern()`.
   In either case, it then creates a partial input that covers the (non-whitespace) code units consumed by that parsing.
+  If necessary, performs case folding on the partial input.
   If the contents of that partial input exactly matches one of the strings in the symbol table,
   the rule succeeds.
 Branch Parsing::
