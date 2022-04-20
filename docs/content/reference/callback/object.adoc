@@ -50,5 +50,5 @@ It accepts arbitrary arguments and calls `new T(std::forward<Args>(args)...)` if
 otherwise `new T{std::forward<Args>(args)...}`.
 Then returns a pointer of the specified type as the result.
 
-{{% godbolt-example "point" "Construct a point on the heap and returns a `std::unique_ptr`" %}}
+{{% godbolt-example "new" "Construct a point on the heap and returns a `std::unique_ptr`" %}}
 
