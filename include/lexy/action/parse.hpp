@@ -150,6 +150,8 @@ constexpr auto parse(const Input& input, Callback callback)
     return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
 }
 
+/// Parses the production into a value, invoking the callback on error.
+/// All callbacks gain access to the specified parse state.
 template <typename Production, typename Input, typename State, typename Callback>
 constexpr auto parse(const Input& input, const State& state, Callback callback)
 {

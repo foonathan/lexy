@@ -205,19 +205,32 @@ inline constexpr auto _is_convertible<To, Arg> = std::is_convertible_v<Arg, To>;
 template <>
 inline constexpr auto _is_convertible<void> = true;
 
+template <typename ParseState, typename Production>
+using _detect_value_of =
+    // We're testing a non-const ParseState on purpose, to handle cases where a user forgot to const
+    // qualify value_of() (it causes a hard error instead of going to ::value).
+    typename decltype(LEXY_DECLVAL(ParseState&).value_of(Production{}))::return_type;
+
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
-    using _type = LEXY_DECAY_DECLTYPE(Production::value);
+    static constexpr auto _get_value([[maybe_unused]] const ParseState* state)
+    {
+        if constexpr (lexy::_detail::is_detected<_detect_value_of, ParseState, Production>)
+            return state->value_of(Production{});
+        else
+            return Production::value;
+    }
+    using _type = decltype(_get_value(nullptr));
 
     static auto _return_type_callback()
     {
         if constexpr (lexy::is_callback<_type>)
-            return Production::value;
+            return _get_value(nullptr);
         else if constexpr (lexy::is_sink<_type, ParseState>)
-            return Production::value.sink(LEXY_DECLVAL(const ParseState&));
+            return _get_value(nullptr).sink(LEXY_DECLVAL(const ParseState&));
         else
-            return Production::value.sink();
+            return _get_value(nullptr).sink();
     }
 
 public:
@@ -226,7 +239,6 @@ public:
     template <typename State = ParseState, typename = std::enable_if_t<std::is_void_v<State>>>
     constexpr production_value_callback() : _state(nullptr)
     {}
-
     template <typename State = ParseState,
               typename       = std::enable_if_t<std::is_same_v<State, ParseState>>>
     constexpr explicit production_value_callback(const State& state) : _state(&state)
@@ -237,20 +249,20 @@ public:
     constexpr auto sink() const
     {
         if constexpr (lexy::is_sink<_type, ParseState>)
-            return Production::value.sink(*_state);
+            return _get_value(_state).sink(*_state);
         else
-            return Production::value.sink();
+            return _get_value(_state).sink();
     }
 
     template <typename... Args>
-    constexpr return_type operator()(Args&&... args)
+    constexpr return_type operator()(Args&&... args) const
     {
         if constexpr (lexy::is_callback_for<_type, Args&&...>)
         {
             if constexpr (lexy::is_callback_state<_type, ParseState>)
-                return Production::value[*_state](LEXY_FWD(args)...);
+                return _get_value(_state)[*_state](LEXY_FWD(args)...);
             else
-                return Production::value(LEXY_FWD(args)...);
+                return _get_value(_state)(LEXY_FWD(args)...);
         }
         else if constexpr (lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>)
         {

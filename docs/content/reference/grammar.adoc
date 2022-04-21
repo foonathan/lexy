@@ -121,16 +121,24 @@ namespace lexy
 }
 ----
 
-A callback and sink that wraps `Production::value`.
+[.lead]
+A callback and sink for the specified `Production`.
 
-If `Production::value` is a link:{{< relref "callback#callback" >}}[callback], `return_type` is its return type, `.sink()` is ill-formed and `operator()` forwards to `Production::value.operator()`.
+It wraps an underlying callback/sink, which is determined as follows:
 
-If `Production::value` is a link:{{< relref "callback#sink" >}}[sink],
+1. `ParseState` is non-void and the call `state.value_of(Production{})` is well-formed.
+   It will use the result as the underlying callback/sink.
+2. `ParseState` is non-void but `state.value_of(Production{})` is ill-formed.
+   It will use `Production::value` as the underlying callback/sink, passing the parse state to `.sink()` and as state parameter to the callback.
+3. `ParseState` is void.
+   It will use `Production::value` as the underlying callback/sink.
+
+The behavior of the member functions depends on three cases:
+
+1. If the underlying callback/sink is a link:{{< relref "callback#callback" >}}[callback], `return_type` is its return type, `.sink()` is ill-formed and `operator()` forwards to `Production::value.operator()`.
+2. If the underlying callback/sink is a link:{{< relref "callback#sink" >}}[sink],
 `return_type` is its return type, `.sink()` forwards to `Production::value.sink()`, and `operator()` accepts the return type of the sink and forwards it unchanged.
-
-If `Production::value` is both a callback and a sink, `return_type` is the return type of the callback, `.sink()` forwards to the sink, and `operator()` to the callback.
-
-If `ParseState` is non-void, the provided one will be forwarded to `Production::value.sink()` as argument, and passed as state parameter to the callback part of `Production::value`.
+3. If the underlying callback/sink is both a callback and a sink, `return_type` is the return type of the callback, `.sink()` forwards to the sink, and `operator()` to the callback.
 
 TIP: Use {{% docref "lexy::operator>>" %}} to combine a sink and a callback in one `Production::value`.
 

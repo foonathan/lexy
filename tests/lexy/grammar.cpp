@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/adapter.hpp>
 #include <lexy/callback/bind.hpp>
 #include <lexy/callback/container.hpp>
 #include <lexy/callback/fold.hpp>
@@ -122,6 +123,59 @@ TEST_CASE("production_value_callback")
 
         lexy::production_value_callback<prod_value<as_allocator_list>, std::allocator<int>> cb(
             state);
+        CHECK(std::is_same_v<decltype(cb)::return_type, std::vector<int>>);
+
+        auto sink = cb.sink();
+        sink(0);
+        sink(1);
+        sink(2);
+        CHECK(LEXY_MOV(sink).finish() == std::vector<int>{0, 1, 2});
+    }
+
+    SUBCASE("parse state overrides callback")
+    {
+        struct state_t
+        {
+            auto value_of(prod_value<lexy::construct<void>>) const
+            {
+                return lexy::construct<int>;
+            }
+        } state;
+
+        lexy::production_value_callback<prod_value<lexy::construct<void>>, state_t> cb(state);
+
+        CHECK(std::is_same_v<decltype(cb)::return_type, int>);
+        CHECK(cb() == 0);
+        CHECK(cb(42) == 42);
+    }
+    SUBCASE("parse state overrides callback that access state")
+    {
+        struct state_t
+        {
+            int result;
+
+            auto value_of(prod_value<lexy::construct<void>>) const
+            {
+                return lexy::callback<int>([this] { return result; });
+            }
+        } state{42};
+
+        lexy::production_value_callback<prod_value<lexy::construct<void>>, state_t> cb(state);
+
+        CHECK(std::is_same_v<decltype(cb)::return_type, int>);
+        CHECK(cb() == 42);
+    }
+    SUBCASE("parse state overrides sink")
+    {
+        struct state_t
+        {
+            auto value_of(prod_value<lexy::count>) const
+            {
+                return lexy::as_list<std::vector<int>>;
+            }
+        } state;
+
+        lexy::production_value_callback<prod_value<lexy::count>, state_t> cb(state);
         CHECK(std::is_same_v<decltype(cb)::return_type, std::vector<int>>);
 
         auto sink = cb.sink();
