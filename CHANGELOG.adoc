@@ -3,6 +3,10 @@
 NOTE: The project is currently still in-development and especially undocumented implementation details (such as the interface of rules) are subject to changes.
 Until the first release is done, breaking changes -- but not new features -- are tracked here.
 
+== 2022-04-21
+
+`dsl::lit_cp` in a char class now requires a Unicode encoding; use `dsl::lit_b` to support default/byte encoding.
+
 == 2022-03-21
 
 * BEHAVIOR CHANGE: `lexy::token_production` that define a `::whitespace` member now skip whitespace in the direct rule as well.

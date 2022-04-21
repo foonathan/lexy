@@ -267,7 +267,8 @@ namespace
 {
 int eval(const char* str)
 {
-    auto result = lexy::parse<grammar::stmt>(lexy::zstring_input(str), lexy::noop);
+    auto result
+        = lexy::parse<grammar::stmt>(lexy::zstring_input<lexy::utf8_encoding>(str), lexy::noop);
     REQUIRE(result);
     auto exprs = result.value();
     if (exprs.empty())

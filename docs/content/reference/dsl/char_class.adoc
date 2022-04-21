@@ -50,10 +50,13 @@ Those are
 
 * a {{% docref "lexy::dsl::lit" %}} (or {{% docref "lexy::dsl::lit_c" %}}) rule matching a single ASCII character,
 * a {{% docref "lexy::dsl::lit" %}} (or {{% docref "lexy::dsl::lit_c" %}}) rule whose char type is `char32_t` matching a single character,
+* a {{% docref "lexy::dsl::lit_b" %}} rule matching an arbitrary byte,
 * a {{% docref "lexy::dsl::lit_cp" %}} rule, and
 * {{% docref "lexy::dsl::operator/ (char class)" %}} combinations of the above.
 
 Literal char class rules can be used with the char class operators.
+If they specify a non-ASCII character, the input {{% encoding %}} must be ASCII, UTF-8, UTF-16, or UTF-32 (if it is ASCII, the character will never be matched).
+The exception is {{% docref "lexy::dsl::lit_b" %}} where the encoding must be {{% docref "lexy::default_encoding" %}} or {{% docref "lexy::byte_encoding" %}}.
 
 [#macro]
 == Char class `LEXY_CHAR_CLASS`

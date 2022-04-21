@@ -140,7 +140,8 @@ TEST_CASE("dsl::delimited(open, close)")
     }
     SUBCASE("as rule with custom char class")
     {
-        constexpr auto class_ = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::ascii::punct / dsl::lit_cp<0xE4>);
+        constexpr auto class_
+            = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::ascii::punct / dsl::lit_b<0xE4>);
         constexpr auto rule = delimited(class_);
         CHECK(lexy::is_branch_rule<decltype(rule)>);
 

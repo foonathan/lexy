@@ -440,7 +440,7 @@ int main()
 {
     ast::environment environment;
     // We create an interactive REPL and use it for our input.
-    for (lexy_ext::shell<> shell; shell.is_open();)
+    for (lexy_ext::shell<lexy_ext::default_prompt<lexy::utf8_encoding>> shell; shell.is_open();)
     {
         auto input = shell.prompt_for_input();
 

@@ -261,15 +261,10 @@ TEST_CASE("character class alternative")
 
     SUBCASE("arbitrary 8-bit code points")
     {
-        static constexpr auto rule = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::lit_cp<0xE4>);
+        static constexpr auto rule
+            = LEXY_CHAR_CLASS("my class", dsl::ascii::alpha / dsl::lit_b<0xE4>);
         constexpr auto callback = token_callback;
 
-        // The rule should not match in ascii encoding
-        auto ascii = LEXY_VERIFY(lexy::ascii_encoding{}, "\xE4");
-        CHECK(ascii.status == test_result::fatal_error);
-        CHECK(ascii.trace == test_trace().expected_char_class(0, "my class").cancel());
-
-        // It should match in byte and default encodings though
         auto default_ = LEXY_VERIFY(lexy::default_encoding{}, "\xE4");
         CHECK(default_.status == test_result::success);
 
