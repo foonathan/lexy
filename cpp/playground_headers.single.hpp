@@ -6511,6 +6511,11 @@ struct char_class_base : token_base<Derived>, _char_class_base
     // static const char* char_class_name();
     // static ascii_set char_class_ascii();
 
+    static constexpr auto char_class_unicode()
+    {
+        return true;
+    }
+
     static constexpr std::false_type char_class_match_cp(char32_t)
     {
         return {};
@@ -6548,9 +6553,12 @@ struct char_class_base : token_base<Derived>, _char_class_base
             {
                 return false;
             }
-            else if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> ||
-                               std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
+            else if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> //
+                               || std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
             {
+                static_assert(!Derived::char_class_unicode(),
+                              "cannot use this character class with default/byte_encoding");
+
                 if (reader.peek() == Reader::encoding::eof())
                     return false;
 
@@ -6565,6 +6573,9 @@ struct char_class_base : token_base<Derived>, _char_class_base
             }
             else
             {
+                static_assert(Derived::char_class_unicode(),
+                              "cannot use this character class with Unicode encoding");
+
                 // Parse one code point.
                 auto result = lexy::_detail::parse_code_point(reader);
                 if (result.error != lexy::_detail::cp_error::success)
@@ -6592,6 +6603,10 @@ struct char_class_base : token_base<Derived>, _char_class_base
         static_assert(::lexy::is_char_class_rule<LEXY_DECAY_DECLTYPE(Rule)>);                      \
         struct c : ::lexyd::char_class_base<c>                                                     \
         {                                                                                          \
+            static constexpr auto char_class_unicode()                                             \
+            {                                                                                      \
+                return (Rule).char_class_unicode();                                                \
+            }                                                                                      \
             static LEXY_CONSTEVAL auto char_class_name()                                           \
             {                                                                                      \
                 return Name;                                                                       \
@@ -6640,6 +6655,35 @@ struct _ccp : char_class_base<_ccp<Cp>>
             return cp == Cp;
     }
 };
+template <unsigned char Byte>
+struct _cb : char_class_base<_cb<Byte>>
+{
+    static constexpr auto char_class_unicode()
+    {
+        return Byte <= 0x7F;
+    }
+
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "byte";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        if constexpr (Byte <= 0x7F)
+            result.insert(Byte);
+        return result;
+    }
+
+    static constexpr auto char_class_match_cp([[maybe_unused]] char32_t cp)
+    {
+        if constexpr (Byte <= 0x7F)
+            return std::false_type{};
+        else
+            return cp == Byte;
+    }
+};
 
 template <typename C, typename = std::enable_if_t<lexy::is_char_class_rule<C>>>
 constexpr auto _make_char_class(C c)
@@ -6647,10 +6691,14 @@ constexpr auto _make_char_class(C c)
     return c;
 }
 template <typename CharT, CharT C,
-          typename = std::enable_if_t<C <= 0x7F || std::is_same_v<CharT, char32_t>>>
+          typename = std::enable_if_t<
+              C <= 0x7F || std::is_same_v<CharT, char32_t> || std::is_same_v<CharT, unsigned char>>>
 constexpr auto _make_char_class(_lit<CharT, C>)
 {
-    return _ccp<static_cast<char32_t>(C)>{};
+    if constexpr (std::is_same_v<CharT, unsigned char>)
+        return _cb<C>{};
+    else
+        return _ccp<static_cast<char32_t>(C)>{};
 }
 template <char32_t CP>
 constexpr auto _make_char_class(_lcp<CP>)
@@ -6674,6 +6722,19 @@ template <typename... Cs>
 struct _calt : char_class_base<_calt<Cs...>>
 {
     static_assert(sizeof...(Cs) > 1);
+
+    static constexpr auto char_class_unicode()
+    {
+        constexpr auto non_unicode = (!Cs::char_class_unicode() || ...);
+        static_assert(!non_unicode
+                          // If at least one is non-Unicode, either they all must be non-Unicode or
+                          // only match ASCII.
+                          || ((!Cs::char_class_unicode()
+                               || std::is_same_v<decltype(Cs::char_class_match_cp(0)),
+                                                 std::false_type>)&&...),
+                      "cannot mix bytes and Unicode char classes");
+        return !non_unicode;
+    }
 
     static LEXY_CONSTEVAL auto char_class_name()
     {
@@ -6738,6 +6799,11 @@ namespace lexyd
 template <typename C>
 struct _ccomp : char_class_base<_ccomp<C>>
 {
+    static constexpr auto char_class_unicode()
+    {
+        return C::char_class_unicode();
+    }
+
     static LEXY_CONSTEVAL auto char_class_name()
     {
         return "complement";
@@ -6781,6 +6847,12 @@ namespace lexyd
 template <typename Set, typename Minus>
 struct _cminus : char_class_base<_cminus<Set, Minus>>
 {
+    // calt does the correct logic as well, so re-use it.
+    static constexpr auto char_class_unicode()
+    {
+        return _calt<Set, Minus>::char_class_unicode();
+    }
+
     static LEXY_CONSTEVAL auto char_class_name()
     {
         return "minus";
@@ -6827,6 +6899,12 @@ template <typename... Cs>
 struct _cand : char_class_base<_cand<Cs...>>
 {
     static_assert(sizeof...(Cs) > 1);
+
+    // calt does the correct logic as well, so re-use it.
+    static constexpr auto char_class_unicode()
+    {
+        return _calt<Cs...>::char_class_unicode();
+    }
 
     static LEXY_CONSTEVAL auto char_class_name()
     {
@@ -14097,14 +14175,16 @@ struct _del_chars
                                            std::false_type>)
         {
             // Try to match any code point in default_encoding or byte_encoding.
-            if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> ||
-                          std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
+            if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> //
+                          || std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
             {
+                static_assert(!CharClass::char_class_unicode(),
+                              "cannot use this character class with default/byte_encoding");
                 LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
                             "EOF should be checked before calling this");
 
                 auto recover_begin = reader.position();
-                auto cp =  static_cast<char32_t>(reader.peek());
+                auto cp            = static_cast<char32_t>(reader.peek());
                 reader.bump();
 
                 if (!CharClass::char_class_match_cp(cp))
@@ -14116,6 +14196,9 @@ struct _del_chars
             // Otherwise, try to match Unicode characters.
             else
             {
+                static_assert(CharClass::char_class_unicode(),
+                              "cannot use this character class with Unicode encoding");
+
                 auto result = lexy::_detail::parse_code_point(reader);
                 if (result.error == lexy::_detail::cp_error::success
                     && CharClass::char_class_match_cp(result.cp))
