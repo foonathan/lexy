@@ -34,9 +34,6 @@ constexpr std::size_t _digit_count(int radix, Integer value)
 template <typename T>
 struct integer_traits
 {
-    static_assert(std::is_integral_v<T> && !std::is_same_v<T, bool>,
-                  "specialize integer_traits for your custom integer types");
-
     using type = T;
 
     static constexpr auto is_bounded = true;
@@ -74,8 +71,15 @@ struct integer_traits
             return LLONG_MAX;
         else if constexpr (std::is_same_v<T, unsigned long long>)
             return ULLONG_MAX;
+#ifdef __SIZEOF_INT128__
+        else if constexpr (std::is_same_v<T, __int128_t>)
+            return __int128_t(~__uint128_t{} >> 1);
+        else if constexpr (std::is_same_v<T, __uint128_t>)
+            return ~__uint128_t{};
+#endif
         else
-            static_assert(_detail::error<T>);
+            static_assert(_detail::error<T>,
+                          "specialize integer_traits for your custom integer types");
     }();
     template <int Radix>
     static constexpr std::size_t max_digit_count = _digit_count(Radix, _max);
