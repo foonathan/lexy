@@ -13,12 +13,6 @@
 #    error "lexy::read_file() and lexy::read_stdin() have been disabled"
 #endif
 
-#ifdef LEXY_IGNORE_DEPRECATED_FILE
-#    define LEXY_DEPRECATED_FILE(Msg)
-#else
-#    define LEXY_DEPRECATED_FILE(Msg) [[deprecated(Msg)]]
-#endif
-
 namespace lexy
 {
 /// Errors that might occur while reading the file.
@@ -78,24 +72,6 @@ public:
     {
         LEXY_PRECONDITION(!*this);
         return _ec;
-    }
-
-    LEXY_DEPRECATED_FILE("call `.buffer().data()`") const char_type* data() const noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.data();
-    }
-    LEXY_DEPRECATED_FILE("call `.buffer().data()`") std::size_t size() const noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.size();
-    }
-
-    LEXY_DEPRECATED_FILE("`lexy::read_file_result`: call `.buffer()` to use it as an input")
-    auto reader() const& noexcept
-    {
-        LEXY_PRECONDITION(*this);
-        return _buffer.reader();
     }
 
 public:
