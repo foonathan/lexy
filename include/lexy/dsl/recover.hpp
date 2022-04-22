@@ -4,7 +4,6 @@
 #ifndef LEXY_DSL_RECOVER_HPP_INCLUDED
 #define LEXY_DSL_RECOVER_HPP_INCLUDED
 
-#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/literal.hpp>

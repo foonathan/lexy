@@ -94,7 +94,6 @@ template <typename Literal, typename CharClass>
 constexpr auto not_followed_by(Literal, CharClass cc)
 {
     static_assert(lexy::is_literal_rule<Literal> && Literal::lit_char_classes.size == 0);
-    static_assert(lexy::is_char_class_rule<CharClass> || _is_convertible_char_class<CharClass>);
     return _nf<Literal, decltype(_make_char_class(cc))>{};
 }
 

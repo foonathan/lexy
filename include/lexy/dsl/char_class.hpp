@@ -366,19 +366,10 @@ constexpr auto _make_char_class(_lcp<CP>)
 {
     return _ccp<CP>{};
 }
-
-template <typename T>
-using _detect_convertible_char_class = decltype(_make_char_class(T{}));
-template <typename T>
-constexpr auto _is_convertible_char_class
-    = lexy::_detail::is_detected<_detect_convertible_char_class, T>;
 } // namespace lexyd
 
 namespace lexyd
 {
-template <typename... Tokens>
-struct _alt;
-
 template <typename... Cs>
 struct _calt : char_class_base<_calt<Cs...>>
 {
@@ -419,22 +410,11 @@ struct _calt : char_class_base<_calt<Cs...>>
     }
 };
 
-template <typename R1, typename R2,
-          typename
-          = std::enable_if_t<!lexy::is_literal_set_rule<R1> && !lexy::is_literal_set_rule<R2>>>
-constexpr auto operator/(R1, R2)
+template <typename R1, typename R2>
+constexpr auto operator/(R1 r1, R2 r2)
+    -> _calt<decltype(_make_char_class(r1)), decltype(_make_char_class(r2))>
 {
-    static_assert(lexy::is_token_rule<R1> && lexy::is_token_rule<R2>);
-    if constexpr (
-        // At least one needs to be a true character class rule.
-        (lexy::is_char_class_rule<R1> || lexy::is_char_class_rule<R2>)
-        // And both need to be convertible.
-        &&(_is_convertible_char_class<R1> && _is_convertible_char_class<R2>))
-        // Only then is the result also a character class.
-        return _calt<decltype(_make_char_class(R1{})), decltype(_make_char_class(R2{}))>{};
-    else
-        // Otherwise, it's a generic alternative.
-        return _alt<R1, R2>{};
+    return {};
 }
 
 template <typename... Cs, typename C>

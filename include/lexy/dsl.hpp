@@ -4,7 +4,6 @@
 #ifndef LEXY_DSL_HPP_INCLUDED
 #define LEXY_DSL_HPP_INCLUDED
 
-#include <lexy/dsl/alternative.hpp>
 #include <lexy/dsl/any.hpp>
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/bits.hpp>

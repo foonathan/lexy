@@ -8,9 +8,6 @@
 #include <lexy/dsl/code_point.hpp>
 #include <lexy/dsl/unicode.hpp>
 
-// To ensure overload resolution still works.
-#include <lexy/dsl/alternative.hpp>
-
 namespace
 {
 template <typename Rule>
