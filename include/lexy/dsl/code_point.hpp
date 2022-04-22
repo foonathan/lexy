@@ -8,13 +8,6 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/char_class.hpp>
 
-#include <lexy/dsl/literal.hpp>
-#ifdef LEXY_IGNORE_DEPRECATED_CODE_POINT_LITERAL
-#    define LEXY_DEPRECATED_CODE_POINT_LITERAL
-#else
-#    define LEXY_DEPRECATED_CODE_POINT_LITERAL [[deprecated("use dsl::lit_cp instead")]]
-#endif
-
 namespace lexyd
 {
 template <typename Predicate>
@@ -55,12 +48,6 @@ struct _cp : char_class_base<_cp<Predicate>>
     }
 
     //=== dsl ===//
-    template <char32_t CodePoint>
-    LEXY_DEPRECATED_CODE_POINT_LITERAL constexpr auto lit() const
-    {
-        return lit_cp<CodePoint>;
-    }
-
     template <typename P>
     constexpr auto if_() const
     {
