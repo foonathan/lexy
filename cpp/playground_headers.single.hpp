@@ -961,6 +961,12 @@ template <typename Sink, typename... Args>
 using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
 
 template <typename T, typename... Args>
+using _detect_sink_callback_for = decltype(LEXY_DECLVAL(T&)(LEXY_DECLVAL(Args)...));
+template <typename T, typename... Args>
+constexpr bool is_sink_callback_for
+    = _detail::is_detected<_detect_sink_callback_for, std::decay_t<T>, Args...>;
+
+template <typename T, typename... Args>
 using _detect_sink = decltype(LEXY_DECLVAL(const T).sink(LEXY_DECLVAL(Args)...).finish());
 template <typename T, typename... Args>
 constexpr bool is_sink = _detail::is_detected<_detect_sink, T, Args...>;
@@ -1254,6 +1260,32 @@ using _detect_value_of =
     // qualify value_of() (it causes a hard error instead of going to ::value).
     typename decltype(LEXY_DECLVAL(ParseState&).value_of(Production{}))::return_type;
 
+template <typename Production, typename Sink>
+struct _sfinae_sink
+{
+    Sink _sink;
+
+    using return_type = typename Sink::return_type;
+
+    LEXY_FORCE_INLINE constexpr _sfinae_sink(Production, Sink&& sink) : _sink(LEXY_MOV(sink)) {}
+
+    template <typename... Args>
+    LEXY_FORCE_INLINE constexpr void operator()(Args&&... args)
+    {
+        if constexpr (!is_sink_callback_for<Sink, Args&&...>)
+            // We're attempting to call a sink of Production with the given arguments, but no such
+            // overload exists.
+            static_assert(_detail::error<Production, Args...>,
+                          "missing value sink callback overload for production");
+        _sink(LEXY_FWD(args)...);
+    }
+
+    LEXY_FORCE_INLINE constexpr auto finish() &&
+    {
+        return LEXY_MOV(_sink).finish();
+    }
+};
+
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
@@ -1292,9 +1324,16 @@ public:
     constexpr auto sink() const
     {
         if constexpr (lexy::is_sink<_type, ParseState>)
-            return _get_value(_state).sink(*_state);
+        {
+            return _sfinae_sink(Production{}, _get_value(_state).sink(*_state));
+        }
         else
-            return _get_value(_state).sink();
+        {
+            // We're attempting to obtain a sink for Production, but none was provided.
+            // As Production uses a list rule, it needs a sink.
+            static_assert(lexy::is_sink<_type>, "missing value sink for production");
+            return _sfinae_sink(Production{}, _get_value(_state).sink());
+        }
     }
 
     template <typename... Args>
@@ -1307,24 +1346,19 @@ public:
             else
                 return _get_value(_state)(LEXY_FWD(args)...);
         }
-        else if constexpr (lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>)
+        else if constexpr ((lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>) //
+                           &&_is_convertible<return_type, Args&&...>)
         {
-            if constexpr (_is_convertible<return_type, Args&&...>)
-            {
-                // We don't have a matching callback, but it is a single argument that has
-                // the correct type already, or we return void and have no arguments.
-                // Assume it came from the list sink and return the value without invoking a
-                // callback.
-                return (LEXY_FWD(args), ...);
-            }
-            else
-            {
-                static_assert(_detail::error<Production, Args...>,
-                              "missing value callback overload for production; only have sink");
-            }
+            // We don't have a matching callback, but it is a single argument that has
+            // the correct type already, or we return void and have no arguments.
+            // Assume it came from the list sink and return the value without invoking a
+            // callback.
+            return (LEXY_FWD(args), ...);
         }
         else
         {
+            // We're attempting to call the callback of Production with the given arguments, but no
+            // such overload exists.
             static_assert(_detail::error<Production, Args...>,
                           "missing value callback overload for production");
         }
@@ -6717,19 +6751,10 @@ constexpr auto _make_char_class(_lcp<CP>)
 {
     return _ccp<CP>{};
 }
-
-template <typename T>
-using _detect_convertible_char_class = decltype(_make_char_class(T{}));
-template <typename T>
-constexpr auto _is_convertible_char_class
-    = lexy::_detail::is_detected<_detect_convertible_char_class, T>;
 } // namespace lexyd
 
 namespace lexyd
 {
-template <typename... Tokens>
-struct _alt;
-
 template <typename... Cs>
 struct _calt : char_class_base<_calt<Cs...>>
 {
@@ -6770,22 +6795,11 @@ struct _calt : char_class_base<_calt<Cs...>>
     }
 };
 
-template <typename R1, typename R2,
-          typename
-          = std::enable_if_t<!lexy::is_literal_set_rule<R1> && !lexy::is_literal_set_rule<R2>>>
-constexpr auto operator/(R1, R2)
+template <typename R1, typename R2>
+constexpr auto operator/(R1 r1, R2 r2)
+    -> _calt<decltype(_make_char_class(r1)), decltype(_make_char_class(r2))>
 {
-    static_assert(lexy::is_token_rule<R1> && lexy::is_token_rule<R2>);
-    if constexpr (
-        // At least one needs to be a true character class rule.
-        (lexy::is_char_class_rule<R1> || lexy::is_char_class_rule<R2>)
-        // And both need to be convertible.
-        &&(_is_convertible_char_class<R1> && _is_convertible_char_class<R2>))
-        // Only then is the result also a character class.
-        return _calt<decltype(_make_char_class(R1{})), decltype(_make_char_class(R2{}))>{};
-    else
-        // Otherwise, it's a generic alternative.
-        return _alt<R1, R2>{};
+    return {};
 }
 
 template <typename... Cs, typename C>
@@ -6968,6 +6982,215 @@ constexpr auto operator&(_cand<Cs...>, _cand<Ds...>) -> _cand<Cs..., Ds...>
 } // namespace lexyd
 
 #endif // LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
+
+
+namespace lexyd
+{
+template <typename Predicate>
+struct _cp : char_class_base<_cp<Predicate>>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        if constexpr (std::is_void_v<Predicate>)
+            return "code-point";
+        else
+            return lexy::_detail::type_name<Predicate>();
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        if constexpr (std::is_void_v<Predicate>)
+        {
+            lexy::_detail::ascii_set result;
+            result.insert(0x00, 0x7F);
+            return result;
+        }
+        else
+        {
+            lexy::_detail::ascii_set result;
+            for (auto c = 0; c <= 0x7F; ++c)
+                if (Predicate{}(lexy::code_point(char32_t(c))))
+                    result.insert(c);
+            return result;
+        }
+    }
+
+    static constexpr bool char_class_match_cp([[maybe_unused]] char32_t cp)
+    {
+        if constexpr (std::is_void_v<Predicate>)
+            return true;
+        else
+            return Predicate{}(lexy::code_point(cp));
+    }
+
+    //=== dsl ===//
+    template <typename P>
+    constexpr auto if_() const
+    {
+        static_assert(std::is_void_v<Predicate>);
+        return _cp<P>{};
+    }
+
+    template <char32_t Low, char32_t High>
+    constexpr auto range() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.range";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return Low <= cp.value() && cp.value() <= High;
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <char32_t... CPs>
+    constexpr auto set() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.set";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return ((cp.value() == CPs) || ...);
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    constexpr auto ascii() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.ASCII";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_ascii();
+            }
+        };
+
+        return if_<predicate>();
+    }
+    constexpr auto bmp() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.BMP";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_bmp();
+            }
+        };
+
+        return if_<predicate>();
+    }
+    constexpr auto noncharacter() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "code-point.non-character";
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                return cp.is_noncharacter();
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <lexy::code_point::general_category_t Category>
+    constexpr auto general_category() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return lexy::_detail::general_category_name(Category);
+            }
+
+            constexpr bool operator()(lexy::code_point cp) const
+            {
+                // Note: can't use `cp.is_noncharacter()` for `Cn` as `Cn` also includes all code
+                // points that are currently unassigned.
+                if constexpr (Category == lexy::code_point::Cc)
+                    return cp.is_control();
+                else if constexpr (Category == lexy::code_point::Cs)
+                    return cp.is_surrogate();
+                else if constexpr (Category == lexy::code_point::Co)
+                    return cp.is_private_use();
+                else
+                    return cp.general_category() == Category;
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <const auto& GcGroup>
+    struct _group_pred;
+    template <lexy::code_point::general_category_t... Cats,
+              const lexy::code_point::_gc_group<Cats...>& GcGroup>
+    struct _group_pred<GcGroup>
+    {
+        static LEXY_CONSTEVAL auto name()
+        {
+            return GcGroup.name;
+        }
+
+        constexpr bool operator()(lexy::code_point cp) const
+        {
+            return cp.general_category() == GcGroup;
+        }
+    };
+    template <const auto& GcGroup>
+    constexpr auto general_category() const
+    {
+        return if_<_group_pred<GcGroup>>();
+    }
+};
+
+/// Matches a single unicode code point in the current unicode encoding.
+constexpr auto code_point = _cp<void>{};
+} // namespace lexyd
+
+namespace lexy
+{
+// The void-version without predicate logically matches any input (modulo encoding errors, of
+// course).
+template <>
+inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind;
+} // namespace lexy
+
+#endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
+
+// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
+#define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
@@ -7512,228 +7735,6 @@ constexpr auto token_kind_of<lexy::dsl::_lset<Literals...>> = lexy::literal_toke
 } // namespace lexy
 
 #endif // LEXY_DSL_LITERAL_HPP_INCLUDED
-
-#ifdef LEXY_IGNORE_DEPRECATED_CODE_POINT_LITERAL
-#    define LEXY_DEPRECATED_CODE_POINT_LITERAL
-#else
-#    define LEXY_DEPRECATED_CODE_POINT_LITERAL [[deprecated("use dsl::lit_cp instead")]]
-#endif
-
-namespace lexyd
-{
-template <typename Predicate>
-struct _cp : char_class_base<_cp<Predicate>>
-{
-    static LEXY_CONSTEVAL auto char_class_name()
-    {
-        if constexpr (std::is_void_v<Predicate>)
-            return "code-point";
-        else
-            return lexy::_detail::type_name<Predicate>();
-    }
-
-    static LEXY_CONSTEVAL auto char_class_ascii()
-    {
-        if constexpr (std::is_void_v<Predicate>)
-        {
-            lexy::_detail::ascii_set result;
-            result.insert(0x00, 0x7F);
-            return result;
-        }
-        else
-        {
-            lexy::_detail::ascii_set result;
-            for (auto c = 0; c <= 0x7F; ++c)
-                if (Predicate{}(lexy::code_point(char32_t(c))))
-                    result.insert(c);
-            return result;
-        }
-    }
-
-    static constexpr bool char_class_match_cp([[maybe_unused]] char32_t cp)
-    {
-        if constexpr (std::is_void_v<Predicate>)
-            return true;
-        else
-            return Predicate{}(lexy::code_point(cp));
-    }
-
-    //=== dsl ===//
-    template <char32_t CodePoint>
-    LEXY_DEPRECATED_CODE_POINT_LITERAL constexpr auto lit() const
-    {
-        return lit_cp<CodePoint>;
-    }
-
-    template <typename P>
-    constexpr auto if_() const
-    {
-        static_assert(std::is_void_v<Predicate>);
-        return _cp<P>{};
-    }
-
-    template <char32_t Low, char32_t High>
-    constexpr auto range() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.range";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return Low <= cp.value() && cp.value() <= High;
-            }
-        };
-
-        return if_<predicate>();
-    }
-
-    template <char32_t... CPs>
-    constexpr auto set() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.set";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return ((cp.value() == CPs) || ...);
-            }
-        };
-
-        return if_<predicate>();
-    }
-
-    constexpr auto ascii() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.ASCII";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return cp.is_ascii();
-            }
-        };
-
-        return if_<predicate>();
-    }
-    constexpr auto bmp() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.BMP";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return cp.is_bmp();
-            }
-        };
-
-        return if_<predicate>();
-    }
-    constexpr auto noncharacter() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return "code-point.non-character";
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                return cp.is_noncharacter();
-            }
-        };
-
-        return if_<predicate>();
-    }
-
-    template <lexy::code_point::general_category_t Category>
-    constexpr auto general_category() const
-    {
-        struct predicate
-        {
-            static LEXY_CONSTEVAL auto name()
-            {
-                return lexy::_detail::general_category_name(Category);
-            }
-
-            constexpr bool operator()(lexy::code_point cp) const
-            {
-                // Note: can't use `cp.is_noncharacter()` for `Cn` as `Cn` also includes all code
-                // points that are currently unassigned.
-                if constexpr (Category == lexy::code_point::Cc)
-                    return cp.is_control();
-                else if constexpr (Category == lexy::code_point::Cs)
-                    return cp.is_surrogate();
-                else if constexpr (Category == lexy::code_point::Co)
-                    return cp.is_private_use();
-                else
-                    return cp.general_category() == Category;
-            }
-        };
-
-        return if_<predicate>();
-    }
-
-    template <const auto& GcGroup>
-    struct _group_pred;
-    template <lexy::code_point::general_category_t... Cats,
-              const lexy::code_point::_gc_group<Cats...>& GcGroup>
-    struct _group_pred<GcGroup>
-    {
-        static LEXY_CONSTEVAL auto name()
-        {
-            return GcGroup.name;
-        }
-
-        constexpr bool operator()(lexy::code_point cp) const
-        {
-            return cp.general_category() == GcGroup;
-        }
-    };
-    template <const auto& GcGroup>
-    constexpr auto general_category() const
-    {
-        return if_<_group_pred<GcGroup>>();
-    }
-};
-
-/// Matches a single unicode code point in the current unicode encoding.
-constexpr auto code_point = _cp<void>{};
-} // namespace lexyd
-
-namespace lexy
-{
-// The void-version without predicate logically matches any input (modulo encoding errors, of
-// course).
-template <>
-inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind;
-} // namespace lexy
-
-#endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
-
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
-// SPDX-License-Identifier: BSL-1.0
-
-#ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
-#define LEXY_DSL_NEWLINE_HPP_INCLUDED
-
-
 
 
 
@@ -9440,126 +9441,6 @@ void trace(std::FILE* file, const Input& input, const State& state, visualizatio
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
-#ifndef LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
-#define LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
-
-
-
-
-
-
-#ifdef LEXY_IGNORE_DEPRECATED_ALTERNATIVE
-#    define LEXY_DEPRECATED_ALTERNATIVE
-#else
-#    define LEXY_DEPRECATED_ALTERNATIVE                                                            \
-        [[deprecated("use dsl::literal_set() or dsl::operator| instead")]]
-#endif
-
-namespace lexy
-{
-struct exhausted_alternatives
-{
-    static LEXY_CONSTEVAL auto name()
-    {
-        return "exhausted alternatives";
-    }
-};
-} // namespace lexy
-
-namespace lexyd
-{
-template <typename... Tokens>
-struct _alt : token_base<_alt<Tokens...>>
-{
-    template <typename Reader>
-    struct LEXY_DEPRECATED_ALTERNATIVE tp
-    {
-        typename Reader::iterator end;
-
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
-
-        constexpr bool try_parse(Reader reader)
-        {
-            auto result = false;
-
-            auto begin                    = reader.position();
-            end                           = begin;
-            [[maybe_unused]] auto process = [&](auto token, Reader local_reader) {
-                // Try to match the current token.
-                if (!lexy::try_match_token(token, local_reader))
-                    return;
-
-                // Update end to longest match.
-                end    = lexy::_detail::max_range_end(begin, end, local_reader.position());
-                result = true;
-            };
-            (process(Tokens{}, reader), ...);
-
-            return result;
-        }
-
-        template <typename Context>
-        constexpr void report_error(Context& context, const Reader& reader)
-        {
-            auto err = lexy::error<Reader, lexy::exhausted_alternatives>(reader.position());
-            context.on(_ev::error{}, err);
-        }
-    };
-};
-
-// The generic operator/ overload is in char_class.hpp.
-
-template <typename... R, typename S, typename = std::enable_if_t<!lexy::is_literal_set_rule<S>>>
-LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(_alt<R...>, S)
-{
-    static_assert(lexy::is_token_rule<S>);
-    if constexpr ((lexy::is_char_class_rule<S> && ... && _is_convertible_char_class<R>))
-        // If we add a char class, we attempt to turn it into a character class alternative.
-        return _calt<decltype(_make_char_class(R{}))..., decltype(_make_char_class(S{}))>{};
-    else
-        return _alt<R..., S>{};
-}
-template <typename R, typename... S, typename = std::enable_if_t<!lexy::is_literal_set_rule<R>>>
-LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(R, _alt<S...>)
-{
-    static_assert(lexy::is_token_rule<R>);
-    if constexpr ((lexy::is_char_class_rule<R> && ... && _is_convertible_char_class<S>))
-        // If we add a char class, we attempt to turn it into a character class alternative.
-        return _calt<decltype(_make_char_class(R{})), decltype(_make_char_class(S{}))...>{};
-    else
-        return _alt<R, S...>{};
-}
-template <typename... R, typename... S>
-LEXY_DEPRECATED_ALTERNATIVE constexpr auto operator/(_alt<R...>, _alt<S...>)
-{
-    return _alt<R..., S...>{};
-}
-} // namespace lexyd
-
-namespace lexy
-{
-template <typename H, typename... T>
-constexpr auto token_kind_of<lexy::dsl::_alt<H, T...>> = [] {
-    constexpr auto is_equal = [](auto a, auto b) {
-        if constexpr (std::is_same_v<decltype(a), decltype(b)>)
-            return a == b;
-        else
-            return false;
-    };
-
-    constexpr auto kind = lexy::token_kind_of<H>;
-    if constexpr ((is_equal(kind, lexy::token_kind_of<T>) && ...))
-        return kind;
-    else
-        return lexy::unknown_token_kind;
-}();
-} // namespace lexy
-
-#endif // LEXY_DSL_ALTERNATIVE_HPP_INCLUDED
-
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
-// SPDX-License-Identifier: BSL-1.0
-
 #ifndef LEXY_DSL_ANY_HPP_INCLUDED
 #define LEXY_DSL_ANY_HPP_INCLUDED
 
@@ -10484,7 +10365,6 @@ constexpr auto must(Branch)
 #define LEXY_DSL_RECOVER_HPP_INCLUDED
 
 
-
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
@@ -11339,13 +11219,6 @@ constexpr auto do_while(Then then, Condition condition)
 
 
 
-#ifdef LEXY_IGNORE_DEPRECATED_WHITESPACE
-#    define LEXY_DEPRECATED_WHITESPACE
-#else
-#    define LEXY_DEPRECATED_WHITESPACE                                                             \
-        [[deprecated("dsl::whitespace (without arguments) is unecessary now")]]
-#endif
-
 //=== implementation ===//
 namespace lexy::_detail
 {
@@ -11489,22 +11362,11 @@ struct _wsr : rule_base
     }
 };
 
-struct _ws : rule_base
+template <typename Rule>
+constexpr auto whitespace(Rule)
 {
-    template <typename NextParser>
-    struct LEXY_DEPRECATED_WHITESPACE p : lexy::_detail::automatic_ws_parser<NextParser>
-    {};
-
-    /// Overrides implicit whitespace detection.
-    template <typename Rule>
-    constexpr auto operator()(Rule) const
-    {
-        return _wsr<Rule>{};
-    }
-};
-
-/// Matches whitespace.
-constexpr auto whitespace = _ws{};
+    return _wsr<Rule>{};
+}
 } // namespace lexyd
 
 //=== no_whitespace ===//
@@ -16200,7 +16062,6 @@ template <typename Literal, typename CharClass>
 constexpr auto not_followed_by(Literal, CharClass cc)
 {
     static_assert(lexy::is_literal_rule<Literal> && Literal::lit_char_classes.size == 0);
-    static_assert(lexy::is_char_class_rule<CharClass> || _is_convertible_char_class<CharClass>);
     return _nf<Literal, decltype(_make_char_class(cc))>{};
 }
 
