@@ -211,6 +211,32 @@ using _detect_value_of =
     // qualify value_of() (it causes a hard error instead of going to ::value).
     typename decltype(LEXY_DECLVAL(ParseState&).value_of(Production{}))::return_type;
 
+template <typename Production, typename Sink>
+struct _sfinae_sink
+{
+    Sink _sink;
+
+    using return_type = typename Sink::return_type;
+
+    LEXY_FORCE_INLINE constexpr _sfinae_sink(Production, Sink&& sink) : _sink(LEXY_MOV(sink)) {}
+
+    template <typename... Args>
+    LEXY_FORCE_INLINE constexpr void operator()(Args&&... args)
+    {
+        if constexpr (!is_sink_callback_for<Sink, Args&&...>)
+            // We're attempting to call a sink of Production with the given arguments, but no such
+            // overload exists.
+            static_assert(_detail::error<Production, Args...>,
+                          "missing value sink callback overload for production");
+        _sink(LEXY_FWD(args)...);
+    }
+
+    LEXY_FORCE_INLINE constexpr auto finish() &&
+    {
+        return LEXY_MOV(_sink).finish();
+    }
+};
+
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
@@ -249,9 +275,16 @@ public:
     constexpr auto sink() const
     {
         if constexpr (lexy::is_sink<_type, ParseState>)
-            return _get_value(_state).sink(*_state);
+        {
+            return _sfinae_sink(Production{}, _get_value(_state).sink(*_state));
+        }
         else
-            return _get_value(_state).sink();
+        {
+            // We're attempting to obtain a sink for Production, but none was provided.
+            // As Production uses a list rule, it needs a sink.
+            static_assert(lexy::is_sink<_type>, "missing value sink for production");
+            return _sfinae_sink(Production{}, _get_value(_state).sink());
+        }
     }
 
     template <typename... Args>
@@ -264,24 +297,19 @@ public:
             else
                 return _get_value(_state)(LEXY_FWD(args)...);
         }
-        else if constexpr (lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>)
+        else if constexpr ((lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>) //
+                           &&_is_convertible<return_type, Args&&...>)
         {
-            if constexpr (_is_convertible<return_type, Args&&...>)
-            {
-                // We don't have a matching callback, but it is a single argument that has
-                // the correct type already, or we return void and have no arguments.
-                // Assume it came from the list sink and return the value without invoking a
-                // callback.
-                return (LEXY_FWD(args), ...);
-            }
-            else
-            {
-                static_assert(_detail::error<Production, Args...>,
-                              "missing value callback overload for production; only have sink");
-            }
+            // We don't have a matching callback, but it is a single argument that has
+            // the correct type already, or we return void and have no arguments.
+            // Assume it came from the list sink and return the value without invoking a
+            // callback.
+            return (LEXY_FWD(args), ...);
         }
         else
         {
+            // We're attempting to call the callback of Production with the given arguments, but no
+            // such overload exists.
             static_assert(_detail::error<Production, Args...>,
                           "missing value callback overload for production");
         }

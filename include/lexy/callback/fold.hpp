@@ -8,6 +8,23 @@
 
 namespace lexy
 {
+template <bool Inplace>
+struct _fold_sfinae;
+template <>
+struct _fold_sfinae<true>
+{
+    template <typename Op, typename T, typename... Args>
+    using type = decltype(void(
+        _detail::invoke(LEXY_DECLVAL(Op), LEXY_DECLVAL(T&), LEXY_DECLVAL(Args)...)));
+};
+template <>
+struct _fold_sfinae<false>
+{
+    template <typename Op, typename T, typename... Args>
+    using type = decltype(void(
+        _detail::invoke(LEXY_DECLVAL(Op), LEXY_DECLVAL(T&&), LEXY_DECLVAL(Args)...)));
+};
+
 template <typename T, typename Arg, bool Inplace, typename Op>
 struct _fold
 {
@@ -22,7 +39,8 @@ struct _fold
         using return_type = T;
 
         template <typename... Args>
-        constexpr void operator()(Args&&... args)
+        constexpr auto operator()(Args&&... args) ->
+            typename _fold_sfinae<Inplace>::template type<Op, T, Args&&...>
         {
             if constexpr (Inplace)
                 _detail::invoke(_op, _result, LEXY_FWD(args)...);
