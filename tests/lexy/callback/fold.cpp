@@ -48,7 +48,7 @@ TEST_CASE("count")
 
     auto sink_cb = cb.sink();
     sink_cb(1);
-    sink_cb(nullptr, "hello");
+    sink_cb(nullptr, 'h');
     sink_cb(3.14f, 42);
     CHECK(LEXY_MOV(sink_cb).finish() == 3);
 }
