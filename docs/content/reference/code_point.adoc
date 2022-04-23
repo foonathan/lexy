@@ -189,7 +189,7 @@ static constexpr _gc-group_ Z;                  // Z = Zs, Zl, Zp
 static constexpr _gc-group_ separator = Z;
 
 static constexpr _gc-group_ C;                  // C = Cc, Cf, Cs, Co, Cn
-static constexpr _gc-group_ other;
+static constexpr _gc-group_ other = C;
 ----
 
 [.lead]

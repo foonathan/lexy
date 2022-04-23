@@ -27,20 +27,30 @@ namespace lexy
     template <typename T>
     constexpr bool is_branch_rule; <3>
     template <typename T>
-    constexpr bool is_token_rule;  <4>
+    constexpr bool is_unconditional_branch_rule; <4>
+    template <typename T>
+    constexpr bool is_token_rule;  <5>
 
     template <typename T>
-    constexpr bool is_literal_rule; <5>
+    constexpr bool is_literal_rule; <6>
     template <typename T>
-    constexpr bool is_char_class_rule; <6>
+    constexpr bool is_literal_set_rule; <7>
+    template <typename T>
+    constexpr bool is_char_class_rule; <8>
+
+    template <typename T>
+    constexpr bool is_separator; <9>
 }
 ----
 <1> Whether or not `T` is a production, i.e. it has a `::rule` member.
 <2> Whether or not `T` is a {{% rule %}}.
 <3> Whether or not `T` is a {{% branch-rule %}}.
-<4> Whether or not `T` is a {{% token-rule %}}.
-<5> Whether or not `T` is a {{% literal-rule %}}.
-<6> Whether or not `T` is a {{% char-class-rule %}}.
+<4> Whether or not `T` is an unconditional {{% branch-rule %}} (e.g. {{% docref "lexy::dsl::else_" %}}).
+<5> Whether or not `T` is a {{% token-rule %}}.
+<6> Whether or not `T` is a {{% literal-rule %}}.
+<7> Whether or not `T` is a {{% docref "lexy::dsl::literal_set" %}} rule.
+<8> Whether or not `T` is a {{% char-class-rule %}}.
+<9> Whether or not `T` is a separator ({{% docref "lexy::dsl::sep" %}} and {{% docref "lexy::dsl::trailing_sep" %}}).
 
 [#production_name]
 == Function `lexy::production_name`

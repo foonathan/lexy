@@ -1,6 +1,6 @@
 ---
+layout: single
 header: "lexy/callback.hpp"
-umbrella: true
 entities:
   "callback": callback
   "sink": sink
@@ -12,24 +12,37 @@ Callbacks that receive the values produced during parsing and process them.
 [#callback]
 == Callback
 
-[source,cpp]
+{{% interface %}}
 ----
-template <typename T>
-concept callback_ = requires { typename T::return_type; }
+namespace lexy
+{
+    template <typename T>
+    concept _callback_ = requires { typename T::return_type; }
 
-template <typename T, typename ... Args>
-concept callback-for = callback<T>
-  && requires(const T& cb, Args&&... args) {
-      { cb(std::forward<Args>(args)...) }
-        -> std::same_as<typename T::return_type>;
-    };
+    template <typename T>
+    constexpr bool is_callback = _callback_<T>;
 
-template <typename T, typename State, typename ... Args>
-concept callback-with-state = callback<T>
-  && requires(const T& cb, const State& state) {
-        { cb[state](std::forward<Args>(args)...) }
-          -> std::same_as<typename T::return_type>;
-     };
+    template <typename T, typename ... Args>
+    concept _callback-for_ = callback<T>
+      && requires(const T& cb, Args&&... args) {
+          { cb(std::forward<Args>(args)...) }
+            -> std::same_as<typename T::return_type>;
+        };
+
+    template <typename T, typename ... Args>
+    constexpr bool is_callback_for = _callback-for_<T, Args..>;
+
+    template <typename T, typename State, typename ... Args>
+    concept _callback-with-state_ = callback<T>
+      && requires(const T& cb, const State& state) {
+            { cb[state](std::forward<Args>(args)...) }
+              -> std::same_as<typename T::return_type>;
+         };
+
+    template <typename T, typename State>
+    constexpr bool is_callback_state
+        = _callback-with-state_<T, State, some-arguments...>;
+}
 ----
 
 [.lead]
@@ -45,22 +58,35 @@ During parsing, the callback arguments are the values produced by the rules whil
 [#sink]
 == Sink
 
-[source,cpp]
+{{% interface %}}
 ----
-template <typename T>
-concept sink-callback = requires (T& cb) {
-      typename T::return_type;
+namespace lexy
+{
+    template <typename T>
+    concept _sink-callback_ = requires (T& cb) {
+          typename T::return_type;
 
-      // there exist some args... with:
-      { cb(args...) } -> std::same_as<void>;
+          // there exist some args... with:
+          { cb(args...) } -> std::same_as<void>;
 
-      { std::move(cb).finish() } -> std::same_as<typename T::return_type>;
-  };
+          { std::move(cb).finish() } -> std::same_as<typename T::return_type>;
+      };
 
-template <typename T, typename ... Args>
-concept sink = requires (const T& s, Args&&... args) {
-      { s.sink(std::forward<Args>(args)...) } -> callback-sink;
-  };
+    template <typename T, typename ... Args>
+    concept _sink_ = requires (const T& s, Args&&... args) {
+          { s.sink(std::forward<Args>(args)...) } -> _sink-callback_;
+      };
+
+    template <typename T, typename... Args>
+    constexpr bool is_sink = _sink_<T, Args...>;
+
+    template <typename Sink, typename... Args>
+    using sink_callback = /* return type of .sink(Args...) */;
+
+    template <typename T, typename ... Args>
+    constexpr bool is_sink_callback_for
+      = /* T is a sink callback that can be invoked with Args... */;
+}
 ----
 
 [.lead]
@@ -77,7 +103,9 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
 
 == Pre-defined callbacks and sinks
 
-.Adapters and composition:
+[%collapsible]
+.Adapters and composition
+====
 {{% docref "lexy::callback" %}}::
   Turn an overload set of function objects into a callback.
 {{% docref "lexy::mem_fn" %}}::
@@ -88,8 +116,11 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
   Bind parameters and reorder and transform arguments of a callback or sink.
 {{% docref "lexy::fold" %}} and {{% docref "lexy::fold_inplace" %}}::
   Fold over all arguments of a sink.
+====
 
-.Primitives:
+[%collapsible]
+.Primitives
+====
 {{% docref "lexy::noop" %}}::
   Do nothing.
 {{% docref "lexy::constant" %}}::
@@ -100,8 +131,11 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
   Construct a new object.
 {{% docref "lexy::bit_cast" %}}::
   Constructs a new object by reinterpreting the bits of an existing one.
+====
 
-.Rule specific:
+[%collapsible]
+.Rule specific
+====
 {{% docref "lexy::as_integer" %}}::
   Produce a (signed) integer value.
 {{% docref "lexy::as_string" %}}::
@@ -110,4 +144,5 @@ During parsing, the sink callback is repeatedly invoked by values produced durin
   Produce a container from all list items.
 {{% docref "lexy::as_aggregate" %}}::
   Produce an aggregate by setting the specified members.
+====
 
