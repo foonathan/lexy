@@ -1,21 +1,27 @@
-= `lexy`
+= lexy
 
+ifdef::env-github[]
 image:https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Flexy%2Findex.json[Project Status,link=https://www.jonathanmueller.dev/project/]
 image:https://github.com/foonathan/lexy/workflows/Main%20CI/badge.svg[Build Status]
-image:https://img.shields.io/badge/try-online-blue[Playground,link=https://lexy.foonathan.net/playground]
+image:https://img.shields.io/badge/try_it_online-blue[Playground,link=https://lexy.foonathan.net/playground]
+endif::[]
 
-`lexy` is a parser combinator library for {cpp}17 and onwards.
+lexy is a parser combinator library for {cpp}17 and onwards.
 It allows you to write a parser by specifying it in a convenient {cpp} DSL,
-which gives you all the flexibility and control of a handwritten parser without all the manual work.
+which gives you all the flexibility and control of a handwritten parser without any of the manual work.
 
-Documentation: https://lexy.foonathan.net/[lexy.foonathan.net]
+ifdef::env-github[]
+*Documentation*: https://lexy.foonathan.net/[lexy.foonathan.net]
+endif::[]
 
 .IPv4 address parser
+--
+ifndef::env-github[]
+[.godbolt-example]
+.+++<a href="https://godbolt.org/z/scvajjE17", title="Try it online">{{< svg "icons/play.svg" >}}</a>+++
+endif::[]
 [source,cpp]
 ----
-#include <lexy/callback.hpp>
-#include <lexy/dsl.hpp>
-
 namespace dsl = lexy::dsl;
 
 // Parse an IPv4 address into a `std::uint32_t`.
@@ -37,95 +43,87 @@ struct ipv4_address
         });
 };
 ----
-
-See https://github.com/foonathan/lexy/tree/main/examples[examples/] for more examples, such as a fully conforming JSON parser,
-a (subset of) XML parser, or an interactive REPL for a bash-like language, among others;
-play with the parsing on the https://lexy.foonathan.net/playground/[online playground];
-or jump directly to the https://lexy.foonathan.net/tutorial/[tutorial] to learn how to write your own grammars.
+--
 
 == Features
 
-Describe the parser, not some abstract grammar::
-  Unlike parser generators that use some table driven magic for parsing, `lexy`'s grammar is just syntax sugar for a hand-written recursive descent parser.
-  The parsing algorithm does exactly what you've instructed it to do.
-  No more ambiguities or weird shift/reduce errors!
+Full control::
+  * *Describe the parser, not some abstract grammar*:
+    Unlike parser generators that use some table driven magic for parsing, lexy's grammar is just syntax sugar for a hand-written recursive descent parser.
+    The parsing algorithm does exactly what you've instructed it to do -- no more ambiguities or weird shift/reduce errors!
+  * *No implicit backtracking or lookahead*:
+    It will only backtrack when you say it should, and only lookahead when and how far you want it.
+    Don't worry about rules that have side-effects, they won't be executed unnecessarily thanks to the user-specified lookahead conditions.
+    https://lexy.foonathan.net/playground?example=peek[Try it online].
+  * *Escape hatch for manual parsing*:
+    Sometimes you want to parse something that can't be expressed easily with lexy's facilities.
+    Don't worry, you can integrate a hand-written parser into the grammar at any point.
+    https://lexy.foonathan.net/playground/?example=scan[Try it online].
+  * *Tracing*:
+    Figure out why the grammar isn't working the way you want it to.
+    https://lexy.foonathan.net/playground/?example=trace&mode=trace[Try it online].
 
-A pure {cpp} DSL::
-  No need to use an external grammar file, embed the DSL directly in your {cpp} using operator overloading and functions.
+Easily integrated::
+  * *A pure {cpp} DSL*:
+    No need to use an external grammar file; embed the grammar directly in your {cpp} project using operator overloading and functions.
+  * *Bring your own data structures*:
+    You can directly store results into your own types and have full control over all heap allocations.
+  * *Fully `constexpr` parsing*:
+    You want to parse a string literal at compile-time? You can do so.
+  * *Minimal standard library dependencies*:
+    The core parsing library only depends on fundamental headers such as `<type_traits>` or `<cstddef>`; no big includes like `<vector>` or `<algorithm>`.
+  * *Header-only core library* (by necessity, not by choice -- it's `constexpr` after all).
 
-No implicit backtracking or lookahead::
-  It will only backtrack when you say it should, and only lookahead when and how far you want it.
-  Don't worry about rules that have side-effects, they won't be executed unnecessarily thanks to the user-specified lookahead conditions.
+ifdef::env-github[Designed for text::]
+ifndef::env-github[Designed for text (e.g. {{< github-example json >}}, {{< github-example xml >}}, {{< github-example email >}}) ::]
+  * *Unicode support*: parse UTF-8, UTF-16, or UTF-32, and access the Unicode character database to query char classes or perform case folding.
+    https://lexy.foonathan.net/playground?example=identifier-unicode[Try it online].
+  * *Convenience*:
+    Built-in rules for parsing nested structures, quotes and escape sequences.
+    https://lexy.foonathan.net/playground?example=parenthesized[Try it online].
+  * *Automatic whitespace skipping*:
+    No need to manually handle whitespace or comments.
+    https://lexy.foonathan.net/playground/?example=whitespace_comment[Try it online].
 
-Bring your own data structures::
-  The input is parsed into the data structures you've provided.
-  It will not do heap allocations to store output unless you've instructed it to do so.
-  You can even evaluate the input on the fly, without storing anything.
+ifdef::env-github[Designed for programming languages::]
+ifndef::env-github[Designed for programming languages (e.g. {{< github-example calculator >}}, {{< github-example shell >}})::]
+  * *Keyword and identifier parsing*:
+    Reserve a set of keywords that won't be matched as regular identifiers.
+    https://lexy.foonathan.net/playground/?example=reserved_identifier[Try it online].
+  * *Operator parsing*:
+    Parse unary/binary operators with different precedences and associativity, including chained comparisons `a < b < c`.
+    https://lexy.foonathan.net/playground/?example=expr[Try it online].
+  * *Automatic error recovery*:
+    Log an error, recover, and continue parsing!
+    https://lexy.foonathan.net/playground/?example=recover[Try it online].
 
-Good error reporting::
-  On a parse error, it will invoke a user-defined callback with information about what went wrong and during which production.
-  Custom error messages can be injected using the special `dsl::error`, `dsl::require` and `dsl::prevent` error.
-  Write parse rules that detect common mistakes and issue appropriate diagnostics!
-
-Error recovery::
-  Log an error, recover, and continue parsing! https://lexy.foonathan.net/playground/?example=recover[Try it online].
-
-Unicode support::
-  You can parse UTF-8, UTF-16, or UTF-32 and access (some of) the Unicode character database.
-  `lexy` takes care of code point encoding and decoding as necessary, as well as endianness and byte-order marks.
-  Want to match a string literal containing arbitrary Unicode code points or `\u21D4` and store the result in a `std::string`?
-  Want to match any Unicode alphabetic or whitespace character, or a Unicode-aware identifier?
-  You can do so out of the box.
-
-Byte parsing::
-  Rules for parsing `N` bytes, an Nbit big/little endian integer, and related utilities for binary formats.
-
-Keyword and identifier parsing::
-  Reserve a set of keywords that won't be matched as regular identifiers. https://lexy.foonathan.net/playground/?id=7boh7TGss[Try it online].
-
-Tracing::
-  Figure out why the grammar isn't working the way you want it to. https://lexy.foonathan.net/playground/?example=trace&mode=trace[Try it online].
-
-Fully `constexpr` parsing::
-  You want to parse a string literal at compile-time? You can do so.
-
-Minimal standard library dependencies::
-  The core parsing library only depends on the required headers such as `<type_traits>` or `<cstddef>`.
-  Some input classes required `<cstdio>`.
-
-Header-only core library::
-  By necessity, not by choice -- it's `constexpr` after all.
-
-== Planned features
-
-The following features are in various stages of development and will be added before the 1.0.0 release.
-
-Operator parsing::
-  Parse operators with different precedences using Pratt parsing.
-
-NOTE: `lexy` is under active development and especially currently undocumented features (such as the internal rule interface) are subject to change.
-All breaking changes with migration strategies are documented in the change log and big breaks are announced in advance as an issue.
+ifdef::env-github[Designed for binary input::]
+ifndef::env-github[Designed for binary input (e.g. {{< github-example protobuf >}})::]
+  * *Bytes*: Rules for parsing `N` bytes or Nbit big/little endian integer.
+  * *Bits*: Rules for parsing individual bit patterns.
+  * *Blobs*: Rules for parsing TLV formats.
 
 == FAQ
 
-Why should I use `lexy` over XYZ?::
-  `lexy` is closest to other PEG parsers.
+Why should I use lexy over XYZ?::
+  lexy is closest to other PEG parsers.
   However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
-  This is not the case for `lexy`, where backtracking is controlled using branch conditions.
-  `lexy` also gives you a lot of control over error reporting and supports error recovery.
+  This is not the case for lexy, where backtracking is controlled using branch conditions.
+  lexy also gives you a lot of control over error reporting, supports error recovery, special support for operator precedence parsing, and other advanced features.
 
   http://boost-spirit.com/home/[Boost.Spirit]:::
     The main difference: it is not a Boost library.
     Otherwise, it is just a different implementation with a different flavor.
-    Use `lexy` if you like `lexy` more.
+    Use lexy if you like lexy more.
   https://github.com/taocpp/PEGTL[PEGTL]:::
     PEGTL is very similar and was a big inspiration.
-    The biggest difference is that `lexy` uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
+    The biggest difference is that lexy uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
     depending on your preference this can be an advantage or disadvantage.
-  Handwritten Parsers:::
+  Hand-written Parsers:::
     Writing a handwritten parser is more manual work and error prone.
-    `lexy` automates that away without having to sacrifice control.
-    You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time.
+    lexy automates that away without having to sacrifice control.
+    You can use it to quickly prototype a parser and then slowly replace more and more with a handwritten parser over time;
+    mixing a hand-written parser and a lexy grammar works seamlessly.
 
 How bad are the compilation times?::
 They're not as bad as you might expect (in debug mode, that is).
@@ -135,11 +133,10 @@ If we remove all the lexy specific parts and just benchmark the time it takes fo
 that takes about 700ms.
 If we validate JSON only instead of parsing it, so remove the data structures and keep only the lexy specific parts, we're looking at about 840ms.
 +
-Compile time benchmarks and optimizations are planned.
-Keep in mind, that you can fully isolate `lexy` in a single translation unit that only needs to be touched when you change the parser.
+Keep in mind, that you can fully isolate lexy in a single translation unit that only needs to be touched when you change the parser.
 
 How bad are the {cpp} error messages if you mess something up?::
-  They're certainly worse than the error message `lexy` gives you.
+  They're certainly worse than the error message lexy gives you.
   The big problem here is that the first line gives you the error, followed by dozens of template instantiations, which end at your `lexy::parse` call.
   Besides providing an external tool to filter those error messages, there is nothing I can do about that.
 
@@ -148,9 +145,9 @@ How fast is it?::
   A sample result of the JSON validator benchmark which compares the example JSON parser with various other implementations is available https://lexy.foonathan.net/benchmark_json/[here].
 
 Why is it called lexy?::
-  I previously had a tokenizer library called `foonathan/lex`.
+  I previously had a tokenizer library called foonathan/lex.
   I've tried adding a parser to it, but found that the line between pure tokenization and parsing has become increasingly blurred.
-  `lexy` is a re-imagination on of the parser I've added to `foonathan/lex`, and I've simply kept a similar name.
+  lexy is a re-imagination on of the parser I've added to foonathan/lex, and I've simply kept a similar name.
 
 == Building
 
