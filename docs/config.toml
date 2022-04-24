@@ -14,7 +14,7 @@ source-highlighter = "pygments"
 allow = ['^asciidoctor$']
 
 [params]
-tagline = "C++ parser combinator library"
+tagline = "C++ parsing DSL"
 github = "https://github.com/foonathan/lexy"
 github_src_prefix = "https://github.com/foonathan/lexy/blob/main"
 github_edit_prefix = "https://github.com/foonathan/lexy/edit/main"
