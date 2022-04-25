@@ -3,7 +3,6 @@ title: "Tutorial"
 ---
 :toc: left
 :toclevels: 1
-:source-highlighter: rouge
 
 This tutorial introduces you to the basics of `lexy`.
 Our goal is to parse some simple configuration file of a software package.

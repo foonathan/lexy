@@ -1,0 +1,145 @@
+---
+title: Building lexy and integrating it in your own projects
+---
+:toc: left
+:toclevels: 1
+
+The library uses CMake (3.8 or higher) as its build system.
+It requires a compiler that supports {cpp}17, but works best with {cpp}20.
+It is tested with GCC 7 and higher, clang 6 and higher, the latest MSVC and clang-cl.
+Other compilers may work as well.
+
+== Basic integration
+
+The recommended way to integrate lexy is using https://cmake.org/cmake/help/latest/module/FetchContent.html[`FetchContent`].
+This will automatically download the library and make it available in your CMake project.
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(lexy URL https://github.com/foonathan/lexy/archive/refs/heads/main.zip)
+FetchContent_MakeAvailable(lexy)
+```
+
+lexy will detect when it is used via `FetchContent` (or `add_subdirectory`) and automatically disable project infrastructure like tests or examples.
+It exposes the following targets:
+
+`foonathan::lexy::core` (header-only)::
+  lexy's core library; it is required.
+  It is an `INTERFACE` target that sets the required include path and {cpp} standard flags.
+`foonathan::lexy::file` (library)::
+  Link to this library if you want to use {{% docref "lexy::read_file" %}} and other file I/O functions.
+`foonathan::lexy::unicode` (header-only)::
+  Link to this library if you want to use advanced Unicode rules that require the Unicode character database.
+`foonathan::lexy::ext` (header-only)::
+  Link to this library if you want to use the extension headers in `lexy_ext/`.
+`foonathan::lexy` (library)::
+  Umbrella target that links to all other targets.
+
+A minimal `CMakeLists.txt` that uses lexy can look like this:
+
+.`CMakeLists.txt`
+```cmake
+project(lexy-example)
+
+include(FetchContent)
+FetchContent_Declare(lexy URL https://github.com/foonathan/lexy/archive/refs/heads/main.zip)
+FetchContent_MakeAvailable(lexy)
+
+add_executable(lexy_example)
+target_sources(lexy_example PRIVATE main.cpp)
+target_link_libraries(lexy_example PRIVATE foonathan::lexy)
+```
+
+== Configuration
+
+lexy can be customized by two CMake flags set at build time:
+
+`LEXY_FORCE_CPP17`::
+  If this option is `ON`, linking against `foonathan::lexy::core` (and transitively also `foonathan::lexy`) sets the flag to enable {cpp}17 for all compilers.
+  If this option is `OFF`, linking enables {cpp}20 for compilers that support it and {cpp}17 otherwise.
+  It is `OFF` by default.
+`LEXY_USER_CONFIG_HEADER`::
+  This setting defines the file path to the user config header file (see below).
+
+All other configuration happens via the user config header, which is a user-written file that can be used to override many of the automatic compiler detections.
+If `LEXY_USER_CONFIG_HEADER` is set, it will use the specified header; otherwise, looks for a header file named `lexy_user_config.hpp` somewhere in the include search path.
+This header is then automatically included by lexy and can define macros to customize lexy.
+Those are:
+
+`LEXY_ENABLE_ASSERT`::
+  Whether or not internal assertions and precondition checks are enabled.
+  By default, they are enabled unless `NDEBUG` is defined.
+`LEXY_HAS_NTTP`::
+  Whether or not the compiler supports {cpp}20's generalized non-type template parameters.
+`LEXY_HAS_CONSTEVAL`::
+  Whether or not the compiler supports `consteval`.
+`LEXY_HAS_CHAR8_t`::
+  Whether or not the compiler supports `char8_t`.
+`LEXY_IS_LITTLE_ENDIAN`::
+  Whether or not the native endianness is little endian.
+`LEXY_FORCE_INLINE`::
+  The compiler specific attribute to force inlining.
+`LEXY_EMPTY_MEMBER`::
+  The compiler specific attribute for `[[no_unique_address]]`.
+
+== Development build
+
+To contribute to lexy, you don't want to use it as a subdirectory as that disables most targets.
+Instead, clone the project normally and use CMake directly (i.e. `cmake -S /path/to/lexy -B /path/to/build`).
+This requires at least CMake 3.18.
+
+=== Development target
+
+The special target `foonathan::lexy::dev` can be used instead of `foonathan::lexy::core`.
+It will enable the relevant compiler warnings inside the lexy headers.
+Link against it in any examples or tests.
+
+NOTE: It is not part of the umbrella target `foonathan::lexy`.
+
+=== Examples
+
+Examples are only available if `LEXY_BUILD_EXAMPLES` is `ON` (the default).
+Each example has its own target, e.g. `lexy_example_calculator`.
+
+=== Tests
+
+Tests are only available if `LEXY_BUILD_TESTS` is `ON` (the default).
+It will automatically fetch doctest and `enable_testing()`.
+
+The following test targets are available:
+
+`lexy_test`::
+  Tests for all headers in `lexy/`.
+`lexy_ext_test`::
+  Tests for all headers in `lexy_ext/`.
+`lexy_test_XXX`::
+  Tests for example `XXX`.
+`lexy_test_playground`, `lexy_test_godbolt`, `lexy_test_godbolt_examples`, `lexy_test_playground_examples`::
+  Compile-only targets that ensure the examples of the documentation all compile.
+
+The minimal workflow to build lexy and run all tests is:
+
+```
+cmake -S /path/to/lexy -B /path/to/build
+cd /path/to/build
+cmake --build .
+ctest
+```
+
+=== Benchmarks
+
+Benchmarks are only available if `LEXY_BUILD_BENCHMARKS` is `ON` (not the default).
+It will automatically fetch nanobench and necessary data files.
+Refer to the `benchmarks/` folder for details.
+
+=== Docs
+
+Docs can only be built if `LEXY_BUILD_DOCS` is `ON` (not the default).
+It requires that you have installed https://gohugo.io/[hugo], https://asciidoctor.org/[Asciidoctor], and https://github.com/pygments/pygments.rb[pygments.rb].
+Docs can be build by two targets:
+
+`lexy_docs_serve`::
+  This will compile the docs and serve the website on localhost.
+`lexy_docs`::
+  This will compile the docs into `docs/public`.
+

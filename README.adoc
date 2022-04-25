@@ -149,28 +149,10 @@ Why is it called lexy?::
   I've tried adding a parser to it, but found that the line between pure tokenization and parsing has become increasingly blurred.
   lexy is a re-imagination on of the parser I've added to foonathan/lex, and I've simply kept a similar name.
 
-== Building
+ifdef::env-github[]
+== Documentation
 
-The library uses CMake as its build system.
-Simply put it somewhere and use `add_subdirectory()` to make the following targets available
+The documentation, including tutorials, reference documentation, and an interactive playground can be found at https://lexy.foonathan.net/[lexy.foonathan.net].
 
-`foonathan::lexy::core`::
-  This target is required.
-  It is an `INTERFACE` target that sets the required include path and {cpp} standard flags.
-`foonathan::lexy::file`::
-  Link to this library if you want to use the (not header only) `lexy::read_file()` functionality.
-`foonathan::lexy::unicode`::
-  Link to this library if you want to use advanced Unicode rules that require the Unicode character database.
-`foonathan::lexy::ext`::
-  Link to this library if you want to use the extension headers in `lexy_ext/`.
-`foonathan::lexy`::
-  Umbrella target that links to all other targets.
-
-Configuration is supported by providing a `lexy_user_config.hpp` somewhere in the include search path,
-or setting the `LEXY_USER_CONFIG_HEADER` CMake option to a header path.
-This header can then override many of the detections in `lexy/_detail/config.hpp`.
-Refer to that header for details.
-
-The library is continuously tested on GCC 7 or higher, clang 6 or higher, as well as MSVC and clang-cl.
-It requires {cpp}17 support, but works best with {cpp}20.
+endif::[]
 
