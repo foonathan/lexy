@@ -1,0 +1,19 @@
+---
+layout: single
+title: Learn
+menu:
+  main:
+    name: "Learn"
+    weight: 1
+---
+
+New to lexy? Start here.
+
+## Getting started
+
+* link:{{< ref "learn/tutorial" >}}[Tutorial]
+
+## Need more help?
+
+Please look at https://github.com/foonathan/lexy/discussions/categories/q-a[previous questions] or https://github.com/foonathan/lexy/discussions/new[ask a new one].
+

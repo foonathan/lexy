@@ -1,9 +1,5 @@
 ---
 title: "Tutorial"
-menu:
-  main:
-    name: "Tutorial"
-    weight: 1
 ---
 :toc: left
 :toclevels: 1

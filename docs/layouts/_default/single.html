@@ -1,7 +1,7 @@
 {{ define "main" }}
 <main>
 
-{{ if .TableOfContents }}
+{{ if ne .TableOfContents "<nav id=\"TableOfContents\"></nav>" }}
 <aside class="toc">
     <header><a href="#">Table of Contents</a></header>
     {{ .TableOfContents }}
@@ -9,7 +9,23 @@
 {{ end }}
 
 <article>
+    <header>
+        <h1>{{ .Page.Title }}</h1>
+        <nav>
+            <a href="{{ .Site.Params.github_src_prefix }}/include/{{ .Params.header }}">
+                {{ (resources.Get "icons/github.svg").Content | safeHTML }} View source
+            </a>
+            <a href="{{ .Site.Params.github }}/issues/new?title={{ .Params.header | urlize }}">
+                {{ (resources.Get "icons/bug.svg").Content | safeHTML }} Report an issue
+            </a>
+            <a href="{{ .Site.Params.github_edit_prefix }}/docs/content/{{ .File.Path }}">
+                {{ (resources.Get "icons/edit.svg").Content | safeHTML }} Edit this page
+            </a>
+        </nav>
+    </header>
+
     {{ .Content }}
+
 </article>
 
 </main>
