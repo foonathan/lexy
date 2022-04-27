@@ -292,18 +292,18 @@ window.addEventListener('load', async() => {
         const dsl_identifiers = document.querySelectorAll('span.ace_dsl');
         for (let span of dsl_identifiers)
         {
-            const text = span.childNodes[0];
-            const identifier = text.data.toLowerCase();
+            const text = span.innerText;
+            const identifier = text.toLowerCase();
             const url = doc_entities[identifier] ?? doc_entities['lexy::' + identifier];
             if (url)
             {
                 var link = document.createElement('a');
-                link.appendChild(text.cloneNode(true));
+                link.appendChild(span.cloneNode(true));
                 link.title = "Documentation";
                 link.href = url;
                 link.target = "_blank";
 
-                text.replaceWith(link);
+                span.replaceWith(link);
             }
         }
     });
