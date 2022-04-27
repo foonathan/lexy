@@ -190,3 +190,6 @@ Combining everything, we have the full example for parsing the HTML color into o
 
 {{% godbolt-example color "Parse an HTML color" %}}
 
+Note how we're checking whether parsing produced a value with `.has_value()`, and not whether there were any parse errors `.is_error()`, `operator bool()`.
+This is because lexy implements error recovery: certain errors can be recovered during parsing.
+
