@@ -90,7 +90,12 @@ function update_toolbar_production(selected_production)
     const productions = playground.list_of_productions(source);
 
     if (selected_production === undefined)
-        selected_production = toolbar_production.value;
+    {
+        if (productions.includes(toolbar_production.value))
+            selected_production = toolbar_production.value;
+        else
+            selected_production = productions[productions.length - 1];
+    }
 
     // Clear and re-populate selection.
     toolbar_production.innerHTML = '';
