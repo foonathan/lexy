@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <list>
 
 #include <lexy/action/match.hpp>
 #include <lexy/dsl.hpp>

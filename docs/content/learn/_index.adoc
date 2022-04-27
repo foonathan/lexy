@@ -11,7 +11,8 @@ New to lexy? Start here.
 
 ## Getting started
 
-* link:{{< ref "learn/build" >}}[Building lexy and integrating it in your own projects]
+1. link:{{< ref "learn/build" >}}[Building lexy and integrating it in your own projects]
+2. link:{{< ref "learn/warmup" >}}[Warming up -- the first parser]
 * link:{{< ref "learn/tutorial" >}}[Tutorial]
 
 ## Need more help?

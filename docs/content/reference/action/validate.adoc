@@ -3,6 +3,7 @@ header: "lexy/action/validate.hpp"
 entities:
   "lexy::validate_result": validate_result
   "lexy::validate": validate
+  "error callback": error-callback
 ---
 
 [#error-callback]
