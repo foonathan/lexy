@@ -1,10 +1,10 @@
 # Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 # SPDX-License-Identifier: BSL-1.0
 
-add_executable(lexy_example_tutorial)
-set_target_properties(lexy_example_tutorial PROPERTIES OUTPUT_NAME "tutorial")
-target_sources(lexy_example_tutorial PRIVATE tutorial.cpp)
-target_link_libraries(lexy_example_tutorial PRIVATE foonathan::lexy::dev foonathan::lexy::file)
+add_executable(lexy_example_config)
+set_target_properties(lexy_example_config PROPERTIES OUTPUT_NAME "config")
+target_sources(lexy_example_config PRIVATE config.cpp)
+target_link_libraries(lexy_example_config PRIVATE foonathan::lexy::dev foonathan::lexy::file)
 
 add_executable(lexy_example_calculator)
 set_target_properties(lexy_example_calculator PROPERTIES OUTPUT_NAME "calculator")

@@ -14,7 +14,7 @@ New to lexy? Start here.
 1. link:{{< ref "learn/build" >}}[Building lexy and integrating it in your own projects]
 2. link:{{< ref "learn/warmup" >}}[Warming up -- the first parser]
 3. link:{{< ref "learn/branching" >}}[Branching, backtracking and making decisions -- lexy is not declarative]
-* link:{{< ref "learn/tutorial" >}}[Tutorial]
+4. link:{{< ref "learn/walkthrough" >}}[Walkthrough -- parser for custom package format]
 
 ## Need more help?
 

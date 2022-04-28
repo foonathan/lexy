@@ -42,7 +42,7 @@ struct name : lexy::token_production
     // Captures it all into a lexeme.
     static constexpr auto rule = [] {
         auto lead_char     = dsl::ascii::alpha;
-        auto trailing_char = dsl::ascii::alnum / dsl::lit_c<'_'>;
+        auto trailing_char = dsl::ascii::word;
 
         return dsl::identifier(lead_char, trailing_char)
                + dsl::peek(dsl::ascii::space).error<invalid_character>;
@@ -86,7 +86,7 @@ struct author
     // Match zero or more non-control code points ("characters") surrounded by quotation marks.
     // We allow `\u` and `\U` as escape sequences.
     static constexpr auto rule = [] {
-        auto cp     = (dsl::code_point - dsl::ascii::control).error<invalid_character>;
+        auto cp     = (-dsl::ascii::control).error<invalid_character>;
         auto escape = dsl::backslash_escape                                //
                           .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>)  //
                           .rule(dsl::lit_c<'U'> >> dsl::code_point_id<8>); //
@@ -134,7 +134,7 @@ struct config
 
         auto combination = dsl::combination(name_field, version_field, authors_field)
                                .missing_error<unknown_field>.duplicate_error<duplicate_field>;
-        return combination + dsl::whitespace(dsl::ascii::space) + dsl::eof;
+        return combination + dsl::eof;
     }();
 
     static constexpr auto value = lexy::as_aggregate<PackageConfig>;
