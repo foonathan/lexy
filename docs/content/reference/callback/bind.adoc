@@ -8,6 +8,7 @@ entities:
   "lexy::bind": bind
   "lexy::bind_sink": bind_sink
 ---
+:toc: left
 
 [.lead]
 Bind parameters of a callback or sink.

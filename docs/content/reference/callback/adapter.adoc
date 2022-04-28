@@ -4,6 +4,7 @@ entities:
   "lexy::callback": callback
   "lexy::mem_fn": mem_fn
 ---
+:toc: left
 
 [.lead]
 Adapt a function object or sink into a callback.

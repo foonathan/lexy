@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::newline": newline
   "lexy::dsl::eol": eol
 ---
+:toc: left
 
 [.lead]
 The `newline` and `eol` token rules.

@@ -3,6 +3,7 @@ header: "lexy/callback/constant.hpp"
 entities:
   "lexy::constant": constant
 ---
+:toc: left
 
 [#constant]
 == Callback `lexy::constants`

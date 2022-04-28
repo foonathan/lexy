@@ -11,6 +11,7 @@ entities:
   "LEXY_LITERAL_SET": literal_set
   "lexy::dsl::operator/ (literal)": literal_set
 ---
+:toc: left
 
 [.lead]
 Token rules that match exact characters.

@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::context_counter": context_counter
   "lexy::dsl::equal_counts": equal_counts
 ---
+:toc: left
 
 [.lead]
 A counter that can be manipulated during parsing.

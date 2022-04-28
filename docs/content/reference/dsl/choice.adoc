@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::operator|": choice
   "choice": choice
 ---
+:toc: left
 
 [#choice]
 == Rule `lexy::dsl::operator|`

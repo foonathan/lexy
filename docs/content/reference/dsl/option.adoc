@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::nullopt": nullopt
   "lexy::dsl::opt": opt
 ---
+:toc: left
 
 [.lead]
 The `nullopt` and `opt()` rules.

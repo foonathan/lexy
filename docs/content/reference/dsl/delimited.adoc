@@ -12,6 +12,7 @@ entities:
   "lexy::dsl::backslash_escape": escape-predefined
   "lexy::dsl::dollar_escape": escape-predefined
 ---
+:toc: left
 
 [.lead]
 Rules for parsing delimited/quoted strings with escape sequences.

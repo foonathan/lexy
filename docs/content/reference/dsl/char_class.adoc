@@ -9,6 +9,7 @@ entities:
   "lexy::dsl::operator-": minus
   "lexy::dsl::operator&": intersection
 ---
+:toc: left
 
 [.lead]
 Char class builders and combinators.

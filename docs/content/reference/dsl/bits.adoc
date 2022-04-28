@@ -9,6 +9,7 @@ entities:
   "lexy::dsl::bit::any": bit_any
   "lexy::dsl::bits": bits
 ---
+:toc: left
 
 [.lead]
 Rules that match specific bits.

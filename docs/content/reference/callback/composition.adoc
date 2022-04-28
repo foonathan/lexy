@@ -4,6 +4,10 @@ entities:
   "lexy::operator|": compose-callback
   "lexy::operator>>": compose-sink
 ---
+:toc: left
+
+[.lead]
+Compose callbacks and sinks.
 
 [#compose-callback]
 == Callback `lexy::operator|`

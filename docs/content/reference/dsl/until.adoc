@@ -3,6 +3,7 @@ header: "lexy/dsl/until.hpp"
 entities:
   "lexy::dsl::until": until
 ---
+:toc: left
 
 [#until]
 == Token rule `lexy::dsl::until`

@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::minus_sign": minus_sign
   "lexy::dsl::sign": sign
 ---
+:toc: left
 
 [.lead]
 The `plus_sign`, `minus_sign` and `sign` rules.

@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::op": op
   "lexy::dsl::operator/ (operator)": choice
 ---
+:toc: left
 
 [.lead]
 Define operators of an {{% docref "expression" %}}.

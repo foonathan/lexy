@@ -3,6 +3,7 @@ header: "lexy/action/parse_as_tree.hpp"
 entities:
   "lexy::parse_as_tree": parse_as_tree
 ---
+:toc: left
 
 [#parse_as_tree]
 == Action `lexy::parse_as_tree`

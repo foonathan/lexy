@@ -4,6 +4,7 @@ header: "lexy/dsl.hpp"
 entities:
   "rule": doc
 ---
+:toc: left
 
 [.lead]
 The rule DSL for specifying the grammar.

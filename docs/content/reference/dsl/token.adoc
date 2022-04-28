@@ -6,6 +6,7 @@ entities:
   ".kind": kind
   "lexy::dsl::token": token
 ---
+:toc: left
 
 [.lead]
 The basic token interface as well as the `token` token rule.

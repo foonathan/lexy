@@ -7,6 +7,7 @@ entities:
   "lexy::dsl::while_one": while_one
   "lexy::dsl::do_while": do_while
 ---
+:toc: left
 
 [.lead]
 Rules that loop.

@@ -5,6 +5,7 @@ entities:
   "callback": callback
   "sink": sink
 ---
+:toc: left
 
 [.lead]
 Callbacks that receive the values produced during parsing and process them.

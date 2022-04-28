@@ -6,6 +6,7 @@ entities:
   "lexy::dsl::recover": recover
   "lexy::dsl::find": find
 ---
+:toc: left
 
 [.lead]
 The `try_`, `recover` and `find` rules for error recovery.

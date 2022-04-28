@@ -8,6 +8,7 @@ entities:
   "lexy::token": token
   "lexy::token_for": token
 ---
+:toc: left
 
 [.lead]
 Identifying and storing tokens of the input.

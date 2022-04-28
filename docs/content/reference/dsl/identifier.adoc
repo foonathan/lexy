@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::keyword": keyword
   "LEXY_KEYWORD": keyword
 ---
+:toc: left
 
 [.lead]
 The `identifier` and `keyword` rules.

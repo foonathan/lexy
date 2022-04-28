@@ -3,6 +3,7 @@ header: "lexy/dsl/if.hpp"
 entities:
   "lexy::dsl::if_": if_
 ---
+:toc: left
 
 [#if_]
 == Rule `lexy::dsl::if_`

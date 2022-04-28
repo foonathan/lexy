@@ -5,6 +5,7 @@ entities:
   "lexy::member": member
   "LEXY_MEM": member
 ---
+:toc: left
 
 [#member]
 == Rule `lexy::dsl::member`

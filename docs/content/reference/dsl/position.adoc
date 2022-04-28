@@ -3,6 +3,7 @@ header: "lexy/dsl/position.hpp"
 entities:
   "lexy::dsl::position": position
 ---
+:toc: left
 
 [#position]
 == Rule `lexy::dsl::position`

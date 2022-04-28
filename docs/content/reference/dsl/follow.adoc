@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::followed_by": followed_by
   "lexy::dsl::not_followed_by": not_followed_by
 ---
+:toc: left
 
 [.lead]
 The `followed_by` and `not_followed_by` literal rules.

@@ -11,6 +11,7 @@ entities:
   "lexy::argv_error_context": typedefs
   "lexy::dsl::argv_separator": argv_separator
 ---
+:toc: left
 
 [.lead]
 An input that uses the command line arguments.

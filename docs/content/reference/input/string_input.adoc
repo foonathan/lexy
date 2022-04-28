@@ -7,6 +7,7 @@ entities:
   "lexy::string_error": typedefs
   "lexy::string_error_context": typedefs
 ---
+:toc: left
 
 [.lead]
 Inputs that read a string.

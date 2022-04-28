@@ -21,6 +21,7 @@ entities:
   "lexy::dsl::unicode::xid_start_underscore": identifier
   "lexy::dsl::unicode::xid_continue": identifier
 ---
+:toc: left
 
 [.lead]
 Char class rules for matching Unicode char classes.

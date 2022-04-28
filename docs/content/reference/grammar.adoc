@@ -9,6 +9,7 @@ entities:
   "lexy::transparent_production": transparent_production
   "lexy::max_recursion_depth": max_recursion_depth
 ---
+:toc: left
 
 [.lead]
 Traits and definitions for the grammar.

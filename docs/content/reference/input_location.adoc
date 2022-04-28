@@ -10,6 +10,7 @@ entities:
   "lexy::input_line_annotation": input_line_annotation
   "lexy::get_input_line_annotation": input_line_annotation
 ---
+:toc: left
 
 [.lead]
 Converts a position (iterator) into a human readable location (line/column number).

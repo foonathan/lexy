@@ -6,6 +6,7 @@ entities:
   "lexy::read_file": read_file
   "lexy::read_stdin": read_stdin
 ---
+:toc: left
 :experimental:
 
 [.lead]

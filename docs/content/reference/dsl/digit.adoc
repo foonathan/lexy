@@ -14,6 +14,7 @@ entities:
   "lexy::dsl::digit_sep_underscore": digit-sep
   "lexy::dsl::digit_sep_tick": digit-sep
 ---
+:toc: left
 
 [.lead]
 Token rules that match individual digits or sequence of digits.

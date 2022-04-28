@@ -8,6 +8,7 @@ entities:
   "lexy::dsl::angle_bracketed": brackets-predefined
   "lexy::dsl::parenthesized": brackets-predefined
 ---
+:toc: left
 
 [.lead]
 Rules for parsing bracketed or parenthesized expressions.

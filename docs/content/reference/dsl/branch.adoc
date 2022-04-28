@@ -6,6 +6,7 @@ entities:
   "branch": branch
   "lexy::dsl::else_": else_
 ---
+:toc: left
 
 [.lead]
 The `operator>>` overload for rules and `else_` branch rule.

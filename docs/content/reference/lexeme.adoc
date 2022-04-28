@@ -4,6 +4,7 @@ entities:
   "lexy::lexeme": lexeme
   "lexy::lexeme_for": lexeme
 ---
+:toc: left
 
 [#lexeme]
 == Class `lexy::lexeme`

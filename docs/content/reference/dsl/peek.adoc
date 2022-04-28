@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::peek": peek
   "lexy::dsl::peek_not": peek_not
 ---
+:toc: left
 
 [.lead]
 The `peek` and `peek_not` branch rules.

@@ -31,10 +31,9 @@ $sans-font: sans-serif;
 $code-font: Inconsolata,monospace,sans-serif;
 
 $footer-offset: 75px;
-$toc-width: 300px;
 
 %limited-width {
-    max-width: 1200px;
+    max-width: 1250px;
     margin: 0 auto 0 auto;
     padding: 0 10px 0 10px;
 }
@@ -42,7 +41,6 @@ $toc-width: 300px;
 %content-width {
     @media (min-width: 800px) {
         max-width: 900px;
-        margin: 0 auto 0 auto;
         padding: 0 10px 0 10px;
     }
 }

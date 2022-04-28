@@ -4,6 +4,10 @@ entities:
   "lexy::construct": construct
   "lexy::new_": new_
 ---
+:toc: left
+
+[.lead]
+Construct objects.
 
 [#construct]
 == Callback `lexy::construct`

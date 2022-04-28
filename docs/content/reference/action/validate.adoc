@@ -5,6 +5,10 @@ entities:
   "lexy::validate": validate
   "error callback": error-callback
 ---
+:toc: left
+
+[.lead]
+Validate input.
 
 [#error-callback]
 == Error callback

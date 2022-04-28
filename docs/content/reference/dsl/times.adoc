@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::times": times
   "lexy::dsl::twice": twice
 ---
+:toc: left
 
 [.lead]
 The `times` and `twice` rules.

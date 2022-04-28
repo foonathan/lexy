@@ -6,6 +6,7 @@ entities:
   "lexy::dsl::debug": debug
   "LEXY_DEBUG": debug
 ---
+:toc: left
 
 [.lead]
 Visualize the parsing process.

@@ -8,6 +8,7 @@ entities:
   "lexy::visualize": visualize
   "lexy::visualization_display_width": visualization_display_width
 ---
+:toc: left
 
 [.lead]
 Functions to visualize lexy's data structures for debugging purposes.

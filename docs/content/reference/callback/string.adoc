@@ -3,6 +3,7 @@ header: "lexy/callback/string.hpp"
 entities:
   "lexy::as_string": as_string
 ---
+:toc: left
 
 [#as_string]
 == Callback and sink `lexy::as_string`

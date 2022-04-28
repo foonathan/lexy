@@ -15,6 +15,7 @@ entities:
   "lexy::dsl::little_bint64": int
   "lexy::dsl::big_bint64": int
 ---
+:toc: left
 
 [.lead]
 Rules that match one or more bytes.

@@ -11,6 +11,7 @@ entities:
   "lexy::deduce_encoding": deduce_encoding
   "lexy::encoding_endianness": encoding_endianness
 ---
+:toc: left
 
 [.lead]
 Facilities for handling the encoding of an input.

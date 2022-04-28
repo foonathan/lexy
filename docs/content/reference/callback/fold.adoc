@@ -5,6 +5,7 @@ entities:
   "lexy::fold_inplace": fold_inplace
   "lexy::count": count
 ---
+:toc: left
 
 [.lead]
 Sinks that fold over the items.

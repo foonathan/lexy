@@ -5,6 +5,7 @@ entities:
   "lexy::as_collection": as_list
   "lexy::collect": collect
 ---
+:toc: left
 
 [.lead]
 Callbacks and sinks for constructing containers.

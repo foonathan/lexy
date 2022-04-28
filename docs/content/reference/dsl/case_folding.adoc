@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::ascii::case_folding": ascii
   "lexy::dsl::unicode::simple_case_folding": simple
 ---
+:toc: left
 
 [.lead]
 Rules for case-insensitive parsing.

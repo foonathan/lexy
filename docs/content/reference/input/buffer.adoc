@@ -7,6 +7,7 @@ entities:
   "lexy::buffer_error": typedefs
   "lexy::buffer_error_context": typedefs
 ---
+:toc: left
 
 [.lead]
 Inputs that read from a buffer in memory.

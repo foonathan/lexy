@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::scan": scan
   "lexy::scan_production": scan_production
 ---
+:toc: left
 
 [.lead]
 Manually parse input.

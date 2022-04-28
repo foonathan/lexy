@@ -24,6 +24,7 @@ entities:
   "lexy::dsl::percent_sign": doc
   "lexy::dsl::equal_sign": doc
 ---
+:toc: left
 
 [.lead]
 Predefined punctuators.

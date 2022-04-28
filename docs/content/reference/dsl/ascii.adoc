@@ -23,6 +23,7 @@ entities:
   "lexy::dsl::ascii::one_of": one_of
   "LEXY_ASCII_ONE_OF": one_of
 ---
+:toc: left
 
 [.lead]
 Char class rules for matching the ASCII char classes.

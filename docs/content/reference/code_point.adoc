@@ -5,6 +5,7 @@ entities:
   "lexy::code_point::general_category_t": general_category
   "lexy::simple_case_fold": simple_case_fold
 ---
+:toc: left
 
 [.lead]
 Vocabulary types for code points, and simple Unicode algorithms.

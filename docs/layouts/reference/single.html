@@ -9,6 +9,13 @@
 {{ define "main" }}
 <main>
 
+{{ if ne .TableOfContents "<nav id=\"TableOfContents\"></nav>" }}
+<aside class="toc">
+    <header><a href="#">Table of Contents</a></header>
+    {{ .TableOfContents }}
+</aside>
+{{ end }}
+
 <article id="doc">
     <header>
         {{ if (isset .Params "header") }}

@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::error": error
   "lexy::dsl::must": must
 ---
+:toc: left
 
 [.lead]
 Rules that generate errors.

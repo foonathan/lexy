@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::sep": sep
   "lexy::dsl::trailing_sep": trailing_sep
 ---
+:toc: left
 
 [.lead]
 The `sep` and `trailing_sep` separators.

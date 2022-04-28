@@ -6,6 +6,7 @@ entities:
   "lexy::dsl::recurse": recurse
   "lexy::dsl::recurse_branch": recurse
 ---
+:toc: left
 
 [.lead]
 The `inline_`, `p`, and `recurse` rules.

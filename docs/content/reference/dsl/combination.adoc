@@ -4,6 +4,7 @@ entities:
   "lexy::dsl::combination": combination
   "lexy::dsl::partial_combination": partial_combination
 ---
+:toc: left
 
 [.lead]
 The `combination` and `partial_combination` rules.

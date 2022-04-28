@@ -4,6 +4,7 @@ entities:
   "lexy::parse_result": parse_result
   "lexy::parse": parse
 ---
+:toc: left
 
 [#parse_result]
 == Class `lexy::parse_result`

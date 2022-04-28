@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::whitespace": whitespace
   "lexy::dsl::no_whitespace": no_whitespace
 ---
+:toc: left
 
 [.lead]
 Facilities for skipping whitespace.

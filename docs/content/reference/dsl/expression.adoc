@@ -12,6 +12,7 @@ entities:
   "lexy::dsl::postfix_op": postfix_op
   "lexy::dsl::prefix_op": prefix_op
 ---
+:toc: left
 
 [.lead]
 Support for operator precedence parsing.

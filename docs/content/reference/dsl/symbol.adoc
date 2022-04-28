@@ -4,6 +4,7 @@ entities:
   "lexy::symbol_table": "symbol_table"
   "lexy::dsl::symbol": "symbol"
 ---
+:toc: left
 
 [.lead]
 The `symbol` rule.

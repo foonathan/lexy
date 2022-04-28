@@ -21,6 +21,8 @@ body {
 main {
     @extend %limited-width;
     margin-bottom: $footer-offset;
+    display: flex;
+    justify-content: center;
 }
 
 h1,
@@ -197,11 +199,12 @@ aside.toc {
         display: initial;
 
         position: sticky;
-        top: 1em;
-        float: left;
-        width: $toc-width;
+        top: 0em;
+        min-width: 250px;
+        align-self: flex-start;
 
         header {
+            margin-top: 1em;
             font-weight: bold;
         }
 
@@ -216,9 +219,6 @@ aside.toc {
         a {
             text-decoration: none;
         }
-    }
-    aside.toc ~ article {
-        padding-left: $toc-width;
     }
 }
 

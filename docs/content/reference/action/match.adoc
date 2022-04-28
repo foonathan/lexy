@@ -3,6 +3,7 @@ header: "lexy/action/match.hpp"
 entities:
   "lexy::match": match
 ---
+:toc: left
 
 [#match]
 == Action `lexy::match`

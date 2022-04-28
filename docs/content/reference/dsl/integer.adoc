@@ -5,6 +5,7 @@ entities:
   "lexy::dsl::integer": integer
   "lexy::dsl::code_point_id": code_point_id
 ---
+:toc: left
 
 [.lead]
 The `integer` and `code_point_id` rules.

@@ -3,6 +3,7 @@ header: "lexy/dsl/XXX.hpp"
 entities:
   "lexy::dsl::XXX": XXX
 ---
+:toc: left
 
 [.lead]
 One line description of the header.

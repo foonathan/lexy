@@ -8,6 +8,7 @@ entities:
   "lexy::expected_char_class": expected_char_class
   "lexy::error_context": error_context
 ---
+:toc: left
 
 [.lead]
 Classes to store information about parse errors.
