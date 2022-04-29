@@ -171,6 +171,45 @@ TEST_CASE("as_collection")
     }
 }
 
+TEST_CASE("concat")
+{
+    SUBCASE("string")
+    {
+        auto concat = lexy::concat<std::string>;
+        CHECK(lexy::is_callback<decltype(concat)>);
+        CHECK(lexy::is_sink<decltype(concat)>);
+
+        CHECK(concat(lexy::nullopt{}) == "");
+        CHECK(concat("abc") == "abc");
+        CHECK(concat("abc", "def", "ghi") == "abcdefghi");
+
+        auto sink = concat.sink();
+        sink("");
+        sink("");
+        sink("abc");
+        sink("def");
+        CHECK(LEXY_MOV(sink).finish() == "abcdef");
+    }
+    SUBCASE("vector")
+    {
+        auto concat = lexy::concat<std::vector<int>>;
+        CHECK(lexy::is_callback<decltype(concat)>);
+        CHECK(lexy::is_sink<decltype(concat)>);
+
+        CHECK(concat(lexy::nullopt{}).empty());
+        CHECK(concat(std::vector{1, 2, 3}) == std::vector{1, 2, 3});
+        CHECK(concat(std::vector{1, 2, 3}, std::vector{4, 5, 6}, std::vector{7, 8, 9})
+              == std::vector{1, 2, 3, 4, 5, 6, 7, 8, 9});
+
+        auto sink = concat.sink();
+        sink(std::vector<int>{});
+        sink(std::vector<int>{});
+        sink(std::vector{1, 2, 3});
+        sink(std::vector{4, 5, 6});
+        CHECK(LEXY_MOV(sink).finish() == std::vector{1, 2, 3, 4, 5, 6});
+    }
+}
+
 TEST_CASE("collect")
 {
     SUBCASE("void")

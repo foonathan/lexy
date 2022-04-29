@@ -16,6 +16,15 @@ template <typename Container>
 constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
 
 template <typename Container>
+using _detect_append = decltype(LEXY_DECLVAL(Container&).append(LEXY_DECLVAL(Container &&)));
+template <typename Container>
+constexpr auto _has_append = _detail::is_detected<_detect_append, Container>;
+} // namespace lexy
+
+//=== as_list ===//
+namespace lexy
+{
+template <typename Container>
 struct _list_sink
 {
     Container _result;
@@ -151,6 +160,7 @@ template <typename Container>
 constexpr auto as_list = _list<Container>{};
 } // namespace lexy
 
+//=== as_collection ===//
 namespace lexy
 {
 template <typename Container>
@@ -290,6 +300,112 @@ template <typename T>
 constexpr auto as_collection = _collection<T>{};
 } // namespace lexy
 
+//=== concat ===//
+namespace lexy
+{
+template <typename Container>
+struct _concat
+{
+    using return_type = Container;
+
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Tail>
+    constexpr Container _call(Container&& head, Tail&&... tail) const
+    {
+        if constexpr (sizeof...(Tail) == 0)
+            return LEXY_MOV(head);
+        else
+        {
+            if constexpr (_has_reserve<Container>)
+            {
+                auto total_size = (head.size() + ... + tail.size());
+                head.reserve(total_size);
+            }
+
+            auto append = [&head](Container&& container) {
+                if constexpr (_has_append<Container>)
+                {
+                    head.append(LEXY_MOV(container));
+                }
+                else
+                {
+                    for (auto& elem : container)
+                        head.push_back(LEXY_MOV(elem));
+                }
+            };
+            (append(LEXY_MOV(tail)), ...);
+
+            return LEXY_MOV(head);
+        }
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const -> decltype(_call(Container(LEXY_FWD(args))...))
+    {
+        return _call(Container(LEXY_FWD(args))...);
+    }
+
+    struct _sink
+    {
+        Container _result;
+
+        using return_type = Container;
+
+        void operator()(Container&& container)
+        {
+            if (_result.empty())
+            {
+                // We assign until we have items.
+                // That way we get the existing allocator.
+                _result = LEXY_MOV(container);
+            }
+            else if constexpr (_has_append<Container>)
+            {
+                _result.append(LEXY_MOV(container));
+            }
+            else
+            {
+                if constexpr (_has_reserve<Container>)
+                {
+                    auto capacity   = _result.capacity();
+                    auto total_size = _result.size() + container.size();
+                    if (total_size > capacity)
+                    {
+                        // If we need more space we reserve at least twice as much.
+                        auto exp_capacity = 2 * capacity;
+                        if (total_size > exp_capacity)
+                            _result.reserve(total_size);
+                        else
+                            _result.reserve(exp_capacity);
+                    }
+                }
+
+                for (auto& elem : container)
+                    _result.push_back(LEXY_MOV(elem));
+            }
+        }
+
+        Container&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+
+    constexpr auto sink() const
+    {
+        return _sink{};
+    }
+};
+
+template <typename Container>
+constexpr auto concat = _concat<Container>{};
+} // namespace lexy
+
+//=== collect ===//
 namespace lexy
 {
 template <typename Container, typename Callback>

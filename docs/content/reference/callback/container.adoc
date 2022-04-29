@@ -3,6 +3,7 @@ header: "lexy/callback/container.hpp"
 entities:
   "lexy::as_list": as_list
   "lexy::as_collection": as_list
+  "lexy::concat": concat
   "lexy::collect": collect
 ---
 :toc: left
@@ -109,6 +110,43 @@ As a sink, this behavior is similar to {{% docref "lexy::bind_sink" %}} where th
 {{% godbolt-example "as_list" "Construct a list of integers" %}}
 
 {{% godbolt-example "as_list-allocator" "Construct a list of integers with a custom allocator" %}}
+
+[#concat]
+== Callback and sink `lexy::concat`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <typename Container>
+    struct _concat-impl_
+    {
+        using return_type = Container;
+
+        constexpr Container operator()() const;
+        constexpr Container operator()(lexy::nullopt) const;
+        constexpr Container operator()(Container&& head, Container&&... tail) const;
+
+        constexpr _sink_ auto sink() const;
+    };
+
+    template <typename Container>
+    constexpr _concat-impl_ concat;
+}
+----
+
+[.lead]
+Callback and sink that concatenates multiple containers.
+
+As a callback, it accepts zero or more existing containers, and will concatenate them together.
+This is done by repeatedly calling `.append()` or `.push_back()` on the first container.
+
+As a sink, it creates a default constructed container object as the current result.
+It can then be invoked with a single container object.
+If the current result is still empty, the new container is move assigned into it.
+Otherwise, the new container is appended by calling `.append()` or `.push_back()`.
+
+{{% godbolt-example "concat" "Construct a list of integers from a list of list of integers" %}}
 
 [#collect]
 == Sink `lexy::collect`
