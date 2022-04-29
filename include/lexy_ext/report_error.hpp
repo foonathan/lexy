@@ -50,6 +50,7 @@ struct error_writer
     OutputIt write_message(OutputIt out, const Writer& message)
     {
         using namespace lexy::_detail;
+        using lexy::_detail::color; // clang-cl bug
 
         out    = write_color<color::red, color::bold>(out, opts);
         out    = write_str(out, "error: ");
@@ -64,6 +65,7 @@ struct error_writer
     OutputIt write_empty_annotation(OutputIt out) const
     {
         using namespace lexy::_detail;
+        using lexy::_detail::color; // clang-cl bug
 
         out    = write_str(out, "     ");
         out    = write_str(out, column());
@@ -76,6 +78,7 @@ struct error_writer
                               IteratorOrSize end, const Writer& message) const
     {
         using namespace lexy::_detail;
+        using lexy::_detail::color; // clang-cl bug
 
         auto colorize_underline = [&](OutputIt out) {
             switch (kind)
