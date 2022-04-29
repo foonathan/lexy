@@ -75,6 +75,12 @@ public:
     }
 #endif
 
+    template <typename CharT, CharT... C, typename... Args>
+    LEXY_CONSTEVAL auto map(lexyd::_lit<CharT, C...>, Args&&... args) const
+    {
+        return map<_detail::type_string<CharT, C...>>(LEXY_FWD(args)...);
+    }
+
     //=== access ===//
     static constexpr bool empty() noexcept
     {

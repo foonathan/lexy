@@ -25,7 +25,7 @@ TEST_CASE("symbol_table")
     {
         auto table = lexy::symbol_table<int> //
                          .map<'a'>(0)
-                         .map<'b'>(1)
+                         .map(LEXY_LIT("b"), 1)
                          .map<LEXY_SYMBOL("c")>(2)
 #if LEXY_HAS_NTTP
                          .map<"abc">(3);

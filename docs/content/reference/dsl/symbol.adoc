@@ -40,6 +40,9 @@ The `symbol` rule.
         template <auto C, typename... Args>
         consteval _symbol-table_ map(Args&&... args) const;
 
+        template <typename ... Args>
+        consteval _symbol-table_ map(_literal-rule_ auto lit, Args&& args) const;
+
         //=== access ===//
         static constexpr bool empty() noexcept;
 
@@ -99,6 +102,10 @@ consteval _symbol-table_ map(Args&&... args) const;
 
 template <auto C, typename... Args>
 consteval _symbol-table_ map(Args&&... args) const;
+
+// `lit` must be a `dsl::lit` rule
+template <typename ... Args>
+consteval _symbol-table_ map(_literal-rule_ auto lit, Args&& args) const;
 ----
 
 [.lead]
