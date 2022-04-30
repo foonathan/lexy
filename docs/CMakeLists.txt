@@ -17,14 +17,23 @@ add_custom_command(OUTPUT assets/cpp/playground_headers.single.hpp
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS foonathan::lexy)
 
+add_custom_command(OUTPUT static/download
+        COMMAND ${CMAKE_COMMAND} -E make_directory static/download
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(OUTPUT static/download/lexy-src.zip
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/../lexy-src.zip static/download/lexy-src.zip
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS lexy_package)
+
 add_custom_target(lexy_docs
         COMMAND ${HUGO_BINARY} --minify
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp)
+        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
 
 add_custom_target(lexy_docs_serve
         COMMAND ${HUGO_BINARY} serve
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         USES_TERMINAL
-        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp)
+        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
+
 

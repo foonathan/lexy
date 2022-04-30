@@ -16,7 +16,7 @@ This will automatically download the library and make it available in your CMake
 
 ```cmake
 include(FetchContent)
-FetchContent_Declare(lexy URL https://github.com/foonathan/lexy/archive/refs/heads/main.zip)
+FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
 FetchContent_MakeAvailable(lexy)
 ```
 
@@ -42,7 +42,7 @@ A minimal `CMakeLists.txt` that uses lexy can look like this:
 project(lexy-example)
 
 include(FetchContent)
-FetchContent_Declare(lexy URL https://github.com/foonathan/lexy/archive/refs/heads/main.zip)
+FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
 FetchContent_MakeAvailable(lexy)
 
 add_executable(lexy_example)
