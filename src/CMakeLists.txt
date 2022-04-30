@@ -1,8 +1,8 @@
 # Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 # SPDX-License-Identifier: BSL-1.0
 
-set(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy)
-set(ext_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext)
+get_filename_component(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy ABSOLUTE)
+get_filename_component(ext_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext ABSOLUTE)
 set(header_files
         ${include_dir}/_detail/assert.hpp
         ${include_dir}/_detail/buffer_builder.hpp
@@ -112,14 +112,14 @@ set(header_files
         ${include_dir}/parse_tree.hpp
         ${include_dir}/token.hpp
         ${include_dir}/visualize.hpp
-        )
+        PARENT_SCOPE)
 set(ext_header_files
         ${ext_include_dir}/compiler_explorer.hpp
         ${ext_include_dir}/parse_tree_algorithm.hpp
         ${ext_include_dir}/parse_tree_doctest.hpp
         ${ext_include_dir}/report_error.hpp
         ${ext_include_dir}/shell.hpp
-        )
+        PARENT_SCOPE)
 
 # Base target for common options.
 add_library(_lexy_base INTERFACE)

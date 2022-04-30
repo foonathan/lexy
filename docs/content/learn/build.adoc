@@ -66,6 +66,10 @@ If `LEXY_USER_CONFIG_HEADER` is set, it will use the specified header; otherwise
 This header is then automatically included by lexy and can define macros to customize lexy.
 Those are:
 
+`LEXY_ENCODING_OF_CHAR`::
+  The encoding that lexy will deduce for `char` strings.
+  By default, it is {{% docref "lexy::default_encoding" %}}, which means any 8bit encoding.
+  It can be overridden to {{% docref "lexy::ascii_encoding" %}} or {{% docref "lexy::utf8_encoding" %}}.
 `LEXY_ENABLE_ASSERT`::
   Whether or not internal assertions and precondition checks are enabled.
   By default, they are enabled unless `NDEBUG` is defined.
@@ -142,4 +146,9 @@ Docs can be build by two targets:
   This will compile the docs and serve the website on localhost.
 `lexy_docs`::
   This will compile the docs into `docs/public`.
+
+=== Packaging
+
+lexy also exposes a custom target `lexy_package`.
+It will create a file `lexy-src.zip` in the build directory containing all source files necessary for downstream users to use lexy.
 

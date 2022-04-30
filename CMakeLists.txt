@@ -29,5 +29,12 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     if(LEXY_BUILD_DOCS)
         add_subdirectory(docs EXCLUDE_FROM_ALL)
     endif()
+
+    set(package_files include/ src/ CMakeLists.txt LICENSE)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip
+        COMMAND ${CMAKE_COMMAND} -E tar c ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip --format=zip -- ${package_files}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS ${package_files})
+    add_custom_target(lexy_package DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip)
 endif()
 
