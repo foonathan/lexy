@@ -597,7 +597,7 @@ error: while parsing name
      |        ~~^ invalid name character
 ----
 
-Likewise, we can use {{% docref "dsl::peek_not" %}}, which fails if a rule would match, if we were to specify a build string in our version:
+Likewise, we can use {{% docref "lexy::dsl::peek_not" %}}, which fails if a rule would match, if we were to specify a build string in our version:
 
 [source,cpp]
 ----

@@ -71,7 +71,7 @@ public:
         if (_cur == _end)
             return encoding::eof();
         else
-            return encoding::to_int_type(*_cur);
+            return encoding::to_int_type(static_cast<typename encoding::char_type>(*_cur));
     }
 
     constexpr void bump() noexcept

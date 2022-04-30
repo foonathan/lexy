@@ -94,9 +94,6 @@ This is because all input is case folded prior to matching which makes matching 
 
 {{% interface %}}
 ----
-template <typename CaseFoldingDSL>
-consteval _symbol-table_ case_folding(CaseFoldingDSL) const;
-
 template <auto SymbolString, typename... Args>
 consteval _symbol-table_ map(Args&&... args) const;
 

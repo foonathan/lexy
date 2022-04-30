@@ -83,7 +83,7 @@ struct _acfr // ascii case folding reader
     {
         auto c = _impl.peek();
         if (encoding::to_int_type('A') <= c && c <= encoding::to_int_type('Z'))
-            return c + encoding::to_int_type('a' - 'A');
+            return typename encoding::int_type(c + encoding::to_int_type('a' - 'A'));
         else
             return c;
     }
@@ -109,6 +109,9 @@ namespace lexyd::ascii
 {
 struct _cf_dsl
 {
+    template <typename Encoding>
+    static constexpr auto is_inplace = true;
+
     template <typename Reader>
     using case_folding = lexy::_acfr<Reader>;
 
@@ -259,6 +262,9 @@ namespace lexyd::unicode
 {
 struct _scf_dsl
 {
+    template <typename Encoding>
+    static constexpr auto is_inplace = std::is_same_v<Encoding, lexy::utf32_encoding>;
+
     template <typename Reader>
     using case_folding = lexy::_sucfr<Reader>;
 

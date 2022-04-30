@@ -3,7 +3,6 @@ header: "lexy/callback/string.hpp"
 entities:
   "lexy::as_string": as_string
 ---
-:toc: left
 
 [#as_string]
 == Callback and sink `lexy::as_string`
@@ -58,11 +57,15 @@ The resulting sink callback has the following overloads and returns the finished
   Encodes `cp` in the `Encoding`, which must be ASCII, UTF-8, UTF-16, or UTF-32.
   Calls `.append(begin, end)`, where `[begin, end)` is an iterator range to the encoded representation of `cp`, on the resulting string.
 
-{{% godbolt-example capture "Convert a captured `lexy::lexeme` to a `std::string`" %}}
+It also provides a member function `.case_folding()` that accepts a case folding DSL object like {{% docref "lexy::dsl::ascii::case_folding" %}} or {{% docref "lexy::dsl::unicode::simple_case_folding" %}}.
+It returns a callback where each resulting string will be case folded before returned.
+It requires that `Encoding` is ASCII, UTF-8, UTF-16, or UTF-32.
 
 {{% godbolt-example list_sep "Build a list of characters" %}}
 
 {{% godbolt-example quoted_escape "Parse a string literal" %}}
+
+{{% godbolt-example identifier_case_folded "Parse a case-insensitive identifier" %}}
 
 NOTE: `lexy::as_string<std::string_view>` is a valid callback that can convert a {{% docref "lexy::lexeme" %}} to a `std::string_view`,
 provided that the character types are an exact match and that the iterators of the input are pointers.
