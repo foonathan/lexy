@@ -428,6 +428,9 @@ constexpr auto token_kind_of<lexy::dsl::_lcp<Cp...>> = lexy::literal_token_kind;
 //=== lit_set ===//
 namespace lexy
 {
+template <typename T, template <typename> typename CaseFolding, typename... Strings>
+class _symbol_table;
+
 struct expected_literal_set
 {
     static LEXY_CONSTEVAL auto name()
@@ -439,6 +442,18 @@ struct expected_literal_set
 
 namespace lexyd
 {
+template <typename Literal, template <typename> typename CaseFolding>
+struct _cfl;
+
+template <template <typename> typename CaseFolding, typename CharT, CharT... C>
+constexpr auto _make_lit_rule(lexy::_detail::type_string<CharT, C...>)
+{
+    if constexpr (std::is_same_v<CaseFolding<lexy::_pr8>, lexy::_pr8>)
+        return _lit<CharT, C...>{};
+    else
+        return _cfl<_lit<CharT, C...>, CaseFolding>{};
+}
+
 template <typename... Literals>
 struct _lset : token_base<_lset<Literals...>>, _lset_base
 {
@@ -520,6 +535,13 @@ constexpr auto literal_set(Literals...)
 {
     static_assert((lexy::is_literal_rule<Literals> && ...));
     return _lset<Literals...>{};
+}
+
+/// Matches one of the symbols in the symbol table.
+template <typename T, template <typename> typename CaseFolding, typename... Strings>
+constexpr auto literal_set(const lexy::_symbol_table<T, CaseFolding, Strings...>)
+{
+    return _lset<decltype(_make_lit_rule<CaseFolding>(Strings{}))...>{};
 }
 } // namespace lexyd
 

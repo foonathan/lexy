@@ -7,6 +7,7 @@
 #include <lexy/dsl/ascii.hpp>
 #include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/identifier.hpp>
+#include <lexy/dsl/symbol.hpp>
 
 TEST_CASE("dsl::lit_c")
 {
@@ -627,5 +628,19 @@ TEST_CASE("dsl::literal_set() operator/")
     constexpr auto set_a        = LEXY_LITERAL_SET(dsl::lit_c<'a'>);
     constexpr auto keep_erasure = dsl::literal_set() / set_a;
     CHECK(equivalent_rules(keep_erasure, set_a));
+}
+
+TEST_CASE("dsl::literal_set() from symbol table")
+{
+    constexpr auto basic = dsl::literal_set(
+        lexy::symbol_table<int>.map<'a'>(0).map<LEXY_SYMBOL("b")>(1).map(LEXY_LIT("c"), 2));
+    CHECK(equivalent_rules(basic, dsl::literal_set(LEXY_LIT("a"), LEXY_LIT("b"), LEXY_LIT("c"))));
+
+    constexpr auto case_folding = dsl::literal_set(
+        lexy::symbol_table<int>.case_folding(dsl::ascii::case_folding).map<'a'>(0).map<LEXY_SYMBOL("b")>(1).map(LEXY_LIT("c"), 2));
+    CHECK(
+        equivalent_rules(case_folding, dsl::literal_set(dsl::ascii::case_folding(LEXY_LIT("a")),
+                                                        dsl::ascii::case_folding(LEXY_LIT("b")),
+                                                        dsl::ascii::case_folding(LEXY_LIT("c")))));
 }
 

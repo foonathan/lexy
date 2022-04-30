@@ -150,6 +150,9 @@ namespace lexy::dsl
 {
     constexpr _literal-set_ literal_set(_literal-rule_ auto ... literals);
 
+    template <typename T>
+    constexpr _literal-set_ literal_set(_symbol-table_<T> symbols);
+
     constexpr _literal-set_ operator/(_literal-set_ lhs, _literal-rule_ auto rhs);
     constexpr _literal-set_ operator/(_literal-set_ lhs, _literal-set_ auto rhs);
 }
@@ -174,6 +177,9 @@ Errors::
   The rule then fails without consuming anything.
 Parse tree::
   Single token node with the {{% docref "lexy::predefined_token_kind" %}} `lexy::literal_token_kind`.
+
+The second overload creates a literal set that matches all the symbols of the specified {{% docref "lexy::symbol_table" %}}.
+It ignores their respective values.
 
 `operator/` can be used to extend a literal set and add more literal rules to it.
 The resulting literal set matches everything already matched by `lhs`, as well as `rhs`.
