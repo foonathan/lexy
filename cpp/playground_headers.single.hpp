@@ -2010,7 +2010,7 @@ public:
         if (_cur == _end)
             return encoding::eof();
         else
-            return encoding::to_int_type(*_cur);
+            return encoding::to_int_type(static_cast<typename encoding::char_type>(*_cur));
     }
 
     constexpr void bump() noexcept
@@ -2594,6 +2594,15 @@ template <typename Container>
 constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
 
 template <typename Container>
+using _detect_append = decltype(LEXY_DECLVAL(Container&).append(LEXY_DECLVAL(Container &&)));
+template <typename Container>
+constexpr auto _has_append = _detail::is_detected<_detect_append, Container>;
+} // namespace lexy
+
+//=== as_list ===//
+namespace lexy
+{
+template <typename Container>
 struct _list_sink
 {
     Container _result;
@@ -2729,6 +2738,7 @@ template <typename Container>
 constexpr auto as_list = _list<Container>{};
 } // namespace lexy
 
+//=== as_collection ===//
 namespace lexy
 {
 template <typename Container>
@@ -2868,6 +2878,112 @@ template <typename T>
 constexpr auto as_collection = _collection<T>{};
 } // namespace lexy
 
+//=== concat ===//
+namespace lexy
+{
+template <typename Container>
+struct _concat
+{
+    using return_type = Container;
+
+    constexpr Container operator()(nullopt&&) const
+    {
+        return Container();
+    }
+
+    template <typename... Tail>
+    constexpr Container _call(Container&& head, Tail&&... tail) const
+    {
+        if constexpr (sizeof...(Tail) == 0)
+            return LEXY_MOV(head);
+        else
+        {
+            if constexpr (_has_reserve<Container>)
+            {
+                auto total_size = (head.size() + ... + tail.size());
+                head.reserve(total_size);
+            }
+
+            auto append = [&head](Container&& container) {
+                if constexpr (_has_append<Container>)
+                {
+                    head.append(LEXY_MOV(container));
+                }
+                else
+                {
+                    for (auto& elem : container)
+                        head.push_back(LEXY_MOV(elem));
+                }
+            };
+            (append(LEXY_MOV(tail)), ...);
+
+            return LEXY_MOV(head);
+        }
+    }
+
+    template <typename... Args>
+    constexpr auto operator()(Args&&... args) const -> decltype(_call(Container(LEXY_FWD(args))...))
+    {
+        return _call(Container(LEXY_FWD(args))...);
+    }
+
+    struct _sink
+    {
+        Container _result;
+
+        using return_type = Container;
+
+        void operator()(Container&& container)
+        {
+            if (_result.empty())
+            {
+                // We assign until we have items.
+                // That way we get the existing allocator.
+                _result = LEXY_MOV(container);
+            }
+            else if constexpr (_has_append<Container>)
+            {
+                _result.append(LEXY_MOV(container));
+            }
+            else
+            {
+                if constexpr (_has_reserve<Container>)
+                {
+                    auto capacity   = _result.capacity();
+                    auto total_size = _result.size() + container.size();
+                    if (total_size > capacity)
+                    {
+                        // If we need more space we reserve at least twice as much.
+                        auto exp_capacity = 2 * capacity;
+                        if (total_size > exp_capacity)
+                            _result.reserve(total_size);
+                        else
+                            _result.reserve(exp_capacity);
+                    }
+                }
+
+                for (auto& elem : container)
+                    _result.push_back(LEXY_MOV(elem));
+            }
+        }
+
+        Container&& finish() &&
+        {
+            return LEXY_MOV(_result);
+        }
+    };
+
+    constexpr auto sink() const
+    {
+        return _sink{};
+    }
+};
+
+template <typename Container>
+constexpr auto concat = _concat<Container>{};
+} // namespace lexy
+
+//=== collect ===//
 namespace lexy
 {
 template <typename Container, typename Callback>
@@ -7623,6 +7739,9 @@ constexpr auto token_kind_of<lexy::dsl::_lcp<Cp...>> = lexy::literal_token_kind;
 //=== lit_set ===//
 namespace lexy
 {
+template <typename T, template <typename> typename CaseFolding, typename... Strings>
+class _symbol_table;
+
 struct expected_literal_set
 {
     static LEXY_CONSTEVAL auto name()
@@ -7634,6 +7753,18 @@ struct expected_literal_set
 
 namespace lexyd
 {
+template <typename Literal, template <typename> typename CaseFolding>
+struct _cfl;
+
+template <template <typename> typename CaseFolding, typename CharT, CharT... C>
+constexpr auto _make_lit_rule(lexy::_detail::type_string<CharT, C...>)
+{
+    if constexpr (std::is_same_v<CaseFolding<lexy::_pr8>, lexy::_pr8>)
+        return _lit<CharT, C...>{};
+    else
+        return _cfl<_lit<CharT, C...>, CaseFolding>{};
+}
+
 template <typename... Literals>
 struct _lset : token_base<_lset<Literals...>>, _lset_base
 {
@@ -7715,6 +7846,13 @@ constexpr auto literal_set(Literals...)
 {
     static_assert((lexy::is_literal_rule<Literals> && ...));
     return _lset<Literals...>{};
+}
+
+/// Matches one of the symbols in the symbol table.
+template <typename T, template <typename> typename CaseFolding, typename... Strings>
+constexpr auto literal_set(const lexy::_symbol_table<T, CaseFolding, Strings...>)
+{
+    return _lset<decltype(_make_lit_rule<CaseFolding>(Strings{}))...>{};
 }
 } // namespace lexyd
 
@@ -12133,7 +12271,7 @@ struct _acfr // ascii case folding reader
     {
         auto c = _impl.peek();
         if (encoding::to_int_type('A') <= c && c <= encoding::to_int_type('Z'))
-            return c + encoding::to_int_type('a' - 'A');
+            return typename encoding::int_type(c + encoding::to_int_type('a' - 'A'));
         else
             return c;
     }
@@ -12159,6 +12297,9 @@ namespace lexyd::ascii
 {
 struct _cf_dsl
 {
+    template <typename Encoding>
+    static constexpr auto is_inplace = true;
+
     template <typename Reader>
     using case_folding = lexy::_acfr<Reader>;
 
@@ -12309,6 +12450,9 @@ namespace lexyd::unicode
 {
 struct _scf_dsl
 {
+    template <typename Encoding>
+    static constexpr auto is_inplace = std::is_same_v<Encoding, lexy::utf32_encoding>;
+
     template <typename Reader>
     using case_folding = lexy::_sucfr<Reader>;
 
@@ -13558,6 +13702,12 @@ public:
         return map<_detail::type_string<LEXY_DECAY_DECLTYPE(C), C>>(LEXY_FWD(args)...);
     }
 #endif
+
+    template <typename CharT, CharT... C, typename... Args>
+    LEXY_CONSTEVAL auto map(lexyd::_lit<CharT, C...>, Args&&... args) const
+    {
+        return map<_detail::type_string<CharT, C...>>(LEXY_FWD(args)...);
+    }
 
     //=== access ===//
     static constexpr bool empty() noexcept
