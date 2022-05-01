@@ -74,6 +74,8 @@ br {
 
 article {
     @extend %content-width;
+    flex: 1;
+    min-width: 0;
 }
 article p,
 article ul,
