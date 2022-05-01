@@ -226,6 +226,12 @@ aside.toc {
 
 //=== body ===//
 article {
+    svg {
+        height: 1em;
+        position: relative;
+        top: 2px;
+    }
+
     header {
         margin-top: 1em;
         margin-bottom: 1em;
@@ -237,11 +243,6 @@ article {
             a {
                 text-decoration: none;
                 padding-right: 7px;
-                svg {
-                    height: 1em;
-                    position: relative;
-                    top: 2px;
-                }
             }
 
             form.search {
@@ -261,10 +262,6 @@ article {
                     margin-left: -25px;
                     border: none;
                     background: initial;
-
-                    svg {
-                        height: 1em;
-                    }
                 }
             }
         }

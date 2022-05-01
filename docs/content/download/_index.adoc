@@ -1,0 +1,21 @@
+---
+title: Download
+layout: single
+menu:
+  main:
+    name: "Download"
+    weight: 4
+---
+
+For build instructions, read link:{{< ref "learn/build" >}}[the tutorial].
+
+## Latest development version
+
+{{< svg "icons/download.svg" >}} link:/download/lexy-src.zip[Download sources]
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
+FetchContent_MakeAvailable(lexy)
+```
+

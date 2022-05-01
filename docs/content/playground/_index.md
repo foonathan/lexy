@@ -3,7 +3,7 @@ title: "Playground"
 menu:
   main:
     name: "Playground"
-    weight: 4
+    weight: 3
 ---
 
 Enter the grammar in the left editor (`lexy/dsl.hpp` and namespace alias `dsl` is pre-included) and the input in the right editor.

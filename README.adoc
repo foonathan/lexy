@@ -154,5 +154,20 @@ ifdef::env-github[]
 
 The documentation, including tutorials, reference documentation, and an interactive playground can be found at https://lexy.foonathan.net/[lexy.foonathan.net].
 
+A minimal `CMakeLists.txt` that uses lexy can look like this:
+
+.`CMakeLists.txt`
+```cmake
+project(lexy-example)
+
+include(FetchContent)
+FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
+FetchContent_MakeAvailable(lexy)
+
+add_executable(lexy_example)
+target_sources(lexy_example PRIVATE main.cpp)
+target_link_libraries(lexy_example PRIVATE foonathan::lexy)
+```
+
 endif::[]
 
