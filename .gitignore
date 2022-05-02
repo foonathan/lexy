@@ -1,5 +1,6 @@
 docs/assets/cpp/playground_headers.single.hpp
 docs/content/_index.adoc
-docs/static/download/lexy-src.zip
+docs/content/learn/changelog.adoc
+docs/static/download/*.zip
 docs/public/
 docs/resources/

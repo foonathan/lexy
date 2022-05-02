@@ -10,6 +10,13 @@ add_custom_command(OUTPUT content/_index.adoc
         COMMAND ${CMAKE_COMMAND} -E copy ../README.adoc content/_index.adoc
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../README.adoc)
+add_custom_command(OUTPUT content/learn/changelog.adoc
+        COMMAND ${CMAKE_COMMAND} -E echo "---"              >  content/learn/changelog.adoc
+        COMMAND ${CMAKE_COMMAND} -E echo "title: Changelog" >> content/learn/changelog.adoc
+        COMMAND ${CMAKE_COMMAND} -E echo "---"              >> content/learn/changelog.adoc
+        COMMAND ${CMAKE_COMMAND} -E cat ../CHANGELOG.adoc   >> content/learn/changelog.adoc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../CHANGELOG.adoc)
 
 set(resolver "${CMAKE_CURRENT_SOURCE_DIR}/../support/resolve-lexy-headers.py")
 add_custom_command(OUTPUT assets/cpp/playground_headers.single.hpp
@@ -25,15 +32,14 @@ add_custom_command(OUTPUT static/download/lexy-src.zip
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS lexy_package)
 
+set(generated_files content/_index.adoc content/learn/changelog.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
 add_custom_target(lexy_docs
         COMMAND ${HUGO_BINARY} --minify
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
-
+        DEPENDS ${generated_files})
 add_custom_target(lexy_docs_serve
         COMMAND ${HUGO_BINARY} serve
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         USES_TERMINAL
-        DEPENDS content/_index.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
-
+        DEPENDS ${generated_files})
 

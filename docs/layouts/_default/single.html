@@ -12,9 +12,6 @@
     <header>
         <h1>{{ .Page.Title }}</h1>
         <nav>
-            <a href="{{ .Site.Params.github_src_prefix }}/include/{{ .Params.header }}">
-                {{ (resources.Get "icons/github.svg").Content | safeHTML }} View source
-            </a>
             <a href="{{ .Site.Params.github }}/issues/new?title={{ .Params.header | urlize }}">
                 {{ (resources.Get "icons/bug.svg").Content | safeHTML }} Report an issue
             </a>
