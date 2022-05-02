@@ -19,6 +19,7 @@ New to lexy? Start here.
 ## Development
 
 * link:{{< ref "learn/changelog" >}}[Changelog]
+* link:{{< ref "learn/versioning" >}}[Versioning and compatibility policy]
 
 ## Need more help?
 
