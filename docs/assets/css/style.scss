@@ -231,6 +231,9 @@ article {
         position: relative;
         top: 2px;
     }
+    p svg:not(:first-child) {
+        padding-left: .25em;
+    }
 
     header {
         margin-top: 1em;
