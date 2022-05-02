@@ -11,7 +11,7 @@ For build instructions, read link:{{< ref "learn/build" >}}[the tutorial].
 
 ## Latest development version
 
-{{< svg "icons/download.svg" >}} link:/download/lexy-src.zip[Download sources]
+{{< svg "icons/download.svg" >}} link:/download/lexy-src.zip[Download] {{< svg "icons/license.svg" >}} link:https://opensource.org/licenses/BSL-1.0/[BSL-1.0]
 
 ```cmake
 include(FetchContent)
