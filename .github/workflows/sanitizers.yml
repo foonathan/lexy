@@ -1,6 +1,9 @@
 name: Sanitizers
 
-on: [push, pull_request]
+on:
+  push:
+    branches: '**'
+  pull_request:
 
 jobs:
   sanitizers:
@@ -58,5 +61,4 @@ jobs:
     - name: Build
       working-directory: build/
       run: cmake --build .
-
 
