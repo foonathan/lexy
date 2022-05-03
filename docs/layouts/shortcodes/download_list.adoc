@@ -1,7 +1,8 @@
 {{ range sort $.Site.Data.tags "date" "desc" }}
-== {{ .name }}
+== {{ .name }} +++{{ if .prerelease }} {{ (resources.Get "icons/beta.svg").Content | safeHTML }} {{ end }}+++
 
-+++{{ (resources.Get "icons/calender.svg").Content | safeHTML }}+++ {{ default .date (now.Format "2006-01-02") }}
++++{{ (resources.Get "icons/calender.svg").Content | safeHTML }}+++ {{ default (now) .date | time.Format "2006-01-02" }}
++++{{ (resources.Get "icons/github.svg").Content | safeHTML }}+++ link:{{ .url }}[Github]
 +++{{ (resources.Get "icons/download.svg").Content | safeHTML }}+++ link:{{ .download }}[Download]
 +++{{ (resources.Get "icons/license.svg").Content | safeHTML }}+++ link:https://opensource.org/licenses/BSL-1.0/[BSL-1.0]
 
