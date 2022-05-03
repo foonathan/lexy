@@ -1,4 +1,6 @@
 name: Website
+permissions:
+  contents: write
 
 on:
   push:
