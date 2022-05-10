@@ -236,7 +236,7 @@ TEST_CASE("buffer")
 
         reader.bump();
         CHECK(reader.position() == buffer.data() + 3);
-        CHECK(reader.peek() == lexy::default_encoding::eof());
+        CHECK(reader.peek() == lexy::ascii_encoding::eof());
     }
 }
 
