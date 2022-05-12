@@ -70,3 +70,24 @@ If no separator is present after the last item, it is not an error.
 TIP: To create a separator that _must_ be present after every the last item (and every item before that),
 simply add the separator to the item itself.
 
+[#ignore_trailing_sep]
+== Separator `lexy::dsl::ignore_trailing_sep`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    constexpr _separator_ auto ignore_trailing_sep(_branch-rule_ rule);
+}
+----
+
+[.lead]
+`ignore_trailing_sep` indicates a separator between two items and it can be ignored after the last item.
+
+It can only be used with {{% docref "lexy::dsl::times" %}}.
+If specified as a separator, it will parse `rule` between two items, but makes no attempt to parse it after the last item.
+
+{{% godbolt-example times_isep "Parse three integers separated by comma, twice" %}}
+
+TIP: Use it if the separator can also legally occur after the list.
+

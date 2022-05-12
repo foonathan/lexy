@@ -152,6 +152,14 @@ constexpr auto list(Item, _tsep<Sep>)
                   "list() without a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
 }
+
+template <typename Item, typename Sep>
+constexpr auto list(Item, _isep<Sep>)
+{
+    static_assert(lexy::_detail::error<Item, Sep>,
+                  "list() does not support `dsl::ignore_trailing_sep()`");
+    return _lst<Item, void>{};
+}
 } // namespace lexyd
 
 namespace lexyd

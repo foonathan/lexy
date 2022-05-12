@@ -113,6 +113,26 @@ constexpr auto trailing_sep(Branch)
     static_assert(lexy::is_branch_rule<Branch>);
     return _tsep<Branch>{};
 }
+
+template <typename Branch>
+struct _isep : _sep_base
+{
+    using rule          = Branch;
+    using trailing_rule = _else;
+
+    template <typename Context, typename Reader>
+    static constexpr void report_trailing_error(Context&, Reader&, typename Reader::iterator,
+                                                typename Reader::iterator)
+    {}
+};
+
+/// Defines a separator for a list that ignores the existence of trailing separators.
+template <typename Branch>
+constexpr auto ignore_trailing_sep(Branch)
+{
+    static_assert(lexy::is_branch_rule<Branch>);
+    return _isep<Branch>{};
+}
 } // namespace lexyd
 
 #endif // LEXY_DSL_SEPARATOR_HPP_INCLUDED
