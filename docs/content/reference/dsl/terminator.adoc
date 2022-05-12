@@ -95,6 +95,10 @@ constexpr _rule_ auto operator()(_rule_ auto rule) const
 {
     return rule + terminator();
 }
+constexpr _branch-rule_ auto operator()(_branch-rule_ auto rule) const
+{
+    return rule >> terminator();
+}
 ----
 
 [.lead]

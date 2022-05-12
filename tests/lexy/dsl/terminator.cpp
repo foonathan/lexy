@@ -21,11 +21,17 @@ TEST_CASE("dsl::terminator()")
     CHECK(equivalent_rules(term.limit(dsl::lit_c<';'>).limit(dsl::lit_c<'.'>),
                            term.limit(dsl::lit_c<';'>, dsl::lit_c<'.'>)));
 
-    SUBCASE("operator()")
+    SUBCASE("operator() rule")
     {
         constexpr auto rule = term(dsl::position);
         CHECK(lexy::is_rule<decltype(rule)>);
         CHECK(equivalent_rules(rule, dsl::position + term.terminator()));
+    }
+    SUBCASE("operator() branch")
+    {
+        constexpr auto rule = term(LEXY_LIT("abc"));
+        CHECK(lexy::is_rule<decltype(rule)>);
+        CHECK(equivalent_rules(rule, LEXY_LIT("abc") >> term.terminator()));
     }
 
     SUBCASE(".try_()")
