@@ -213,23 +213,7 @@ struct lit_trie_matcher<Trie, CurNode>
     static constexpr auto transitions = Trie.node_transitions(CurNode);
 
     template <typename Indices = make_index_sequence<transitions.length>>
-    struct _impl
-    {
-        template <typename Reader>
-        LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
-        {
-            constexpr auto cur_value = Trie.node_value[CurNode];
-
-            // We don't have any transition, so return our value unconditionally.
-            // This prevents an unecessary `reader.peek()` call which breaks `lexy_ext::shell`.
-            // But first, we need to check that we don't match that nodes char class.
-            constexpr auto char_class = Trie.node_char_class[CurNode];
-            if (_node_char_class<char_class, CharClasses...>::match(reader))
-                return Trie.node_no_match;
-            else
-                return cur_value;
-        }
-    };
+    struct _impl;
     template <std::size_t... Idx>
     struct _impl<index_sequence<Idx...>>
     {
@@ -238,25 +222,35 @@ struct lit_trie_matcher<Trie, CurNode>
         {
             constexpr auto cur_value = Trie.node_value[CurNode];
 
-            auto                  cur_pos  = reader.position();
-            [[maybe_unused]] auto cur_char = reader.peek();
+            if constexpr (sizeof...(Idx) > 0)
+            {
+                auto cur_pos  = reader.position();
+                auto cur_char = reader.peek();
 
-            auto next_value = Trie.node_no_match;
-            (void)(_try_transition<transitions.index[Idx]>(next_value, reader, cur_char) || ...);
-            if (next_value != Trie.node_no_match)
-                // We prefer a longer match.
-                return next_value;
+                auto next_value = Trie.node_no_match;
+                (void)(_try_transition<transitions.index[Idx]>(next_value, reader, cur_char)
+                       || ...);
+                if (next_value != Trie.node_no_match)
+                    // We prefer a longer match.
+                    return next_value;
 
-            // We haven't found a longer match, return our match.
-            reader.set_position(cur_pos);
+                // We haven't found a longer match, return our match.
+                reader.set_position(cur_pos);
+            }
 
-            // But first, we need to check that we don't match that nodes char class.
+            // But first, we might need to check that we don't match that nodes char class.
             constexpr auto char_class = Trie.node_char_class[CurNode];
-            if (_node_char_class<char_class, CharClasses...>::match(reader))
-                // The char class matched, so we can't match anymore.
-                return Trie.node_no_match;
-            else
+            if constexpr (cur_value == Trie.node_no_match || char_class >= sizeof...(CharClasses))
+            {
                 return cur_value;
+            }
+            else
+            {
+                if (_node_char_class<char_class, CharClasses...>::match(reader))
+                    return Trie.node_no_match;
+                else
+                    return cur_value;
+            }
         }
     };
 
