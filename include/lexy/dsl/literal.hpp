@@ -80,6 +80,25 @@ struct lit_trie
     {
         return ((pos = insert(pos, C)), ...);
     }
+
+    LEXY_CONSTEVAL auto node_transitions(std::size_t node) const
+    {
+        struct
+        {
+            std::size_t length;
+            std::size_t index[max_transition_count];
+        } result{};
+
+        // We need to consider the same range only.
+        for (auto i = node; i != node_count - 1; ++i)
+            if (transition_from[i] == node)
+            {
+                result.index[result.length] = i;
+                ++result.length;
+            }
+
+        return result;
+    }
 };
 
 template <typename... CharClasses>
@@ -168,51 +187,62 @@ template <std::size_t CharClassIdx, typename... CharClasses>
 using _node_char_class
     = _node_char_class_impl<CharClassIdx, (CharClassIdx < sizeof...(CharClasses)), CharClasses...>;
 
-template <const auto& Trie, std::size_t CurNode,
-          // Same bounds as in the for loop of insert().
-          typename Indices = make_index_sequence<(Trie.node_count - 1) - CurNode>>
+template <const auto& Trie, std::size_t CurNode>
 struct lit_trie_matcher;
 template <typename Encoding, template <typename> typename CaseFolding, std::size_t N,
           typename... CharClasses, const lit_trie<Encoding, CaseFolding, N, CharClasses...>& Trie,
-          std::size_t CurNode, std::size_t... Indices>
-struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
+          std::size_t CurNode>
+struct lit_trie_matcher<Trie, CurNode>
 {
-    template <std::size_t Idx, typename Reader, typename IntT>
+    template <std::size_t TransIdx, typename Reader, typename IntT>
     LEXY_FORCE_INLINE static constexpr bool _try_transition(std::size_t& result, Reader& reader,
                                                             IntT cur)
     {
-        constexpr auto trans_idx = CurNode + Idx;
-        if constexpr (Trie.transition_from[trans_idx] == CurNode)
-        {
-            using encoding            = typename Reader::encoding;
-            constexpr auto trans_char = Trie.transition_char[trans_idx];
-            if (cur != encoding::to_int_type(trans_char))
-                return false;
+        static_assert(Trie.transition_from[TransIdx] == CurNode);
 
-            reader.bump();
-            result = lit_trie_matcher<Trie, Trie.transition_to[trans_idx]>::_try_match(reader);
-            return true;
-        }
-        else
-        {
-            (void)result;
-            (void)reader;
-            (void)cur;
+        using encoding            = typename Reader::encoding;
+        constexpr auto trans_char = Trie.transition_char[TransIdx];
+        if (cur != encoding::to_int_type(trans_char))
             return false;
-        }
+
+        reader.bump();
+        result = lit_trie_matcher<Trie, Trie.transition_to[TransIdx]>::try_match(reader);
+        return true;
     }
 
-    template <typename Reader>
-    LEXY_FORCE_INLINE static constexpr std::size_t _try_match(Reader& reader)
+    static constexpr auto transitions = Trie.node_transitions(CurNode);
+
+    template <typename Indices = make_index_sequence<transitions.length>>
+    struct _impl
     {
-        constexpr auto cur_value = Trie.node_value[CurNode];
-        if constexpr (((Trie.transition_from[CurNode + Indices] == CurNode) || ...))
+        template <typename Reader>
+        LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
         {
+            constexpr auto cur_value = Trie.node_value[CurNode];
+
+            // We don't have any transition, so return our value unconditionally.
+            // This prevents an unecessary `reader.peek()` call which breaks `lexy_ext::shell`.
+            // But first, we need to check that we don't match that nodes char class.
+            constexpr auto char_class = Trie.node_char_class[CurNode];
+            if (_node_char_class<char_class, CharClasses...>::match(reader))
+                return Trie.node_no_match;
+            else
+                return cur_value;
+        }
+    };
+    template <std::size_t... Idx>
+    struct _impl<index_sequence<Idx...>>
+    {
+        template <typename Reader>
+        LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& reader)
+        {
+            constexpr auto cur_value = Trie.node_value[CurNode];
+
             auto                  cur_pos  = reader.position();
             [[maybe_unused]] auto cur_char = reader.peek();
 
             auto next_value = Trie.node_no_match;
-            (void)(_try_transition<Indices>(next_value, reader, cur_char) || ...);
+            (void)(_try_transition<transitions.index[Idx]>(next_value, reader, cur_char) || ...);
             if (next_value != Trie.node_no_match)
                 // We prefer a longer match.
                 return next_value;
@@ -228,30 +258,19 @@ struct lit_trie_matcher<Trie, CurNode, index_sequence<Indices...>>
             else
                 return cur_value;
         }
-        else
-        {
-            // We don't have any matching transition, so return our value unconditionally.
-            // This prevents an unecessary `reader.peek()` call which breaks `lexy_ext::shell`.
-            // But first, we need to check that we don't match that nodes char class.
-            constexpr auto char_class = Trie.node_char_class[CurNode];
-            if (_node_char_class<char_class, CharClasses...>::match(reader))
-                return Trie.node_no_match;
-            else
-                return cur_value;
-        }
-    }
+    };
 
     template <typename Reader>
     LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& _reader)
     {
         if constexpr (std::is_same_v<CaseFolding<Reader>, Reader>)
         {
-            return _try_match(_reader);
+            return _impl<>::try_match(_reader);
         }
         else
         {
             CaseFolding<Reader> reader{_reader};
-            auto                result = _try_match(reader);
+            auto                result = _impl<>::try_match(reader);
             _reader.set_position(reader.position());
             return result;
         }
