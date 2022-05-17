@@ -16,12 +16,78 @@ struct _seq_impl<>
     template <typename NextParser>
     using p = NextParser;
 };
-template <typename H, typename... T>
-struct _seq_impl<H, T...>
+template <typename R1>
+struct _seq_impl<R1>
 {
-    // We parse Head and then seq<Tail...>.
     template <typename NextParser>
-    using p = lexy::parser_for<H, lexy::parser_for<_seq_impl<T...>, NextParser>>;
+    using p = lexy::parser_for<R1, NextParser>;
+};
+template <typename R1, typename R2>
+struct _seq_impl<R1, R2>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<R1, lexy::parser_for<R2, NextParser>>;
+};
+template <typename R1, typename R2, typename R3>
+struct _seq_impl<R1, R2, R3>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<R1, lexy::parser_for<R2, lexy::parser_for<R3, NextParser>>>;
+};
+template <typename R1, typename R2, typename R3, typename R4>
+struct _seq_impl<R1, R2, R3, R4>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<
+        R1, lexy::parser_for<R2, lexy::parser_for<R3, lexy::parser_for<R4, NextParser>>>>;
+};
+template <typename R1, typename R2, typename R3, typename R4, typename R5>
+struct _seq_impl<R1, R2, R3, R4, R5>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<
+        R1, lexy::parser_for<
+                R2, lexy::parser_for<R3, lexy::parser_for<R4, lexy::parser_for<R5, NextParser>>>>>;
+};
+template <typename R1, typename R2, typename R3, typename R4, typename R5, typename R6>
+struct _seq_impl<R1, R2, R3, R4, R5, R6>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<
+        R1,
+        lexy::parser_for<
+            R2,
+            lexy::parser_for<
+                R3, lexy::parser_for<R4, lexy::parser_for<R5, lexy::parser_for<R6, NextParser>>>>>>;
+};
+template <typename R1, typename R2, typename R3, typename R4, typename R5, typename R6, typename R7>
+struct _seq_impl<R1, R2, R3, R4, R5, R6, R7>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<
+        R1,
+        lexy::parser_for<
+            R2, lexy::parser_for<
+                    R3, lexy::parser_for<
+                            R4, lexy::parser_for<
+                                    R5, lexy::parser_for<R6, lexy::parser_for<R7, NextParser>>>>>>>;
+};
+template <typename R1, typename R2, typename R3, typename R4, typename R5, typename R6, typename R7,
+          typename... T>
+struct _seq_impl<R1, R2, R3, R4, R5, R6, R7, T...>
+{
+    template <typename NextParser>
+    using p = lexy::parser_for<
+        R1,
+        lexy::parser_for<
+            R2,
+            lexy::parser_for<
+                R3,
+                lexy::parser_for<
+                    R4, lexy::parser_for<
+                            R5, lexy::parser_for<
+                                    R6, lexy::parser_for<R7, lexy::parser_for<_seq_impl<T...>,
+                                                                              NextParser>>>>>>>>;
 };
 
 template <typename... R>
