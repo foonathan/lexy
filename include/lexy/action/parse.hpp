@@ -77,10 +77,11 @@ public:
 
 private:
     constexpr explicit parse_result(_impl_t&& impl) noexcept : _impl(LEXY_MOV(impl)), _value() {}
-    constexpr explicit parse_result(_impl_t&& impl, T&& v) noexcept : _impl(LEXY_MOV(impl))
+    template <typename U>
+    constexpr explicit parse_result(_impl_t&& impl, U&& v) noexcept : _impl(LEXY_MOV(impl))
     {
         LEXY_PRECONDITION(impl.is_success() || impl.is_recovered_error());
-        _value.emplace(LEXY_MOV(v));
+        _value.emplace(LEXY_FWD(v));
     }
 
     // In principle we could do a space optimization, as we can reconstruct the impl's status from

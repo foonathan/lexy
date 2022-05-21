@@ -88,6 +88,22 @@ struct string_list_p
 using prod = string_list_p;
 } // namespace parse_sink_cb
 
+namespace parse_void
+{
+namespace dsl = lexy::dsl;
+
+using parse_value::string_p;
+
+struct string_pair_p
+{
+    static constexpr auto rule
+        = dsl::parenthesized(dsl::p<string_p> + dsl::comma + dsl::p<string_p>);
+    static constexpr auto value = lexy::noop;
+};
+
+using prod = string_pair_p;
+} // namespace parse_void
+
 TEST_CASE("parse")
 {
     SUBCASE("value")
@@ -169,6 +185,19 @@ TEST_CASE("parse")
         auto abc_abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,abc,123)"), lexy::noop);
         CHECK(abc_abc_123);
         CHECK(abc_abc_123.value() == 3);
+    }
+    SUBCASE("void")
+    {
+        using namespace parse_void;
+
+        constexpr auto empty = lexy::parse<prod>(lexy::zstring_input(""), lexy::noop);
+        CHECK(!empty);
+
+        constexpr auto abc_abc = lexy::parse<prod>(lexy::zstring_input("(abc,abc)"), lexy::noop);
+        CHECK(abc_abc);
+
+        constexpr auto abc_123 = lexy::parse<prod>(lexy::zstring_input("(abc,123)"), lexy::noop);
+        CHECK(abc_123);
     }
 }
 
