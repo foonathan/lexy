@@ -8,49 +8,6 @@
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/encoding.hpp>
 
-#if 0
-/// Readers are non-owning, cheaply copyable types.
-class Reader
-{
-public:
-    /// The encoding the input uses.
-    using encoding = XXX_encoding;
-
-    /// An iterator of char_type, not int_type.
-    using iterator = ForwardIterator;
-
-    /// If the reader is at eof, returns Encoding::eof().
-    /// Otherwise, returns Encoding::to_int_type(/* current character */).
-    typename Encoding::int_type peek() const;
-
-    /// Advances to the next character in the input.
-    void bump();
-
-    /// Returns an iterator to the current character.
-    /// The following code must produce a valid range:
-    /// ```
-    /// auto begin = reader.position();
-    /// reader.bump();
-    /// ... // more bumps
-    /// auto end = reader.position();
-    /// ```
-    iterator position() const;
-
-    /// Sets the reader to a position.
-    /// It must be returned by a previous call to `position()` of this reader or a copy,
-    /// and can either backtrack the reader or move it forward.
-    void set_position(iterator new_pos);
-};
-
-/// An Input produces a reader.
-class Input
-{
-public:
-    /// Returns a reader to the beginning of the input.
-    Reader reader() const &;
-};
-#endif
-
 namespace lexy
 {
 // A generic reader from an iterator range.
@@ -131,11 +88,17 @@ namespace lexy
 template <typename Input>
 using input_reader = decltype(LEXY_DECLVAL(Input).reader());
 
+template <typename Input>
+constexpr bool input_is_view = std::is_trivially_copyable_v<Input>;
+
 template <typename Reader, typename CharT>
 constexpr bool char_type_compatible_with_reader
     = (std::is_same_v<CharT, typename Reader::encoding::char_type>)
       || Reader::encoding::template is_secondary_char_type<CharT>();
+} // namespace lexy
 
+namespace lexy
+{
 template <typename Reader>
 struct _partial_input
 {

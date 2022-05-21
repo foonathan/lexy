@@ -165,7 +165,10 @@ using error_for = error<input_reader<Input>, Tag>;
 
 namespace lexy
 {
-// Contains information about the context of an error.
+template <typename Input>
+using _detect_parent_input = decltype(LEXY_DECLVAL(Input).parent_input());
+
+/// Contains information about the context of an error.
 template <typename Production, typename Input>
 class error_context
 {
@@ -179,19 +182,22 @@ public:
     : error_context(input, pos)
     {}
 
-    // The input.
-    constexpr const Input& input() const noexcept
+    /// The input.
+    constexpr const auto& input() const noexcept
     {
-        return *_input;
+        if constexpr (_detail::is_detected<_detect_parent_input, Input>)
+            return _input->parent_input();
+        else
+            return *_input;
     }
 
-    // The name of the production where the error occurred.
+    /// The name of the production where the error occurred.
     static LEXY_CONSTEVAL const char* production()
     {
         return production_name<Production>();
     }
 
-    // The starting position of the production.
+    /// The starting position of the production.
     constexpr auto position() const noexcept
     {
         return _pos;

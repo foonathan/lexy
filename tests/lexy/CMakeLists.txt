@@ -96,6 +96,7 @@ set(tests
         input/base.cpp
         input/buffer.cpp
         input/file.cpp
+        input/lexeme_input.cpp
         input/range_input.cpp
         input/string_input.cpp
 

@@ -229,6 +229,8 @@ Contains additional information about an error.
 
 `input()`::
   The entire input where the error occurred; all positions are iterators into that input.
+  If the input is {{% docref "lexy::lexeme_input" %}}, returns the parent input instead.
+  This allows correct computation of the {{% docref "lexy::input_location" %}}.
 `production()`::
   The name of the production where the error occurred, i.e. {{% docref "lexy::production_name" %}}.
 `position()`::

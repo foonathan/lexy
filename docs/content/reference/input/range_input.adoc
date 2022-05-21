@@ -51,3 +51,5 @@ If no template arguments are specified, CTAD is used to deduce the encoding from
 
 TIP: If the iterators are pointers, use {{% docref "lexy::string_input" %}} instead.
 
+TIP: If you're parsing a subset of an input, use `lexy::lexeme_input` instead.
+

@@ -2,6 +2,7 @@
 
 == Upcoming
 
+* Add `lexy::lexeme_input` to support multi-pass parsing.
 * Turn `dsl::terminator(term)(branch)` into a branch rule, as opposed to being a plain rule (#74).
 * Add `dsl::ignore_trailing_sep()` separator.
 * Fix bug that prevented `lexy::parse` with a root production whose value is `void`.

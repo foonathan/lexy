@@ -76,6 +76,8 @@ The input itself is unchanging and it produces a reader which remembers the curr
   Use a file as input.
 {{% headerref "argv_input" %}}::
   Use the command-line arguments as input.
+{{% headerref "lexeme_input" %}}::
+  Use a subset of an existing input while computing correct line/column information.
 
 [#grammar]
 == The grammar DSL
