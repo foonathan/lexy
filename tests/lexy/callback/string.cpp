@@ -106,13 +106,21 @@ TEST_CASE("as_string")
         return lexy::lexeme(reader, begin);
     }();
 
-    SUBCASE("basci")
+    SUBCASE("basic")
     {
         std::string from_nullopt = lexy::as_string<std::string>(lexy::nullopt{});
         CHECK(from_nullopt.empty());
 
         std::string from_rvalue = lexy::as_string<std::string>(std::string("test"));
         CHECK(from_rvalue == "test");
+
+        std::string from_char_range
+            = lexy::as_string<std::string>(char_lexeme.begin(), char_lexeme.end());
+        CHECK(from_char_range == "AbC");
+        std::string from_char_range_alloc
+            = lexy::as_string<std::string>(std::allocator<char>{}, char_lexeme.begin(),
+                                           char_lexeme.end());
+        CHECK(from_char_range_alloc == "AbC");
 
         std::string from_char_lexeme = lexy::as_string<std::string>(char_lexeme);
         CHECK(from_char_lexeme == "AbC");
@@ -145,6 +153,7 @@ TEST_CASE("as_string")
         std::string from_sink = [&] {
             auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink();
             sink('a');
+            sink(char_lexeme.begin(), char_lexeme.end());
             sink(char_lexeme);
             sink(uchar_lexeme);
             sink(std::string("hi"));
@@ -153,12 +162,13 @@ TEST_CASE("as_string")
 
             return LEXY_MOV(sink).finish();
         }();
-        CHECK(from_sink == "aAbCAbChia\u00E4");
+        CHECK(from_sink == "aAbCAbCAbChia\u00E4");
 
         std::string from_alloc_sink = [&] {
             auto sink
                 = lexy::as_string<std::string, lexy::utf8_encoding>.sink(std::allocator<int>());
             sink('a');
+            sink(char_lexeme.begin(), char_lexeme.end());
             sink(char_lexeme);
             sink(uchar_lexeme);
             sink(std::string("hi"));
@@ -167,7 +177,7 @@ TEST_CASE("as_string")
 
             return LEXY_MOV(sink).finish();
         }();
-        CHECK(from_alloc_sink == "aAbCAbChia\u00E4");
+        CHECK(from_alloc_sink == "aAbCAbCAbChia\u00E4");
     }
     SUBCASE("ASCII case folding")
     {
@@ -180,6 +190,12 @@ TEST_CASE("as_string")
         std::string from_rvalue = callback(std::string("TeSt"));
         CHECK(from_rvalue == "test");
 
+        std::string from_char_range = callback(char_lexeme.begin(), char_lexeme.end());
+        CHECK(from_char_range == "abc");
+        std::string from_char_range_alloc
+            = callback(std::allocator<char>{}, char_lexeme.begin(), char_lexeme.end());
+        CHECK(from_char_range_alloc == "abc");
+
         std::string from_char_lexeme = callback(char_lexeme);
         CHECK(from_char_lexeme == "abc");
         std::string from_char_lexeme_alloc = callback(std::allocator<char>{}, char_lexeme);
@@ -198,6 +214,7 @@ TEST_CASE("as_string")
         std::string from_sink = [&] {
             auto sink = callback.sink();
             sink('a');
+            sink(char_lexeme.begin(), char_lexeme.end());
             sink(char_lexeme);
             sink(uchar_lexeme);
             sink(std::string("hi"));
@@ -206,7 +223,7 @@ TEST_CASE("as_string")
 
             return LEXY_MOV(sink).finish();
         }();
-        CHECK(from_sink == "aabcabchia\u00C4");
+        CHECK(from_sink == "aabcabcabchia\u00C4");
     }
     SUBCASE("Unicode case folding")
     {
@@ -219,6 +236,12 @@ TEST_CASE("as_string")
         std::string from_rvalue = callback(std::string("TeSt"));
         CHECK(from_rvalue == "test");
 
+        std::string from_char_range = callback(char_lexeme.begin(), char_lexeme.end());
+        CHECK(from_char_range == "abc");
+        std::string from_char_range_alloc
+            = callback(std::allocator<char>{}, char_lexeme.begin(), char_lexeme.end());
+        CHECK(from_char_range_alloc == "abc");
+
         std::string from_char_lexeme = callback(char_lexeme);
         CHECK(from_char_lexeme == "abc");
         std::string from_char_lexeme_alloc = callback(std::allocator<char>{}, char_lexeme);
@@ -237,6 +260,7 @@ TEST_CASE("as_string")
         std::string from_sink = [&] {
             auto sink = callback.sink();
             sink('a');
+            sink(char_lexeme.begin(), char_lexeme.end());
             sink(char_lexeme);
             sink(uchar_lexeme);
             sink(std::string("hi"));
@@ -245,7 +269,7 @@ TEST_CASE("as_string")
 
             return LEXY_MOV(sink).finish();
         }();
-        CHECK(from_sink == "aabcabchia\u00E4");
+        CHECK(from_sink == "aabcabcabchia\u00E4");
     }
 }
 

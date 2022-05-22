@@ -90,6 +90,18 @@ struct _as_string
         return _case_folding(LEXY_MOV(str));
     }
 
+    template <typename Iterator>
+    constexpr auto operator()(Iterator begin, Iterator end) const -> decltype(String(begin, end))
+    {
+        return _case_folding(String(begin, end));
+    }
+    template <typename Str = String, typename Iterator>
+    constexpr auto operator()(const typename Str::allocator_type& allocator, Iterator begin,
+                              Iterator end) const -> decltype(String(begin, end, allocator))
+    {
+        return _case_folding(String(begin, end, allocator));
+    }
+
     template <typename Reader>
     constexpr String operator()(lexeme<Reader> lex) const
     {
@@ -145,6 +157,13 @@ struct _as_string
         void operator()(String&& str)
         {
             _result.append(LEXY_MOV(str));
+        }
+
+        template <typename Str = String, typename Iterator>
+        auto operator()(Iterator begin, Iterator end)
+            -> decltype(void(LEXY_DECLVAL(Str).append(begin, end)))
+        {
+            _result.append(begin, end);
         }
 
         template <typename Reader>

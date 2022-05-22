@@ -35,6 +35,8 @@ As a callback, it has the following overloads; `A` is `typename String::allocato
   returns `String(lex.data(), lex.size())`;
   otherwise, returns `String(lex.begin(), lex.end())`.
   The second version passes the `allocator` as last parameter.
+`(Iterator begin, Iterator end)` and `(const A& allocator, Iterator begin, Iterator end)`::
+  Constructs a string from an iterator range directly.
 `(lexy::code_point cp)` and `(const A& allocator, lexy::code_point cp)`::
   Encodes `cp` in the `Encoding`, which must be ASCII, UTF-8, UTF-16, or UTF-32.
   Returns `String(begin, end)`, where `[begin, end)` is an iterator range to the encoded representation of `cp`.
@@ -53,6 +55,8 @@ The resulting sink callback has the following overloads and returns the finished
 `(lexy::lexeme<Reader> lex)`::
   Requires that the character type of `lex` is compatible with the character type of `Encoding`.
   Calls `.append(lex.begin(), lex.end())` on the resulting string.
+`(Iterator begin, Iterator end)`::
+  Calls `.append(begin, end)`.
 `(lexy::code_point cp)`::
   Encodes `cp` in the `Encoding`, which must be ASCII, UTF-8, UTF-16, or UTF-32.
   Calls `.append(begin, end)`, where `[begin, end)` is an iterator range to the encoded representation of `cp`, on the resulting string.
