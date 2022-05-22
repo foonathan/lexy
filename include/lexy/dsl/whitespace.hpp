@@ -111,13 +111,18 @@ template <typename Context>
 using context_whitespace = lexy::production_whitespace<typename Context::production,
                                                        typename Context::whitespace_production>;
 
+// Inherit from it in a continuation to disable automatic whitespace skipping.
+struct disable_whitespace_skipping
+{};
+
 template <typename NextParser>
 struct automatic_ws_parser
 {
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        if (context.control_block->enable_whitespace_skipping)
+        if (!std::is_base_of_v<disable_whitespace_skipping,
+                               NextParser> && context.control_block->enable_whitespace_skipping)
         {
             // Skip the appropriate whitespace.
             using rule = context_whitespace<Context>;

@@ -11,20 +11,23 @@ entities:
 ----
 namespace lexy::dsl
 {
-    constexpr _branch-rule_ auto capture(_token-rule_ auto token);
+    constexpr _branch-rule_ auto capture(_rule_ auto rule);
 }
 ----
 
 [.lead]
-`capture_token` is a branch rule that parses `token` capturing everything it has consumed but excluding whitespace as a value.
+`capture_token` is a {{% branch-rule %}} that parses `rule` capturing everything it has consumed but excluding whitespace as a value.
 
+Requires::
+ `rule` is either a {{% token-rule %}} or {{% docref "lexy::dsl::p" %}} where the production is a token production.
 (Branch) Parsing::
-  Parses `token` unchanged.
+  Parses `rule` unchanged.
 Errors::
-  All errors raised by `token`.
-  The rule then fails if `token` has failed.
+  All errors raised by `rule`.
+  The rule then fails if `rule` has failed.
 Values::
   A {{% docref "lexy::lexeme" %}} whose range covers everything consumed by `token` except any trailing whitespace.
+  Then all values produced by `rule`.
 
 {{% godbolt-example capture "Get a single code point" %}}
 
