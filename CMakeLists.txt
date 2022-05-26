@@ -15,13 +15,16 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(LEXY_BUILD_EXAMPLES   "whether or not examples should be built" ON)
     option(LEXY_BUILD_TESTS      "whether or not tests should be built" ON)
     option(LEXY_BUILD_DOCS       "whether or not docs should be built" OFF)
+	option(LEXY_BUILD_PACKAGE    "whether or not the package should be built" OFF)
 
-    set(package_files include/ src/ CMakeLists.txt LICENSE)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip
-        COMMAND ${CMAKE_COMMAND} -E tar c ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip --format=zip -- ${package_files}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${package_files})
-    add_custom_target(lexy_package DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip)
+	if(LEXY_BUILD_PACKAGE)
+        set(package_files include/ src/ CMakeLists.txt LICENSE)
+        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip
+            COMMAND ${CMAKE_COMMAND} -E tar c ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip --format=zip -- ${package_files}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS ${package_files})
+        add_custom_target(lexy_package DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip)
+    endif()
 
     if(LEXY_BUILD_EXAMPLES)
         add_subdirectory(examples)
