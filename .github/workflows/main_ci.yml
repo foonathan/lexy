@@ -15,6 +15,7 @@ jobs:
           - "gcc:9"
           - "gcc:10"
           - "gcc:11"
+          - "gcc:12"
           - "clang:6"
           - "clang:7"
           - "clang:8"
