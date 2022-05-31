@@ -12,7 +12,11 @@ namespace lexy::_detail
 template <std::size_t Idx, typename T>
 struct _tuple_holder
 {
-    LEXY_EMPTY_MEMBER T value;
+#if !defined(__GNUC__) || defined(__clang__)
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105795
+    LEXY_EMPTY_MEMBER
+#endif
+    T value;
 };
 
 template <std::size_t Idx, typename... T>
