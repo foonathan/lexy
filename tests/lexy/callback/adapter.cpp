@@ -4,6 +4,7 @@
 #include <lexy/callback/adapter.hpp>
 
 #include <doctest/doctest.h>
+#include <lexy/callback/constant.hpp>
 #include <lexy/callback/fold.hpp>
 
 namespace
@@ -73,6 +74,15 @@ TEST_CASE("callback")
         CHECK(std::is_same_v<decltype(callback)::return_type, float>);
         CHECK(callback(4) == 8);
         CHECK(callback(2.f) == 3.5);
+
+        struct no_default
+        {
+            constexpr no_default(int) {}
+        };
+
+        constexpr auto callback_without_default_ctor
+            = lexy::callback(lexy::constant(no_default(42)));
+        CHECK(std::is_same_v<decltype(callback_without_default_ctor)::return_type, no_default>);
     }
 }
 
