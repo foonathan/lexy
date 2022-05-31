@@ -46,7 +46,7 @@ Requires::
   It must take at least one argument, which is a reference to a `lexy::rule_scanner`.
   It can optionally take a second argument, which is a reference to the parse state passed to the top-level action.
 Parsing::
-  Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position, and optionally the parse state.
+  Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position, and optionally the parse state, followed by all values already produced by previous rules.
   Then parses and consumes everything parsed and consumed by `P::scan()`.
   Succeeds, if `P::scan()` returns a {{% docref "lexy::scan_result" %}} that contains a value.
   Fails otherwise.
@@ -56,6 +56,7 @@ Errors::
 Values::
   If the `value_type` of the returned {{% docref "lexy::scan_result" %}} is non-void, returns that value.
   Otherwise, produces no value.
+  Values produced by previous rules are discarded.
 Parse tree::
   Creates all nodes created from the rules parsed by `P::scan()` as if those rules were parsed directly.
 
@@ -67,6 +68,9 @@ Regardless of the top-level parse action, the overloads of `.parse()` and `.bran
 {{% playground-example "scan" "Parse a Rust-style raw string literal" %}}
 
 TIP: Use {{% docref "lexy::scan_production" %}} to remove boilerplate for a production whose rule is entirely `dsl::scan`.
+
+TIP: Use `condition >> dsl::scan` to turn a scanner into a branch.
+The values produced by condition are available in the scan function to consume.
 
 NOTE: Use {{% docref "lexy::scan" %}} if you want to manually parse the root production.
 

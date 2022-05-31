@@ -2,6 +2,7 @@
 
 == Upcoming
 
+* Change `dsl::scan`: it will now be invoked with the previously produced values.
 * Add `lexy::lexeme_input` to support multi-pass parsing.
 * Turn `dsl::terminator(term)(branch)` into a branch rule, as opposed to being a plain rule (#74).
 * Add `dsl::ignore_trailing_sep()` separator.

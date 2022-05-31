@@ -4,7 +4,9 @@
 #include <lexy/dsl/scan.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/production.hpp>
@@ -87,6 +89,19 @@ struct state_scan : lexy::scan_production<const char*>, test_production
     }
 };
 
+struct branch_scan : lexy::scan_production<const char*>, test_production
+{
+    static constexpr auto name = "branch_scan";
+    static constexpr auto rule = dsl::capture(LEXY_LIT("abc")) >> dsl::scan;
+
+    template <typename Reader, typename Context>
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>& scanner,
+                                      lexy::lexeme<Reader>                 lexeme)
+    {
+        scanner.parse(LEXY_LIT("def"));
+        return lexeme.end();
+    }
+};
 } // namespace
 
 TEST_CASE("dsl::scan")
@@ -183,6 +198,38 @@ TEST_CASE("dsl::scan")
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace());
+    }
+    SUBCASE("branch scan")
+    {
+        constexpr auto callback = lexy::callback<int>(
+            // branch_scan production
+            [](const char*) { return 0; },
+            [](const char* begin, const char* value) {
+                CHECK(begin + 3 == value);
+                return 1;
+            },
+            // top-level production
+            [](const char*, int i) { return i; });
+
+        constexpr auto rule = dsl::if_(dsl::p<branch_scan>);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace().production("branch_scan").cancel());
+
+        auto abc = LEXY_VERIFY("abc");
+        CHECK(abc.status == test_result::recovered_error);
+        CHECK(abc.trace
+              == test_trace() //
+                     .production("branch_scan")
+                     .literal("abc")
+                     .expected_literal(3, "def", 0));
+
+        auto abcdef = LEXY_VERIFY("abcdef");
+        CHECK(abcdef.status == test_result::success);
+        CHECK(abcdef.value == 1);
+        CHECK(abcdef.trace == test_trace().production("branch_scan").literal("abc").literal("def"));
     }
 }
 

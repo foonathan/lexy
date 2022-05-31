@@ -546,19 +546,19 @@ struct _scan : rule_base
                 if constexpr (lexy::_detail::is_detected<
                                   _detect_scan_state, Context, decltype(scanner),
                                   decltype(context.control_block->parse_state)>)
-                    return Context::production::scan(scanner, *context.control_block->parse_state);
+                    return Context::production::scan(scanner, *context.control_block->parse_state,
+                                                      LEXY_FWD(args)...);
                 else
-                    return Context::production::scan(scanner);
+                    return Context::production::scan(scanner, LEXY_FWD(args)...);
             }();
             reader.set_position(scanner.position());
             if (!result)
                 return false;
 
             if constexpr (std::is_void_v<typename decltype(result)::value_type>)
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                return NextParser::parse(context, reader);
             else
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         LEXY_MOV(result).value());
+                return NextParser::parse(context, reader, LEXY_MOV(result).value());
         }
     };
 };
