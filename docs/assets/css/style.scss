@@ -218,7 +218,10 @@ aside.toc {
             padding: 0;
             ul {
                 padding-left: 1em;
-                padding-bottom: .5em;
+                padding-bottom: .2em;
+            }
+            li {
+                padding-bottom: .2em;
             }
         }
         a {
