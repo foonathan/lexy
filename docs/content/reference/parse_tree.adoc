@@ -107,7 +107,7 @@ The default constructor is only valid for the _`default-resource`_ and uses the 
 The second overload assigns the specified `resource`, which is not changed by further assignment.
 
 [#builder]
-=== Construction: `lexy::parse_tree::builder`
+=== Construction: `lexy::{zwsp}parse{zwsp}_tree::{zwsp}builder`
 
 {{% interface %}}
 ----
@@ -235,7 +235,7 @@ A shallow tree, where all nodes are children of the root node, has `depth() == 1
 A completely nested tree, where each node has exactly one child, has `depth() == size() - 1`.
 
 [#node_kind]
-=== Nodes: `lexy::parse_tree::node_kind`
+=== Nodes: `lexy::{zwsp}parse{zwsp}_tree::{zwsp}node{zwsp}_kind`
 
 {{% interface %}}
 ----
@@ -291,7 +291,7 @@ A node kind and a token kind is equal, if the node kind is a token node with tha
 and a node kind and a production is equal, if it is a production node for that production.
 
 [#node]
-=== Nodes: `lexy::parse_tree::node`
+=== Nodes: `lexy::{zwsp}parse{zwsp}_tree::{zwsp}node`
 
 {{% interface %}}
 ----

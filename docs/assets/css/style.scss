@@ -203,7 +203,10 @@ aside.toc {
         position: sticky;
         top: 0em;
         min-width: 200px;
+        max-width: 350px;
+        padding-right: 1em;
         align-self: flex-start;
+        hyphens: auto;
 
         header {
             margin-top: 1em;

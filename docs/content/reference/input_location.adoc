@@ -86,7 +86,7 @@ Calling `position()` on the resulting location will be the beginning of the last
 NOTE: If `position` points inside a `\r\n` sequence, for example, the resulting `position()` will point to the initial `\r`.
 
 [#counting]
-== Counting strategies `lexy::code_unit_location_counting`, `lexy::code_point_location_counting`, `lexy::byte_location_counting`
+== Counting strategies `lexy::{zwsp}code{zwsp}_unit{zwsp}_location{zwsp}_counting`, `lexy::{zwsp}code{zwsp}_point{zwsp}_location{zwsp}_counting`, `lexy::{zwsp}byte{zwsp}_location{zwsp}_counting`
 
 {{% interface %}}
 ----
