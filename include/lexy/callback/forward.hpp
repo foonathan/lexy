@@ -8,6 +8,8 @@
 
 namespace lexy
 {
+struct nullopt;
+
 template <typename T>
 struct _fwd
 {
@@ -27,7 +29,17 @@ struct _fwd<void>
 {
     using return_type = void;
 
+    template <typename... Args>
+    constexpr auto sink(const Args&...) const
+    {
+        // We don't need a separate type, forward itself can have the required functions.
+        return *this;
+    }
+
     constexpr void operator()() const {}
+    constexpr void operator()(const lexy::nullopt&) const {}
+
+    constexpr void finish() && {}
 };
 
 /// A callback that just forwards an existing object.

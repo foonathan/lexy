@@ -136,7 +136,7 @@ constexpr auto ws = dsl::whitespace(dsl::ascii::space / dsl::ascii::newline);
 struct comment
 {
     static constexpr auto rule  = LEXY_LIT("<!--") >> dsl::until(LEXY_LIT("-->"));
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 // Non-markup content.

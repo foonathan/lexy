@@ -74,7 +74,7 @@ constexpr auto kw_while   = LEXY_KEYWORD("while", identifier);
 struct number : lexy::token_production
 {
     static constexpr auto rule  = dsl::while_(dsl::lit_c<'|'>);
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 //=== variables ===//
@@ -126,7 +126,7 @@ struct execute_body
 
     // Parsing the body executes it.
     static constexpr auto rule  = dsl::curly_bracketed.opt_list(dsl::recurse<statement<Vars...>>);
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 // Skips until we find the next curly brackets, keeping track of the opening brackets.
@@ -145,7 +145,7 @@ struct skip_body
         return bracket_counter.create() + dsl::loop(skip + check_balance);
     }();
 
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 // Checks whether a variable is non-zero.
@@ -171,11 +171,11 @@ struct if_stmt
             return dsl::lit_c<Var> >> select;
         }();
 
-        static constexpr auto value = lexy::noop;
+        static constexpr auto value = lexy::forward<void>;
     };
 
     static constexpr auto rule  = kw_if >> (dsl::p<impl<Vars>> | ... | unknown_variable_error);
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 // Loops while a variable is non-zero.
@@ -202,11 +202,11 @@ struct while_stmt
             return dsl::lit_c<Var> >> loop;
         }();
 
-        static constexpr auto value = lexy::noop;
+        static constexpr auto value = lexy::forward<void>;
     };
 
     static constexpr auto rule  = kw_while >> (dsl::p<impl<Vars>> | ... | unknown_variable_error);
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 template <char... Vars>
@@ -222,7 +222,7 @@ struct statement
         return if_stmts | while_stmts | dsl::else_ >> var_stmts;
     }();
 
-    static constexpr auto value = lexy::noop;
+    static constexpr auto value = lexy::forward<void>;
 };
 
 //=== program ===//
