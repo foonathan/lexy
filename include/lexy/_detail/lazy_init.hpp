@@ -159,6 +159,47 @@ private:
     : _lazy_init_storage<T>(0, LEXY_FWD(args)...)
     {}
 };
+template <typename T>
+class lazy_init<T&>
+{
+public:
+    using value_type = T&;
+
+    constexpr lazy_init() noexcept : _ptr(nullptr) {}
+
+    constexpr T& emplace(T& ref)
+    {
+        LEXY_PRECONDITION(!*this);
+        _ptr = &ref;
+        return ref;
+    }
+
+    template <typename Fn, typename... Args>
+    constexpr T& emplace_result(Fn&& fn, Args&&... args)
+    {
+        return emplace(LEXY_FWD(fn)(LEXY_FWD(args)...));
+    }
+
+    constexpr explicit operator bool() const noexcept
+    {
+        return _ptr != nullptr;
+    }
+
+    constexpr T& operator*() const noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return *_ptr;
+    }
+
+    constexpr T* operator->() const noexcept
+    {
+        LEXY_PRECONDITION(*this);
+        return _ptr;
+    }
+
+private:
+    T* _ptr;
+};
 template <>
 class lazy_init<void>
 {

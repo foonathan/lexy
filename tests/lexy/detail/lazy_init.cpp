@@ -6,6 +6,11 @@
 #include <doctest/doctest.h>
 #include <string>
 
+namespace
+{
+constexpr auto my_int = 42;
+}
+
 TEST_CASE("_detail::lazy_init")
 {
     SUBCASE("trivial")
@@ -102,6 +107,32 @@ TEST_CASE("_detail::lazy_init")
             CHECK(*assigned == "aaaaa");
             CHECK(assigned->size() == 5);
         }
+    }
+    SUBCASE("reference")
+    {
+        using lazy_init = lexy::_detail::lazy_init<const int&>;
+
+        constexpr auto empty = lazy_init();
+        CHECK(!empty);
+
+        constexpr auto emplaced = [] {
+            lazy_init result;
+            result.emplace(my_int);
+            return result;
+        }();
+        CHECK(emplaced);
+        CHECK(&*emplaced == &my_int);
+        CHECK(emplaced.operator->() == &my_int);
+
+        constexpr auto emplaced_result = [] {
+            lazy_init result;
+            result.emplace_result([](int) -> const int& { return my_int; }, 21);
+            return result;
+        }();
+        CHECK(emplaced_result);
+        CHECK(*emplaced_result == 42);
+        CHECK(&*emplaced_result == &my_int);
+        CHECK(emplaced_result.operator->() == &my_int);
     }
     SUBCASE("void")
     {
