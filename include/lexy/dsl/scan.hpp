@@ -64,22 +64,22 @@ public:
         return static_cast<bool>(_value);
     }
 
-    constexpr const auto& value() const& noexcept
+    constexpr decltype(auto) value() const& noexcept
     {
         return *_value;
     }
-    constexpr auto&& value() && noexcept
+    constexpr decltype(auto) value() && noexcept
     {
         return LEXY_MOV(*_value);
     }
 
     template <typename U = T>
-    constexpr U value_or(U&& fallback) const& noexcept
+    constexpr decltype(auto) value_or(U&& fallback) const& noexcept
     {
         return _value ? *_value : LEXY_FWD(fallback);
     }
     template <typename U = T>
-    constexpr U value_or(U&& fallback) && noexcept
+    constexpr decltype(auto) value_or(U&& fallback) && noexcept
     {
         return _value ? LEXY_MOV(*_value) : LEXY_FWD(fallback);
     }

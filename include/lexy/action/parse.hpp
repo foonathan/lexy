@@ -51,11 +51,11 @@ public:
         return static_cast<bool>(_value);
     }
 
-    constexpr const auto& value() const& noexcept
+    constexpr decltype(auto) value() const& noexcept
     {
         return *_value;
     }
-    constexpr auto&& value() && noexcept
+    constexpr decltype(auto) value() && noexcept
     {
         return LEXY_MOV(*_value);
     }

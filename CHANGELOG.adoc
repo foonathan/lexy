@@ -7,6 +7,7 @@
 * Turn `dsl::terminator(term)(branch)` into a branch rule, as opposed to being a plain rule (#74).
 * Add `dsl::ignore_trailing_sep()` separator.
 * Turn `lexy::forward<void>` into a sink.
+* Support references in `lexy::parse_result` and `lexy::scan_result`
 * Fix bug that prevented `lexy::parse` with a root production whose value is `void`.
 
 == Release 2022.05.0
