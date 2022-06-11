@@ -9,6 +9,7 @@
 * Turn `lexy::forward<void>` into a sink.
 * Support references in `lexy::parse_result` and `lexy::scan_result`
 * Fix bug that prevented `lexy::parse` with a root production whose value is `void`.
+* Fix bug that caused infinite template instantiations for recursive scans.
 
 == Release 2022.05.0
 

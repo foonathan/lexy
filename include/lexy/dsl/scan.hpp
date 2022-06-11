@@ -140,28 +140,35 @@ using _value_callback_for = lexy::production_value_callback<
 
 // The context used for a child production during scanning.
 // It forwards all events but overrides the value callback.
-template <typename Context, typename ValueCallback = _value_callback_for<Context>>
+template <typename RootContext, typename Context,
+          typename ValueCallback = _value_callback_for<Context>>
 struct spc_child
 {
     using production            = typename Context::production;
     using whitespace_production = typename Context::whitespace_production;
     using value_type            = typename ValueCallback::return_type;
 
+    RootContext*                     root_context;
     decltype(Context::handler)       handler;
     decltype(Context::control_block) control_block;
     _detail::lazy_init<value_type>   value;
 
-    constexpr explicit spc_child(decltype(Context::control_block) cb) : control_block(cb) {}
-    constexpr explicit spc_child(const Context& context) : control_block(context.control_block) {}
+    constexpr explicit spc_child(RootContext& root, decltype(Context::control_block) cb)
+    : root_context(&root), control_block(cb)
+    {}
+    constexpr explicit spc_child(RootContext& root, const Context& context)
+    : root_context(&root), control_block(context.control_block)
+    {}
 
     template <typename ChildProduction>
     constexpr auto sub_context(ChildProduction child)
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
         if constexpr (std::is_same_v<ValueCallback, void_value_callback>)
-            return spc_child<sub_context_t, void_value_callback>(control_block);
+            return spc_child<RootContext, sub_context_t, void_value_callback>(*root_context,
+                                                                              control_block);
         else
-            return spc_child<sub_context_t>(control_block);
+            return spc_child<RootContext, sub_context_t>(*root_context, control_block);
     }
 
     constexpr auto value_callback()
@@ -185,12 +192,14 @@ struct spc
     using whitespace_production = typename Context::whitespace_production;
     using value_type            = T;
 
+    Context*                         root_context;
     decltype(Context::handler)&      handler;
     decltype(Context::control_block) control_block;
     _detail::lazy_init<T>&           value;
 
     constexpr explicit spc(_detail::lazy_init<T>& value, Context& context)
-    : handler(context.handler), control_block(context.control_block), value(value)
+    : root_context(&context), handler(context.handler), control_block(context.control_block),
+      value(value)
     {}
 
     template <typename ChildProduction>
@@ -198,9 +207,10 @@ struct spc
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
         if constexpr (std::is_void_v<T>)
-            return spc_child<sub_context_t, void_value_callback>(control_block);
+            return spc_child<Context, sub_context_t, void_value_callback>(*root_context,
+                                                                          control_block);
         else
-            return spc_child<sub_context_t>(control_block);
+            return spc_child<Context, sub_context_t>(*root_context, control_block);
     }
 
     constexpr auto value_callback()
@@ -276,8 +286,8 @@ public:
     constexpr auto parse(Production production = {})
     {
         // Directly create a child context from the production context.
-        auto context
-            = _detail::spc_child(static_cast<Derived&>(*this).context().sub_context(production));
+        auto& root_context = static_cast<Derived&>(*this).context();
+        auto  context      = _detail::spc_child(root_context, root_context.sub_context(production));
 
         // We can't use an early return to get automatic return type deduction.
         if (_state != _state_failed)
@@ -538,16 +548,16 @@ struct _scan : rule_base
     template <typename NextParser>
     struct p
     {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        template <typename Scanner, typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool _parse(Scanner& scanner, Context& context, Reader& reader,
+                                            Args&&... args)
         {
-            lexy::rule_scanner scanner(context, reader);
-            lexy::scan_result  result = [&] {
+            lexy::scan_result result = [&] {
                 if constexpr (lexy::_detail::is_detected<
                                   _detect_scan_state, Context, decltype(scanner),
                                   decltype(context.control_block->parse_state)>)
                     return Context::production::scan(scanner, *context.control_block->parse_state,
-                                                      LEXY_FWD(args)...);
+                                                     LEXY_FWD(args)...);
                 else
                     return Context::production::scan(scanner, LEXY_FWD(args)...);
             }();
@@ -559,6 +569,21 @@ struct _scan : rule_base
                 return NextParser::parse(context, reader);
             else
                 return NextParser::parse(context, reader, LEXY_MOV(result).value());
+        }
+
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::rule_scanner scanner(context, reader);
+            return _parse(scanner, context, reader, LEXY_FWD(args)...);
+        }
+        template <typename Context, typename ValueCallback, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(
+            lexy::_detail::spc_child<Context, ValueCallback>& context, Reader& reader,
+            Args&&... args)
+        {
+            lexy::rule_scanner scanner(*context.root_context, reader);
+            return _parse(scanner, context, reader, LEXY_FWD(args)...);
         }
     };
 };

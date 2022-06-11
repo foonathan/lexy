@@ -4,6 +4,7 @@
 #include <lexy/dsl/scan.hpp>
 
 #include "verify.hpp"
+#include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/eof.hpp>
 #include <lexy/dsl/if.hpp>
@@ -100,6 +101,22 @@ struct branch_scan : lexy::scan_production<const char*>, test_production
     {
         scanner.parse(LEXY_LIT("def"));
         return lexeme.end();
+    }
+};
+
+struct recursive_scan : lexy::scan_production<int>, test_production
+{
+    template <typename Reader, typename Context>
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>& scanner)
+    {
+        if (scan_result result;
+            scanner.branch(result, LEXY_LIT("(") >> dsl::recurse<recursive_scan> + LEXY_LIT(")")))
+            return result.value() + 1;
+        else
+        {
+            scanner.parse(dsl::lit_c<'x'>);
+            return 0;
+        }
     }
 };
 } // namespace
@@ -230,6 +247,46 @@ TEST_CASE("dsl::scan")
         CHECK(abcdef.status == test_result::success);
         CHECK(abcdef.value == 1);
         CHECK(abcdef.trace == test_trace().production("branch_scan").literal("abc").literal("def"));
+    }
+    SUBCASE("recursive")
+    {
+        constexpr auto callback = [](const char*, int value) { return value; };
+
+        auto empty = LEXY_VERIFY_P(recursive_scan, "");
+        CHECK(empty.status == test_result::recovered_error);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace().expected_literal(0, "x", 0));
+
+        auto zero = LEXY_VERIFY_P(recursive_scan, "x");
+        CHECK(zero.status == test_result::success);
+        CHECK(zero.value == 0);
+        CHECK(zero.trace == test_trace().literal("x"));
+
+        auto one = LEXY_VERIFY_P(recursive_scan, "(x)");
+        CHECK(one.status == test_result::success);
+        CHECK(one.value == 1);
+        CHECK(one.trace
+              == test_trace()
+                     .literal("(")
+                     .production("test_production")
+                     .literal("x")
+                     .finish()
+                     .literal(")"));
+
+        auto two = LEXY_VERIFY_P(recursive_scan, "((x))");
+        CHECK(two.status == test_result::success);
+        CHECK(two.value == 2);
+        CHECK(two.trace
+              == test_trace()
+                     .literal("(")
+                     .production("test_production")
+                     .literal("(")
+                     .production("test_production")
+                     .literal("x")
+                     .finish()
+                     .literal(")")
+                     .finish()
+                     .literal(")"));
     }
 }
 
