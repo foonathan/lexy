@@ -75,6 +75,7 @@ set(header_files
         ${include_dir}/dsl/newline.hpp
         ${include_dir}/dsl/option.hpp
         ${include_dir}/dsl/operator.hpp
+        ${include_dir}/dsl/parse_as.hpp
         ${include_dir}/dsl/peek.hpp
         ${include_dir}/dsl/position.hpp
         ${include_dir}/dsl/production.hpp

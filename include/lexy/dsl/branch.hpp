@@ -99,6 +99,15 @@ constexpr auto operator+(_br<C1, R...>, _br<C2, S...>)
 {
     return _br<C1, R..., C2, S...>{};
 }
+
+template <typename Condition, typename Then>
+constexpr auto _maybe_branch(Condition condition, Then then)
+{
+    if constexpr (lexy::is_branch_rule<Condition>)
+        return condition >> then;
+    else
+        return condition + then;
+}
 } // namespace lexyd
 
 namespace lexyd

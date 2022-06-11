@@ -72,6 +72,7 @@ set(tests
         dsl/newline.cpp
         dsl/operator.cpp
         dsl/option.cpp
+        dsl/parse_as.cpp
         dsl/peek.cpp
         dsl/position.cpp
         dsl/production.cpp

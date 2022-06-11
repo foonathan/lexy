@@ -116,10 +116,7 @@ namespace lexyd
 template <typename Then, typename Condition>
 constexpr auto do_while(Then then, Condition condition)
 {
-    if constexpr (lexy::is_branch_rule<Then>)
-        return then >> while_(condition >> then);
-    else
-        return then + while_(condition >> then);
+    return _maybe_branch(then, while_(condition >> then));
 }
 } // namespace lexyd
 

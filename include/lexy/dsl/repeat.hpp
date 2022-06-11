@@ -5,7 +5,8 @@
 #define LEXY_DSL_REPEAT_HPP_INCLUDED
 
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/scan.hpp>
+#include <lexy/dsl/branch.hpp>
+#include <lexy/dsl/parse_as.hpp>
 #include <lexy/lexeme.hpp>
 
 namespace lexyd
@@ -127,61 +128,8 @@ struct _repc : rule_base // repeat, capture
 };
 
 template <typename Count, typename Loop>
-struct _rep : _copy_base<Count>
-{
-    template <typename Reader>
-    struct bp
-    {
-        lexy::branch_parser_for<Count, Reader> count_parser;
-
-        template <typename ControlBlock>
-        constexpr bool try_parse(const ControlBlock* cb, const Reader& reader)
-        {
-            return count_parser.try_parse(cb, reader);
-        }
-
-        template <typename Context>
-        constexpr void cancel(Context& context)
-        {
-            // No need to use the special context here; it doesn't produce any values.
-            count_parser.cancel(context);
-        }
-
-        template <typename NextParser, typename Context, typename... Args>
-        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
-        {
-            lexy::_detail::lazy_init<std::size_t> count;
-
-            // Parse the count using a scan context to ensure that it always produces a value.
-            if (lexy::_detail::spc scan_context(count, context);
-                !count_parser.template finish<lexy::_detail::final_parser>(scan_context, reader))
-                return false;
-
-            // Parse the actual loop.
-            return lexy::parser_for<Loop, NextParser>::parse(context, reader, *count,
-                                                             LEXY_FWD(args)...);
-        }
-    };
-
-    template <typename NextParser>
-    struct p
-    {
-        template <typename Context, typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
-        {
-            lexy::_detail::lazy_init<std::size_t> count;
-
-            // Parse the count using a scan context to ensure that it always produces a value.
-            if (lexy::_detail::spc scan_context(count, context);
-                !lexy::parser_for<Count, lexy::_detail::final_parser>::parse(scan_context, reader))
-                return false;
-
-            // Parse the actual loop.
-            return lexy::parser_for<Loop, NextParser>::parse(context, reader, *count,
-                                                             LEXY_FWD(args)...);
-        }
-    };
-};
+struct _rep : decltype(_maybe_branch(_pas<std::size_t, Count, true>{}, Loop{}))
+{};
 
 template <typename Count>
 struct _rep_dsl
