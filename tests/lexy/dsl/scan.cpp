@@ -273,7 +273,8 @@ TEST_CASE("dsl::scan")
                      .finish()
                      .literal(")"));
 
-        auto two = LEXY_VERIFY_P(recursive_scan, "((x))");
+        // GCC 8 doesn't want to execute it at compile-time.
+        auto two = LEXY_VERIFY_RUNTIME_P(recursive_scan, "((x))");
         CHECK(two.status == test_result::success);
         CHECK(two.value == 2);
         CHECK(two.trace

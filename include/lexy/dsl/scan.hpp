@@ -577,9 +577,10 @@ struct _scan : rule_base
             lexy::rule_scanner scanner(context, reader);
             return _parse(scanner, context, reader, LEXY_FWD(args)...);
         }
-        template <typename Context, typename ValueCallback, typename Reader, typename... Args>
+        template <typename RootContext, typename Context, typename ValueCallback, typename Reader,
+                  typename... Args>
         LEXY_PARSER_FUNC static bool parse(
-            lexy::_detail::spc_child<Context, ValueCallback>& context, Reader& reader,
+            lexy::_detail::spc_child<RootContext, Context, ValueCallback>& context, Reader& reader,
             Args&&... args)
         {
             lexy::rule_scanner scanner(*context.root_context, reader);
