@@ -225,15 +225,27 @@ struct string : lexy::token_production
                                                 .map<'r'>('\r')
                                                 .map<'t'>('\t');
 
+    // In JSON, a Unicode code point can be specified by its encoding in UTF-16:
+    // * code points <= 0xFFFF are specified using `\uNNNN`.
+    // * other code points are specified by two surrogate UTF-16 sequences.
+    // However, we don't combine the two surrogates into the final code point,
+    // instead keep them separate and require a later pass that merges them if necessary.
+    // (This behavior is allowed by the standard).
+    struct code_point_id
+    {
+        // We parse the integer value of a UTF-16 code unit.
+        static constexpr auto rule = LEXY_LIT("u") >> dsl::code_unit_id<lexy::utf16_encoding, 4>;
+        // And convert it into a code point, which might be a surrogate.
+        static constexpr auto value = lexy::construct<lexy::code_point>;
+    };
+
     static constexpr auto rule = [] {
         // Everything is allowed inside a string except for control characters.
         auto code_point = (-dsl::unicode::control).error<invalid_char>;
 
         // Escape sequences start with a backlash and either map one of the symbols,
-        // or a Unicode code point of the form uXXXX.
-        auto escape = dsl::backslash_escape //
-                          .symbol<escaped_symbols>()
-                          .rule(dsl::lit_c<'u'> >> dsl::code_point_id<4>);
+        // or a Unicode code point.
+        auto escape = dsl::backslash_escape.symbol<escaped_symbols>().rule(dsl::p<code_point_id>);
 
         // String of code_point with specified escape sequences, surrounded by ".
         // We abort string parsing if we see a newline to handle missing closing ".
