@@ -490,6 +490,7 @@ template <typename T, typename Base = void>
 constexpr auto integer = _int_dsl<T, Base>{};
 } // namespace lexyd
 
+//=== code_point_id ===//
 namespace lexy
 {
 struct invalid_code_point
@@ -503,13 +504,38 @@ struct invalid_code_point
 
 namespace lexyd
 {
-/// Matches the number of a code point.
+/// Matches the integer value of a code point.
 template <std::size_t N, typename Base = hex>
 constexpr auto code_point_id = [] {
     using type = std::conditional_t<_ndigits_can_overflow<lexy::code_point, N, Base::digit_radix>(),
                                     lexy::code_point, lexy::unbounded<lexy::code_point>>;
     using parser = _integer_parser<type, Base, true>;
     return _int<_ndigits<N, Base>, parser, lexy::invalid_code_point>{};
+}();
+} // namespace lexyd
+
+//=== code_unit_id ===//
+namespace lexy
+{
+struct invalid_code_unit
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "invalid code unit";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+/// Matches the integer value of a code unit.
+template <typename Encoding, std::size_t N, typename Base = hex>
+constexpr auto code_unit_id = [] {
+    using char_type = typename Encoding::char_type;
+    using type      = std::conditional_t<_ndigits_can_overflow<char_type, N, Base::digit_radix>(),
+                                    char_type, lexy::unbounded<char_type>>;
+    using parser    = _integer_parser<type, Base, true>;
+    return _int<_ndigits<N, Base>, parser, lexy::invalid_code_unit>{};
 }();
 } // namespace lexyd
 

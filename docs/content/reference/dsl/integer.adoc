@@ -173,3 +173,31 @@ The only difference is that integer overflows raises a generic error with tag `l
 CAUTION: The rule still recovers from a `lexy::invalid_code_point`.
 The `lexy::code_point` produced might be invalid in that case, i.e. `.is_invalid() == true`.
 
+[#code_unit_id]
+== Rule `lexy::dsl::code_unit_id`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    struct invalid_code_unit {};
+}
+
+namespace lexy::dsl
+{
+    template <_encoding_ Encoding, std::size_t N, typename Base = hex>
+    constexpr _branch-rule_ auto code_unit_id;
+}
+----
+
+[.lead]
+`code_unit_id` is a {{% branch-rule %}} that parses a sequence of `N` digits as a code unit of the specified {{% encoding %}}.
+
+`code_unit_id<Encoding, N, Base>` behaves almost exactly like `integer<typename Encoding::char_type>(n_digits<N, Base>)`.
+The only difference is that integer overflows raises a generic error with tag `lexy::invalid_code_unit` as opposed to `lexy::integer_overflow`.
+
+{{% godbolt-example code_unit_id "Parse a code point value" %}}
+
+CAUTION: The rule still recovers from a `lexy::invalid_code_unit`.
+The code unit produced has been truncated (somehow) in that case.
+

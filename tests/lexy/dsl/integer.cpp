@@ -915,3 +915,73 @@ TEST_CASE("dsl::code_point_id")
     }
 }
 
+TEST_CASE("dsl::code_unit_id")
+{
+    static constexpr auto id = dsl::code_unit_id<lexy::utf8_encoding, 3>;
+    CHECK(lexy::is_branch_rule<decltype(id)>);
+
+    constexpr auto callback
+        = lexy::callback<int>([](const char*) { return int(0); },
+                              [](const char*, LEXY_CHAR8_T c) { return int(c); });
+
+    SUBCASE("as rule")
+    {
+        constexpr auto rule = id;
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace == test_trace().expected_char_class(0, "digit.hex").cancel());
+
+        auto capital_A = LEXY_VERIFY("041");
+        CHECK(capital_A.status == test_result::success);
+        CHECK(capital_A.value == 0x41);
+        CHECK(capital_A.trace == test_trace().token("digits", "041"));
+
+        auto non_ascii = LEXY_VERIFY("0E0");
+        CHECK(non_ascii.status == test_result::success);
+        CHECK(non_ascii.value == 0xE0);
+        CHECK(non_ascii.trace == test_trace().token("digits", "0E0"));
+
+        auto extra_digits = LEXY_VERIFY("0001");
+        CHECK(extra_digits.status == test_result::success);
+        CHECK(extra_digits.value == 0);
+        CHECK(extra_digits.trace == test_trace().token("digits", "000"));
+
+        auto overflow = LEXY_VERIFY("ABC");
+        CHECK(overflow.status == test_result::recovered_error);
+        CHECK(overflow.value == 0xAB);
+        CHECK(overflow.trace
+              == test_trace().token("digits", "ABC").error(0, 3, "invalid code unit"));
+    }
+    SUBCASE("as branch")
+    {
+        constexpr auto rule = dsl::if_(id);
+
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == 0);
+        CHECK(empty.trace == test_trace());
+
+        auto capital_A = LEXY_VERIFY("041");
+        CHECK(capital_A.status == test_result::success);
+        CHECK(capital_A.value == 0x41);
+        CHECK(capital_A.trace == test_trace().token("digits", "041"));
+
+        auto non_ascii = LEXY_VERIFY("0E0");
+        CHECK(non_ascii.status == test_result::success);
+        CHECK(non_ascii.value == 0xE0);
+        CHECK(non_ascii.trace == test_trace().token("digits", "0E0"));
+
+        auto extra_digits = LEXY_VERIFY("0001");
+        CHECK(extra_digits.status == test_result::success);
+        CHECK(extra_digits.value == 0);
+        CHECK(extra_digits.trace == test_trace().token("digits", "000"));
+
+        auto overflow = LEXY_VERIFY("ABC");
+        CHECK(overflow.status == test_result::recovered_error);
+        CHECK(overflow.value == 0xAB);
+        CHECK(overflow.trace
+              == test_trace().token("digits", "ABC").error(0, 3, "invalid code unit"));
+    }
+}
+
