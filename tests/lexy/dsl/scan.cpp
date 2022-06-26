@@ -119,6 +119,27 @@ struct recursive_scan : lexy::scan_production<int>, test_production
         }
     }
 };
+
+struct token : lexy::token_production
+{
+    static constexpr auto name = "token";
+
+    static constexpr auto whitespace = dsl::lit_c<'-'>;
+    static constexpr auto rule       = LEXY_LIT("abc");
+    static constexpr auto value      = lexy::forward<void>;
+};
+
+struct whitespace_scan : lexy::scan_production<void>, test_production
+{
+    static constexpr auto whitespace = dsl::lit_c<'+'>;
+
+    template <typename Reader, typename Context>
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>& scanner)
+    {
+        // The scanner needs to skip whitespace here!
+        return scanner.parse(token{});
+    }
+};
 } // namespace
 
 TEST_CASE("dsl::scan")
@@ -288,6 +309,30 @@ TEST_CASE("dsl::scan")
                      .literal(")")
                      .finish()
                      .literal(")"));
+    }
+    SUBCASE("whitespace")
+    {
+        constexpr auto callback = token_callback;
+
+        auto empty = LEXY_VERIFY_P(whitespace_scan, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().production("token").expected_literal(0, "abc", 0).cancel().cancel());
+
+        auto abc = LEXY_VERIFY_P(whitespace_scan, "abc");
+        CHECK(abc.status == test_result::success);
+        CHECK(abc.trace == test_trace().production("token").literal("abc"));
+
+        auto abc_ws = LEXY_VERIFY_P(whitespace_scan, "--abc++");
+        CHECK(abc_ws.status == test_result::success);
+        // clang-format off
+        CHECK(abc_ws.trace == test_trace()
+                .production("token")
+                    .whitespace("--")
+                    .literal("abc")
+                    .finish()
+                .whitespace("++"));
+        // clang-format on
     }
 }
 

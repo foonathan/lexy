@@ -288,23 +288,45 @@ public:
         // Directly create a child context from the production context.
         auto& root_context = static_cast<Derived&>(*this).context();
         auto  context      = _detail::spc_child(root_context, root_context.sub_context(production));
+        if (_state == _state_failed)
+            return scan_result(LEXY_MOV(context.value));
 
-        // We can't use an early return to get automatic return type deduction.
-        if (_state != _state_failed)
+        // We manually parse the rule of the production, so need to raise events.
+        context.on(lexy::parse_events::production_start{}, _reader.position());
+
+        if constexpr (lexy::_production_defines_whitespace<Production>)
         {
-            // We manually parse the rule of the production, so need to raise events.
-            context.on(lexy::parse_events::production_start{}, _reader.position());
-
-            using parser = lexy::parser_for<Rule, lexy::_detail::final_parser>;
-            auto success = parser::parse(context, _reader);
-            if (success)
-            {
-                context.on(lexy::parse_events::production_finish{}, _reader.position());
-            }
-            else
+            // Skip initial whitespace of the production.
+            using whitespace_parser
+                = lexy::whitespace_parser<decltype(context), lexy::pattern_parser<>>;
+            if (!whitespace_parser::parse(context, _reader))
             {
                 context.on(lexy::parse_events::production_cancel{}, _reader.position());
                 _state = _state_failed;
+                return scan_result(LEXY_MOV(context.value));
+            }
+        }
+
+        using parser = lexy::parser_for<Rule, lexy::_detail::final_parser>;
+        auto success = parser::parse(context, _reader);
+        if (!success)
+        {
+            context.on(lexy::parse_events::production_cancel{}, _reader.position());
+            _state = _state_failed;
+            return scan_result(LEXY_MOV(context.value));
+        }
+
+        context.on(lexy::parse_events::production_finish{}, _reader.position());
+
+        if constexpr (lexy::is_token_production<Production>)
+        {
+            // Skip trailing whitespace of the parent.
+            using whitespace_parser = lexy::whitespace_parser<LEXY_DECAY_DECLTYPE(root_context),
+                                                              lexy::pattern_parser<>>;
+            if (!whitespace_parser::parse(root_context, _reader))
+            {
+                _state = _state_failed;
+                return scan_result(LEXY_MOV(context.value));
             }
         }
 
