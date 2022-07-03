@@ -18,6 +18,7 @@ set(header_files
         ${include_dir}/_detail/stateless_lambda.hpp
         ${include_dir}/_detail/std.hpp
         ${include_dir}/_detail/string_view.hpp
+        ${include_dir}/_detail/swar.hpp
         ${include_dir}/_detail/tuple.hpp
         ${include_dir}/_detail/type_name.hpp
 

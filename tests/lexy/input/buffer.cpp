@@ -240,6 +240,29 @@ TEST_CASE("buffer")
         CHECK(reader.position() == buffer.data() + 3);
         CHECK(reader.peek() == lexy::ascii_encoding::eof());
     }
+    SUBCASE("reader, sentinel, swar")
+    {
+        REQUIRE(sizeof(lexy::_detail::swar_int) == 8);
+
+        const char str[]
+            = {'\x00', '\x11', '\x22', '\x33', '\x44', '\x55', '\x66', '\x77', '\x88', '\x99'};
+        const lexy::buffer<lexy::utf8_encoding> buffer(str, sizeof(str));
+
+        auto reader = buffer.reader();
+        CHECK(reader.position() == buffer.data());
+        CHECK(reader.peek() == 0x00);
+        CHECK(reader.peek_swar() == 0x7766554433221100);
+
+        reader.bump_swar();
+        CHECK(reader.position() == buffer.data() + 8);
+        CHECK(reader.peek() == 0x88);
+        CHECK(reader.peek_swar() == 0xFFFFFFFFFFFF9988);
+
+        reader.bump_swar();
+        CHECK(reader.position() == buffer.data() + 16);
+        CHECK(reader.peek() == 0xFF);
+        CHECK(reader.peek_swar() == 0xFFFFFFFFFFFFFFFF);
+    }
 }
 
 TEST_CASE("make_buffer_from_raw")

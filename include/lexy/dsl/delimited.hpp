@@ -223,7 +223,7 @@ struct _escape_base
 template <typename Open, typename Close, typename Limit = void>
 struct _delim_dsl
 {
-    /// Add literal tokens that will limit the delimited to detect a missing terminator.
+    /// Add char classes that will limit the delimited to detect a missing terminator.
     template <typename LimitCharClass>
     constexpr auto limit(LimitCharClass) const
     {
@@ -231,7 +231,7 @@ struct _delim_dsl
 
         return _delim_dsl<Open, Close, LimitCharClass>{};
     }
-    /// Add literal tokens that will limit the delimited and specify the error.
+    /// Add char classes that will limit the delimited and specify the error.
     template <typename Error, typename LimitCharClass>
     constexpr auto limit(LimitCharClass) const
     {

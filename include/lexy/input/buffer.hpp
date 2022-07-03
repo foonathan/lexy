@@ -6,6 +6,7 @@
 
 #include <cstring>
 #include <lexy/_detail/memory_resource.hpp>
+#include <lexy/_detail/swar.hpp>
 #include <lexy/error.hpp>
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
@@ -14,7 +15,7 @@ namespace lexy
 {
 // The reader used by the buffer if it can use a sentinel.
 template <typename Encoding>
-class _br
+class _br : public _detail::swar_reader_base<_br<Encoding>>
 {
 public:
     using encoding = Encoding;
@@ -129,7 +130,8 @@ public:
     : _resource(resource), _size(size)
     {
         _data = allocate(size);
-        std::memcpy(_data, data, size * sizeof(char_type));
+        if (size > 0)
+            std::memcpy(_data, data, size * sizeof(char_type));
     }
     explicit buffer(const char_type* begin, const char_type* end,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
@@ -176,7 +178,9 @@ public:
             return;
 
         if constexpr (_has_sentinel)
-            _resource->deallocate(_data, (_size + 1) * sizeof(char_type), alignof(char_type));
+            _resource->deallocate(_data,
+                                  _detail::round_size_for_swar(_size + 1) * sizeof(char_type),
+                                  alignof(char_type));
         else
             _resource->deallocate(_data, _size * sizeof(char_type), alignof(char_type));
     }
@@ -236,13 +240,21 @@ private:
     char_type* allocate(std::size_t size) const
     {
         if constexpr (_has_sentinel)
-            ++size;
+        {
+            auto mem_size = _detail::round_size_for_swar(size + 1);
+            auto memory   = static_cast<char_type*>(
+                _resource->allocate(mem_size * sizeof(char_type), alignof(char_type)));
 
-        auto memory = static_cast<char_type*>(
-            _resource->allocate(size * sizeof(char_type), alignof(char_type)));
-        if constexpr (_has_sentinel)
-            memory[size - 1] = encoding::eof();
-        return memory;
+            for (auto ptr = memory + size; ptr != memory + mem_size; ++ptr)
+                *ptr = encoding::eof();
+
+            return memory;
+        }
+        else
+        {
+            return static_cast<char_type*>(
+                _resource->allocate(size * sizeof(char_type), alignof(char_type)));
+        }
     }
 
     LEXY_EMPTY_MEMBER _detail::memory_resource_ptr<MemoryResource> _resource;
