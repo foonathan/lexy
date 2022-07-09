@@ -3,6 +3,7 @@ header: "lexy/input/buffer.hpp"
 entities:
   "lexy::buffer": buffer
   "lexy::make_buffer_from_raw": make_buffer_from_raw
+  "lexy::make_buffer_from_input": make_buffer_from_input
   "lexy::buffer_lexeme": typedefs
   "lexy::buffer_error": typedefs
   "lexy::buffer_error_context": typedefs
@@ -192,6 +193,27 @@ but reinterpreted as code units of the specified {{% encoding %}} and in the spe
   Then behaves like the other overload.
 
 {{% godbolt-example "make_buffer" "Treat a memory mapped file as little endian UTF-16" %}}
+
+[#make_buffer_from_input]
+== Function `lexy::make_buffer_from_input`
+
+{{% interface %}}
+----
+namespace lexy
+{
+    template <_input_ Input, typename MemoryResource = _default-resource_>
+    auto make_buffer_from_input(const Input& input, MemoryResource* resource = _default-resource_)
+      -> buffer<_encoding-of-input_<Input>, MemoryResource>;
+}
+----
+
+[.lead]
+Returns a buffer that contains the same characters as the specified input.
+
+The result is a copy of the existing input allocated using the specified resource.
+
+NOTE: Using a buffer as input as opposed can make parsing more efficient,
+as lexy can use specialized algorithms that exploit guarantees the buffer makes.
 
 [#typedefs]
 == Convenience typedefs

@@ -406,6 +406,46 @@ struct _make_buffer<utf32_encoding, encoding_endianness::bom>
 template <typename Encoding, encoding_endianness Endianness>
 constexpr auto make_buffer_from_raw = _make_buffer<Encoding, Endianness>{};
 
+//=== make_buffer_from_input ===//
+template <typename Input>
+using _detect_input_data = decltype(LEXY_DECLVAL(Input&).data());
+
+template <typename Input, typename MemoryResource = void>
+constexpr auto make_buffer_from_input(const Input&    input,
+                                      MemoryResource* resource
+                                      = _detail::get_memory_resource<MemoryResource>())
+    -> buffer<typename input_reader<Input>::encoding, MemoryResource>
+{
+    using type = buffer<typename input_reader<Input>::encoding, MemoryResource>;
+    if constexpr (_detail::is_detected<_detect_input_data, Input>)
+    {
+        return type(input.data(), input.size(), resource);
+    }
+    else
+    {
+        auto reader = input.reader();
+        auto begin  = reader.position();
+        while (reader.peek() != input_reader<Input>::encoding::eof())
+            reader.bump();
+        auto end = reader.position();
+
+        if constexpr (std::is_pointer_v<decltype(begin)>)
+        {
+            return type(begin, end, resource);
+        }
+        else
+        {
+            auto                   size = _detail::range_size(begin, end);
+            typename type::builder builder(size, resource);
+            auto                   dest = builder.data();
+            for (auto cur = begin; cur != end; ++cur)
+                *dest++ = *cur; // NOLINT: clang-analyzer thinks this might access zero memory for
+                                // some reason?!
+            return LEXY_MOV(builder).finish();
+        }
+    }
+}
+
 //=== convenience typedefs ===//
 template <typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
