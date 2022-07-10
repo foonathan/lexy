@@ -9,4 +9,5 @@ FetchContent_MakeAvailable(nanobench)
 
 add_subdirectory(json)
 add_subdirectory(file)
+add_subdirectory(swar)
 

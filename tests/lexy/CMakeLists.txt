@@ -10,6 +10,7 @@ set(tests
         detail/stateless_lambda.cpp
         detail/std.cpp
         detail/string_view.cpp
+        detail/swar.cpp
         detail/tuple.cpp
         detail/type_name.cpp
 

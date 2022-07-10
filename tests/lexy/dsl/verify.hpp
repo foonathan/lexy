@@ -10,6 +10,7 @@
 #include <lexy/callback/adapter.hpp>
 #include <lexy/callback/fold.hpp>
 #include <lexy/dsl/any.hpp>
+#include <lexy/input/buffer.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/token.hpp>
 #include <lexy/visualize.hpp>
@@ -558,9 +559,27 @@ test_result verify(const Input& input, Callback cb)
         return parser.end;
     }()));
 
-    test_handler<Input, Callback> handler(input, cb);
-    auto                          reader = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
+    auto result = [&] {
+        test_handler<Input, Callback> handler(input, cb);
+        auto                          reader = input.reader();
+        return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
+    }();
+
+    if constexpr (std::is_pointer_v<decltype(input.reader().position())>)
+    {
+        auto buffer        = lexy::make_buffer_from_input(input);
+        auto buffer_result = [&] {
+            test_handler<decltype(buffer), Callback> handler(buffer, cb);
+            auto                                     reader = buffer.reader();
+            return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
+        }();
+
+        REQUIRE(result.status == buffer_result.status);
+        REQUIRE(result.value == buffer_result.value);
+        REQUIRE(result.trace == buffer_result.trace);
+    }
+
+    return result;
 }
 
 template <typename Rule, typename Input, typename Callback>

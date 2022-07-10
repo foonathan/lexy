@@ -29,5 +29,8 @@ LEXY_INSTANTIATE_SUBGRAMMAR(
     test_action<lexy::string_input<>, int (*)(const char*, lexy_subgrammar_test::production*)>)
 LEXY_INSTANTIATE_SUBGRAMMAR(
     lexy_subgrammar_test::production,
+    test_action<lexy::buffer<>, int (*)(const char*, lexy_subgrammar_test::production*)>)
+LEXY_INSTANTIATE_SUBGRAMMAR(
+    lexy_subgrammar_test::production,
     lexy::parse_action<void, lexy::string_input<>, LEXY_DECAY_DECLTYPE(lexy::noop)>)
 
