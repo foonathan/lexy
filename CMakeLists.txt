@@ -7,6 +7,10 @@ project(lexy VERSION 2022.05.0 LANGUAGES CXX)
 set(LEXY_USER_CONFIG_HEADER "" CACHE FILEPATH "The user config header for lexy.")
 option(LEXY_FORCE_CPP17     "Whether or not lexy should use C++17 even if compiler supports C++20." OFF)
 
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_LIST_DIR}/cmake
+)
+
 add_subdirectory(src)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -16,6 +20,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(LEXY_BUILD_TESTS      "whether or not tests should be built" ON)
     option(LEXY_BUILD_DOCS       "whether or not docs should be built" OFF)
     option(LEXY_BUILD_PACKAGE    "whether or not the package should be built" ON)
+    option(LEXY_ENABLE_INSTALL   "whether or not to enable the install rule" ON)
 
     if(LEXY_BUILD_PACKAGE)
         set(package_files include/ src/ CMakeLists.txt LICENSE)
@@ -33,6 +38,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         add_subdirectory(benchmarks)
     endif()
     if(LEXY_BUILD_TESTS)
+        set(DOCTEST_NO_INSTALL ON)
         enable_testing()
         add_subdirectory(tests)
     endif()
@@ -41,3 +47,49 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     endif()
 endif()
 
+if(LEXY_ENABLE_INSTALL)
+
+    include(CMakePackageConfigHelpers)
+    include(GNUInstallDirs)
+
+    install(TARGETS lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
+        EXPORT ${PROJECT_NAME}Targets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    # install as a subdirectory only
+    install(EXPORT ${PROJECT_NAME}Targets
+        NAMESPACE foonathan::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
+
+    configure_package_config_file(
+        cmake/lexyConfig.cmake.in
+        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
+    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
+
+    write_basic_package_version_file(
+      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+      COMPATIBILITY AnyNewerVersion
+    )
+
+    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
+
+    install(
+        DIRECTORY 
+            include/lexy 
+            include/lexy_ext
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+          PATTERN "*.hpp"
+    )
+
+endif() # LEXY_ENABLE_INSTALL
