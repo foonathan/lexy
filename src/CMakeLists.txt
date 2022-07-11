@@ -179,10 +179,10 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # GCC's arry bounds, maybe uninitialized, and restrict warning seems to have false positives.
     target_compile_options(lexy_dev INTERFACE -Wno-array-bounds -Wno-maybe-uninitialized -Wno-restrict)
 elseif(MSVC)
-    target_compile_options(lexy_dev INTERFACE /WX /W3 /EHsc /D _CRT_SECURE_NO_WARNINGS /wd5105)
+    target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105)
 endif()
 
-# Link to have FILE I/O. 
+# Link to have FILE I/O.
 add_library(lexy_file STATIC)
 add_library(foonathan::lexy::file ALIAS lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
