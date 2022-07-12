@@ -148,13 +148,19 @@ endif()
 add_library(lexy_core INTERFACE)
 add_library(foonathan::lexy::core ALIAS lexy_core)
 target_link_libraries(lexy_core INTERFACE _lexy_base)
-target_include_directories(lexy_core SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_include_directories(lexy_core SYSTEM INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
 
 # Core library with warnings; for development only.
 add_library(lexy_dev INTERFACE)
 add_library(foonathan::lexy::dev ALIAS lexy_dev)
 target_link_libraries(lexy_dev INTERFACE _lexy_base)
-target_include_directories(lexy_dev INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_include_directories(lexy_dev INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
@@ -177,7 +183,7 @@ elseif(MSVC)
 endif()
 
 # Link to have FILE I/O.
-add_library(lexy_file)
+add_library(lexy_file STATIC)
 add_library(foonathan::lexy::file ALIAS lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
 target_sources(lexy_file PRIVATE input/file.cpp)
