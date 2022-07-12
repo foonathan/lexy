@@ -41,51 +41,50 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     if(LEXY_BUILD_DOCS)
         add_subdirectory(docs EXCLUDE_FROM_ALL)
     endif()
+
+    if(LEXY_ENABLE_INSTALL)
+
+        include(CMakePackageConfigHelpers)
+        include(GNUInstallDirs)
+
+        install(TARGETS lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
+            EXPORT ${PROJECT_NAME}Targets
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
+
+        install(EXPORT ${PROJECT_NAME}Targets
+            NAMESPACE foonathan::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )
+
+        configure_package_config_file(
+            cmake/lexyConfig.cmake.in
+            "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )
+        install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )
+
+        write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        COMPATIBILITY AnyNewerVersion
+        )
+
+        install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )
+
+        install(
+            DIRECTORY
+                include/lexy
+                include/lexy_ext
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            FILES_MATCHING
+            PATTERN "*.hpp"
+        )
+
+    endif() # LEXY_ENABLE_INSTALL
 endif()
-
-if(LEXY_ENABLE_INSTALL)
-
-    include(CMakePackageConfigHelpers)
-    include(GNUInstallDirs)
-
-    install(TARGETS lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
-        EXPORT ${PROJECT_NAME}Targets
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
-
-    # install as a subdirectory only
-    install(EXPORT ${PROJECT_NAME}Targets
-        NAMESPACE foonathan::
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    )
-
-    configure_package_config_file(
-        cmake/lexyConfig.cmake.in
-        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    )
-    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    )
-
-    write_basic_package_version_file(
-      "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-      COMPATIBILITY AnyNewerVersion
-    )
-
-    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-      DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    )
-
-    install(
-        DIRECTORY 
-            include/lexy 
-            include/lexy_ext
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING
-          PATTERN "*.hpp"
-    )
-
-endif() # LEXY_ENABLE_INSTALL

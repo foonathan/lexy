@@ -148,18 +148,18 @@ endif()
 add_library(lexy_core INTERFACE)
 add_library(foonathan::lexy::core ALIAS lexy_core)
 target_link_libraries(lexy_core INTERFACE _lexy_base)
-target_include_directories(lexy_core SYSTEM INTERFACE 
+target_include_directories(lexy_core SYSTEM INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>    
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
 # Core library with warnings; for development only.
 add_library(lexy_dev INTERFACE)
 add_library(foonathan::lexy::dev ALIAS lexy_dev)
 target_link_libraries(lexy_dev INTERFACE _lexy_base)
-target_include_directories(lexy_dev INTERFACE 
+target_include_directories(lexy_dev INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>    
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
