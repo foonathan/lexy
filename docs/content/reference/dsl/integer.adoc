@@ -29,9 +29,13 @@ namespace lexy
 
     template <typename T>
     struct unbounded {};
-
     template <typename T>
     struct integer_traits<unbounded<T>> { … };
+
+    template <typename T, T Max>
+    struct bounded {};
+    template <typename T, T Max>
+    struct integer_traits<bounded<T, Max>> { … };
 }
 ----
 
@@ -80,8 +84,13 @@ struct _integer-traits-bounded-specialization_
 
 The integer traits are specialized for the built-in integral types (except `bool`) with the expected semantics,
 as well as {{% docref "lexy::code_point" %}}.
+
 The specialization for `lexy::unbounded<T>` behaves the same as the one for plain `T`,
-except that `is_bounded == false`.
+except that `is_bounded == false`:
+Integer overflow can happen and has the usual C++ semantics (UB for signed, wrapping for unsigned).
+
+The specialization for `lexy::bounded<T, Max>` behaves the same as the one for plain `T`, except that the maximal accepted integer value has been lowered to `Max` instead of `std::numeric_limits<T>:::max()`.
+Everything greater than `Max` is considered to be overflow.
 
 TIP: Use `lexy::unbounded<T>` when you know that overflow is impossible,
 e.g. because you're parsing two hexadecimal digits as an `unsigned char`.

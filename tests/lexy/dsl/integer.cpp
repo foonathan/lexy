@@ -219,6 +219,23 @@ TEST_CASE("_integer_parser")
         CHECK(parse_int(parser, "1'2'3") == 123);
         CHECK(parse_int(parser, "0'0'0'0'0'0'1'2'3") == 123);
     }
+    SUBCASE("base 10, bounded")
+    {
+        constexpr auto parser
+            = dsl::_integer_parser<lexy::bounded<std::uint8_t, 42>, dsl::decimal, false>{};
+
+        for (auto i = 0; i <= 42; ++i)
+            CHECK(parse_int(parser, std::to_string(i).c_str()) == i);
+        for (auto i = 43; i < 512; ++i)
+            CHECK(!parse_int(parser, std::to_string(i).c_str()).success);
+
+        CHECK(parse_int(parser, "000000000000") == 0);
+        CHECK(parse_int(parser, "00000000000042") == 42);
+        CHECK(!parse_int(parser, "00000000000043").success);
+
+        CHECK(parse_int(parser, "1'2") == 12);
+        CHECK(parse_int(parser, "0'0'0'0'0'0'1'2") == 12);
+    }
 
     SUBCASE("base 16, uint8_t")
     {

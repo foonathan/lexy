@@ -7,6 +7,7 @@
 * Add `lexy::lexeme_input` to support multi-pass parsing.
 * Turn `dsl::terminator(term)(branch)` into a branch rule, as opposed to being a plain rule (#74).
 * Add `dsl::ignore_trailing_sep()` separator.
+* Add `lexy::bounded<T, Max>` for bounded integer parsing (#72).
 * Add `dsl::code_unit_id` rule.
 * Turn `lexy::forward<void>` into a sink.
 * Support references in `lexy::parse_result` and `lexy::scan_result`
