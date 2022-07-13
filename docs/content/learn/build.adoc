@@ -147,8 +147,11 @@ Docs can be build by two targets:
 `lexy_docs`::
   This will compile the docs into `docs/public`.
 
-=== Packaging
+=== Packaging and installing
 
 lexy also exposes a custom target `lexy_package`.
 It will create a file `lexy-src.zip` in the build directory containing all source files necessary for downstream users to use lexy.
+
+As subdirectory and if `LEXY_ENABLE_INSTALL` the library can be installed using https://cmake.org/cmake/help/latest/manual/cmake.1.html#install-a-project[`cmake --install`].
+This will include the header files, the `foonathan::lexy::file` library and CMake code to enable `find_package()`.
 
