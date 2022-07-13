@@ -14,11 +14,7 @@ Other compilers may work as well.
 The recommended way to integrate lexy is using https://cmake.org/cmake/help/latest/module/FetchContent.html[`FetchContent`].
 This will automatically download the library and make it available in your CMake project.
 
-```cmake
-include(FetchContent)
-FetchContent_Declare(lexy URL https://lexy.foonathan.net/download/lexy-src.zip)
-FetchContent_MakeAvailable(lexy)
-```
+{{% release_selection %}}
 
 lexy will detect when it is used via `FetchContent` (or `add_subdirectory`) and automatically disable project infrastructure like tests or examples.
 It exposes the following targets:

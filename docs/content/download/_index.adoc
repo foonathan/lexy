@@ -9,5 +9,5 @@ menu:
 
 For build instructions, read link:{{< relref "learn/build" >}}[the tutorial].
 
-{{% download_list %}}
+{{% release_list %}}
 
