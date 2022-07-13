@@ -43,7 +43,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     endif()
 
     if(LEXY_ENABLE_INSTALL)
-
         include(CMakePackageConfigHelpers)
         include(GNUInstallDirs)
 
@@ -51,40 +50,30 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
             EXPORT ${PROJECT_NAME}Targets
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        )
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
         install(EXPORT ${PROJECT_NAME}Targets
             NAMESPACE foonathan::
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-        )
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
         configure_package_config_file(
             cmake/lexyConfig.cmake.in
             "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-        )
+            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
         install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-        )
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
+        # YYYY.MM.N1 is compatible with YYYY.MM.N2.
         write_basic_package_version_file(
-        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        COMPATIBILITY AnyNewerVersion
-        )
+            "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+            COMPATIBILITY SameMinorVersion)
 
         install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-        )
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
-        install(
-            DIRECTORY
-                include/lexy
-                include/lexy_ext
+        install(DIRECTORY include/lexy include/lexy_ext
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING
-            PATTERN "*.hpp"
-        )
-
-    endif() # LEXY_ENABLE_INSTALL
+            PATTERN "*.hpp")
+    endif()
 endif()
