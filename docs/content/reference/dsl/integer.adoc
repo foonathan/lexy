@@ -4,11 +4,12 @@ entities:
   "lexy::integer_traits": integer_traits
   "lexy::dsl::integer": integer
   "lexy::dsl::code_point_id": code_point_id
+  "lexy::dsl::code_unit_id": code_unit_id
 ---
 :toc: left
 
 [.lead]
-The `integer` and `code_point_id` rules.
+The `integer`, `code_point_id` and `code_unit_id` rules.
 
 [#integer_traits]
 == `lexy::integer_traits`

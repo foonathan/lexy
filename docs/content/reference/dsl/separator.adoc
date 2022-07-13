@@ -4,11 +4,12 @@ entities:
   "separator": doc
   "lexy::dsl::sep": sep
   "lexy::dsl::trailing_sep": trailing_sep
+  "lexy::dsl::ignore_trailing_sep": ignore_trailing_sep
 ---
 :toc: left
 
 [.lead]
-The `sep` and `trailing_sep` separators.
+The `sep`, `trailing_sep` and `ignore_trailing_sep` separators.
 
 They are used with {{% docref "lexy::dsl::times" %}} and {{% docref "lexy::dsl::list" %}} (and variants thereof) and are not actually rules themselves.
 
