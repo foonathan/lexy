@@ -7,7 +7,7 @@ menu:
     weight: 4
 ---
 
-For build instructions, read link:{{< ref "learn/build" >}}[the tutorial].
+For build instructions, read link:{{< relref "learn/build" >}}[the tutorial].
 
 {{% download_list %}}
 

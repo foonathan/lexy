@@ -11,15 +11,15 @@ New to lexy? Start here.
 
 ## Getting started
 
-1. link:{{< ref "learn/build" >}}[Building lexy and integrating it in your own projects]
-2. link:{{< ref "learn/warmup" >}}[Warming up -- the first parser]
-3. link:{{< ref "learn/branching" >}}[Branching, backtracking and making decisions -- lexy is not declarative]
-4. link:{{< ref "learn/walkthrough" >}}[Walkthrough -- parser for custom package format]
+1. link:{{< relref "learn/build" >}}[Building lexy and integrating it in your own projects]
+2. link:{{< relref "learn/warmup" >}}[Warming up -- the first parser]
+3. link:{{< relref "learn/branching" >}}[Branching, backtracking and making decisions -- lexy is not declarative]
+4. link:{{< relref "learn/walkthrough" >}}[Walkthrough -- parser for custom package format]
 
 ## Development
 
-* link:{{< ref "learn/changelog" >}}[Changelog]
-* link:{{< ref "learn/versioning" >}}[Versioning and compatibility policy]
+* link:{{< relref "learn/changelog" >}}[Changelog]
+* link:{{< relref "learn/versioning" >}}[Versioning and compatibility policy]
 
 ## Need more help?
 

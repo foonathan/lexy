@@ -38,7 +38,7 @@ struct PackageConfig
 
 The full source code can be found at {{< github-example config >}}.
 
-Following the three steps outlined in the {{< ref "learn/warmup" >}}[warmup], our program has the following structure:
+Following the three steps outlined in the {{< relref "learn/warmup" >}}[warmup], our program has the following structure:
 
 [source,cpp]
 ----
@@ -174,7 +174,7 @@ struct version
 
 Let's also allow the special value `unreleased` as an alternate spelling for `0.0.0`.
 For that, we need to use a {{% docref choice %}} between the previous `dsl::times` rule and {{% docref "LEXY_LIT" %}}`("unreleased")`.
-As discussed in the {{< ref "learn/branching" >}}[branching tutorial], we need to use {{% branch-rule %}}s to let lexy know how to make a decision.
+As discussed in the {{< relref "learn/branching" >}}[branching tutorial], we need to use {{% branch-rule %}}s to let lexy know how to make a decision.
 Luckily, `LEXY_LIT` is already a branch rule, so we can turn the number part into one by using {{% docref "lexy::dsl::else_" %}}:
 
 [source,cpp]
@@ -279,7 +279,7 @@ Like {{% docref "lexy::dsl::times" %}}, we can also specify a separator, in whic
 
 However, as the list here is surrounded by square brackets, we can use `.list()` of {{% docref "lexy::dsl::square_bracketed" %}} instead.
 It is a special case of the generic {{% docref "lexy::dsl::brackets" %}}, which in turn is a wrapper over {{% docref "lexy::dsl::terminator" %}}.
-As discussed in the {{< ref "learn/branching" >}}[tutorial about branching], they allow parsing things without requiring a branch condition.
+As discussed in the {{< relref "learn/branching" >}}[tutorial about branching], they allow parsing things without requiring a branch condition.
 
 [source,cpp]
 ----
