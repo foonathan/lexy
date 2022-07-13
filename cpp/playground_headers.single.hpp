@@ -16641,6 +16641,30 @@ struct integer_traits<unbounded<T>>
         integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
     }
 };
+
+template <typename T, T Max>
+struct bounded
+{};
+template <typename T, T Max>
+struct integer_traits<bounded<T, Max>>
+{
+    using type                       = typename integer_traits<T>::type;
+    static constexpr auto is_bounded = true;
+
+    template <int Radix>
+    static constexpr std::size_t max_digit_count = _digit_count(Radix, Max);
+
+    template <int Radix>
+    static constexpr void add_digit_unchecked(type& result, unsigned digit)
+    {
+        integer_traits<T>::template add_digit_unchecked<Radix>(result, digit);
+    }
+    template <int Radix>
+    static constexpr bool add_digit_checked(type& result, unsigned digit)
+    {
+        return integer_traits<T>::template add_digit_checked<Radix>(result, digit) && result <= Max;
+    }
+};
 } // namespace lexy
 
 namespace lexy
