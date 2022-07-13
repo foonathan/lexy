@@ -1,6 +1,6 @@
 = Changelog
 
-== Upcoming
+== Release 2022.05.1
 
 * Change `dsl::scan`: it will now be invoked with the previously produced values.
 * Add `dsl::parse_as` to ensure that a rule always produces a value (e.g. when combined with the `dsl::scan` change above).
