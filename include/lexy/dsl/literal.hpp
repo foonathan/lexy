@@ -8,8 +8,56 @@
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/_detail/iterator.hpp>
 #include <lexy/_detail/nttp_string.hpp>
+#include <lexy/_detail/swar.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
+
+//=== lit_matcher ===//
+namespace lexy::_detail
+{
+template <std::size_t CurCharIndex, typename CharT, CharT... Cs, typename Reader>
+constexpr auto match_literal(Reader& reader)
+{
+    using char_type = typename Reader::encoding::char_type;
+    if constexpr (CurCharIndex >= sizeof...(Cs))
+    {
+        (void)reader;
+        return std::true_type{};
+    }
+    // We only use SWAR if the reader supports it and we have enough to fill at least one.
+    else if constexpr (is_swar_reader<Reader> && sizeof...(Cs) >= swar_length<char_type>)
+    {
+        // Try and pack as many characters into a swar as possible, starting at the current
+        // index.
+        constexpr auto pack = swar_pack<CurCharIndex>(transcode_char<char_type>(Cs)...);
+
+        // Do a single swar comparison.
+        if ((reader.peek_swar() & pack.mask) == pack.value)
+        {
+            reader.bump_swar(pack.count);
+
+            // Recurse with the incremented index.
+            return bool(match_literal<CurCharIndex + pack.count, CharT, Cs...>(reader));
+        }
+        else
+        {
+            auto partial = swar_find_difference<CharT>(reader.peek_swar() & pack.mask, pack.value);
+            reader.bump_swar(partial);
+            return false;
+        }
+    }
+    else
+    {
+        static_assert(CurCharIndex == 0);
+
+        // Compare each code unit, bump on success, cancel on failure.
+        return ((reader.peek() == transcode_int<typename Reader::encoding>(Cs)
+                     ? (reader.bump(), true)
+                     : false)
+                && ...);
+    }
+}
+} // namespace lexy::_detail
 
 //=== lit_trie ===//
 namespace lexy::_detail
@@ -300,22 +348,9 @@ struct _lit
 
         constexpr auto try_parse(Reader reader)
         {
-            if constexpr (sizeof...(C) == 0)
-            {
-                end = reader.position();
-                return std::true_type{};
-            }
-            else
-            {
-                auto result
-                    // Compare each code unit, bump on success, cancel on failure.
-                    = ((reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>(C)
-                            ? (reader.bump(), true)
-                            : false)
-                       && ...);
-                end = reader.position();
-                return result;
-            }
+            auto result = lexy::_detail::match_literal<0, CharT, C...>(reader);
+            end         = reader.position();
+            return result;
         }
 
         template <typename Context>
@@ -404,13 +439,9 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
         {
             using encoding = typename Reader::encoding;
 
-            auto result
-                // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek() == encoding::to_int_type(_string<encoding>.data[Idx])
-                        ? (reader.bump(), true)
-                        : false)
-                   && ...);
-            end = reader.position();
+            auto result = lexy::_detail::match_literal<0, typename encoding::char_type,
+                                                       _string<encoding>.data[Idx]...>(reader);
+            end         = reader.position();
             return result;
         }
 

@@ -4,6 +4,7 @@
 #ifndef BENCHMARKS_SWAR_SWAR_HPP_INCLUDED
 #define BENCHMARKS_SWAR_SWAR_HPP_INCLUDED
 
+#include <lexy/dsl/any.hpp>
 #include <lexy/input/buffer.hpp>
 #include <nanobench.h>
 
@@ -54,6 +55,8 @@ constexpr auto disable_swar(lexy::_br<Encoding> reader)
 }
 
 lexy::buffer<lexy::utf8_encoding> random_buffer(std::size_t size, float unicode_ratio);
+
+lexy::buffer<lexy::utf8_encoding> repeat_buffer_padded(std::size_t size, const char* str);
 
 #endif // BENCHMARKS_SWAR_SWAR_HPP_INCLUDED
 

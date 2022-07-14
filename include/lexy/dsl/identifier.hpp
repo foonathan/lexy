@@ -329,7 +329,7 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
         constexpr bool try_parse(Reader reader)
         {
             // Need to match the literal.
-            if (!lexy::try_match_token(_lit<CharT, C...>{}, reader))
+            if (!lexy::_detail::match_literal<0, CharT, C...>(reader))
                 return false;
             end = reader.position();
 

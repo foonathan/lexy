@@ -55,12 +55,38 @@ lexy::buffer<lexy::utf8_encoding> random_buffer(std::size_t size, float unicode_
     }
     return LEXY_MOV(builder).finish();
 }
+lexy::buffer<lexy::utf8_encoding> repeat_buffer_padded(std::size_t size, const char* str)
+{
+    lexy::buffer<lexy::utf8_encoding>::builder builder(size);
+    for (auto i = std::size_t(0); i != size;)
+    {
+        auto remaining = size - i;
+        if (random01() >= 0.5)
+        {
+            auto length = std::size_t(random_ascii());
+            if (length > remaining)
+                length = remaining;
+            std::memset(builder.data() + i, static_cast<unsigned char>(length), length);
+            i += length;
+        }
+        else if (std::strlen(str) < remaining)
+        {
+            std::memcpy(builder.data() + i, str, std::strlen(str)); // NOLINT
+            i += std::strlen(str);
+        }
+    }
+    return LEXY_MOV(builder).finish();
+}
 
 std::size_t bm_any(ankerl::nanobench::Bench& b);
+std::size_t bm_lit(ankerl::nanobench::Bench& b);
 
-int main()
+int main(int argc, char* argv[])
 {
     ankerl::nanobench::Bench b;
-    bm_any(b);
+    if (argc == 1 || argv[1] == std::string_view("any"))
+        bm_any(b);
+    if (argc == 1 || argv[1] == std::string_view("lit"))
+        bm_lit(b);
 }
 

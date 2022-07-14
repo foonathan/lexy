@@ -146,6 +146,39 @@ TEST_CASE("dsl::lit")
         CHECK(umlaute.status == test_result::success);
         CHECK(umlaute.trace == test_trace().literal("\\u00E4\\u00F6\\u00FC"));
     }
+    SUBCASE("swar")
+    {
+        constexpr auto rule = LEXY_LIT("abcdefghijklmnopqrstuvwxyz");
+        CHECK(lexy::is_token_rule<decltype(rule)>);
+        CHECK(lexy::is_literal_rule<decltype(rule)>);
+
+        auto empty = LEXY_VERIFY(lexy::utf8_encoding{}, LEXY_CHAR8_STR(""));
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace().expected_literal(0, "abcdefghijklmnopqrstuvwxyz", 0).cancel());
+
+        auto partial = LEXY_VERIFY(lexy::utf8_encoding{}, LEXY_CHAR8_STR("abcdefghij"));
+        CHECK(partial.status == test_result::fatal_error);
+        CHECK(partial.trace
+              == test_trace()
+                     .error_token("abcdefghij")
+                     .expected_literal(0, "abcdefghijklmnopqrstuvwxyz", 10)
+                     .cancel());
+
+        auto partial_wrong
+            = LEXY_VERIFY(lexy::utf8_encoding{}, LEXY_CHAR8_STR("abcdefghijKLMNOPQRSTUVWXYZ"));
+        CHECK(partial_wrong.status == test_result::fatal_error);
+        CHECK(partial_wrong.trace
+              == test_trace()
+                     .error_token("abcdefghij")
+                     .expected_literal(0, "abcdefghijklmnopqrstuvwxyz", 10)
+                     .cancel());
+
+        auto success
+            = LEXY_VERIFY(lexy::utf8_encoding{}, LEXY_CHAR8_STR("abcdefghijklmnopqrstuvwxyz"));
+        CHECK(success.status == test_result::success);
+        CHECK(success.trace == test_trace().literal("abcdefghijklmnopqrstuvwxyz"));
+    }
 }
 
 TEST_CASE("dsl::lit_cp")

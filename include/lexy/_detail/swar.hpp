@@ -10,8 +10,13 @@
 #include <lexy/_detail/config.hpp>
 #include <lexy/input/base.hpp>
 
+#if defined(_MSC_VER)
+#    include <intrin.h>
+#endif
+
 namespace lexy::_detail
 {
+// Contains the chars in little endian order; rightmost bits are first char.
 using swar_int = std::uintmax_t;
 
 // The number of chars that can fit into one SWAR.
@@ -20,6 +25,9 @@ constexpr auto swar_length = [] {
     static_assert(sizeof(CharT) < sizeof(swar_int) && sizeof(swar_int) % sizeof(CharT) == 0);
     return sizeof(swar_int) / sizeof(CharT);
 }();
+
+template <typename CharT>
+constexpr auto char_bit_size = sizeof(CharT) * CHAR_BIT;
 
 // Returns a swar_int filled with the specific char.
 template <typename CharT>
@@ -30,10 +38,89 @@ constexpr swar_int swar_fill(CharT _c)
     auto result = swar_int(0);
     for (auto i = 0u; i != swar_length<CharT>; ++i)
     {
-        result <<= sizeof(CharT) * CHAR_BIT;
+        result <<= char_bit_size<CharT>;
         result |= c;
     }
     return result;
+}
+
+constexpr void _swar_pack(swar_int&, int) {}
+template <typename H, typename... T>
+constexpr void _swar_pack(swar_int& result, int index, H h, T... t)
+{
+    if (std::size_t(index) == char_bit_size<swar_int>)
+        return;
+
+    if (index >= 0)
+        result |= swar_int(std::make_unsigned_t<H>(h)) << index;
+
+    _swar_pack(result, index + int(char_bit_size<H>), t...);
+}
+
+template <typename CharT>
+struct swar_pack_result
+{
+    swar_int    value;
+    swar_int    mask;
+    std::size_t count;
+
+    constexpr CharT operator[](std::size_t idx) const
+    {
+        constexpr auto mask = (swar_int(1) << char_bit_size<CharT>)-1;
+        return (value >> idx * char_bit_size<CharT>)&mask;
+    }
+};
+
+// Returns a swar_int containing the specified characters.
+// If more are provided than fit, will only take the first couple ones.
+template <int SkipFirstNChars = 0, typename... CharT>
+constexpr auto swar_pack(CharT... cs)
+{
+    using char_type = std::common_type_t<CharT...>;
+    swar_pack_result<char_type> result{0, 0, 0};
+
+    _swar_pack(result.value, -SkipFirstNChars * int(char_bit_size<char_type>), cs...);
+
+    auto count = int(sizeof...(CharT)) - SkipFirstNChars;
+    if (count <= 0)
+    {
+        result.mask  = 0;
+        result.count = 0;
+    }
+    else if (count >= int(swar_length<char_type>))
+    {
+        result.mask  = swar_int(-1);
+        result.count = swar_length<char_type>;
+    }
+    else
+    {
+        result.mask  = swar_int(swar_int(1) << count * int(char_bit_size<char_type>)) - 1;
+        result.count = std::size_t(count);
+    }
+
+    return result;
+}
+
+// Returns the index of the char that is different between lhs and rhs.
+template <typename CharT>
+constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
+{
+    if (lhs == rhs)
+        return swar_length<CharT>;
+
+    auto mask = lhs ^ rhs;
+
+#if defined(__GNUC__)
+    auto bit_idx = __builtin_ctzll(mask);
+#elif defined(_MSC_VER)
+    unsigned long bit_idx;
+    if (!_BitScanForward64(&bit_idx, mask))
+        bit_idx         = 64;
+#else
+#    error "unsupported compiler; please file an issue"
+#endif
+
+    return std::size_t(bit_idx) / char_bit_size<CharT>;
 }
 } // namespace lexy::_detail
 
@@ -70,7 +157,13 @@ public:
     void bump_swar()
     {
         auto ptr = static_cast<Derived&>(*this).position();
-        ptr += sizeof(swar_int);
+        ptr += swar_length<typename Derived::encoding::char_type>;
+        static_cast<Derived&>(*this).set_position(ptr);
+    }
+    void bump_swar(std::size_t char_count)
+    {
+        auto ptr = static_cast<Derived&>(*this).position();
+        ptr += char_count;
         static_cast<Derived&>(*this).set_position(ptr);
     }
 };
