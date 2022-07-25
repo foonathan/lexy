@@ -26,12 +26,12 @@ TEST_CASE("_detail::tuple")
         CHECK(std::is_same_v<decltype(tuple), lexy::_detail::tuple<int&, int&&, const int&>>);
 
         CHECK(std::is_same_v<decltype(tuple.get<0>()), int&>);
-        CHECK(std::is_same_v<decltype(tuple.get<1>()), int&>);
+        CHECK(std::is_same_v<decltype(tuple.get<1>()), int&&>);
         CHECK(std::is_same_v<decltype(tuple.get<2>()), const int&>);
 
         const auto& ctuple = tuple;
         CHECK(std::is_same_v<decltype(ctuple.get<0>()), int&>);
-        CHECK(std::is_same_v<decltype(ctuple.get<1>()), int&>);
+        CHECK(std::is_same_v<decltype(ctuple.get<1>()), int&&>);
         CHECK(std::is_same_v<decltype(ctuple.get<2>()), const int&>);
     }
 }

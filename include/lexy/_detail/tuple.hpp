@@ -32,6 +32,17 @@ struct _nth_type<0, H, T...>
     using type = H;
 };
 
+template <typename T>
+struct _tuple_get_type
+{
+    using type = T&;
+};
+template <typename T>
+struct _tuple_get_type<T&&>
+{
+    using type = T&&;
+};
+
 template <typename Indices, typename... T>
 class _tuple;
 template <std::size_t... Idx, typename... T>
@@ -59,16 +70,20 @@ struct tuple : _tuple<index_sequence_for<T...>, T...>
     using element_type = typename _nth_type<N, T...>::type;
 
     template <std::size_t N>
-    constexpr auto get() noexcept -> element_type<N>&
+    constexpr decltype(auto) get() noexcept
     {
         // NOLINTNEXTLINE: this is fine.
-        return static_cast<_tuple_holder<N, element_type<N>>&>(*this).value;
+        auto&& holder = static_cast<_tuple_holder<N, element_type<N>>&>(*this);
+        // NOLINTNEXTLINE
+        return static_cast<typename _tuple_get_type<element_type<N>>::type>(holder.value);
     }
     template <std::size_t N>
-    constexpr auto get() const noexcept -> const element_type<N>&
+    constexpr decltype(auto) get() const noexcept
     {
         // NOLINTNEXTLINE: this is fine.
-        return static_cast<const _tuple_holder<N, element_type<N>>&>(*this).value;
+        auto&& holder = static_cast<const _tuple_holder<N, element_type<N>>&>(*this);
+        // NOLINTNEXTLINE
+        return static_cast<typename _tuple_get_type<const element_type<N>>::type>(holder.value);
     }
 
     static constexpr auto index_sequence()

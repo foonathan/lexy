@@ -1,5 +1,9 @@
 = Changelog
 
+== Upcoming
+
+Fix bug where `lexy::bind` callback does not forward rvalue arguments; they got turned into lvalues instead.
+
 == Release 2022.05.1
 
 * Change `dsl::scan`: it will now be invoked with the previously produced values.

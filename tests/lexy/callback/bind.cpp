@@ -91,6 +91,14 @@ TEST_CASE("bind a callback")
         CHECK(bound(42, "123") == 42 + 3 + 1);
         CHECK(bound(42, "123", nullptr, 11) == 42 + 3 + 1);
     }
+    SUBCASE("rvalue")
+    {
+        auto bound = lexy::bind(lexy::callback<int>([](int&& i) { return i; }), lexy::_1);
+        CHECK(bound(42) == 42);
+
+        int i = 11;
+        CHECK(bound(LEXY_MOV(i)) == 11);
+    }
 }
 
 TEST_CASE("bind_sink")
