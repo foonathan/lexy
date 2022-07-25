@@ -17,6 +17,7 @@ Checks: >
     -readability-else-after-return,
     -readability-function-cognitive-complexity,
     -readability-function-size,
+    -readability-identifier-length,
     -readability-magic-numbers,
     -readability-make-member-function-const,
     -readability-misleading-indentation,
