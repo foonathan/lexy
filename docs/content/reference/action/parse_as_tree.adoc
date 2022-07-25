@@ -44,4 +44,6 @@ If a token rule has an ignorable {{% docref "lexy::token_kind" %}} and matches w
 
 The resulting parse tree is a lossless representation of the input:
 Traversing all token nodes of the tree and concatenating their {{% docref "lexy::lexeme" %}}s will yield the same input back.
+Any remaining input that was not parsed by the production is stored in the tree's `remaining_input()` {{% docref "lexy::lexeme" %}};
+if the remaining input is empty, both iterators will point to the end of the input.
 

@@ -389,11 +389,18 @@ public:
             return traverse_range(root());
     }
 
+    //=== remaining input ===//
+    lexy::lexeme<Reader> remaining_input() const noexcept
+    {
+        return _remaining_input;
+    }
+
 private:
     _detail::pt_buffer<MemoryResource>   _buffer;
     _detail::pt_node_production<Reader>* _root;
     std::size_t                          _size;
     std::size_t                          _depth;
+    lexy::lexeme<Reader>                 _remaining_input;
 };
 
 template <typename Input, typename TokenKind = void, typename MemoryResource = void>
@@ -540,11 +547,12 @@ public:
     explicit builder(Production production) : builder(parse_tree(), production)
     {}
 
-    parse_tree&& finish() &&
+    parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
         _cur.insert_children_into(_cur.prod);
         _cur.update_size_depth(_result._size, _result._depth);
+        _result._remaining_input = remaining_input;
         return LEXY_MOV(_result);
     }
 

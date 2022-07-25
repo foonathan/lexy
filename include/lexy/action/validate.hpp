@@ -169,6 +169,11 @@ public:
         return validate_result<ErrorCallback>(rule_parse_result, LEXY_MOV(_sink).finish());
     }
 
+    const Input& input() const
+    {
+        return *_input;
+    }
+
 private:
     _error_sink_t<ErrorCallback> _sink;
     const Input*                 _input;

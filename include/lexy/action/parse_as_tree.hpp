@@ -6,6 +6,7 @@
 
 #include <lexy/action/base.hpp>
 #include <lexy/action/validate.hpp>
+#include <lexy/dsl/any.hpp>
 #include <lexy/parse_tree.hpp>
 
 namespace lexy
@@ -34,12 +35,21 @@ public:
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_finish, iterator)
+        void on(parse_tree_handler& handler, parse_events::production_finish, iterator pos)
         {
             if (--handler._depth == 0)
-                *handler._tree = LEXY_MOV(*handler._builder).finish();
+            {
+                auto reader = handler._validate.input().reader();
+                reader.set_position(pos);
+                lexy::try_match_token(dsl::any, reader);
+                auto end = reader.position();
+
+                *handler._tree = LEXY_MOV(*handler._builder).finish({pos, end});
+            }
             else
+            {
                 handler._builder->finish_production(LEXY_MOV(_marker));
+            }
         }
 
         void on(parse_tree_handler& handler, parse_events::production_cancel, iterator pos)

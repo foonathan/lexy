@@ -52,6 +52,9 @@ namespace lexy
 
         traverse_range traverse(node n) const noexcept;
         traverse_range traverse() const noexcept;
+
+        //=== remaining input ===//
+        lexy::lexeme<Reader> remaining_input() const noexcept
     };
 
     template <_input_ Input, typename TokenKind = void,
@@ -127,7 +130,7 @@ public:
     : builder(parse_tree{}, root)
     {}
 
-    parse_tree&& finish() &&;
+    parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&;
 
     //=== production node ===//
     marker start_production(_production_ auto production);
@@ -161,6 +164,7 @@ Then the tree can be built using the following methods:
 `finish`::
   Finishes the construction of the entire tree and returns it.
   The active node must be the root node.
+  It optionally sets the remaining input.
 
 `start_production`::
   Start construction for a new production node for `production` and pushes it to the active node's list of children.
@@ -501,4 +505,19 @@ for (auto [event, node] : tree.traverse())
 
 NOTE: Traversing the parse tree is an optimized operation that does not involve dynamic memory allocation or recursion.
 Instead, each iteration step simply follows a pointer.
+
+=== Remaining input
+
+{{% interface %}}
+----
+lexy::lexeme<Reader> remaining_input() const noexcept
+----
+
+[.lead]
+Returns the remaining input, i.e. everything that has not been turned into the parse tree.
+
+Unless it has been set in `finish()`, it is empty.
+
+CAUTION: The position of an empty remaining input is not necessarily at the end of the input.
+{{% docref "lexy::parse_as_tree" %}} guarantees it, however.
 

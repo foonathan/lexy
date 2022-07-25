@@ -54,6 +54,7 @@ TEST_CASE("parse_tree::builder")
         parse_tree tree;
         CHECK(tree.empty());
         CHECK(tree.size() == 0);
+        CHECK(tree.remaining_input().empty());
     }
 
     SUBCASE("empty root")
@@ -62,6 +63,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 1);
         CHECK(tree.depth() == 0);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{});
         CHECK(tree == expected);
@@ -81,11 +83,34 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
         CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "a")
                             .token(token_kind::b, "b")
                             .token(token_kind::c, "c");
+        CHECK(tree == expected);
+    }
+    SUBCASE("root node with child tokens and remaining input")
+    {
+        auto input = lexy::zstring_input("abc");
+        auto tree  = [&] {
+            parse_tree::builder builder(root_p{});
+
+            builder.token(token_kind::a, input.data(), input.data() + 1);
+            builder.token(token_kind::b, input.data() + 1, input.data() + 2);
+
+            return LEXY_MOV(builder).finish({input.data() + 2, input.data() + 3});
+        }();
+        CHECK(!tree.empty());
+        CHECK(tree.size() == 3);
+        CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().begin() == input.data() + 2);
+        CHECK(tree.remaining_input().end() == input.data() + 3);
+
+        auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
+                            .token(token_kind::a, "a")
+                            .token(token_kind::b, "b");
         CHECK(tree == expected);
     }
 
@@ -102,6 +127,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 2);
         CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected
             = lexy_ext::parse_tree_desc<token_kind>(root_p{}).production(child_p{}).finish();
@@ -124,6 +150,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -154,6 +181,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
         CHECK(tree.depth() == 3);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -186,6 +214,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -217,6 +246,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
         CHECK(tree.depth() == 3);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -242,6 +272,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 1);
         CHECK(tree.depth() == 0);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{});
         CHECK(tree == expected);
@@ -263,6 +294,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
         CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "a")
@@ -291,6 +323,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "a")
@@ -321,6 +354,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
         CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "a")
@@ -350,6 +384,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .token(token_kind::a, "a")
@@ -374,6 +409,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 2);
         CHECK(tree.depth() == 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected
             = lexy_ext::parse_tree_desc<token_kind>(root_p{}).production(child_p{}).finish();
@@ -397,6 +433,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -428,6 +465,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
         CHECK(tree.depth() == 3);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -461,6 +499,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -493,6 +532,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
         CHECK(tree.depth() == 3);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -523,6 +563,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
                             .production(child_p{})
@@ -573,6 +614,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 2 * many_count + 1);
         CHECK(tree.depth() == 2);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});
@@ -611,6 +653,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == many_count + 2);
         CHECK(tree.depth() == many_count + 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});
@@ -657,6 +700,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 2 * many_count + 2);
         CHECK(tree.depth() == many_count + 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});
@@ -698,6 +742,7 @@ TEST_CASE("parse_tree::builder")
         CHECK(!tree.empty());
         CHECK(tree.size() == 2 * many_count + 2);
         CHECK(tree.depth() == many_count + 1);
+        CHECK(tree.remaining_input().empty());
 
         auto expected = [&] {
             lexy_ext::parse_tree_desc<token_kind> result(root_p{});

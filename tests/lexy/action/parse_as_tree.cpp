@@ -59,7 +59,7 @@ struct root_p
 
     static constexpr auto rule = [] {
         auto digits = lexy::dsl::digits<>.kind<token_kind::a>;
-        return digits + lexy::dsl::p<child_p> + digits + lexy::dsl::eof;
+        return digits + lexy::dsl::p<child_p> + digits;
     }();
 };
 } // namespace
@@ -95,10 +95,10 @@ TEST_CASE("parse_as_tree")
                     .finish()
                 .token(token_kind::b, ")")
                 .finish()
-            .token(token_kind::a, "321")
-            .token(lexy::eof_token_kind, "");
+            .token(token_kind::a, "321");
         // clang-format on
         CHECK(tree == expected);
+        CHECK(tree.remaining_input().empty());
     }
     SUBCASE("quoted")
     {
@@ -116,10 +116,10 @@ TEST_CASE("parse_as_tree")
                     .token(token_kind::b, "\"")
                     .finish()
                 .finish()
-            .token(token_kind::a, "321")
-            .token(lexy::eof_token_kind, "");
+            .token(token_kind::a, "321");
         // clang-format on
         CHECK(tree == expected);
+        CHECK(tree.remaining_input().empty());
     }
     SUBCASE("whitespace")
     {
@@ -141,25 +141,50 @@ TEST_CASE("parse_as_tree")
                 .token(token_kind::b, ")")
                 .whitespace(" ")
                 .finish()
-            .token(token_kind::a, "321")
-            .token(lexy::eof_token_kind, "");
+            .token(token_kind::a, "321");
         // clang-format on
         CHECK(tree == expected);
+        CHECK(tree.remaining_input().empty());
+    }
+    SUBCASE("remaining input")
+    {
+        auto input  = lexy::zstring_input("123(abc)321!!!");
+        auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
+        CHECK(result);
+
+        // clang-format off
+        auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
+            .token(token_kind::a, "123")
+            .production(child_p{})
+                .token(token_kind::b, "(")
+                .production(abc_p{})
+                    .token(token_kind::c, "abc")
+                    .finish()
+                .token(token_kind::b, ")")
+                .finish()
+            .token(token_kind::a, "321");
+        // clang-format on
+        CHECK(tree == expected);
+        CHECK(tree.remaining_input().begin() == input.data() + 11);
+        CHECK(tree.remaining_input().end() == input.data() + 14);
     }
     SUBCASE("failure")
     {
         tree = parse_tree::builder(root_p{}).finish();
         CHECK(!tree.empty());
+        CHECK(tree.remaining_input().empty());
 
         auto input  = lexy::zstring_input("123(abc");
         auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
         CHECK(!result);
         CHECK(tree.empty());
+        CHECK(tree.remaining_input().empty());
     }
     SUBCASE("recovered")
     {
         tree = parse_tree::builder(root_p{}).finish();
         CHECK(!tree.empty());
+        CHECK(tree.remaining_input().empty());
 
         auto input  = lexy::zstring_input("123(abxxx)321");
         auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
@@ -172,10 +197,10 @@ TEST_CASE("parse_as_tree")
                 .token(lexy::error_token_kind, "abxxx")
                 .token(token_kind::b, ")")
                 .finish()
-            .token(token_kind::a, "321")
-            .token(lexy::eof_token_kind, "");
+            .token(token_kind::a, "321");
         // clang-format on
         CHECK(tree == expected);
+        CHECK(tree.remaining_input().empty());
     }
 }
 
