@@ -58,7 +58,7 @@ namespace _detail
                     return static_cast<parse_context_var*>(cur)->value;
 
             LEXY_ASSERT(false, "context variable hasn't been created");
-            return LEXY_DECLVAL(T&);
+            return static_cast<parse_context_var*>(cb->vars)->value;
         }
     };
 

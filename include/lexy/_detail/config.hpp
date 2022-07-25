@@ -21,8 +21,7 @@
 #define LEXY_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #define LEXY_FWD(...) static_cast<decltype(__VA_ARGS__)>(__VA_ARGS__)
 
-#define LEXY_DECLVAL(...)                                                                          \
-    reinterpret_cast<::lexy::_detail::add_rvalue_ref<__VA_ARGS__>>(*reinterpret_cast<char*>(1024))
+#define LEXY_DECLVAL(...) lexy::_detail::declval<__VA_ARGS__>()
 
 #define LEXY_DECAY_DECLTYPE(...) std::decay_t<decltype(__VA_ARGS__)>
 
@@ -36,11 +35,11 @@
 
 namespace lexy::_detail
 {
-template <typename T>
-using add_rvalue_ref = T&&;
-
 template <typename... T>
 constexpr bool error = false;
+
+template <typename T>
+std::add_rvalue_reference_t<T> declval();
 
 template <typename T>
 constexpr void swap(T& lhs, T& rhs)

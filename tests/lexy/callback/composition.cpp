@@ -39,6 +39,14 @@ TEST_CASE("callback compose")
         CHECK(composed[2](0) == 2 * 0);
         CHECK(composed[2](8) == 2 * 16);
     }
+    SUBCASE("callbacks returning void")
+    {
+        constexpr auto a = lexy::callback<int>([](int i) { return 2 * i; });
+        constexpr auto b = lexy::callback([](int) {});
+
+        constexpr auto composed = a | b;
+        composed(0);
+    }
 
     SUBCASE("sink and callback")
     {
