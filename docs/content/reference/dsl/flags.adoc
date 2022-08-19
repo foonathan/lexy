@@ -2,7 +2,39 @@
 header: "lexy/dsl/flags.hpp"
 entities:
   "lexy::dsl::flags": "flags"
+  "lexy::dsl::flag": "flag"
 ---
+:toc: left
+
+[.lead]
+Parse an optional flag or multiple ones.
+
+[#flag]
+== Rule `lexy::dsl::flag`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <auto If, auto Else = decltype(If){}>
+    constexpr _rule_ auto flag(_branch-rule_ auto branch);
+}
+----
+
+[.lead]
+`flag` is a rule that tries to parse a {{% branch-rule %}} and produces `If`, otherwise `Else`.
+
+Parsing::
+  Tries to parse `branch`.
+  If that backtracks, succeeds without consuming anything.
+Errors::
+  All errors raised by `branch` during branch parsing.
+  The rule then fails if `branch` has failed.
+Values::
+  If `branch` was parsed, `If` followed by all values produced by it.
+  Otherwise, `Else`.
+
+NOTE: Use {{% docref "lexy::dsl::opt" %}} if you only want a value if `branch` did not match.
 
 [#flags]
 == Rule `lexy::dsl::flags`

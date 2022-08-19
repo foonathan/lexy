@@ -94,3 +94,5 @@ and it parses the same as {{% docref "lexy::dsl::if_" %}}.
 
 TIP: Use {{% docref "lexy::bind" %}} with {{% docref "lexy::nth_value" %}} and `or` to pass a different value than `lexy::nullopt` to the callback.
 
+TIP: Use {{% docref "lexy::dsl::flag" %}} if you want a value if `branch` parsed as well.
+

@@ -100,5 +100,36 @@ constexpr auto flags(_sym<Table, Token, Tag> flag_rule)
 }
 } // namespace lexyd
 
+namespace lexyd
+{
+template <typename Rule, auto If, auto Else>
+struct _flag : rule_base
+{
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::branch_parser_for<Rule, Reader> branch{};
+            if (branch.try_parse(context.control_block, reader))
+                return branch.template finish<NextParser>(context, reader, LEXY_FWD(args)..., If);
+            else
+            {
+                branch.cancel(context);
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., Else);
+            }
+        }
+    };
+};
+
+template <auto If, auto Else = LEXY_DECAY_DECLTYPE(If){}, typename Rule>
+constexpr auto flag(Rule)
+{
+    static_assert(lexy::is_branch_rule<Rule>);
+    return _flag<Rule, If, Else>{};
+}
+} // namespace lexyd
+
 #endif // LEXY_DSL_FLAGS_HPP_INCLUDED
 
