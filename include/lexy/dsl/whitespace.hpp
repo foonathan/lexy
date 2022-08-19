@@ -64,43 +64,53 @@ private:
     Context* _context;
 };
 
+template <typename Rule, typename Context, typename Reader>
+constexpr bool skip_whitespace(Context& context, Reader& reader)
+{
+    auto begin  = reader.position();
+    auto result = true;
+    if constexpr (lexy::is_token_rule<Rule>)
+    {
+        // Parsing a token repeatedly cannot fail, so we can optimize it.
+        while (lexy::try_match_token(Rule{}, reader))
+        {}
+    }
+    else
+    {
+        // Parse the rule using a special handler that only forwards errors.
+        using production = ws_production<Rule>;
+        result = lexy::do_action<production>(whitespace_handler(context), lexy::no_parse_state,
+                                             reader);
+    }
+    auto end = reader.position();
+
+    if (result)
+    {
+        // Add a whitespace token node.
+        context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
+        return true;
+    }
+    else
+    {
+        context.on(lexy::parse_events::token{}, lexy::error_token_kind, begin, end);
+        return false;
+    }
+}
+
 template <typename Rule, typename NextParser>
 struct manual_ws_parser
 {
+    // Note that this is not marked force inline.
+    // Compile-time performance really suffers if that is the case.
+    // See #84.
     template <typename Context, typename Reader, typename... Args>
-    LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+    constexpr static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        auto result = true;
-        auto begin  = reader.position();
-        if constexpr (lexy::is_token_rule<Rule>)
-        {
-            // Parsing a token repeatedly cannot fail, so we can optimize it.
-            while (lexy::try_match_token(Rule{}, reader))
-            {}
-        }
-        else
-        {
-            // Parse the rule using a special handler that only forwards errors.
-            using production = ws_production<Rule>;
-            result = lexy::do_action<production>(whitespace_handler(context), lexy::no_parse_state,
-                                                 reader);
-        }
-        auto end = reader.position();
-
-        if (result)
-        {
-            // Add a whitespace token node.
-            context.on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin, end);
-            // And continue.
-            return NextParser::parse(context, reader, LEXY_FWD(args)...);
-        }
-        else
-        {
-            // Add an error token node.
-            context.on(lexy::parse_events::token{}, lexy::error_token_kind, begin, end);
-            // And cancel.
+        auto result = skip_whitespace<Rule>(context, reader);
+        if (!result)
             return false;
-        }
+
+        return NextParser::parse(context, reader, LEXY_FWD(args)...);
     }
 };
 template <typename NextParser>
@@ -121,8 +131,8 @@ struct automatic_ws_parser
     template <typename Context, typename Reader, typename... Args>
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
-        if (!std::is_base_of_v<disable_whitespace_skipping,
-                               NextParser> && context.control_block->enable_whitespace_skipping)
+        if (!std::is_base_of_v<disable_whitespace_skipping, NextParser> //
+            && context.control_block->enable_whitespace_skipping)
         {
             // Skip the appropriate whitespace.
             using rule = context_whitespace<Context>;
