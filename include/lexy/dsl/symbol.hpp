@@ -271,6 +271,11 @@ struct _sym : branch_base
         typename Reader::iterator end;
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
+        constexpr auto value() const
+        {
+            return Table[symbol];
+        }
+
         template <typename ControlBlock>
         constexpr bool try_parse(ControlBlock&, const Reader& reader)
         {
@@ -358,6 +363,11 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::iterator end;
 
+        constexpr auto value() const
+        {
+            return Table[symbol];
+        }
+
         constexpr bool try_parse(const void*, Reader reader)
         {
             // Try to parse a symbol.
@@ -441,6 +451,11 @@ struct _sym<Table, void, Tag> : branch_base
     {
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::iterator end;
+
+        constexpr auto value() const
+        {
+            return Table[symbol];
+        }
 
         constexpr bool try_parse(const void*, Reader reader)
         {

@@ -248,6 +248,8 @@ the other rule does not have access to context variables, and any context modifi
   parse a keyword
 {{% docref "lexy::dsl::symbol" %}}::
   parse one of the specified symbols and produce their value
+{{% docref "lexy::dsl::flags" %}}::
+  parses multiple symbols representing enum flags in any order
 ====
 
 [%collapsible]

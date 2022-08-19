@@ -60,6 +60,7 @@ set(tests
         dsl/eof.cpp
         dsl/error.cpp
         dsl/expression.cpp
+        dsl/flags.cpp
         dsl/follow.cpp
         dsl/list.cpp
         dsl/literal.cpp

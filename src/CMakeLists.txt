@@ -66,6 +66,7 @@ set(header_files
         ${include_dir}/dsl/error.hpp
         ${include_dir}/dsl/expression.hpp
         ${include_dir}/dsl/follow.hpp
+        ${include_dir}/dsl/flags.hpp
         ${include_dir}/dsl/identifier.hpp
         ${include_dir}/dsl/if.hpp
         ${include_dir}/dsl/integer.hpp
