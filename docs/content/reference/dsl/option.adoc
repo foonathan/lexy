@@ -61,6 +61,7 @@ it will use that constructor instead of the default constructor.
 For example, `std::optional<std::optional<int>>(lexy::nullopt{})` will contain a default-constructed `std::optional<int>`,
 and is not empty itself.
 This is not the same behavior as `std::optional<std::optional<int>>(std::nullopt{})`, which will create a `std::optional<std::optional<int>>` containing nothing.
+Similarly, `std::optional<int*>(lexy::nullopt{})` will contain a `nullptr`.
 
 [#opt]
 == Rule `lexy::dsl::opt`
