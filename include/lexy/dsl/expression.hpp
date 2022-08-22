@@ -20,7 +20,7 @@
 //=== dsl ===//
 namespace lexyd
 {
-/// Tag type to indicate that the operand of an operation is the atom rule.
+/// Operation that just parses the atomic rule.
 struct atom
 {
     static LEXY_CONSTEVAL auto name()
@@ -29,7 +29,7 @@ struct atom
     }
 };
 
-/// Tag type to indicate that the operand of an operation is one of multiple.
+/// Operation that selects between multiple ones.
 template <typename... Operands>
 struct groups
 {};

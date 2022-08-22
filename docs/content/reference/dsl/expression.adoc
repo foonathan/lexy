@@ -118,7 +118,7 @@ CAUTION: If two operators at different binding powers share a common prefix (e.g
 it might be necessary to use {{% docref "lexy::dsl::not_followed_by" %}}.
 
 [#groups]
-== Operand specification `lexy::dsl::groups`
+== Operation `lexy::dsl::groups`
 
 {{% interface %}}
 ----
@@ -131,7 +131,7 @@ namespace lexy::dsl
 ----
 
 [.lead]
-`groups` is an operand specification that indicates that the operand is one of the specified operations.
+`groups` is a special operation that selects one of the specified operations as operand.
 
 Parsing::
   When attempting to parse an operand in the current operation, it will parse one of the specified `Operands` (a "group"),
@@ -142,6 +142,8 @@ Errors::
   * `Expression::operator_group_error`: if an operator from group B was parsed after an operator from group 1, at the position of operator B.
 
 {{% playground-example expr_groups "Parse either a math or a bit operation" %}}
+
+NOTE: `groups` can be used in the top-level `operation` of an expression as well.
 
 [#infix_op_left]
 == Operation base `lexy::dsl::infix_op_left`
