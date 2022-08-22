@@ -33,6 +33,9 @@ struct _lit_base
 {};
 struct _sep_base
 {};
+
+struct _operation_base
+{};
 } // namespace lexyd
 
 namespace lexy
@@ -59,6 +62,9 @@ constexpr bool is_literal_set_rule = std::is_base_of_v<dsl::_lset_base, T>;
 
 template <typename T>
 constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
+
+template <typename T>
+constexpr auto is_operation = std::is_base_of_v<lexy::dsl::_operation_base, T>;
 } // namespace lexy
 
 //=== predefined_token_kind ===//
@@ -165,6 +171,20 @@ LEXY_CONSTEVAL std::size_t max_recursion_depth()
     else
         return 1024; // Arbitrary power of two.
 }
+
+struct production_info
+{
+    const char* name;
+    bool        is_token;
+    bool        is_transparent;
+
+    template <typename Production,
+              typename = std::enable_if_t<is_production<Production> || is_operation<Production>>>
+    production_info(Production)
+    : name(production_name<Production>()), is_token(is_token_production<Production>),
+      is_transparent(is_transparent_production<Production>)
+    {}
+};
 } // namespace lexy
 
 namespace lexy

@@ -21,7 +21,7 @@
 namespace lexyd
 {
 /// Operation that just parses the atomic rule.
-struct atom
+struct atom : _operation_base
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -31,22 +31,22 @@ struct atom
 
 /// Operation that selects between multiple ones.
 template <typename... Operands>
-struct groups
+struct groups : _operation_base
 {};
 
-struct infix_op_left // a ~ b ~ c == (a ~ b) ~ c
+struct infix_op_left : _operation_base // a ~ b ~ c == (a ~ b) ~ c
 {};
-struct infix_op_right // a ~ b ~ c == a ~ (b ~ c)
+struct infix_op_right : _operation_base // a ~ b ~ c == a ~ (b ~ c)
 {};
-struct infix_op_list // a ~ b ~ c kept as-is
+struct infix_op_list : _operation_base // a ~ b ~ c kept as-is
 {};
-struct infix_op_single // a ~ b ~ c is an error
-{};
-
-struct postfix_op
+struct infix_op_single : _operation_base // a ~ b ~ c is an error
 {};
 
-struct prefix_op
+struct postfix_op : _operation_base
+{};
+
+struct prefix_op : _operation_base
 {};
 } // namespace lexyd
 
