@@ -172,18 +172,36 @@ LEXY_CONSTEVAL std::size_t max_recursion_depth()
         return 1024; // Arbitrary power of two.
 }
 
+template <typename T>
+using _enable_production_or_operation = std::enable_if_t<is_production<T> || is_operation<T>>;
+
 struct production_info
 {
     const char* name;
     bool        is_token;
     bool        is_transparent;
 
-    template <typename Production,
-              typename = std::enable_if_t<is_production<Production> || is_operation<Production>>>
-    production_info(Production)
+    template <typename Production, typename = _enable_production_or_operation<Production>>
+    constexpr production_info(Production)
     : name(production_name<Production>()), is_token(is_token_production<Production>),
       is_transparent(is_transparent_production<Production>)
     {}
+
+    friend constexpr bool operator==(production_info lhs, production_info rhs)
+    {
+        // We can safely compare pointers, strings are necessarily interned:
+        // if Production::name exists: same address for all types,
+        // otherwise we use __PRETTY_FUNCTION__ (or equivalent), which is a function-local static.
+        //
+        // This only fails if we have different productions with the same name and the compiler does
+        // string interning. But as the production name corresponds to the qualified C++ name (by
+        // default), this is only possible if the user does something weird.
+        return lhs.name == rhs.name;
+    }
+    friend constexpr bool operator!=(production_info lhs, production_info rhs)
+    {
+        return !(lhs == rhs);
+    }
 };
 } // namespace lexy
 

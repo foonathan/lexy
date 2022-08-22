@@ -4,6 +4,8 @@
 
 * Add `lexy::dsl::flags` and `lexy::dsl::flag` to parse enum flags.
 * Add `lexy::parse_tree::remaining_input()` and populate it by `lexy::parse_as_tree`.
+* Use type-erased `lexy::production_info` instead of `Production` type in `lexy::parse_tree`.
+  This is technically a breaking change, as it may affect overload resolution.
 * Fix bug where `lexy::bind` callback does not forward rvalue arguments; they got turned into lvalues instead.
 * Fix bug where callback composition was not allowed if the final callback returns `void`.
 

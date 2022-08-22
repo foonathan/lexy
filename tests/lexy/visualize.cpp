@@ -5,6 +5,7 @@
 
 #include <doctest/doctest.h>
 #include <iterator>
+#include <lexy/dsl/any.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/parse_tree.hpp>
 #include <string>
@@ -174,10 +175,12 @@ const char* token_kind_name(token_kind k)
 struct child_p : lexy::token_production
 {
     static constexpr auto name = "child_p";
+    static constexpr auto rule = lexy::dsl::any;
 };
 struct root_p
 {
     static constexpr auto name = "root_p";
+    static constexpr auto rule = lexy::dsl::any;
 };
 } // namespace
 

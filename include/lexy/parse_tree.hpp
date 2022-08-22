@@ -150,14 +150,12 @@ struct pt_node_production : pt_node<Reader>
     std::size_t token_production : 1;
     std::size_t first_child_adjacent : 1;
 
-    template <typename Production>
-    explicit pt_node_production(Production) noexcept
-    : pt_node<Reader>(pt_node<Reader>::type_production), child_count(0),
-      token_production(lexy::is_token_production<Production>), first_child_adjacent(true)
+    explicit pt_node_production(production_info info) noexcept
+    : pt_node<Reader>(pt_node<Reader>::type_production), name(info.name), child_count(0),
+      token_production(info.is_token), first_child_adjacent(true)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
-
-        name = lexy::production_name<Production>();
+        LEXY_PRECONDITION(!info.is_transparent);
     }
 
     pt_node<Reader>* first_child()
@@ -527,8 +525,7 @@ public:
     };
 
     //=== root node ===//
-    template <typename Production>
-    explicit builder(parse_tree&& tree, Production production) : _result(LEXY_MOV(tree))
+    explicit builder(parse_tree&& tree, production_info production) : _result(LEXY_MOV(tree))
     {
         // Empty the initial parse tree.
         _result._buffer.reset();
@@ -543,9 +540,7 @@ public:
         // Begin construction at the root.
         _cur = marker(_result._buffer.top(), 0, _result._root);
     }
-    template <typename Production>
-    explicit builder(Production production) : builder(parse_tree(), production)
-    {}
+    explicit builder(production_info production) : builder(parse_tree(), production) {}
 
     parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
     {
@@ -557,10 +552,9 @@ public:
     }
 
     //=== production nodes ===//
-    template <typename Production>
-    auto start_production(Production production)
+    auto start_production(production_info production)
     {
-        if constexpr (lexy::is_transparent_production<Production>)
+        if (production.is_transparent)
             // Don't need to add a new node for a transparent production.
             return _cur;
 
@@ -627,11 +621,10 @@ public:
         return old;
     }
 
-    template <typename Production>
-    void set_container_production(Production production)
+    void set_container_production(production_info production)
     {
         LEXY_PRECONDITION(!_cur.prod);
-        if constexpr (lexy::is_transparent_production<Production>)
+        if (production.is_transparent)
             // If the production is transparent, we do nothing.
             return;
 
@@ -793,33 +786,22 @@ public:
         return !(nk == tk);
     }
 
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator==(node_kind nk, Production)
+    friend bool operator==(node_kind nk, production_info info)
     {
-        auto name = lexy::production_name<Production>();
-        // We can safely compare pointers, strings are necessarily interned:
-        // if Production::name exists: same address for all types,
-        // otherwise we use __PRETTY_FUNCTION__ (or equivalent), which is a function-local static.
-        //
-        // This only fails if we have different productions with the same name and the compiler does
-        // string interning. But as the production name corresponds to the qualified C++ name (by
-        // default), this is only possible if the user does something weird.
-        return nk.is_production() && nk._ptr->as_production()->name == name;
+        // Just like `production_info::operator==`, we can compare strings.
+        return nk.is_production() && nk._ptr->as_production()->name == info.name;
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator==(Production p, node_kind nk)
+    friend bool operator==(production_info info, node_kind nk)
     {
-        return nk == p;
+        return nk == info;
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator!=(node_kind nk, Production p)
+    friend bool operator!=(node_kind nk, production_info info)
     {
-        return !(nk == p);
+        return !(nk == info);
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator!=(Production p, node_kind nk)
+    friend bool operator!=(production_info info, node_kind nk)
     {
-        return !(nk == p);
+        return !(nk == info);
     }
 
 private:

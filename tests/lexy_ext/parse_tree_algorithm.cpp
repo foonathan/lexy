@@ -21,7 +21,9 @@ struct child_p
 };
 
 struct root_p
-{};
+{
+    static constexpr auto rule = 0; // Need a rule to identify as production.
+};
 } // namespace
 
 TEST_CASE("tokens()")
