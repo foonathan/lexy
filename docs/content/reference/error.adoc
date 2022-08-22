@@ -23,6 +23,9 @@ namespace lexy
     template <_reader_ Reader, typename Tag>
     class error;
 
+    template <_reader_ Reader>
+    class error<Reader, void>;
+
     struct expected_literal {};
     template <_reader_ Reader>
     class error<Reader, expected_literal>;
@@ -46,18 +49,28 @@ Represents a parse error.
 Different kinds of errors are identified by the `Tag`, which is an empty tag type.
 The error type is specialized for three tags.
 
-=== Generic error (primary template)
+=== Generic error (primary template, `void`)
 
 {{% interface %}}
 ----
 template <_reader_ Reader, typename Tag>
-class error
+class error : public error<Reader, void>
 {
     using _iterator_ = typename Reader::iterator;
 
 public:
     constexpr explicit error(_iterator_ begin, _iterator_ end) noexcept;
-    constexpr explicit error(_iterator_ pos) noexcept
+    constexpr explicit error(_iterator_ pos) noexcept;
+};
+
+template <_reader_ Reader>
+class error<void>
+{
+    using _iterator_ = typename Reader::iterator;
+
+public:
+    constexpr explicit error(_iterator_ begin, _iterator_ end, const char* msg) noexcept;
+    constexpr explicit error(_iterator_ pos, const char* msg) noexcept
     : error(pos, pos)
     {}
 
@@ -79,7 +92,7 @@ A generic error without additional data.
 `position()` is the position where the error occurred, while `begin()` and `end()` return the entire range.
 For some errors, this range is empty.
 
-`message()` is determined by `Tag`.
+`message()` is determined by `Tag` (if typed) or the constructor argument (if type-erased).
 By default, it is the type name of `Tag` after removing the top-level namespace.
 This can be overridden by `Tag::name()` or `Tag::name`.
 

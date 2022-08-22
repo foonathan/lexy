@@ -10,15 +10,20 @@
 
 namespace lexy
 {
-/// Generic failure.
 template <typename Reader, typename Tag>
-class error
+class error;
+
+/// Type erased generic failure.
+template <typename Reader>
+class error<Reader, void>
 {
 public:
-    constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
-    constexpr explicit error(typename Reader::iterator begin,
-                             typename Reader::iterator end) noexcept
-    : _pos(begin), _end(end)
+    constexpr explicit error(typename Reader::iterator pos, const char* msg) noexcept
+    : _pos(pos), _end(pos), _msg(msg)
+    {}
+    constexpr explicit error(typename Reader::iterator begin, typename Reader::iterator end,
+                             const char* msg) noexcept
+    : _pos(begin), _end(end), _msg(msg)
     {}
 
     constexpr auto position() const noexcept
@@ -28,7 +33,7 @@ public:
 
     constexpr const char* message() const noexcept
     {
-        return _detail::type_name<Tag>();
+        return _msg;
     }
 
     constexpr auto begin() const noexcept
@@ -43,6 +48,21 @@ public:
 private:
     typename Reader::iterator _pos;
     typename Reader::iterator _end;
+    const char*               _msg;
+};
+
+/// Generic failure.
+template <typename Reader, typename Tag>
+class error : public error<Reader, void>
+{
+public:
+    constexpr explicit error(typename Reader::iterator pos) noexcept
+    : error<Reader, void>(pos, _detail::type_name<Tag>())
+    {}
+    constexpr explicit error(typename Reader::iterator begin,
+                             typename Reader::iterator end) noexcept
+    : error<Reader, void>(begin, end, _detail::type_name<Tag>())
+    {}
 };
 
 /// Expected the literal character sequence.
