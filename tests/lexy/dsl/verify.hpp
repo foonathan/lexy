@@ -486,7 +486,7 @@ public:
     public:
         constexpr explicit value_callback(const State* handler) : _handler(handler) {}
 
-        using return_type = std::conditional_t<is_test_production<Production>, int, Production>;
+        using return_type = std::conditional_t<is_test_production<Production>, int, Production*>;
 
         constexpr auto sink() const
         {
@@ -502,7 +502,7 @@ public:
             if constexpr (is_test_production<Production>)
                 return _handler->_cb(_handler->_begin, LEXY_FWD(args)...);
             else
-                return Production{};
+                return nullptr;
         }
 
     private:
@@ -536,6 +536,14 @@ private:
     bool     _had_error;
 
     iterator _begin, _last_token;
+};
+
+template <typename Input, typename Callback>
+struct test_action
+{
+    using handler = test_handler<Input, Callback>;
+    using input   = Input;
+    using state   = handler;
 };
 
 constexpr auto token_callback = [](auto) { return 0; };
@@ -613,7 +621,7 @@ constexpr auto _get_input(Encoding, CharT... cs)
             size = static_cast<std::size_t>(ptr - array);
         }
 
-        input(const input&) = delete;
+        input(const input&)            = delete;
         input& operator=(const input&) = delete;
 
         constexpr auto reader() const&

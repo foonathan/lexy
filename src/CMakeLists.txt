@@ -88,6 +88,7 @@ set(header_files
         ${include_dir}/dsl/separator.hpp
         ${include_dir}/dsl/sequence.hpp
         ${include_dir}/dsl/sign.hpp
+        ${include_dir}/dsl/subgrammar.hpp
         ${include_dir}/dsl/symbol.hpp
         ${include_dir}/dsl/terminator.hpp
         ${include_dir}/dsl/times.hpp

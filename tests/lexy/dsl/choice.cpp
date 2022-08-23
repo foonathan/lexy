@@ -24,7 +24,9 @@ struct label
 TEST_CASE("dsl::operator|")
 {
     constexpr auto callback = lexy::callback<int>([](const char*) { return 42; },
-                                                  [](const char*, auto p) { return p.id; });
+                                                  [](const char*, auto p) {
+                                                      return std::remove_pointer_t<decltype(p)>::id;
+                                                  });
 
     SUBCASE("simple")
     {

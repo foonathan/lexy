@@ -85,6 +85,8 @@ set(tests
         dsl/sequence.cpp
         dsl/separator.cpp
         dsl/sign.cpp
+        dsl/subgrammar.cpp
+        dsl/subgrammar_other.cpp
         dsl/symbol.cpp
         dsl/terminator.cpp
         dsl/trace.cpp

@@ -296,7 +296,7 @@ TEST_CASE("dsl::recurse")
         {};
 
         constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
-                                                      [](const char*, inner) { return 1; });
+                                                      [](const char*, inner*) { return 1; });
 
         auto empty = LEXY_VERIFY_P(production, "");
         CHECK(empty.status == test_result::success);
@@ -340,7 +340,7 @@ TEST_CASE("dsl::recurse")
         struct production : test_production_for<decltype(dsl::recurse<inner>)>, with_whitespace
         {};
 
-        constexpr auto callback = [](const char*, inner) { return 0; };
+        constexpr auto callback = [](const char*, inner*) { return 0; };
 
         auto empty = LEXY_VERIFY_P(production, "");
         CHECK(empty.status == test_result::fatal_error);
@@ -386,7 +386,7 @@ TEST_CASE("dsl::recurse")
         {};
 
         constexpr auto callback = lexy::callback<int>([](const char*) { return 0; },
-                                                      [](const char*, inner) { return 1; });
+                                                      [](const char*, inner*) { return 1; });
 
         auto empty = LEXY_VERIFY_P(production, "");
         CHECK(empty.status == test_result::success);

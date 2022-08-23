@@ -196,6 +196,8 @@ the other rule does not have access to context variables, and any context modifi
   parse another production's rule inline
 {{% docref "lexy::dsl::return_" %}}::
   exit early from parsing a production
+{{% docref "lexy::dsl::subgrammar" %}}::
+  parse a production defined in a different source file
 ====
 
 [%collapsible]

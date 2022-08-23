@@ -134,6 +134,7 @@ that takes about 700ms.
 If we validate JSON only instead of parsing it, so remove the data structures and keep only the lexy specific parts, we're looking at about 840ms.
 +
 Keep in mind, that you can fully isolate lexy in a single translation unit that only needs to be touched when you change the parser.
+You can also split a lexy grammar into multiple translation units using the `dsl::subgrammar` rule.
 
 How bad are the {cpp} error messages if you mess something up?::
   They're certainly worse than the error message lexy gives you.

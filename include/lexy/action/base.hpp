@@ -88,13 +88,17 @@ template <typename Production>
 using _whitespace_production_of
     = std::conditional_t<_production_defines_whitespace<Production>, Production, void>;
 
+template <typename Handler, typename State, typename Production>
+using _production_value_type =
+    typename Handler::template value_callback<Production, State>::return_type;
+
 template <typename Handler, typename State, typename Production,
           typename WhitespaceProduction = _whitespace_production_of<Production>>
 struct _pc
 {
     using production            = Production;
     using whitespace_production = WhitespaceProduction;
-    using value_type = typename Handler::template value_callback<Production, State>::return_type;
+    using value_type            = _production_value_type<Handler, State, Production>;
 
     typename Handler::template event_handler<Production>  handler;
     _detail::parse_context_control_block<Handler, State>* control_block;
@@ -170,6 +174,25 @@ namespace lexy
 {
 constexpr void* no_parse_state = nullptr;
 
+template <typename Handler, typename State, typename Production, typename Reader>
+constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& reader)
+{
+    context.on(parse_events::production_start{}, reader.position());
+
+    // We parse whitespace, theen the rule, then finish.
+    using parser = lexy::whitespace_parser<
+        LEXY_DECAY_DECLTYPE(context),
+        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
+    auto rule_result = parser::parse(context, reader);
+
+    if (rule_result)
+        context.on(parse_events::production_finish{}, reader.position());
+    else
+        context.on(parse_events::production_cancel{}, reader.position());
+
+    return rule_result;
+}
+
 template <typename Production, typename Handler, typename State, typename Reader>
 constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
 {
@@ -179,18 +202,7 @@ constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
                                                        max_recursion_depth<Production>());
     _pc<Handler, State, Production>      context(&control_block);
 
-    context.on(parse_events::production_start{}, reader.position());
-
-    // We parse whitespace, theen the rule, then finish.
-    using parser = lexy::whitespace_parser<
-        decltype(context),
-        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
-    auto rule_result = parser::parse(context, reader);
-
-    if (rule_result)
-        context.on(parse_events::production_finish{}, reader.position());
-    else
-        context.on(parse_events::production_cancel{}, reader.position());
+    auto rule_result = _do_action(context, reader);
 
     using value_type = typename decltype(context)::value_type;
     if constexpr (std::is_void_v<value_type>)
