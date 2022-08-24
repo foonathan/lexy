@@ -2468,13 +2468,17 @@ template <typename Production>
 using _whitespace_production_of
     = std::conditional_t<_production_defines_whitespace<Production>, Production, void>;
 
+template <typename Handler, typename State, typename Production>
+using _production_value_type =
+    typename Handler::template value_callback<Production, State>::return_type;
+
 template <typename Handler, typename State, typename Production,
           typename WhitespaceProduction = _whitespace_production_of<Production>>
 struct _pc
 {
     using production            = Production;
     using whitespace_production = WhitespaceProduction;
-    using value_type = typename Handler::template value_callback<Production, State>::return_type;
+    using value_type            = _production_value_type<Handler, State, Production>;
 
     typename Handler::template event_handler<Production>  handler;
     _detail::parse_context_control_block<Handler, State>* control_block;
@@ -2550,6 +2554,25 @@ namespace lexy
 {
 constexpr void* no_parse_state = nullptr;
 
+template <typename Handler, typename State, typename Production, typename Reader>
+constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& reader)
+{
+    context.on(parse_events::production_start{}, reader.position());
+
+    // We parse whitespace, theen the rule, then finish.
+    using parser = lexy::whitespace_parser<
+        LEXY_DECAY_DECLTYPE(context),
+        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
+    auto rule_result = parser::parse(context, reader);
+
+    if (rule_result)
+        context.on(parse_events::production_finish{}, reader.position());
+    else
+        context.on(parse_events::production_cancel{}, reader.position());
+
+    return rule_result;
+}
+
 template <typename Production, typename Handler, typename State, typename Reader>
 constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
 {
@@ -2559,18 +2582,7 @@ constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
                                                        max_recursion_depth<Production>());
     _pc<Handler, State, Production>      context(&control_block);
 
-    context.on(parse_events::production_start{}, reader.position());
-
-    // We parse whitespace, theen the rule, then finish.
-    using parser = lexy::whitespace_parser<
-        decltype(context),
-        lexy::parser_for<lexy::production_rule<Production>, _detail::final_parser>>;
-    auto rule_result = parser::parse(context, reader);
-
-    if (rule_result)
-        context.on(parse_events::production_finish{}, reader.position());
-    else
-        context.on(parse_events::production_cancel{}, reader.position());
+    auto rule_result = _do_action(context, reader);
 
     using value_type = typename decltype(context)::value_type;
     if constexpr (std::is_void_v<value_type>)
@@ -3554,22 +3566,42 @@ private:
     const Input*                 _input;
 };
 
+template <typename State, typename Input, typename ErrorCallback>
+struct validate_action
+{
+    const ErrorCallback* _callback;
+    const State*         _state = nullptr;
+
+    using handler = validate_handler<Input, ErrorCallback>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit validate_action(const ErrorCallback& callback) : _callback(&callback) {}
+    template <typename U = State>
+    constexpr explicit validate_action(const U& state, const ErrorCallback& callback)
+    : _callback(&callback), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(input, *_callback), _state, reader);
+    }
+};
+
 template <typename Production, typename Input, typename ErrorCallback>
 constexpr auto validate(const Input& input, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = validate_handler(input, callback);
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
+    return validate_action<void, Input, ErrorCallback>(callback)(Production{}, input);
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
 constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = validate_handler(input, callback);
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+    return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 
@@ -3632,18 +3664,37 @@ private:
     bool _failed;
 };
 
+template <typename State, typename Input>
+struct match_action
+{
+    const State* _state = nullptr;
+
+    using handler = match_handler;
+    using state   = State;
+    using input   = Input;
+
+    constexpr match_action() = default;
+    template <typename U = State>
+    constexpr explicit match_action(const U& state) : _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(), _state, reader);
+    }
+};
+
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(match_handler(), no_parse_state, reader);
+    return match_action<void, Input>()(Production{}, input);
 }
-
 template <typename Production, typename Input, typename State>
 constexpr bool match(const Input& input, const State& state)
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(match_handler(), &state, reader);
+    return match_action<State, Input>(state)(Production{}, input);
 }
 } // namespace lexy
 
@@ -5692,26 +5743,54 @@ private:
     validate_handler<Input, ErrorCallback> _validate;
 };
 
+template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
+          typename MemoryResource = void>
+struct parse_as_tree_action
+{
+    using tree_type = lexy::parse_tree_for<Input, TokenKind, MemoryResource>;
+
+    tree_type*           _tree;
+    const ErrorCallback* _callback;
+    const State*         _state = nullptr;
+
+    using handler = parse_tree_handler<tree_type, Input, ErrorCallback>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit parse_as_tree_action(tree_type& tree, const ErrorCallback& callback)
+    : _tree(&tree), _callback(&callback)
+    {}
+    template <typename U = State>
+    constexpr explicit parse_as_tree_action(const U& state, tree_type& tree,
+                                            const ErrorCallback& callback)
+    : _tree(&tree), _callback(&callback), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(*_tree, input, *_callback), _state, reader);
+    }
+};
+
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
                    const Input& input, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
+    return parse_as_tree_action<void, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(tree, callback)(Production{}, input);
 }
-
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
                    const Input& input, const State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+    return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(state, tree, callback)(Production{}, input);
 }
 } // namespace lexy
 
@@ -9692,22 +9771,45 @@ private:
     input_location_anchor<Input> _anchor;
 };
 
+template <typename State, typename Input, typename OutputIt, typename TokenKind = void>
+struct trace_action
+{
+    OutputIt              _out;
+    visualization_options _opts;
+    const State*          _state = nullptr;
+
+    using handler = trace_handler<OutputIt, Input>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit trace_action(OutputIt out, visualization_options opts = {})
+    : _out(out), _opts(opts)
+    {}
+    template <typename U = State>
+    constexpr explicit trace_action(const U& state, OutputIt out, visualization_options opts = {})
+    : _out(out), _opts(opts), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(_out, input, _opts), _state, reader);
+    }
+};
+
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>
 OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts = {})
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
-                                       no_parse_state, reader);
+    return trace_action<void, Input, OutputIt, TokenKind>(out, opts)(Production{}, input);
 }
-
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
           typename ParseState>
 OutputIt trace_to(OutputIt out, const Input& input, const ParseState& state,
                   visualization_options opts = {})
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
-                                       &state, reader);
+    return trace_action<ParseState, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
+                                                                                  input);
 }
 
 template <typename Production, typename TokenKind = void, typename Input>
@@ -19780,6 +19882,111 @@ constexpr auto sign = if_(_plus{} | _minus{});
 } // namespace lexyd
 
 #endif // LEXY_DSL_SIGN_HPP_INCLUDED
+
+// Copyright (C) 2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_SUBGRAMMAR_HPP_INCLUDED
+#define LEXY_DSL_SUBGRAMMAR_HPP_INCLUDED
+
+
+
+
+namespace lexy
+{
+template <typename Production, typename Handler, typename State, typename Reader>
+struct _subgrammar;
+
+template <typename Production, typename Action>
+using _subgrammar_for = _subgrammar<Production, typename Action::handler, typename Action::state,
+                                    lexy::input_reader<typename Action::input>>;
+} // namespace lexy
+
+#define LEXY_DECLARE_SUBGRAMMAR(Production)                                                        \
+    namespace lexy                                                                                 \
+    {                                                                                              \
+        template <typename Handler, typename State, typename Reader>                               \
+        struct _subgrammar<Production, Handler, State, Reader>                                     \
+        {                                                                                          \
+            template <typename T>                                                                  \
+            static bool parse(_detail::lazy_init<T>&                                value,         \
+                              _detail::parse_context_control_block<Handler, State>* control_block, \
+                              Reader&                                               reader);                                                     \
+        };                                                                                         \
+    }
+
+#define LEXY_DEFINE_SUBGRAMMAR(Production)                                                         \
+    template <typename Handler, typename State, typename Reader>                                   \
+    template <typename T>                                                                          \
+    bool ::lexy::_subgrammar<Production, Handler, State, Reader>::                                 \
+        parse(::lexy::_detail::lazy_init<T>&                                value,                 \
+              ::lexy::_detail::parse_context_control_block<Handler, State>* control_block,         \
+              Reader&                                                       reader)                \
+    {                                                                                              \
+        lexy::_pc<Handler, State, Production> context(control_block);                              \
+        auto                                  success = ::lexy::_do_action(context, reader);       \
+        value                                         = LEXY_MOV(context.value);                   \
+        return success;                                                                            \
+    }
+
+#define LEXY_INSTANTIATE_SUBGRAMMAR(Production, ...)                                               \
+    template bool ::lexy::_subgrammar_for<Production, __VA_ARGS__> /**/                            \
+        ::parse<::lexy::_production_value_type<typename __VA_ARGS__::handler,                      \
+                                               typename __VA_ARGS__::state, Production>> /**/      \
+        (::lexy::_detail::lazy_init<::lexy::_production_value_type<                                \
+             typename __VA_ARGS__::handler, typename __VA_ARGS__::state, Production>>&,            \
+         ::lexy::_detail::parse_context_control_block<typename __VA_ARGS__::handler,               \
+                                                      typename __VA_ARGS__::state>*,               \
+         ::lexy::input_reader<typename __VA_ARGS__::input>&);
+
+namespace lexyd
+{
+template <typename Production, typename T>
+struct _subg : rule_base
+{
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Handler, typename State, typename CurProduction, typename CurWhitespace,
+                  typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(
+            lexy::_pc<Handler, State, CurProduction, CurWhitespace>& context, Reader& reader,
+            Args&&... args)
+        {
+            auto vars                   = context.control_block->vars;
+            context.control_block->vars = nullptr;
+
+            constexpr auto production_uses_void_callback
+                = std::is_same_v<typename Handler::template value_callback<Production, State>,
+                                 lexy::_detail::void_value_callback>;
+            using value_type = std::conditional_t<production_uses_void_callback, void, T>;
+            lexy::_detail::lazy_init<value_type> value;
+
+            using subgrammar_traits = lexy::_subgrammar<Production, Handler, State, Reader>;
+            auto rule_result
+                = subgrammar_traits::template parse<value_type>(value, context.control_block,
+                                                                reader);
+
+            context.control_block->vars = vars;
+
+            if (!rule_result)
+                return false;
+
+            if constexpr (std::is_void_v<value_type>)
+                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            else
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., *LEXY_MOV(value));
+        }
+    };
+};
+
+/// Parses the entry production of a subgrammar, which may be defined in a different
+/// file.
+template <typename Production, typename T>
+constexpr auto subgrammar = _subg<Production, T>{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_SUBGRAMMAR_HPP_INCLUDED
 
 
 
