@@ -1122,6 +1122,9 @@ struct _lit_base
 {};
 struct _sep_base
 {};
+
+struct _operation_base
+{};
 } // namespace lexyd
 
 namespace lexy
@@ -1148,6 +1151,9 @@ constexpr bool is_literal_set_rule = std::is_base_of_v<dsl::_lset_base, T>;
 
 template <typename T>
 constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
+
+template <typename T>
+constexpr auto is_operation = std::is_base_of_v<lexy::dsl::_operation_base, T>;
 } // namespace lexy
 
 //=== predefined_token_kind ===//
@@ -1254,6 +1260,38 @@ LEXY_CONSTEVAL std::size_t max_recursion_depth()
     else
         return 1024; // Arbitrary power of two.
 }
+
+template <typename T>
+using _enable_production_or_operation = std::enable_if_t<is_production<T> || is_operation<T>>;
+
+struct production_info
+{
+    const char* name;
+    bool        is_token;
+    bool        is_transparent;
+
+    template <typename Production, typename = _enable_production_or_operation<Production>>
+    constexpr production_info(Production)
+    : name(production_name<Production>()), is_token(is_token_production<Production>),
+      is_transparent(is_transparent_production<Production>)
+    {}
+
+    friend constexpr bool operator==(production_info lhs, production_info rhs)
+    {
+        // We can safely compare pointers, strings are necessarily interned:
+        // if Production::name exists: same address for all types,
+        // otherwise we use __PRETTY_FUNCTION__ (or equivalent), which is a function-local static.
+        //
+        // This only fails if we have different productions with the same name and the compiler does
+        // string interning. But as the production name corresponds to the qualified C++ name (by
+        // default), this is only possible if the user does something weird.
+        return lhs.name == rhs.name;
+    }
+    friend constexpr bool operator!=(production_info lhs, production_info rhs)
+    {
+        return !(lhs == rhs);
+    }
+};
 } // namespace lexy
 
 namespace lexy
@@ -3101,15 +3139,20 @@ constexpr auto collect(Callback&& callback)
 
 namespace lexy
 {
-/// Generic failure.
 template <typename Reader, typename Tag>
-class error
+class error;
+
+/// Type erased generic failure.
+template <typename Reader>
+class error<Reader, void>
 {
 public:
-    constexpr explicit error(typename Reader::iterator pos) noexcept : _pos(pos), _end(pos) {}
-    constexpr explicit error(typename Reader::iterator begin,
-                             typename Reader::iterator end) noexcept
-    : _pos(begin), _end(end)
+    constexpr explicit error(typename Reader::iterator pos, const char* msg) noexcept
+    : _pos(pos), _end(pos), _msg(msg)
+    {}
+    constexpr explicit error(typename Reader::iterator begin, typename Reader::iterator end,
+                             const char* msg) noexcept
+    : _pos(begin), _end(end), _msg(msg)
     {}
 
     constexpr auto position() const noexcept
@@ -3119,7 +3162,7 @@ public:
 
     constexpr const char* message() const noexcept
     {
-        return _detail::type_name<Tag>();
+        return _msg;
     }
 
     constexpr auto begin() const noexcept
@@ -3134,6 +3177,21 @@ public:
 private:
     typename Reader::iterator _pos;
     typename Reader::iterator _end;
+    const char*               _msg;
+};
+
+/// Generic failure.
+template <typename Reader, typename Tag>
+class error : public error<Reader, void>
+{
+public:
+    constexpr explicit error(typename Reader::iterator pos) noexcept
+    : error<Reader, void>(pos, _detail::type_name<Tag>())
+    {}
+    constexpr explicit error(typename Reader::iterator begin,
+                             typename Reader::iterator end) noexcept
+    : error<Reader, void>(begin, end, _detail::type_name<Tag>())
+    {}
 };
 
 /// Expected the literal character sequence.
@@ -3259,18 +3317,17 @@ namespace lexy
 template <typename Input>
 using _detect_parent_input = decltype(LEXY_DECLVAL(Input).parent_input());
 
-/// Contains information about the context of an error.
 template <typename Production, typename Input>
-class error_context
+class error_context;
+
+/// Contains information about the context of an error, production is type-erased.
+template <typename Input>
+class error_context<void, Input>
 {
 public:
-    constexpr explicit error_context(const Input&                           input,
+    constexpr explicit error_context(lexy::production_info production, const Input& input,
                                      typename input_reader<Input>::iterator pos) noexcept
-    : _input(&input), _pos(pos)
-    {}
-    constexpr explicit error_context(Production, const Input& input,
-                                     typename input_reader<Input>::iterator pos) noexcept
-    : error_context(input, pos)
+    : _input(&input), _pos(pos), _production(production.name)
     {}
 
     /// The input.
@@ -3283,9 +3340,9 @@ public:
     }
 
     /// The name of the production where the error occurred.
-    static LEXY_CONSTEVAL const char* production()
+    const char* production() const noexcept
     {
-        return production_name<Production>();
+        return _production;
     }
 
     /// The starting position of the production.
@@ -3297,7 +3354,33 @@ public:
 private:
     const Input*                           _input;
     typename input_reader<Input>::iterator _pos;
+    const char*                            _production;
 };
+
+/// Contains information about the context of an error.
+template <typename Production, typename Input>
+class error_context : public error_context<void, Input>
+{
+public:
+    constexpr explicit error_context(const Input&                           input,
+                                     typename input_reader<Input>::iterator pos) noexcept
+    : error_context(input, Production{}, pos)
+    {}
+    constexpr explicit error_context(Production production, const Input& input,
+                                     typename input_reader<Input>::iterator pos) noexcept
+    : error_context<void, Input>(production, input, pos)
+    {}
+
+    // We override production to make it static and constexpr.
+    static LEXY_CONSTEVAL const char* production()
+    {
+        return production_name<Production>();
+    }
+};
+
+template <typename Input>
+error_context(production_info, const Input&, typename input_reader<Input>::iterator)
+    -> error_context<void, Input>;
 } // namespace lexy
 
 #endif // LEXY_ERROR_HPP_INCLUDED
@@ -4489,14 +4572,12 @@ struct pt_node_production : pt_node<Reader>
     std::size_t token_production : 1;
     std::size_t first_child_adjacent : 1;
 
-    template <typename Production>
-    explicit pt_node_production(Production) noexcept
-    : pt_node<Reader>(pt_node<Reader>::type_production), child_count(0),
-      token_production(lexy::is_token_production<Production>), first_child_adjacent(true)
+    explicit pt_node_production(production_info info) noexcept
+    : pt_node<Reader>(pt_node<Reader>::type_production), name(info.name), child_count(0),
+      token_production(info.is_token), first_child_adjacent(true)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
-
-        name = lexy::production_name<Production>();
+        LEXY_PRECONDITION(!info.is_transparent);
     }
 
     pt_node<Reader>* first_child()
@@ -4866,8 +4947,7 @@ public:
     };
 
     //=== root node ===//
-    template <typename Production>
-    explicit builder(parse_tree&& tree, Production production) : _result(LEXY_MOV(tree))
+    explicit builder(parse_tree&& tree, production_info production) : _result(LEXY_MOV(tree))
     {
         // Empty the initial parse tree.
         _result._buffer.reset();
@@ -4882,9 +4962,7 @@ public:
         // Begin construction at the root.
         _cur = marker(_result._buffer.top(), 0, _result._root);
     }
-    template <typename Production>
-    explicit builder(Production production) : builder(parse_tree(), production)
-    {}
+    explicit builder(production_info production) : builder(parse_tree(), production) {}
 
     parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
     {
@@ -4896,10 +4974,9 @@ public:
     }
 
     //=== production nodes ===//
-    template <typename Production>
-    auto start_production(Production production)
+    auto start_production(production_info production)
     {
-        if constexpr (lexy::is_transparent_production<Production>)
+        if (production.is_transparent)
             // Don't need to add a new node for a transparent production.
             return _cur;
 
@@ -4966,11 +5043,10 @@ public:
         return old;
     }
 
-    template <typename Production>
-    void set_container_production(Production production)
+    void set_container_production(production_info production)
     {
         LEXY_PRECONDITION(!_cur.prod);
-        if constexpr (lexy::is_transparent_production<Production>)
+        if (production.is_transparent)
             // If the production is transparent, we do nothing.
             return;
 
@@ -5132,33 +5208,22 @@ public:
         return !(nk == tk);
     }
 
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator==(node_kind nk, Production)
+    friend bool operator==(node_kind nk, production_info info)
     {
-        auto name = lexy::production_name<Production>();
-        // We can safely compare pointers, strings are necessarily interned:
-        // if Production::name exists: same address for all types,
-        // otherwise we use __PRETTY_FUNCTION__ (or equivalent), which is a function-local static.
-        //
-        // This only fails if we have different productions with the same name and the compiler does
-        // string interning. But as the production name corresponds to the qualified C++ name (by
-        // default), this is only possible if the user does something weird.
-        return nk.is_production() && nk._ptr->as_production()->name == name;
+        // Just like `production_info::operator==`, we can compare strings.
+        return nk.is_production() && nk._ptr->as_production()->name == info.name;
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator==(Production p, node_kind nk)
+    friend bool operator==(production_info info, node_kind nk)
     {
-        return nk == p;
+        return nk == info;
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator!=(node_kind nk, Production p)
+    friend bool operator!=(node_kind nk, production_info info)
     {
-        return !(nk == p);
+        return !(nk == info);
     }
-    template <typename Production, typename = lexy::production_rule<Production>>
-    friend bool operator!=(Production p, node_kind nk)
+    friend bool operator!=(production_info info, node_kind nk)
     {
-        return !(nk == p);
+        return !(nk == info);
     }
 
 private:
@@ -15796,8 +15861,8 @@ constexpr auto operator/(_opc<O1...>, _opc<O2...>)
 //=== dsl ===//
 namespace lexyd
 {
-/// Tag type to indicate that the operand of an operation is the atom rule.
-struct atom
+/// Operation that just parses the atomic rule.
+struct atom : _operation_base
 {
     static LEXY_CONSTEVAL auto name()
     {
@@ -15805,24 +15870,24 @@ struct atom
     }
 };
 
-/// Tag type to indicate that the operand of an operation is one of multiple.
+/// Operation that selects between multiple ones.
 template <typename... Operands>
-struct groups
+struct groups : _operation_base
 {};
 
-struct infix_op_left // a ~ b ~ c == (a ~ b) ~ c
+struct infix_op_left : _operation_base // a ~ b ~ c == (a ~ b) ~ c
 {};
-struct infix_op_right // a ~ b ~ c == a ~ (b ~ c)
+struct infix_op_right : _operation_base // a ~ b ~ c == a ~ (b ~ c)
 {};
-struct infix_op_list // a ~ b ~ c kept as-is
+struct infix_op_list : _operation_base // a ~ b ~ c kept as-is
 {};
-struct infix_op_single // a ~ b ~ c is an error
-{};
-
-struct postfix_op
+struct infix_op_single : _operation_base // a ~ b ~ c is an error
 {};
 
-struct prefix_op
+struct postfix_op : _operation_base
+{};
+
+struct prefix_op : _operation_base
 {};
 } // namespace lexyd
 
