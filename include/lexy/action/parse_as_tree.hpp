@@ -131,26 +131,54 @@ private:
     validate_handler<Input, ErrorCallback> _validate;
 };
 
+template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
+          typename MemoryResource = void>
+struct parse_as_tree_action
+{
+    using tree_type = lexy::parse_tree_for<Input, TokenKind, MemoryResource>;
+
+    tree_type*           _tree;
+    const ErrorCallback* _callback;
+    const State*         _state = nullptr;
+
+    using handler = parse_tree_handler<tree_type, Input, ErrorCallback>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit parse_as_tree_action(tree_type& tree, const ErrorCallback& callback)
+    : _tree(&tree), _callback(&callback)
+    {}
+    template <typename U = State>
+    constexpr explicit parse_as_tree_action(const U& state, tree_type& tree,
+                                            const ErrorCallback& callback)
+    : _tree(&tree), _callback(&callback), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(*_tree, input, *_callback), _state, reader);
+    }
+};
+
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
                    const Input& input, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
+    return parse_as_tree_action<void, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(tree, callback)(Production{}, input);
 }
-
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
                    const Input& input, const State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = parse_tree_handler(tree, input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+    return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(state, tree, callback)(Production{}, input);
 }
 } // namespace lexy
 

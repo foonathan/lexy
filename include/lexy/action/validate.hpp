@@ -179,22 +179,42 @@ private:
     const Input*                 _input;
 };
 
+template <typename State, typename Input, typename ErrorCallback>
+struct validate_action
+{
+    const ErrorCallback* _callback;
+    const State*         _state = nullptr;
+
+    using handler = validate_handler<Input, ErrorCallback>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit validate_action(const ErrorCallback& callback) : _callback(&callback) {}
+    template <typename U = State>
+    constexpr explicit validate_action(const U& state, const ErrorCallback& callback)
+    : _callback(&callback), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(input, *_callback), _state, reader);
+    }
+};
+
 template <typename Production, typename Input, typename ErrorCallback>
 constexpr auto validate(const Input& input, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = validate_handler(input, callback);
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
+    return validate_action<void, Input, ErrorCallback>(callback)(Production{}, input);
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
 constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
-    auto handler = validate_handler(input, callback);
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+    return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 

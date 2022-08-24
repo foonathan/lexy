@@ -12,6 +12,10 @@ entities:
 ----
 namespace lexy
 {
+    template <typename State, typename Input, typename ErrorCallback,
+              typename TokenKind = void, typename MemoryResource = _default-resource_>
+    struct parse_as_tree_action;
+
     template <_production_ Production,
               typename TK, typename MemRes,
               _input_ Input>

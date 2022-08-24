@@ -12,6 +12,9 @@ entities:
 ----
 namespace lexy
 {
+    template <typename State, typename Input>
+    struct match_action;
+
     template <_production_ Production>
     constexpr bool match(const _input_ auto& input);
 

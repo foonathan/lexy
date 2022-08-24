@@ -118,6 +118,9 @@ If `is_success() == true`, `error_count() == 0` and `errors()` returns the resul
 ----
 namespace lexy
 {
+    template <typename State, typename Input, typename ErrorCallback>
+    struct parse_action;
+
     template <_production_ Production>
     constexpr auto parse(const _input_ auto& input,
                          _error-callback_ auto error_callback)

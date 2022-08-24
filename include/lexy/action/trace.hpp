@@ -428,22 +428,45 @@ private:
     input_location_anchor<Input> _anchor;
 };
 
+template <typename State, typename Input, typename OutputIt, typename TokenKind = void>
+struct trace_action
+{
+    OutputIt              _out;
+    visualization_options _opts;
+    const State*          _state = nullptr;
+
+    using handler = trace_handler<OutputIt, Input>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit trace_action(OutputIt out, visualization_options opts = {})
+    : _out(out), _opts(opts)
+    {}
+    template <typename U = State>
+    constexpr explicit trace_action(const U& state, OutputIt out, visualization_options opts = {})
+    : _out(out), _opts(opts), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(_out, input, _opts), _state, reader);
+    }
+};
+
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input>
 OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts = {})
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
-                                       no_parse_state, reader);
+    return trace_action<void, Input, OutputIt, TokenKind>(out, opts)(Production{}, input);
 }
-
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
           typename ParseState>
 OutputIt trace_to(OutputIt out, const Input& input, const ParseState& state,
                   visualization_options opts = {})
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(trace_handler<OutputIt, Input, TokenKind>(out, input, opts),
-                                       &state, reader);
+    return trace_action<ParseState, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
+                                                                                  input);
 }
 
 template <typename Production, typename TokenKind = void, typename Input>

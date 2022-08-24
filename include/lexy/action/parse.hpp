@@ -142,23 +142,43 @@ private:
     validate_handler<Input, ErrorCallback> _validate;
 };
 
-/// Parses the production into a value, invoking the callback on error.
-template <typename Production, typename Input, typename Callback>
-constexpr auto parse(const Input& input, Callback callback)
+template <typename State, typename Input, typename ErrorCallback>
+struct parse_action
 {
-    auto handler = lexy::parse_handler(input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), no_parse_state, reader);
+    const ErrorCallback* _callback;
+    const State*         _state = nullptr;
+
+    using handler = parse_handler<Input, ErrorCallback>;
+    using state   = State;
+    using input   = Input;
+
+    constexpr explicit parse_action(const ErrorCallback& callback) : _callback(&callback) {}
+    template <typename U = State>
+    constexpr explicit parse_action(const U& state, const ErrorCallback& callback)
+    : _callback(&callback), _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(input, *_callback), _state, reader);
+    }
+};
+
+/// Parses the production into a value, invoking the callback on error.
+template <typename Production, typename Input, typename ErrorCallback>
+constexpr auto parse(const Input& input, const ErrorCallback& callback)
+{
+    return parse_action<void, Input, ErrorCallback>(callback)(Production{}, input);
 }
 
 /// Parses the production into a value, invoking the callback on error.
 /// All callbacks gain access to the specified parse state.
-template <typename Production, typename Input, typename State, typename Callback>
-constexpr auto parse(const Input& input, const State& state, Callback callback)
+template <typename Production, typename Input, typename State, typename ErrorCallback>
+constexpr auto parse(const Input& input, const State& state, ErrorCallback& callback)
 {
-    auto handler = lexy::parse_handler(input, LEXY_MOV(callback));
-    auto reader  = input.reader();
-    return lexy::do_action<Production>(LEXY_MOV(handler), &state, reader);
+    return parse_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 

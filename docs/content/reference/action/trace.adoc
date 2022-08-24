@@ -18,6 +18,9 @@ Visualize the parsing process.
 ----
 namespace lexy
 {
+    template <typename State, typename Input, typename OutputIt, typename TokenKind = void>
+    struct trace_action;
+
     template <_production_ Production, typename TokenKind = void,
               std::output_iterator<char> OutputIt>
     OutputIt trace_to(OutputIt out, const auto _input_& input,

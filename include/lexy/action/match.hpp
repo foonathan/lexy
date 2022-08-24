@@ -42,18 +42,37 @@ private:
     bool _failed;
 };
 
+template <typename State, typename Input>
+struct match_action
+{
+    const State* _state = nullptr;
+
+    using handler = match_handler;
+    using state   = State;
+    using input   = Input;
+
+    constexpr match_action() = default;
+    template <typename U = State>
+    constexpr explicit match_action(const U& state) : _state(&state)
+    {}
+
+    template <typename Production>
+    constexpr auto operator()(Production, const Input& input) const
+    {
+        auto reader = input.reader();
+        return lexy::do_action<Production>(handler(), _state, reader);
+    }
+};
+
 template <typename Production, typename Input>
 constexpr bool match(const Input& input)
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(match_handler(), no_parse_state, reader);
+    return match_action<void, Input>()(Production{}, input);
 }
-
 template <typename Production, typename Input, typename State>
 constexpr bool match(const Input& input, const State& state)
 {
-    auto reader = input.reader();
-    return lexy::do_action<Production>(match_handler(), &state, reader);
+    return match_action<State, Input>(state)(Production{}, input);
 }
 } // namespace lexy
 
