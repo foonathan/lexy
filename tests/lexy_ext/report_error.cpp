@@ -14,6 +14,7 @@ namespace
 struct production
 {
     static constexpr auto name = "production";
+    static constexpr auto rule = 0; // Need a rule member to make it a production.
 };
 
 struct error_tag
