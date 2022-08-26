@@ -57,13 +57,13 @@ Requires::
   * `T` is the type of the value produced by using {{% docref "lexy::parse" %}} on the `Production`.
     If `lexy::parse` is never used, it can be `void`.
 Parsing::
-  Parses `Production` as-if by {{% docref "lexy::dsl::p" %}}.
+  Parses `Production` as-if it was the top level action.
+  Unlike {{% docref "lexy::dsl::p" %}}, the context is not retained: whitespace rules and parse variables get reset.
 Errors::
   All errors raised by parsing `Production`.
   The rule then fails if it has failed.
 Values::
   The single value of type `T` produced by parsing `Production`.
-
 
 .Split a grammar into multiple files.
 ====
@@ -105,4 +105,6 @@ LEXY_INSTANTIATE_SUBGRAMMAR(child_production,
 ====
 
 NOTE: If you forgot a `LEXY_INSTANTIATE_SUBGRAMMAR` call or make an error with the type of the action, you will get linker errors.
+
+CAUTION: If the subgrammar wants automatic whitespace skipping, it needs to specify a `whitespace` in the entry production again.
 
