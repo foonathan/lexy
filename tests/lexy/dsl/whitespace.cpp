@@ -12,7 +12,7 @@ namespace
 {
 struct with_whitespace
 {
-    static constexpr auto whitespace = LEXY_LIT(".");
+    static constexpr auto whitespace = dsl::whitespace(LEXY_LIT("."));
 };
 } // namespace
 

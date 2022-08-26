@@ -10,6 +10,12 @@
 #include <lexy/dsl/loop.hpp>
 #include <lexy/dsl/token.hpp>
 
+namespace lexyd
+{
+template <typename Rule>
+struct _wsr;
+}
+
 //=== implementation ===//
 namespace lexy::_detail
 {
@@ -113,6 +119,9 @@ struct manual_ws_parser
         return NextParser::parse(context, reader, LEXY_FWD(args)...);
     }
 };
+template <typename Rule, typename NextParser>
+struct manual_ws_parser<lexyd::_wsr<Rule>, NextParser> : manual_ws_parser<Rule, NextParser>
+{};
 template <typename NextParser>
 struct manual_ws_parser<void, NextParser> : NextParser
 {};
