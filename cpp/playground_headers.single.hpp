@@ -2445,6 +2445,9 @@ namespace _detail
     template <typename Handler, typename State = void>
     struct parse_context_control_block
     {
+        using handler_type = Handler;
+        using state_type   = State;
+
         LEXY_EMPTY_MEMBER Handler parse_handler;
         const State*              parse_state;
 
@@ -11663,6 +11666,12 @@ constexpr auto do_while(Then then, Condition condition)
 
 
 
+namespace lexyd
+{
+template <typename Rule>
+struct _wsr;
+}
+
 //=== implementation ===//
 namespace lexy::_detail
 {
@@ -11766,6 +11775,9 @@ struct manual_ws_parser
         return NextParser::parse(context, reader, LEXY_FWD(args)...);
     }
 };
+template <typename Rule, typename NextParser>
+struct manual_ws_parser<lexyd::_wsr<Rule>, NextParser> : manual_ws_parser<Rule, NextParser>
+{};
 template <typename NextParser>
 struct manual_ws_parser<void, NextParser> : NextParser
 {};
@@ -19947,22 +19959,24 @@ struct _subg : rule_base
     template <typename NextParser>
     struct p
     {
-        template <typename Handler, typename State, typename CurProduction, typename CurWhitespace,
-                  typename Reader, typename... Args>
-        LEXY_PARSER_FUNC static bool parse(
-            lexy::_pc<Handler, State, CurProduction, CurWhitespace>& context, Reader& reader,
-            Args&&... args)
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            using control_block_type = LEXY_DECAY_DECLTYPE(*context.control_block);
+            using handler_type       = typename control_block_type::handler_type;
+            using state_type         = typename control_block_type::state_type;
+
             auto vars                   = context.control_block->vars;
             context.control_block->vars = nullptr;
 
-            constexpr auto production_uses_void_callback
-                = std::is_same_v<typename Handler::template value_callback<Production, State>,
-                                 lexy::_detail::void_value_callback>;
+            constexpr auto production_uses_void_callback = std::is_same_v<
+                typename handler_type::template value_callback<Production, state_type>,
+                lexy::_detail::void_value_callback>;
             using value_type = std::conditional_t<production_uses_void_callback, void, T>;
             lexy::_detail::lazy_init<value_type> value;
 
-            using subgrammar_traits = lexy::_subgrammar<Production, Handler, State, Reader>;
+            using subgrammar_traits
+                = lexy::_subgrammar<Production, handler_type, state_type, Reader>;
             auto rule_result
                 = subgrammar_traits::template parse<value_type>(value, context.control_block,
                                                                 reader);
