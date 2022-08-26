@@ -65,6 +65,9 @@ namespace _detail
     template <typename Handler, typename State = void>
     struct parse_context_control_block
     {
+        using handler_type = Handler;
+        using state_type   = State;
+
         LEXY_EMPTY_MEMBER Handler parse_handler;
         const State*              parse_state;
 
