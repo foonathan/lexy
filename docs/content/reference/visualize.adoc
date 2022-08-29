@@ -162,13 +162,19 @@ NOTE: Use {{% docref "lexy::trace" %}} to visualize the parsing process itself.
 ----
 namespace lexy
 {
-    struct cfile_output_iterator;
+    class cfile_output_iterator
+    {
+    public:
+        explicit cfile_output_iterator(std::FILE* file);
+
+        // OutputIterator members
+    };
 
     template <typename T>
     void visualize(std::FILE* file, const T& obj,
                    visualization_options opts = {})
     {
-        visualize_to(cfile_output_iterator{file}, obj, opts);
+        visualize_to(cfile_output_iterator(file), obj, opts);
     }
 }
 ----

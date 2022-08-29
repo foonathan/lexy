@@ -601,6 +601,8 @@ struct cfile_output_iterator
 {
     std::FILE* _file;
 
+    explicit constexpr cfile_output_iterator(std::FILE* file) : _file(file) {}
+
     auto operator*() const noexcept
     {
         return *this;
