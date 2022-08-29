@@ -73,7 +73,7 @@ int main()
     if (!file)
     { … }
 
-    auto result = lexy::parse<grammar::config>(file.buffer(), lexy_ext::report_error); <4>
+    auto result = lexy::parse<grammar::config>(file.buffer(), lexy_ext::report_error.path(filename)); <4>
     if (!result) <5>
     { … }
 

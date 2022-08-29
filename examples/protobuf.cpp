@@ -285,7 +285,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto result = lexy::parse<grammar::message>(file.buffer(), lexy_ext::report_error);
+    auto result
+        = lexy::parse<grammar::message>(file.buffer(), lexy_ext::report_error.path(argv[1]));
     if (!result)
         return 2;
 

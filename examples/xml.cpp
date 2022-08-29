@@ -20,7 +20,7 @@ namespace ast
 class xml_node
 {
 public:
-    xml_node(const xml_node&) = delete;
+    xml_node(const xml_node&)            = delete;
     xml_node& operator=(const xml_node&) = delete;
     virtual ~xml_node()                  = default;
 
@@ -284,7 +284,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto document = lexy::parse<grammar::document>(file.buffer(), lexy_ext::report_error);
+    auto document
+        = lexy::parse<grammar::document>(file.buffer(), lexy_ext::report_error.path(argv[1]));
     if (!document)
         return 2;
 
