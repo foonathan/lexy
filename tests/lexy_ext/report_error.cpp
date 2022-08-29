@@ -27,7 +27,7 @@ TEST_CASE("_detail::write_error")
 {
     auto write = [](const auto& context, const auto& error) {
         std::string str;
-        lexy_ext::_detail::write_error(std::back_insert_iterator(str), context, error, {});
+        lexy_ext::_detail::write_error(std::back_insert_iterator(str), context, error, {}, nullptr);
         return str;
     };
 

@@ -235,7 +235,8 @@ namespace lexy_ext::_detail
 {
 template <typename OutputIt, typename Production, typename Input, typename Reader, typename Tag>
 OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>& context,
-                     const lexy::error<Reader, Tag>& error, lexy::visualization_options opts)
+                     const lexy::error<Reader, Tag>& error, lexy::visualization_options opts,
+                     const char* path)
 {
     diagnostic_writer<Input> writer(context.input(), opts);
 
@@ -251,6 +252,8 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
                                    out = lexy::_detail::write_str(out, context.production());
                                    return out;
                                });
+    if (path != nullptr)
+        out = writer.write_path(out, path);
     out = writer.write_empty_annotation(out);
 
     // Write an annotation for the context.
@@ -314,11 +317,19 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Production, Input>&
 
 namespace lexy_ext
 {
+template <typename OutputIterator = int>
 struct _report_error
 {
+    OutputIterator              _iter;
+    lexy::visualization_options _opts;
+    const char*                 _path;
+
     struct _sink
     {
-        std::size_t _count;
+        OutputIterator              _iter;
+        lexy::visualization_options _opts;
+        const char*                 _path;
+        std::size_t                 _count;
 
         using return_type = std::size_t;
 
@@ -326,8 +337,11 @@ struct _report_error
         void operator()(const lexy::error_context<Production, Input>& context,
                         const lexy::error<Reader, Tag>&               error)
         {
-            _detail::write_error(lexy::cfile_output_iterator{stderr}, context, error,
-                                 {lexy::visualize_fancy});
+            if constexpr (std::is_same_v<OutputIterator, int>)
+                _detail::write_error(lexy::cfile_output_iterator{stderr}, context, error, _opts,
+                                     _path);
+            else
+                _iter = _detail::write_error(_iter, context, error, _opts, _path);
             ++_count;
         }
 
@@ -340,12 +354,31 @@ struct _report_error
     };
     constexpr auto sink() const
     {
-        return _sink{};
+        return _sink{_iter, _opts, _path, 0};
+    }
+
+    /// Specifies a path that will be printed alongside the diagnostic.
+    constexpr _report_error path(const char* path) const
+    {
+        return {_iter, _opts, path};
+    }
+
+    /// Specifies an output iterator where the errors are written to.
+    template <typename OI>
+    constexpr _report_error<OI> to(OI out) const
+    {
+        return {out, _opts, _path};
+    }
+
+    /// Overrides visualization options.
+    constexpr _report_error opts(lexy::visualization_options opts) const
+    {
+        return {_iter, opts, _path};
     }
 };
 
 /// An error callback that uses diagnostic_writer to print to stderr (by default).
-constexpr auto report_error = _report_error{};
+constexpr auto report_error = _report_error<>{};
 } // namespace lexy_ext
 
 #endif // LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
