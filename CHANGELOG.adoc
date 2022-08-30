@@ -4,6 +4,8 @@
 
 * Add `lexy::dsl::subgrammar` to split a grammar into multiple translation units.
 * Add `lexy::dsl::flags` and `lexy::dsl::flag` to parse enum flags.
+* Add overload of `lexy::dsl::position` that parses a rule.
+  This allows using it as branch conditions.
 * Add `lexy::parse_tree::remaining_input()` and populate it by `lexy::parse_as_tree`.
 * Use type-erased `lexy::production_info` instead of `Production` type in `lexy::parse_tree`.
   This is technically a breaking change, as it may affect overload resolution.
