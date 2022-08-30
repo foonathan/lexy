@@ -104,6 +104,30 @@ struct utf8_encoding
     }
 };
 
+/// An encoding where the input is assumed to be valid UTF-8, but the char type is char.
+struct utf8_char_encoding
+{
+    using char_type = char;
+    using int_type  = char;
+
+    template <typename OtherCharType>
+    static constexpr bool is_secondary_char_type()
+    {
+        return std::is_same_v<OtherCharType, LEXY_CHAR8_T>;
+    }
+
+    static LEXY_CONSTEVAL int_type eof()
+    {
+        // 0xFF is not part of valid UTF-8.
+        return int_type(0xFF);
+    }
+
+    static constexpr int_type to_int_type(char_type c)
+    {
+        return int_type(c);
+    }
+};
+
 /// An encoding where the input is assumed to be valid UTF-16.
 struct utf16_encoding
 {
@@ -191,7 +215,8 @@ struct _deduce_encoding<char>
     using type = LEXY_ENCODING_OF_CHAR;
     static_assert(std::is_same_v<type, default_encoding>      //
                       || std::is_same_v<type, ascii_encoding> //
-                      || std::is_same_v<type, utf8_encoding>,
+                      || std::is_same_v<type, utf8_encoding>  //
+                      || std::is_same_v<type, utf8_char_encoding>,
                   "invalid value for LEXY_ENCODING_OF_CHAR");
 #else
     using type = default_encoding; // Don't know the exact encoding.

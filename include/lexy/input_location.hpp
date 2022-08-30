@@ -305,7 +305,9 @@ template <typename Encoding, typename Iterator>
 constexpr Iterator find_cp_boundary(Iterator cur, Iterator end)
 {
     auto is_cp_continuation = [](auto c) {
-        if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+        if constexpr (std::is_same_v<Encoding,
+                                     lexy::utf8_encoding> //
+                      || std::is_same_v<Encoding, lexy::utf8_char_encoding>)
             return (c & 0b1100'0000) == (0b10 << 6);
         else if constexpr (std::is_same_v<Encoding, lexy::utf16_encoding>)
             return 0xDC00 <= c && c <= 0xDFFF;

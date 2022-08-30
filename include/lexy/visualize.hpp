@@ -385,8 +385,9 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         }
         return out;
     }
-    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>     //
-                       || std::is_same_v<encoding, lexy::utf16_encoding> //
+    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>         //
+                       || std::is_same_v<encoding, lexy::utf8_char_encoding> //
+                       || std::is_same_v<encoding, lexy::utf16_encoding>     //
                        || std::is_same_v<encoding, lexy::utf32_encoding>)
     {
         // Parse the individual code points, and write them out.
@@ -418,7 +419,9 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
                 // Visualize each skipped code unit as byte.
                 for (auto cur = begin; cur != end; ++cur)
                 {
-                    if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>)
+                    if constexpr (std::is_same_v<encoding,
+                                                 lexy::utf8_encoding> //
+                                  || std::is_same_v<encoding, lexy::utf8_char_encoding>)
                     {
                         out = write_escaped_byte(out, static_cast<unsigned char>(*cur & 0xFF));
                     }

@@ -17,6 +17,10 @@ template <lexy::encoding_endianness DontCare>
 struct _bom<lexy::utf8_encoding, DontCare> //
 : _lit<unsigned char, 0xEF, 0xBB, 0xBF>
 {};
+template <lexy::encoding_endianness DontCare>
+struct _bom<lexy::utf8_char_encoding, DontCare> //
+: _lit<unsigned char, 0xEF, 0xBB, 0xBF>
+{};
 template <>
 struct _bom<lexy::utf16_encoding, lexy::encoding_endianness::little>
 : _lit<unsigned char, 0xFF, 0xFE>

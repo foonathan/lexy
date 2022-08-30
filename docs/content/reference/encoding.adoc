@@ -5,6 +5,7 @@ entities:
   "lexy::default_encoding": encoding
   "lexy::ascii_encoding": encoding
   "lexy::utf8_encoding": encoding
+  "lexy::utf8_char_encoding": encoding
   "lexy::utf16_encoding": encoding
   "lexy::utf32_encoding": encoding
   "lexy::byte_encoding": encoding
@@ -40,10 +41,11 @@ namespace lexy
 {
     struct default_encoding {}; // any 8-bit encoding
 
-    struct ascii_encoding {}; // ASCII
-    struct utf8_encoding  {}; // UTF-8
-    struct utf16_encoding {}; // UTF-16
-    struct utf32_encoding {}; // UTF-32
+    struct ascii_encoding {};       // ASCII
+    struct utf8_encoding  {};       // UTF-8, char8_t
+    struct utf8_char_encoding  {};  // UTF-8, char
+    struct utf16_encoding {};       // UTF-16
+    struct utf32_encoding {};       // UTF-32
 
     struct byte_encoding {}; // not text
 }
@@ -56,14 +58,15 @@ Tag types for the encodings supported by lexy.
 .The character types
 ====
 |===
-| Encoding           | Primary character type | Secondary character type(s)
+| Encoding            | Primary character type | Secondary character type(s)
 
-| `default_encoding` | `char`                 | none
-| `ascii_encoding`   | `char`                 | none
-| `utf8_encoding`    | `char8_t`              | `char`
-| `utf16_encoding`   | `char16_t`             | `wchar_t` (Windows only)
-| `utf32_encoding`   | `char32_t`             | `wchar_t` (Linux and related systems)
-| `byte_encoding`    | `unsigned char`        | `char`, `std::byte`
+| `default_encoding`  | `char`                 | none
+| `ascii_encoding`    | `char`                 | none
+| `utf8_encoding`     | `char8_t`              | `char`
+| `utf8_char_encoding`| `char`                 | `char8_t`
+| `utf16_encoding`    | `char16_t`             | `wchar_t` (Windows only)
+| `utf32_encoding`    | `char32_t`             | `wchar_t` (Linux and related systems)
+| `byte_encoding`     | `unsigned char`        | `char`, `std::byte`
 |===
 ====
 
@@ -117,7 +120,7 @@ Deduces an encoding from the character type of a string.
 What encoding is deduced from a character type is specified in the table above.
 If `CharT` is not listed there, the alias is ill-formed.
 
-The encoding corresponding to `char` can be overridden by defining the macro `LEXY_ENCODING_OF_CHAR` to one of `lexy::default_encoding`, `lexy::ascii_encoding` and `lexy::utf8_encoding`.
+The encoding corresponding to `char` can be overridden by defining the macro `LEXY_ENCODING_OF_CHAR` to one of `lexy::default_encoding`, `lexy::ascii_encoding`, `lexy::utf8_encoding`, and `lexy::utf8_char_encoding`.
 
 [#encoding_endianness]
 == Enum class `lexy::encoding_endianness`

@@ -51,6 +51,7 @@ private:
 // (i.e. where char_type == int_type).
 LEXY_INSTANTIATION_NEWTYPE(_bra, _br, lexy::ascii_encoding);
 LEXY_INSTANTIATION_NEWTYPE(_br8, _br, lexy::utf8_encoding);
+LEXY_INSTANTIATION_NEWTYPE(_brc, _br, lexy::utf8_char_encoding);
 LEXY_INSTANTIATION_NEWTYPE(_br32, _br, lexy::utf32_encoding);
 
 // Create the appropriate buffer reader.
@@ -61,6 +62,8 @@ constexpr auto _buffer_reader(const typename Encoding::char_type* data)
         return _bra(data);
     else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
         return _br8(data);
+    else if constexpr (std::is_same_v<Encoding, lexy::utf8_char_encoding>)
+        return _brc(data);
     else if constexpr (std::is_same_v<Encoding, lexy::utf32_encoding>)
         return _br32(data);
     else
@@ -334,6 +337,25 @@ struct _make_buffer<utf8_encoding, encoding_endianness::bom>
         }
 
         return _make_buffer<utf8_encoding, encoding_endianness::big>{}(memory, size, resource);
+    }
+};
+template <>
+struct _make_buffer<utf8_char_encoding, encoding_endianness::bom>
+{
+    template <typename MemoryResource = void>
+    auto operator()(const void* _memory, std::size_t size,
+                    MemoryResource* resource = _detail::get_memory_resource<MemoryResource>()) const
+    {
+        auto memory = static_cast<const unsigned char*>(_memory);
+
+        // We just skip over the BOM if there is one, it doesn't matter.
+        if (size >= 3 && memory[0] == 0xEF && memory[1] == 0xBB && memory[2] == 0xBF)
+        {
+            memory += 3;
+            size -= 3;
+        }
+
+        return _make_buffer<utf8_char_encoding, encoding_endianness::big>{}(memory, size, resource);
     }
 };
 template <>

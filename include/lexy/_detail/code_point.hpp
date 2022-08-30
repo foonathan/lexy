@@ -20,14 +20,17 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
         *buffer = char(cp);
         return 1;
     }
-    else if constexpr (std::is_same_v<Encoding, lexy::utf8_encoding>)
+    else if constexpr (std::is_same_v<Encoding,
+                                      lexy::utf8_encoding> //
+                       || std::is_same_v<Encoding, lexy::utf8_char_encoding>)
     {
+        using char_type = typename Encoding::char_type;
         // Taken from http://www.herongyang.com/Unicode/UTF-8-UTF-8-Encoding-Algorithm.html.
         if (cp <= 0x7F)
         {
             LEXY_PRECONDITION(size >= 1);
 
-            buffer[0] = LEXY_CHAR8_T(cp);
+            buffer[0] = char_type(cp);
             return 1;
         }
         else if (cp <= 0x07'FF)
@@ -37,8 +40,8 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
             auto first  = (cp >> 6) & 0x1F;
             auto second = (cp >> 0) & 0x3F;
 
-            buffer[0] = LEXY_CHAR8_T(0xC0 | first);
-            buffer[1] = LEXY_CHAR8_T(0x80 | second);
+            buffer[0] = char_type(0xC0 | first);
+            buffer[1] = char_type(0x80 | second);
             return 2;
         }
         else if (cp <= 0xFF'FF)
@@ -49,9 +52,9 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
             auto second = (cp >> 6) & 0x3F;
             auto third  = (cp >> 0) & 0x3F;
 
-            buffer[0] = LEXY_CHAR8_T(0xE0 | first);
-            buffer[1] = LEXY_CHAR8_T(0x80 | second);
-            buffer[2] = LEXY_CHAR8_T(0x80 | third);
+            buffer[0] = char_type(0xE0 | first);
+            buffer[1] = char_type(0x80 | second);
+            buffer[2] = char_type(0x80 | third);
             return 3;
         }
         else
@@ -63,10 +66,10 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
             auto third  = (cp >> 6) & 0x3F;
             auto fourth = (cp >> 0) & 0x3F;
 
-            buffer[0] = LEXY_CHAR8_T(0xF0 | first);
-            buffer[1] = LEXY_CHAR8_T(0x80 | second);
-            buffer[2] = LEXY_CHAR8_T(0x80 | third);
-            buffer[3] = LEXY_CHAR8_T(0x80 | fourth);
+            buffer[0] = char_type(0xF0 | first);
+            buffer[1] = char_type(0x80 | second);
+            buffer[2] = char_type(0x80 | third);
+            buffer[3] = char_type(0x80 | fourth);
             return 4;
         }
     }
@@ -152,7 +155,8 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         else
             return {cp, cp_error::out_of_range, reader.position()};
     }
-    else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding>)
+    else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding> //
+                       || std::is_same_v<typename Reader::encoding, lexy::utf8_char_encoding>)
     {
         constexpr auto payload_lead1 = 0b0111'1111;
         constexpr auto payload_lead2 = 0b0001'1111;
