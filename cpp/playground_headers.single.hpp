@@ -21461,7 +21461,7 @@ public:
     ///
     /// error: A message.
     template <typename OutputIt, typename Writer>
-    OutputIt write_message(OutputIt out, diagnostic_kind kind, const Writer& message)
+    OutputIt write_message(OutputIt out, diagnostic_kind kind, const Writer& message) const
     {
         using namespace lexy::_detail;
         using lexy::_detail::color; // clang-cl bug
