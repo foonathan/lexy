@@ -62,6 +62,7 @@ set(header_files
         ${include_dir}/dsl/context_identifier.hpp
         ${include_dir}/dsl/delimited.hpp
         ${include_dir}/dsl/digit.hpp
+        ${include_dir}/dsl/effect.hpp
         ${include_dir}/dsl/eof.hpp
         ${include_dir}/dsl/error.hpp
         ${include_dir}/dsl/expression.hpp

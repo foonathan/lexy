@@ -57,6 +57,7 @@ set(tests
         dsl/context_identifier.cpp
         dsl/delimited.cpp
         dsl/digit.cpp
+        dsl/effect.cpp
         dsl/eof.cpp
         dsl/error.cpp
         dsl/expression.cpp

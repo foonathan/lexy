@@ -66,6 +66,12 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 #    endif
 #endif
 
+#if LEXY_HAS_NTTP
+#    define LEXY_NTTP_PARAM auto
+#else
+#    define LEXY_NTTP_PARAM const auto&
+#endif
+
 //=== consteval ===//
 #ifndef LEXY_HAS_CONSTEVAL
 #    if defined(_MSC_VER) && !defined(__clang__)
