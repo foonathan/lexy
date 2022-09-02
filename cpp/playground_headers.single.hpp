@@ -79,6 +79,12 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 #    endif
 #endif
 
+#if LEXY_HAS_NTTP
+#    define LEXY_NTTP_PARAM auto
+#else
+#    define LEXY_NTTP_PARAM const auto&
+#endif
+
 //=== consteval ===//
 #ifndef LEXY_HAS_CONSTEVAL
 #    if defined(_MSC_VER) && !defined(__clang__)
@@ -991,7 +997,7 @@ constexpr bool is_callback_for
     = _detail::is_detected<_detect_callback_for, std::decay_t<T>, Args...>;
 
 template <typename T, typename State>
-using _detect_callback_state = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(const State&)]);
+using _detect_callback_state = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(State&)]);
 template <typename T, typename State>
 constexpr bool is_callback_state
     = _detail::is_detected<_detect_callback_state, T, std::decay_t<State>>;
@@ -1367,7 +1373,7 @@ struct _sfinae_sink
 template <typename Production, typename ParseState = void>
 class production_value_callback
 {
-    static constexpr auto _get_value([[maybe_unused]] const ParseState* state)
+    static constexpr auto _get_value([[maybe_unused]] ParseState* state)
     {
         if constexpr (lexy::_detail::is_detected<_detect_value_of, ParseState, Production>)
             return state->value_of(Production{});
@@ -1380,28 +1386,28 @@ class production_value_callback
     {
         if constexpr (lexy::is_callback<_type>)
             return _get_value(nullptr);
-        else if constexpr (lexy::is_sink<_type, ParseState>)
-            return _get_value(nullptr).sink(LEXY_DECLVAL(const ParseState&));
+        else if constexpr (lexy::is_sink<_type, std::add_lvalue_reference_t<ParseState>>)
+            return _get_value(nullptr).sink(LEXY_DECLVAL(ParseState&));
         else
             return _get_value(nullptr).sink();
     }
 
 public:
-    constexpr explicit production_value_callback(const ParseState* state) : _state(state) {}
+    constexpr explicit production_value_callback(ParseState* state) : _state(state) {}
 
     template <typename State = ParseState, typename = std::enable_if_t<std::is_void_v<State>>>
     constexpr production_value_callback() : _state(nullptr)
     {}
     template <typename State = ParseState,
               typename       = std::enable_if_t<std::is_same_v<State, ParseState>>>
-    constexpr explicit production_value_callback(const State& state) : _state(&state)
+    constexpr explicit production_value_callback(State& state) : _state(&state)
     {}
 
     using return_type = typename decltype(_return_type_callback())::return_type;
 
     constexpr auto sink() const
     {
-        if constexpr (lexy::is_sink<_type, ParseState>)
+        if constexpr (lexy::is_sink<_type, std::add_lvalue_reference_t<ParseState>>)
         {
             return _sfinae_sink(Production{}, _get_value(_state).sink(*_state));
         }
@@ -1424,7 +1430,8 @@ public:
             else
                 return _get_value(_state)(LEXY_FWD(args)...);
         }
-        else if constexpr ((lexy::is_sink<_type> || lexy::is_sink<_type, ParseState>) //
+        else if constexpr ((lexy::is_sink<_type>                                              //
+                            || lexy::is_sink<_type, std::add_lvalue_reference_t<ParseState>>) //
                            &&_is_convertible<return_type, Args&&...>)
         {
             // We don't have a matching callback, but it is a single argument that has
@@ -1443,7 +1450,7 @@ public:
     }
 
 private:
-    const ParseState* _state;
+    ParseState* _state;
 };
 } // namespace lexy
 
@@ -2477,14 +2484,14 @@ namespace _detail
         using state_type   = State;
 
         LEXY_EMPTY_MEMBER Handler parse_handler;
-        const State*              parse_state;
+        State*                    parse_state;
 
         parse_context_var_base* vars;
 
         int  cur_depth, max_depth;
         bool enable_whitespace_skipping;
 
-        constexpr parse_context_control_block(Handler&& handler, const State* state,
+        constexpr parse_context_control_block(Handler&& handler, State* state,
                                               std::size_t max_depth)
         : parse_handler(LEXY_MOV(handler)), parse_state(state), //
           vars(nullptr),                                        //
@@ -2605,7 +2612,7 @@ constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& read
 }
 
 template <typename Production, typename Handler, typename State, typename Reader>
-constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
+constexpr auto do_action(Handler&& handler, State* state, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
 
@@ -2721,7 +2728,7 @@ struct _list_alloc
     template <typename State>
     struct _with_state
     {
-        const State&   _state;
+        State&         _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -2747,13 +2754,13 @@ struct _list_alloc
     };
 
     template <typename State>
-    constexpr auto operator[](const State& state) const
+    constexpr auto operator[](State& state) const
     {
         return _with_state<State>{state, _alloc};
     }
 
     template <typename State>
-    constexpr auto sink(const State& state) const
+    constexpr auto sink(State& state) const
     {
         return _list_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }
@@ -2860,7 +2867,7 @@ struct _collection_alloc
     template <typename State>
     struct _with_state
     {
-        const State&   _state;
+        State&         _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -2886,13 +2893,13 @@ struct _collection_alloc
     };
 
     template <typename State>
-    constexpr auto operator[](const State& state) const
+    constexpr auto operator[](State& state) const
     {
         return _with_state<State>{state, _alloc};
     }
 
     template <typename State>
-    constexpr auto sink(const State& state) const
+    constexpr auto sink(State& state) const
     {
         return _collection_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }
@@ -3601,7 +3608,7 @@ template <typename State, typename Input, typename ErrorCallback>
 struct validate_action
 {
     const ErrorCallback* _callback;
-    const State*         _state = nullptr;
+    State*               _state = nullptr;
 
     using handler = validate_handler<Input, ErrorCallback>;
     using state   = State;
@@ -3609,7 +3616,7 @@ struct validate_action
 
     constexpr explicit validate_action(const ErrorCallback& callback) : _callback(&callback) {}
     template <typename U = State>
-    constexpr explicit validate_action(const U& state, const ErrorCallback& callback)
+    constexpr explicit validate_action(U& state, const ErrorCallback& callback)
     : _callback(&callback), _state(&state)
     {}
 
@@ -3629,10 +3636,16 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
+constexpr auto validate(const Input& input, State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
     return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
+}
+template <typename Production, typename Input, typename State, typename ErrorCallback>
+constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    return validate_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 
@@ -3698,7 +3711,7 @@ private:
 template <typename State, typename Input>
 struct match_action
 {
-    const State* _state = nullptr;
+    State* _state = nullptr;
 
     using handler = match_handler;
     using state   = State;
@@ -3706,7 +3719,7 @@ struct match_action
 
     constexpr match_action() = default;
     template <typename U = State>
-    constexpr explicit match_action(const U& state) : _state(&state)
+    constexpr explicit match_action(U& state) : _state(&state)
     {}
 
     template <typename Production>
@@ -3723,9 +3736,14 @@ constexpr bool match(const Input& input)
     return match_action<void, Input>()(Production{}, input);
 }
 template <typename Production, typename Input, typename State>
-constexpr bool match(const Input& input, const State& state)
+constexpr bool match(const Input& input, State& state)
 {
     return match_action<State, Input>(state)(Production{}, input);
+}
+template <typename Production, typename Input, typename State>
+constexpr bool match(const Input& input, const State& state)
+{
+    return match_action<const State, Input>(state)(Production{}, input);
 }
 } // namespace lexy
 
@@ -5782,7 +5800,7 @@ struct parse_as_tree_action
 
     tree_type*           _tree;
     const ErrorCallback* _callback;
-    const State*         _state = nullptr;
+    State*               _state = nullptr;
 
     using handler = parse_tree_handler<tree_type, Input, ErrorCallback>;
     using state   = State;
@@ -5792,7 +5810,7 @@ struct parse_as_tree_action
     : _tree(&tree), _callback(&callback)
     {}
     template <typename U = State>
-    constexpr explicit parse_as_tree_action(const U& state, tree_type& tree,
+    constexpr explicit parse_as_tree_action(U& state, tree_type& tree,
                                             const ErrorCallback& callback)
     : _tree(&tree), _callback(&callback), _state(&state)
     {}
@@ -5817,10 +5835,19 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const State& state, const ErrorCallback& callback)
+                   const Input& input, State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(state, tree, callback)(Production{}, input);
+}
+template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
+          typename State, typename ErrorCallback>
+auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+                   const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    return parse_as_tree_action<const State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);
 }
 } // namespace lexy
@@ -9818,7 +9845,7 @@ struct trace_action
 {
     OutputIt              _out;
     visualization_options _opts;
-    const State*          _state = nullptr;
+    State*                _state = nullptr;
 
     using handler = trace_handler<OutputIt, Input>;
     using state   = State;
@@ -9828,7 +9855,7 @@ struct trace_action
     : _out(out), _opts(opts)
     {}
     template <typename U = State>
-    constexpr explicit trace_action(const U& state, OutputIt out, visualization_options opts = {})
+    constexpr explicit trace_action(U& state, OutputIt out, visualization_options opts = {})
     : _out(out), _opts(opts), _state(&state)
     {}
 
@@ -9846,18 +9873,29 @@ OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts =
     return trace_action<void, Input, OutputIt, TokenKind>(out, opts)(Production{}, input);
 }
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
-          typename ParseState>
-OutputIt trace_to(OutputIt out, const Input& input, const ParseState& state,
+          typename State>
+OutputIt trace_to(OutputIt out, const Input& input, State& state, visualization_options opts = {})
+{
+    return trace_action<State, Input, OutputIt, TokenKind>(state, out, opts)(Production{}, input);
+}
+template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
+          typename State>
+OutputIt trace_to(OutputIt out, const Input& input, const State& state,
                   visualization_options opts = {})
 {
-    return trace_action<ParseState, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
-                                                                                  input);
+    return trace_action<const State, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
+                                                                                   input);
 }
 
 template <typename Production, typename TokenKind = void, typename Input>
 void trace(std::FILE* file, const Input& input, visualization_options opts = {})
 {
     trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, opts);
+}
+template <typename Production, typename TokenKind = void, typename Input, typename State>
+void trace(std::FILE* file, const Input& input, State& state, visualization_options opts = {})
+{
+    trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, state, opts);
 }
 template <typename Production, typename TokenKind = void, typename Input, typename State>
 void trace(std::FILE* file, const Input& input, const State& state, visualization_options opts = {})
@@ -15605,6 +15643,75 @@ constexpr auto token_kind_of<lexy::dsl::_ndigits_s<N, Base, Sep>> = lexy::digits
 } // namespace lexy
 
 #endif // LEXY_DSL_DIGIT_HPP_INCLUDED
+
+// Copyright (C) 2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_EFFECT_HPP_INCLUDED
+#define LEXY_DSL_EFFECT_HPP_INCLUDED
+
+
+
+
+namespace lexyd
+{
+template <typename EffRule, typename State>
+using _detect_eff_fn = decltype(EffRule::_fn()(LEXY_DECLVAL(State&)));
+
+template <LEXY_NTTP_PARAM Fn>
+struct _eff : rule_base
+{
+    static constexpr auto _fn()
+    {
+        return Fn;
+    }
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            using control_block_type = LEXY_DECAY_DECLTYPE(*context.control_block);
+            using state_type         = typename control_block_type::state_type;
+
+            if constexpr (lexy::_detail::is_detected<_detect_eff_fn, _eff, state_type>)
+            {
+                using return_type = decltype(Fn(*context.control_block->parse_state));
+                if constexpr (std::is_void_v<return_type>)
+                {
+                    Fn(*context.control_block->parse_state);
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                }
+                else
+                {
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...,
+                                             Fn(*context.control_block->parse_state));
+                }
+            }
+            else
+            {
+                using return_type = decltype(Fn());
+                if constexpr (std::is_void_v<return_type>)
+                {
+                    Fn();
+                    return NextParser::parse(context, reader, LEXY_FWD(args)...);
+                }
+                else
+                {
+                    return NextParser::parse(context, reader, LEXY_FWD(args)..., Fn());
+                }
+            }
+        }
+    };
+};
+
+/// Invokes Fn and produces its value as result.
+template <LEXY_NTTP_PARAM Fn>
+constexpr auto effect = _eff<Fn>{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_EFFECT_HPP_INCLUDED
 
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
