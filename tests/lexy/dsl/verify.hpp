@@ -484,7 +484,7 @@ public:
         static_assert(std::is_same_v<State, test_handler>);
 
     public:
-        constexpr explicit value_callback(const State* handler) : _handler(handler) {}
+        constexpr explicit value_callback(State* handler) : _handler(handler) {}
 
         using return_type = std::conditional_t<is_test_production<Production>, int, Production*>;
 
@@ -506,7 +506,7 @@ public:
         }
 
     private:
-        const test_handler* _handler;
+        test_handler* _handler;
     };
 
     template <typename T>

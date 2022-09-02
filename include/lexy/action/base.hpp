@@ -69,14 +69,14 @@ namespace _detail
         using state_type   = State;
 
         LEXY_EMPTY_MEMBER Handler parse_handler;
-        const State*              parse_state;
+        State*                    parse_state;
 
         parse_context_var_base* vars;
 
         int  cur_depth, max_depth;
         bool enable_whitespace_skipping;
 
-        constexpr parse_context_control_block(Handler&& handler, const State* state,
+        constexpr parse_context_control_block(Handler&& handler, State* state,
                                               std::size_t max_depth)
         : parse_handler(LEXY_MOV(handler)), parse_state(state), //
           vars(nullptr),                                        //
@@ -197,7 +197,7 @@ constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& read
 }
 
 template <typename Production, typename Handler, typename State, typename Reader>
-constexpr auto do_action(Handler&& handler, const State* state, Reader& reader)
+constexpr auto do_action(Handler&& handler, State* state, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
 

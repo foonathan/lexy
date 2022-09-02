@@ -146,7 +146,7 @@ template <typename State, typename Input, typename ErrorCallback>
 struct parse_action
 {
     const ErrorCallback* _callback;
-    const State*         _state = nullptr;
+    State*               _state = nullptr;
 
     using handler = parse_handler<Input, ErrorCallback>;
     using state   = State;
@@ -154,7 +154,7 @@ struct parse_action
 
     constexpr explicit parse_action(const ErrorCallback& callback) : _callback(&callback) {}
     template <typename U = State>
-    constexpr explicit parse_action(const U& state, const ErrorCallback& callback)
+    constexpr explicit parse_action(U& state, const ErrorCallback& callback)
     : _callback(&callback), _state(&state)
     {}
 
@@ -176,9 +176,14 @@ constexpr auto parse(const Input& input, const ErrorCallback& callback)
 /// Parses the production into a value, invoking the callback on error.
 /// All callbacks gain access to the specified parse state.
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto parse(const Input& input, const State& state, ErrorCallback& callback)
+constexpr auto parse(const Input& input, State& state, ErrorCallback& callback)
 {
     return parse_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
+}
+template <typename Production, typename Input, typename State, typename ErrorCallback>
+constexpr auto parse(const Input& input, const State& state, ErrorCallback& callback)
+{
+    return parse_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 

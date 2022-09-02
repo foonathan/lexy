@@ -82,7 +82,8 @@ TEST_CASE("bind a callback")
     {
         auto bound = lexy::bind(cb, lexy::_1, lexy::parse_state.map([](float f) { return 2 * f; }),
                                 lexy::_2);
-        CHECK(bound[3.14f](42, "13") == 42 + 6 + 1);
+        auto state = 3.14f;
+        CHECK(bound[state](42, "13") == 42 + 6 + 1);
     }
 
     SUBCASE("mixed")
@@ -117,7 +118,8 @@ TEST_CASE("bind_sink")
     {
         constexpr auto bound = lexy::bind_sink(my_sink{}, lexy::parse_state, 3.14f);
 
-        auto cb = bound.sink(2);
+        auto state = 2;
+        auto cb    = bound.sink(state);
         cb(11);
         cb(42);
         CHECK(LEXY_MOV(cb).finish() == 2 * 11 + 3 + 2 * 42 + 3);

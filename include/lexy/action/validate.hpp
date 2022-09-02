@@ -183,7 +183,7 @@ template <typename State, typename Input, typename ErrorCallback>
 struct validate_action
 {
     const ErrorCallback* _callback;
-    const State*         _state = nullptr;
+    State*               _state = nullptr;
 
     using handler = validate_handler<Input, ErrorCallback>;
     using state   = State;
@@ -191,7 +191,7 @@ struct validate_action
 
     constexpr explicit validate_action(const ErrorCallback& callback) : _callback(&callback) {}
     template <typename U = State>
-    constexpr explicit validate_action(const U& state, const ErrorCallback& callback)
+    constexpr explicit validate_action(U& state, const ErrorCallback& callback)
     : _callback(&callback), _state(&state)
     {}
 
@@ -211,10 +211,16 @@ constexpr auto validate(const Input& input, const ErrorCallback& callback)
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
+constexpr auto validate(const Input& input, State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
     return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
+}
+template <typename Production, typename Input, typename State, typename ErrorCallback>
+constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    return validate_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 } // namespace lexy
 

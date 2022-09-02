@@ -37,8 +37,7 @@ class scanner : public _detail::scanner<scanner<ControlProduction, Input, State,
     using _production = _scp<ControlProduction>;
 
 public:
-    constexpr explicit scanner(const Input& input, const State* state,
-                               const ErrorCallback& callback)
+    constexpr explicit scanner(const Input& input, State* state, const ErrorCallback& callback)
     : _impl(input.reader()),
       _cb(_handler(input, callback), state, max_recursion_depth<_production>()), _context(&_cb)
     {
@@ -81,9 +80,14 @@ constexpr auto scan(const Input& input, const ErrorCallback& callback)
 }
 
 template <typename ControlProduction = void, typename Input, typename State, typename ErrorCallback>
-constexpr auto scan(const Input& input, const State& state, const ErrorCallback& callback)
+constexpr auto scan(const Input& input, State& state, const ErrorCallback& callback)
 {
     return scanner<ControlProduction, Input, State, ErrorCallback>(input, &state, callback);
+}
+template <typename ControlProduction = void, typename Input, typename State, typename ErrorCallback>
+constexpr auto scan(const Input& input, const State& state, const ErrorCallback& callback)
+{
+    return scanner<ControlProduction, Input, const State, ErrorCallback>(input, &state, callback);
 }
 } // namespace lexy
 

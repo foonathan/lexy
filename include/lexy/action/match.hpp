@@ -45,7 +45,7 @@ private:
 template <typename State, typename Input>
 struct match_action
 {
-    const State* _state = nullptr;
+    State* _state = nullptr;
 
     using handler = match_handler;
     using state   = State;
@@ -53,7 +53,7 @@ struct match_action
 
     constexpr match_action() = default;
     template <typename U = State>
-    constexpr explicit match_action(const U& state) : _state(&state)
+    constexpr explicit match_action(U& state) : _state(&state)
     {}
 
     template <typename Production>
@@ -70,9 +70,14 @@ constexpr bool match(const Input& input)
     return match_action<void, Input>()(Production{}, input);
 }
 template <typename Production, typename Input, typename State>
-constexpr bool match(const Input& input, const State& state)
+constexpr bool match(const Input& input, State& state)
 {
     return match_action<State, Input>(state)(Production{}, input);
+}
+template <typename Production, typename Input, typename State>
+constexpr bool match(const Input& input, const State& state)
+{
+    return match_action<const State, Input>(state)(Production{}, input);
 }
 } // namespace lexy
 

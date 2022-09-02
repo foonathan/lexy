@@ -139,7 +139,7 @@ struct parse_as_tree_action
 
     tree_type*           _tree;
     const ErrorCallback* _callback;
-    const State*         _state = nullptr;
+    State*               _state = nullptr;
 
     using handler = parse_tree_handler<tree_type, Input, ErrorCallback>;
     using state   = State;
@@ -149,7 +149,7 @@ struct parse_as_tree_action
     : _tree(&tree), _callback(&callback)
     {}
     template <typename U = State>
-    constexpr explicit parse_as_tree_action(const U& state, tree_type& tree,
+    constexpr explicit parse_as_tree_action(U& state, tree_type& tree,
                                             const ErrorCallback& callback)
     : _tree(&tree), _callback(&callback), _state(&state)
     {}
@@ -174,10 +174,19 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const State& state, const ErrorCallback& callback)
+                   const Input& input, State& state, const ErrorCallback& callback)
     -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
+                                MemoryResource>(state, tree, callback)(Production{}, input);
+}
+template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
+          typename State, typename ErrorCallback>
+auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
+                   const Input& input, const State& state, const ErrorCallback& callback)
+    -> validate_result<ErrorCallback>
+{
+    return parse_as_tree_action<const State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);
 }
 } // namespace lexy

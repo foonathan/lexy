@@ -344,6 +344,10 @@ namespace lexy
 
     template <_production_ ControlProduction = void, typename ParseState>
     constexpr scanner scan(const _input_ auto& input,
+                           ParseState& parse_state,
+                           _error-callback_ auto error_callback);
+    template <_production_ ControlProduction = void, typename ParseState>
+    constexpr scanner scan(const _input_ auto& input,
                            const ParseState& parse_state,
                            _error-callback_ auto error_callback);
 }

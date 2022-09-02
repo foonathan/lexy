@@ -59,7 +59,7 @@ struct _list_alloc
     template <typename State>
     struct _with_state
     {
-        const State&   _state;
+        State&         _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -85,13 +85,13 @@ struct _list_alloc
     };
 
     template <typename State>
-    constexpr auto operator[](const State& state) const
+    constexpr auto operator[](State& state) const
     {
         return _with_state<State>{state, _alloc};
     }
 
     template <typename State>
-    constexpr auto sink(const State& state) const
+    constexpr auto sink(State& state) const
     {
         return _list_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }
@@ -198,7 +198,7 @@ struct _collection_alloc
     template <typename State>
     struct _with_state
     {
-        const State&   _state;
+        State&         _state;
         const AllocFn& _alloc;
 
         constexpr Container operator()(Container&& container) const
@@ -224,13 +224,13 @@ struct _collection_alloc
     };
 
     template <typename State>
-    constexpr auto operator[](const State& state) const
+    constexpr auto operator[](State& state) const
     {
         return _with_state<State>{state, _alloc};
     }
 
     template <typename State>
-    constexpr auto sink(const State& state) const
+    constexpr auto sink(State& state) const
     {
         return _collection_sink<Container>{Container(_detail::invoke(_alloc, state))};
     }

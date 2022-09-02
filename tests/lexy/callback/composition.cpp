@@ -36,8 +36,9 @@ TEST_CASE("callback compose")
                                       lexy::parse_state, lexy::values);
 
         constexpr auto composed = a | b | c;
-        CHECK(composed[2](0) == 2 * 0);
-        CHECK(composed[2](8) == 2 * 16);
+        auto           state    = 2;
+        CHECK(composed[state](0) == 2 * 0);
+        CHECK(composed[state](8) == 2 * 16);
     }
     SUBCASE("callbacks returning void")
     {
@@ -93,7 +94,8 @@ TEST_CASE("callback compose")
         s(1);
         s(2);
         s(3);
-        auto result = composed[2](LEXY_MOV(s).finish());
+        auto state  = 2;
+        auto result = composed[state](LEXY_MOV(s).finish());
         CHECK(result == 2);
     }
 }

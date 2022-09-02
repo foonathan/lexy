@@ -433,7 +433,7 @@ struct trace_action
 {
     OutputIt              _out;
     visualization_options _opts;
-    const State*          _state = nullptr;
+    State*                _state = nullptr;
 
     using handler = trace_handler<OutputIt, Input>;
     using state   = State;
@@ -443,7 +443,7 @@ struct trace_action
     : _out(out), _opts(opts)
     {}
     template <typename U = State>
-    constexpr explicit trace_action(const U& state, OutputIt out, visualization_options opts = {})
+    constexpr explicit trace_action(U& state, OutputIt out, visualization_options opts = {})
     : _out(out), _opts(opts), _state(&state)
     {}
 
@@ -461,18 +461,29 @@ OutputIt trace_to(OutputIt out, const Input& input, visualization_options opts =
     return trace_action<void, Input, OutputIt, TokenKind>(out, opts)(Production{}, input);
 }
 template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
-          typename ParseState>
-OutputIt trace_to(OutputIt out, const Input& input, const ParseState& state,
+          typename State>
+OutputIt trace_to(OutputIt out, const Input& input, State& state, visualization_options opts = {})
+{
+    return trace_action<State, Input, OutputIt, TokenKind>(state, out, opts)(Production{}, input);
+}
+template <typename Production, typename TokenKind = void, typename OutputIt, typename Input,
+          typename State>
+OutputIt trace_to(OutputIt out, const Input& input, const State& state,
                   visualization_options opts = {})
 {
-    return trace_action<ParseState, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
-                                                                                  input);
+    return trace_action<const State, Input, OutputIt, TokenKind>(state, out, opts)(Production{},
+                                                                                   input);
 }
 
 template <typename Production, typename TokenKind = void, typename Input>
 void trace(std::FILE* file, const Input& input, visualization_options opts = {})
 {
     trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, opts);
+}
+template <typename Production, typename TokenKind = void, typename Input, typename State>
+void trace(std::FILE* file, const Input& input, State& state, visualization_options opts = {})
+{
+    trace_to<Production, TokenKind>(cfile_output_iterator{file}, input, state, opts);
 }
 template <typename Production, typename TokenKind = void, typename Input, typename State>
 void trace(std::FILE* file, const Input& input, const State& state, visualization_options opts = {})

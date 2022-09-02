@@ -127,6 +127,10 @@ namespace lexy
       -> parse_result<_see-below_, decltype(error_callback)>;
 
     template <_production_ Production, typename ParseState>
+    constexpr auto parse(const _input_ auto& input, ParseState& parse_state,
+                         _error-callback_ auto error_callback)
+      -> parse_result<_see-below_, decltype(error_callback)>;
+    template <_production_ Production, typename ParseState>
     constexpr auto parse(const _input_ auto& input, const ParseState& parse_state,
                          _error-callback_ auto error_callback)
       -> parse_result<_see-below_, decltype(error_callback)>;

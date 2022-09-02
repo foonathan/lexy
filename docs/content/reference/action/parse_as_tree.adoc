@@ -27,6 +27,12 @@ namespace lexy
               typename TK, typename MemRes,
               _input_ Input, typename ParseState>
     auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TK, MemRes>& tree,
+                       const Input& input, ParseState& parse_state, _error-callback_ auto error_callback)
+        -> validate_result<decltype(error_callback)>;
+    template <_production_ Production,
+              typename TK, typename MemRes,
+              _input_ Input, typename ParseState>
+    auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TK, MemRes>& tree,
                        const Input& input, const ParseState& parse_state, _error-callback_ auto error_callback)
         -> validate_result<decltype(error_callback)>;
 }
