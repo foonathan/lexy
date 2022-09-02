@@ -176,12 +176,12 @@ constexpr auto parse(const Input& input, const ErrorCallback& callback)
 /// Parses the production into a value, invoking the callback on error.
 /// All callbacks gain access to the specified parse state.
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto parse(const Input& input, State& state, ErrorCallback& callback)
+constexpr auto parse(const Input& input, State& state, const ErrorCallback& callback)
 {
     return parse_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto parse(const Input& input, const State& state, ErrorCallback& callback)
+constexpr auto parse(const Input& input, const State& state, const ErrorCallback& callback)
 {
     return parse_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
