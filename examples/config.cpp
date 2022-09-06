@@ -64,7 +64,8 @@ struct version : lexy::token_production
         auto number      = dsl::try_(dsl::integer<int>, dsl::nullopt);
         auto dot         = dsl::try_(dsl::period);
         auto dot_version = dsl::times<3>(number, dsl::sep(dot))
-                           + dsl::peek_not(dsl::lit_c<'-'>).error<forbidden_build_string>;
+                           + dsl::peek_not(dsl::lit_c<'-'> + dsl::while_(dsl::ascii::alnum))
+                                 .error<forbidden_build_string>;
 
         auto unreleased = LEXY_LIT("unreleased");
 

@@ -612,7 +612,8 @@ struct version
         …
 
         auto dot_version = dsl::times<3>(number, dsl::sep(dot))
-                           + dsl::peek_not(dsl::lit_c<'-'>).error<forbidden_build_string>; <3>
+                           + dsl::peek_not(dsl::lit_c<'-'> + dsl::while_(dsl::ascii::alnum))
+                                 .error<forbidden_build_string>; <3>
 
         …
     }();
@@ -620,14 +621,15 @@ struct version
 ----
 <1> Define a tag.
 <2> Give it a custom message.
-<3> Raise the error when the beginning of a build string is encountered.
+<3> Raise the error when we encounter a build string.
+    We then consume it and recover.
 
 .Forbidden build string
 ----
 error: while parsing version
      |
  2:16| version = 0.0.0-alpha
-     |           ~~~~~^ build string not supported
+     |           ~~~~~^^^^^^ build string not supported
 ----
 
 == Polish: Better error recovery

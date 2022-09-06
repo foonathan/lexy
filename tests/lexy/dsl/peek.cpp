@@ -102,7 +102,7 @@ TEST_CASE("dsl::peek_not()")
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().error(0, 2, "unexpected").backtracked("ab"));
+        CHECK(ab.trace == test_trace().error(0, 2, "unexpected").recovery().error_token("ab"));
     }
     SUBCASE("as rule with .error")
     {
@@ -118,7 +118,7 @@ TEST_CASE("dsl::peek_not()")
 
         auto ab = LEXY_VERIFY("ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().error(0, 2, "my error").backtracked("ab"));
+        CHECK(ab.trace == test_trace().error(0, 2, "my error").recovery().error_token("ab"));
     }
 
     SUBCASE("as branch")

@@ -2,6 +2,8 @@
 
 == Upcoming
 
+* Change `lexy::dsl::peek_not()` error recovery behavior:
+  it will now consume the input it matched to recover, which is more useful.
 * Add `lexy::dsl::subgrammar` to split a grammar into multiple translation units.
 * Add `lexy::dsl::flags` and `lexy::dsl::flag` to parse enum flags.
 * Add overload of `lexy::dsl::position` that parses a rule.
