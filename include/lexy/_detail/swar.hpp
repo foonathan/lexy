@@ -44,6 +44,22 @@ constexpr swar_int swar_fill(CharT _c)
     return result;
 }
 
+// Returns a swar_int filled with the complement of the specific char.
+template <typename CharT>
+constexpr swar_int swar_fill_compl(CharT _c)
+{
+    using uchar_t = std::make_unsigned_t<CharT>;
+    auto c        = uchar_t(~uchar_t(_c));
+
+    auto result = swar_int(0);
+    for (auto i = 0u; i != swar_length<CharT>; ++i)
+    {
+        result <<= char_bit_size<CharT>;
+        result |= c;
+    }
+    return result;
+}
+
 constexpr void _swar_pack(swar_int&, int) {}
 template <typename H, typename... T>
 constexpr void _swar_pack(swar_int& result, int index, H h, T... t)

@@ -18,6 +18,14 @@ TEST_CASE("swar_fill")
     CHECK(swar_fill(char16_t(0xAA)) == 0x00AA00AA'00AA00AA);
 }
 
+TEST_CASE("swar_fill_compl")
+{
+    REQUIRE(sizeof(swar_int) == 8);
+    CHECK(swar_fill_compl(char(0)) == 0xFFFFFFFF'FFFFFFFF);
+    CHECK(swar_fill_compl(char(0xF)) == 0xF0F0F0F0'F0F0F0F0);
+    CHECK(swar_fill_compl(char16_t(0xF)) == 0xFFF0FFF0'FFF0FFF0);
+}
+
 TEST_CASE("swar_pack")
 {
     REQUIRE(sizeof(swar_int) == 8);

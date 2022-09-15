@@ -3,7 +3,7 @@
 
 # Benchmarking executable.
 add_executable(lexy_benchmark_swar)
-target_sources(lexy_benchmark_swar PRIVATE main.cpp swar.hpp any.cpp literal.cpp)
+target_sources(lexy_benchmark_swar PRIVATE main.cpp swar.hpp any.cpp digits.cpp literal.cpp)
 target_link_libraries(lexy_benchmark_swar PRIVATE foonathan::lexy::dev foonathan::lexy::file nanobench)
 set_target_properties(lexy_benchmark_swar PROPERTIES OUTPUT_NAME "swar")
 
