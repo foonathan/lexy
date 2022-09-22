@@ -21,7 +21,7 @@ void test(const char* name, Rule rule, Predicate pred)
     CHECK(non_ascii.status == test_result::fatal_error);
     CHECK(non_ascii.trace == test_trace().expected_char_class(0, name).cancel());
 
-    for (auto c = 0; c <= 127; ++c)
+    for (auto c = 0; c <= 255; ++c)
     {
         const char input[] = {char(c), char(c)};
         auto       cp      = lexy::code_point(static_cast<char32_t>(c));
@@ -38,6 +38,24 @@ void test(const char* name, Rule rule, Predicate pred)
             CHECK(result.status == test_result::fatal_error);
             CHECK(result.trace == test_trace().expected_char_class(0, name).cancel());
         }
+
+        auto swar_utf8 = rule.template char_class_match_swar<lexy::utf8_char_encoding>(
+            lexy::_detail::swar_fill(char(c)));
+        if (swar_utf8)
+            CHECK(pred(c));
+        if (!pred(c))
+            CHECK(!swar_utf8);
+
+        auto swar_utf32 = rule.template char_class_match_swar<lexy::utf32_encoding>(
+            lexy::_detail::swar_fill(char32_t(c)));
+        if (swar_utf32)
+            CHECK(pred(c));
+        if (!pred(c))
+            CHECK(!swar_utf32);
+
+        auto swar_utf32_wrong = rule.template char_class_match_swar<lexy::utf32_encoding>(
+            lexy::_detail::swar_fill(char32_t(0xFF00 | c)));
+        CHECK(!swar_utf32_wrong);
     }
 
     auto utf16 = LEXY_VERIFY(u"A");
