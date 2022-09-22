@@ -47,8 +47,19 @@ struct _idp : token_base<_idp<Leading, Trailing>>
                 return false;
 
             // Match zero or more trailing characters.
-            while (lexy::try_match_token(Trailing{}, reader))
-            {}
+            while (true)
+            {
+                if constexpr (lexy::_detail::is_swar_reader<Reader>)
+                {
+                    // If we have a swar reader, consume as much as possible at once.
+                    while (Trailing{}.template char_class_match_swar<typename Reader::encoding>(
+                        reader.peek_swar()))
+                        reader.bump_swar();
+                }
+
+                if (!lexy::try_match_token(Trailing{}, reader))
+                    break;
+            }
 
             end = reader.position();
             return true;

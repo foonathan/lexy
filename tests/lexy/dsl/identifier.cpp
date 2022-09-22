@@ -44,6 +44,10 @@ TEST_CASE("dsl::identifier(leading, trailing).pattern()")
     auto Abc123 = LEXY_VERIFY("Abc123");
     CHECK(Abc123.status == test_result::success);
     CHECK(Abc123.trace == test_trace().token("identifier", "Abc"));
+
+    auto swar = LEXY_VERIFY(lexy::utf8_char_encoding{}, "Abcdefghijklmnopqrstuvwxyz");
+    CHECK(swar.status == test_result::success);
+    CHECK(swar.trace == test_trace().token("identifier", "Abcdefghijklmnopqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::identifier(leading, trailing)")

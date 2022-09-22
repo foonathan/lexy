@@ -79,8 +79,9 @@ lexy::buffer<lexy::utf8_encoding> repeat_buffer_padded(std::size_t size, const c
 }
 
 std::size_t bm_any(ankerl::nanobench::Bench& b);
-std::size_t bm_lit(ankerl::nanobench::Bench& b);
 std::size_t bm_digits(ankerl::nanobench::Bench& b);
+std::size_t bm_identifier(ankerl::nanobench::Bench& b);
+std::size_t bm_lit(ankerl::nanobench::Bench& b);
 
 int main(int argc, char* argv[])
 {
@@ -89,6 +90,8 @@ int main(int argc, char* argv[])
         bm_any(b);
     if (argc == 1 || argv[1] == std::string_view("digits"))
         bm_digits(b);
+    if (argc == 1 || argv[1] == std::string_view("identifier"))
+        bm_identifier(b);
     if (argc == 1 || argv[1] == std::string_view("lit"))
         bm_lit(b);
 }
