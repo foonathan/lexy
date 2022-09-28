@@ -82,6 +82,7 @@ std::size_t bm_any(ankerl::nanobench::Bench& b);
 std::size_t bm_digits(ankerl::nanobench::Bench& b);
 std::size_t bm_identifier(ankerl::nanobench::Bench& b);
 std::size_t bm_lit(ankerl::nanobench::Bench& b);
+std::size_t bm_until(ankerl::nanobench::Bench& b);
 
 int main(int argc, char* argv[])
 {
@@ -94,5 +95,7 @@ int main(int argc, char* argv[])
         bm_identifier(b);
     if (argc == 1 || argv[1] == std::string_view("lit"))
         bm_lit(b);
+    if (argc == 1 || argv[1] == std::string_view("until"))
+        bm_until(b);
 }
 

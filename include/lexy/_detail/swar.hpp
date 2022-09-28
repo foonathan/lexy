@@ -139,19 +139,26 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
     return std::size_t(bit_idx) / char_bit_size<CharT>;
 }
 
-// Returns true if v has a zero char.
-template <typename CharT>
-constexpr bool swar_has_zero(swar_int v)
+// Returns true if v has a char less than N.
+template <typename CharT, CharT N>
+constexpr bool swar_has_char_less(swar_int v)
 {
-    // https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
+    // https://graphics.stanford.edu/~seander/bithacks.html#HasLessInWord
 
-    constexpr auto one         = swar_fill(CharT(1));
-    auto           zero_or_msb = v - one;
+    constexpr auto offset      = swar_fill(CharT(N));
+    auto           zero_or_msb = v - offset;
 
     constexpr auto msb_mask = swar_fill(CharT(1 << (char_bit_size<CharT> - 1)));
     auto           not_msb  = ~v & msb_mask;
 
     return zero_or_msb & not_msb;
+}
+
+// Returns true if v has a zero char.
+template <typename CharT>
+constexpr bool swar_has_zero(swar_int v)
+{
+    return swar_has_char_less<CharT, 1>(v);
 }
 
 // Returns true if v contains the specified char.
