@@ -24,22 +24,13 @@ struct _any : token_base<_any, unconditional_branch_base>
             using encoding = typename Reader::encoding;
             if constexpr (lexy::_detail::is_swar_reader<Reader>)
             {
-                constexpr auto eof = lexy::_detail::swar_fill(encoding::eof());
-                while (reader.peek_swar() != eof)
+                while (!lexy::_detail::swar_has_char<typename encoding::char_type, encoding::eof()>(
+                    reader.peek_swar()))
                     reader.bump_swar();
+            }
 
-                // We've reached the swar that represents EOF, go back to the first char that is
-                // EOF. This works as for a swar reader, char_type == int_type.
-                auto ptr = reader.position();
-                while (ptr[-1] == encoding::eof())
-                    --ptr;
-                reader.set_position(ptr);
-            }
-            else
-            {
-                while (reader.peek() != encoding::eof())
-                    reader.bump();
-            }
+            while (reader.peek() != encoding::eof())
+                reader.bump();
 
             end = reader.position();
             return {};

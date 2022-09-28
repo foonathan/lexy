@@ -76,3 +76,71 @@ TEST_CASE("swar_find_difference")
     CHECK(swar_find_difference<char>(abc, aBc) == 1);
 }
 
+TEST_CASE("swar_has_zero")
+{
+    SUBCASE("char")
+    {
+        constexpr auto all_zero = swar_fill(char(0));
+        CHECK(swar_has_zero<char>(all_zero));
+
+        constexpr auto all_one = swar_fill(char(1));
+        CHECK(!swar_has_zero<char>(all_one));
+
+        constexpr auto all_high = swar_fill(char(0xAB));
+        CHECK(!swar_has_zero<char>(all_high));
+
+        constexpr auto contains_zero = swar_pack(char('a'), char('b'), char('c'), char(0),
+                                                 char('d'), char('e'), char('f'), char('g'))
+                                           .value;
+        CHECK(swar_has_zero<char>(contains_zero));
+    }
+    SUBCASE("char32_t")
+    {
+        constexpr auto all_zero = swar_fill(char32_t(0));
+        CHECK(swar_has_zero<char32_t>(all_zero));
+
+        constexpr auto all_one = swar_fill(char32_t(1));
+        CHECK(!swar_has_zero<char32_t>(all_one));
+
+        constexpr auto all_high = swar_fill(char32_t(0xAB));
+        CHECK(!swar_has_zero<char32_t>(all_high));
+
+        constexpr auto contains_zero = swar_pack(char32_t('a'), char32_t(0)).value;
+        CHECK(swar_has_zero<char32_t>(contains_zero));
+    }
+}
+
+TEST_CASE("swar_has_char")
+{
+    SUBCASE("char")
+    {
+        constexpr auto all_zero = swar_fill(char(0));
+        CHECK(!swar_has_char<char, 1>(all_zero));
+
+        constexpr auto all_one = swar_fill(char(1));
+        CHECK(swar_has_char<char, 1>(all_one));
+
+        constexpr auto all_high = swar_fill(char(0xAB));
+        CHECK(!swar_has_char<char, 1>(all_high));
+
+        constexpr auto contains_one = swar_pack(char('a'), char('b'), char('c'), char(1), char('d'),
+                                                char('e'), char('f'), char('g'))
+                                          .value;
+        CHECK(swar_has_char<char, 1>(contains_one));
+    }
+    SUBCASE("char32_t")
+    {
+        constexpr auto all_zero = swar_fill(char32_t(0));
+        CHECK(!swar_has_char<char32_t, 1>(all_zero));
+
+        constexpr auto all_one = swar_fill(char32_t(1));
+        CHECK(swar_has_char<char32_t, 1>(all_one));
+
+        constexpr auto all_high = swar_fill(char32_t(0xAB));
+        CHECK(!swar_has_char<char32_t, 1>(all_high));
+
+        constexpr auto contains_one = swar_pack(char32_t('a'), char32_t(1)).value;
+        CHECK(swar_has_char<char32_t, 1>(contains_one));
+    }
+}
+

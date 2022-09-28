@@ -24,12 +24,16 @@ TEST_CASE("dsl::any")
     CHECK(invalid_utf8.status == test_result::success);
     CHECK(invalid_utf8.trace == test_trace().token("any", "abc\\x80123"));
 
-    auto swar_long = LEXY_VERIFY(lexy::ascii_encoding{}, "123456789012345678901234567890");
+    auto swar_empty = LEXY_VERIFY(lexy::utf8_char_encoding{}, "");
+    CHECK(swar_empty.status == test_result::success);
+    CHECK(swar_empty.trace == test_trace().token("any", ""));
+
+    auto swar_long = LEXY_VERIFY(lexy::utf8_char_encoding{}, "123456789012345678901234567890");
     CHECK(swar_long.status == test_result::success);
     CHECK(swar_long.trace == test_trace().token("any", "123456789012345678901234567890"));
 
-    auto swar_unicode = LEXY_VERIFY(lexy::utf8_encoding{},
-                                    LEXY_CHAR8_STR("123456789\u00E401234567890\u00E51234567890"));
+    auto swar_unicode
+        = LEXY_VERIFY(lexy::utf8_char_encoding{}, "123456789\u00E401234567890\u00E51234567890");
     CHECK(swar_unicode.status == test_result::success);
     CHECK(swar_unicode.trace
           == test_trace().token("any", "123456789\\u00E401234567890\\u00E51234567890"));

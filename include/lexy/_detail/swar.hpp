@@ -138,6 +138,36 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
 
     return std::size_t(bit_idx) / char_bit_size<CharT>;
 }
+
+// Returns true if v has a zero char.
+template <typename CharT>
+constexpr bool swar_has_zero(swar_int v)
+{
+    // https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
+
+    constexpr auto one         = swar_fill(CharT(1));
+    auto           zero_or_msb = v - one;
+
+    constexpr auto msb_mask = swar_fill(CharT(1 << (char_bit_size<CharT> - 1)));
+    auto           not_msb  = ~v & msb_mask;
+
+    return zero_or_msb & not_msb;
+}
+
+// Returns true if v contains the specified char.
+template <typename CharT, CharT C>
+constexpr bool swar_has_char(swar_int v)
+{
+    if constexpr (C == 0)
+    {
+        return swar_has_zero<CharT>(v);
+    }
+    else
+    {
+        constexpr auto mask = swar_fill(C);
+        return swar_has_zero<CharT>(v ^ mask);
+    }
+}
 } // namespace lexy::_detail
 
 namespace lexy::_detail
