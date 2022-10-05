@@ -66,16 +66,16 @@ namespace lexy::dsl
 
 [source,cpp,subs="+quotes"]
 ----
-struct _Operation_ : _operation-base_
+struct _operation_ : _operation-base_
 {
     static constexpr auto op = _operator-rule_;
-    using operand = _Operation-or-dsl::atom_;
+    using operand = _operation-or-dsl::atom_;
 };
 
-struct _Expression_ : lexy::expression_production
+struct _expression_ : lexy::expression_production
 {
     static constexpr auto atom = _rule_;
-    using operation = _Operation_;
+    using operation = _operation_;
 };
 ----
 
@@ -125,7 +125,7 @@ it might be necessary to use {{% docref "lexy::dsl::not_followed_by" %}}.
 ----
 namespace lexy::dsl
 {
-    template <_production_ Expr, _Operation_ RootOperation>
+    template <_expression_ Expr, _operation_ RootOperation>
     struct subexpression_production { … };
 }
 ----
@@ -143,7 +143,7 @@ All operators with a binding power lower than `RootOperation` are not recognized
 ----
 namespace lexy::dsl
 {
-    template <_Operation_... Operands>
+    template <_operation_... Operands>
     struct groups
     {};
 }
