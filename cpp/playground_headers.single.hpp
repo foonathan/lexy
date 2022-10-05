@@ -16354,6 +16354,7 @@ using post_operation_list_of = decltype(_operation_list_of<false, MinBindingPowe
 //=== expression rule ===//
 namespace lexyd
 {
+template <typename RootOperation>
 struct _expr : rule_base
 {
     struct _state
@@ -16633,8 +16634,13 @@ struct _expr : rule_base
         {
             static_assert(std::is_same_v<NextParser, lexy::_detail::final_parser>);
 
+            using production             = typename Context::production;
+            constexpr auto binding_power = lexy::_detail::binding_power_of<production>(
+                lexy::_detail::type_or<RootOperation, typename production::operation>{});
+
             _state state;
-            _parse<0>(context, reader, state);
+            _parse<binding_power.lhs>(context, reader, state);
+
             // Regardless of parse errors, we can recover if we already had a value at some point.
             return !!context.value;
         }
@@ -16677,7 +16683,13 @@ struct expression_production
     using operator_chain_error = lexy::operator_chain_error;
     using operator_group_error = lexy::operator_group_error;
 
-    static constexpr auto rule = lexyd::_expr{};
+    static constexpr auto rule = lexyd::_expr<void>{};
+};
+
+template <typename Expr, typename RootOperation>
+struct subexpression_production : Expr
+{
+    static constexpr auto rule = lexyd::_expr<RootOperation>{};
 };
 } // namespace lexy
 
