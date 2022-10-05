@@ -9,6 +9,7 @@
 * Add overload of `lexy::dsl::position` that parses a rule.
   This allows using it as branch conditions.
 * Add `lexy::dsl::effect` to trigger side-effects during parsing.
+* Add `lexy::subexpression_production` to parse a subexpression.
 * Add `lexy::utf8_char_encoding`.
 * Add `lexy::parse_tree::remaining_input()` and populate it by `lexy::parse_as_tree`.
 * Use type-erased `lexy::production_info` instead of `Production` type in `lexy::parse_tree`.

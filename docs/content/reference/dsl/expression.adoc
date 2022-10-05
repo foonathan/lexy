@@ -3,6 +3,7 @@ header: "lexy/dsl/expression.hpp"
 entities:
   "expression": doc
   "lexy::expression_production": expression_production
+  "lexy::subexpression_production": subexpression_production
   "lexy::dsl::atom": expression_production
   "lexy::dsl::groups": groups
   "lexy::dsl::infix_op_left": infix_op_left
@@ -116,6 +117,24 @@ TIP: See {{< github-example calculator >}} for a bigger example.
 
 CAUTION: If two operators at different binding powers share a common prefix (e.g. `*` and `**` or `=` and `==`),
 it might be necessary to use {{% docref "lexy::dsl::not_followed_by" %}}.
+
+[#subexpression_production]
+== Class `lexy::subexpression_production`
+
+{{% interface %}}
+----
+namespace lexy::dsl
+{
+    template <_production_ Expr, _Operation_ RootOperation>
+    struct subexpression_production { … };
+}
+----
+
+[.lead]
+`subexpression_production` is a base class of a production that wants to parse a subexpression.
+
+It will parse the same expression as `Expr`, but instead of starting with `Expr::operation`, it starts with `RootOperation`, which must be an operation of the expression.
+All operators with a binding power lower than `RootOperation` are not recognized.
 
 [#groups]
 == Operation `lexy::dsl::groups`

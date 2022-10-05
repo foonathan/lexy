@@ -1374,3 +1374,118 @@ TEST_CASE("expression - groups")
     }
 }
 
+namespace nested_operations
+{
+struct product_only : lexy::subexpression_production<sum_product, sum_product::product>
+{};
+} // namespace nested_operations
+
+TEST_CASE("subexpression")
+{
+    using namespace nested_operations;
+    auto callback
+        = lexy::callback<int>([](const char*, int value) { return value; },
+                              [](const char*, lexy::op<op_plus>, int rhs) { return rhs; },
+                              [](const char*, lexy::op<op_minus>, int rhs) { return -rhs; },
+                              [](const char*, int lhs, lexy::op<op_plus>, int rhs) {
+                                  return lhs + rhs;
+                              },
+                              [](const char*, int lhs, lexy::op<op_minus>, int rhs) {
+                                  return lhs - rhs;
+                              },
+                              [](const char*, int lhs, lexy::op<op_times>, int rhs) {
+                                  return lhs * rhs;
+                              },
+                              [](const char*, int lhs, lexy::op<op_div>, int rhs) {
+                                  return lhs / rhs;
+                              });
+
+    using prod = product_only;
+
+    auto empty = LEXY_OP_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.value == -1);
+    // clang-format off
+        CHECK(empty.trace == test_trace()
+                .operation_chain()
+                   .expected_char_class(0, "digit.decimal")
+                   .finish()
+                .cancel());
+        CHECK(empty.tree == test_tree());
+    // clang-format on
+
+    auto atom = LEXY_OP_VERIFY("1");
+    CHECK(atom.status == test_result::success);
+    CHECK(atom.value == 1);
+    CHECK(atom.tree == test_tree(prod{}).digits("1"));
+
+    auto a = LEXY_OP_VERIFY("1+2");
+    CHECK(a.status == test_result::success);
+    CHECK(a.value == 1);
+    CHECK(a.tree == test_tree(prod{}).digits("1"));
+    auto m = LEXY_OP_VERIFY("2-1");
+    CHECK(m.status == test_result::success);
+    CHECK(m.value == 2);
+    CHECK(m.tree == test_tree(prod{}).digits("2"));
+    auto t = LEXY_OP_VERIFY("1*2");
+    CHECK(t.status == test_result::success);
+    CHECK(t.value == 2);
+    CHECK(t.tree == test_tree(prod{}).production("product").digits("1").literal("*").digits("2"));
+    auto d = LEXY_OP_VERIFY("4/2");
+    CHECK(d.status == test_result::success);
+    CHECK(d.value == 2);
+    CHECK(d.tree == test_tree(prod{}).production("product").digits("4").literal("/").digits("2"));
+
+    auto p = LEXY_OP_VERIFY("+1");
+    CHECK(p.status == test_result::success);
+    CHECK(p.value == 1);
+    CHECK(p.tree == test_tree(prod{}).production("prefix").literal("+").digits("1"));
+    auto n = LEXY_OP_VERIFY("-1");
+    CHECK(n.status == test_result::success);
+    CHECK(n.value == -1);
+    CHECK(n.tree == test_tree(prod{}).production("prefix").literal("-").digits("1"));
+
+    auto at = LEXY_OP_VERIFY("1+2*3");
+    CHECK(at.status == test_result::success);
+    CHECK(at.value == 1);
+    CHECK(at.tree == test_tree(prod{}).digits("1"));
+    auto ta = LEXY_OP_VERIFY("1*2+3");
+    CHECK(ta.status == test_result::success);
+    CHECK(ta.value == 2);
+    CHECK(ta.tree
+          == test_tree(prod{}).production("product").digits("1").literal("*").digits("2").finish());
+    // clang-format on
+
+    auto ata = LEXY_OP_VERIFY("1+2*3+4");
+    CHECK(ata.status == test_result::success);
+    CHECK(ata.value == 1);
+    CHECK(ata.tree == test_tree(prod{}).digits("1"));
+    auto tat = LEXY_OP_VERIFY("1*2+3*4");
+    CHECK(tat.status == test_result::success);
+    CHECK(tat.value == 2);
+    // clang-format off
+    CHECK(tat.tree == test_tree(prod{})
+            .production("product")
+                .digits("1")
+                .literal("*")
+                .digits("2"));
+    // clang-format on
+
+    auto tn = LEXY_OP_VERIFY("2*-1");
+    CHECK(tn.status == test_result::success);
+    CHECK(tn.value == -2);
+    // clang-format off
+    CHECK(tn.tree == test_tree(prod{})
+            .production("product")
+                .digits("2")
+                .literal("*")
+                .production("prefix")
+                    .literal("-")
+                    .digits("1"));
+    // clang-format on
+    auto mn = LEXY_OP_VERIFY("2--1");
+    CHECK(mn.status == test_result::success);
+    CHECK(mn.value == 2);
+    CHECK(mn.tree == test_tree(prod{}).digits("2"));
+}
+
