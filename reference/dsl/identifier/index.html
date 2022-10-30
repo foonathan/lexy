@@ -122,7 +122,7 @@ Its <a href=/reference/token/#predefined_token_kind><code>lexy::predefined_token
 <span class=tok-w>    </span><span class=tok-k>constexpr</span><span class=tok-w> </span><span class=tok-n><em>literal</em></span><em><span class=tok-o>-</span><span class=tok-n>rule</span></em><span class=tok-w> </span><span class=tok-k>auto</span><span class=tok-w> </span><span class=tok-n>keyword</span><span class=tok-p>(</span><span class=tok-n><em>identifier</em></span><em><span class=tok-o>-</span><span class=tok-n>dsl</span></em><span class=tok-w> </span><span class=tok-n>identifier</span><span class=tok-p>);</span><span class=tok-w></span>
 <span class=tok-p>}</span><span class=tok-w></span>
 
-<span class=tok-cp>#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword&lt;Str&gt;(identifier)</span></code></pre></div></div><div class="paragraph lead"><p><code>keyword</code> is a <a href=/reference/dsl/literal/#doc>literal rule</a> that matches a keyword.</p></div><div class=dlist><dl><dt class=hdlist1>Matching</dt><dd><p>Tries to match and consume <code>identifier.pattern()</code>,
+<span class=tok-cp>#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword&lt;Str&gt;(Identifier)</span></code></pre></div></div><div class="paragraph lead"><p><code>keyword</code> is a <a href=/reference/dsl/literal/#doc>literal rule</a> that matches a keyword.</p></div><div class=dlist><dl><dt class=hdlist1>Matching</dt><dd><p>Tries to match and consume <code>identifier.pattern()</code>,
 i.e. the basic pattern of an identifier ignoring any reserved identifiers.
 Then creates a partial input that covers everything just consumed (without the trailing whitespace)
 and matches <a href=/reference/dsl/literal/#lit><code>lexy::dsl::lit</code></a><code>&lt;Str></code> on that input.
