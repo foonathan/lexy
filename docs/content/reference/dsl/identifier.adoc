@@ -167,7 +167,7 @@ namespace lexy::dsl
     constexpr _literal-rule_ auto keyword(_identifier-dsl_ identifier);
 }
 
-#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword<Str>(identifier)
+#define LEXY_KEYWORD(Str, Identifier) lexy::dsl::keyword<Str>(Identifier)
 ----
 
 [.lead]
