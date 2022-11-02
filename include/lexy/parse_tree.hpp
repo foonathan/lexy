@@ -591,7 +591,7 @@ public:
 
     void cancel_production(marker&& m)
     {
-        LEXY_PRECONDITION(_cur.prod);
+        LEXY_PRECONDITION(_cur.prod || m.prod == _cur.prod);
         if (_cur.prod == m.prod)
             // We're backtracking a transparent production, do nothing.
             return;

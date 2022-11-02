@@ -38,6 +38,11 @@ struct string_p : lexy::token_production
     static constexpr auto rule = lexy::dsl::quoted(lexy::dsl::ascii::character);
 };
 
+struct transparent_string_p : lexy::transparent_production
+{
+    static constexpr auto rule = lexy::dsl::p<string_p>;
+};
+
 struct abc_p : lexy::token_production
 {
     static constexpr auto name = "abc_p";
@@ -48,7 +53,7 @@ struct child_p
 {
     static constexpr auto name = "child_p";
     static constexpr auto rule
-        = lexy::dsl::p<string_p> | lexy::dsl::parenthesized.try_(lexy::dsl::p<abc_p>);
+        = lexy::dsl::p<transparent_string_p> | lexy::dsl::parenthesized.try_(lexy::dsl::p<abc_p>);
 };
 
 struct root_p

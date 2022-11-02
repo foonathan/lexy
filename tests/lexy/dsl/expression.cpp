@@ -7,7 +7,9 @@
 #include <lexy/action/parse_as_tree.hpp>
 #include <lexy/callback/composition.hpp>
 #include <lexy/callback/fold.hpp>
+#include <lexy/dsl/choice.hpp>
 #include <lexy/dsl/integer.hpp>
+#include <lexy/dsl/production.hpp>
 #include <lexy_ext/parse_tree_doctest.hpp>
 
 namespace
@@ -1487,5 +1489,93 @@ TEST_CASE("subexpression")
     CHECK(mn.status == test_result::success);
     CHECK(mn.value == 2);
     CHECK(mn.tree == test_tree(prod{}).digits("2"));
+}
+
+// Regression test for https://github.com/foonathan/lexy/issues/95.
+namespace transparent_atom
+{
+template <char C>
+struct atom_digit : lexy::transparent_production
+{
+    static constexpr auto name = "atom";
+    static constexpr auto rule = dsl::lit_c<C>;
+};
+
+struct prod : lexy::expression_production, test_production
+{
+    static constexpr auto atom = dsl::p<atom_digit<'0'>> | dsl::p<atom_digit<'1'>>;
+
+    struct operation : dsl::infix_op_left
+    {
+        static constexpr auto name = "sum";
+        static constexpr auto op   = dsl::op(dsl::lit_c<'+'>);
+        using operand              = dsl::atom;
+    };
+};
+} // namespace transparent_atom
+
+TEST_CASE("expression - transparent atom")
+{
+    using namespace transparent_atom;
+    auto callback
+        = lexy::callback<int>([](const char*, atom_digit<'0'>*) { return 0; },
+                              [](const char*, atom_digit<'1'>*) { return 1; },
+                              [](const char*, int lhs, auto, int rhs) { return lhs + rhs; });
+
+    auto empty = LEXY_OP_VERIFY("");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.value == -1);
+    // clang-format off
+    CHECK(empty.trace == test_trace()
+            .operation_chain()
+                .production("atom").cancel()
+                .production("atom").cancel()
+                .error(0, 0, "exhausted choice")
+                .finish()
+            .cancel());
+    CHECK(empty.tree == test_tree());
+    // clang-format on
+
+    auto zero = LEXY_OP_VERIFY("0");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.value == 0);
+    CHECK(zero.trace == test_trace().operation_chain().production("atom").literal("0"));
+    CHECK(zero.tree == test_tree().production("test_production").literal("0"));
+    auto one = LEXY_OP_VERIFY("1");
+    CHECK(one.status == test_result::success);
+    CHECK(one.value == 1);
+    // clang-format off
+    CHECK(one.trace == test_trace()
+            .operation_chain()
+                .production("atom")
+                    .cancel()
+                .production("atom")
+                    .literal("1"));
+    // clang-format on
+    CHECK(one.tree == test_tree().production("test_production").literal("1"));
+
+    auto sum = LEXY_OP_VERIFY("0+1");
+    CHECK(sum.status == test_result::success);
+    CHECK(sum.value == 1);
+    // clang-format off
+    CHECK(sum.trace == test_trace()
+             .operation_chain()
+                 .production("atom")
+                     .literal("0")
+                     .finish()
+                 .literal("+")
+                 .production("atom")
+                     .cancel()
+                 .production("atom")
+                     .literal("1")
+                     .finish()
+                 .operation("sum"));
+    CHECK(sum.tree == test_tree()
+             .production("test_production")
+                 .production("sum")
+                     .literal("0")
+                     .literal("+")
+                     .literal("1"));
+    // clang-format on
 }
 
