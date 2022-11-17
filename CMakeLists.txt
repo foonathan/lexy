@@ -19,7 +19,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(LEXY_ENABLE_INSTALL   "whether or not to enable the install rule" ON)
 
     if(LEXY_BUILD_PACKAGE)
-        set(package_files include/ src/ CMakeLists.txt LICENSE)
+        set(package_files include/ src/ cmake/ CMakeLists.txt LICENSE)
         add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip
             COMMAND ${CMAKE_COMMAND} -E tar c ${CMAKE_CURRENT_BINARY_DIR}/lexy-src.zip --format=zip -- ${package_files}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
