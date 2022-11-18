@@ -67,6 +67,7 @@ The memory resource object passed to the constructor does not propagate during c
 
 TIP: As the buffer owns the input, it can terminate it with the EOF character for encodings that have the same character and integer type.
 This eliminates a branch during parsing, because there is no need to check for the end of the buffer.
+It also enables the use of https://en.wikipedia.org/wiki/SWAR[SWAR] techniques for faster parsing.
 
 === Empty constructors
 

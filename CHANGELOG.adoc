@@ -3,6 +3,7 @@
 == Upcoming
 
 * Update Unicode database to Unicode 15.
+* Use SWAR (SIMD within a register) techniques to optimize token parsing.
 * Change `lexy::dsl::peek_not()` error recovery behavior:
   it will now consume the input it matched to recover, which is more useful.
 * Add `lexy::dsl::subgrammar` to split a grammar into multiple translation units.
