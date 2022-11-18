@@ -321,6 +321,14 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
 
     using lit_case_folding = void;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        typename Encoding::char_type result = 0;
+        (void)((result = lexy::_detail::transcode_char<decltype(result)>(C), true) || ...);
+        return result;
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
                                                  std::size_t char_class)

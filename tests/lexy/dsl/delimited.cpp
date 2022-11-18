@@ -528,6 +528,46 @@ TEST_CASE("dsl::delimited(open, close)")
     }
 }
 
+TEST_CASE("dsl::delimited(open, close) - SWAR")
+{
+    constexpr auto rule = dsl::delimited(dsl::lit_c<'('>,
+                                         dsl::lit_c<')'>) //
+        (dsl::ascii::print, dsl::dollar_escape.rule(dsl::lit_c<')'>));
+
+    constexpr delim_callback callback
+        = lexy::callback<int>([](const char*, std::size_t count) { return int(count); });
+
+    auto empty = LEXY_VERIFY(lexy::utf8_char_encoding{}, "");
+    CHECK(empty.status == test_result::fatal_error);
+    CHECK(empty.value == -1);
+    CHECK(empty.trace == test_trace().expected_literal(0, "(", 0).cancel());
+
+    auto zero = LEXY_VERIFY(lexy::utf8_char_encoding{}, "()");
+    CHECK(zero.status == test_result::success);
+    CHECK(zero.value == 0);
+    CHECK(zero.trace == test_trace().literal("(").literal(")"));
+    auto few = LEXY_VERIFY(lexy::utf8_char_encoding{}, "(abc)");
+    CHECK(few.status == test_result::success);
+    CHECK(few.value == 3);
+    CHECK(few.trace == test_trace().literal("(").token("abc").literal(")"));
+    auto many = LEXY_VERIFY(lexy::utf8_char_encoding{}, "(abcdefghijklmnopqrstuvwxyz)");
+    CHECK(many.status == test_result::success);
+    CHECK(many.value == 26);
+    CHECK(many.trace == test_trace().literal("(").token("abcdefghijklmnopqrstuvwxyz").literal(")"));
+
+    auto esc = LEXY_VERIFY(lexy::utf8_char_encoding{}, "(abcdefghijklmnopqr$)stuvwxyz)");
+    CHECK(esc.status == test_result::success);
+    CHECK(esc.value == 26);
+    CHECK(esc.trace
+          == test_trace()
+                 .literal("(")
+                 .token("abcdefghijklmnopqr")
+                 .literal("$")
+                 .literal(")")
+                 .token("stuvwxyz")
+                 .literal(")"));
+}
+
 TEST_CASE("dsl::delimited(delim)")
 {
     CHECK(equivalent_rules(dsl::delimited(dsl::lit_c<'"'>),

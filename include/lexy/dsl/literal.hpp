@@ -333,6 +333,14 @@ struct _lit
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
     using lit_case_folding                   = void;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        typename Encoding::char_type result = 0;
+        (void)((result = lexy::_detail::transcode_char<decltype(result)>(C), true) || ...);
+        return result;
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
     {
@@ -412,6 +420,12 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
     static constexpr auto lit_max_char_count = 4 * sizeof...(Cp);
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
     using lit_case_folding                   = void;
+
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        return _string<Encoding>.data[0];
+    }
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
