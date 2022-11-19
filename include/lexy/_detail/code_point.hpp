@@ -158,7 +158,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding> //
                        || std::is_same_v<typename Reader::encoding, lexy::utf8_char_encoding>)
     {
-        using uchar_t                = std::make_unsigned_t<typename Reader::encoding::char_type>;
+        using uchar_t                = unsigned char;
         constexpr auto payload_lead1 = 0b0111'1111;
         constexpr auto payload_lead2 = 0b0001'1111;
         constexpr auto payload_lead3 = 0b0000'1111;
