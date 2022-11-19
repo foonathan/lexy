@@ -232,11 +232,9 @@ namespace lexy
               typename MemoryResource = _default-resource_>
     using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
 
-    template <typename Production,
-              _encoding_ Encoding = default_encoding
+    template <_encoding_ Encoding = default_encoding
               typename MemoryResource = _default-resource_>
-    using buffer_error_context = error_context<Production,
-                                      buffer<Encoding, MemoryResource>>;
+    using buffer_error_context = error_context<buffer<Encoding, MemoryResource>>;
 }
 ----
 

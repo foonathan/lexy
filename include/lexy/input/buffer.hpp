@@ -465,8 +465,8 @@ using buffer_lexeme = lexeme_for<buffer<Encoding, MemoryResource>>;
 template <typename Tag, typename Encoding = default_encoding, typename MemoryResource = void>
 using buffer_error = error_for<buffer<Encoding, MemoryResource>, Tag>;
 
-template <typename Production, typename Encoding = default_encoding, typename MemoryResource = void>
-using buffer_error_context = error_context<Production, buffer<Encoding, MemoryResource>>;
+template <typename Encoding = default_encoding, typename MemoryResource = void>
+using buffer_error_context = error_context<buffer<Encoding, MemoryResource>>;
 } // namespace lexy
 
 #endif // LEXY_INPUT_BUFFER_HPP_INCLUDED

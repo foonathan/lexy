@@ -6,6 +6,8 @@
 * Use SWAR (SIMD within a register) techniques to optimize token parsing.
 * Change `lexy::dsl::peek_not()` error recovery behavior:
   it will now consume the input it matched to recover, which is more useful.
+* Remove `Production` parameter from `lexy::error_context`.
+  It is replaced by a type-erased `lexy::production_info`.
 * Add `lexy::dsl::subgrammar` to split a grammar into multiple translation units.
 * Add `lexy::dsl::flags` and `lexy::dsl::flag` to parse enum flags.
 * Add overload of `lexy::dsl::position` that parses a rule.
@@ -17,7 +19,7 @@
 * Add `lexy::make_buffer_from_input` function.
 * Use type-erased `lexy::production_info` instead of `Production` type in `lexy::parse_tree`.
   This is technically a breaking change, as it may affect overload resolution.
-* Add type-erased version of `lexy::error` and `lexy:error_context`.
+* Add type-erased version of `lexy::error`.
 * Support non-`const` parse state.
 * Fix bug where `lexy::bind` callback does not forward rvalue arguments; they got turned into lvalues instead.
 * Fix bug where callback composition was not allowed if the final callback returns `void`.

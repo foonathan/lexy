@@ -21,7 +21,7 @@ We promise:
   In particular, all DSL rules will continue to accept the same input as they have in the previous version, and produce the same values.
   This does _not_ apply to the behavior on invalid input, see below.
 * No removal of functionality unless it has been deprecated in a previous major release.
-* No build breaking changes: whenever possible, we will add an alternative with a different spelling and deprecate the previous version instead.
+* Few build breaking changes: whenever possible, we will add an alternative with a different spelling and deprecate the previous version instead.
 
 We reserve the right to:
 

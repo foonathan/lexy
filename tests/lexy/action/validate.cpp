@@ -94,23 +94,27 @@ TEST_CASE("validate")
     }
     SUBCASE("non-void callback")
     {
-        constexpr auto prod_a_error = [](lexy::string_error_context<prod_a>,
-                                         lexy::string_error<lexy::expected_literal> error) {
-            if (error.string() != lexy::_detail::string_view("abc"))
-                throw 0;
-            return -1;
+        constexpr auto error = [](lexy::string_error_context<>               ctx,
+                                  lexy::string_error<lexy::expected_literal> error) {
+            if (ctx.production() == doctest::String("prod_a"))
+            {
+                if (error.string() != lexy::_detail::string_view("abc"))
+                    throw 0;
+                return -1;
+            }
+            else if (ctx.production() == doctest::String("prod_b"))
+            {
+                if (error.character() == '(')
+                    return -2;
+                else if (error.character() == ')')
+                    return -3;
+                else
+                    return -4;
+            }
+
+            throw 0;
         };
-        constexpr auto prod_b_error = [](lexy::string_error_context<prod_b>,
-                                         lexy::string_error<lexy::expected_literal> error) {
-            if (error.character() == '(')
-                return -2;
-            else if (error.character() == ')')
-                return -3;
-            else
-                return -4;
-        };
-        constexpr auto callback
-            = lexy::collect<std::vector<int>>(lexy::callback<int>(prod_a_error, prod_b_error));
+        constexpr auto callback = lexy::collect<std::vector<int>>(lexy::callback<int>(error));
 
         auto success = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), callback);
         CHECK(success);
