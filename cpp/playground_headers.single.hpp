@@ -3688,11 +3688,23 @@ constexpr auto swar_length = [] {
 template <typename CharT>
 constexpr auto char_bit_size = sizeof(CharT) * CHAR_BIT;
 
+template <typename CharT>
+constexpr auto make_uchar(CharT c)
+{
+    if constexpr (std::is_same_v<CharT, LEXY_CHAR8_T>)
+        // Not all libstdc++ support char8_t and std::make_unsigned_t.
+        return c;
+    else
+        return std::make_unsigned_t<CharT>(c);
+}
+template <typename CharT>
+using uchar_t = decltype(make_uchar(CharT()));
+
 // Returns a swar_int filled with the specific char.
 template <typename CharT>
 constexpr swar_int swar_fill(CharT _c)
 {
-    auto c = std::make_unsigned_t<CharT>(_c);
+    auto c = make_uchar(_c);
 
     auto result = swar_int(0);
     for (auto i = 0u; i != swar_length<CharT>; ++i)
@@ -3707,8 +3719,7 @@ constexpr swar_int swar_fill(CharT _c)
 template <typename CharT>
 constexpr swar_int swar_fill_compl(CharT _c)
 {
-    using uchar_t = std::make_unsigned_t<CharT>;
-    auto c        = uchar_t(~uchar_t(_c));
+    auto c = uchar_t<CharT>(~uchar_t<CharT>(_c));
 
     auto result = swar_int(0);
     for (auto i = 0u; i != swar_length<CharT>; ++i)
@@ -3727,7 +3738,7 @@ constexpr void _swar_pack(swar_int& result, int index, H h, T... t)
         return;
 
     if (index >= 0)
-        result |= swar_int(std::make_unsigned_t<H>(h)) << index;
+        result |= swar_int(make_uchar(h)) << index;
 
     _swar_pack(result, index + int(char_bit_size<H>), t...);
 }
@@ -6824,7 +6835,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding> //
                        || std::is_same_v<typename Reader::encoding, lexy::utf8_char_encoding>)
     {
-        using uchar_t                = std::make_unsigned_t<typename Reader::encoding::char_type>;
+        using uchar_t                = unsigned char;
         constexpr auto payload_lead1 = 0b0111'1111;
         constexpr auto payload_lead2 = 0b0001'1111;
         constexpr auto payload_lead3 = 0b0000'1111;
