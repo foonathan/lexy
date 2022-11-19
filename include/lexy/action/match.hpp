@@ -13,10 +13,11 @@ class match_handler
 public:
     constexpr match_handler() : _failed(false) {}
 
-    template <typename Production>
     class event_handler
     {
     public:
+        constexpr event_handler(production_info) {}
+
         template <typename Error>
         constexpr void on(match_handler& handler, parse_events::error, Error&&)
         {

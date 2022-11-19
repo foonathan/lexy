@@ -19,18 +19,19 @@ public:
     : _tree(&tree), _depth(0), _validate(input, cb)
     {}
 
-    template <typename Production>
     class event_handler
     {
         using iterator = typename lexy::input_reader<Input>::iterator;
 
     public:
+        event_handler(production_info info) : _validate(info) {}
+
         void on(parse_tree_handler& handler, parse_events::production_start ev, iterator pos)
         {
             if (handler._depth++ == 0)
-                handler._builder.emplace(LEXY_MOV(*handler._tree), Production{});
+                handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
             else
-                _marker = handler._builder->start_production(Production{});
+                _marker = handler._builder->start_production(_validate.get_info());
 
             _validate.on(handler._validate, ev, pos);
         }
@@ -109,9 +110,8 @@ public:
         }
 
     private:
-        typename Tree::builder::marker _marker;
-        typename validate_handler<Input, ErrorCallback>::template event_handler<Production>
-            _validate;
+        typename Tree::builder::marker                                 _marker;
+        typename validate_handler<Input, ErrorCallback>::event_handler _validate;
     };
 
     template <typename Production, typename State>

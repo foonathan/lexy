@@ -340,14 +340,15 @@ public:
       _last_token(_begin)
     {}
 
-    template <typename Production>
     class event_handler
     {
     public:
+        constexpr event_handler(lexy::production_info info) : _name(info.name) {}
+
         void on(test_handler& handler, lexy::parse_events::production_start, iterator pos)
         {
             CHECK(handler._last_token == pos);
-            handler._trace.production(lexy::production_name<Production>());
+            handler._trace.production(_name);
         }
         void on(test_handler& handler, lexy::parse_events::production_finish, iterator pos)
         {
@@ -477,6 +478,9 @@ public:
             CHECK(handler._last_token == pos);
             handler._trace.token("debug", str);
         }
+
+    private:
+        const char* _name;
     };
 
     template <typename Production, typename State>

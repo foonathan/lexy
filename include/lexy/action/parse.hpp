@@ -106,9 +106,7 @@ public:
     : _validate(input, callback)
     {}
 
-    template <typename Production>
-    using event_handler =
-        typename validate_handler<Input, ErrorCallback>::template event_handler<Production>;
+    using event_handler = typename validate_handler<Input, ErrorCallback>::event_handler;
 
     constexpr operator validate_handler<Input, ErrorCallback>&()
     {

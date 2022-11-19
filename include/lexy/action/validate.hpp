@@ -126,13 +126,12 @@ public:
     : _sink(_get_error_sink(callback)), _input(&input)
     {}
 
-    template <typename Production>
     class event_handler
     {
         using iterator = typename lexy::input_reader<Input>::iterator;
 
     public:
-        constexpr event_handler() = default;
+        constexpr event_handler(production_info info) : _begin(), _info(info) {}
 
         constexpr void on(validate_handler&, parse_events::production_start, iterator pos)
         {
@@ -142,7 +141,7 @@ public:
         template <typename Error>
         constexpr void on(validate_handler& handler, parse_events::error, Error&& error)
         {
-            lexy::error_context err_ctx(Production{}, *handler._input, _begin);
+            lexy::error_context err_ctx(_info, *handler._input, _begin);
             handler._sink(err_ctx, LEXY_FWD(error));
         }
 
@@ -157,8 +156,14 @@ public:
             return _begin;
         }
 
+        constexpr production_info get_info() const
+        {
+            return _info;
+        }
+
     private:
-        iterator _begin = {};
+        iterator        _begin;
+        production_info _info;
     };
 
     template <typename Production, typename State>

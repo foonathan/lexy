@@ -154,10 +154,10 @@ struct spc_child
     _detail::lazy_init<value_type>   value;
 
     constexpr explicit spc_child(RootContext& root, decltype(Context::control_block) cb)
-    : root_context(&root), control_block(cb)
+    : root_context(&root), handler(production{}), control_block(cb)
     {}
     constexpr explicit spc_child(RootContext& root, const Context& context)
-    : root_context(&root), control_block(context.control_block)
+    : root_context(&root), handler(production{}), control_block(context.control_block)
     {}
 
     template <typename ChildProduction>
@@ -243,7 +243,7 @@ class scanner
 public:
     using encoding = typename Reader::encoding;
 
-    constexpr scanner(const scanner&) noexcept = delete;
+    constexpr scanner(const scanner&) noexcept            = delete;
     constexpr scanner& operator=(const scanner&) noexcept = delete;
 
     //=== status ===//
@@ -380,7 +380,7 @@ public:
     class error_recovery_guard
     {
     public:
-        error_recovery_guard(const error_recovery_guard&) = delete;
+        error_recovery_guard(const error_recovery_guard&)            = delete;
         error_recovery_guard& operator=(const error_recovery_guard&) = delete;
 
         constexpr void cancel() &&

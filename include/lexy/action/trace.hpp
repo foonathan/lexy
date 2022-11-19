@@ -313,16 +313,17 @@ public:
         LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
     }
 
-    template <typename Production>
     class event_handler
     {
         using iterator = typename lexy::input_reader<Input>::iterator;
 
     public:
+        constexpr event_handler(production_info info) : _info(info) {}
+
         void on(trace_handler& handler, parse_events::production_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
-            handler._writer.write_production_start(loc, lexy::production_name<Production>());
+            handler._writer.write_production_start(loc, _info.name);
 
             // All events for the production are after the initial event.
             _previous_anchor.emplace(handler._anchor);
@@ -403,6 +404,7 @@ public:
         }
 
     private:
+        production_info _info;
         // The beginning of the previous production.
         // If the current production gets canceled, it needs to be restored.
         _detail::lazy_init<input_location_anchor<Input>> _previous_anchor;

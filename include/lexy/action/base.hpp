@@ -103,12 +103,12 @@ struct _pc
     using whitespace_production = WhitespaceProduction;
     using value_type            = _production_value_type<Handler, State, Production>;
 
-    typename Handler::template event_handler<Production>  handler;
+    typename Handler::event_handler                       handler;
     _detail::parse_context_control_block<Handler, State>* control_block;
     _detail::lazy_init<value_type>                        value;
 
     constexpr explicit _pc(_detail::parse_context_control_block<Handler, State>* cb)
-    : control_block(cb)
+    : handler(Production{}), control_block(cb)
     {}
 
     template <typename ChildProduction>

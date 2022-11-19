@@ -34,17 +34,20 @@ class whitespace_handler
 public:
     constexpr explicit whitespace_handler(Context& context) : _context(&context) {}
 
-    template <typename Production>
-    struct event_handler
-    {
-        static_assert(_detail::error<Production>,
-                      "whitespace rule must not contain `dsl::p` or `dsl::recurse`;"
-                      "use `dsl::inline_` instead");
-    };
-    template <typename Rule>
-    class event_handler<ws_production<Rule>>
+    class event_handler
     {
     public:
+        template <typename Rule>
+        constexpr event_handler(ws_production<Rule>)
+        {}
+        template <typename Production>
+        constexpr event_handler(Production)
+        {
+            static_assert(_detail::error<Production>,
+                          "whitespace rule must not contain `dsl::p` or `dsl::recurse`;"
+                          "use `dsl::inline_` instead");
+        }
+
         template <typename Error>
         constexpr void on(whitespace_handler& handler, parse_events::error ev, Error&& error)
         {
