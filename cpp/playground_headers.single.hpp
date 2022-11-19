@@ -3657,6 +3657,242 @@ constexpr auto validate(const Input& input, const State& state, const ErrorCallb
 #ifndef LEXY_DSL_ANY_HPP_INCLUDED
 #define LEXY_DSL_ANY_HPP_INCLUDED
 
+// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DETAIL_SWAR_HPP_INCLUDED
+#define LEXY_DETAIL_SWAR_HPP_INCLUDED
+
+#include <climits>
+#include <cstdint>
+#include <cstring>
+
+
+
+#if defined(_MSC_VER)
+#    include <intrin.h>
+#endif
+
+namespace lexy::_detail
+{
+// Contains the chars in little endian order; rightmost bits are first char.
+using swar_int = std::uintmax_t;
+
+// The number of chars that can fit into one SWAR.
+template <typename CharT>
+constexpr auto swar_length = [] {
+    static_assert(sizeof(CharT) < sizeof(swar_int) && sizeof(swar_int) % sizeof(CharT) == 0);
+    return sizeof(swar_int) / sizeof(CharT);
+}();
+
+template <typename CharT>
+constexpr auto char_bit_size = sizeof(CharT) * CHAR_BIT;
+
+// Returns a swar_int filled with the specific char.
+template <typename CharT>
+constexpr swar_int swar_fill(CharT _c)
+{
+    auto c = std::make_unsigned_t<CharT>(_c);
+
+    auto result = swar_int(0);
+    for (auto i = 0u; i != swar_length<CharT>; ++i)
+    {
+        result <<= char_bit_size<CharT>;
+        result |= c;
+    }
+    return result;
+}
+
+// Returns a swar_int filled with the complement of the specific char.
+template <typename CharT>
+constexpr swar_int swar_fill_compl(CharT _c)
+{
+    using uchar_t = std::make_unsigned_t<CharT>;
+    auto c        = uchar_t(~uchar_t(_c));
+
+    auto result = swar_int(0);
+    for (auto i = 0u; i != swar_length<CharT>; ++i)
+    {
+        result <<= char_bit_size<CharT>;
+        result |= c;
+    }
+    return result;
+}
+
+constexpr void _swar_pack(swar_int&, int) {}
+template <typename H, typename... T>
+constexpr void _swar_pack(swar_int& result, int index, H h, T... t)
+{
+    if (std::size_t(index) == char_bit_size<swar_int>)
+        return;
+
+    if (index >= 0)
+        result |= swar_int(std::make_unsigned_t<H>(h)) << index;
+
+    _swar_pack(result, index + int(char_bit_size<H>), t...);
+}
+
+template <typename CharT>
+struct swar_pack_result
+{
+    swar_int    value;
+    swar_int    mask;
+    std::size_t count;
+
+    constexpr CharT operator[](std::size_t idx) const
+    {
+        constexpr auto mask = (swar_int(1) << char_bit_size<CharT>)-1;
+        return (value >> idx * char_bit_size<CharT>)&mask;
+    }
+};
+
+// Returns a swar_int containing the specified characters.
+// If more are provided than fit, will only take the first couple ones.
+template <int SkipFirstNChars = 0, typename... CharT>
+constexpr auto swar_pack(CharT... cs)
+{
+    using char_type = std::common_type_t<CharT...>;
+    swar_pack_result<char_type> result{0, 0, 0};
+
+    _swar_pack(result.value, -SkipFirstNChars * int(char_bit_size<char_type>), cs...);
+
+    auto count = int(sizeof...(CharT)) - SkipFirstNChars;
+    if (count <= 0)
+    {
+        result.mask  = 0;
+        result.count = 0;
+    }
+    else if (count >= int(swar_length<char_type>))
+    {
+        result.mask  = swar_int(-1);
+        result.count = swar_length<char_type>;
+    }
+    else
+    {
+        result.mask  = swar_int(swar_int(1) << count * int(char_bit_size<char_type>)) - 1;
+        result.count = std::size_t(count);
+    }
+
+    return result;
+}
+
+// Returns the index of the char that is different between lhs and rhs.
+template <typename CharT>
+constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
+{
+    if (lhs == rhs)
+        return swar_length<CharT>;
+
+    auto mask = lhs ^ rhs;
+
+#if defined(__GNUC__)
+    auto bit_idx = __builtin_ctzll(mask);
+#elif defined(_MSC_VER)
+    unsigned long bit_idx;
+    if (!_BitScanForward64(&bit_idx, mask))
+        bit_idx         = 64;
+#else
+#    error "unsupported compiler; please file an issue"
+#endif
+
+    return std::size_t(bit_idx) / char_bit_size<CharT>;
+}
+
+// Returns true if v has a char less than N.
+template <typename CharT, CharT N>
+constexpr bool swar_has_char_less(swar_int v)
+{
+    // https://graphics.stanford.edu/~seander/bithacks.html#HasLessInWord
+
+    constexpr auto offset      = swar_fill(CharT(N));
+    auto           zero_or_msb = v - offset;
+
+    constexpr auto msb_mask = swar_fill(CharT(1 << (char_bit_size<CharT> - 1)));
+    auto           not_msb  = ~v & msb_mask;
+
+    return zero_or_msb & not_msb;
+}
+
+// Returns true if v has a zero char.
+template <typename CharT>
+constexpr bool swar_has_zero(swar_int v)
+{
+    return swar_has_char_less<CharT, 1>(v);
+}
+
+// Returns true if v contains the specified char.
+template <typename CharT, CharT C>
+constexpr bool swar_has_char(swar_int v)
+{
+    if constexpr (C == 0)
+    {
+        return swar_has_zero<CharT>(v);
+    }
+    else
+    {
+        constexpr auto mask = swar_fill(C);
+        return swar_has_zero<CharT>(v ^ mask);
+    }
+}
+} // namespace lexy::_detail
+
+namespace lexy::_detail
+{
+struct _swar_base
+{};
+template <typename Reader>
+constexpr auto is_swar_reader = std::is_base_of_v<_swar_base, Reader>;
+
+template <typename Derived>
+class swar_reader_base : _swar_base
+{
+public:
+    swar_int peek_swar() const
+    {
+        auto ptr = static_cast<const Derived&>(*this).position();
+
+        swar_int result;
+#if LEXY_IS_LITTLE_ENDIAN
+        std::memcpy(&result, ptr, sizeof(swar_int));
+#else
+        using char_type = typename Derived::encoding::char_type;
+        auto dst        = reinterpret_cast<char*>(&result);
+        auto length     = sizeof(swar_int) / sizeof(char_type);
+        for (auto i = 0u; i != length; ++i)
+        {
+            std::memcpy(dst + i, ptr + length - i - 1, sizeof(char_type));
+        }
+#endif
+        return result;
+    }
+
+    void bump_swar()
+    {
+        auto ptr = static_cast<Derived&>(*this).position();
+        ptr += swar_length<typename Derived::encoding::char_type>;
+        static_cast<Derived&>(*this).set_position(ptr);
+    }
+    void bump_swar(std::size_t char_count)
+    {
+        auto ptr = static_cast<Derived&>(*this).position();
+        ptr += char_count;
+        static_cast<Derived&>(*this).set_position(ptr);
+    }
+};
+
+constexpr std::size_t round_size_for_swar(std::size_t size_in_bytes)
+{
+    // We round up to the next multiple.
+    if (auto remainder = size_in_bytes % sizeof(swar_int); remainder > 0)
+        size_in_bytes += sizeof(swar_int) - remainder;
+    // Then add one extra space of padding on top.
+    size_in_bytes += sizeof(swar_int);
+    return size_in_bytes;
+}
+} // namespace lexy::_detail
+
+#endif // LEXY_DETAIL_SWAR_HPP_INCLUDED
+
 
 // Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
@@ -3963,8 +4199,17 @@ struct _any : token_base<_any, unconditional_branch_base>
 
         constexpr std::true_type try_parse(Reader reader)
         {
-            while (reader.peek() != Reader::encoding::eof())
+            using encoding = typename Reader::encoding;
+            if constexpr (lexy::_detail::is_swar_reader<Reader>)
+            {
+                while (!lexy::_detail::swar_has_char<typename encoding::char_type, encoding::eof()>(
+                    reader.peek_swar()))
+                    reader.bump_swar();
+            }
+
+            while (reader.peek() != encoding::eof())
                 reader.bump();
+
             end = reader.position();
             return {};
         }
@@ -6579,6 +6824,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding> //
                        || std::is_same_v<typename Reader::encoding, lexy::utf8_char_encoding>)
     {
+        using uchar_t                = std::make_unsigned_t<typename Reader::encoding::char_type>;
         constexpr auto payload_lead1 = 0b0111'1111;
         constexpr auto payload_lead2 = 0b0001'1111;
         constexpr auto payload_lead3 = 0b0000'1111;
@@ -6591,7 +6837,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         constexpr auto pattern_lead4 = 0b11110 << 3;
         constexpr auto pattern_cont  = 0b10 << 6;
 
-        auto first = reader.peek();
+        auto first = uchar_t(reader.peek());
         if ((first & ~payload_lead1) == pattern_lead1)
         {
             // ASCII character.
@@ -6606,7 +6852,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             reader.bump();
 
-            auto second = reader.peek();
+            auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
@@ -6625,12 +6871,12 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             reader.bump();
 
-            auto second = reader.peek();
+            auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
-            auto third = reader.peek();
+            auto third = uchar_t(reader.peek());
             if ((third & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
@@ -6653,17 +6899,17 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             reader.bump();
 
-            auto second = reader.peek();
+            auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
-            auto third = reader.peek();
+            auto third = uchar_t(reader.peek());
             if ((third & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
 
-            auto fourth = reader.peek();
+            auto fourth = uchar_t(reader.peek());
             if ((fourth & ~payload_cont) != pattern_cont)
                 return {{}, cp_error::missing_trailing, reader.position()};
             reader.bump();
@@ -6785,6 +7031,7 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_CODE_POINT_HPP_INCLUDED
+
 
 
 
@@ -6953,7 +7200,7 @@ struct char_class_base : token_base<Derived>, _char_class_base
     // static const char* char_class_name();
     // static ascii_set char_class_ascii();
 
-    static constexpr auto char_class_unicode()
+    static constexpr bool char_class_unicode()
     {
         return true;
     }
@@ -6970,6 +7217,14 @@ struct char_class_base : token_base<Derived>, _char_class_base
         constexpr auto name = Derived::char_class_name();
         auto           err  = lexy::error<Reader, lexy::expected_char_class>(position, name);
         context.on(_ev::error{}, err);
+    }
+
+    /// Returns true if c contains only characters from the char class.
+    /// If it returns false, it may still be valid, it just couldn't be detected.
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int)
+    {
+        return std::false_type{};
     }
 
     //=== provided functions ===//
@@ -7602,6 +7857,54 @@ inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind
 
 
 
+
+//=== lit_matcher ===//
+namespace lexy::_detail
+{
+template <std::size_t CurCharIndex, typename CharT, CharT... Cs, typename Reader>
+constexpr auto match_literal(Reader& reader)
+{
+    using char_type = typename Reader::encoding::char_type;
+    if constexpr (CurCharIndex >= sizeof...(Cs))
+    {
+        (void)reader;
+        return std::true_type{};
+    }
+    // We only use SWAR if the reader supports it and we have enough to fill at least one.
+    else if constexpr (is_swar_reader<Reader> && sizeof...(Cs) >= swar_length<char_type>)
+    {
+        // Try and pack as many characters into a swar as possible, starting at the current
+        // index.
+        constexpr auto pack = swar_pack<CurCharIndex>(transcode_char<char_type>(Cs)...);
+
+        // Do a single swar comparison.
+        if ((reader.peek_swar() & pack.mask) == pack.value)
+        {
+            reader.bump_swar(pack.count);
+
+            // Recurse with the incremented index.
+            return bool(match_literal<CurCharIndex + pack.count, CharT, Cs...>(reader));
+        }
+        else
+        {
+            auto partial = swar_find_difference<CharT>(reader.peek_swar() & pack.mask, pack.value);
+            reader.bump_swar(partial);
+            return false;
+        }
+    }
+    else
+    {
+        static_assert(CurCharIndex == 0);
+
+        // Compare each code unit, bump on success, cancel on failure.
+        return ((reader.peek() == transcode_int<typename Reader::encoding>(Cs)
+                     ? (reader.bump(), true)
+                     : false)
+                && ...);
+    }
+}
+} // namespace lexy::_detail
+
 //=== lit_trie ===//
 namespace lexy::_detail
 {
@@ -7876,6 +8179,14 @@ struct _lit
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
     using lit_case_folding                   = void;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        typename Encoding::char_type result = 0;
+        (void)((result = lexy::_detail::transcode_char<decltype(result)>(C), true) || ...);
+        return result;
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
     {
@@ -7891,22 +8202,9 @@ struct _lit
 
         constexpr auto try_parse(Reader reader)
         {
-            if constexpr (sizeof...(C) == 0)
-            {
-                end = reader.position();
-                return std::true_type{};
-            }
-            else
-            {
-                auto result
-                    // Compare each code unit, bump on success, cancel on failure.
-                    = ((reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>(C)
-                            ? (reader.bump(), true)
-                            : false)
-                       && ...);
-                end = reader.position();
-                return result;
-            }
+            auto result = lexy::_detail::match_literal<0, CharT, C...>(reader);
+            end         = reader.position();
+            return result;
         }
 
         template <typename Context>
@@ -7969,6 +8267,12 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
     static constexpr auto lit_char_classes   = lexy::_detail::char_class_list{};
     using lit_case_folding                   = void;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        return _string<Encoding>.data[0];
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos, std::size_t)
     {
@@ -7995,13 +8299,9 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
         {
             using encoding = typename Reader::encoding;
 
-            auto result
-                // Compare each code unit, bump on success, cancel on failure.
-                = ((reader.peek() == encoding::to_int_type(_string<encoding>.data[Idx])
-                        ? (reader.bump(), true)
-                        : false)
-                   && ...);
-            end = reader.position();
+            auto result = lexy::_detail::match_literal<0, typename encoding::char_type,
+                                                       _string<encoding>.data[Idx]...>(reader);
+            end         = reader.position();
             return result;
         }
 
@@ -9924,6 +10224,8 @@ void trace(std::FILE* file, const Input& input, const State& state, visualizatio
 
 
 
+// SWAR tricks inspired by https://garbagecollected.org/2017/01/31/four-column-ascii/.
+
 namespace lexyd::ascii
 {
 //=== control ===//
@@ -9940,6 +10242,17 @@ struct _control : char_class_base<_control>
         result.insert(0x00, 0x1F);
         result.insert(0x7F);
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type         = typename Encoding::char_type;
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        constexpr auto expected = lexy::_detail::swar_fill(char_type(0b00'00000));
+
+        // We're only checking for 0x00-0x1F, and allow a false negative for 0x7F.
+        return (c & mask) == expected;
     }
 };
 inline constexpr auto control = _control{};
@@ -10028,6 +10341,22 @@ struct _lower : char_class_base<_lower>
         result.insert('a', 'z');
         return result;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        // All interesting characters are in column 4.
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        constexpr auto expected = lexy::_detail::swar_fill(char_type(0b11'00000));
+
+        // But we need to eliminate ~ at the beginning and {|}~\x7F at the end.
+        constexpr auto offset_low  = lexy::_detail::swar_fill(char_type(1));
+        constexpr auto offset_high = lexy::_detail::swar_fill(char_type(5));
+
+        return ((c - offset_low) & mask) == expected && ((c + offset_high) & mask) == expected;
+    }
 };
 inline constexpr auto lower = _lower{};
 
@@ -10043,6 +10372,22 @@ struct _upper : char_class_base<_upper>
         lexy::_detail::ascii_set result;
         result.insert('A', 'Z');
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        // All interesting characters are in column 3.
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        constexpr auto expected = lexy::_detail::swar_fill(char_type(0b10'00000));
+
+        // But we need to eliminate @ at the beginning and [\]^_ at the end.
+        constexpr auto offset_low  = lexy::_detail::swar_fill(char_type(1));
+        constexpr auto offset_high = lexy::_detail::swar_fill(char_type(5));
+
+        return ((c - offset_low) & mask) == expected && ((c + offset_high) & mask) == expected;
     }
 };
 inline constexpr auto upper = _upper{};
@@ -10060,6 +10405,13 @@ struct _alpha : char_class_base<_alpha>
         result.insert('a', 'z');
         result.insert('A', 'Z');
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        // We're assuming lower characters are more common, so do the efficient check only for them.
+        return _lower::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto alpha = _alpha{};
@@ -10079,6 +10431,13 @@ struct _alphau : char_class_base<_alphau>
         result.insert('_');
         return result;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        // We're assuming alpha characters are more common, so do the efficient check only for them.
+        return _alpha::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto alpha_underscore = _alphau{};
 
@@ -10095,6 +10454,21 @@ struct _digit : char_class_base<_digit>
         lexy::_detail::ascii_set result;
         result.insert('0', '9');
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        // All interesting characters are in the second half of column 1.
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(char_type(0b01111));
+        constexpr auto expected = lexy::_detail::swar_fill(char_type(0b01'10000));
+
+        // But we need to eliminate :;<=>? at the end.
+        constexpr auto offset_high = lexy::_detail::swar_fill(char_type(6));
+
+        return (c & mask) == expected && ((c + offset_high) & mask) == expected;
     }
 };
 inline constexpr auto digit = _digit{};
@@ -10113,6 +10487,13 @@ struct _alnum : char_class_base<_alnum>
         result.insert(_digit::char_class_ascii());
         return result;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        // We're assuming alpha characters are more common, so do the efficient check only for them.
+        return _alpha::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto alnum       = _alnum{};
 inline constexpr auto alpha_digit = _alnum{};
@@ -10130,6 +10511,14 @@ struct _word : char_class_base<_word>
         result.insert(_alphau::char_class_ascii());
         result.insert(_digit::char_class_ascii());
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        // We're assuming alphau characters are more common, so do the efficient check only for
+        // them.
+        return _alphau::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto word                   = _word{};
@@ -10197,6 +10586,35 @@ struct _graph : char_class_base<_graph>
         result.insert(0x21, 0x7E);
         return result;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        // First check that we have only ASCII, but shifted by one, so we also exclude 0x7F.
+        constexpr auto ascii_mask     = lexy::_detail::swar_fill_compl(char_type(0b11'11111));
+        constexpr auto ascii_offset   = lexy::_detail::swar_fill(char_type(1));
+        constexpr auto ascii_expected = lexy::_detail::swar_fill(char_type(0));
+        if (((c + ascii_offset) & ascii_mask) != ascii_expected)
+            return false;
+
+        // The above check also included 0xFF for single byte encodings where it overflowed,
+        // so do a separate check in those cases.
+        if constexpr (sizeof(char_type) == 1)
+        {
+            if ((c & ascii_mask) != ascii_expected)
+                return false;
+        }
+
+        // Then we must not have a character in column 0, or space.
+        // If we subtract one we turn 0x21-0x01 into column 0 and 0x00 to a value definitely not in
+        // column 0, so need to check both.
+        constexpr auto mask       = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        constexpr auto unexpected = lexy::_detail::swar_fill(char_type(0b00'00000));
+        constexpr auto offset_low = lexy::_detail::swar_fill(char_type(1));
+        return (c & mask) != unexpected && ((c - offset_low) & mask) != unexpected;
+    }
 };
 inline constexpr auto graph = _graph{};
 
@@ -10213,6 +10631,32 @@ struct _print : char_class_base<_print>
         result.insert(0x20, 0x7E);
         return result;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        // First check that we have only ASCII, but shifted by one, so we also exclude 0x7F.
+        constexpr auto ascii_mask     = lexy::_detail::swar_fill_compl(char_type(0b11'11111));
+        constexpr auto ascii_offset   = lexy::_detail::swar_fill(char_type(1));
+        constexpr auto ascii_expected = lexy::_detail::swar_fill(char_type(0));
+        if (((c + ascii_offset) & ascii_mask) != ascii_expected)
+            return false;
+
+        // The above check also included 0xFF for single byte encodings where it overflowed,
+        // so do a separate check in those cases.
+        if constexpr (sizeof(char_type) == 1)
+        {
+            if ((c & ascii_mask) != ascii_expected)
+                return false;
+        }
+
+        // Then we must not have a character in column 0.
+        constexpr auto mask       = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        constexpr auto unexpected = lexy::_detail::swar_fill(char_type(0b00'00000));
+        return (c & mask) != unexpected;
+    }
 };
 inline constexpr auto print = _print{};
 
@@ -10228,6 +10672,17 @@ struct _char : char_class_base<_char>
         lexy::_detail::ascii_set result;
         result.insert(0x00, 0x7F);
         return result;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        using char_type = typename Encoding::char_type;
+
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(char_type(0b11'11111));
+        constexpr auto expected = lexy::_detail::swar_fill(char_type(0));
+
+        return (c & mask) == expected;
     }
 };
 inline constexpr auto character = _char{};
@@ -12700,6 +13155,12 @@ struct _cfl : token_base<_cfl<Literal, CaseFolding>>, _lit_base
 
     using lit_case_folding = _cfl_folding<CaseFolding>;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        return Literal::template lit_first_char<Encoding>();
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
                                                  std::size_t char_class)
@@ -13589,8 +14050,19 @@ struct _idp : token_base<_idp<Leading, Trailing>>
                 return false;
 
             // Match zero or more trailing characters.
-            while (lexy::try_match_token(Trailing{}, reader))
-            {}
+            while (true)
+            {
+                if constexpr (lexy::_detail::is_swar_reader<Reader>)
+                {
+                    // If we have a swar reader, consume as much as possible at once.
+                    while (Trailing{}.template char_class_match_swar<typename Reader::encoding>(
+                        reader.peek_swar()))
+                        reader.bump_swar();
+                }
+
+                if (!lexy::try_match_token(Trailing{}, reader))
+                    break;
+            }
 
             end = reader.position();
             return true;
@@ -13852,6 +14324,14 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
 
     using lit_case_folding = void;
 
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        typename Encoding::char_type result = 0;
+        (void)((result = lexy::_detail::transcode_char<decltype(result)>(C), true) || ...);
+        return result;
+    }
+
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
                                                  std::size_t char_class)
@@ -13871,7 +14351,7 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
         constexpr bool try_parse(Reader reader)
         {
             // Need to match the literal.
-            if (!lexy::try_match_token(_lit<CharT, C...>{}, reader))
+            if (!lexy::_detail::match_literal<0, CharT, C...>(reader))
                 return false;
             end = reader.position();
 
@@ -14105,6 +14585,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 #ifndef LEXY_DSL_DELIMITED_HPP_INCLUDED
 #define LEXY_DSL_DELIMITED_HPP_INCLUDED
+
 
 
 
@@ -14685,12 +15166,61 @@ struct _del_chars
         begin = recover_end;
     }
 
-    template <typename Context, typename Sink>
-    constexpr void parse(Context& context, Reader& reader, Sink& sink)
+    template <typename Close, typename... Escs>
+    constexpr void parse_swar(Reader& reader, Close, Escs...)
     {
+        using encoding = typename Reader::encoding;
+
+        // If we have a SWAR reader and the Close and Escape chars are literal rules,
+        // we can munch as much content as possible in a fast loop.
+        // We also need to efficiently check for the CharClass for it to make sense.
+        if constexpr (lexy::_detail::is_swar_reader<Reader> //
+                      && (lexy::is_literal_rule<Close> && ... && Escs::esc_is_literal)
+                      && !std::is_same_v<
+                          decltype(CharClass::template char_class_match_swar<encoding>({})),
+                          std::false_type>)
+        {
+            using char_type = typename encoding::char_type;
+            using lexy::_detail::swar_has_char;
+
+            while (true)
+            {
+                auto cur = reader.peek_swar();
+
+                // If we have an EOF or the initial character of the closing delimiter, we exit as
+                // we have no more content.
+                if (swar_has_char<char_type, encoding::eof()>(cur)
+                    || swar_has_char<char_type, Close::template lit_first_char<encoding>()>(cur))
+                    break;
+
+                // The same is true if we have the escape character.
+                if constexpr (sizeof...(Escs) > 0)
+                {
+                    if ((swar_has_char<char_type, Escs::template esc_first_char<encoding>()>(cur)
+                         || ...))
+                        break;
+                }
+
+                // We definitely don't have the end of the delimited content in the current SWAR,
+                // check if they all follow the char class.
+                if (!CharClass::template char_class_match_swar<encoding>(cur))
+                    // They don't or we need to look closer, exit the loop.
+                    break;
+
+                reader.bump_swar();
+            }
+        }
+    }
+
+    // Precondition: the next code unit definitely belongs to the content, not the delimiter.
+    template <typename Context, typename Sink>
+    constexpr void parse_one(Context& context, Reader& reader, Sink& sink)
+    {
+        using encoding = typename Reader::encoding;
+
         // First try to match the ASCII characters.
         using matcher = lexy::_detail::ascii_set_matcher<_cas<CharClass>>;
-        if (matcher::template match<typename Reader::encoding>(reader.peek()))
+        if (matcher::template match<encoding>(reader.peek()))
         {
             reader.bump();
         }
@@ -14698,12 +15228,12 @@ struct _del_chars
                                            std::false_type>)
         {
             // Try to match any code point in default_encoding or byte_encoding.
-            if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> //
-                          || std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
+            if constexpr (std::is_same_v<encoding, lexy::default_encoding> //
+                          || std::is_same_v<encoding, lexy::byte_encoding>)
             {
                 static_assert(!CharClass::char_class_unicode(),
                               "cannot use this character class with default/byte_encoding");
-                LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+                LEXY_ASSERT(reader.peek() != encoding::eof(),
                             "EOF should be checked before calling this");
 
                 auto recover_begin = reader.position();
@@ -14740,7 +15270,7 @@ struct _del_chars
         else
         {
             // We can just discard the invalid ASCII character.
-            LEXY_ASSERT(reader.peek() != Reader::encoding::eof(),
+            LEXY_ASSERT(reader.peek() != encoding::eof(),
                         "EOF should be checked before calling this");
             auto recover_begin = reader.position();
             reader.bump();
@@ -14796,8 +15326,15 @@ struct _del : rule_base
     {
         auto                     del_begin = reader.position();
         _del_chars<Char, Reader> cur_chars(reader);
-        while (!close.try_parse(context.control_block, reader))
+        while (true)
         {
+            // Parse as many content chars as possible.
+            // If it returns, we need to look closer at the next char.
+            cur_chars.parse_swar(reader, Close{}, Escapes{}...);
+
+            // Check for closing delimiter.
+            if (close.try_parse(context.control_block, reader))
+                break;
             close.cancel(context);
 
             // Check for missing delimiter.
@@ -14813,12 +15350,12 @@ struct _del : rule_base
             }
 
             // Check for escape sequences.
-            if ((Escapes::_try_parse(context, reader, sink, cur_chars) || ...))
+            if ((Escapes::esc_try_parse(context, reader, sink, cur_chars) || ...))
                 // We had an escape sequence, so do nothing in this iteration.
                 continue;
 
-            // Parse the next character.
-            cur_chars.parse(context, reader, sink);
+            // It is actually a content char, consume it.
+            cur_chars.parse_one(context, reader, sink);
         }
 
         // Finish the currently active character sequence.
@@ -14860,7 +15397,7 @@ struct _escape_base
 template <typename Open, typename Close, typename Limit = void>
 struct _delim_dsl
 {
-    /// Add literal tokens that will limit the delimited to detect a missing terminator.
+    /// Add char classes that will limit the delimited to detect a missing terminator.
     template <typename LimitCharClass>
     constexpr auto limit(LimitCharClass) const
     {
@@ -14868,7 +15405,7 @@ struct _delim_dsl
 
         return _delim_dsl<Open, Close, LimitCharClass>{};
     }
-    /// Add literal tokens that will limit the delimited and specify the error.
+    /// Add char classes that will limit the delimited and specify the error.
     template <typename Error, typename LimitCharClass>
     constexpr auto limit(LimitCharClass) const
     {
@@ -14942,9 +15479,16 @@ namespace lexyd
 template <typename Escape, typename... Branches>
 struct _escape : _escape_base
 {
+    static constexpr bool esc_is_literal = lexy::is_literal_rule<Escape>;
+    template <typename Encoding>
+    static constexpr auto esc_first_char() -> typename Encoding::char_type
+    {
+        return Escape::template lit_first_char<Encoding>();
+    }
+
     template <typename Context, typename Reader, typename Sink, typename Char>
-    static constexpr bool _try_parse(Context& context, Reader& reader, Sink& sink,
-                                     _del_chars<Char, Reader>& cur_chars)
+    static constexpr bool esc_try_parse(Context& context, Reader& reader, Sink& sink,
+                                        _del_chars<Char, Reader>& cur_chars)
     {
         auto begin = reader.position();
 
@@ -15048,7 +15592,10 @@ constexpr auto dollar_escape    = escape(lit_c<'$'>);
 
 
 
+
 //=== bases ===//
+// SWAR matching code adapted from:
+// https://lemire.me/blog/2018/09/30/quickly-identifying-a-sequence-of-digits-in-a-string-of-characters/
 namespace lexyd
 {
 template <int Radix>
@@ -15076,6 +15623,16 @@ struct _d<2> : char_class_base<_d<2>>
     {
         return static_cast<unsigned>(c) - '0';
     }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(CharT(0xF));
+        constexpr auto expected = lexy::_detail::swar_fill(CharT(0x30));
+        constexpr auto offset   = lexy::_detail::swar_fill(CharT(0x0E));
+
+        return (c & mask) == expected && ((c + offset) & mask) == expected;
+    }
 };
 using binary = _d<2>;
 
@@ -15100,6 +15657,16 @@ struct _d<8> : char_class_base<_d<8>>
     static constexpr unsigned digit_value(CharT c)
     {
         return static_cast<unsigned>(c) - '0';
+    }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(CharT(0xF));
+        constexpr auto expected = lexy::_detail::swar_fill(CharT(0x30));
+        constexpr auto offset   = lexy::_detail::swar_fill(CharT(0x08));
+
+        return (c & mask) == expected && ((c + offset) & mask) == expected;
     }
 };
 using octal = _d<8>;
@@ -15126,8 +15693,90 @@ struct _d<10> : char_class_base<_d<10>>
     {
         return static_cast<unsigned>(c) - '0';
     }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        constexpr auto mask     = lexy::_detail::swar_fill_compl(CharT(0xF));
+        constexpr auto expected = lexy::_detail::swar_fill(CharT(0x30));
+        constexpr auto offset   = lexy::_detail::swar_fill(CharT(0x06));
+
+        return (c & mask) == expected && ((c + offset) & mask) == expected;
+    }
 };
 using decimal = _d<10>;
+
+struct hex_lower : char_class_base<hex_lower>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "digit.hex-lower";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        result.insert('a', 'f');
+        return result;
+    }
+
+    static constexpr unsigned digit_radix = 16;
+
+    template <typename CharT>
+    static constexpr unsigned digit_value(CharT c)
+    {
+        if (c >= 'a')
+            return static_cast<unsigned>(c) - 'a' + 10;
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
+        else
+            return unsigned(-1);
+    }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        // False negative for hex digits, but that's okay.
+        return _d<10>::swar_matches<CharT>(c);
+    }
+};
+
+struct hex_upper : char_class_base<hex_upper>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "digit.hex-upper";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        lexy::_detail::ascii_set result;
+        result.insert('0', '9');
+        result.insert('A', 'F');
+        return result;
+    }
+
+    static constexpr unsigned digit_radix = 16;
+
+    template <typename CharT>
+    static constexpr unsigned digit_value(CharT c)
+    {
+        if (c >= 'A')
+            return static_cast<unsigned>(c) - 'A' + 10;
+        else if (c <= '9')
+            return static_cast<unsigned>(c) - '0';
+        else
+            return unsigned(-1);
+    }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        // False negative for hex digits, but that's okay.
+        return _d<10>::swar_matches<CharT>(c);
+    }
+};
 
 template <>
 struct _d<16> : char_class_base<_d<16>>
@@ -15160,66 +15809,15 @@ struct _d<16> : char_class_base<_d<16>>
         else
             return unsigned(-1);
     }
+
+    template <typename CharT>
+    static constexpr bool swar_matches(lexy::_detail::swar_int c)
+    {
+        // False negative for hex digits, but that's okay.
+        return _d<10>::swar_matches<CharT>(c);
+    }
 };
 using hex = _d<16>;
-
-struct hex_lower : char_class_base<hex_lower>
-{
-    static LEXY_CONSTEVAL auto char_class_name()
-    {
-        return "digit.hex-lower";
-    }
-
-    static LEXY_CONSTEVAL auto char_class_ascii()
-    {
-        lexy::_detail::ascii_set result;
-        result.insert('0', '9');
-        result.insert('a', 'f');
-        return result;
-    }
-
-    static constexpr unsigned digit_radix = 16;
-
-    template <typename CharT>
-    static constexpr unsigned digit_value(CharT c)
-    {
-        if (c >= 'a')
-            return static_cast<unsigned>(c) - 'a' + 10;
-        else if (c <= '9')
-            return static_cast<unsigned>(c) - '0';
-        else
-            return unsigned(-1);
-    }
-};
-
-struct hex_upper : char_class_base<hex_upper>
-{
-    static LEXY_CONSTEVAL auto char_class_name()
-    {
-        return "digit.hex-upper";
-    }
-
-    static LEXY_CONSTEVAL auto char_class_ascii()
-    {
-        lexy::_detail::ascii_set result;
-        result.insert('0', '9');
-        result.insert('A', 'F');
-        return result;
-    }
-
-    static constexpr unsigned digit_radix = 16;
-
-    template <typename CharT>
-    static constexpr unsigned digit_value(CharT c)
-    {
-        if (c >= 'A')
-            return static_cast<unsigned>(c) - 'A' + 10;
-        else if (c <= '9')
-            return static_cast<unsigned>(c) - '0';
-        else
-            return unsigned(-1);
-    }
-};
 } // namespace lexyd
 
 //=== digit ===//
@@ -15275,6 +15873,65 @@ struct forbidden_leading_zero
 
 namespace lexyd
 {
+template <typename Base, typename Reader>
+constexpr bool _match_digits(Reader& reader)
+{
+    // Need at least one digit.
+    // Checking for a single digit is also cheaper than doing a SWAR comparison,
+    // so we do that manually in either case.
+    if (!lexy::try_match_token(digit<Base>, reader))
+        return false;
+
+    // Now we consume as many digits as possible.
+    // First using SWAR...
+    if constexpr (lexy::_detail::is_swar_reader<Reader>)
+    {
+        using char_type = typename Reader::encoding::char_type;
+        while (Base::template swar_matches<char_type>(reader.peek_swar()))
+            reader.bump_swar();
+    }
+
+    // ... then manually to get any trailing digits.
+    while (lexy::try_match_token(digit<Base>, reader))
+    {}
+
+    return true;
+}
+template <typename Base, typename Sep, typename Reader>
+constexpr bool _match_digits_sep(Reader& reader)
+{
+    // Need at least one digit.
+    if (!lexy::try_match_token(digit<Base>, reader))
+        return false;
+
+    // Might have following digits.
+    while (true)
+    {
+        if (lexy::try_match_token(Sep{}, reader))
+        {
+            // Need a digit after a separator.
+            if (!lexy::try_match_token(digit<Base>, reader))
+                return false;
+        }
+        else
+        {
+            // Attempt to consume as many digits as possible.
+            if constexpr (lexy::_detail::is_swar_reader<Reader>)
+            {
+                using char_type = typename Reader::encoding::char_type;
+                while (Base::template swar_matches<char_type>(reader.peek_swar()))
+                    reader.bump_swar();
+            }
+
+            if (!lexy::try_match_token(digit<Base>, reader))
+                // If we're not having a digit, we're done.
+                break;
+        }
+    }
+
+    return true;
+}
+
 template <typename Base, typename Sep>
 struct _digits_st : token_base<_digits_st<Base, Sep>>
 {
@@ -15290,52 +15947,20 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
 
         constexpr bool try_parse(Reader reader)
         {
-            // Check for a zero that is followed by a digit or separator.
-            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
-            {
-                reader.bump();
-                end = reader.position();
+            using char_type = typename Reader::encoding::char_type;
+            auto begin      = reader.position();
+            auto result     = _match_digits_sep<Base, Sep>(reader);
+            end             = reader.position();
 
-                if (lexy::try_match_token(digit<Base>, reader)
-                    || lexy::try_match_token(Sep{}, reader))
-                {
-                    forbidden_leading_zero = true;
-                    return false;
-                }
-
-                // Just zero.
-                return true;
-            }
-            // Need at least one digit.
-            else if (!lexy::try_match_token(digit<Base>, reader))
+            if (result && lexy::_detail::next(begin) != end
+                && *begin == lexy::_detail::transcode_char<char_type>('0'))
             {
-                end                    = reader.position();
-                forbidden_leading_zero = false;
+                end                    = lexy::_detail::next(begin);
+                forbidden_leading_zero = true;
                 return false;
             }
 
-            // Might have following digits.
-            while (true)
-            {
-                if (lexy::try_match_token(Sep{}, reader))
-                {
-                    // Need a digit after a separator.
-                    if (!lexy::try_match_token(digit<Base>, reader))
-                    {
-                        end                    = reader.position();
-                        forbidden_leading_zero = false;
-                        return false;
-                    }
-                }
-                else if (!lexy::try_match_token(digit<Base>, reader))
-                {
-                    // If we're not having a digit, we're done.
-                    break;
-                }
-            }
-
-            end = reader.position();
-            return true;
+            return result;
         }
 
         template <typename Context>
@@ -15369,34 +15994,9 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
 
         constexpr bool try_parse(Reader reader)
         {
-            // Need at least one digit.
-            if (!lexy::try_match_token(digit<Base>, reader))
-            {
-                end = reader.position();
-                return false;
-            }
-
-            // Might have following digits.
-            while (true)
-            {
-                if (lexy::try_match_token(Sep{}, reader))
-                {
-                    // Need a digit after a separator.
-                    if (!lexy::try_match_token(digit<Base>, reader))
-                    {
-                        end = reader.position();
-                        return false;
-                    }
-                }
-                else if (!lexy::try_match_token(digit<Base>, reader))
-                {
-                    // If we're not having a digit, we're done.
-                    break;
-                }
-            }
-
-            end = reader.position();
-            return true;
+            auto result = _match_digits_sep<Base, Sep>(reader);
+            end         = reader.position();
+            return result;
         }
 
         template <typename Context>
@@ -15428,35 +16028,20 @@ struct _digits_t : token_base<_digits_t<Base>>
 
         constexpr bool try_parse(Reader reader)
         {
-            // Check for a zero that is followed by a digit.
-            if (reader.peek() == lexy::_detail::transcode_int<typename Reader::encoding>('0'))
+            using char_type = typename Reader::encoding::char_type;
+            auto begin      = reader.position();
+            auto result     = _match_digits<Base>(reader);
+            end             = reader.position();
+
+            if (result && lexy::_detail::next(begin) != end
+                && *begin == lexy::_detail::transcode_char<char_type>('0'))
             {
-                reader.bump();
-                end = reader.position();
-
-                if (lexy::try_match_token(digit<Base>, reader))
-                {
-                    forbidden_leading_zero = true;
-                    return false;
-                }
-
-                // Just zero.
-                return true;
-            }
-
-            // Need at least one digit.
-            if (!lexy::try_match_token(digit<Base>, reader))
-            {
-                forbidden_leading_zero = false;
+                end                    = lexy::_detail::next(begin);
+                forbidden_leading_zero = true;
                 return false;
             }
 
-            // Might have more than one digit afterwards.
-            while (lexy::try_match_token(digit<Base>, reader))
-            {}
-
-            end = reader.position();
-            return true;
+            return result;
         }
 
         template <typename Context>
@@ -15497,16 +16082,9 @@ struct _digits : token_base<_digits<Base>>
 
         constexpr bool try_parse(Reader reader)
         {
-            // Need at least one digit.
-            if (!lexy::try_match_token(digit<Base>, reader))
-                return false;
-
-            // Might have more than one digit afterwards.
-            while (lexy::try_match_token(digit<Base>, reader))
-            {}
-
-            end = reader.position();
-            return true;
+            auto result = _match_digits<Base>(reader);
+            end         = reader.position();
+            return result;
         }
 
         template <typename Context>
@@ -16870,6 +17448,12 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
     static constexpr auto lit_char_classes = lexy::_detail::char_class_list<CharClass>{};
 
     using lit_case_folding = typename Literal::lit_case_folding;
+
+    template <typename Encoding>
+    static constexpr auto lit_first_char() -> typename Encoding::char_type
+    {
+        return Literal::template lit_first_char<Encoding>();
+    }
 
     template <typename Trie>
     static LEXY_CONSTEVAL std::size_t lit_insert(Trie& trie, std::size_t pos,
@@ -20332,6 +20916,12 @@ struct _control : char_class_base<_control>
     {
         return lexy::code_point(cp).is_control();
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_control::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto control = _control{};
 
@@ -20353,6 +20943,12 @@ struct _blank : char_class_base<_blank>
         // tab already handled as part of ASCII
         return lexy::code_point(cp).general_category() == lexy::code_point::space_separator;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_blank::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto blank = _blank{};
 
@@ -20373,6 +20969,12 @@ struct _newline : char_class_base<_newline>
         // NEL, PARAGRAPH SEPARATOR, LINE SEPARATOR
         return cp == 0x85 || cp == 0x2029 || cp == 0x2028;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_newline::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto newline = _newline{};
 
@@ -20389,6 +20991,12 @@ struct _other_space : char_class_base<_other_space>
     }
 
     // The same as in ASCII, so no match function needed.
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_other_space::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto other_space = _other_space{};
 
@@ -20407,6 +21015,12 @@ struct _space : char_class_base<_space>
     static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(whitespace)>(cp);
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_space::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto space = _space{};
@@ -20428,6 +21042,12 @@ struct _lower : char_class_base<_lower>
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(lowercase)>(cp);
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_lower::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto lower = _lower{};
 
@@ -20447,6 +21067,12 @@ struct _upper : char_class_base<_upper>
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(uppercase)>(cp);
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_upper::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto upper = _upper{};
 
@@ -20465,6 +21091,12 @@ struct _alpha : char_class_base<_alpha>
     static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic)>(cp);
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_alpha::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto alpha = _alpha{};
@@ -20486,6 +21118,12 @@ struct _digit : char_class_base<_digit>
     {
         return lexy::code_point(cp).general_category() == lexy::code_point::decimal_number;
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_digit::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto digit = _digit{};
 
@@ -20505,6 +21143,12 @@ struct _alnum : char_class_base<_alnum>
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic)>(cp)
                || lexy::code_point(cp).general_category() == lexy::code_point::decimal_number;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_alnum::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto alnum       = _alnum{};
@@ -20532,6 +21176,12 @@ struct _word : char_class_base<_word>
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(alphabetic),
                                                         LEXY_UNICODE_PROPERTY(join_control)>(cp);
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_word::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto word = _word{};
 
@@ -20557,6 +21207,12 @@ struct _graph : char_class_base<_graph>
                && cp.general_category() != lexy::code_point::unassigned
                && !_space::char_class_match_cp(cp.value());
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_graph::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto graph = _graph{};
 
@@ -20578,6 +21234,12 @@ struct _print : char_class_base<_print>
         return !_control::char_class_match_cp(cp)
                && (_blank::char_class_match_cp(cp) || _graph::char_class_match_cp(cp));
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_print::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto print = _print{};
 
@@ -20596,6 +21258,12 @@ struct _char : char_class_base<_char>
     static LEXY_UNICODE_CONSTEXPR bool char_class_match_cp(char32_t cp)
     {
         return lexy::code_point(cp).general_category() != lexy::code_point::unassigned;
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_char::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto character = _char{};
@@ -20619,6 +21287,12 @@ struct _xid_start : char_class_base<_xid_start>
     {
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_start)>(cp);
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_alpha::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto xid_start = _xid_start{};
 
@@ -20638,6 +21312,12 @@ struct _xid_start_underscore : char_class_base<_xid_start_underscore>
     {
         // underscore handled as part of ASCII.
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_start)>(cp);
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_alphau::template char_class_match_swar<Encoding>(c);
     }
 };
 inline constexpr auto xid_start_underscore = _xid_start_underscore{};
@@ -20659,6 +21339,12 @@ struct _xid_continue : char_class_base<_xid_continue>
         // underscore handled as part of ASCII.
         return lexy::_detail::code_point_has_properties<LEXY_UNICODE_PROPERTY(xid_continue)>(cp);
     }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_word::template char_class_match_swar<Encoding>(c);
+    }
 };
 inline constexpr auto xid_continue = _xid_continue{};
 } // namespace lexyd::unicode
@@ -20674,8 +21360,32 @@ inline constexpr auto xid_continue = _xid_continue{};
 
 
 
+
 namespace lexyd
 {
+struct _nl;
+
+template <typename Condition, typename Reader>
+constexpr void _until_swar([[maybe_unused]] Reader& reader)
+{
+    if constexpr (std::is_same_v<Condition, _nl> //
+                  && lexy::_detail::is_swar_reader<Reader>)
+    {
+        // We use SWAR to skip characters until we have one that is <= 0xF or EOF.
+        // Then we need to inspect it in more detail.
+        using char_type = typename Reader::encoding::char_type;
+
+        while (true)
+        {
+            auto cur = reader.peek_swar();
+            if (lexy::_detail::swar_has_char<char_type, Reader::encoding::eof()>(cur)
+                || lexy::_detail::swar_has_char_less<char_type, 0xF>(cur))
+                break;
+            reader.bump_swar();
+        }
+    }
+}
+
 template <typename Condition>
 struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
 {
@@ -20690,6 +21400,8 @@ struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
         {
             while (true)
             {
+                _until_swar<Condition>(reader);
+
                 // Check whether we've reached the end of the input or the condition.
                 // Note that we're checking for EOF before the condition.
                 // This is a potential optimization: as we're accepting EOF anyway, we don't need to
@@ -20725,6 +21437,8 @@ struct _until : token_base<_until<Condition>>
         {
             while (true)
             {
+                _until_swar<Condition>(reader);
+
                 // Try to parse the condition.
                 if (lexy::try_match_token(Condition{}, reader))
                 {
@@ -20734,8 +21448,8 @@ struct _until : token_base<_until<Condition>>
                 }
 
                 // Check whether we've reached the end of the input.
-                // We need to do it after checking for condition, as the condition might just accept
-                // EOF.
+                // We need to do it after checking for condition, as the condition might just
+                // accept EOF.
                 if (reader.peek() == Reader::encoding::eof())
                 {
                     // It did, so we did not succeed.
@@ -20979,11 +21693,12 @@ private:
 
 
 
+
 namespace lexy
 {
 // The reader used by the buffer if it can use a sentinel.
 template <typename Encoding>
-class _br
+class _br : public _detail::swar_reader_base<_br<Encoding>>
 {
 public:
     using encoding = Encoding;
@@ -21098,7 +21813,8 @@ public:
     : _resource(resource), _size(size)
     {
         _data = allocate(size);
-        std::memcpy(_data, data, size * sizeof(char_type));
+        if (size > 0)
+            std::memcpy(_data, data, size * sizeof(char_type));
     }
     explicit buffer(const char_type* begin, const char_type* end,
                     MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
@@ -21145,7 +21861,9 @@ public:
             return;
 
         if constexpr (_has_sentinel)
-            _resource->deallocate(_data, (_size + 1) * sizeof(char_type), alignof(char_type));
+            _resource->deallocate(_data,
+                                  _detail::round_size_for_swar(_size + 1) * sizeof(char_type),
+                                  alignof(char_type));
         else
             _resource->deallocate(_data, _size * sizeof(char_type), alignof(char_type));
     }
@@ -21205,13 +21923,21 @@ private:
     char_type* allocate(std::size_t size) const
     {
         if constexpr (_has_sentinel)
-            ++size;
+        {
+            auto mem_size = _detail::round_size_for_swar(size + 1);
+            auto memory   = static_cast<char_type*>(
+                _resource->allocate(mem_size * sizeof(char_type), alignof(char_type)));
 
-        auto memory = static_cast<char_type*>(
-            _resource->allocate(size * sizeof(char_type), alignof(char_type)));
-        if constexpr (_has_sentinel)
-            memory[size - 1] = encoding::eof();
-        return memory;
+            for (auto ptr = memory + size; ptr != memory + mem_size; ++ptr)
+                *ptr = encoding::eof();
+
+            return memory;
+        }
+        else
+        {
+            return static_cast<char_type*>(
+                _resource->allocate(size * sizeof(char_type), alignof(char_type)));
+        }
     }
 
     LEXY_EMPTY_MEMBER _detail::memory_resource_ptr<MemoryResource> _resource;
@@ -21374,6 +22100,46 @@ struct _make_buffer<utf32_encoding, encoding_endianness::bom>
 /// Creates a buffer with the specified encoding/endianness from raw memory.
 template <typename Encoding, encoding_endianness Endianness>
 constexpr auto make_buffer_from_raw = _make_buffer<Encoding, Endianness>{};
+
+//=== make_buffer_from_input ===//
+template <typename Input>
+using _detect_input_data = decltype(LEXY_DECLVAL(Input&).data());
+
+template <typename Input, typename MemoryResource = void>
+constexpr auto make_buffer_from_input(const Input&    input,
+                                      MemoryResource* resource
+                                      = _detail::get_memory_resource<MemoryResource>())
+    -> buffer<typename input_reader<Input>::encoding, MemoryResource>
+{
+    using type = buffer<typename input_reader<Input>::encoding, MemoryResource>;
+    if constexpr (_detail::is_detected<_detect_input_data, Input>)
+    {
+        return type(input.data(), input.size(), resource);
+    }
+    else
+    {
+        auto reader = input.reader();
+        auto begin  = reader.position();
+        while (reader.peek() != input_reader<Input>::encoding::eof())
+            reader.bump();
+        auto end = reader.position();
+
+        if constexpr (std::is_pointer_v<decltype(begin)>)
+        {
+            return type(begin, end, resource);
+        }
+        else
+        {
+            auto                   size = _detail::range_size(begin, end);
+            typename type::builder builder(size, resource);
+            auto                   dest = builder.data();
+            for (auto cur = begin; cur != end; ++cur)
+                *dest++ = *cur; // NOLINT: clang-analyzer thinks this might access zero memory for
+                                // some reason?!
+            return LEXY_MOV(builder).finish();
+        }
+    }
+}
 
 //=== convenience typedefs ===//
 template <typename Encoding = default_encoding, typename MemoryResource = void>
