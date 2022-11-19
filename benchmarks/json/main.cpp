@@ -103,28 +103,35 @@ Benchmarking is done by https://nanobench.ankerl.com/[nanobench] on an AMD FX-63
     )";
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     std::ofstream            out("benchmark_json.adoc");
     ankerl::nanobench::Bench b;
+
+    auto perf = argc == 2 && argv[1] == std::string_view("perf");
 
     auto bench_data = [&](const char* file) {
         auto data = get_data(file);
 
         b.title(file).relative(true);
         b.unit("byte").batch(data.size());
-        b.minEpochIterations(10);
+        b.minEpochIterations(perf ? 100 : 10);
 
-        b.run("baseline", [&] { return json_baseline(data); });
-        b.run("lexy", [&] { return json_lexy(data); });
-        b.run("pegtl", [&] { return json_pegtl(data); });
-        b.run("nlohmann/json", [&] { return json_nlohmann(data); });
-        b.run("rapidjson", [&] { return json_rapid(data); });
+        if (perf)
+            b.run("lexy", [&] { return json_lexy(data); });
+        else
+        {
+            b.run("baseline", [&] { return json_baseline(data); });
+            b.run("lexy", [&] { return json_lexy(data); });
+            b.run("pegtl", [&] { return json_pegtl(data); });
+            b.run("nlohmann/json", [&] { return json_nlohmann(data); });
+            b.run("rapidjson", [&] { return json_rapid(data); });
 #ifdef LEXY_HAS_BOOST_JSON
-        b.run("Boost.JSON", [&] { return json_boost(data); });
+            b.run("Boost.JSON", [&] { return json_boost(data); });
 #endif
 
-        b.render(output_template(), out);
+            b.render(output_template(), out);
+        }
     };
 
     out << output_prefix();
