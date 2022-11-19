@@ -328,7 +328,7 @@ struct json
 
     // Whitespace is a sequence of space, tab, carriage return, or newline.
     // Add your comment syntax here.
-    static constexpr auto whitespace = dsl::ascii::space / dsl::ascii::newline;
+    static constexpr auto whitespace = dsl::ascii::blank / dsl::ascii::newline;
 
     static constexpr auto rule  = dsl::p<json_value> + dsl::eof;
     static constexpr auto value = lexy::forward<ast::json_value>;
