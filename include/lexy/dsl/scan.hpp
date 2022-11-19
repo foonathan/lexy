@@ -9,7 +9,6 @@
 #include <lexy/callback/forward.hpp>
 #include <lexy/callback/object.hpp>
 #include <lexy/dsl/base.hpp>
-#include <lexy/dsl/production.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -274,55 +273,17 @@ public:
             _state = _state_failed;
     }
 
-    template <typename Production, typename Rule = lexy::production_rule<Production>>
-    constexpr auto parse(Production production = {})
+    template <typename Production, typename = lexy::production_rule<Production>>
+    constexpr auto parse(Production = {})
     {
-        // Directly create a child context from the production context.
-        auto& root_context = static_cast<Derived&>(*this).context();
-        auto  context      = _detail::spc_child(root_context, root_context.sub_context(production));
-        if (_state == _state_failed)
-            return scan_result(LEXY_MOV(context.value));
+        using context_t = LEXY_DECAY_DECLTYPE(static_cast<Derived&>(*this).context());
+        using value_type =
+            typename lexy::production_value_callback<Production,
+                                                     typename context_t::state_type>::return_type;
 
-        // We manually parse the rule of the production, so need to raise events.
-        context.on(lexy::parse_events::production_start{}, _reader.position());
-
-        if constexpr (lexy::_production_defines_whitespace<Production>)
-        {
-            // Skip initial whitespace of the production.
-            using whitespace_parser
-                = lexy::whitespace_parser<decltype(context), lexy::pattern_parser<>>;
-            if (!whitespace_parser::parse(context, _reader))
-            {
-                context.on(lexy::parse_events::production_cancel{}, _reader.position());
-                _state = _state_failed;
-                return scan_result(LEXY_MOV(context.value));
-            }
-        }
-
-        using parser = lexy::parser_for<Rule, lexy::_detail::final_parser>;
-        auto success = parser::parse(context, _reader);
-        if (!success)
-        {
-            context.on(lexy::parse_events::production_cancel{}, _reader.position());
-            _state = _state_failed;
-            return scan_result(LEXY_MOV(context.value));
-        }
-
-        context.on(lexy::parse_events::production_finish{}, _reader.position());
-
-        if constexpr (lexy::is_token_production<Production>)
-        {
-            // Skip trailing whitespace of the parent.
-            using whitespace_parser = lexy::whitespace_parser<LEXY_DECAY_DECLTYPE(root_context),
-                                                              lexy::pattern_parser<>>;
-            if (!whitespace_parser::parse(root_context, _reader))
-            {
-                _state = _state_failed;
-                return scan_result(LEXY_MOV(context.value));
-            }
-        }
-
-        return scan_result(LEXY_MOV(context.value));
+        scan_result<value_type> result;
+        parse(result, lexyd::_prd<Production>{});
+        return result;
     }
 
     template <typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>

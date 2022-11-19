@@ -99,6 +99,9 @@ template <typename Handler, typename State, typename Production,
           typename WhitespaceProduction = _whitespace_production_of<Production>>
 struct _pc
 {
+    using handler_type = Handler;
+    using state_type   = State;
+
     using production            = Production;
     using whitespace_production = WhitespaceProduction;
     using value_type            = _production_value_type<Handler, State, Production>;
