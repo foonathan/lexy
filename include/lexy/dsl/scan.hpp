@@ -143,6 +143,9 @@ struct spc_child
         std::remove_pointer_t<
             decltype(LEXY_DECLVAL(decltype(Context::control_block))->parse_state)>>;
 
+    using handler_type = typename RootContext::handler_type;
+    using state_type   = typename RootContext::state_type;
+
     using production            = typename Context::production;
     using whitespace_production = typename Context::whitespace_production;
     using value_type            = typename _value_callback::return_type;
@@ -183,6 +186,9 @@ struct spc_child
 template <typename T, typename Context>
 struct spc
 {
+    using handler_type = typename Context::handler_type;
+    using state_type   = typename Context::state_type;
+
     using production            = typename Context::production;
     using whitespace_production = typename Context::whitespace_production;
     using value_type            = T;

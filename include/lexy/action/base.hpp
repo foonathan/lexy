@@ -82,6 +82,23 @@ namespace _detail
           vars(nullptr),                                        //
           cur_depth(0), max_depth(static_cast<int>(max_depth)), enable_whitespace_skipping(true)
         {}
+
+        template <typename OtherHandler>
+        constexpr parse_context_control_block(Handler&& handler,
+                                              parse_context_control_block<OtherHandler, State>* cb)
+        : parse_handler(LEXY_MOV(handler)), parse_state(cb->parse_state), //
+          vars(cb->vars), cur_depth(cb->cur_depth), max_depth(cb->max_depth),
+          enable_whitespace_skipping(cb->enable_whitespace_skipping)
+        {}
+
+        template <typename OtherHandler>
+        constexpr void copy_vars_from(parse_context_control_block<OtherHandler, State>* cb)
+        {
+            vars                       = cb->vars;
+            cur_depth                  = cb->cur_depth;
+            max_depth                  = cb->max_depth;
+            enable_whitespace_skipping = cb->enable_whitespace_skipping;
+        }
     };
 } // namespace _detail
 

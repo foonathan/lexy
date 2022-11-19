@@ -4,6 +4,7 @@
 #include <lexy/dsl/repeat.hpp>
 
 #include "verify.hpp"
+#include <lexy/callback/forward.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
 #include <lexy/dsl/position.hpp>
