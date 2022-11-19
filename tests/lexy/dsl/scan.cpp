@@ -56,23 +56,6 @@ struct simple_scan : lexy::scan_production<int>, test_production
     }
 };
 
-struct no_value_scan : lexy::scan_production<void>, test_production
-{
-    struct literal
-    {
-        static constexpr auto name = "literal";
-        static constexpr auto rule = LEXY_LIT("abc");
-        // note: no value
-    };
-
-    template <typename Reader, typename Context>
-    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>& scanner)
-    {
-        scanner.parse(dsl::p<literal>);
-        return true;
-    }
-};
-
 struct state_scan : lexy::scan_production<const char*>, test_production
 {
     // Overload is required as we also call lexy::match without a state.
@@ -211,19 +194,6 @@ TEST_CASE("dsl::scan")
                      .token("digits", "42")
                      .finish()
                      .eof());
-    }
-    SUBCASE("void")
-    {
-        constexpr auto callback = token_callback;
-
-        auto empty = LEXY_VERIFY_P(no_value_scan, "");
-        CHECK(empty.status == test_result::recovered_error);
-        CHECK(empty.trace
-              == test_trace().production("literal").expected_literal(0, "abc", 0).cancel());
-
-        auto abc = LEXY_VERIFY_P(no_value_scan, "abc");
-        CHECK(abc.status == test_result::success);
-        CHECK(abc.trace == test_trace().production("literal").literal("abc"));
     }
     SUBCASE("with state")
     {

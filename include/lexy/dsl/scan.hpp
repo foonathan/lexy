@@ -9,6 +9,7 @@
 #include <lexy/callback/forward.hpp>
 #include <lexy/callback/object.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/production.hpp>
 #include <lexy/error.hpp>
 #include <lexy/lexeme.hpp>
 
@@ -133,20 +134,19 @@ scan_result(_detail::lazy_init<T>&&) -> scan_result<T>;
 //=== scanner implementation ===//
 namespace lexy::_detail
 {
-template <typename Context>
-using _value_callback_for = lexy::production_value_callback<
-    typename Context::production,
-    std::remove_pointer_t<decltype(LEXY_DECLVAL(decltype(Context::control_block))->parse_state)>>;
-
 // The context used for a child production during scanning.
 // It forwards all events but overrides the value callback.
-template <typename RootContext, typename Context,
-          typename ValueCallback = _value_callback_for<Context>>
+template <typename RootContext, typename Context>
 struct spc_child
 {
+    using _value_callback = lexy::production_value_callback<
+        typename Context::production,
+        std::remove_pointer_t<
+            decltype(LEXY_DECLVAL(decltype(Context::control_block))->parse_state)>>;
+
     using production            = typename Context::production;
     using whitespace_production = typename Context::whitespace_production;
-    using value_type            = typename ValueCallback::return_type;
+    using value_type            = typename _value_callback::return_type;
 
     RootContext*                     root_context;
     decltype(Context::handler)       handler;
@@ -164,16 +164,12 @@ struct spc_child
     constexpr auto sub_context(ChildProduction child)
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
-        if constexpr (std::is_same_v<ValueCallback, void_value_callback>)
-            return spc_child<RootContext, sub_context_t, void_value_callback>(*root_context,
-                                                                              control_block);
-        else
-            return spc_child<RootContext, sub_context_t>(*root_context, control_block);
+        return spc_child<RootContext, sub_context_t>(*root_context, control_block);
     }
 
     constexpr auto value_callback()
     {
-        return ValueCallback(control_block->parse_state);
+        return _value_callback(control_block->parse_state);
     }
 
     template <typename Event, typename... Args>
@@ -206,11 +202,7 @@ struct spc
     constexpr auto sub_context(ChildProduction child)
     {
         using sub_context_t = decltype(LEXY_DECLVAL(Context).sub_context(child));
-        if constexpr (std::is_void_v<T>)
-            return spc_child<Context, sub_context_t, void_value_callback>(*root_context,
-                                                                          control_block);
-        else
-            return spc_child<Context, sub_context_t>(*root_context, control_block);
+        return spc_child<Context, sub_context_t>(*root_context, control_block);
     }
 
     constexpr auto value_callback()
@@ -599,11 +591,9 @@ struct _scan : rule_base
             lexy::rule_scanner scanner(context, reader);
             return _parse(scanner, context, reader, LEXY_FWD(args)...);
         }
-        template <typename RootContext, typename Context, typename ValueCallback, typename Reader,
-                  typename... Args>
-        LEXY_PARSER_FUNC static bool parse(
-            lexy::_detail::spc_child<RootContext, Context, ValueCallback>& context, Reader& reader,
-            Args&&... args)
+        template <typename RootContext, typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(lexy::_detail::spc_child<RootContext, Context>& context,
+                                           Reader& reader, Args&&... args)
         {
             lexy::rule_scanner scanner(*context.root_context, reader);
             return _parse(scanner, context, reader, LEXY_FWD(args)...);
