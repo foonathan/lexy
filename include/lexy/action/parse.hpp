@@ -96,19 +96,21 @@ private:
 
 namespace lexy
 {
-template <typename Input, typename ErrorCallback>
+template <typename Reader, typename ErrorCallback>
 class parse_handler
 {
-    using iterator = typename lexy::input_reader<Input>::iterator;
+    using iterator = typename Reader::iterator;
 
 public:
-    constexpr explicit parse_handler(const Input& input, const ErrorCallback& callback)
+    template <typename Input>
+    constexpr explicit parse_handler(const _detail::any_holder<const Input*>& input,
+                                     const ErrorCallback&                     callback)
     : _validate(input, callback)
     {}
 
-    using event_handler = typename validate_handler<Input, ErrorCallback>::event_handler;
+    using event_handler = typename validate_handler<Reader, ErrorCallback>::event_handler;
 
-    constexpr operator validate_handler<Input, ErrorCallback>&()
+    constexpr operator validate_handler<Reader, ErrorCallback>&()
     {
         return _validate;
     }
@@ -137,7 +139,7 @@ public:
     }
 
 private:
-    validate_handler<Input, ErrorCallback> _validate;
+    validate_handler<Reader, ErrorCallback> _validate;
 };
 
 template <typename State, typename Input, typename ErrorCallback>
@@ -146,7 +148,7 @@ struct parse_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = parse_handler<Input, ErrorCallback>;
+    using handler = parse_handler<lexy::input_reader<Input>, ErrorCallback>;
     using state   = State;
     using input   = Input;
 
@@ -159,8 +161,9 @@ struct parse_action
     template <typename Production>
     constexpr auto operator()(Production, const Input& input) const
     {
-        auto reader = input.reader();
-        return lexy::do_action<Production>(handler(input, *_callback), _state, reader);
+        _detail::any_holder input_holder(&input);
+        auto                reader = input.reader();
+        return lexy::do_action<Production>(handler(input_holder, *_callback), _state, reader);
     }
 };
 

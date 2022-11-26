@@ -4,6 +4,7 @@
 #ifndef LEXY_ACTION_VALIDATE_HPP_INCLUDED
 #define LEXY_ACTION_VALIDATE_HPP_INCLUDED
 
+#include <lexy/_detail/any_ref.hpp>
 #include <lexy/_detail/lazy_init.hpp>
 #include <lexy/action/base.hpp>
 #include <lexy/callback/base.hpp>
@@ -118,17 +119,63 @@ private:
 
 namespace lexy
 {
-template <typename Input, typename ErrorCallback>
+template <typename Reader, typename Sink>
+struct _validate_callbacks
+{
+    Sink              sink;
+    _detail::any_cref input;
+
+    void (*generic)(Sink&, production_info info, _detail::any_cref input,
+                    typename Reader::iterator begin, const error<Reader, void>& error);
+    void (*literal)(Sink&, production_info info, _detail::any_cref input,
+                    typename Reader::iterator begin, const error<Reader, expected_literal>& error);
+    void (*keyword)(Sink&, production_info info, _detail::any_cref input,
+                    typename Reader::iterator begin, const error<Reader, expected_keyword>& error);
+    void (*char_class)(Sink&, production_info info, _detail::any_cref input,
+                       typename Reader::iterator                 begin,
+                       const error<Reader, expected_char_class>& error);
+
+    template <typename Input, typename ErrorCallback>
+    constexpr _validate_callbacks(const _detail::any_holder<const Input*>& input,
+                                  const ErrorCallback&                     callback)
+    : sink(_get_error_sink(callback)), input(&input),
+      generic([](Sink& sink, production_info info, _detail::any_cref input,
+                 typename Reader::iterator begin, const error<Reader, void>& error) {
+          lexy::error_context err_ctx(info, *input->template get<const Input*>(), begin);
+          sink(err_ctx, LEXY_FWD(error));
+      }),
+      literal([](Sink& sink, production_info info, _detail::any_cref input,
+                 typename Reader::iterator begin, const error<Reader, expected_literal>& error) {
+          lexy::error_context err_ctx(info, *input->template get<const Input*>(), begin);
+          sink(err_ctx, LEXY_FWD(error));
+      }),
+      keyword([](Sink& sink, production_info info, _detail::any_cref input,
+                 typename Reader::iterator begin, const error<Reader, expected_keyword>& error) {
+          lexy::error_context err_ctx(info, *input->template get<const Input*>(), begin);
+          sink(err_ctx, LEXY_FWD(error));
+      }),
+      char_class([](Sink& sink, production_info info, _detail::any_cref input,
+                    typename Reader::iterator                 begin,
+                    const error<Reader, expected_char_class>& error) {
+          lexy::error_context err_ctx(info, *input->template get<const Input*>(), begin);
+          sink(err_ctx, LEXY_FWD(error));
+      })
+    {}
+};
+
+template <typename Reader, typename ErrorCallback>
 class validate_handler
 {
 public:
-    constexpr explicit validate_handler(const Input& input, const ErrorCallback& callback)
-    : _sink(_get_error_sink(callback)), _input(&input)
+    template <typename Input>
+    constexpr explicit validate_handler(const _detail::any_holder<const Input*>& input,
+                                        const ErrorCallback&                     callback)
+    : _cb(input, callback)
     {}
 
     class event_handler
     {
-        using iterator = typename lexy::input_reader<Input>::iterator;
+        using iterator = typename Reader::iterator;
 
     public:
         constexpr event_handler(production_info info) : _begin(), _info(info) {}
@@ -138,36 +185,31 @@ public:
             _begin = pos;
         }
 
-        template <typename Reader, typename Tag>
+        template <typename Tag>
         constexpr void on(validate_handler&         handler, parse_events::error,
                           const error<Reader, Tag>& error)
         {
-            on(handler, parse_events::error{},
-               static_cast<const lexy::error<Reader, void>&>(error));
+            handler._cb.generic(handler._cb.sink, _info, handler._cb.input, _begin, error);
         }
-        template <typename Reader>
         constexpr void on(validate_handler&          handler, parse_events::error,
                           const error<Reader, void>& error)
         {
-            _report_error(handler, error);
+            handler._cb.generic(handler._cb.sink, _info, handler._cb.input, _begin, error);
         }
-        template <typename Reader>
         constexpr void on(validate_handler&                      handler, parse_events::error,
                           const error<Reader, expected_literal>& error)
         {
-            _report_error(handler, error);
+            handler._cb.literal(handler._cb.sink, _info, handler._cb.input, _begin, error);
         }
-        template <typename Reader>
         constexpr void on(validate_handler&                      handler, parse_events::error,
                           const error<Reader, expected_keyword>& error)
         {
-            _report_error(handler, error);
+            handler._cb.keyword(handler._cb.sink, _info, handler._cb.input, _begin, error);
         }
-        template <typename Reader>
         constexpr void on(validate_handler&                         handler, parse_events::error,
                           const error<Reader, expected_char_class>& error)
         {
-            _report_error(handler, error);
+            handler._cb.char_class(handler._cb.sink, _info, handler._cb.input, _begin, error);
         }
 
         template <typename Event, typename... Args>
@@ -187,13 +229,6 @@ public:
         }
 
     private:
-        template <typename Error>
-        constexpr void _report_error(validate_handler& handler, Error&& error)
-        {
-            lexy::error_context err_ctx(_info, *handler._input, _begin);
-            handler._sink(err_ctx, LEXY_FWD(error));
-        }
-
         iterator        _begin;
         production_info _info;
     };
@@ -203,17 +238,11 @@ public:
 
     constexpr auto get_result_void(bool rule_parse_result) &&
     {
-        return validate_result<ErrorCallback>(rule_parse_result, LEXY_MOV(_sink).finish());
-    }
-
-    const Input& input() const
-    {
-        return *_input;
+        return validate_result<ErrorCallback>(rule_parse_result, LEXY_MOV(_cb.sink).finish());
     }
 
 private:
-    _error_sink_t<ErrorCallback> _sink;
-    const Input*                 _input;
+    _validate_callbacks<Reader, _error_sink_t<ErrorCallback>> _cb;
 };
 
 template <typename State, typename Input, typename ErrorCallback>
@@ -222,7 +251,7 @@ struct validate_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = validate_handler<Input, ErrorCallback>;
+    using handler = validate_handler<lexy::input_reader<Input>, ErrorCallback>;
     using state   = State;
     using input   = Input;
 
@@ -235,8 +264,9 @@ struct validate_action
     template <typename Production>
     constexpr auto operator()(Production, const Input& input) const
     {
-        auto reader = input.reader();
-        return lexy::do_action<Production>(handler(input, *_callback), _state, reader);
+        _detail::any_holder input_holder(&input);
+        auto                reader = input.reader();
+        return lexy::do_action<Production>(handler(input_holder, *_callback), _state, reader);
     }
 };
 

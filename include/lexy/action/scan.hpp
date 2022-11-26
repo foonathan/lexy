@@ -33,13 +33,13 @@ class scanner : public _detail::scanner<scanner<ControlProduction, Input, State,
 {
     using _impl       = _detail::scanner<scanner<ControlProduction, Input, State, ErrorCallback>,
                                    lexy::input_reader<Input>>;
-    using _handler    = lexy::validate_handler<Input, ErrorCallback>;
+    using _handler    = lexy::validate_handler<lexy::input_reader<Input>, ErrorCallback>;
     using _production = _scp<ControlProduction>;
 
 public:
     constexpr explicit scanner(const Input& input, State* state, const ErrorCallback& callback)
-    : _impl(input.reader()),
-      _cb(_handler(input, callback), state, max_recursion_depth<_production>()), _context(&_cb)
+    : _impl(input.reader()), _input(&input),
+      _cb(_handler(_input, callback), state, max_recursion_depth<_production>()), _context(&_cb)
     {
         _context.on(parse_events::production_start{}, this->position());
     }
@@ -67,6 +67,7 @@ private:
         return _context;
     }
 
+    _detail::any_holder<const Input*>              _input;
     _detail::parse_context_control_block<_handler> _cb;
     _pc<_handler, State, _production>              _context;
 

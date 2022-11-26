@@ -60,7 +60,6 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == lexy::_detail::string_view("prod_a"));
                 CHECK(*error.position() == ')');
-                CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
 
             auto result
@@ -72,7 +71,6 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == lexy::_detail::string_view("prod_a"));
                 CHECK(*error.position() == 'a');
-                CHECK(error.string() == lexy::_detail::string_view("abc"));
             };
 
             auto result
@@ -84,7 +82,6 @@ TEST_CASE("validate")
             constexpr auto callback = [](auto ctx, auto error) {
                 CHECK(ctx.production() == lexy::_detail::string_view("prod_b"));
                 CHECK(*error.position() == ']');
-                CHECK(error.character() == ')');
             };
 
             auto result
@@ -94,27 +91,28 @@ TEST_CASE("validate")
     }
     SUBCASE("non-void callback")
     {
-        constexpr auto error = [](lexy::string_error_context<>               ctx,
-                                  lexy::string_error<lexy::expected_literal> error) {
-            if (ctx.production() == doctest::String("prod_a"))
-            {
-                if (error.string() != lexy::_detail::string_view("abc"))
-                    throw 0;
-                return -1;
-            }
-            else if (ctx.production() == doctest::String("prod_b"))
-            {
-                if (error.character() == '(')
-                    return -2;
-                else if (error.character() == ')')
-                    return -3;
-                else
-                    return -4;
-            }
+        constexpr auto error = lexy::callback<int>(
+            [](lexy::string_error_context<> ctx, lexy::string_error<lexy::expected_literal> error) {
+                if (ctx.production() == doctest::String("prod_a"))
+                {
+                    if (error.string() != lexy::_detail::string_view("abc"))
+                        throw 0;
+                    return -1;
+                }
+                else if (ctx.production() == doctest::String("prod_b"))
+                {
+                    if (error.character() == '(')
+                        return -2;
+                    else if (error.character() == ')')
+                        return -3;
+                    else
+                        return -4;
+                }
 
-            throw 0;
-        };
-        constexpr auto callback = lexy::collect<std::vector<int>>(lexy::callback<int>(error));
+                throw 0;
+            },
+            [](lexy::string_error_context<>, auto) -> int { throw 0; });
+        constexpr auto callback = lexy::collect<std::vector<int>>(error);
 
         auto success = lexy::validate<prod_b>(lexy::zstring_input("(abc)"), callback);
         CHECK(success);

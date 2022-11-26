@@ -11,17 +11,19 @@
 
 namespace lexy
 {
-template <typename Tree, typename Input, typename ErrorCallback>
+template <typename Tree, typename Reader, typename ErrorCallback>
 class parse_tree_handler
 {
 public:
-    explicit parse_tree_handler(Tree& tree, const Input& input, const ErrorCallback& cb)
-    : _tree(&tree), _depth(0), _validate(input, cb)
+    template <typename Input>
+    explicit parse_tree_handler(Tree& tree, const _detail::any_holder<const Input*>& input,
+                                const ErrorCallback& cb)
+    : _tree(&tree), _depth(0), _validate(input, cb), _reader(input.get()->reader())
     {}
 
     class event_handler
     {
-        using iterator = typename lexy::input_reader<Input>::iterator;
+        using iterator = typename Reader::iterator;
 
     public:
         event_handler(production_info info) : _validate(info) {}
@@ -40,7 +42,7 @@ public:
         {
             if (--handler._depth == 0)
             {
-                auto reader = handler._validate.input().reader();
+                auto reader = handler._reader;
                 reader.set_position(pos);
                 lexy::try_match_token(dsl::any, reader);
                 auto end = reader.position();
@@ -110,8 +112,8 @@ public:
         }
 
     private:
-        typename Tree::builder::marker                                 _marker;
-        typename validate_handler<Input, ErrorCallback>::event_handler _validate;
+        typename Tree::builder::marker                                  _marker;
+        typename validate_handler<Reader, ErrorCallback>::event_handler _validate;
     };
 
     template <typename Production, typename State>
@@ -128,7 +130,8 @@ private:
     Tree*                                            _tree;
     int                                              _depth;
 
-    validate_handler<Input, ErrorCallback> _validate;
+    validate_handler<Reader, ErrorCallback> _validate;
+    Reader                                  _reader;
 };
 
 template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
@@ -141,7 +144,7 @@ struct parse_as_tree_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = parse_tree_handler<tree_type, Input, ErrorCallback>;
+    using handler = parse_tree_handler<tree_type, lexy::input_reader<Input>, ErrorCallback>;
     using state   = State;
     using input   = Input;
 
@@ -157,8 +160,10 @@ struct parse_as_tree_action
     template <typename Production>
     constexpr auto operator()(Production, const Input& input) const
     {
-        auto reader = input.reader();
-        return lexy::do_action<Production>(handler(*_tree, input, *_callback), _state, reader);
+        _detail::any_holder input_holder(&input);
+        auto                reader = input.reader();
+        return lexy::do_action<Production>(handler(*_tree, input_holder, *_callback), _state,
+                                           reader);
     }
 };
 

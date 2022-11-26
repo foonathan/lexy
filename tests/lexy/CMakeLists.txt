@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSL-1.0
 
 set(tests
+        detail/any_ref.cpp
         detail/buffer_builder.cpp
         detail/integer_sequence.cpp
         detail/invoke.cpp
