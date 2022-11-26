@@ -83,6 +83,9 @@ public:
     constexpr _iterator_ end() const noexcept;
 
     constexpr const char* message() const noexcept;
+
+    template <typename Tag>
+    constexpr bool is(Tag) const noexcept;
 };
 ----
 
