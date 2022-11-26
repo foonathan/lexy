@@ -15,10 +15,10 @@ template <typename Tree, typename Reader, typename ErrorCallback>
 class parse_tree_handler
 {
 public:
-    template <typename Input>
+    template <typename Input, typename Sink>
     explicit parse_tree_handler(Tree& tree, const _detail::any_holder<const Input*>& input,
-                                const ErrorCallback& cb)
-    : _tree(&tree), _depth(0), _validate(input, cb), _reader(input.get()->reader())
+                                _detail::any_holder<Sink>& sink)
+    : _tree(&tree), _depth(0), _validate(input, sink), _reader(input.get()->reader())
     {}
 
     class event_handler
@@ -161,9 +161,9 @@ struct parse_as_tree_action
     constexpr auto operator()(Production, const Input& input) const
     {
         _detail::any_holder input_holder(&input);
+        _detail::any_holder sink(_get_error_sink(*_callback));
         auto                reader = input.reader();
-        return lexy::do_action<Production>(handler(*_tree, input_holder, *_callback), _state,
-                                           reader);
+        return lexy::do_action<Production>(handler(*_tree, input_holder, sink), _state, reader);
     }
 };
 

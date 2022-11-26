@@ -102,10 +102,10 @@ class parse_handler
     using iterator = typename Reader::iterator;
 
 public:
-    template <typename Input>
+    template <typename Input, typename Sink>
     constexpr explicit parse_handler(const _detail::any_holder<const Input*>& input,
-                                     const ErrorCallback&                     callback)
-    : _validate(input, callback)
+                                     _detail::any_holder<Sink>&               sink)
+    : _validate(input, sink)
     {}
 
     using event_handler = typename validate_handler<Reader, ErrorCallback>::event_handler;
@@ -162,8 +162,9 @@ struct parse_action
     constexpr auto operator()(Production, const Input& input) const
     {
         _detail::any_holder input_holder(&input);
+        _detail::any_holder sink(_get_error_sink(*_callback));
         auto                reader = input.reader();
-        return lexy::do_action<Production>(handler(input_holder, *_callback), _state, reader);
+        return lexy::do_action<Production>(handler(input_holder, sink), _state, reader);
     }
 };
 

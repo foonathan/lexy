@@ -38,8 +38,8 @@ class scanner : public _detail::scanner<scanner<ControlProduction, Input, State,
 
 public:
     constexpr explicit scanner(const Input& input, State* state, const ErrorCallback& callback)
-    : _impl(input.reader()), _input(&input),
-      _cb(_handler(_input, callback), state, max_recursion_depth<_production>()), _context(&_cb)
+    : _impl(input.reader()), _input(&input), _sink(_get_error_sink(callback)),
+      _cb(_handler(_input, _sink), state, max_recursion_depth<_production>()), _context(&_cb)
     {
         _context.on(parse_events::production_start{}, this->position());
     }
@@ -67,9 +67,10 @@ private:
         return _context;
     }
 
-    _detail::any_holder<const Input*>              _input;
-    _detail::parse_context_control_block<_handler> _cb;
-    _pc<_handler, State, _production>              _context;
+    _detail::any_holder<const Input*>                 _input;
+    _detail::any_holder<_error_sink_t<ErrorCallback>> _sink;
+    _detail::parse_context_control_block<_handler>    _cb;
+    _pc<_handler, State, _production>                 _context;
 
     friend _impl;
 };
