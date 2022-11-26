@@ -33,7 +33,7 @@ class scanner : public _detail::scanner<scanner<ControlProduction, Input, State,
 {
     using _impl       = _detail::scanner<scanner<ControlProduction, Input, State, ErrorCallback>,
                                    lexy::input_reader<Input>>;
-    using _handler    = lexy::validate_handler<lexy::input_reader<Input>, ErrorCallback>;
+    using _handler    = lexy::validate_handler<lexy::input_reader<Input>>;
     using _production = _scp<ControlProduction>;
 
 public:

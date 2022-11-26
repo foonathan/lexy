@@ -112,7 +112,7 @@ private:
         _status_fatal,
     } _status;
 
-    template <typename Input, typename Callback>
+    template <typename Reader>
     friend class validate_handler;
 };
 } // namespace lexy
@@ -163,7 +163,7 @@ struct _validate_callbacks
     {}
 };
 
-template <typename Reader, typename ErrorCallback>
+template <typename Reader>
 class validate_handler
 {
 public:
@@ -236,13 +236,11 @@ public:
     template <typename Production, typename State>
     using value_callback = _detail::void_value_callback;
 
-    template <typename>
+    template <typename Result>
     constexpr auto get_result(bool rule_parse_result) &&
     {
-        return validate_result<
-            ErrorCallback>(rule_parse_result,
-                           LEXY_MOV(_cb.sink->template get<_error_sink_t<ErrorCallback>>())
-                               .finish());
+        using sink_t = _error_sink_t<typename Result::error_callback>;
+        return Result(rule_parse_result, LEXY_MOV(_cb.sink->template get<sink_t>()).finish());
     }
 
 private:
@@ -255,7 +253,7 @@ struct validate_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = validate_handler<lexy::input_reader<Input>, ErrorCallback>;
+    using handler = validate_handler<lexy::input_reader<Input>>;
     using state   = State;
     using input   = Input;
 

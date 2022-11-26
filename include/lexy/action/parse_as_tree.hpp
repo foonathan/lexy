@@ -112,8 +112,8 @@ public:
         }
 
     private:
-        typename Tree::builder::marker                                  _marker;
-        typename validate_handler<Reader, ErrorCallback>::event_handler _validate;
+        typename Tree::builder::marker                   _marker;
+        typename validate_handler<Reader>::event_handler _validate;
     };
 
     template <typename Production, typename State>
@@ -131,8 +131,8 @@ private:
     Tree*                                            _tree;
     int                                              _depth;
 
-    validate_handler<Reader, ErrorCallback> _validate;
-    Reader                                  _reader;
+    validate_handler<Reader> _validate;
+    Reader                   _reader;
 };
 
 template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
