@@ -90,27 +90,27 @@ private:
     lexy::_detail::lazy_init<T> _value;
 
     template <typename Reader>
-    friend class parse_handler;
+    friend class _ph;
 };
 } // namespace lexy
 
 namespace lexy
 {
 template <typename Reader>
-class parse_handler
+class _ph
 {
     using iterator = typename Reader::iterator;
 
 public:
     template <typename Input, typename Sink>
-    constexpr explicit parse_handler(const _detail::any_holder<const Input*>& input,
-                                     _detail::any_holder<Sink>&               sink)
+    constexpr explicit _ph(const _detail::any_holder<const Input*>& input,
+                           _detail::any_holder<Sink>&               sink)
     : _validate(input, sink)
     {}
 
-    using event_handler = typename validate_handler<Reader>::event_handler;
+    using event_handler = typename _vh<Reader>::event_handler;
 
-    constexpr operator validate_handler<Reader>&()
+    constexpr operator _vh<Reader>&()
     {
         return _validate;
     }
@@ -133,7 +133,7 @@ public:
     }
 
 private:
-    validate_handler<Reader> _validate;
+    _vh<Reader> _validate;
 };
 
 template <typename State, typename Input, typename ErrorCallback>
@@ -142,7 +142,7 @@ struct parse_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = parse_handler<lexy::input_reader<Input>>;
+    using handler = _ph<lexy::input_reader<Input>>;
     using state   = State;
     using input   = Input;
 

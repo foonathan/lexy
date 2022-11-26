@@ -29,10 +29,10 @@ struct ws_production
 // A special handler for parsing whitespace.
 // It only forwards errors to the context and ignores all other events.
 template <typename Context>
-class whitespace_handler
+class _wh
 {
 public:
-    constexpr explicit whitespace_handler(Context& context) : _context(&context) {}
+    constexpr explicit _wh(Context& context) : _context(&context) {}
 
     class event_handler
     {
@@ -49,13 +49,13 @@ public:
         }
 
         template <typename Error>
-        constexpr void on(whitespace_handler& handler, parse_events::error ev, Error&& error)
+        constexpr void on(_wh& handler, parse_events::error ev, Error&& error)
         {
             handler._context->on(ev, LEXY_FWD(error));
         }
 
         template <typename Event, typename... Args>
-        constexpr int on(whitespace_handler&, Event, const Args&...)
+        constexpr int on(_wh&, Event, const Args&...)
         {
             return 0; // an operation_start event returns something
         }
@@ -92,8 +92,8 @@ constexpr bool skip_whitespace(Context& context, Reader& reader)
     {
         // Parse the rule using a special handler that only forwards errors.
         using production = ws_production<Rule>;
-        result = lexy::do_action<production, whitespace_result>(whitespace_handler(context),
-                                                                lexy::no_parse_state, reader);
+        result = lexy::do_action<production, whitespace_result>(_wh(context), lexy::no_parse_state,
+                                                                reader);
     }
     auto end = reader.position();
 

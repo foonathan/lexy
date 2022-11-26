@@ -8,10 +8,10 @@
 
 namespace lexy
 {
-class match_handler
+class _mh
 {
 public:
-    constexpr match_handler() : _failed(false) {}
+    constexpr _mh() : _failed(false) {}
 
     class event_handler
     {
@@ -19,13 +19,13 @@ public:
         constexpr event_handler(production_info) {}
 
         template <typename Error>
-        constexpr void on(match_handler& handler, parse_events::error, Error&&)
+        constexpr void on(_mh& handler, parse_events::error, Error&&)
         {
             handler._failed = true;
         }
 
         template <typename Event, typename... Args>
-        constexpr int on(match_handler&, Event, const Args&...)
+        constexpr int on(_mh&, Event, const Args&...)
         {
             return 0; // operation_chain_start needs to return something
         }
@@ -49,7 +49,7 @@ struct match_action
 {
     State* _state = nullptr;
 
-    using handler = match_handler;
+    using handler = _mh;
     using state   = State;
     using input   = Input;
 

@@ -180,7 +180,7 @@ struct _token : token_base<_token<Rule>>
             // We match a dummy production that only consists of the rule.
             auto success = lexy::do_action<
                 _production,
-                lexy::match_action<void, Reader>::template result_type>(lexy::match_handler(),
+                lexy::match_action<void, Reader>::template result_type>(lexy::_mh(),
                                                                         lexy::no_parse_state,
                                                                         reader);
             end = reader.position();

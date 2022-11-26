@@ -303,11 +303,10 @@ private:
 namespace lexy
 {
 template <typename OutputIt, typename Input, typename TokenKind = void>
-class trace_handler
+class _th
 {
 public:
-    explicit trace_handler(OutputIt out, const Input& input,
-                           visualization_options opts = {}) noexcept
+    explicit _th(OutputIt out, const Input& input, visualization_options opts = {}) noexcept
     : _writer(out, opts), _input(&input), _anchor(input)
     {
         LEXY_PRECONDITION(opts.max_tree_depth <= visualization_options::max_tree_depth_limit);
@@ -320,7 +319,7 @@ public:
     public:
         constexpr event_handler(production_info info) : _info(info) {}
 
-        void on(trace_handler& handler, parse_events::production_start, iterator pos)
+        void on(_th& handler, parse_events::production_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_production_start(loc, _info.name);
@@ -329,12 +328,12 @@ public:
             _previous_anchor.emplace(handler._anchor);
             handler._anchor = loc.anchor();
         }
-        void on(trace_handler& handler, parse_events::production_finish, iterator pos)
+        void on(_th& handler, parse_events::production_finish, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
-        void on(trace_handler& handler, parse_events::production_cancel, iterator pos)
+        void on(_th& handler, parse_events::production_cancel, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
@@ -343,61 +342,61 @@ public:
             handler._anchor = *_previous_anchor;
         }
 
-        int on(trace_handler& handler, parse_events::operation_chain_start, iterator pos)
+        int on(_th& handler, parse_events::operation_chain_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_production_start(loc, "operation chain");
             return 0; // need to return something
         }
         template <typename Operation>
-        void on(trace_handler& handler, parse_events::operation_chain_op, Operation, iterator pos)
+        void on(_th& handler, parse_events::operation_chain_op, Operation, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_operation(loc, lexy::production_name<Operation>());
         }
-        void on(trace_handler& handler, parse_events::operation_chain_finish, int, iterator pos)
+        void on(_th& handler, parse_events::operation_chain_finish, int, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
 
         template <typename TK>
-        void on(trace_handler& handler, parse_events::token, TK kind, iterator begin, iterator end)
+        void on(_th& handler, parse_events::token, TK kind, iterator begin, iterator end)
         {
             auto loc = handler.get_location(begin);
             handler._writer.write_token(loc, token_kind<TokenKind>(kind),
                                         lexeme_for<Input>(begin, end));
         }
-        void on(trace_handler& handler, parse_events::backtracked, iterator begin, iterator end)
+        void on(_th& handler, parse_events::backtracked, iterator begin, iterator end)
         {
             auto loc = handler.get_location(begin);
             handler._writer.write_backtrack(loc, lexeme_for<Input>(begin, end));
         }
 
         template <typename Error>
-        void on(trace_handler& handler, parse_events::error, const Error& error)
+        void on(_th& handler, parse_events::error, const Error& error)
         {
             auto loc = handler.get_location(error.position());
             handler._writer.write_error(loc, error);
         }
 
-        void on(trace_handler& handler, parse_events::recovery_start, iterator pos)
+        void on(_th& handler, parse_events::recovery_start, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_recovery_start(loc);
         }
-        void on(trace_handler& handler, parse_events::recovery_finish, iterator pos)
+        void on(_th& handler, parse_events::recovery_finish, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_finish(loc);
         }
-        void on(trace_handler& handler, parse_events::recovery_cancel, iterator pos)
+        void on(_th& handler, parse_events::recovery_cancel, iterator pos)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_cancel(loc);
         }
 
-        void on(trace_handler& handler, parse_events::debug, iterator pos, const char* str)
+        void on(_th& handler, parse_events::debug, iterator pos, const char* str)
         {
             auto loc = handler.get_location(pos);
             handler._writer.write_debug(loc, str);
@@ -438,7 +437,7 @@ struct trace_action
     visualization_options _opts;
     State*                _state = nullptr;
 
-    using handler = trace_handler<OutputIt, Input>;
+    using handler = _th<OutputIt, Input>;
     using state   = State;
     using input   = Input;
 

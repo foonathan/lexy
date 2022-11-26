@@ -11,13 +11,13 @@
 
 namespace lexy
 {
-template <typename Tree, typename Reader, typename ErrorCallback>
-class parse_tree_handler
+template <typename Tree, typename Reader>
+class _pth
 {
 public:
     template <typename Input, typename Sink>
-    explicit parse_tree_handler(Tree& tree, const _detail::any_holder<const Input*>& input,
-                                _detail::any_holder<Sink>& sink)
+    explicit _pth(Tree& tree, const _detail::any_holder<const Input*>& input,
+                  _detail::any_holder<Sink>& sink)
     : _tree(&tree), _depth(0), _validate(input, sink), _reader(input.get()->reader())
     {}
 
@@ -28,7 +28,7 @@ public:
     public:
         event_handler(production_info info) : _validate(info) {}
 
-        void on(parse_tree_handler& handler, parse_events::production_start ev, iterator pos)
+        void on(_pth& handler, parse_events::production_start ev, iterator pos)
         {
             if (handler._depth++ == 0)
                 handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
@@ -38,7 +38,7 @@ public:
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_finish, iterator pos)
+        void on(_pth& handler, parse_events::production_finish, iterator pos)
         {
             if (--handler._depth == 0)
             {
@@ -55,7 +55,7 @@ public:
             }
         }
 
-        void on(parse_tree_handler& handler, parse_events::production_cancel, iterator pos)
+        void on(_pth& handler, parse_events::production_cancel, iterator pos)
         {
             if (--handler._depth == 0)
             {
@@ -71,49 +71,47 @@ public:
             }
         }
 
-        auto on(parse_tree_handler& handler, lexy::parse_events::operation_chain_start, iterator)
+        auto on(_pth& handler, lexy::parse_events::operation_chain_start, iterator)
         {
             // As we don't know the production yet (or whether it is actually an operation),
             // we create a container node to decide later.
             return handler._builder->start_container();
         }
         template <typename Operation>
-        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_op, Operation op,
-                iterator)
+        void on(_pth& handler, lexy::parse_events::operation_chain_op, Operation op, iterator)
         {
             // We set the production of the current container.
             // This will do a "left rotation" on the parse tree, making a new container the parent.
             handler._builder->set_container_production(op);
         }
         template <typename Marker>
-        void on(parse_tree_handler& handler, lexy::parse_events::operation_chain_finish,
-                Marker&&            marker, iterator)
+        void on(_pth& handler, lexy::parse_events::operation_chain_finish, Marker&& marker,
+                iterator)
         {
             handler._builder->finish_container(LEXY_MOV(marker));
         }
 
         template <typename TokenKind>
-        void on(parse_tree_handler& handler, parse_events::token, TokenKind kind, iterator begin,
-                iterator end)
+        void on(_pth& handler, parse_events::token, TokenKind kind, iterator begin, iterator end)
         {
             handler._builder->token(kind, begin, end);
         }
 
         template <typename Error>
-        void on(parse_tree_handler& handler, parse_events::error ev, Error&& error)
+        void on(_pth& handler, parse_events::error ev, Error&& error)
         {
             _validate.on(handler._validate, ev, LEXY_FWD(error));
         }
 
         template <typename Event, typename... Args>
-        auto on(parse_tree_handler& handler, Event ev, Args&&... args)
+        auto on(_pth& handler, Event ev, Args&&... args)
         {
             return _validate.on(handler._validate, ev, LEXY_FWD(args)...);
         }
 
     private:
-        typename Tree::builder::marker                   _marker;
-        typename validate_handler<Reader>::event_handler _validate;
+        typename Tree::builder::marker      _marker;
+        typename _vh<Reader>::event_handler _validate;
     };
 
     template <typename Production, typename State>
@@ -131,8 +129,8 @@ private:
     Tree*                                            _tree;
     int                                              _depth;
 
-    validate_handler<Reader> _validate;
-    Reader                   _reader;
+    _vh<Reader> _validate;
+    Reader      _reader;
 };
 
 template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
@@ -145,7 +143,7 @@ struct parse_as_tree_action
     const ErrorCallback* _callback;
     State*               _state = nullptr;
 
-    using handler = parse_tree_handler<tree_type, lexy::input_reader<Input>, ErrorCallback>;
+    using handler = _pth<tree_type, lexy::input_reader<Input>>;
     using state   = State;
     using input   = Input;
 
