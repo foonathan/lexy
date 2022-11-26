@@ -8,6 +8,7 @@
   it will now consume the input it matched to recover, which is more useful.
 * Remove `Production` parameter from `lexy::error_context`.
   It is replaced by a type-erased `lexy::production_info`.
+* `lexy::validate`, `lexy::parse`, and `lexy::parse_as_tree` now type-erase generic error tags prior to invoking the callback.
 * Add `lexy::dsl::subgrammar` to split a grammar into multiple translation units.
 * Add `lexy::dsl::flags` and `lexy::dsl::flag` to parse enum flags.
 * Add overload of `lexy::dsl::position` that parses a rule.

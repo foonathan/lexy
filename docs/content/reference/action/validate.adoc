@@ -30,7 +30,8 @@ template <_input_ Input, typename Tag>
 void operator()(const lexy::error_context<Input>& context,
                 const lexy::error_for<Input, Tag>& error);
 ----
-It will be invoked for each {{% docref "lexy::error" %}} object with the corresponding {{% docref "lexy::error_context" %}}.
+It will be invoked for each {{% docref "lexy::error" %}} object with the corresponding {{% docref "lexy::error_context" %}};
+errors with generic tag are type-erased prior to invocation.
 The final result of the sink, the error list, is then made available.
 
 If it is a link:{{< relref "callback#callback" >}}[callback], it must return `void` with the same signature.

@@ -138,11 +138,36 @@ public:
             _begin = pos;
         }
 
-        template <typename Error>
-        constexpr void on(validate_handler& handler, parse_events::error, Error&& error)
+        template <typename Reader, typename Tag>
+        constexpr void on(validate_handler&         handler, parse_events::error,
+                          const error<Reader, Tag>& error)
         {
-            lexy::error_context err_ctx(_info, *handler._input, _begin);
-            handler._sink(err_ctx, LEXY_FWD(error));
+            on(handler, parse_events::error{},
+               static_cast<const lexy::error<Reader, void>&>(error));
+        }
+        template <typename Reader>
+        constexpr void on(validate_handler&          handler, parse_events::error,
+                          const error<Reader, void>& error)
+        {
+            _report_error(handler, error);
+        }
+        template <typename Reader>
+        constexpr void on(validate_handler&                      handler, parse_events::error,
+                          const error<Reader, expected_literal>& error)
+        {
+            _report_error(handler, error);
+        }
+        template <typename Reader>
+        constexpr void on(validate_handler&                      handler, parse_events::error,
+                          const error<Reader, expected_keyword>& error)
+        {
+            _report_error(handler, error);
+        }
+        template <typename Reader>
+        constexpr void on(validate_handler&                         handler, parse_events::error,
+                          const error<Reader, expected_char_class>& error)
+        {
+            _report_error(handler, error);
         }
 
         template <typename Event, typename... Args>
@@ -162,6 +187,13 @@ public:
         }
 
     private:
+        template <typename Error>
+        constexpr void _report_error(validate_handler& handler, Error&& error)
+        {
+            lexy::error_context err_ctx(_info, *handler._input, _begin);
+            handler._sink(err_ctx, LEXY_FWD(error));
+        }
+
         iterator        _begin;
         production_info _info;
     };
