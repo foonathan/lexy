@@ -58,7 +58,8 @@ public:
         else
             _context.on(parse_events::production_cancel{}, this->position());
 
-        return LEXY_MOV(_cb.parse_handler).get_result_void(parse_result);
+        return LEXY_MOV(_cb.parse_handler)
+            .template get_result<validate_result<ErrorCallback>>(parse_result);
     }
 
 private:

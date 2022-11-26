@@ -514,7 +514,7 @@ public:
         test_handler* _handler;
     };
 
-    template <typename T>
+    template <typename>
     constexpr auto get_result(bool rule_parse_result, int result) &&
     {
         if (rule_parse_result)
@@ -549,6 +549,9 @@ struct test_action
     using handler = test_handler<Input, Callback>;
     using input   = Input;
     using state   = handler;
+
+    template <typename>
+    using result_type = test_result;
 };
 
 constexpr auto token_callback = [](auto) { return 0; };
@@ -566,7 +569,9 @@ test_result verify(const Input& input, Callback cb)
     auto result = [&] {
         test_handler<Input, Callback> handler(input, cb);
         auto                          reader = input.reader();
-        return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
+        return lexy::do_action<
+            Production, test_action<Input, Callback>::template result_type>(LEXY_MOV(handler),
+                                                                            &handler, reader);
     }();
 
     if constexpr (std::is_pointer_v<decltype(input.reader().position())>)
@@ -575,7 +580,10 @@ test_result verify(const Input& input, Callback cb)
         auto buffer_result = [&] {
             test_handler<decltype(buffer), Callback> handler(buffer, cb);
             auto                                     reader = buffer.reader();
-            return lexy::do_action<Production>(LEXY_MOV(handler), &handler, reader);
+            return lexy::do_action<
+                Production,
+                test_action<decltype(buffer), Callback>::template result_type>(LEXY_MOV(handler),
+                                                                               &handler, reader);
         }();
 
         REQUIRE(result.status == buffer_result.status);

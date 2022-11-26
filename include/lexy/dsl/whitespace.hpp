@@ -64,7 +64,8 @@ public:
     template <typename Production, typename State>
     using value_callback = _detail::void_value_callback;
 
-    constexpr bool get_result_void(bool rule_parse_result) &&
+    template <typename>
+    constexpr bool get_result(bool rule_parse_result) &&
     {
         return rule_parse_result;
     }
@@ -72,6 +73,9 @@ public:
 private:
     Context* _context;
 };
+
+template <typename>
+using whitespace_result = bool;
 
 template <typename Rule, typename Context, typename Reader>
 constexpr bool skip_whitespace(Context& context, Reader& reader)
@@ -88,8 +92,8 @@ constexpr bool skip_whitespace(Context& context, Reader& reader)
     {
         // Parse the rule using a special handler that only forwards errors.
         using production = ws_production<Rule>;
-        result = lexy::do_action<production>(whitespace_handler(context), lexy::no_parse_state,
-                                             reader);
+        result = lexy::do_action<production, whitespace_result>(whitespace_handler(context),
+                                                                lexy::no_parse_state, reader);
     }
     auto end = reader.position();
 

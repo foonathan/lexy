@@ -196,7 +196,8 @@ constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& read
     return rule_result;
 }
 
-template <typename Production, typename Handler, typename State, typename Reader>
+template <typename Production, template <typename> typename Result, typename Handler,
+          typename State, typename Reader>
 constexpr auto do_action(Handler&& handler, State* state, Reader& reader)
 {
     static_assert(!std::is_reference_v<Handler>, "need to move handler in");
@@ -209,12 +210,13 @@ constexpr auto do_action(Handler&& handler, State* state, Reader& reader)
 
     using value_type = typename decltype(context)::value_type;
     if constexpr (std::is_void_v<value_type>)
-        return LEXY_MOV(control_block.parse_handler).get_result_void(rule_result);
+        return LEXY_MOV(control_block.parse_handler).template get_result<Result<void>>(rule_result);
     else if (context.value)
         return LEXY_MOV(control_block.parse_handler)
-            .template get_result<value_type>(rule_result, LEXY_MOV(*context.value));
+            .template get_result<Result<value_type>>(rule_result, LEXY_MOV(*context.value));
     else
-        return LEXY_MOV(control_block.parse_handler).template get_result<value_type>(rule_result);
+        return LEXY_MOV(control_block.parse_handler)
+            .template get_result<Result<value_type>>(rule_result);
 }
 } // namespace lexy
 

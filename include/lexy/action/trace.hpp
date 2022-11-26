@@ -413,7 +413,8 @@ public:
     template <typename Production, typename State>
     using value_callback = _detail::void_value_callback;
 
-    constexpr OutputIt get_result_void(bool) &&
+    template <typename>
+    constexpr OutputIt get_result(bool) &&
     {
         return LEXY_MOV(_writer).finish();
     }
@@ -441,6 +442,9 @@ struct trace_action
     using state   = State;
     using input   = Input;
 
+    template <typename>
+    using result_type = OutputIt;
+
     constexpr explicit trace_action(OutputIt out, visualization_options opts = {})
     : _out(out), _opts(opts)
     {}
@@ -453,7 +457,8 @@ struct trace_action
     constexpr auto operator()(Production, const Input& input) const
     {
         auto reader = input.reader();
-        return lexy::do_action<Production>(handler(_out, input, _opts), _state, reader);
+        return lexy::do_action<Production, result_type>(handler(_out, input, _opts), _state,
+                                                        reader);
     }
 };
 

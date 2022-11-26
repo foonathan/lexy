@@ -236,7 +236,8 @@ public:
     template <typename Production, typename State>
     using value_callback = _detail::void_value_callback;
 
-    constexpr auto get_result_void(bool rule_parse_result) &&
+    template <typename>
+    constexpr auto get_result(bool rule_parse_result) &&
     {
         return validate_result<
             ErrorCallback>(rule_parse_result,
@@ -258,6 +259,9 @@ struct validate_action
     using state   = State;
     using input   = Input;
 
+    template <typename>
+    using result_type = validate_result<ErrorCallback>;
+
     constexpr explicit validate_action(const ErrorCallback& callback) : _callback(&callback) {}
     template <typename U = State>
     constexpr explicit validate_action(U& state, const ErrorCallback& callback)
@@ -270,7 +274,8 @@ struct validate_action
         _detail::any_holder input_holder(&input);
         _detail::any_holder sink(_get_error_sink(*_callback));
         auto                reader = input.reader();
-        return lexy::do_action<Production>(handler(input_holder, sink), _state, reader);
+        return lexy::do_action<Production, result_type>(handler(input_holder, sink), _state,
+                                                        reader);
     }
 };
 

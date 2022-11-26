@@ -118,24 +118,18 @@ public:
     template <typename Production, typename State>
     using value_callback = production_value_callback<Production, State>;
 
-    constexpr auto get_result_void(bool rule_parse_result) &&
-    {
-        return parse_result<void, ErrorCallback>(
-            LEXY_MOV(_validate).get_result_void(rule_parse_result));
-    }
-
-    template <typename T>
+    template <typename Result, typename T>
     constexpr auto get_result(bool rule_parse_result, T&& result) &&
     {
-        return parse_result<T, ErrorCallback>(LEXY_MOV(_validate).get_result_void(
-                                                  rule_parse_result),
-                                              LEXY_MOV(result));
+        using validate_result = lexy::validate_result<typename Result::error_callback>;
+        return Result(LEXY_MOV(_validate).template get_result<validate_result>(rule_parse_result),
+                      LEXY_MOV(result));
     }
-    template <typename T>
+    template <typename Result>
     constexpr auto get_result(bool rule_parse_result) &&
     {
-        return parse_result<T, ErrorCallback>(
-            LEXY_MOV(_validate).get_result_void(rule_parse_result));
+        using validate_result = lexy::validate_result<typename Result::error_callback>;
+        return Result(LEXY_MOV(_validate).template get_result<validate_result>(rule_parse_result));
     }
 
 private:
@@ -152,6 +146,9 @@ struct parse_action
     using state   = State;
     using input   = Input;
 
+    template <typename T>
+    using result_type = parse_result<T, ErrorCallback>;
+
     constexpr explicit parse_action(const ErrorCallback& callback) : _callback(&callback) {}
     template <typename U = State>
     constexpr explicit parse_action(U& state, const ErrorCallback& callback)
@@ -164,7 +161,8 @@ struct parse_action
         _detail::any_holder input_holder(&input);
         _detail::any_holder sink(_get_error_sink(*_callback));
         auto                reader = input.reader();
-        return lexy::do_action<Production>(handler(input_holder, sink), _state, reader);
+        return lexy::do_action<Production, result_type>(handler(input_holder, sink), _state,
+                                                        reader);
     }
 };
 

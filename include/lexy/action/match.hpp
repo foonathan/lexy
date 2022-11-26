@@ -34,7 +34,8 @@ public:
     template <typename Production, typename State>
     using value_callback = _detail::void_value_callback;
 
-    constexpr bool get_result_void(bool rule_parse_result) &&
+    template <typename>
+    constexpr bool get_result(bool rule_parse_result) &&
     {
         return rule_parse_result && !_failed;
     }
@@ -52,6 +53,9 @@ struct match_action
     using state   = State;
     using input   = Input;
 
+    template <typename>
+    using result_type = bool;
+
     constexpr match_action() = default;
     template <typename U = State>
     constexpr explicit match_action(U& state) : _state(&state)
@@ -61,7 +65,7 @@ struct match_action
     constexpr auto operator()(Production, const Input& input) const
     {
         auto reader = input.reader();
-        return lexy::do_action<Production>(handler(), _state, reader);
+        return lexy::do_action<Production, result_type>(handler(), _state, reader);
     }
 };
 
