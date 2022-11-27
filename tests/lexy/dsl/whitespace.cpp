@@ -181,6 +181,10 @@ TEST_CASE("dsl::whitespace")
         CHECK(three.status == test_result::success);
         CHECK(three.trace == test_trace().whitespace("---"));
 
+        auto swar = LEXY_VERIFY(lexy::utf8_char_encoding{}, "-------------");
+        CHECK(swar.status == test_result::success);
+        CHECK(swar.trace == test_trace().whitespace("-------------"));
+
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};
 

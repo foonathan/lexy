@@ -4,6 +4,7 @@
 #ifndef LEXY_DSL_WHITESPACE_HPP_INCLUDED
 #define LEXY_DSL_WHITESPACE_HPP_INCLUDED
 
+#include <lexy/_detail/swar.hpp>
 #include <lexy/action/base.hpp>
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/choice.hpp>
@@ -98,6 +99,15 @@ ws_handler(Context& context) -> ws_handler<typename Context::handler_type>;
 template <typename>
 using ws_result = bool;
 
+template <typename WhitespaceRule>
+constexpr bool space_is_definitely_whitespace()
+{
+    if constexpr (lexy::is_char_class_rule<WhitespaceRule>)
+        return WhitespaceRule::char_class_ascii().contains[int(' ')];
+    else
+        return false;
+}
+
 template <typename WhitespaceRule, typename Handler, typename Reader>
 constexpr auto skip_whitespace(ws_handler<Handler>&& handler, Reader& reader)
 {
@@ -106,8 +116,29 @@ constexpr auto skip_whitespace(ws_handler<Handler>&& handler, Reader& reader)
     if constexpr (lexy::is_token_rule<WhitespaceRule>)
     {
         // Parsing a token repeatedly cannot fail, so we can optimize it.
-        while (lexy::try_match_token(WhitespaceRule{}, reader))
-        {}
+
+        if constexpr (_detail::is_swar_reader<Reader> //
+                      && space_is_definitely_whitespace<WhitespaceRule>())
+        {
+            while (true)
+            {
+                // Skip as many spaces as possible.
+                using char_type = typename Reader::encoding::char_type;
+                while (reader.peek_swar() == _detail::swar_fill(char_type(' ')))
+                    reader.bump_swar();
+
+                // We no longer have a space, skip the entire whitespace rule once.
+                if (!lexy::try_match_token(WhitespaceRule{}, reader))
+                    // If that fails, we definitely have no more whitespace.
+                    break;
+            }
+        }
+        else
+        {
+            // Without SWAR, we just repeatedly skip the whitespace rule.
+            while (lexy::try_match_token(WhitespaceRule{}, reader))
+            {}
+        }
 
         handler.real_on(lexy::parse_events::token{}, lexy::whitespace_token_kind, begin,
                         reader.position());
