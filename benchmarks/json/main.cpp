@@ -8,6 +8,8 @@
 
 bool json_baseline(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_lexy(const lexy::buffer<lexy::utf8_encoding>& input);
+bool json_lexy_no_swar(const lexy::buffer<lexy::utf8_encoding>& input);
+bool json_lexy_no_buffer(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_nlohmann(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_rapid(const lexy::buffer<lexy::utf8_encoding>& input);
@@ -123,6 +125,8 @@ int main(int argc, char* argv[])
         {
             b.run("baseline", [&] { return json_baseline(data); });
             b.run("lexy", [&] { return json_lexy(data); });
+            b.run("lexy (no swar)", [&] { return json_lexy_no_swar(data); });
+            b.run("lexy (no buffer)", [&] { return json_lexy_no_buffer(data); });
             b.run("pegtl", [&] { return json_pegtl(data); });
             b.run("nlohmann/json", [&] { return json_nlohmann(data); });
             b.run("rapidjson", [&] { return json_rapid(data); });
