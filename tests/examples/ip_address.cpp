@@ -36,31 +36,34 @@ auto recovered(const char* str)
 }
 } // namespace
 
+namespace
+{
 namespace ip
 {
-bool operator==(ip_address lhs, ip_address rhs)
-{
-    if (lhs.version != rhs.version)
-        return false;
-
-    for (auto i = 0; i < 8; ++i)
-        if (lhs.pieces[i] != rhs.pieces[i])
+    bool operator==(ip_address lhs, ip_address rhs)
+    {
+        if (lhs.version != rhs.version)
             return false;
 
-    return true;
-}
+        for (auto i = 0; i < 8; ++i)
+            if (lhs.pieces[i] != rhs.pieces[i])
+                return false;
 
-doctest::String toString(ip_address addr)
-{
-    doctest::String result;
-    for (auto piece : addr.pieces)
-    {
-        result += doctest::toString(piece);
-        result += " ";
+        return true;
     }
-    return result;
-}
+
+    doctest::String toString(ip_address addr)
+    {
+        doctest::String result;
+        for (auto piece : addr.pieces)
+        {
+            result += doctest::toString(piece);
+            result += " ";
+        }
+        return result;
+    }
 } // namespace ip
+} // namespace
 
 TEST_CASE("IPv4")
 {
