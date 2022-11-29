@@ -205,7 +205,8 @@ struct _del : rule_base
                                       _del_limit<Limit>, Limit>;
 
     template <typename CloseParser, typename Context, typename Reader, typename Sink>
-    static constexpr bool _loop(CloseParser& close, Context& context, Reader& reader, Sink& sink)
+    LEXY_PARSER_FUNC static bool _loop(CloseParser& close, Context& context, Reader& reader,
+                                       Sink& sink)
     {
         auto                     del_begin = reader.position();
         _del_chars<Char, Reader> cur_chars(reader);
