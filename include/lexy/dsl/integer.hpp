@@ -234,7 +234,7 @@ constexpr bool _ndigits_can_overflow()
     return N >= max_digit_count;
 }
 
-// Parses T in the Base while checking for overflow.
+// Parses T in the Base without checking for overflow.
 template <typename T, typename Base>
 struct _unbounded_integer_parser
 {
@@ -262,7 +262,7 @@ struct _unbounded_integer_parser
     }
 };
 
-// Parses T in the Base without checking for overflow.
+// Parses T in the Base while checking for overflow.
 template <typename T, typename Base, bool AssumeOnlyDigits>
 struct _bounded_integer_parser
 {
@@ -360,7 +360,7 @@ struct _integer_parser_digits<T, _digits<Base>>
 template <typename T, typename Base>
 struct _integer_parser_digits<T, _digits_t<Base>>
 {
-    using type = _integer_parser<T, Base, false>;
+    using type = _integer_parser<T, Base, true>;
 };
 template <typename T, typename Base, typename Sep>
 struct _integer_parser_digits<T, _digits_s<Base, Sep>>
