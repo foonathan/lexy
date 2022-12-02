@@ -48,6 +48,14 @@ TEST_CASE("dsl::unicode::control")
     test("code-point.control", rule, dsl::ascii::control);
 }
 
+TEST_CASE("-dsl::unicode::control")
+{
+    constexpr auto rule = -dsl::unicode::control;
+    CHECK(lexy::is_token_rule<decltype(rule)>);
+
+    test("code-point.non-control", rule, -dsl::ascii::control);
+}
+
 TEST_CASE("dsl::unicode::blank")
 {
     constexpr auto rule = dsl::unicode::blank;

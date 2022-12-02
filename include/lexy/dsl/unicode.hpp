@@ -11,6 +11,30 @@
 
 namespace lexyd::unicode
 {
+struct _nctrl : char_class_base<_nctrl>
+{
+    static LEXY_CONSTEVAL auto char_class_name()
+    {
+        return "code-point.non-control";
+    }
+
+    static LEXY_CONSTEVAL auto char_class_ascii()
+    {
+        return ascii::_print::char_class_ascii();
+    }
+
+    static constexpr bool char_class_match_cp(char32_t cp)
+    {
+        return !lexy::code_point(cp).is_control();
+    }
+
+    template <typename Encoding>
+    static constexpr auto char_class_match_swar(lexy::_detail::swar_int c)
+    {
+        return ascii::_print::template char_class_match_swar<Encoding>(c);
+    }
+};
+
 struct _control : char_class_base<_control>
 {
     static LEXY_CONSTEVAL auto char_class_name()
@@ -35,6 +59,15 @@ struct _control : char_class_base<_control>
     }
 };
 inline constexpr auto control = _control{};
+
+constexpr auto operator-(_control)
+{
+    return _nctrl{};
+}
+constexpr auto operator-(_nctrl)
+{
+    return _control{};
+}
 
 //=== whitespace ===//
 struct _blank : char_class_base<_blank>
