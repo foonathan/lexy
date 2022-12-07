@@ -130,6 +130,19 @@ struct _tokk : token_base<_tokk<Kind, Token>, Token>
 template <typename Tag, typename Token>
 struct _toke : token_base<_toke<Tag, Token>, Token>
 {
+    // If we're overriding the error for a char class rule, we also want to change its error
+    // reporting. Otherwise, rules such as `dsl::delimited()` building on char classes will generate
+    // the "wrong" error.
+    //
+    // If it's not a char class, adding this function doesn't hurt.
+    template <typename Reader, typename Context>
+    static constexpr void char_class_report_error(Context&                  context,
+                                                  typename Reader::iterator position)
+    {
+        auto err = lexy::error<Reader, Tag>(position, position);
+        context.on(_ev::error{}, err);
+    }
+
     template <typename Reader>
     struct tp : lexy::token_parser_for<Token, Reader>
     {

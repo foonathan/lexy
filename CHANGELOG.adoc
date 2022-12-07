@@ -24,6 +24,7 @@
 * Support non-`const` parse state.
 * Fix bug where `lexy::bind` callback does not forward rvalue arguments; they got turned into lvalues instead.
 * Fix bug where callback composition was not allowed if the final callback returns `void`.
+* Fix bug where `dsl::quoted(cc.error<foo>)` did not use `foo` as the error.
 
 == Release 2022.05.1
 
