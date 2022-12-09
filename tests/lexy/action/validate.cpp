@@ -19,10 +19,17 @@ struct prod_a
     static constexpr auto name = "prod_a";
     static constexpr auto rule = list(LEXY_LIT("abc"));
 };
+
+struct prod_trans : lexy::transparent_production
+{
+    static constexpr auto name = "prod_trans";
+    static constexpr auto rule = lexy::dsl::p<prod_a>;
+};
+
 struct prod_b
 {
     static constexpr auto name = "prod_b";
-    static constexpr auto rule = LEXY_LIT("(") + lexy::dsl::p<prod_a> + LEXY_LIT(")");
+    static constexpr auto rule = LEXY_LIT("(") + lexy::dsl::p<prod_trans> + LEXY_LIT(")");
 };
 } // namespace
 

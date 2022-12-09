@@ -247,6 +247,7 @@ Contains additional information about an error.
   This allows correct computation of the {{% docref "lexy::input_location" %}}.
 `production()`::
   The name of the production where the error occurred, i.e. {{% docref "lexy::production_name" %}}.
+  This is the first non-{{% docref "lexy::transparent_production" %}} parent of the current production.
 `position()`::
   The position where it started to parse the production.
 

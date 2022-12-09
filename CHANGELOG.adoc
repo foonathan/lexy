@@ -1,5 +1,9 @@
 = Changelog
 
+== Upcoming
+
+* `lexy::error_context::production` will not be a transparent production.
+
 == Release 2022.12.0
 
 === Potential breaking changes

@@ -92,10 +92,13 @@ namespace lexy
 ----
 
 [.lead]
-Base class to indicate that this production should not show up in the parse tree.
+Base class to indicate that this production should not show up in the parse tree or diagnostics.
 
-In the parse tree, there will be no separate node for `Production`.
+In the {{% docref "lexy::parse_tree" %}}, there will be no separate node for `Production`.
 Instead, all child nodes of `Production` are added to its parent node.
+
+In the {{% docref "lexy::error_context" %}}, transparent production will not be listed.
+Instead, the next non-transparent parent is used.
 
 [#production_name]
 == Function `lexy::production_name`
