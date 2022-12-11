@@ -52,7 +52,7 @@ Values::
 
 {{% godbolt-example try "Recover from missing version numbers" %}}
 
-NOTE: See {{< github-example tutorial >}} for a more complete version number parser.
+NOTE: See {{< github-example config >}} for a more complete version number parser.
 
 {{% godbolt-example lookahead "Create an empty optional if we're not having the key" %}}
 

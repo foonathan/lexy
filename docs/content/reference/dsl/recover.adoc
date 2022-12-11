@@ -67,7 +67,7 @@ If `recovery_rule` raises an error, this corresponds to a `catch` block whose ex
 
 {{% godbolt-example try "Recover from missing version numbers" %}}
 
-NOTE: See {{< github-example tutorial >}} for a more complete version number parser.
+NOTE: See {{< github-example config >}} for a more complete version number parser.
 
 [#find]
 == Rule `lexy::dsl::find`
