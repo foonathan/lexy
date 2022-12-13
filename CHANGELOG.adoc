@@ -3,6 +3,7 @@
 == Upcoming
 
 * `lexy::error_context::production` will not be a transparent production.
+* Fix `lexy::production_info::operator==` when the compiler doesn't merge string literals.
 
 == Release 2022.12.0
 

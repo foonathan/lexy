@@ -127,9 +127,10 @@ namespace lexy
 {
     struct production_info
     {
-        const char* name;           <1>
-        bool        is_token;       <2>
-        bool        is_transparent; <3>
+        const void* id;             <1>
+        const char* name;           <2>
+        bool        is_token;       <3>
+        bool        is_transparent; <4>
 
         production_info(_production_ auto production);
         production_info(_operation_ auto operation);
@@ -139,17 +140,16 @@ namespace lexy
     };
 }
 ----
-<1> {{% docref "lexy::production_name" %}}
-<2> `lexy::is_token_production`
-<3> `lexy::is_transparent_production`
+<1> A unique id identifying the production.
+<2> {{% docref "lexy::production_name" %}}
+<3> `lexy::is_token_production`
+<4> `lexy::is_transparent_production`
 
 [.lead]
 A collection of type-erased information about a production (or operation, see {{% docref "expression" %}}).
 
 For an operation, `is_token` and `is_transparent` will always be `false`.
 It is considered like a production here, because it behaves like one in the {{% docref "lexy::parse_tree" %}}.
-
-CAUTION: lexy assumes that `name` is always the result of `lexy::production_name` and does address comparison instead of string comparison in some situations.
 
 [#production_rule]
 == Trait `lexy::production_rule`

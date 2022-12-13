@@ -197,7 +197,7 @@ struct _string_view_holder<FnPtr, index_sequence<Indices...>>
 };
 
 template <auto FnPtr>
-constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
+inline constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED

@@ -38,8 +38,7 @@ public:
     template <typename Tag>
     constexpr bool is(Tag = {}) const noexcept
     {
-        // Just like production_info::operator==, we can safely compare strings.
-        return _msg == _detail::type_name<Tag>();
+        return _detail::string_view(_msg) == _detail::type_name<Tag>();
     }
 
     constexpr auto begin() const noexcept
