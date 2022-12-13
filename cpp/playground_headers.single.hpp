@@ -776,7 +776,7 @@ struct _string_view_holder<FnPtr, index_sequence<Indices...>>
 };
 
 template <auto FnPtr>
-constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
+inline constexpr const auto* make_cstr = _string_view_holder<FnPtr>::value;
 } // namespace lexy::_detail
 
 #endif // LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED
@@ -852,8 +852,8 @@ template <typename T, int NsCount>
 constexpr string_view _type_name()
 {
     auto name = _full_type_name<T>();
-    LEXY_ASSERT(name.find('<') == string_view::npos || NsCount == 0,
-                "cannot strip namespaces from template instantiations");
+    if (name.find('<') != string_view::npos && NsCount != 0)
+        return name;
 
     for (auto namespace_count = NsCount; namespace_count > 0; --namespace_count)
     {
@@ -878,20 +878,25 @@ constexpr const char* type_name()
         return "unknown-type";
 }
 
-template <typename T>
-constexpr const void* type_id()
+template <typename T, int NsCount>
+inline constexpr const char* _type_id_holder = type_name<T, NsCount>();
+
+// Returns a unique address for each type.
+// For implementation reasons, it also doubles as the pointer to the name.
+template <typename T, int NsCount = 1>
+constexpr const char* const* type_id()
 {
-    // As different types have different type names, the compiler can't merge them,
-    // and we necessarily have different addresses.
-    if constexpr (_detail::is_detected<_detect_name_f, T>)
-        return T::name();
-    else if constexpr (_detail::is_detected<_detect_name_v, T>)
-        return T::name;
+    if constexpr (_detail::is_detected<_detect_name_v, T> //
+                  && !_detail::is_detected<_detect_name_f, T>)
+    {
+        // We can use the address of the static constexpr directly.
+        return &T::name;
+    }
     else
     {
-        static_assert(LEXY_HAS_AUTOMATIC_TYPE_NAME,
-                      "you need to manuall add a ::name() or ::name to your type");
-        return _full_type_name<T>().data();
+        // We instantiate a variable template with a function unique by type.
+        // As the variable is inline, there should be a single address only.
+        return &_type_id_holder<T, NsCount>;
     }
 }
 } // namespace lexy::_detail
@@ -1272,26 +1277,21 @@ using _enable_production_or_operation = std::enable_if_t<is_production<T> || is_
 
 struct production_info
 {
-    const char* name;
-    bool        is_token;
-    bool        is_transparent;
+    const char* const* id;
+    const char*        name;
+    bool               is_token;
+    bool               is_transparent;
 
     template <typename Production, typename = _enable_production_or_operation<Production>>
     constexpr production_info(Production)
-    : name(production_name<Production>()), is_token(is_token_production<Production>),
+    : id(_detail::type_id<Production>()), name(production_name<Production>()),
+      is_token(is_token_production<Production>),
       is_transparent(is_transparent_production<Production>)
     {}
 
     friend constexpr bool operator==(production_info lhs, production_info rhs)
     {
-        // We can safely compare pointers, strings are necessarily interned:
-        // if Production::name exists: same address for all types,
-        // otherwise we use __PRETTY_FUNCTION__ (or equivalent), which is a function-local static.
-        //
-        // This only fails if we have different productions with the same name and the compiler does
-        // string interning. But as the production name corresponds to the qualified C++ name (by
-        // default), this is only possible if the user does something weird.
-        return lhs.name == rhs.name;
+        return lhs.id == rhs.id;
     }
     friend constexpr bool operator!=(production_info lhs, production_info rhs)
     {
@@ -3314,8 +3314,7 @@ public:
     template <typename Tag>
     constexpr bool is(Tag = {}) const noexcept
     {
-        // Just like production_info::operator==, we can safely compare strings.
-        return _msg == _detail::type_name<Tag>();
+        return _detail::string_view(_msg) == _detail::type_name<Tag>();
     }
 
     constexpr auto begin() const noexcept
@@ -5107,13 +5106,13 @@ struct pt_node_production : pt_node<Reader>
 {
     static constexpr std::size_t child_count_bits = sizeof(std::size_t) * CHAR_BIT - 2;
 
-    const char* name;
-    std::size_t child_count : child_count_bits;
-    std::size_t token_production : 1;
-    std::size_t first_child_adjacent : 1;
+    const char* const* id;
+    std::size_t        child_count : child_count_bits;
+    std::size_t        token_production : 1;
+    std::size_t        first_child_adjacent : 1;
 
     explicit pt_node_production(production_info info) noexcept
-    : pt_node<Reader>(pt_node<Reader>::type_production), name(info.name), child_count(0),
+    : pt_node<Reader>(pt_node<Reader>::type_production), id(info.id), child_count(0),
       token_production(info.is_token), first_child_adjacent(true)
     {
         static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
@@ -5705,7 +5704,7 @@ public:
     const char* name() const noexcept
     {
         if (auto prod = _ptr->as_production())
-            return prod->name;
+            return *prod->id;
         else if (auto token = _ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind).name();
         else
@@ -5720,8 +5719,7 @@ public:
         if (lhs.is_token() && rhs.is_token())
             return lhs._ptr->as_token()->kind == rhs._ptr->as_token()->kind;
         else
-            // Just like `production_info::operator==`, we can compare strings.
-            return lhs._ptr->as_production()->name == rhs._ptr->as_production()->name;
+            return lhs._ptr->as_production()->id == rhs._ptr->as_production()->id;
     }
     friend bool operator!=(node_kind lhs, node_kind rhs)
     {
@@ -5750,8 +5748,7 @@ public:
 
     friend bool operator==(node_kind nk, production_info info)
     {
-        // Just like `production_info::operator==`, we can compare strings.
-        return nk.is_production() && nk._ptr->as_production()->name == info.name;
+        return nk.is_production() && nk._ptr->as_production()->id == info.id;
     }
     friend bool operator==(production_info info, node_kind nk)
     {
