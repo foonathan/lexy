@@ -79,8 +79,8 @@ template <typename T, int NsCount>
 constexpr string_view _type_name()
 {
     auto name = _full_type_name<T>();
-    LEXY_ASSERT(name.find('<') == string_view::npos || NsCount == 0,
-                "cannot strip namespaces from template instantiations");
+    if (name.find('<') != string_view::npos && NsCount != 0)
+        return name;
 
     for (auto namespace_count = NsCount; namespace_count > 0; --namespace_count)
     {
