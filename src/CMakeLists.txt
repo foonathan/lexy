@@ -208,3 +208,27 @@ add_library(lexy INTERFACE)
 add_library(foonathan::lexy ALIAS lexy)
 target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::unicode foonathan::lexy::ext)
 
+if(LEXY_ENABLE_INSTALL)
+    set_target_properties(lexy_core PROPERTIES EXPORT_NAME lexy::core)
+    set_target_properties(lexy_dev PROPERTIES EXPORT_NAME lexy::dev)
+    set_target_properties(lexy_file PROPERTIES EXPORT_NAME lexy::file)
+    set_target_properties(lexy_unicode PROPERTIES EXPORT_NAME lexy::unicode)
+    set_target_properties(lexy_ext PROPERTIES EXPORT_NAME lexy::ext)
+
+    include(GNUInstallDirs)
+
+    install(TARGETS lexy lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
+        EXPORT ${PROJECT_NAME}Targets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+    install(EXPORT ${PROJECT_NAME}Targets
+        NAMESPACE foonathan::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+    install(DIRECTORY ${include_dir} ${ext_include_dir}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+        PATTERN "*.hpp")
+endif()
