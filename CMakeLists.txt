@@ -46,6 +46,16 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         include(CMakePackageConfigHelpers)
         include(GNUInstallDirs)
 
+        install(TARGETS lexy lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
+            EXPORT ${PROJECT_NAME}Targets
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+        install(EXPORT ${PROJECT_NAME}Targets
+            NAMESPACE foonathan::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
         configure_package_config_file(
             cmake/lexyConfig.cmake.in
             "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
@@ -60,5 +70,10 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 
         install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+        install(DIRECTORY include/lexy include/lexy_ext
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            FILES_MATCHING
+            PATTERN "*.hpp")
     endif()
 endif()

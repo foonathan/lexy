@@ -149,9 +149,14 @@ if (LEXY_USER_CONFIG_HEADER)
     endif()
 endif()
 
+function(add_alias name target)
+    add_library(foonathan::${name} ALIAS ${target})
+    set_target_properties(${target} PROPERTIES EXPORT_NAME ${name})
+endfunction()
+
 # Core library.
 add_library(lexy_core INTERFACE)
-add_library(foonathan::lexy::core ALIAS lexy_core)
+add_alias(lexy::core lexy_core)
 target_link_libraries(lexy_core INTERFACE _lexy_base)
 target_include_directories(lexy_core SYSTEM INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -160,7 +165,7 @@ target_include_directories(lexy_core SYSTEM INTERFACE
 
 # Core library with warnings; for development only.
 add_library(lexy_dev INTERFACE)
-add_library(foonathan::lexy::dev ALIAS lexy_dev)
+add_alias(lexy::dev lexy_dev)
 target_link_libraries(lexy_dev INTERFACE _lexy_base)
 target_include_directories(lexy_dev INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -189,46 +194,21 @@ endif()
 
 # Link to have FILE I/O.
 add_library(lexy_file STATIC)
-add_library(foonathan::lexy::file ALIAS lexy_file)
+add_alias(lexy::file lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
 target_sources(lexy_file PRIVATE input/file.cpp)
 
 # Link to enable unicode database.
 add_library(lexy_unicode INTERFACE)
-add_library(foonathan::lexy::unicode ALIAS lexy_unicode)
+add_alias(lexy::unicode lexy_unicode)
 target_compile_definitions(lexy_unicode INTERFACE LEXY_HAS_UNICODE_DATABASE=1)
 
 # Link to have extension headers.
 add_library(lexy_ext INTERFACE)
-add_library(foonathan::lexy::ext ALIAS lexy_ext)
+add_alias(lexy::ext lexy_ext)
 target_sources(lexy_ext INTERFACE ${ext_headers_files})
 
 # Umbrella target with all components.
 add_library(lexy INTERFACE)
-add_library(foonathan::lexy ALIAS lexy)
+add_alias(lexy lexy)
 target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::unicode foonathan::lexy::ext)
-
-if(LEXY_ENABLE_INSTALL)
-    set_target_properties(lexy_core PROPERTIES EXPORT_NAME lexy::core)
-    set_target_properties(lexy_dev PROPERTIES EXPORT_NAME lexy::dev)
-    set_target_properties(lexy_file PROPERTIES EXPORT_NAME lexy::file)
-    set_target_properties(lexy_unicode PROPERTIES EXPORT_NAME lexy::unicode)
-    set_target_properties(lexy_ext PROPERTIES EXPORT_NAME lexy::ext)
-
-    include(GNUInstallDirs)
-
-    install(TARGETS lexy lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
-        EXPORT ${PROJECT_NAME}Targets
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-    install(EXPORT ${PROJECT_NAME}Targets
-        NAMESPACE foonathan::
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
-
-    install(DIRECTORY ${include_dir} ${ext_include_dir}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING
-        PATTERN "*.hpp")
-endif()
