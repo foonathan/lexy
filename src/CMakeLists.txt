@@ -154,6 +154,8 @@ function(add_alias name target)
     set_target_properties(${target} PROPERTIES EXPORT_NAME ${name})
 endfunction()
 
+include(GNUInstallDirs)
+
 # Core library.
 add_library(lexy_core INTERFACE)
 add_alias(lexy::core lexy_core)
