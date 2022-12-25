@@ -46,7 +46,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         include(CMakePackageConfigHelpers)
         include(GNUInstallDirs)
 
-        install(TARGETS lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
+        install(TARGETS lexy lexy_core lexy_file lexy_unicode lexy_ext _lexy_base lexy_dev
             EXPORT ${PROJECT_NAME}Targets
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
