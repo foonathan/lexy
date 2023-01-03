@@ -5,6 +5,7 @@
 
 #include "verify.hpp"
 #include <cctype>
+#include <lexy/dsl/identifier.hpp>
 
 namespace
 {
@@ -70,6 +71,16 @@ void test(const char* name, Rule rule, Predicate pred)
         CHECK(utf16.trace == test_trace().expected_char_class(0, name).cancel());
     }
 }
+
+template <typename Rule>
+bool test_swar(Rule, const char* str)
+{
+    constexpr auto rule = lexy::dsl::identifier(Rule()).pattern();
+
+    auto input  = lexy::buffer<lexy::utf8_char_encoding>(str, std::strlen(str));
+    auto reader = input.reader();
+    return lexy::try_match_token(rule, reader) && reader.peek() == lexy::utf8_char_encoding::eof();
+}
 } // namespace
 
 TEST_CASE("dsl::ascii::control")
@@ -78,6 +89,9 @@ TEST_CASE("dsl::ascii::control")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.control", rule, [](int c) { return std::iscntrl(c); });
+
+    CHECK(test_swar(rule, "\1\2\3\4\5\6\7\10\11\12\13\14\15\16\17\20"));
+    CHECK(!test_swar(rule, "\1\2\3\4\5\6\7\10 \12\13\14\15\16\17\20"));
 }
 
 TEST_CASE("dsl::ascii::blank")
@@ -118,6 +132,8 @@ TEST_CASE("dsl::ascii::digit")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.digit", rule, [](int c) { return std::isdigit(c); });
+    CHECK(test_swar(rule, "12345678901234567890"));
+    CHECK(!test_swar(rule, "2134567890a1234567890"));
 }
 
 TEST_CASE("dsl::ascii::lower")
@@ -126,6 +142,8 @@ TEST_CASE("dsl::ascii::lower")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.lower", rule, [](int c) { return std::islower(c); });
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::upper")
@@ -134,6 +152,8 @@ TEST_CASE("dsl::ascii::upper")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.upper", rule, [](int c) { return std::isupper(c); });
+    CHECK(test_swar(rule, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
+    CHECK(!test_swar(rule, "ABCDEFGHIjKLMNOPQRSTUVWXYZ"));
 }
 
 TEST_CASE("dsl::ascii::alpha")
@@ -142,6 +162,9 @@ TEST_CASE("dsl::ascii::alpha")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.alpha", rule, [](int c) { return std::isalpha(c); });
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmno1pqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::alpha_underscore")
@@ -150,6 +173,9 @@ TEST_CASE("dsl::ascii::alpha_underscore")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.alpha-underscore", rule, [](int c) { return (std::isalpha(c) != 0) || c == '_'; });
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmno1pqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::alpha_digit")
@@ -158,6 +184,10 @@ TEST_CASE("dsl::ascii::alpha_digit")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.alpha-digit", rule, [](int c) { return std::isalnum(c); });
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmno1pqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmno-pqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::alnum")
@@ -166,6 +196,10 @@ TEST_CASE("dsl::ascii::alnum")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     CHECK(equivalent_rules(rule, dsl::ascii::alpha_digit));
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmno1pqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmno-pqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::word")
@@ -174,6 +208,10 @@ TEST_CASE("dsl::ascii::word")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.word", rule, [](int c) { return (std::isalnum(c) != 0) || c == '_'; });
+    CHECK(test_swar(rule, "abcdefghijklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmnopqrstuvwxyz"));
+    CHECK(test_swar(rule, "abcdefghiJklmno1pqrstuvwxyz"));
+    CHECK(!test_swar(rule, "abcdefghiJklmno-pqrstuvwxyz"));
 }
 
 TEST_CASE("dsl::ascii::alpha_digit_underscore")
@@ -198,6 +236,9 @@ TEST_CASE("dsl::ascii::graph")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.graph", rule, [](int c) { return std::isgraph(c); });
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrstuvwxyz23456789!@#^%&*(&%"));
+    CHECK(!test_swar(rule, "abcdefGHIJKLMNOpqrstuvw\nxyz23456789!@#^%&*(&%"));
+    CHECK(!test_swar(rule, "abcdefGHIJKLMNOpqrst uvwxyz23456789!@#^%&*(&%"));
 }
 
 TEST_CASE("dsl::ascii::print")
@@ -206,6 +247,9 @@ TEST_CASE("dsl::ascii::print")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII.print", rule, [](int c) { return std::isprint(c); });
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrstuvwxyz23456789!@#^%&*(&%"));
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrst uvwxyz23456789!@#^%&*(&%"));
+    CHECK(!test_swar(rule, "abcdefGHIJKLMNOpqrstuvw\nxyz23456789!@#^%&*(&%"));
 }
 
 TEST_CASE("dsl::ascii::character")
@@ -214,6 +258,9 @@ TEST_CASE("dsl::ascii::character")
     CHECK(lexy::is_token_rule<decltype(rule)>);
 
     test("ASCII", rule, [](int c) { return 0x00 <= c && c <= 0x7F; });
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrstuvwxyz23456789!@#^%&*(&%"));
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrst uvwxyz23456789!@#^%&*(&%"));
+    CHECK(test_swar(rule, "abcdefGHIJKLMNOpqrstuvw\nxyz23456789!@#^%&*(&%"));
 }
 
 TEST_CASE("dsl::ascii::one_of")
