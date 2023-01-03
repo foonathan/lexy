@@ -26,6 +26,7 @@ TEST_CASE("get_input_location()")
             return lexy::get_input_location(input, input.data() + offset);
         };
 
+        verify(lexy::input_location(input), input.data(), 1, input.data(), 1);
         for (auto offset = 0u; offset < 7; ++offset)
         {
             auto loc = get_location(offset);
@@ -73,6 +74,8 @@ TEST_CASE("get_input_location()")
                                                                                     + offset);
         };
 
+        verify(lexy::input_location<decltype(input), lexy::code_point_location_counting>(input),
+               input.data(), 1, input.data(), 1);
         for (auto offset = 0u; offset < 7; ++offset)
         {
             auto loc = get_location(offset);
@@ -125,6 +128,7 @@ TEST_CASE("get_input_location()")
             return lexy::get_input_location(input, input.data() + offset);
         };
 
+        verify(lexy::input_location(input), input.data(), 1, input.data(), 1);
         for (auto offset = 0u; offset < 16; ++offset)
         {
             auto loc = get_location(offset);

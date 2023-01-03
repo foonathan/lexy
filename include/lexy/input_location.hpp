@@ -124,6 +124,10 @@ class input_location
     using iterator = typename lexy::input_reader<Input>::iterator;
 
 public:
+    constexpr explicit input_location(const Input& input)
+    : _line_begin(input.reader().position()), _column_begin(_line_begin), _line_nr(1), _column_nr(1)
+    {}
+
     /// The closest previous anchor.
     constexpr input_location_anchor<Input> anchor() const
     {

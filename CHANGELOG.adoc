@@ -2,6 +2,7 @@
 
 == Upcoming
 
+* Add constructor to `lexy::input_location`.
 * `lexy::error_context::production` will not be a transparent production.
 * Fix `lexy::production_info::operator==` when the compiler doesn't merge string literals.
 * Fix SWAR matching of `dsl::ascii::print` and `dsl::ascii::graph`.
