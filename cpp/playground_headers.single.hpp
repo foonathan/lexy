@@ -1,17 +1,17 @@
 #define LEXY_HAS_UNICODE_DATABASE 1
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 #define LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_BASE_HPP_INCLUDED
 #define LEXY_ACTION_BASE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_CONFIG_HPP_INCLUDED
@@ -187,13 +187,13 @@ using _char8_t = unsigned char;
 
 #endif // LEXY_DETAIL_CONFIG_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 #define LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ASSERT_HPP_INCLUDED
@@ -471,14 +471,14 @@ private:
 
 #endif // LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 #define LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2021 Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_DETECT_HPP_INCLUDED
@@ -513,7 +513,7 @@ using detected_or = typename _detector<Op, void, Args...>::template type_or<Fall
 
 #endif // LEXY_DETAIL_DETECT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_INTEGER_SEQUENCE_HPP_INCLUDED
@@ -577,7 +577,7 @@ using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
 #endif // LEXY_DETAIL_INTEGER_SEQUENCE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED
@@ -903,13 +903,13 @@ constexpr const char* const* type_id()
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_NOOP_HPP_INCLUDED
 #define LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
@@ -917,7 +917,7 @@ constexpr const char* const* type_id()
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
@@ -1090,7 +1090,7 @@ inline constexpr auto noop = _noop{};
 
 #endif // LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BASE_HPP_INCLUDED
@@ -1098,7 +1098,7 @@ inline constexpr auto noop = _noop{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_GRAMMAR_HPP_INCLUDED
@@ -1456,14 +1456,14 @@ private:
 
 #endif // LEXY_GRAMMAR_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_BASE_HPP_INCLUDED
 #define LEXY_INPUT_BASE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ITERATOR_HPP_INCLUDED
@@ -1472,7 +1472,7 @@ private:
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STD_HPP_INCLUDED
@@ -1745,7 +1745,7 @@ struct sentinel_base
 
 #endif // LEXY_DETAIL_ITERATOR_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ENCODING_HPP_INCLUDED
@@ -2687,13 +2687,13 @@ struct void_value_callback
 
 #endif // LEXY_ACTION_BASE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_VALIDATE_HPP_INCLUDED
 #define LEXY_ACTION_VALIDATE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ANY_REF_HPP_INCLUDED
@@ -2764,7 +2764,7 @@ private:
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
@@ -3274,7 +3274,7 @@ constexpr auto collect(Callback&& callback)
 #endif // LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ERROR_HPP_INCLUDED
@@ -3812,13 +3812,13 @@ constexpr auto validate(const Input& input, const State& state, const ErrorCallb
 
 #endif // LEXY_ACTION_VALIDATE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ANY_HPP_INCLUDED
 #define LEXY_DSL_ANY_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_SWAR_HPP_INCLUDED
@@ -4066,13 +4066,13 @@ constexpr std::size_t round_size_for_swar(std::size_t size_in_bytes)
 #endif // LEXY_DETAIL_SWAR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TOKEN_HPP_INCLUDED
 #define LEXY_DSL_TOKEN_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_MATCH_HPP_INCLUDED
@@ -4422,7 +4422,7 @@ inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
 
 #endif // LEXY_DSL_ANY_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_PARSE_TREE_HPP_INCLUDED
@@ -4431,7 +4431,7 @@ inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
@@ -4585,7 +4585,7 @@ constexpr MemoryResource* get_memory_resource()
 #endif // LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_TOKEN_HPP_INCLUDED
@@ -4598,7 +4598,7 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_LEXEME_HPP_INCLUDED
@@ -6299,13 +6299,13 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 
 #endif // LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_TRACE_HPP_INCLUDED
 #define LEXY_ACTION_TRACE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
@@ -6453,19 +6453,19 @@ struct macro_type_string
 #endif // LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_LOCATION_HPP_INCLUDED
 #define LEXY_INPUT_LOCATION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CODE_POINT_HPP_INCLUDED
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CODE_POINT_HPP_INCLUDED
@@ -6858,13 +6858,13 @@ bool code_point_has_properties(char32_t cp); // not implemented
 #endif // LEXY_CODE_POINT_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
 #define LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_CODE_POINT_HPP_INCLUDED
@@ -8037,14 +8037,14 @@ inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind
 
 #endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LITERAL_HPP_INCLUDED
@@ -9194,7 +9194,7 @@ constexpr auto get_input_line_annotation(const Input&                           
 #endif // LEXY_INPUT_LOCATION_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_VISUALIZE_HPP_INCLUDED
@@ -9203,7 +9203,7 @@ constexpr auto get_input_line_annotation(const Input&                           
 #include <cstdio>
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
@@ -10413,14 +10413,14 @@ void trace(std::FILE* file, const Input& input, const State& state, visualizatio
 
 #endif // LEXY_ACTION_TRACE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_HPP_INCLUDED
 #define LEXY_DSL_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ASCII_HPP_INCLUDED
@@ -10817,9 +10817,9 @@ struct _graph : char_class_base<_graph>
         // If we subtract one we turn 0x21-0x01 into column 0 and 0x00 to a value definitely not in
         // column 0, so need to check both.
         constexpr auto mask       = lexy::_detail::swar_fill_compl(char_type(0b11111));
-        constexpr auto unexpected = lexy::_detail::swar_fill(char_type(0b00'00000));
         constexpr auto offset_low = lexy::_detail::swar_fill(char_type(1));
-        return (c & mask) != unexpected && ((c - offset_low) & mask) != unexpected;
+        return !lexy::_detail::swar_has_zero<char_type>(c & mask)
+               && !lexy::_detail::swar_has_zero<char_type>((c - offset_low) & mask);
     }
 };
 inline constexpr auto graph = _graph{};
@@ -10859,9 +10859,8 @@ struct _print : char_class_base<_print>
         }
 
         // Then we must not have a character in column 0.
-        constexpr auto mask       = lexy::_detail::swar_fill_compl(char_type(0b11111));
-        constexpr auto unexpected = lexy::_detail::swar_fill(char_type(0b00'00000));
-        return (c & mask) != unexpected;
+        constexpr auto mask = lexy::_detail::swar_fill_compl(char_type(0b11111));
+        return !lexy::_detail::swar_has_zero<char_type>(c & mask);
     }
 };
 inline constexpr auto print = _print{};
@@ -10935,7 +10934,7 @@ constexpr auto one_of = typename lexy::_detail::to_type_string<_one_of, Str>::ru
 
 #endif // LEXY_DSL_ASCII_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BITS_HPP_INCLUDED
@@ -11087,7 +11086,7 @@ constexpr auto bits(Bits...)
 
 #endif // LEXY_DSL_BITS_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BOM_HPP_INCLUDED
@@ -11134,7 +11133,7 @@ inline constexpr auto bom = _bom<Encoding, Endianness>{};
 
 #endif // LEXY_DSL_BOM_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BRACKETS_HPP_INCLUDED
@@ -11142,21 +11141,21 @@ inline constexpr auto bom = _bom<Encoding, Endianness>{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TERMINATOR_HPP_INCLUDED
 #define LEXY_DSL_TERMINATOR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
 #define LEXY_DSL_BRANCH_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SEQUENCE_HPP_INCLUDED
@@ -11420,7 +11419,7 @@ inline constexpr auto else_ = _else_dsl{};
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ERROR_HPP_INCLUDED
@@ -11532,20 +11531,20 @@ constexpr auto must(Branch)
 
 #endif // LEXY_DSL_ERROR_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_RECOVER_HPP_INCLUDED
 #define LEXY_DSL_RECOVER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHOICE_HPP_INCLUDED
 #define LEXY_DSL_CHOICE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_TUPLE_HPP_INCLUDED
@@ -11819,7 +11818,7 @@ constexpr auto operator|(_chc<R...>, _chc<S...>)
 #endif // LEXY_DSL_CHOICE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
@@ -12274,7 +12273,7 @@ constexpr auto try_(Rule, Recover)
 #endif // LEXY_DSL_RECOVER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_WHITESPACE_HPP_INCLUDED
@@ -12284,7 +12283,7 @@ constexpr auto try_(Rule, Recover)
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LOOP_HPP_INCLUDED
@@ -12925,7 +12924,7 @@ constexpr auto parenthesized = round_bracketed;
 #endif // LEXY_DSL_BRACKETS_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BYTE_HPP_INCLUDED
@@ -13236,7 +13235,7 @@ inline constexpr auto big_bint64    = _bint<8, lexy::_detail::bint_big>{};
 
 #endif // LEXY_DSL_BYTE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CAPTURE_HPP_INCLUDED
@@ -13379,7 +13378,7 @@ constexpr auto capture(_prd<Production>)
 
 #endif // LEXY_DSL_CAPTURE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CASE_FOLDING_HPP_INCLUDED
@@ -13673,7 +13672,7 @@ inline constexpr auto simple_case_folding = _scf_dsl{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_COMBINATION_HPP_INCLUDED
@@ -13826,7 +13825,7 @@ constexpr auto partial_combination(R...)
 
 #endif // LEXY_DSL_COMBINATION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
@@ -14094,7 +14093,7 @@ constexpr auto equal_counts(_ctx_counter_dsl<Ids>...)
 
 #endif // LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
@@ -14247,7 +14246,7 @@ constexpr auto context_flag = _ctx_flag_dsl<Id>{};
 
 #endif // LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_IDENTIFIER_HPP_INCLUDED
@@ -14255,7 +14254,7 @@ constexpr auto context_flag = _ctx_flag_dsl<Id>{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_IDENTIFIER_HPP_INCLUDED
@@ -14834,7 +14833,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 #endif // LEXY_DSL_CONTEXT_IDENTIFIER_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_DELIMITED_HPP_INCLUDED
@@ -14845,7 +14844,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SYMBOL_HPP_INCLUDED
@@ -15836,7 +15835,7 @@ constexpr auto dollar_escape    = escape(lit_c<'$'>);
 
 #endif // LEXY_DSL_DELIMITED_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
@@ -16547,7 +16546,7 @@ constexpr auto effect = _eff<Fn>{};
 
 #endif // LEXY_DSL_EFFECT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_EOF_HPP_INCLUDED
@@ -16624,7 +16623,7 @@ constexpr auto eof = _eof{};
 #endif // LEXY_DSL_EOF_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_EXPRESSION_HPP_INCLUDED
@@ -16633,7 +16632,7 @@ constexpr auto eof = _eof{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_OPERATOR_HPP_INCLUDED
@@ -17537,7 +17536,7 @@ struct subexpression_production : Expr
 
 #endif // LEXY_DSL_EXPRESSION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_FLAGS_HPP_INCLUDED
@@ -17672,7 +17671,7 @@ constexpr auto flag(Rule)
 
 #endif // LEXY_DSL_FLAGS_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_FOLLOW_HPP_INCLUDED
@@ -17794,7 +17793,7 @@ constexpr auto token_kind_of<lexy::dsl::_nf<Literal, CharClass>> = lexy::literal
 #endif // LEXY_DSL_FOLLOW_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_IF_HPP_INCLUDED
@@ -17843,7 +17842,7 @@ constexpr auto if_(Branch)
 
 #endif // LEXY_DSL_IF_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_INTEGER_HPP_INCLUDED
@@ -18406,7 +18405,7 @@ constexpr auto code_unit_id = [] {
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LIST_HPP_INCLUDED
@@ -18414,7 +18413,7 @@ constexpr auto code_unit_id = [] {
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_OPTION_HPP_INCLUDED
@@ -18534,7 +18533,7 @@ struct _optt : rule_base
 
 #endif // LEXY_DSL_OPTION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SEPARATOR_HPP_INCLUDED
@@ -19116,13 +19115,13 @@ struct _lstt : rule_base
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_MEMBER_HPP_INCLUDED
 #define LEXY_DSL_MEMBER_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
@@ -19289,14 +19288,14 @@ constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PARSE_AS_HPP_INCLUDED
 #define LEXY_DSL_PARSE_AS_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_OBJECT_HPP_INCLUDED
@@ -19535,7 +19534,7 @@ constexpr auto parse_as(Rule)
 
 #endif // LEXY_DSL_PARSE_AS_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PEEK_HPP_INCLUDED
@@ -19715,7 +19714,7 @@ constexpr auto peek_not(Rule)
 
 #endif // LEXY_DSL_PEEK_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_POSITION_HPP_INCLUDED
@@ -19798,7 +19797,7 @@ constexpr auto position = _pos_dsl{};
 
 #endif // LEXY_DSL_POSITION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PRODUCTION_HPP_INCLUDED
@@ -20047,7 +20046,7 @@ constexpr auto recurse_branch = _recb<Production>{};
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
@@ -20094,7 +20093,7 @@ LEXY_PUNCT(equal_sign, "=");
 #endif // LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_REPEAT_HPP_INCLUDED
@@ -20277,7 +20276,7 @@ constexpr auto repeat(Count)
 
 #endif // LEXY_DSL_REPEAT_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_RETURN_HPP_INCLUDED
@@ -20301,13 +20300,13 @@ constexpr auto return_ = _ret{};
 
 #endif // LEXY_DSL_RETURN_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SCAN_HPP_INCLUDED
 #define LEXY_DSL_SCAN_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_FORWARD_HPP_INCLUDED
@@ -20858,7 +20857,7 @@ struct scan_production
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SIGN_HPP_INCLUDED
@@ -21014,7 +21013,7 @@ constexpr auto subgrammar = _subg<Production, T>{};
 
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TIMES_HPP_INCLUDED
@@ -21083,7 +21082,7 @@ constexpr auto twice(Rule rule, Sep sep)
 #endif // LEXY_DSL_TIMES_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_UNICODE_HPP_INCLUDED
@@ -21580,7 +21579,7 @@ inline constexpr auto xid_continue = _xid_continue{};
 
 #endif // LEXY_DSL_UNICODE_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_UNTIL_HPP_INCLUDED
@@ -21742,14 +21741,14 @@ constexpr auto token_kind_of<lexy::dsl::_until<Condition>> = lexy::any_token_kin
 #endif // LEXY_DSL_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 #define LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 
 #include <cstdio>
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
@@ -21789,7 +21788,7 @@ public:
             ::operator delete(_data);
     }
 
-    buffer_builder(const buffer_builder&) = delete;
+    buffer_builder(const buffer_builder&)            = delete;
     buffer_builder& operator=(const buffer_builder&) = delete;
 
     // The total capacity: read + write.
@@ -21910,7 +21909,7 @@ private:
 #endif // LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_BUFFER_HPP_INCLUDED
@@ -22433,7 +22432,7 @@ using compiler_explorer_error_context = lexy::buffer_error_context<Production, l
 
 #endif // LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 
-// Copyright (C) 2020-2022 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
