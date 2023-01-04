@@ -1,6 +1,6 @@
 = Changelog
 
-== Upcoming
+== Release 2022.12.1
 
 * Add constructor to `lexy::input_location`.
 * `lexy::error_context::production` will not be a transparent production.
