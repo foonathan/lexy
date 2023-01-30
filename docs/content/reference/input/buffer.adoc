@@ -31,6 +31,9 @@ namespace lexy
         //=== construction ===//
         class builder;
 
+        static buffer adopt(const char_type* data, std::size_t size,
+                            MemoryResource* resource = _default-resource_);
+
         constexpr buffer() noexcept;
         constexpr explicit buffer(MemoryResource* resource) noexcept;
 
@@ -49,6 +52,8 @@ namespace lexy
         //=== access ===//
         const char_type* data() const noexcept;
         std::size_t      size() const noexcept;
+
+        const char_type* release() && noexcept;
 
         _reader_ auto reader() const& noexcept;
     };
@@ -154,6 +159,21 @@ Write the buffer contents incrementally.
 The constructor allocates memory for `size` code units using `resource`, but does not initialize them.
 Content can then be written into the memory range `[data(), data() + size())`.
 Once everything has been initialized, `finish()` returns the finalized (and from now on immutable) buffer.
+
+=== Adoption
+
+{{% interface %}}
+----
+static buffer adopt(const char_type* data, std::size_t size,
+                    MemoryResource* resource = _default-resource_);
+
+const char_type* release() && noexcept;
+----
+
+`release()` returns a pointer to the data of the buffer and relinquishes ownership over it;
+`adopt()` reconstructs a buffer object.
+
+NOTE: `data` must be the pointer returned by an earlier call to `release()`, with `size` and `resource` matching the original buffer object.
 
 [#make_buffer_from_raw]
 == Function `lexy::make_buffer_from_raw`

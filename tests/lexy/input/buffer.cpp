@@ -200,6 +200,19 @@ TEST_CASE("buffer")
         CHECK(other.size() == 0);
     }
 
+    SUBCASE("release and adopt")
+    {
+        lexy::buffer buffer(str, 3);
+        verify(buffer);
+
+        auto data = buffer.data();
+        auto ptr  = LEXY_MOV(buffer).release();
+        CHECK(ptr == data);
+
+        buffer = decltype(buffer)::adopt(ptr, 3);
+        verify(buffer);
+    }
+
     SUBCASE("reader, no sentinel")
     {
         const lexy::buffer buffer(str, 3);
