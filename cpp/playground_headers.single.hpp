@@ -715,9 +715,17 @@ public:
         }
     }
 
-    constexpr bool starts_with(basic_string_view prefix) const
+    constexpr bool starts_with(basic_string_view prefix) const noexcept
     {
         return substr(0, prefix.size()) == prefix;
+    }
+    constexpr bool try_remove_prefix(basic_string_view prefix) noexcept
+    {
+        if (!starts_with(prefix))
+            return false;
+
+        remove_prefix(prefix.length());
+        return true;
     }
 
     constexpr std::size_t find(basic_string_view str, std::size_t pos = 0) const noexcept
@@ -802,6 +810,7 @@ constexpr auto _full_type_name()
     auto function = string_view(__PRETTY_FUNCTION__);
     function.remove_prefix(prefix.length());
     function.remove_suffix(suffix.length());
+    function.try_remove_prefix("(anonymous namespace)::");
     return function;
 
 #elif defined(__GNUC__)
@@ -819,6 +828,7 @@ constexpr auto _full_type_name()
     auto function = string_view(__PRETTY_FUNCTION__);
     function.remove_prefix(prefix.length());
     function.remove_suffix(suffix.length());
+    function.try_remove_prefix("{anonymous}::");
     return function;
 
 #elif defined(_MSC_VER)
@@ -831,12 +841,8 @@ constexpr auto _full_type_name()
     auto function = string_view(__FUNCSIG__);
     function.remove_prefix(prefix.length());
     function.remove_suffix(suffix.length());
-
-    if (auto s = string_view("struct "); function.starts_with(s))
-        function.remove_prefix(s.length());
-    else if (auto c = string_view("class "); function.starts_with(c))
-        function.remove_prefix(c.length());
-
+    function.try_remove_prefix("struct ") || function.try_remove_prefix("class ");
+    function.try_remove_prefix("`anonymous-namespace'::");
     return function;
 
 #else
