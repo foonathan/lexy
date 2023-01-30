@@ -11995,16 +11995,23 @@ struct _recovery_wrapper : _recovery_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.on(_ev::recovery_start{}, reader.position());
-
             auto recovery_finished = false;
-            auto result
-                = lexy::parser_for<Rule, _continuation>::parse(context, reader, recovery_finished,
-                                                               LEXY_FWD(args)...);
+
+            // As part of the recovery, we parse the rule and whitespace.
+            using parser = lexy::parser_for<Rule, lexy::whitespace_parser<Context, _continuation>>;
+            auto result  = parser::parse(context, reader, recovery_finished, LEXY_FWD(args)...);
+
             if (!recovery_finished)
                 context.on(_ev::recovery_cancel{}, reader.position());
             return result;
         }
     };
+};
+
+struct _noop_recovery : rule_base
+{
+    template <typename NextParser>
+    using p = NextParser;
 };
 } // namespace lexyd
 
@@ -12188,13 +12195,23 @@ struct _tryt : rule_base
         LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_void_v<Recover>)
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            {
+                using recovery_rule = _recovery_wrapper<_noop_recovery>;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
             else if constexpr (std::is_base_of_v<_recovery_base, Recover>)
-                return lexy::parser_for<Recover, NextParser>::parse(context, reader,
-                                                                    LEXY_FWD(args)...);
+            {
+                using recovery_rule = Recover;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
             else
-                return lexy::parser_for<_recovery_wrapper<Recover>,
-                                        NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            {
+                using recovery_rule = _recovery_wrapper<Recover>;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
         }
     };
 

@@ -15,8 +15,8 @@ This is similar to how an exception will perform stack unwinding until the entir
 If <code>rule</code> backtracks, this is not considered a situation where recovery needs to happen, and it also backtracks.
 Only recovers if <code>rule</code> fails, failure of recovery (see below) do not lead to a backtrack;
 at this point the branch has been committed.</p></dd><dt class=hdlist1>Errors</dt><dd><p>All errors raised by <code>rule</code>.
-If <code>rule</code> has not already recovered, recovers for it:</p><div class=ulist><ul><li><p>The single argument overload does it by consuming nothing,
-parsing then simply continues as if nothing happened.</p></li><li><p>The two argument overload does it by parsing <code>recovery_rule</code>.
+If <code>rule</code> has not already recovered, recovers for it:</p><div class=ulist><ul><li><p>The single argument overload does it by skipping whitespace but otherwise consuming nothing;
+parsing then simply continues as if nothing happened.</p></li><li><p>The two argument overload does it by parsing <code>recovery_rule</code> and then skipping whitespace.
 If that succeeds, recovery is finished.
 Otherwise, raises all errors from it unchanged and cancels.</p></li></ul></div></dd><dt class=hdlist1>Values</dt><dd><p>If <code>rule</code> succeeded, all values produced by <code>rule</code>.
 Otherwise, all values produced by <code>recovery_rule</code>.
