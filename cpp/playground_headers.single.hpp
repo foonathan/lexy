@@ -22057,6 +22057,17 @@ public:
         buffer _buffer;
     };
 
+    static buffer adopt(const char_type* data, std::size_t size,
+                        MemoryResource* resource = _detail::get_memory_resource<MemoryResource>())
+    {
+        buffer result(resource);
+        // We can cast away the const-ness, since we require that `data` came from a buffer
+        // origionally, where it wasn't const.
+        result._data = const_cast<char_type*>(data);
+        result._size = size;
+        return result;
+    }
+
     constexpr buffer() noexcept : buffer(_detail::get_memory_resource<MemoryResource>()) {}
 
     constexpr explicit buffer(MemoryResource* resource) noexcept
@@ -22163,6 +22174,14 @@ public:
     std::size_t size() const noexcept
     {
         return _size;
+    }
+
+    const char_type* release() && noexcept
+    {
+        auto result = _data;
+        _data       = nullptr;
+        _size       = 0;
+        return result;
     }
 
     //=== input ===//
