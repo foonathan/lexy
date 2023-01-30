@@ -303,7 +303,7 @@ TEST_CASE("dsl::no_whitespace")
 
         auto ab = LEXY_VERIFY_P(production, "ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().literal("ab").expected_literal(2, "c", 0));
+        CHECK(ab.trace == test_trace().literal("ab").expected_literal(2, "c", 0).recovery());
         auto abc = LEXY_VERIFY_P(production, "abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.trace == test_trace().literal("ab").literal("c"));
@@ -314,7 +314,12 @@ TEST_CASE("dsl::no_whitespace")
         auto inner_whitespace = LEXY_VERIFY_P(production, "ab..c");
         CHECK(inner_whitespace.status == test_result::recovered_error);
         CHECK(inner_whitespace.trace
-              == test_trace().literal("ab").expected_literal(2, "c", 0).whitespace(".."));
+              == test_trace()
+                     .literal("ab")
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .finish()
+                     .whitespace(".."));
         auto trailing_whitespace = LEXY_VERIFY_P(production, "abc..");
         CHECK(trailing_whitespace.status == test_result::success);
         CHECK(trailing_whitespace.trace
@@ -331,7 +336,7 @@ TEST_CASE("dsl::no_whitespace")
 
         auto ab = LEXY_VERIFY_P(production, "ab");
         CHECK(ab.status == test_result::recovered_error);
-        CHECK(ab.trace == test_trace().literal("ab").expected_literal(2, "c", 0));
+        CHECK(ab.trace == test_trace().literal("ab").expected_literal(2, "c", 0).recovery());
         auto abc = LEXY_VERIFY_P(production, "abc");
         CHECK(abc.status == test_result::success);
         CHECK(abc.trace == test_trace().literal("ab").literal("c"));
@@ -342,7 +347,12 @@ TEST_CASE("dsl::no_whitespace")
         auto inner_whitespace = LEXY_VERIFY_P(production, "ab..c");
         CHECK(inner_whitespace.status == test_result::recovered_error);
         CHECK(inner_whitespace.trace
-              == test_trace().literal("ab").expected_literal(2, "c", 0).whitespace(".."));
+              == test_trace()
+                     .literal("ab")
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .finish()
+                     .whitespace(".."));
         auto trailing_whitespace = LEXY_VERIFY_P(production, "abc..");
         CHECK(trailing_whitespace.status == test_result::success);
         CHECK(trailing_whitespace.trace

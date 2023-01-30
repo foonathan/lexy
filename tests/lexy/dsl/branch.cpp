@@ -44,7 +44,13 @@ TEST_CASE("dsl::operator>>")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::recovered_error);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().literal("abc").position().expected_literal(3, "!", 0));
+        CHECK(abc.trace
+              == test_trace() //
+                     .literal("abc")
+                     .position()
+                     .expected_literal(3, "!", 0)
+                     .recovery());
+
         auto abc_mark = LEXY_VERIFY("abc!");
         CHECK(abc_mark.status == test_result::success);
         CHECK(abc_mark.value == 1);
@@ -66,7 +72,13 @@ TEST_CASE("dsl::operator>>")
         auto abc = LEXY_VERIFY("abc");
         CHECK(abc.status == test_result::recovered_error);
         CHECK(abc.value == 1);
-        CHECK(abc.trace == test_trace().literal("abc").position().expected_literal(3, "!", 0));
+        CHECK(abc.trace
+              == test_trace() //
+                     .literal("abc")
+                     .position()
+                     .expected_literal(3, "!", 0)
+                     .recovery());
+
         auto abc_mark = LEXY_VERIFY("abc!");
         CHECK(abc_mark.status == test_result::success);
         CHECK(abc_mark.value == 1);

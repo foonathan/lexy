@@ -49,6 +49,12 @@ struct _recovery_wrapper : _recovery_base
         }
     };
 };
+
+struct _noop_recovery : rule_base
+{
+    template <typename NextParser>
+    using p = NextParser;
+};
 } // namespace lexyd
 
 namespace lexyd
@@ -231,13 +237,23 @@ struct _tryt : rule_base
         LEXY_PARSER_FUNC static bool recover(Context& context, Reader& reader, Args&&... args)
         {
             if constexpr (std::is_void_v<Recover>)
-                return NextParser::parse(context, reader, LEXY_FWD(args)...);
+            {
+                using recovery_rule = _recovery_wrapper<_noop_recovery>;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
             else if constexpr (std::is_base_of_v<_recovery_base, Recover>)
-                return lexy::parser_for<Recover, NextParser>::parse(context, reader,
-                                                                    LEXY_FWD(args)...);
+            {
+                using recovery_rule = Recover;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
             else
-                return lexy::parser_for<_recovery_wrapper<Recover>,
-                                        NextParser>::parse(context, reader, LEXY_FWD(args)...);
+            {
+                using recovery_rule = _recovery_wrapper<Recover>;
+                return lexy::parser_for<recovery_rule, NextParser>::parse(context, reader,
+                                                                          LEXY_FWD(args)...);
+            }
         }
     };
 

@@ -174,7 +174,12 @@ TEST_CASE("dsl::try_(rule)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
         CHECK(empty.trace
-              == test_trace().expected_literal(0, "abc", 0).expected_literal(0, "!", 0).cancel());
+              == test_trace()
+                     .expected_literal(0, "abc", 0)
+                     .recovery()
+                     .finish()
+                     .expected_literal(0, "!", 0)
+                     .cancel());
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::fatal_error);
@@ -182,6 +187,8 @@ TEST_CASE("dsl::try_(rule)")
               == test_trace()
                      .error_token("a")
                      .expected_literal(0, "abc", 1)
+                     .recovery()
+                     .finish()
                      .expected_literal(1, "!", 0)
                      .cancel());
         auto ab = LEXY_VERIFY("ab");
@@ -190,6 +197,8 @@ TEST_CASE("dsl::try_(rule)")
               == test_trace()
                      .error_token("ab")
                      .expected_literal(0, "abc", 2)
+                     .recovery()
+                     .finish()
                      .expected_literal(2, "!", 0)
                      .cancel());
 
@@ -203,12 +212,18 @@ TEST_CASE("dsl::try_(rule)")
 
         auto mark = LEXY_VERIFY("!");
         CHECK(mark.status == test_result::recovered_error);
-        CHECK(mark.trace == test_trace().expected_literal(0, "abc", 0).literal("!"));
+        CHECK(mark.trace
+              == test_trace().expected_literal(0, "abc", 0).recovery().finish().literal("!"));
 
         auto ab_mark = LEXY_VERIFY("ab!");
         CHECK(ab_mark.status == test_result::recovered_error);
         CHECK(ab_mark.trace
-              == test_trace().error_token("ab").expected_literal(0, "abc", 2).literal("!"));
+              == test_trace()
+                     .error_token("ab")
+                     .expected_literal(0, "abc", 2)
+                     .recovery()
+                     .finish()
+                     .literal("!"));
     }
     SUBCASE("rule")
     {
@@ -222,7 +237,12 @@ TEST_CASE("dsl::try_(rule)")
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
         CHECK(empty.trace
-              == test_trace().expected_literal(0, "ab", 0).expected_literal(0, "!", 0).cancel());
+              == test_trace()
+                     .expected_literal(0, "ab", 0)
+                     .recovery()
+                     .finish()
+                     .expected_literal(0, "!", 0)
+                     .cancel());
 
         auto a = LEXY_VERIFY("a");
         CHECK(a.status == test_result::fatal_error);
@@ -230,6 +250,8 @@ TEST_CASE("dsl::try_(rule)")
               == test_trace()
                      .error_token("a")
                      .expected_literal(0, "ab", 1)
+                     .recovery()
+                     .finish()
                      .expected_literal(1, "!", 0)
                      .cancel());
 
@@ -238,6 +260,8 @@ TEST_CASE("dsl::try_(rule)")
                             .literal("ab")
                             .position()
                             .expected_literal(2, "c", 0)
+                            .recovery()
+                            .finish()
                             .expected_literal(2, "!", 0)
                             .cancel();
         CHECK(ab.status == test_result::fatal_error);
@@ -261,13 +285,20 @@ TEST_CASE("dsl::try_(rule)")
         auto mark = LEXY_VERIFY("!");
         CHECK(mark.status == test_result::recovered_error);
         CHECK(mark.value == 0);
-        CHECK(mark.trace == test_trace().expected_literal(0, "ab", 0).literal("!"));
+        CHECK(mark.trace
+              == test_trace().expected_literal(0, "ab", 0).recovery().finish().literal("!"));
 
         auto ab_mark = LEXY_VERIFY("ab!");
         CHECK(ab_mark.status == test_result::recovered_error);
         CHECK(ab_mark.value == 0);
         CHECK(ab_mark.trace
-              == test_trace().literal("ab").position().expected_literal(2, "c", 0).literal("!"));
+              == test_trace()
+                     .literal("ab")
+                     .position()
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .finish()
+                     .literal("!"));
     }
 
     SUBCASE("as branch")
@@ -292,6 +323,8 @@ TEST_CASE("dsl::try_(rule)")
                             .literal("ab")
                             .position()
                             .expected_literal(2, "c", 0)
+                            .recovery()
+                            .finish()
                             .expected_literal(2, "!", 0)
                             .cancel();
         CHECK(ab.status == test_result::fatal_error);
@@ -321,7 +354,13 @@ TEST_CASE("dsl::try_(rule)")
         CHECK(ab_mark.status == test_result::recovered_error);
         CHECK(ab_mark.value == 0);
         CHECK(ab_mark.trace
-              == test_trace().literal("ab").position().expected_literal(2, "c", 0).literal("!"));
+              == test_trace()
+                     .literal("ab")
+                     .position()
+                     .expected_literal(2, "c", 0)
+                     .recovery()
+                     .finish()
+                     .literal("!"));
     }
 }
 

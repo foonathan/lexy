@@ -34,6 +34,8 @@ TEST_CASE("dsl::loop()")
     auto recover_trace = test_trace()
                              .literal("a")
                              .expected_literal(1, "bc", 0)
+                             .recovery()
+                             .finish()
                              .literal("a")
                              .literal("bc")
                              .literal("!");
@@ -79,7 +81,13 @@ TEST_CASE("dsl::while_()")
     auto recovered = LEXY_VERIFY("aabc");
     CHECK(recovered.status == test_result::recovered_error);
     CHECK(recovered.trace
-          == test_trace().literal("a").expected_literal(1, "bc", 0).literal("a").literal("bc"));
+          == test_trace()
+                 .literal("a")
+                 .expected_literal(1, "bc", 0)
+                 .recovery()
+                 .finish()
+                 .literal("a")
+                 .literal("bc"));
 }
 
 TEST_CASE("dsl::while_one()")

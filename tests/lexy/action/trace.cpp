@@ -46,9 +46,9 @@ struct object
         static constexpr auto name = "unexpected";
     };
 
-    static constexpr auto rule
-        = dsl::p<alphabet> | dsl::p<id> //
-          | dsl::p<number> | dsl::p<list> | dsl::try_(dsl::error<unexpected>);
+    static constexpr auto rule = dsl::p<alphabet> | dsl::p<id> //
+                                 | dsl::p<number> | dsl::p<list>
+                                 | dsl::try_(dsl::error<unexpected>);
 };
 
 struct production
@@ -170,6 +170,8 @@ TEST_CASE("trace")
  1:  6:   - list:
  1:  6:     -x
  1:  6:   - error: unexpected
+ 1:  6:   - error recovery:
+ 1:  6:     - finish
  1:  6:   - finish
  1:  6: - finish
 )");
@@ -342,6 +344,8 @@ TEST_CASE("trace")
  1:  6: │  ├──list:
  1:  6: │  │  └╳
  1:  6: │  ├──error: unexpected
+ 1:  6: │  ├──error recovery:
+ 1:  6: │  │  ┴
  1:  6: │  ┴
  1:  6: ┴
 )");
@@ -461,6 +465,7 @@ TEST_CASE("trace")
  1:  6:   - number: ...
  1:  6:   - list: ...
  1:  6:   - error: unexpected
+ 1:  6:   - error recovery: ...
  1:  6:   - finish
  1:  6: - finish
 )");

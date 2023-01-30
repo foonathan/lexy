@@ -59,7 +59,8 @@ TEST_CASE("dsl::p")
                            .production("production")
                            .literal("a")
                            .position()
-                           .expected_literal(1, "bc", 0);
+                           .expected_literal(1, "bc", 0)
+                           .recovery();
         CHECK(a.status == test_result::recovered_error);
         CHECK(a.value == 1);
         CHECK(a.trace == a_trace);
@@ -69,7 +70,8 @@ TEST_CASE("dsl::p")
                             .literal("a")
                             .position()
                             .error_token("b")
-                            .expected_literal(1, "bc", 1);
+                            .expected_literal(1, "bc", 1)
+                            .recovery();
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
@@ -106,7 +108,8 @@ TEST_CASE("dsl::p")
                            .production("production")
                            .literal("a")
                            .position()
-                           .expected_literal(1, "bc", 0);
+                           .expected_literal(1, "bc", 0)
+                           .recovery();
         CHECK(a.status == test_result::recovered_error);
         CHECK(a.value == 1);
         CHECK(a.trace == a_trace);
@@ -116,7 +119,8 @@ TEST_CASE("dsl::p")
                             .literal("a")
                             .position()
                             .error_token("b")
-                            .expected_literal(1, "bc", 1);
+                            .expected_literal(1, "bc", 1)
+                            .recovery();
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);
@@ -163,7 +167,8 @@ TEST_CASE("dsl::p")
                            .production("production")
                            .literal("a")
                            .position()
-                           .expected_literal(1, "bc", 0);
+                           .expected_literal(1, "bc", 0)
+                           .recovery();
         CHECK(a.status == test_result::recovered_error);
         CHECK(a.value == 1);
         CHECK(a.trace == a_trace);
@@ -174,7 +179,8 @@ TEST_CASE("dsl::p")
                             .literal("a")
                             .position()
                             .error_token("b")
-                            .expected_literal(1, "bc", 1);
+                            .expected_literal(1, "bc", 1)
+                            .recovery();
         CHECK(ab.status == test_result::recovered_error);
         CHECK(ab.value == 1);
         CHECK(ab.trace == ab_trace);

@@ -52,7 +52,11 @@ TEST_CASE("dsl::operator|")
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace()
+                     .literal("abc")
+                     .production("label")
+                     .expected_literal(3, "!", 0)
+                     .recovery());
     }
     SUBCASE("branches are ordered")
     {
@@ -73,7 +77,11 @@ TEST_CASE("dsl::operator|")
         CHECK(abc.status == test_result::recovered_error);
         CHECK(abc.value == 0);
         CHECK(abc.trace
-              == test_trace().literal("a").production("label").expected_literal(1, "!", 0));
+              == test_trace()
+                     .literal("a")
+                     .production("label")
+                     .expected_literal(1, "!", 0)
+                     .recovery());
     }
     SUBCASE("with else")
     {
@@ -85,7 +93,8 @@ TEST_CASE("dsl::operator|")
         auto empty = LEXY_VERIFY("");
         CHECK(empty.status == test_result::recovered_error);
         CHECK(empty.value == 2);
-        CHECK(empty.trace == test_trace().production("label").expected_literal(0, "!", 0));
+        CHECK(empty.trace
+              == test_trace().production("label").expected_literal(0, "!", 0).recovery());
 
         auto abc = LEXY_VERIFY("abc!");
         CHECK(abc.status == test_result::success);
@@ -101,7 +110,11 @@ TEST_CASE("dsl::operator|")
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace()
+                     .literal("abc")
+                     .production("label")
+                     .expected_literal(3, "!", 0)
+                     .recovery());
     }
     SUBCASE("with error")
     {
@@ -136,7 +149,11 @@ TEST_CASE("dsl::operator|")
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace()
+                     .literal("abc")
+                     .production("label")
+                     .expected_literal(3, "!", 0)
+                     .recovery());
     }
 
     SUBCASE("as branch")
@@ -164,7 +181,11 @@ TEST_CASE("dsl::operator|")
         CHECK(branch_error.status == test_result::recovered_error);
         CHECK(branch_error.value == 0);
         CHECK(branch_error.trace
-              == test_trace().literal("abc").production("label").expected_literal(3, "!", 0));
+              == test_trace()
+                     .literal("abc")
+                     .production("label")
+                     .expected_literal(3, "!", 0)
+                     .recovery());
     }
 }
 
