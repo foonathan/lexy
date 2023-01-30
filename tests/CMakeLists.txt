@@ -28,6 +28,7 @@ add_subdirectory(playground)
 
 add_test(NAME lexy_test COMMAND lexy_test)
 add_test(NAME lexy_ext_test COMMAND lexy_ext_test)
+add_test(NAME calculator COMMAND lexy_test_calculator)
 add_test(NAME email COMMAND lexy_test_email)
 add_test(NAME ip COMMAND lexy_test_ip_address)
 add_test(NAME json COMMAND lexy_test_json)
