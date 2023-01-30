@@ -38,11 +38,12 @@ struct _recovery_wrapper : _recovery_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             context.on(_ev::recovery_start{}, reader.position());
-
             auto recovery_finished = false;
-            auto result
-                = lexy::parser_for<Rule, _continuation>::parse(context, reader, recovery_finished,
-                                                               LEXY_FWD(args)...);
+
+            // As part of the recovery, we parse the rule and whitespace.
+            using parser = lexy::parser_for<Rule, lexy::whitespace_parser<Context, _continuation>>;
+            auto result  = parser::parse(context, reader, recovery_finished, LEXY_FWD(args)...);
+
             if (!recovery_finished)
                 context.on(_ev::recovery_cancel{}, reader.position());
             return result;

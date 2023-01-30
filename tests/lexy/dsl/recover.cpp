@@ -8,6 +8,7 @@
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/until.hpp>
+#include <lexy/dsl/whitespace.hpp>
 
 TEST_CASE("dsl::find()")
 {
@@ -160,6 +161,14 @@ TEST_CASE("dsl::recover().limit()")
     CHECK(limited.status == test_result::fatal_error);
     CHECK(limited.trace == test_trace().recovery().error_token("abc").cancel().cancel());
 }
+
+namespace
+{
+struct with_whitespace
+{
+    static constexpr auto whitespace = dsl::whitespace(dsl::lit_c<'.'>);
+};
+} // namespace
 
 TEST_CASE("dsl::try_(rule)")
 {
@@ -359,6 +368,91 @@ TEST_CASE("dsl::try_(rule)")
                      .position()
                      .expected_literal(2, "c", 0)
                      .recovery()
+                     .finish()
+                     .literal("!"));
+    }
+    SUBCASE("with whitespace")
+    {
+        constexpr auto try_ = dsl::try_(LEXY_LIT("abc"));
+
+        struct production : test_production_for<decltype(try_ + dsl::lit_c<'!'>)>, with_whitespace
+        {};
+
+        constexpr auto callback = token_callback;
+
+        auto empty = LEXY_VERIFY_P(production, "");
+        CHECK(empty.status == test_result::fatal_error);
+        CHECK(empty.trace
+              == test_trace()
+                     .expected_literal(0, "abc", 0)
+                     .recovery()
+                     .finish()
+                     .expected_literal(0, "!", 0)
+                     .cancel());
+
+        auto a = LEXY_VERIFY_P(production, "a");
+        CHECK(a.status == test_result::fatal_error);
+        CHECK(a.trace
+              == test_trace()
+                     .error_token("a")
+                     .expected_literal(0, "abc", 1)
+                     .recovery()
+                     .finish()
+                     .expected_literal(1, "!", 0)
+                     .cancel());
+        auto ab = LEXY_VERIFY_P(production, "ab");
+        CHECK(ab.status == test_result::fatal_error);
+        CHECK(ab.trace
+              == test_trace()
+                     .error_token("ab")
+                     .expected_literal(0, "abc", 2)
+                     .recovery()
+                     .finish()
+                     .expected_literal(2, "!", 0)
+                     .cancel());
+
+        auto abc = LEXY_VERIFY_P(production, "abc");
+        CHECK(abc.status == test_result::fatal_error);
+        CHECK(abc.trace == test_trace().literal("abc").expected_literal(3, "!", 0).cancel());
+
+        auto abc_mark = LEXY_VERIFY_P(production, "abc!");
+        CHECK(abc_mark.status == test_result::success);
+        CHECK(abc_mark.trace == test_trace().literal("abc").literal("!"));
+        auto abc_ws_mark = LEXY_VERIFY_P(production, "abc..!");
+        CHECK(abc_ws_mark.status == test_result::success);
+        CHECK(abc_ws_mark.trace == test_trace().literal("abc").whitespace("..").literal("!"));
+
+        auto mark = LEXY_VERIFY_P(production, "!");
+        CHECK(mark.status == test_result::recovered_error);
+        CHECK(mark.trace
+              == test_trace().expected_literal(0, "abc", 0).recovery().finish().literal("!"));
+        auto ws_mark = LEXY_VERIFY_P(production, "..!");
+        CHECK(ws_mark.status == test_result::recovered_error);
+        CHECK(ws_mark.trace
+              == test_trace()
+                     .whitespace("..")
+                     .expected_literal(2, "abc", 0)
+                     .recovery()
+                     .finish()
+                     .literal("!"));
+
+        auto ab_mark = LEXY_VERIFY_P(production, "ab!");
+        CHECK(ab_mark.status == test_result::recovered_error);
+        CHECK(ab_mark.trace
+              == test_trace()
+                     .error_token("ab")
+                     .expected_literal(0, "abc", 2)
+                     .recovery()
+                     .finish()
+                     .literal("!"));
+        auto ab_ws_mark = LEXY_VERIFY_P(production, "ab..!");
+        CHECK(ab_ws_mark.status == test_result::recovered_error);
+        CHECK(ab_ws_mark.trace
+              == test_trace()
+                     .error_token("ab")
+                     .expected_literal(0, "abc", 2)
+                     .recovery()
+                     .whitespace("..")
                      .finish()
                      .literal("!"));
     }

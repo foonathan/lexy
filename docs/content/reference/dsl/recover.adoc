@@ -44,9 +44,9 @@ Branch parsing::
 Errors::
   All errors raised by `rule`.
   If `rule` has not already recovered, recovers for it:
-  * The single argument overload does it by consuming nothing,
+  * The single argument overload does it by skipping whitespace but otherwise consuming nothing;
     parsing then simply continues as if nothing happened.
-  * The two argument overload does it by parsing `recovery_rule`.
+  * The two argument overload does it by parsing `recovery_rule` and then skipping whitespace.
     If that succeeds, recovery is finished.
     Otherwise, raises all errors from it unchanged and cancels.
 Values::
