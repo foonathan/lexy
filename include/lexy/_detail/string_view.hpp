@@ -136,9 +136,17 @@ public:
         }
     }
 
-    constexpr bool starts_with(basic_string_view prefix) const
+    constexpr bool starts_with(basic_string_view prefix) const noexcept
     {
         return substr(0, prefix.size()) == prefix;
+    }
+    constexpr bool try_remove_prefix(basic_string_view prefix) noexcept
+    {
+        if (!starts_with(prefix))
+            return false;
+
+        remove_prefix(prefix.length());
+        return true;
     }
 
     constexpr std::size_t find(basic_string_view str, std::size_t pos = 0) const noexcept

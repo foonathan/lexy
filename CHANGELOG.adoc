@@ -1,5 +1,9 @@
 = Changelog
 
+== Upcoming
+
+* Fix `lexy::production_name` for productions in an anonymous namespace.
+
 == Release 2022.12.1
 
 * Add constructor to `lexy::input_location`.
