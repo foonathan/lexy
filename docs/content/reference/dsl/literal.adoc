@@ -192,3 +192,5 @@ This can shorten type names in error messages.
 NOTE: The implementation uses a https://en.wikipedia.org/wiki/Trie[trie] to match them efficiently,
 instead of trying one after the other.
 
+TIP: If you want to match a set of literals but also get information about which one matched, use {{% docref "lexy::dsl::symbol" %}} instead.
+
