@@ -90,6 +90,21 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 #    define LEXY_CONSTEVAL constexpr
 #endif
 
+//=== constexpr ===//
+#ifndef LEXY_HAS_CONSTEXPR_DTOR
+#    if __cpp_constexpr_dynamic_alloc
+#        define LEXY_HAS_CONSTEXPR_DTOR 1
+#    else
+#        define LEXY_HAS_CONSTEXPR_DTOR 0
+#    endif
+#endif
+
+#if LEXY_HAS_CONSTEXPR_DTOR
+#    define LEXY_CONSTEXPR_DTOR constexpr
+#else
+#    define LEXY_CONSTEXPR_DTOR
+#endif
+
 //=== char8_t ===//
 #ifndef LEXY_HAS_CHAR8_T
 #    if __cpp_char8_t

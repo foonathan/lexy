@@ -6,6 +6,7 @@
 
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
+#include <lexy/_detail/std.hpp>
 
 namespace lexy::_detail
 {
@@ -44,20 +45,22 @@ struct _lazy_init_storage_non_trivial
     : _init(true), _value(LEXY_FWD(args)...)
     {}
 
-    ~_lazy_init_storage_non_trivial() noexcept
+    LEXY_CONSTEXPR_DTOR ~_lazy_init_storage_non_trivial() noexcept
     {
         if (_init)
             _value.~T();
     }
 
-    _lazy_init_storage_non_trivial(_lazy_init_storage_non_trivial&& other) noexcept
+    LEXY_CONSTEXPR_DTOR _lazy_init_storage_non_trivial(
+        _lazy_init_storage_non_trivial&& other) noexcept
     : _init(other._init), _empty()
     {
         if (_init)
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
+            _detail::construct_at(&_value, LEXY_MOV(other._value));
     }
 
-    _lazy_init_storage_non_trivial& operator=(_lazy_init_storage_non_trivial&& other) noexcept
+    LEXY_CONSTEXPR_DTOR _lazy_init_storage_non_trivial& operator=(
+        _lazy_init_storage_non_trivial&& other) noexcept
     {
         if (_init && other._init)
             _value = LEXY_MOV(other._value);
@@ -68,7 +71,7 @@ struct _lazy_init_storage_non_trivial
         }
         else if (!_init && other._init)
         {
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
+            _detail::construct_at(&_value, LEXY_MOV(other._value));
             _init = true;
         }
         else
