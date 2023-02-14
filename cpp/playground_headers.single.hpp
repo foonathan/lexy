@@ -103,6 +103,21 @@ using type_or = std::conditional_t<std::is_void_v<T>, Fallback, T>;
 #    define LEXY_CONSTEVAL constexpr
 #endif
 
+//=== constexpr ===//
+#ifndef LEXY_HAS_CONSTEXPR_DTOR
+#    if __cpp_constexpr_dynamic_alloc
+#        define LEXY_HAS_CONSTEXPR_DTOR 1
+#    else
+#        define LEXY_HAS_CONSTEXPR_DTOR 0
+#    endif
+#endif
+
+#if LEXY_HAS_CONSTEXPR_DTOR
+#    define LEXY_CONSTEXPR_DTOR constexpr
+#else
+#    define LEXY_CONSTEXPR_DTOR
+#endif
+
 //=== char8_t ===//
 #ifndef LEXY_HAS_CHAR8_T
 #    if __cpp_char8_t
@@ -245,6 +260,104 @@ using _char8_t = unsigned char;
 #endif // LEXY_DETAIL_ASSERT_HPP_INCLUDED
 
 
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DETAIL_STD_HPP_INCLUDED
+#define LEXY_DETAIL_STD_HPP_INCLUDED
+
+
+
+//=== iterator tags ===//
+#if defined(__GLIBCXX__)
+
+namespace std
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+struct forward_iterator_tag;
+struct bidirectional_iterator_tag;
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
+
+#elif defined(_LIBCPP_VERSION)
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+struct forward_iterator_tag;
+struct bidirectional_iterator_tag;
+_LIBCPP_END_NAMESPACE_STD
+
+#else
+
+// Forward declaring things in std is not allowed, but I'm willing to take the risk.
+
+namespace std
+{
+struct forward_iterator_tag;
+struct bidirectional_iterator_tag;
+} // namespace std
+
+#endif
+
+//=== (constexpr) construct_at ===//
+#if !LEXY_HAS_CONSTEXPR_DTOR
+
+namespace lexy::_detail
+{
+// We don't have constexpr dtor's, so this is just a regular function.
+template <typename T, typename... Args>
+T* construct_at(T* ptr, Args&&... args)
+{
+    return ::new ((void*)ptr) T(LEXY_FWD(args)...);
+}
+} // namespace lexy::_detail
+
+#elif defined(_MSC_VER)
+
+namespace lexy::_detail
+{
+// MSVC can make it constexpr if marked with an attribute given by a macro.
+template <typename T, typename... Args>
+constexpr T* construct_at(T* ptr, Args&&... args)
+{
+#    if defined(_MSVC_CONSTEXPR)
+    _MSVC_CONSTEXPR
+#    endif
+    return ::new ((void*)ptr) T(LEXY_FWD(args)...);
+}
+} // namespace lexy::_detail
+
+#else
+
+namespace lexy::_detail
+{
+struct _construct_at_tag
+{};
+} // namespace lexy::_detail
+
+namespace std
+{
+// GCC only allows constexpr placement new inside a function called `std::construct_at`.
+// So we write our own.
+template <typename T, typename... Args>
+constexpr T* construct_at(lexy::_detail::_construct_at_tag, T* ptr, Args&&... args)
+{
+    return ::new ((void*)ptr) T(LEXY_FWD(args)...);
+}
+} // namespace std
+
+namespace lexy::_detail
+{
+template <typename T, typename... Args>
+constexpr T* construct_at(T* ptr, Args&&... args)
+{
+    return std::construct_at(lexy::_detail::_construct_at_tag{}, ptr, LEXY_FWD(args)...);
+}
+} // namespace lexy::_detail
+
+#endif
+
+#endif // LEXY_DETAIL_STD_HPP_INCLUDED
+
 
 namespace lexy::_detail
 {
@@ -264,6 +377,12 @@ struct _lazy_init_storage_trivial
     constexpr _lazy_init_storage_trivial(int, Args&&... args)
     : _init(true), _value(LEXY_FWD(args)...)
     {}
+
+    template <typename... Args>
+    constexpr void _construct(Args&&... args)
+    {
+        *this = _lazy_init_storage_trivial(0, LEXY_FWD(args)...);
+    }
 };
 
 template <typename T>
@@ -279,24 +398,29 @@ struct _lazy_init_storage_non_trivial
     constexpr _lazy_init_storage_non_trivial() noexcept : _init(false), _empty() {}
 
     template <typename... Args>
-    constexpr _lazy_init_storage_non_trivial(int, Args&&... args)
-    : _init(true), _value(LEXY_FWD(args)...)
-    {}
+    LEXY_CONSTEXPR_DTOR void _construct(Args&&... args)
+    {
+        _detail::construct_at(&_value, LEXY_FWD(args)...);
+        _init = true;
+    }
 
-    ~_lazy_init_storage_non_trivial() noexcept
+    // Cannot add noexcept due to https://github.com/llvm/llvm-project/issues/59854.
+    LEXY_CONSTEXPR_DTOR ~_lazy_init_storage_non_trivial() /* noexcept */
     {
         if (_init)
             _value.~T();
     }
 
-    _lazy_init_storage_non_trivial(_lazy_init_storage_non_trivial&& other) noexcept
+    LEXY_CONSTEXPR_DTOR _lazy_init_storage_non_trivial(
+        _lazy_init_storage_non_trivial&& other) noexcept
     : _init(other._init), _empty()
     {
         if (_init)
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
+            _detail::construct_at(&_value, LEXY_MOV(other._value));
     }
 
-    _lazy_init_storage_non_trivial& operator=(_lazy_init_storage_non_trivial&& other) noexcept
+    LEXY_CONSTEXPR_DTOR _lazy_init_storage_non_trivial& operator=(
+        _lazy_init_storage_non_trivial&& other) noexcept
     {
         if (_init && other._init)
             _value = LEXY_MOV(other._value);
@@ -307,7 +431,7 @@ struct _lazy_init_storage_non_trivial
         }
         else if (!_init && other._init)
         {
-            ::new (static_cast<void*>(&_value)) T(LEXY_MOV(other._value));
+            _detail::construct_at(&_value, LEXY_MOV(other._value));
             _init = true;
         }
         else
@@ -344,8 +468,7 @@ public:
     constexpr T& emplace(Args&&... args)
     {
         LEXY_PRECONDITION(!*this);
-
-        *this = lazy_init(0, LEXY_FWD(args)...);
+        this->_construct(LEXY_FWD(args)...);
         return this->_value;
     }
 
@@ -1478,44 +1601,6 @@ private:
 
 
 
-// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
-// SPDX-License-Identifier: BSL-1.0
-
-#ifndef LEXY_DETAIL_STD_HPP_INCLUDED
-#define LEXY_DETAIL_STD_HPP_INCLUDED
-
-
-
-#if defined(__GLIBCXX__)
-
-namespace std
-{
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-struct forward_iterator_tag;
-struct bidirectional_iterator_tag;
-_GLIBCXX_END_NAMESPACE_VERSION
-} // namespace std
-
-#elif defined(_LIBCPP_VERSION)
-
-_LIBCPP_BEGIN_NAMESPACE_STD
-struct forward_iterator_tag;
-struct bidirectional_iterator_tag;
-_LIBCPP_END_NAMESPACE_STD
-
-#else
-
-// Forward declaring things in std is not allowed, but I'm willing to take the risk.
-
-namespace std
-{
-struct forward_iterator_tag;
-struct bidirectional_iterator_tag;
-} // namespace std
-
-#endif
-
-#endif // LEXY_DETAIL_STD_HPP_INCLUDED
 
 
 //=== iterator algorithms ===//
@@ -2804,18 +2889,19 @@ struct _list_sink
     using return_type = Container;
 
     template <typename C = Container, typename U>
-    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
+    constexpr auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
     {
         return _result.push_back(LEXY_FWD(obj));
     }
 
     template <typename C = Container, typename... Args>
-    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args)
+        -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
     {
         return _result.emplace_back(LEXY_FWD(args)...);
     }
 
-    Container&& finish() &&
+    constexpr Container&& finish() &&
     {
         return LEXY_MOV(_result);
     }
@@ -2943,18 +3029,19 @@ struct _collection_sink
     using return_type = Container;
 
     template <typename C = Container, typename U>
-    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
+    constexpr auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
     {
         return _result.insert(LEXY_FWD(obj));
     }
 
     template <typename C = Container, typename... Args>
-    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args)
+        -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
     {
         return _result.emplace(LEXY_FWD(args)...);
     }
 
-    Container&& finish() &&
+    constexpr Container&& finish() &&
     {
         return LEXY_MOV(_result);
     }
@@ -3127,7 +3214,7 @@ struct _concat
 
         using return_type = Container;
 
-        void operator()(Container&& container)
+        constexpr void operator()(Container&& container)
         {
             if (_result.empty())
             {
@@ -3161,7 +3248,7 @@ struct _concat
             }
         }
 
-        Container&& finish() &&
+        constexpr Container&& finish() &&
         {
             return LEXY_MOV(_result);
         }
