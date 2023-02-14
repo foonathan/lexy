@@ -32,18 +32,19 @@ struct _list_sink
     using return_type = Container;
 
     template <typename C = Container, typename U>
-    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
+    constexpr auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).push_back(LEXY_FWD(obj)))
     {
         return _result.push_back(LEXY_FWD(obj));
     }
 
     template <typename C = Container, typename... Args>
-    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args)
+        -> decltype(LEXY_DECLVAL(C&).emplace_back(LEXY_FWD(args)...))
     {
         return _result.emplace_back(LEXY_FWD(args)...);
     }
 
-    Container&& finish() &&
+    constexpr Container&& finish() &&
     {
         return LEXY_MOV(_result);
     }
@@ -171,18 +172,19 @@ struct _collection_sink
     using return_type = Container;
 
     template <typename C = Container, typename U>
-    auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
+    constexpr auto operator()(U&& obj) -> decltype(LEXY_DECLVAL(C&).insert(LEXY_FWD(obj)))
     {
         return _result.insert(LEXY_FWD(obj));
     }
 
     template <typename C = Container, typename... Args>
-    auto operator()(Args&&... args) -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args)
+        -> decltype(LEXY_DECLVAL(C&).emplace(LEXY_FWD(args)...))
     {
         return _result.emplace(LEXY_FWD(args)...);
     }
 
-    Container&& finish() &&
+    constexpr Container&& finish() &&
     {
         return LEXY_MOV(_result);
     }
@@ -355,7 +357,7 @@ struct _concat
 
         using return_type = Container;
 
-        void operator()(Container&& container)
+        constexpr void operator()(Container&& container)
         {
             if (_result.empty())
             {
@@ -389,7 +391,7 @@ struct _concat
             }
         }
 
-        Container&& finish() &&
+        constexpr Container&& finish() &&
         {
             return LEXY_MOV(_result);
         }
