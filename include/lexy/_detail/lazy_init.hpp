@@ -26,6 +26,12 @@ struct _lazy_init_storage_trivial
     constexpr _lazy_init_storage_trivial(int, Args&&... args)
     : _init(true), _value(LEXY_FWD(args)...)
     {}
+
+    template <typename... Args>
+    constexpr void _construct(Args&&... args)
+    {
+        *this = _lazy_init_storage_trivial(0, LEXY_FWD(args)...);
+    }
 };
 
 template <typename T>
@@ -41,11 +47,14 @@ struct _lazy_init_storage_non_trivial
     constexpr _lazy_init_storage_non_trivial() noexcept : _init(false), _empty() {}
 
     template <typename... Args>
-    constexpr _lazy_init_storage_non_trivial(int, Args&&... args)
-    : _init(true), _value(LEXY_FWD(args)...)
-    {}
+    LEXY_CONSTEXPR_DTOR void _construct(Args&&... args)
+    {
+        _detail::construct_at(&_value, LEXY_FWD(args)...);
+        _init = true;
+    }
 
-    LEXY_CONSTEXPR_DTOR ~_lazy_init_storage_non_trivial() noexcept
+    // Cannot add noexcept due to https://github.com/llvm/llvm-project/issues/59854.
+    LEXY_CONSTEXPR_DTOR ~_lazy_init_storage_non_trivial() /* noexcept */
     {
         if (_init)
             _value.~T();
@@ -108,8 +117,7 @@ public:
     constexpr T& emplace(Args&&... args)
     {
         LEXY_PRECONDITION(!*this);
-
-        *this = lazy_init(0, LEXY_FWD(args)...);
+        this->_construct(LEXY_FWD(args)...);
         return this->_value;
     }
 
