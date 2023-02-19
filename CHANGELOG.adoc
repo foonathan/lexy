@@ -5,6 +5,7 @@
 * Change `lexy::dsl::try_()` error recovery behavior:
   It will now skip whitespace after the (optional) error recovery rule.
 * Add `lexy::buffer::release()` and `lexy::buffer::adopt()`.
+* Add default argument to `lexy::dsl::flag()`.
 * Fix `lexy::production_name` for productions in an anonymous namespace.
 
 == Release 2022.12.1

@@ -129,6 +129,12 @@ constexpr auto flag(Rule)
     static_assert(lexy::is_branch_rule<Rule>);
     return _flag<Rule, If, Else>{};
 }
+
+template <typename Rule>
+constexpr auto flag(Rule rule)
+{
+    return flag<true, false>(rule);
+}
 } // namespace lexyd
 
 #endif // LEXY_DSL_FLAGS_HPP_INCLUDED

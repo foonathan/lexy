@@ -96,24 +96,34 @@ TEST_CASE("dsl::flags")
 
 TEST_CASE("dsl::flag")
 {
-    constexpr auto rule = dsl::flag<flags::a>(LEXY_LIT("a"));
-    CHECK(equivalent_rules(rule, dsl::flag<flags::a, flags::none>(LEXY_LIT("a"))));
+    SUBCASE("explicit value")
+    {
+        constexpr auto rule = dsl::flag<flags::a>(LEXY_LIT("a"));
+        CHECK(equivalent_rules(rule, dsl::flag<flags::a, flags::none>(LEXY_LIT("a"))));
 
-    constexpr auto callback = [](const char*, flags value) { return int(value); };
+        constexpr auto callback = [](const char*, flags value) { return int(value); };
 
-    auto empty = LEXY_VERIFY("");
-    CHECK(empty.status == test_result::success);
-    CHECK(empty.value == int(flags::none));
-    CHECK(empty.trace == test_trace());
+        auto empty = LEXY_VERIFY("");
+        CHECK(empty.status == test_result::success);
+        CHECK(empty.value == int(flags::none));
+        CHECK(empty.trace == test_trace());
 
-    auto a = LEXY_VERIFY("a");
-    CHECK(a.status == test_result::success);
-    CHECK(a.value == int(flags::a));
-    CHECK(a.trace == test_trace().literal("a"));
+        auto a = LEXY_VERIFY("a");
+        CHECK(a.status == test_result::success);
+        CHECK(a.value == int(flags::a));
+        CHECK(a.trace == test_trace().literal("a"));
 
-    auto aa = LEXY_VERIFY("aa");
-    CHECK(aa.status == test_result::success);
-    CHECK(aa.value == int(flags::a));
-    CHECK(aa.trace == test_trace().literal("a"));
+        auto aa = LEXY_VERIFY("aa");
+        CHECK(aa.status == test_result::success);
+        CHECK(aa.value == int(flags::a));
+        CHECK(aa.trace == test_trace().literal("a"));
+    }
+    SUBCASE("boolean")
+    {
+        // This has to be after the above version, otherwise GCC 7 gets really confused about
+        // overload resolution or something.
+        constexpr auto rule = dsl::flag(LEXY_LIT("a"));
+        CHECK(equivalent_rules(rule, dsl::flag<true, false>(LEXY_LIT("a"))));
+    }
 }
 

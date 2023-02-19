@@ -18,6 +18,11 @@ namespace lexy::dsl
 {
     template <auto If, auto Else = decltype(If){}>
     constexpr _rule_ auto flag(_branch-rule_ auto branch);
+
+    constexpr _rule_ auto flag(_branch-rule_ auto branch)
+    {
+        return flag<true, false>(branch);
+    }
 }
 ----
 
