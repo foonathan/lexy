@@ -119,6 +119,10 @@ Its name is `complement`.
 
 {{% playground-example quoted "Match non-control characters in a string literal" %}}
 
+NOTE: For most char classes, `operator-` does not work with the {{% encoding %}} `lexy::default_encoding`:
+For example,`-dsl::ascii::control` could either mean non-control ASCII characters or non-control Unicode characters.
+You need to explicitly pick one interpretation with `lexy::ascii_encoding` or `lexy::utf8_encoding`.
+
 [#minus]
 == Char class minus `lexy::dsl::operator-`
 
