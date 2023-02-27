@@ -18933,7 +18933,7 @@ template <typename Item, typename Sep>
 constexpr auto list(Item, _tsep<Sep>)
 {
     static_assert(lexy::is_branch_rule<Item>,
-                  "list() without a trailing separator requires a branch condition");
+                  "list() with a trailing separator requires a branch condition");
     return _lst<Item, _tsep<Sep>>{};
 }
 
