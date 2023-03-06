@@ -458,7 +458,7 @@ struct _scan : rule_base
         LEXY_PARSER_FUNC static bool _parse(Scanner& scanner, Context& context, Reader& reader,
                                             Args&&... args)
         {
-            lexy::scan_result result = [&] {
+            typename Context::production::scan_result result = [&] {
                 if constexpr (lexy::_detail::is_detected<
                                   _detect_scan_state, Context, decltype(scanner),
                                   decltype(context.control_block->parse_state)>)
@@ -471,7 +471,7 @@ struct _scan : rule_base
             if (!result)
                 return false;
 
-            if constexpr (std::is_void_v<typename decltype(result)::value_type>)
+            if constexpr (std::is_void_v<decltype(result)::value_type>)
                 return NextParser::parse(context, reader);
             else
                 return NextParser::parse(context, reader, LEXY_MOV(result).value());
