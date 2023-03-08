@@ -458,7 +458,7 @@ struct _scan : rule_base
         LEXY_PARSER_FUNC static bool _parse(Scanner& scanner, Context& context, Reader& reader,
                                             Args&&... args)
         {
-            lexy::scan_result result = [&] {
+            typename Context::production::scan_result result = [&] {
                 if constexpr (lexy::_detail::is_detected<
                                   _detect_scan_state, Context, decltype(scanner),
                                   decltype(context.control_block->parse_state)>)
