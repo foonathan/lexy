@@ -112,8 +112,13 @@ namespace lexy
 
         template <typename Tag, typename .... Args>
         constexpr void error(Tag tag, Args&&... args);
+        template <typename .... Args>
+        constexpr void error(const char* msg, Args&&... args);
+
         template <typename Tag, typename .... Args>
         constexpr void fatal_error(Tag tag, Args&&... args);
+        template <typename .... Args>
+        constexpr void fatal_error(const char* msg, Args&&... args);
 
         //=== convenience ===//
         // Forwards to `parse(result, rule)` overload.
@@ -309,16 +314,20 @@ NOTE: It is meant to be called during error recovery only.
 ----
 template <typename Tag, typename .... Args>
 constexpr void error(Tag tag, Args&&... args);
+template <typename .... Args>
+constexpr void error(const char* msg, Args&&... args);
 
 template <typename Tag, typename .... Args>
 constexpr void fatal_error(Tag tag, Args&&... args);
+template <typename .... Args>
+constexpr void fatal_error(const char* msg, Args&&... args);
 ----
 
 [.lead]
 Raise a {{% docref "lexy::error" %}}.
 
-Both overloads construct a `lexy::error` object with the specified `Tag` from the specified arguments and forward it to the handler.
-The second overload then puts the scanner in a failed state, the first overload leaves the state unchanged.
+All overloads construct a `lexy::error` object from the specified arguments and forward it to the handler.
+The fatal overloads then puts the scanner in a failed state, the non-fatal overloads leaves the state unchanged.
 
 [#scan]
 == Action `lexy::scan`
@@ -383,4 +392,3 @@ NOTE: Use {{% docref "lexy::dsl::scan" %}} if you want to manually parse some pr
 
 CAUTION: The overload that takes a `parse_state` internally stores a pointer to it.
 As such, `parse_state` must live as long as the `lexy::scanner` object.
-
