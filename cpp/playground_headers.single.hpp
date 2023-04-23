@@ -20795,10 +20795,24 @@ public:
         context.on(parse_events::error{}, lexy::error<Reader, Tag>(LEXY_FWD(args)...));
     }
 
+    template <typename... Args>
+    constexpr void error(const char* msg, Args&&... args)
+    {
+        auto& context = static_cast<Derived&>(*this).context();
+        context.on(parse_events::error{}, lexy::error<Reader, void>(LEXY_FWD(args)..., msg));
+    }
+
     template <typename Tag, typename... Args>
     constexpr void fatal_error(Tag tag, Args&&... args)
     {
         error(tag, LEXY_FWD(args)...);
+        _state = _state_failed;
+    }
+
+    template <typename... Args>
+    constexpr void fatal_error(const char* msg, Args&&... args)
+    {
+        error(msg, LEXY_FWD(args)...);
         _state = _state_failed;
     }
 
