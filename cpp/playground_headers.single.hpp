@@ -467,8 +467,11 @@ public:
     template <typename... Args>
     constexpr T& emplace(Args&&... args)
     {
-        LEXY_PRECONDITION(!*this);
-        this->_construct(LEXY_FWD(args)...);
+        if (*this)
+            this->_value = T(LEXY_FWD(args)...);
+        else
+            this->_construct(LEXY_FWD(args)...);
+
         return this->_value;
     }
 
@@ -531,7 +534,6 @@ public:
 
     constexpr T& emplace(T& ref)
     {
-        LEXY_PRECONDITION(!*this);
         _ptr = &ref;
         return ref;
     }
@@ -572,7 +574,6 @@ public:
 
     constexpr void emplace()
     {
-        LEXY_PRECONDITION(!*this);
         _init = true;
     }
     template <typename Fn, typename... Args>
