@@ -15,6 +15,7 @@
 #include <lexy/dsl/sequence.hpp>
 #include <lexy/dsl/whitespace.hpp>
 #include <lexy/input/string_input.hpp>
+#include <lexy_ext/report_error.hpp>
 
 namespace
 {
@@ -39,10 +40,32 @@ TEST_CASE("lexy::scan")
         CHECK(scanner.remaining_input().reader().position() == pos);
     };
 
+    // We use lexy_ext::report_error to test that error reporting doesn't crash; there was a bug
+    // before.
+    auto errors = lexy_ext::report_error.to([] {
+        struct iterator
+        {
+            iterator& operator*() noexcept
+            {
+                return *this;
+            }
+            iterator& operator++(int) noexcept
+            {
+                return *this;
+            }
+
+            iterator& operator=(char)
+            {
+                return *this;
+            }
+        };
+        return iterator{};
+    }());
+
     SUBCASE("empty input")
     {
         auto input   = lexy::string_input<lexy::default_encoding>();
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, true, input.data());
 
@@ -58,7 +81,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("parse w/o value")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -77,7 +100,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("parse with value")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -96,7 +119,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("parse production")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -115,7 +138,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("branch w/o value")
     {
         auto input   = lexy::zstring_input("abcdefa");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -142,7 +165,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("branch with value")
     {
         auto input   = lexy::zstring_input("abcdefa");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -192,7 +215,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("branch production")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -220,7 +243,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("error recovery")
     {
         auto input   = lexy::zstring_input("123-abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         scanner.parse(LEXY_LIT("abc"));
         CHECK(!scanner);
         check_position(scanner, false, input.data());
@@ -276,7 +299,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("discard")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -335,7 +358,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("peek")
     {
         auto input   = lexy::zstring_input("abc");
-        auto scanner = lexy::scan(input, lexy::noop);
+        auto scanner = lexy::scan(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 
@@ -353,7 +376,7 @@ TEST_CASE("lexy::scan")
     SUBCASE("control production")
     {
         auto input   = lexy::zstring_input("abc abc");
-        auto scanner = lexy::scan<control_production>(input, lexy::noop);
+        auto scanner = lexy::scan<control_production>(input, errors);
         CHECK(scanner);
         check_position(scanner, false, input.data());
 

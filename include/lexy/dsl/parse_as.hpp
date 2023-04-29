@@ -84,11 +84,13 @@ struct _pas : _copy_base<Rule>
                 = lexy::_pc<decltype(handler), typename Context::state_type,
                             typename Context::production, typename Context::whitespace_production>;
             context_type sub_context(&cb);
+            sub_context.handler = LEXY_MOV(context).handler;
 
             auto result
                 = rule_parser.template finish<lexy::_detail::final_parser>(sub_context, reader);
 
             context.control_block->copy_vars_from(&cb);
+            context.handler = LEXY_MOV(sub_context).handler;
 
             if (!result)
                 return false;
@@ -117,11 +119,13 @@ struct _pas : _copy_base<Rule>
                 = lexy::_pc<decltype(handler), typename Context::state_type,
                             typename Context::production, typename Context::whitespace_production>;
             context_type sub_context(&cb);
+            sub_context.handler = LEXY_MOV(context).handler;
 
             auto result
                 = lexy::parser_for<Rule, lexy::_detail::final_parser>::parse(sub_context, reader);
 
             context.control_block->copy_vars_from(&cb);
+            context.handler = LEXY_MOV(sub_context).handler;
 
             if (!result)
                 return false;
