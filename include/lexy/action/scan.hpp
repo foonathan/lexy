@@ -68,10 +68,10 @@ private:
         return _context;
     }
 
-    _detail::any_holder<const Input*>                 _input;
-    _detail::any_holder<_error_sink_t<ErrorCallback>> _sink;
-    _detail::parse_context_control_block<_handler>    _cb;
-    _pc<_handler, State, _production>                 _context;
+    _detail::any_holder<const Input*>                     _input;
+    _detail::any_holder<_error_sink_t<ErrorCallback>>     _sink;
+    _detail::parse_context_control_block<_handler, State> _cb;
+    _pc<_handler, State, _production>                     _context;
 
     friend _impl;
 };
