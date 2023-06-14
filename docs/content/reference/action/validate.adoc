@@ -64,7 +64,7 @@ namespace lexy
 
         constexpr bool is_success()         const noexcept;
         constexpr bool is_error()           const noexcept;
-        constexpr bool is_recovered_error() const neoxcept;
+        constexpr bool is_recovered_error() const noexcept;
         constexpr bool is_fatal_error()     const noexcept;
 
         //=== error list ===//
@@ -92,7 +92,7 @@ constexpr explicit operator bool() const noexcept
 
 constexpr bool is_success()         const noexcept; <1>
 constexpr bool is_error()           const noexcept; <2>
-constexpr bool is_recovered_error() const neoxcept; <3>
+constexpr bool is_recovered_error() const noexcept; <3>
 constexpr bool is_fatal_error()     const noexcept; <4>
 ----
 <1> Returns `true` if parsing succeeded without raising any errors, `false` otherwise.
