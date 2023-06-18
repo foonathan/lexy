@@ -4,9 +4,13 @@
 
 * Change `lexy::dsl::try_()` error recovery behavior:
   It will now skip whitespace after the (optional) error recovery rule.
+* Add an overload of `fatal_error()` on scanners that allow construction of type-erased generic errors (#134).
 * Add `lexy::buffer::release()` and `lexy::buffer::adopt()`.
 * Add default argument to `lexy::dsl::flag()`.
+* Add missing `constexpr` to container callbacks and `lexy::as_string`.
 * Fix `lexy::production_name` for productions in an anonymous namespace.
+* Fix bugs in `dsl::scan` (#133, #135, #142).
+* Workaround compiler bugs and improve documentation.
 
 == Release 2022.12.1
 
