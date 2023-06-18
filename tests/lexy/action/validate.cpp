@@ -5,6 +5,7 @@
 
 #include <doctest/doctest.h>
 #include <lexy/callback/adapter.hpp>
+#include <lexy/dsl/case_folding.hpp>
 #include <lexy/dsl/list.hpp>
 #include <lexy/dsl/literal.hpp>
 #include <lexy/dsl/production.hpp>
@@ -17,7 +18,7 @@ namespace
 struct prod_a
 {
     static constexpr auto name = "prod_a";
-    static constexpr auto rule = list(LEXY_LIT("abc"));
+    static constexpr auto rule = lexy::dsl::list(lexy::dsl::ascii::case_folding(LEXY_LIT("abc")));
 };
 
 struct prod_trans : lexy::transparent_production

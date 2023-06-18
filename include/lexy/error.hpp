@@ -26,6 +26,13 @@ public:
     : _pos(begin), _end(end), _msg(msg)
     {}
 
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator error<OtherReader, void>() const noexcept
+    {
+        return error<OtherReader, void>(_pos, _end, _msg);
+    }
+
     constexpr auto position() const noexcept
     {
         return _pos;
@@ -68,6 +75,13 @@ public:
                              typename Reader::iterator end) noexcept
     : error<Reader, void>(begin, end, _detail::type_name<Tag>())
     {}
+
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator error<OtherReader, Tag>() const noexcept
+    {
+        return error<OtherReader, Tag>(this->begin(), this->end());
+    }
 };
 
 /// Expected the literal character sequence.
@@ -82,6 +96,13 @@ public:
                              std::size_t length) noexcept
     : _pos(pos), _str(str), _idx(index), _length(length)
     {}
+
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator error<OtherReader, expected_literal>() const noexcept
+    {
+        return error<OtherReader, expected_literal>(_pos, _str, _idx, _length);
+    }
 
     constexpr auto position() const noexcept
     {
@@ -127,6 +148,13 @@ public:
     : _begin(begin), _end(end), _str(str), _length(length)
     {}
 
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator error<OtherReader, expected_keyword>() const noexcept
+    {
+        return error<OtherReader, expected_keyword>(_begin, _end, _str, _length);
+    }
+
     constexpr auto position() const noexcept
     {
         return _begin;
@@ -168,6 +196,13 @@ public:
     constexpr explicit error(typename Reader::iterator pos, const char* name) noexcept
     : _pos(pos), _name(name)
     {}
+
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator error<OtherReader, expected_char_class>() const noexcept
+    {
+        return error<OtherReader, expected_char_class>(_pos, _name);
+    }
 
     constexpr auto position() const noexcept
     {

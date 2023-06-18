@@ -49,6 +49,8 @@ Represents a parse error.
 Different kinds of errors are identified by the `Tag`, which is an empty tag type.
 The error type is specialized for three tags.
 
+An `error<R1, T>` is implicitly convertible to an `error<R2, T>` as long as the `R1::iterator` and `R2::iterator` are the same type.
+
 === Generic error (primary template, `void`)
 
 {{% interface %}}
