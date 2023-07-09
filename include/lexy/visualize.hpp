@@ -622,6 +622,41 @@ struct cfile_output_iterator
     }
 };
 
+struct stderr_output_iterator
+{
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    stderr_output_iterator& operator=(char c)
+    {
+        std::fputc(c, stderr);
+        return *this;
+    }
+};
+struct stdout_output_iterator
+{
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    stdout_output_iterator& operator=(char c)
+    {
+        std::fputc(c, stdout);
+        return *this;
+    }
+};
+
 /// Writes the visualization to the FILE.
 template <typename T>
 void visualize(std::FILE* file, const T& obj, visualization_options opts = {})
