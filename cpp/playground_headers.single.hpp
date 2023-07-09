@@ -1474,6 +1474,9 @@ using _detect_value_of =
     // qualify value_of() (it causes a hard error instead of going to ::value).
     typename decltype(LEXY_DECLVAL(ParseState&).value_of(Production{}))::return_type;
 
+template <typename Production>
+using _detect_value = decltype(Production::value);
+
 template <typename Production, typename Sink>
 struct _sfinae_sink
 {
@@ -1499,6 +1502,11 @@ struct _sfinae_sink
         return LEXY_MOV(_sink).finish();
     }
 };
+
+template <typename Production, typename ParseState = void>
+constexpr bool production_has_value_callback
+    = lexy::_detail::is_detected<_detect_value_of, ParseState, Production>
+      || lexy::_detail::is_detected<_detect_value, Production>;
 
 template <typename Production, typename ParseState = void>
 class production_value_callback
@@ -10009,6 +10017,41 @@ struct cfile_output_iterator
     cfile_output_iterator& operator=(char c)
     {
         std::fputc(c, _file);
+        return *this;
+    }
+};
+
+struct stderr_output_iterator
+{
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    stderr_output_iterator& operator=(char c)
+    {
+        std::fputc(c, stderr);
+        return *this;
+    }
+};
+struct stdout_output_iterator
+{
+    auto operator*() const noexcept
+    {
+        return *this;
+    }
+    auto operator++(int) const noexcept
+    {
+        return *this;
+    }
+
+    stdout_output_iterator& operator=(char c)
+    {
+        std::fputc(c, stdout);
         return *this;
     }
 };
@@ -19558,7 +19601,7 @@ constexpr auto new_ = _new<T, PtrT>{};
 namespace lexyd
 {
 // Custom handler that forwards events but overrides the value callback.
-template <typename T, typename CurProduction, typename Handler>
+template <typename Handler>
 struct _pas_handler
 {
     Handler& _handler;
@@ -19573,31 +19616,38 @@ struct _pas_handler
         return static_cast<H&>(_handler);
     }
 
-    // For child productions, use ::value to get a value.
+    // We use ::value to get a value.
+    // We can't use it unconditionally, as the initial production that contains the parse_as might
+    // not have one. So we silently fallback if that's the case - this might cause worse errors if
+    // the value is missing.
     template <typename Production, typename State>
-    struct value_callback : lexy::production_value_callback<Production, State>
-    {
-        using lexy::production_value_callback<Production, State>::production_value_callback;
-    };
-    // For the production that contains parse_as, use lexy::construct.
-    template <typename State>
-    struct value_callback<CurProduction, State> : lexy::_construct<T>
-    {
-        constexpr value_callback() = default;
-        constexpr value_callback(State*) {}
-    };
+    using value_callback
+        = std::conditional_t<lexy::production_has_value_callback<Production, State>,
+                             lexy::production_value_callback<Production, State>,
+                             lexy::_detail::void_value_callback>;
 };
 
-template <typename T, typename CurProduction, typename Handler>
+struct _pas_final_parser
+{
+    template <typename Context, typename Reader, typename T, typename... Args>
+    LEXY_PARSER_FUNC static bool parse(Context&, Reader&, lexy::_detail::lazy_init<T>& value,
+                                       Args&&... args)
+    {
+        value.emplace_result(lexy::construct<T>, LEXY_FWD(args)...);
+        return true;
+    }
+};
+
+template <typename Handler>
 constexpr auto _make_pas_handler(Handler& handler)
 {
-    return _pas_handler<T, CurProduction, Handler>{handler};
+    return _pas_handler<Handler>{handler};
 }
 // Prevent infinite nesting when parse_as itself is recursive.
-template <typename T, typename CurProduction, typename U, typename P, typename Handler>
-constexpr auto _make_pas_handler(_pas_handler<U, P, Handler>& handler)
+template <typename Handler>
+constexpr auto _make_pas_handler(_pas_handler<Handler>& handler)
 {
-    return _pas_handler<T, CurProduction, Handler>{handler._handler};
+    return handler;
 }
 
 template <typename T, typename Rule, bool Front = false>
@@ -19624,8 +19674,7 @@ struct _pas : _copy_base<Rule>
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            auto handler = _make_pas_handler<T, typename Context::production>(
-                context.control_block->parse_handler);
+            auto handler = _make_pas_handler(context.control_block->parse_handler);
             lexy::_detail::parse_context_control_block cb(LEXY_MOV(handler), context.control_block);
             using context_type
                 = lexy::_pc<decltype(handler), typename Context::state_type,
@@ -19633,8 +19682,9 @@ struct _pas : _copy_base<Rule>
             context_type sub_context(&cb);
             sub_context.handler = LEXY_MOV(context).handler;
 
-            auto result
-                = rule_parser.template finish<lexy::_detail::final_parser>(sub_context, reader);
+            lexy::_detail::lazy_init<T> value;
+            auto                        result
+                = rule_parser.template finish<_pas_final_parser>(sub_context, reader, value);
 
             context.control_block->copy_vars_from(&cb);
             context.handler = LEXY_MOV(sub_context).handler;
@@ -19645,11 +19695,9 @@ struct _pas : _copy_base<Rule>
                 // NOLINTNEXTLINE: clang-tidy wrongly thinks the branch is repeated.
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else if constexpr (Front)
-                return NextParser::parse(context, reader, *LEXY_MOV(sub_context.value),
-                                         LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, *LEXY_MOV(value), LEXY_FWD(args)...);
             else
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         *LEXY_MOV(sub_context.value));
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., *LEXY_MOV(value));
         }
     };
 
@@ -19659,8 +19707,7 @@ struct _pas : _copy_base<Rule>
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            auto handler = _make_pas_handler<T, typename Context::production>(
-                context.control_block->parse_handler);
+            auto handler = _make_pas_handler(context.control_block->parse_handler);
             lexy::_detail::parse_context_control_block cb(LEXY_MOV(handler), context.control_block);
             using context_type
                 = lexy::_pc<decltype(handler), typename Context::state_type,
@@ -19668,8 +19715,9 @@ struct _pas : _copy_base<Rule>
             context_type sub_context(&cb);
             sub_context.handler = LEXY_MOV(context).handler;
 
-            auto result
-                = lexy::parser_for<Rule, lexy::_detail::final_parser>::parse(sub_context, reader);
+            lexy::_detail::lazy_init<T> value;
+            auto                        result
+                = lexy::parser_for<Rule, _pas_final_parser>::parse(sub_context, reader, value);
 
             context.control_block->copy_vars_from(&cb);
             context.handler = LEXY_MOV(sub_context).handler;
@@ -19680,11 +19728,9 @@ struct _pas : _copy_base<Rule>
                 // NOLINTNEXTLINE: clang-tidy wrongly thinks the branch is repeated.
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             else if constexpr (Front)
-                return NextParser::parse(context, reader, *LEXY_MOV(sub_context.value),
-                                         LEXY_FWD(args)...);
+                return NextParser::parse(context, reader, *LEXY_MOV(value), LEXY_FWD(args)...);
             else
-                return NextParser::parse(context, reader, LEXY_FWD(args)...,
-                                         *LEXY_MOV(sub_context.value));
+                return NextParser::parse(context, reader, LEXY_FWD(args)..., *LEXY_MOV(value));
         }
     };
 };
@@ -22948,7 +22994,7 @@ OutputIt write_error(OutputIt out, const lexy::error_context<Input>& context,
 
 namespace lexy_ext
 {
-template <typename OutputIterator = int>
+template <typename OutputIterator>
 struct _report_error
 {
     OutputIterator              _iter;
@@ -22968,18 +23014,14 @@ struct _report_error
         void operator()(const lexy::error_context<Input>& context,
                         const lexy::error<Reader, Tag>&   error)
         {
-            if constexpr (std::is_same_v<OutputIterator, int>)
-                _detail::write_error(lexy::cfile_output_iterator{stderr}, context, error, _opts,
-                                     _path);
-            else
-                _iter = _detail::write_error(_iter, context, error, _opts, _path);
+            _iter = _detail::write_error(_iter, context, error, _opts, _path);
             ++_count;
         }
 
         std::size_t finish() &&
         {
             if (_count != 0)
-                std::fputs("\n", stderr);
+                *_iter++ = '\n';
             return _count;
         }
     };
@@ -23009,7 +23051,7 @@ struct _report_error
 };
 
 /// An error callback that uses diagnostic_writer to print to stderr (by default).
-constexpr auto report_error = _report_error<>{};
+constexpr auto report_error = _report_error<lexy::stderr_output_iterator>{};
 } // namespace lexy_ext
 
 #endif // LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
