@@ -244,6 +244,9 @@ using _detect_value_of =
     // qualify value_of() (it causes a hard error instead of going to ::value).
     typename decltype(LEXY_DECLVAL(ParseState&).value_of(Production{}))::return_type;
 
+template <typename Production>
+using _detect_value = decltype(Production::value);
+
 template <typename Production, typename Sink>
 struct _sfinae_sink
 {
@@ -269,6 +272,11 @@ struct _sfinae_sink
         return LEXY_MOV(_sink).finish();
     }
 };
+
+template <typename Production, typename ParseState = void>
+constexpr bool production_has_value_callback
+    = lexy::_detail::is_detected<_detect_value_of, ParseState, Production>
+      || lexy::_detail::is_detected<_detect_value, Production>;
 
 template <typename Production, typename ParseState = void>
 class production_value_callback

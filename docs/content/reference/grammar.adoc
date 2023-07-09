@@ -197,6 +197,9 @@ This is used by {{% docref "lexy::dsl::whitespace" %}} during automatic whitespa
 namespace lexy
 {
     template <_production_ Production, typename ParseState = void>
+    constexpr bool production_has_value_callback;
+
+    template <_production_ Production, typename ParseState = void>
     class production_value_callback
     {
     public:
@@ -223,6 +226,8 @@ It wraps an underlying callback/sink, which is determined as follows:
    It will use `Production::value` as the underlying callback/sink, passing the parse state to `.sink()` and as state parameter to the callback.
 3. `ParseState` is void.
    It will use `Production::value` as the underlying callback/sink.
+
+If `state.value_of(Production{})` or `Production::value` is well-formed, `production_has_value_callback<Production, ParseState>` is `true`, `false` otherwise.
 
 The behavior of the member functions depends on three cases:
 
