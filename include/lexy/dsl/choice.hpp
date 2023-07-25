@@ -134,20 +134,20 @@ struct _chc
 template <typename R, typename S>
 constexpr auto operator|(R, S)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
-    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(R, "choice");
+    LEXY_REQUIRE_BRANCH_RULE(S, "choice");
     return _chc<R, S>{};
 }
 template <typename... R, typename S>
 constexpr auto operator|(_chc<R...>, S)
 {
-    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(S, "choice");
     return _chc<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator|(R, _chc<S...>)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(R, "choice");
     return _chc<R, S...>{};
 }
 template <typename... R, typename... S>

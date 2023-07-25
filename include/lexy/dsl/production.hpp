@@ -179,7 +179,7 @@ struct _recb : branch_base
     template <typename Reader>
     struct bp
     {
-        static_assert(lexy::is_branch_rule<lexy::production_rule<Production>>);
+        LEXY_REQUIRE_BRANCH_RULE(lexy::production_rule<Production>, "recurse_branch");
 
         using impl = lexy::branch_parser_for<_prd<Production>, Reader>;
         impl _impl;

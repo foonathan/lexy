@@ -207,7 +207,7 @@ template <typename... Branches>
 constexpr auto recover(Branches...)
 {
     static_assert(sizeof...(Branches) > 0);
-    static_assert((lexy::is_branch_rule<Branches> && ...));
+    LEXY_REQUIRE_BRANCH_RULE(Branches..., "recover");
     return _reco<void, Branches...>{};
 }
 } // namespace lexyd

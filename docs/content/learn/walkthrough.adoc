@@ -365,7 +365,7 @@ struct config
 
 However, this is a lot of work.
 In this particular case, it is easier to use {{% docref "whitespace" "automatic whitespace skipping" %}}.
-This is done by adding a `static constexpr` member called `whitespace` to the root production:
+This is done by adding a `static constexpr` member called `whitespace` to the *root* production (and only the root production):
 
 [source,cpp]
 ----

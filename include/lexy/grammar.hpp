@@ -65,7 +65,16 @@ constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
 
 template <typename T>
 constexpr auto is_operation = std::is_base_of_v<lexy::dsl::_operation_base, T>;
+
+template <typename... T>
+constexpr bool _require_branch_rule = (is_branch_rule<T> && ...);
 } // namespace lexy
+
+#define LEXY_REQUIRE_BRANCH_RULE(Rule, Name)                                                       \
+    static_assert(lexy::_require_branch_rule<Rule>, Name                                           \
+                  " requires a branch condition."                                                  \
+                  " You may need to use `>>` to specify the condition that is used for dispatch."  \
+                  " See https://lexy.foonathan.net/learn/branching/ for more information.")
 
 //=== predefined_token_kind ===//
 namespace lexy

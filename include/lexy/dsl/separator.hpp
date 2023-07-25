@@ -90,7 +90,7 @@ struct _sep : _sep_base
 template <typename Branch>
 constexpr auto sep(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "sep");
     return _sep<Branch, void>{};
 }
 
@@ -110,7 +110,7 @@ struct _tsep : _sep_base
 template <typename Branch>
 constexpr auto trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "trailing_sep");
     return _tsep<Branch>{};
 }
 

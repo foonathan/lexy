@@ -228,7 +228,7 @@ public:
     template <typename T, typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
     constexpr bool branch(scan_result<T>& result, Rule)
     {
-        static_assert(lexy::is_branch_rule<Rule>);
+        LEXY_REQUIRE_BRANCH_RULE(Rule, "branch");
         if (_state == _state_failed)
             return false;
 

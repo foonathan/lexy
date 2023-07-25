@@ -31,19 +31,19 @@ struct _br : _copy_base<Condition>
 template <typename Condition, typename Then>
 constexpr auto operator>>(Condition, Then)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, Then>{};
 }
 template <typename Condition, typename... R>
 constexpr auto operator>>(Condition, _seq<R...>)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, R...>{};
 }
 template <typename Condition, typename C, typename... R>
 constexpr auto operator>>(Condition, _br<C, R...>)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, C, R...>{};
 }
 

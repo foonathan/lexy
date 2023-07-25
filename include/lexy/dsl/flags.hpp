@@ -126,7 +126,7 @@ struct _flag : rule_base
 template <auto If, auto Else = LEXY_DECAY_DECLTYPE(If){}, typename Rule>
 constexpr auto flag(Rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>);
+    LEXY_REQUIRE_BRANCH_RULE(Rule, "flag()");
     return _flag<Rule, If, Else>{};
 }
 

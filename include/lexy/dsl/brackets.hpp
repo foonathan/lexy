@@ -100,7 +100,8 @@ struct _brackets
 template <typename Open, typename Close>
 constexpr auto brackets(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    LEXY_REQUIRE_BRANCH_RULE(Open, "brackets()");
+    LEXY_REQUIRE_BRANCH_RULE(Close, "brackets()");
     return _brackets<Open, Close>{};
 }
 

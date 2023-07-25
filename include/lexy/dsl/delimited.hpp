@@ -325,7 +325,8 @@ struct _delim_dsl
 template <typename Open, typename Close>
 constexpr auto delimited(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    LEXY_REQUIRE_BRANCH_RULE(Open, "delimited()");
+    LEXY_REQUIRE_BRANCH_RULE(Close, "delimited()");
     return _delim_dsl<Open, Close>{};
 }
 
@@ -333,7 +334,7 @@ constexpr auto delimited(Open, Close)
 template <typename Delim>
 constexpr auto delimited(Delim)
 {
-    static_assert(lexy::is_branch_rule<Delim>);
+    LEXY_REQUIRE_BRANCH_RULE(Delim, "delimited()");
     return _delim_dsl<Delim, Delim>{};
 }
 
@@ -424,7 +425,7 @@ struct _escape : _escape_base
     template <typename Branch>
     constexpr auto rule(Branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>);
+        LEXY_REQUIRE_BRANCH_RULE(Branch, "escape()");
         return _escape<Escape, Branches..., Branch>{};
     }
 
@@ -432,7 +433,7 @@ struct _escape : _escape_base
     template <typename Branch>
     constexpr auto capture(Branch branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>);
+        LEXY_REQUIRE_BRANCH_RULE(Branch, "escape()");
         return this->rule(lexy::dsl::capture(branch));
     }
 

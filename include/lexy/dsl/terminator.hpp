@@ -105,7 +105,7 @@ struct _term
 template <typename Branch>
 constexpr auto terminator(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "terminator");
     return _term<Branch>{};
 }
 } // namespace lexyd

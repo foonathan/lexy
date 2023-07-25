@@ -36,7 +36,7 @@ struct _if : rule_base
 template <typename Branch>
 constexpr auto if_(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>, "if_() requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "if()");
     if constexpr (lexy::is_unconditional_branch_rule<Branch>)
         // Branch is always taken, so don't wrap in if_().
         return Branch{};

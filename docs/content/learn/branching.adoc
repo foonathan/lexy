@@ -146,7 +146,7 @@ abcabcabd
 Specifying a branch condition every time lexy needs to make a decision, can be pretty annoying.
 Luckily, there are many situations where that isn't necessary:
 
-* {{% docref "lexy::dsl::p" %}} is a branch condition if the rule of the production is a branch.
+* {{% docref "lexy::dsl::p" %}} is a branch condition if the rule of the production is a branch (and the production does not specify custom {{% docref "whitespace" %}}).
   In that case, it is convenient to specify a condition in the rule of a production.
   link:/playground?example=choice_production[Try it online].
 * {{% docref "lexy::dsl::else_" %}} is a branch condition that is always taken.
