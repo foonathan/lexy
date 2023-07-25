@@ -1295,7 +1295,16 @@ constexpr auto is_separator = std::is_base_of_v<lexy::dsl::_sep_base, T>;
 
 template <typename T>
 constexpr auto is_operation = std::is_base_of_v<lexy::dsl::_operation_base, T>;
+
+template <typename... T>
+constexpr bool _require_branch_rule = (is_branch_rule<T> && ...);
 } // namespace lexy
+
+#define LEXY_REQUIRE_BRANCH_RULE(Rule, Name)                                                       \
+    static_assert(lexy::_require_branch_rule<Rule>, Name                                           \
+                  " requires a branch condition."                                                  \
+                  " You may need to use `>>` to specify the condition that is used for dispatch."  \
+                  " See https://lexy.foonathan.net/learn/branching/ for more information.")
 
 //=== predefined_token_kind ===//
 namespace lexy
@@ -11485,19 +11494,19 @@ struct _br : _copy_base<Condition>
 template <typename Condition, typename Then>
 constexpr auto operator>>(Condition, Then)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, Then>{};
 }
 template <typename Condition, typename... R>
 constexpr auto operator>>(Condition, _seq<R...>)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, R...>{};
 }
 template <typename Condition, typename C, typename... R>
 constexpr auto operator>>(Condition, _br<C, R...>)
 {
-    static_assert(lexy::is_branch_rule<Condition>, "condition must be a branch");
+    LEXY_REQUIRE_BRANCH_RULE(Condition, "Left-hand-side of >>");
     return _br<Condition, C, R...>{};
 }
 
@@ -11703,7 +11712,7 @@ struct _must_dsl
 template <typename Branch>
 constexpr auto must(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "must()");
     static_assert(!lexy::is_unconditional_branch_rule<Branch>);
     return _must_dsl<Branch>{};
 }
@@ -11972,20 +11981,20 @@ struct _chc
 template <typename R, typename S>
 constexpr auto operator|(R, S)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
-    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(R, "choice");
+    LEXY_REQUIRE_BRANCH_RULE(S, "choice");
     return _chc<R, S>{};
 }
 template <typename... R, typename S>
 constexpr auto operator|(_chc<R...>, S)
 {
-    static_assert(lexy::is_branch_rule<S>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(S, "choice");
     return _chc<R..., S>{};
 }
 template <typename R, typename... S>
 constexpr auto operator|(R, _chc<S...>)
 {
-    static_assert(lexy::is_branch_rule<R>, "choice requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(R, "choice");
     return _chc<R, S...>{};
 }
 template <typename... R, typename... S>
@@ -12334,7 +12343,7 @@ template <typename... Branches>
 constexpr auto recover(Branches...)
 {
     static_assert(sizeof...(Branches) > 0);
-    static_assert((lexy::is_branch_rule<Branches> && ...));
+    LEXY_REQUIRE_BRANCH_RULE(Branches..., "recover");
     return _reco<void, Branches...>{};
 }
 } // namespace lexyd
@@ -12576,7 +12585,7 @@ struct _whl : rule_base
 template <typename Rule>
 constexpr auto while_(Rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>, "while() requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Rule, "while()");
     return _whl<Rule>{};
 }
 } // namespace lexyd
@@ -12587,7 +12596,7 @@ namespace lexyd
 template <typename Rule>
 constexpr auto while_one(Rule rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>, "while_one() requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Rule, "while_one()");
     return rule >> while_(rule);
 }
 } // namespace lexyd
@@ -13006,7 +13015,7 @@ struct _term
 template <typename Branch>
 constexpr auto terminator(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "terminator");
     return _term<Branch>{};
 }
 } // namespace lexyd
@@ -13106,7 +13115,8 @@ struct _brackets
 template <typename Open, typename Close>
 constexpr auto brackets(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    LEXY_REQUIRE_BRANCH_RULE(Open, "brackets()");
+    LEXY_REQUIRE_BRANCH_RULE(Close, "brackets()");
     return _brackets<Open, Close>{};
 }
 
@@ -14001,7 +14011,7 @@ struct _comb : rule_base
 template <typename... R>
 constexpr auto combination(R...)
 {
-    static_assert((lexy::is_branch_rule<R> && ...), "combination() requires a branch rule");
+    LEXY_REQUIRE_BRANCH_RULE(R..., "combination()");
     static_assert((!lexy::is_unconditional_branch_rule<R> && ...),
                   "combination() does not support unconditional branches");
     return _comb<void, void, R...>{};
@@ -14012,7 +14022,7 @@ constexpr auto combination(R...)
 template <typename... R>
 constexpr auto partial_combination(R...)
 {
-    static_assert((lexy::is_branch_rule<R> && ...), "partial_combination() requires a branch rule");
+    LEXY_REQUIRE_BRANCH_RULE(R..., "partial_combination()");
     static_assert((!lexy::is_unconditional_branch_rule<R> && ...),
                   "partial_combination() does not support unconditional branches");
     // If the choice no longer matches, we just break.
@@ -15892,7 +15902,8 @@ struct _delim_dsl
 template <typename Open, typename Close>
 constexpr auto delimited(Open, Close)
 {
-    static_assert(lexy::is_branch_rule<Open> && lexy::is_branch_rule<Close>);
+    LEXY_REQUIRE_BRANCH_RULE(Open, "delimited()");
+    LEXY_REQUIRE_BRANCH_RULE(Close, "delimited()");
     return _delim_dsl<Open, Close>{};
 }
 
@@ -15900,7 +15911,7 @@ constexpr auto delimited(Open, Close)
 template <typename Delim>
 constexpr auto delimited(Delim)
 {
-    static_assert(lexy::is_branch_rule<Delim>);
+    LEXY_REQUIRE_BRANCH_RULE(Delim, "delimited()");
     return _delim_dsl<Delim, Delim>{};
 }
 
@@ -15991,7 +16002,7 @@ struct _escape : _escape_base
     template <typename Branch>
     constexpr auto rule(Branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>);
+        LEXY_REQUIRE_BRANCH_RULE(Branch, "escape()");
         return _escape<Escape, Branches..., Branch>{};
     }
 
@@ -15999,7 +16010,7 @@ struct _escape : _escape_base
     template <typename Branch>
     constexpr auto capture(Branch branch) const
     {
-        static_assert(lexy::is_branch_rule<Branch>);
+        LEXY_REQUIRE_BRANCH_RULE(Branch, "escape()");
         return this->rule(lexy::dsl::capture(branch));
     }
 
@@ -17861,7 +17872,7 @@ struct _flag : rule_base
 template <auto If, auto Else = LEXY_DECAY_DECLTYPE(If){}, typename Rule>
 constexpr auto flag(Rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>);
+    LEXY_REQUIRE_BRANCH_RULE(Rule, "flag()");
     return _flag<Rule, If, Else>{};
 }
 
@@ -18034,7 +18045,7 @@ struct _if : rule_base
 template <typename Branch>
 constexpr auto if_(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>, "if_() requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "if()");
     if constexpr (lexy::is_unconditional_branch_rule<Branch>)
         // Branch is always taken, so don't wrap in if_().
         return Branch{};
@@ -18698,7 +18709,7 @@ struct _opt : rule_base
 template <typename Rule>
 constexpr auto opt(Rule)
 {
-    static_assert(lexy::is_branch_rule<Rule>, "opt() requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Rule, "opt()");
     if constexpr (lexy::is_unconditional_branch_rule<Rule>)
         // Branch is always taken, so don't wrap in opt().
         return Rule{};
@@ -18828,7 +18839,7 @@ struct _sep : _sep_base
 template <typename Branch>
 constexpr auto sep(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "sep");
     return _sep<Branch, void>{};
 }
 
@@ -18848,7 +18859,7 @@ struct _tsep : _sep_base
 template <typename Branch>
 constexpr auto trailing_sep(Branch)
 {
-    static_assert(lexy::is_branch_rule<Branch>);
+    LEXY_REQUIRE_BRANCH_RULE(Branch, "trailing_sep");
     return _tsep<Branch>{};
 }
 
@@ -18999,8 +19010,7 @@ struct _lst : _copy_base<Item>
 template <typename Item>
 constexpr auto list(Item)
 {
-    static_assert(lexy::is_branch_rule<Item>,
-                  "list() without a separator requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Item, "list() without a separator");
     return _lst<Item, void>{};
 }
 
@@ -19015,8 +19025,7 @@ constexpr auto list(Item, _sep<Sep, Tag>)
 template <typename Item, typename Sep>
 constexpr auto list(Item, _tsep<Sep>)
 {
-    static_assert(lexy::is_branch_rule<Item>,
-                  "list() with a trailing separator requires a branch condition");
+    LEXY_REQUIRE_BRANCH_RULE(Item, "list() with a trailing separator");
     return _lst<Item, _tsep<Sep>>{};
 }
 
@@ -20188,7 +20197,7 @@ struct _recb : branch_base
     template <typename Reader>
     struct bp
     {
-        static_assert(lexy::is_branch_rule<lexy::production_rule<Production>>);
+        LEXY_REQUIRE_BRANCH_RULE(lexy::production_rule<Production>, "recurse_branch");
 
         using impl = lexy::branch_parser_for<_prd<Production>, Reader>;
         impl _impl;
@@ -20790,7 +20799,7 @@ public:
     template <typename T, typename Rule, typename = std::enable_if_t<lexy::is_rule<Rule>>>
     constexpr bool branch(scan_result<T>& result, Rule)
     {
-        static_assert(lexy::is_branch_rule<Rule>);
+        LEXY_REQUIRE_BRANCH_RULE(Rule, "branch");
         if (_state == _state_failed)
             return false;
 

@@ -91,7 +91,7 @@ abcabcabd
 
 abcabcabd
 --------^ error: expected `c` not `d`, however we no longer bracktrack!</code></pre></div></div></div></div><div class=sect1><h2 id=_convenience_rules_to_get_automatic_branch_conditions>Convenience rules to get automatic branch conditions</h2><div class=sectionbody><div class=paragraph><p>Specifying a branch condition every time lexy needs to make a decision, can be pretty annoying.
-Luckily, there are many situations where that isn’t necessary:</p></div><div class=ulist><ul><li><p><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a> is a branch condition if the rule of the production is a branch.
+Luckily, there are many situations where that isn’t necessary:</p></div><div class=ulist><ul><li><p><a href=/reference/dsl/production/#p><code>lexy::dsl::p</code></a> is a branch condition if the rule of the production is a branch (and the production does not specify custom <a href=/reference/dsl/whitespace/#doc><code>whitespace</code></a>).
 In that case, it is convenient to specify a condition in the rule of a production.
 <a href="/playground?example=choice_production">Try it online</a>.</p></li><li><p><a href=/reference/dsl/branch/#else_><code>lexy::dsl::else_</code></a> is a branch condition that is always taken.
 As such, if you have a choice between <code>N</code> alternatives, you only need to provide conditions for <code>N - 1</code>, and can use <code>else_ >></code> for the last one.
