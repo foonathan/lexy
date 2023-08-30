@@ -39,7 +39,14 @@ constexpr auto integer = dsl::integer<int>;
 
 namespace single_operation
 {
-constexpr auto op_minus = dsl::op(dsl::lit_c<'-'>);
+struct op_tag
+{
+    const char* pos;
+
+    constexpr op_tag(const char* pos) : pos(pos) {}
+};
+
+constexpr auto op_minus = dsl::op<op_tag>(dsl::lit_c<'-'>);
 
 struct infix_left : lexy::expression_production, test_production
 {
@@ -620,9 +627,11 @@ TEST_CASE("expression - single operation")
     {
         using prod = postfix;
 
-        auto callback
-            = lexy::callback<int>([](const char*, int value) { return value; },
-                                  [](const char*, int lhs, lexy::op<op_minus>) { return -lhs; });
+        auto callback = lexy::callback<int>([](const char*, int value) { return value; },
+                                            [](const char* input, int lhs, lexy::op<op_minus> op) {
+                                                CHECK(lhs == int(op.pos - input));
+                                                return lhs + 1;
+                                            });
 
         auto empty = LEXY_OP_VERIFY("");
         CHECK(empty.status == test_result::fatal_error);
@@ -644,13 +653,13 @@ TEST_CASE("expression - single operation")
 
         auto one = LEXY_OP_VERIFY("1-");
         CHECK(one.status == test_result::success);
-        CHECK(one.value == -1);
+        CHECK(one.value == 2);
         CHECK(one.trace == test_trace().operation_chain().digits("1").literal("-").operation("op"));
         CHECK(one.tree == test_tree(prod{}).production("op").digits("1").literal("-"));
 
         auto two = LEXY_OP_VERIFY("1--");
         CHECK(two.status == test_result::success);
-        CHECK(two.value == 1);
+        CHECK(two.value == 3);
         // clang-format off
         CHECK(two.trace == test_trace()
                  .operation_chain()
@@ -670,7 +679,7 @@ TEST_CASE("expression - single operation")
 
         auto three = LEXY_OP_VERIFY("1---");
         CHECK(three.status == test_result::recovered_error);
-        CHECK(three.value == 1);
+        CHECK(three.value == 3);
         // clang-format off
         CHECK(three.trace == test_trace()
                  .operation_chain()
@@ -703,7 +712,7 @@ TEST_CASE("expression - single operation")
 
         auto infix = LEXY_OP_VERIFY("1-2");
         CHECK(infix.status == test_result::success);
-        CHECK(infix.value == -1);
+        CHECK(infix.value == 2);
         CHECK(infix.trace
               == test_trace().operation_chain().digits("1").literal("-").operation("op"));
         CHECK(infix.tree == test_tree(prod{}).production("op").digits("1").literal("-"));
