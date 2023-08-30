@@ -7,6 +7,7 @@
 * Add an overload of `fatal_error()` on scanners that allow construction of type-erased generic errors (#134).
 * Add `lexy::buffer::release()` and `lexy::buffer::adopt()`.
 * Add default argument to `lexy::dsl::flag()`.
+* Add `lexy::callback_with_state`.
 * Add missing `constexpr` to container callbacks and `lexy::as_string`.
 * Fix swallowed errors from case-folding rules (#149).
 * Fix `lexy::production_name` for productions in an anonymous namespace.

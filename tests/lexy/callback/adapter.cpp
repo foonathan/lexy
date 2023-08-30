@@ -86,6 +86,17 @@ TEST_CASE("callback")
     }
 }
 
+TEST_CASE("callback_with_state")
+{
+    constexpr auto callback = lexy::callback_with_state<int>([](int a) { return a; },
+                                                             [](int a, int b) { return a + b; });
+
+    CHECK(callback(1) == 1);
+
+    auto state = 2;
+    CHECK(callback[state](1) == 3);
+}
+
 TEST_CASE("callback from sink")
 {
     constexpr auto sink     = lexy::fold_inplace<int>(0, [](int& result, int i) { result += i; });
