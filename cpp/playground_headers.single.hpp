@@ -16956,8 +16956,7 @@ struct _op : branch_base
         if constexpr (std::is_void_v<TagType>)
             return continuation::parse(context, reader, LEXY_FWD(args)...);
         else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
-            return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       op_tag_type(reader.position()));
+            return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(op.pos));
         else
             return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
     }
