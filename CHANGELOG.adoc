@@ -9,6 +9,7 @@
 * Add `lexy::buffer::release()` and `lexy::buffer::adopt()`.
 * Add default argument to `lexy::dsl::flag()`.
 * Add `lexy::callback_with_state`.
+* Pass the parse state to the tag of `lexy::dsl::op` if required (#172).
 * Add missing `constexpr` to container callbacks and `lexy::as_string`.
 * Fix infinite loop in `dsl::delimited` when dealing with invalid code points (#173).
 * Fix swallowed errors from case-folding rules (#149).
