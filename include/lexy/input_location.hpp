@@ -42,12 +42,14 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         return lexy::try_match_token(lexy::dsl::newline, reader);
     }
 
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         reader.bump();
     }
 };
@@ -59,12 +61,14 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         return lexy::try_match_token(lexy::dsl::newline, reader);
     }
 
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         if (!lexy::try_match_token(lexy::dsl::code_point, reader))
             reader.bump();
     }
@@ -78,6 +82,7 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
         LEXY_PRECONDITION(_cur_index <= LineWidth - 1);
         if (_cur_index == LineWidth - 1)
         {
@@ -109,9 +114,20 @@ private:
 };
 
 template <typename Input>
-using _default_location_counting
-    = std::conditional_t<lexy::is_byte_encoding<typename lexy::input_reader<Input>::encoding>,
-                         byte_location_counting<>, code_unit_location_counting>;
+auto _compute_default_location_counting()
+{
+    using encoding = typename lexy::input_reader<Input>::encoding;
+    if constexpr (lexy::is_byte_encoding<encoding>)
+        return byte_location_counting{};
+    else if constexpr (lexy::is_char_encoding<encoding>)
+        return code_unit_location_counting{};
+    else
+        static_assert(_detail::error<Input>,
+                      "input encoding does not have a default location counting policy");
+}
+
+template <typename Input>
+using _default_location_counting = decltype(_compute_default_location_counting<Input>());
 } // namespace lexy
 
 //=== input_location ===//

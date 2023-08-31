@@ -56,6 +56,8 @@ The first overload takes a {{% char-class-rule %}} that matches the `leading` ch
 and one that matches all `trailing` characters after the first.
 The second overload takes just one {{% char-class-rule %}} and uses it both as `leading` and `trailing` characters.
 
+Requires::
+  The {{% encoding %}} of the input is a char encoding.
 Parsing::
   Matches and consumes the token `.pattern()` (see below).
   Then verifies that the lexeme formed from `.pattern()` (excluding any trailing whitespace), is not reserved (see below).

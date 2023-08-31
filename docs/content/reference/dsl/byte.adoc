@@ -52,7 +52,7 @@ namespace lexy::dsl
 `bytes` is a {{% token-rule %}} that matches `N` bytes from a specified set.
 
 Requires::
-  The input {{% encoding %}} is `lexy::byte_encoding`.
+  The {{% encoding %}} of the input is `lexy::byte_encoding`.
 Matching::
   Matches and consumes `N` bytes:
     * By default, it matches arbitrary bytes in the range `[0x00, 0xFF]` (both sides inclusive).
@@ -93,6 +93,8 @@ namespace lexy::dsl
 Padding bytes are bytes whose value doesn't matter:
 they're only expected to have a certain value, but it's okay, if they don't.
 
+Requires::
+  The {{% encoding %}} of the input is `lexy::byte_encoding`.
 (Branch) parsing::
   (Branch) parses {{% docref "lexy::dsl::bytes" %}}.
   If that succeeds, the branch is taken.
@@ -148,6 +150,8 @@ The endianness doesn't matter for `bint8`.
 They delegate to the associated `bytes` rule, which can be specified using the function call operator.
 If none has been specified, they default to {{% docref "lexy::dsl::bytes" %}}.
 
+Requires::
+  The {{% encoding %}} of the input is `lexy::byte_encoding`.
 (Branch) parsing::
   (Branch) parses `bytes`.
   If that succeeds, the branch is taken.

@@ -89,7 +89,8 @@ namespace lexy::dsl
 `find` is a recovery rule that skips input until a synchronization {{% token-rule %}} is reached.
 
 Requires::
-  `literals` and `limits` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
+  * The {{% encoding %}} of the input is a char encoding.
+  * `literals` and `limits` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
 Parsing::
   Tries to match {{% docref "lexy::dsl::lookahead" %}}`(literal_set, limit_set)`,
   where `literals` and `limits` have been collected into a single literal set.
@@ -121,7 +122,7 @@ namespace lexy::dsl
         _rule_ auto limit(auto ... limits);
     };
 
-    constexpr _recover-dsl_ find(_branch-rule_ auto ... branches);
+    constexpr _recover-dsl_ recover(_branch-rule_ auto ... branches);
 }
 ----
 

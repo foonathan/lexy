@@ -30,7 +30,8 @@ namespace lexy::dsl
 `lookahead` is a {{% branch-rule %}} that checks if `needle` is found before `end`.
 
 Requires::
-  `needle` and `end` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
+  * The {{% encoding %}} of the input is a char encoding.
+  * `needle` and `end` are {{% literal-rule %}}s or {{% docref "lexy::dsl::literal_set" %}}.
 Parsing::
   If it can match `needle` before `end` is matched or before EOF is reached, the branch is taken without having consumed any input.
   Otherwise, it raises an error.

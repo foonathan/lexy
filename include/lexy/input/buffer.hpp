@@ -94,13 +94,14 @@ namespace lexy
 template <typename Encoding = default_encoding, typename MemoryResource = void>
 class buffer
 {
+    static_assert(lexy::is_char_encoding<Encoding>);
     static constexpr auto _has_sentinel
         = std::is_same_v<typename Encoding::char_type, typename Encoding::int_type>;
 
 public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
-    static_assert(std::is_trivial_v<char_type>);
+    static_assert(std::is_trivially_copyable_v<char_type>);
 
     //=== constructors ===//
     /// Allows the creation of an uninitialized buffer that is then filled by the user.

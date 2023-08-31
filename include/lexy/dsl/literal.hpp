@@ -18,6 +18,7 @@ namespace lexy::_detail
 template <std::size_t CurCharIndex, typename CharT, CharT... Cs, typename Reader>
 constexpr auto match_literal(Reader& reader)
 {
+    static_assert(lexy::is_char_encoding<typename Reader::encoding>);
     using char_type = typename Reader::encoding::char_type;
     if constexpr (CurCharIndex >= sizeof...(Cs))
     {
@@ -184,11 +185,11 @@ struct _merge_case_folding<CurrentCaseFolding, H, T...>
                                          typename H::lit_case_folding, CurrentCaseFolding>,
                       T...>
 {
-    static_assert(
-        std::is_same_v<CurrentCaseFolding,
-                       typename H::lit_case_folding> //
-            || std::is_void_v<CurrentCaseFolding> || std::is_void_v<typename H::lit_case_folding>,
-        "cannot mix literals with different case foldings in a literal_set");
+    static_assert(std::is_same_v<CurrentCaseFolding,
+                                 typename H::lit_case_folding> //
+                      || std::is_void_v<CurrentCaseFolding>
+                      || std::is_void_v<typename H::lit_case_folding>,
+                  "cannot mix literals with different case foldings in a literal_set");
 };
 
 template <typename Reader>
@@ -305,6 +306,7 @@ struct lit_trie_matcher<Trie, CurNode>
     template <typename Reader>
     LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& _reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         if constexpr (std::is_same_v<CaseFolding<Reader>, Reader>)
         {
             return _impl<>::try_match(_reader);
@@ -388,8 +390,7 @@ constexpr auto lit = lexy::_detail::to_type_string<_lit, Str>{};
 #endif
 
 #define LEXY_LIT(Str)                                                                              \
-    LEXY_NTTP_STRING(::lexyd::_lit, Str)                                                           \
-    {}
+    LEXY_NTTP_STRING(::lexyd::_lit, Str) {}
 } // namespace lexyd
 
 namespace lexy

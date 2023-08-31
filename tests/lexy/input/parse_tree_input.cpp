@@ -5,8 +5,14 @@
 
 #include <doctest/doctest.h>
 #include <lexy/dsl/any.hpp>
+#include <lexy/dsl/capture.hpp>
+#include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/parse_tree_node.hpp>
+#include <lexy/dsl/until.hpp>
 #include <lexy/input/string_input.hpp>
 #include <lexy/parse_tree.hpp>
+
+#include "../dsl/verify.hpp"
 
 namespace
 {
@@ -26,12 +32,13 @@ struct root_p
 {
     static constexpr auto rule = lexy::dsl::any;
 };
+
+using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
 } // namespace
 
 TEST_CASE("parse_tree_input")
 {
-    using parse_tree = lexy::parse_tree_for<lexy::string_input<>, token_kind>;
-    auto input       = lexy::zstring_input("123(abc)321");
+    auto input = lexy::zstring_input("123(abc)321");
 
     auto tree = [&] {
         parse_tree::builder builder(root_p{});
@@ -95,5 +102,75 @@ TEST_CASE("parse_tree_input")
     root_reader.bump();
     CHECK(root_reader.position() == input.data() + 11);
     CHECK(root_reader.peek().address() == nullptr);
+}
+
+TEST_CASE("dsl::eof on parse_tree_input")
+{
+    constexpr auto rule     = dsl::any + dsl::eof;
+    constexpr auto callback = lexy_test::token_callback;
+
+    auto result = LEXY_VERIFY_RUNTIME([&] {
+        auto                str = "abc";
+        parse_tree::builder b(root_p{});
+        b.token(token_kind::a, str, str + 1);
+        b.token(token_kind::b, str, str + 2);
+        b.token(token_kind::c, str, str + 2);
+        return LEXY_MOV(b).finish(str + 3);
+    }());
+    CHECK(result.status == test_result::success);
+    CHECK(result.trace == test_trace().token("any", "abc").token("EOF", ""));
+}
+
+TEST_CASE("dsl::any on parse_tree_input")
+{
+    constexpr auto rule     = dsl::any;
+    constexpr auto callback = lexy_test::token_callback;
+
+    auto result = LEXY_VERIFY_RUNTIME([&] {
+        auto                str = "abc";
+        parse_tree::builder b(root_p{});
+        b.token(token_kind::a, str, str + 1);
+        b.token(token_kind::b, str + 1, str + 2);
+        b.token(token_kind::c, str + 2, str + 3);
+        return LEXY_MOV(b).finish(str + 3);
+    }());
+    CHECK(result.status == test_result::success);
+    CHECK(result.trace == test_trace().token("any", "abc"));
+}
+
+TEST_CASE("dsl::until on parse_tree_input")
+{
+    constexpr auto rule     = dsl::until(dsl::tnode<token_kind::b>);
+    constexpr auto callback = lexy_test::token_callback;
+
+    auto result = LEXY_VERIFY_RUNTIME([&] {
+        auto                str = "abc";
+        parse_tree::builder b(root_p{});
+        b.token(token_kind::a, str, str + 1);
+        b.token(token_kind::b, str + 1, str + 2);
+        b.token(token_kind::c, str + 2, str + 3);
+        return LEXY_MOV(b).finish(str + 3);
+    }());
+    CHECK(result.status == test_result::success);
+    CHECK(result.trace == test_trace().token("any", "ab"));
+}
+
+TEST_CASE("dsl::capture on parse_tree_input")
+{
+    constexpr auto rule     = dsl::capture(dsl::tnode<token_kind::a>);
+    constexpr auto callback = [](const char* position, lexy::string_lexeme<> lexeme) {
+        CHECK(position == lexeme.begin());
+        return int(lexeme.size());
+    };
+
+    auto result = LEXY_VERIFY_RUNTIME([&] {
+        auto                str = "abc";
+        parse_tree::builder b(root_p{});
+        b.token(token_kind::a, str, str + 3);
+        return LEXY_MOV(b).finish(str + 3);
+    }());
+    CHECK(result.status == test_result::success);
+    CHECK(result.value == 3);
+    CHECK(result.trace == test_trace().token("token", "abc"));
 }
 

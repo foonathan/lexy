@@ -42,6 +42,8 @@ struct _idp : token_base<_idp<Leading, Trailing>>
 
         constexpr bool try_parse(Reader reader)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
             // Need to match Leading character.
             if (!lexy::try_match_token(Leading{}, reader))
                 return false;

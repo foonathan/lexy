@@ -23,6 +23,8 @@ concept _char-class-rule_ = _token-rule_<T> && …;
 A _char class rule_ is a special {{% token-rule %}} that matches a single code point from a given set, the _char class_.
 Each char class rule has the same parsing behavior:
 
+Requires::
+  The {{% encoding %}} of the input is a char encoding.
 Matching::
   * If the current code unit is an ASCII character, matches and consumes it.
     Checks if that character is part of the char class.

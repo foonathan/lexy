@@ -255,6 +255,7 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             auto sink = context.value_callback().sink();
 
             // Parse characters until we have the closing delimiter.

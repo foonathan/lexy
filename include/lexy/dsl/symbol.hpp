@@ -268,6 +268,7 @@ struct _sym : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         typename Reader::marker end;
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
@@ -340,6 +341,7 @@ struct _sym : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             // Capture the token and continue with special continuation.
             return lexy::parser_for<_cap<Token>, _cont<Args...>>::parse(context, reader,
                                                                         LEXY_FWD(args)...);
@@ -360,6 +362,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::marker end;
 
@@ -403,6 +406,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             auto begin = reader.position();
 
             // Try to parse a symbol that is not the prefix of an identifier.
@@ -449,6 +453,7 @@ struct _sym<Table, void, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
         typename Reader::marker end;
 
@@ -491,6 +496,7 @@ struct _sym<Table, void, Tag> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             bp<Reader> impl{};
             if (impl.try_parse(context.control_block, reader))
                 return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);

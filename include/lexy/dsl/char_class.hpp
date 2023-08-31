@@ -210,6 +210,8 @@ struct char_class_base : token_base<Derived>, _char_class_base
 
         constexpr bool try_parse(Reader reader)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
             using matcher = lexy::_detail::ascii_set_matcher<_cas<Derived>>;
             if (matcher::template match<typename Reader::encoding>(reader.peek()))
             {

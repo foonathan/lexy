@@ -17,6 +17,8 @@ using _string_view_char_type = LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data());
 template <typename Encoding = default_encoding>
 class string_input
 {
+    static_assert(lexy::is_char_encoding<Encoding>);
+
 public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;

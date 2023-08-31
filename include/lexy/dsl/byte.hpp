@@ -40,14 +40,13 @@ struct _b : token_base<_b<N, Predicate>>
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
         typename Reader::marker end;
 
         constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
-            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
-
             // Bump N times.
             auto result
                 = ((_match(reader.peek()) ? (reader.bump(), true) : ((void)Idx, false)) && ...);
@@ -167,6 +166,7 @@ struct _pb : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
         typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
@@ -200,6 +200,7 @@ struct _pb : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
             auto begin = reader.position();
             if (!_b<N, void>::token_parse(context, reader))
                 return false;
@@ -323,6 +324,7 @@ struct _bint : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
         typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
@@ -355,6 +357,7 @@ struct _bint : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
             auto begin = reader.position();
             if (!_rule::token_parse(context, reader))
                 return false;
