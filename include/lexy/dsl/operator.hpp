@@ -96,6 +96,11 @@ namespace lexyd
 template <typename Tag, typename Reader>
 using _detect_op_tag_ctor = decltype(Tag(LEXY_DECLVAL(Reader).position()));
 
+template <typename Tag, typename Reader, typename Context>
+using _detect_op_tag_ctor_with_state
+    = decltype(Tag(*LEXY_DECLVAL(Context).control_block->parse_state,
+                   LEXY_DECLVAL(Reader).position()));
+
 template <typename TagType, typename Literal, typename... R>
 struct _op : branch_base
 {
@@ -115,6 +120,10 @@ struct _op : branch_base
             return continuation::parse(context, reader, LEXY_FWD(args)...);
         else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
             return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(op.pos));
+        else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state, op_tag_type,
+                                                      Reader, Context>)
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       op_tag_type(*context.control_block->parse_state, op.pos));
         else
             return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
     }
@@ -146,6 +155,12 @@ struct _op : branch_base
             else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
                 return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...,
                                                           op_tag_type(reader.position()));
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state,
+                                                          op_tag_type, Reader, Context>)
+                return impl
+                    .template finish<continuation>(context, reader, LEXY_FWD(args)...,
+                                                   op_tag_type(*context.control_block->parse_state,
+                                                               reader.position()));
             else
                 return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...,
                                                           op_tag_type{});
@@ -166,6 +181,10 @@ struct _op : branch_base
                 return continuation::parse(context, reader, LEXY_FWD(args)...);
             else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
                 return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(pos));
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state,
+                                                          op_tag_type, Reader, Context>)
+                return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                           op_tag_type(*context.control_block->parse_state, pos));
             else
                 return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
         }
@@ -310,4 +329,3 @@ constexpr auto operator/(_opc<O1...>, _opc<O2...>)
 } // namespace lexyd
 
 #endif // LEXY_DSL_OPERATOR_HPP_INCLUDED
-

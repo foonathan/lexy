@@ -75,6 +75,7 @@ set(tests
         dsl/member.cpp
         dsl/newline.cpp
         dsl/operator.cpp
+        dsl/operator_state.cpp
         dsl/option.cpp
         dsl/parse_as.cpp
         dsl/peek.cpp
