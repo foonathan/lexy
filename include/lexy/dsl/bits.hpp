@@ -110,7 +110,7 @@ struct _bits : token_base<_bits<Mask, Value>>
 
         constexpr bool try_parse(Reader reader)
         {
-            static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
 
             auto byte = reader.peek();
             if (byte == Reader::encoding::eof()

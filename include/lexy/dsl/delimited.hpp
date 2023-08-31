@@ -110,27 +110,7 @@ struct _del_chars
         else if constexpr (!std::is_same_v<decltype(CharClass::char_class_match_cp(char32_t())),
                                            std::false_type>)
         {
-            // Try to match any code point in default_encoding or byte_encoding.
-            if constexpr (std::is_same_v<encoding, lexy::default_encoding> //
-                          || std::is_same_v<encoding, lexy::byte_encoding>)
-            {
-                static_assert(!CharClass::char_class_unicode(),
-                              "cannot use this character class with default/byte_encoding");
-                LEXY_ASSERT(reader.peek() != encoding::eof(),
-                            "EOF should be checked before calling this");
-
-                auto recover_begin = reader.position();
-                auto cp            = static_cast<char32_t>(reader.peek());
-                reader.bump();
-
-                if (!CharClass::char_class_match_cp(cp))
-                {
-                    finish(context, sink, recover_begin);
-                    _recover(context, recover_begin, reader.position());
-                }
-            }
-            // Otherwise, try to match Unicode characters.
-            else
+            if constexpr (lexy::is_unicode_encoding<encoding>)
             {
                 static_assert(CharClass::char_class_unicode(),
                               "cannot use this character class with Unicode encoding");
@@ -150,6 +130,23 @@ struct _del_chars
                         reader.bump();
                     else
                         reader.set_position(result.end);
+                    _recover(context, recover_begin, reader.position());
+                }
+            }
+            else
+            {
+                static_assert(!CharClass::char_class_unicode(),
+                              "cannot use this character class with non-Unicode char encoding");
+                LEXY_ASSERT(reader.peek() != encoding::eof(),
+                            "EOF should be checked before calling this");
+
+                auto recover_begin = reader.position();
+                auto cp            = static_cast<char32_t>(reader.peek());
+                reader.bump();
+
+                if (!CharClass::char_class_match_cp(cp))
+                {
+                    finish(context, sink, recover_begin);
                     _recover(context, recover_begin, reader.position());
                 }
             }

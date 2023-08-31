@@ -98,7 +98,7 @@ public:
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
-        static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
 
         reader.bump();
         ++_cur_index;
@@ -109,9 +109,9 @@ private:
 };
 
 template <typename Input>
-using _default_location_counting = std::conditional_t<
-    std::is_same_v<typename lexy::input_reader<Input>::encoding, lexy::byte_encoding>,
-    byte_location_counting<>, code_unit_location_counting>;
+using _default_location_counting
+    = std::conditional_t<lexy::is_byte_encoding<typename lexy::input_reader<Input>::encoding>,
+                         byte_location_counting<>, code_unit_location_counting>;
 } // namespace lexy
 
 //=== input_location ===//

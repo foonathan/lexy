@@ -363,32 +363,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
     };
 
     using encoding = typename Reader::encoding;
-    if constexpr (std::is_same_v<encoding, lexy::ascii_encoding> //
-                  || std::is_same_v<encoding, lexy::default_encoding>)
-    {
-        auto count = 0u;
-        for (char c : lexeme)
-        {
-            // If the character is in fact ASCII, visualize the code point.
-            // Otherwise, visualize as byte.
-            if (lexy::_detail::is_ascii(c))
-                out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
-            else
-                out = write_escaped_byte(out, static_cast<unsigned char>(c));
-
-            ++count;
-            if (count == opts.max_lexeme_width)
-            {
-                out = _detail::write_ellipsis(out, opts);
-                break;
-            }
-        }
-        return out;
-    }
-    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>         //
-                       || std::is_same_v<encoding, lexy::utf8_char_encoding> //
-                       || std::is_same_v<encoding, lexy::utf16_encoding>     //
-                       || std::is_same_v<encoding, lexy::utf32_encoding>)
+    if constexpr (lexy::is_unicode_encoding<encoding>)
     {
         // Parse the individual code points, and write them out.
         lexy::range_input<encoding, typename Reader::iterator> input(lexeme.begin(), lexeme.end());
@@ -461,7 +436,28 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         }
         return out;
     }
-    else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
+    else if constexpr (lexy::is_text_encoding<encoding>)
+    {
+        auto count = 0u;
+        for (char c : lexeme)
+        {
+            // If the character is in fact ASCII, visualize the code point.
+            // Otherwise, visualize as byte.
+            if (lexy::_detail::is_ascii(c))
+                out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
+            else
+                out = write_escaped_byte(out, static_cast<unsigned char>(c));
+
+            ++count;
+            if (count == opts.max_lexeme_width)
+            {
+                out = _detail::write_ellipsis(out, opts);
+                break;
+            }
+        }
+        return out;
+    }
+    else if constexpr (lexy::is_byte_encoding<encoding>)
     {
         auto count = 0u;
         for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
