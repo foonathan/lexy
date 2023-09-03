@@ -97,7 +97,12 @@ enum predefined_token_kind : std::uint_least16_t
     _smallest_predefined_token_kind = digits_token_kind,
 };
 
-constexpr const char* _kind_name(predefined_token_kind kind) noexcept
+template <typename T>
+constexpr const char* token_kind_name(const T&) noexcept
+{
+    return "token";
+}
+constexpr const char* token_kind_name(predefined_token_kind kind) noexcept
 {
     switch (kind)
     {
