@@ -43,7 +43,8 @@ constexpr auto debug = lexy::_detail::to_type_string<_debug, Str>{};
 #endif
 
 #define LEXY_DEBUG(Str)                                                                            \
-    LEXY_NTTP_STRING(::lexyd::_debug, Str) {}
+    LEXY_NTTP_STRING(::lexyd::_debug, Str)                                                         \
+    {}
 } // namespace lexyd
 
 //=== trace ====//
@@ -318,6 +319,10 @@ public:
 
     public:
         constexpr event_handler(production_info info) : _info(info) {}
+
+        void on(_th&, parse_events::grammar_start, iterator) {}
+        void on(_th&, parse_events::grammar_finish, lexy::input_reader<Input>&) {}
+        void on(_th&, parse_events::grammar_cancel, lexy::input_reader<Input>&) {}
 
         void on(_th& handler, parse_events::production_start, iterator pos)
         {

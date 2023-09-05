@@ -18,7 +18,7 @@ public:
     template <typename Input, typename Sink>
     explicit _pth(Tree& tree, const _detail::any_holder<const Input*>& input,
                   _detail::any_holder<Sink>& sink)
-    : _tree(&tree), _depth(0), _validate(input, sink), _reader(input.get()->reader())
+    : _tree(&tree), _depth(0), _validate(input, sink)
     {}
 
     class event_handler
@@ -28,47 +28,56 @@ public:
     public:
         event_handler(production_info info) : _validate(info) {}
 
+        void on(_pth& handler, parse_events::grammar_start, iterator)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
+        }
+        void on(_pth& handler, parse_events::grammar_finish, Reader& reader)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            auto begin = reader.position();
+            lexy::try_match_token(dsl::any, reader);
+            auto end = reader.position();
+
+            *handler._tree = LEXY_MOV(*handler._builder).finish({begin, end});
+        }
+        void on(_pth& handler, parse_events::grammar_cancel, Reader&)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            handler._tree->clear();
+        }
+
         void on(_pth& handler, parse_events::production_start ev, iterator pos)
         {
             if (handler._depth++ == 0)
-                handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
-            else
-                _marker = handler._builder->start_production(_validate.get_info());
+                return;
 
+            _marker = handler._builder->start_production(_validate.get_info());
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(_pth& handler, parse_events::production_finish, iterator pos)
+        void on(_pth& handler, parse_events::production_finish, iterator)
         {
             if (--handler._depth == 0)
-            {
-                auto reader = handler._reader;
-                // TODO reader.reset(pos);
-                lexy::try_match_token(dsl::any, reader);
-                auto end = reader.position();
+                return;
 
-                *handler._tree = LEXY_MOV(*handler._builder).finish({pos, end});
-            }
-            else
-            {
-                handler._builder->finish_production(LEXY_MOV(_marker));
-            }
+            handler._builder->finish_production(LEXY_MOV(_marker));
         }
 
         void on(_pth& handler, parse_events::production_cancel, iterator pos)
         {
             if (--handler._depth == 0)
-            {
-                handler._tree->clear();
-            }
-            else
-            {
-                // Cancelling the production removes all nodes from the tree.
-                // To ensure that the parse tree remains lossless, we add everything consumed by it
-                // as an error token.
-                handler._builder->cancel_production(LEXY_MOV(_marker));
-                handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
-            }
+                return;
+
+            // Cancelling the production removes all nodes from the tree.
+            // To ensure that the parse tree remains lossless, we add everything consumed by it
+            // as an error token.
+            handler._builder->cancel_production(LEXY_MOV(_marker));
+            handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
         }
 
         auto on(_pth& handler, lexy::parse_events::operation_chain_start, iterator)
@@ -130,7 +139,6 @@ private:
     int                                              _depth;
 
     _vh<Reader> _validate;
-    Reader      _reader;
 };
 
 template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,

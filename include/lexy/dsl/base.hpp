@@ -12,6 +12,19 @@
 //=== parse_events ===//
 namespace lexy::parse_events
 {
+/// Parsing started.
+/// Arguments: position
+struct grammar_start
+{};
+/// Parsing finished succesfully.
+/// Arguments: the reader at the final parse position.
+struct grammar_finish
+{};
+/// Parsing finished unsuccesfully.
+/// Arguments: the reader at the final parse position.
+struct grammar_cancel
+{};
+
 /// Start of the current production.
 /// Arguments: position
 struct production_start
