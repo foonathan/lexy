@@ -119,17 +119,17 @@ struct _del_chars
                 if (result.error == lexy::_detail::cp_error::success
                     && CharClass::char_class_match_cp(result.cp))
                 {
-                    reader.set_position(result.end);
+                    reader.reset(result.end);
                 }
                 else
                 {
                     finish(context, sink, reader.position());
 
                     auto recover_begin = reader.position();
-                    if (recover_begin == result.end)
+                    if (recover_begin == result.end.position())
                         reader.bump();
                     else
-                        reader.set_position(result.end);
+                        reader.reset(result.end);
                     _recover(context, recover_begin, reader.position());
                 }
             }

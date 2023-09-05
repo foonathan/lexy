@@ -268,7 +268,7 @@ struct _sym : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
         constexpr auto value() const
@@ -286,7 +286,7 @@ struct _sym : branch_base
             end = parser.end;
 
             // Check whether this is a symbol.
-            auto content = lexy::partial_input(reader, end);
+            auto content = lexy::partial_input(reader, end.position());
             symbol       = Table.parse(content);
 
             // Only succeed if it is a symbol.
@@ -301,8 +301,8 @@ struct _sym : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
-            context.on(_ev::token{}, Token{}, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, Token{}, reader.position(), end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -361,7 +361,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
     struct bp
     {
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto value() const
         {
@@ -374,7 +374,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             symbol = Table.try_parse(reader);
             if (!symbol)
                 return false;
-            end = reader.position();
+            end = reader.current();
 
             // We had a symbol, but it must not be the prefix of a valid identifier.
             return !lexy::try_match_token(T{}, reader);
@@ -388,8 +388,8 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the identifier pattern.
-            context.on(_ev::token{}, _idp<L, T>{}, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, _idp<L, T>{}, reader.position(), end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -427,9 +427,9 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             else
             {
                 // We need to consume and report the identifier pattern.
-                auto end = symbol_reader.position();
-                context.on(_ev::token{}, _idp<L, T>{}, begin, end);
-                reader.set_position(end);
+                auto end = symbol_reader.current();
+                context.on(_ev::token{}, _idp<L, T>{}, begin, end.position());
+                reader.reset(end);
 
                 // And continue parsing with the symbol value after whitespace skipping.
                 using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -450,7 +450,7 @@ struct _sym<Table, void, Tag> : branch_base
     struct bp
     {
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto value() const
         {
@@ -461,7 +461,7 @@ struct _sym<Table, void, Tag> : branch_base
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
-            end    = reader.position();
+            end    = reader.current();
 
             // Only succeed if it is a symbol.
             return static_cast<bool>(symbol);
@@ -475,8 +475,9 @@ struct _sym<Table, void, Tag> : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
-            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(),
+                       end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;

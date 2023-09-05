@@ -16,18 +16,18 @@ namespace lexy
 template <typename Input>
 struct input_location_anchor
 {
-    using iterator = typename lexy::input_reader<Input>::iterator;
+    using marker = typename lexy::input_reader<Input>::marker;
 
     constexpr explicit input_location_anchor(const Input& input)
-    : _line_begin(input.reader().position()), _line_nr(1)
+    : _line_begin(input.reader().current()), _line_nr(1)
     {}
 
     // implementation detail
-    constexpr explicit input_location_anchor(iterator line_begin, unsigned line_nr)
+    constexpr explicit input_location_anchor(marker line_begin, unsigned line_nr)
     : _line_begin(line_begin), _line_nr(line_nr)
     {}
 
-    iterator _line_begin;
+    marker   _line_begin;
     unsigned _line_nr;
 };
 } // namespace lexy
@@ -122,10 +122,12 @@ template <typename Input, typename Counting = _default_location_counting<Input>>
 class input_location
 {
     using iterator = typename lexy::input_reader<Input>::iterator;
+    using marker   = typename lexy::input_reader<Input>::marker;
 
 public:
     constexpr explicit input_location(const Input& input)
-    : _line_begin(input.reader().position()), _column_begin(_line_begin), _line_nr(1), _column_nr(1)
+    : _line_begin(input.reader().current()), _column_begin(_line_begin.position()), _line_nr(1),
+      _column_nr(1)
     {}
 
     /// The closest previous anchor.
@@ -178,12 +180,13 @@ public:
     }
 
 private:
-    constexpr input_location(iterator line_begin, unsigned line_nr, iterator column_begin,
+    constexpr input_location(marker line_begin, unsigned line_nr, iterator column_begin,
                              unsigned column_nr)
     : _line_begin(line_begin), _column_begin(column_begin), _line_nr(line_nr), _column_nr(column_nr)
     {}
 
-    iterator _line_begin, _column_begin;
+    marker   _line_begin;
+    iterator _column_begin;
     unsigned _line_nr, _column_nr;
 
     template <typename C, typename I>
@@ -201,7 +204,7 @@ constexpr auto get_input_location(const Input&                                 i
     -> input_location<Input, Counting>
 {
     auto reader = input.reader();
-    reader.set_position(anchor._line_begin);
+    reader.reset(anchor._line_begin);
 
     auto line_begin   = anchor._line_begin;
     auto line_nr      = anchor._line_nr;
@@ -227,8 +230,10 @@ constexpr auto get_input_location(const Input&                                 i
         else if (counting.try_match_newline(reader))
         {
             // [column_begin, newline_end) covers the newline.
-            auto newline_end = reader.position();
-            if (lexy::_detail::min_range_end(column_begin, newline_end, position) != newline_end)
+            auto newline_end = reader.current();
+            if (lexy::_detail::min_range_end(column_begin.position(), newline_end.position(),
+                                             position)
+                != newline_end.position())
                 break;
 
             // Advance to the next line.
@@ -242,8 +247,10 @@ constexpr auto get_input_location(const Input&                                 i
             counting.match_column(reader);
 
             // [column_begin, column_end) covers the column.
-            auto column_end = reader.position();
-            if (lexy::_detail::min_range_end(column_begin, column_end, position) != column_end)
+            auto column_end = reader.current();
+            if (lexy::_detail::min_range_end(column_begin.position(), column_end.position(),
+                                             position)
+                != column_end.position())
                 break;
 
             // Advance to the next column.
@@ -252,7 +259,7 @@ constexpr auto get_input_location(const Input&                                 i
         }
     }
 
-    return {line_begin, line_nr, column_begin, column_nr};
+    return {line_begin, line_nr, column_begin.position(), column_nr};
 }
 
 template <typename Counting, typename Input>
@@ -281,11 +288,11 @@ constexpr auto get_input_location(const Input&                                 i
 namespace lexy::_detail
 {
 template <typename Counting, typename Input>
-constexpr auto get_input_line(const Input&                                 input,
-                              typename lexy::input_reader<Input>::iterator line_begin)
+constexpr auto get_input_line(const Input&                               input,
+                              typename lexy::input_reader<Input>::marker line_begin)
 {
     auto reader = input.reader();
-    reader.set_position(line_begin);
+    reader.reset(line_begin);
 
     auto line_end = reader.position();
     for (Counting counting;
@@ -301,7 +308,7 @@ constexpr auto get_input_line(const Input&                                 input
         lexy::lexeme_for<Input> line;
         lexy::lexeme_for<Input> newline;
     };
-    return result_t{{line_begin, line_end}, {line_end, newline_end}};
+    return result_t{{line_begin.position(), line_end}, {line_end, newline_end}};
 }
 
 // Advances the iterator to the beginning of the next code point.

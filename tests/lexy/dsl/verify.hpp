@@ -563,7 +563,7 @@ test_result verify(const Input& input, Callback cb)
         auto                                                         reader = input.reader();
         lexy::token_parser_for<decltype(dsl::any), decltype(reader)> parser(reader);
         parser.try_parse(reader);
-        return parser.end;
+        return parser.end.position();
     }()));
 
     auto result = [&] {

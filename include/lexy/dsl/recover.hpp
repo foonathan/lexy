@@ -79,20 +79,20 @@ struct _find : _recovery_base
             context.on(_ev::recovery_start{}, begin);
             while (true)
             {
-                auto end    = reader.position(); // *before* we've consumed Token/Limit
+                auto end    = reader.current(); // *before* we've consumed Token/Limit
                 auto result = matcher::try_match(reader);
                 if (result == 0)
                 {
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-                    context.on(_ev::recovery_finish{}, end);
-                    reader.set_position(end); // reset to before the token
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end.position());
+                    context.on(_ev::recovery_finish{}, end.position());
+                    reader.reset(end); // reset to before the token
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 }
                 else if (result == 1 || reader.peek() == Reader::encoding::eof())
                 {
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-                    context.on(_ev::recovery_cancel{}, end);
-                    reader.set_position(end); // reset to before the limit
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end.position());
+                    context.on(_ev::recovery_cancel{}, end.position());
+                    reader.reset(end); // reset to before the limit
                     return false;
                 }
                 else

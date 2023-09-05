@@ -184,6 +184,10 @@ public:
     {
         return _reader.position();
     }
+    constexpr auto current() const noexcept -> typename Reader::marker
+    {
+        return _reader.current();
+    }
 
     constexpr auto remaining_input() const noexcept
     {
@@ -481,7 +485,7 @@ struct _scan : rule_base
                 else
                     return Context::production::scan(scanner, LEXY_FWD(args)...);
             }();
-            reader.set_position(scanner.position());
+            reader.reset(scanner.current());
             if (!result)
                 return false;
 

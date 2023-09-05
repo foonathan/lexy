@@ -168,6 +168,16 @@ public:
         using encoding = typename Prompt::encoding;
         using iterator = typename lexy::_detail::buffer_builder<char_type>::stable_iterator;
 
+        struct marker
+        {
+            iterator _it;
+
+            constexpr iterator position() const noexcept
+            {
+                return _it;
+            }
+        };
+
         auto reader() const&
         {
             return *this;
@@ -191,9 +201,13 @@ public:
             return iterator(_shell->_buffer, _idx);
         }
 
-        void set_position(iterator new_pos) noexcept
+        marker current() const noexcept
         {
-            _idx = new_pos.index();
+            return {position()};
+        }
+        void reset(marker m) noexcept
+        {
+            _idx = m._it.index();
         }
 
     private:

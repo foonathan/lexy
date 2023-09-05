@@ -204,9 +204,9 @@ struct char_class_base : token_base<Derived>, _char_class_base
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -214,7 +214,7 @@ struct char_class_base : token_base<Derived>, _char_class_base
             if (matcher::template match<typename Reader::encoding>(reader.peek()))
             {
                 reader.bump();
-                end = reader.position();
+                end = reader.current();
                 return true;
             }
 
@@ -253,7 +253,7 @@ struct char_class_base : token_base<Derived>, _char_class_base
                 if (!Derived::char_class_match_cp(cp))
                     return false;
 
-                end = reader.position();
+                end = reader.current();
                 return true;
             }
         }

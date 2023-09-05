@@ -381,7 +381,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
             else if (result.error == lexy::_detail::cp_error::success)
             {
                 // Consume and visualize.
-                reader.set_position(result.end);
+                reader.reset(result.end);
                 out = visualize_to(out, lexy::code_point(result.cp), opts);
             }
             else

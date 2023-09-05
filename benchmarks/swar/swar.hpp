@@ -21,6 +21,16 @@ public:
     using encoding = Encoding;
     using iterator = const typename Encoding::char_type*;
 
+    struct marker
+    {
+        iterator _it;
+
+        constexpr iterator position() const noexcept
+        {
+            return _it;
+        }
+    };
+
     explicit swar_disabled_reader(iterator begin) noexcept : _cur(begin) {}
 
     auto peek() const noexcept
@@ -39,9 +49,13 @@ public:
         return _cur;
     }
 
-    void set_position(iterator new_pos) noexcept
+    marker current() const noexcept
     {
-        _cur = new_pos;
+        return {_cur};
+    }
+    void reset(marker m) noexcept
+    {
+        _cur = m._it;
     }
 
 private:

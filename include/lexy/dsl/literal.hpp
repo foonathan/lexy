@@ -272,7 +272,7 @@ struct lit_trie_matcher<Trie, CurNode>
 
             if constexpr (sizeof...(Idx) > 0)
             {
-                auto cur_pos  = reader.position();
+                auto cur      = reader.current();
                 auto cur_char = reader.peek();
 
                 auto next_value = Trie.node_no_match;
@@ -283,7 +283,7 @@ struct lit_trie_matcher<Trie, CurNode>
                     return next_value;
 
                 // We haven't found a longer match, return our match.
-                reader.set_position(cur_pos);
+                reader.reset(cur);
             }
 
             // But first, we might need to check that we don't match that nodes char class.
@@ -313,7 +313,7 @@ struct lit_trie_matcher<Trie, CurNode>
         {
             CaseFolding<Reader> reader{_reader};
             auto                result = _impl<>::try_match(reader);
-            _reader.set_position(reader.position());
+            _reader.reset(reader.current());
             return result;
         }
     }
@@ -350,14 +350,14 @@ struct _lit
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr auto try_parse(Reader reader)
         {
             auto result = lexy::_detail::match_literal<0, CharT, C...>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
@@ -368,7 +368,7 @@ struct _lit
             constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<char_type>;
 
             auto begin = reader.position();
-            auto index = lexy::_detail::range_size(begin, this->end);
+            auto index = lexy::_detail::range_size(begin, end.position());
             auto err = lexy::error<Reader, lexy::expected_literal>(begin, str, index, sizeof...(C));
             context.on(_ev::error{}, err);
         }
@@ -388,7 +388,8 @@ constexpr auto lit = lexy::_detail::to_type_string<_lit, Str>{};
 #endif
 
 #define LEXY_LIT(Str)                                                                              \
-    LEXY_NTTP_STRING(::lexyd::_lit, Str) {}
+    LEXY_NTTP_STRING(::lexyd::_lit, Str)                                                           \
+    {}
 } // namespace lexyd
 
 namespace lexy
@@ -445,9 +446,9 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -455,7 +456,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
 
             auto result = lexy::_detail::match_literal<0, typename encoding::char_type,
                                                        _string<encoding>.data[Idx]...>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
@@ -465,7 +466,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
             using encoding = typename Reader::encoding;
 
             auto begin = reader.position();
-            auto index = lexy::_detail::range_size(begin, end);
+            auto index = lexy::_detail::range_size(begin, end.position());
             auto err   = lexy::error<Reader, lexy::expected_literal>(begin, _string<encoding>.data,
                                                                    index, _string<encoding>.length);
             context.on(_ev::error{}, err);
@@ -537,9 +538,9 @@ struct _lset : token_base<_lset<Literals...>>, _lset_base
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -547,7 +548,7 @@ struct _lset : token_base<_lset<Literals...>>, _lset_base
             using matcher  = lexy::_detail::lit_trie_matcher<_t<encoding>, 0>;
 
             auto result = matcher::try_match(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result != _t<encoding>.node_no_match;
         }
 

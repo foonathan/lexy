@@ -7,43 +7,10 @@
 
 #define LEXY_TEST
 #include "../../examples/json.cpp"
+#include "../swar/swar.hpp"
 
 namespace
 {
-template <typename Encoding>
-class swar_disabled_reader
-{
-public:
-    using encoding = Encoding;
-    using iterator = const typename Encoding::char_type*;
-
-    explicit swar_disabled_reader(iterator begin) noexcept : _cur(begin) {}
-
-    auto peek() const noexcept
-    {
-        // The last one will be EOF.
-        return *_cur;
-    }
-
-    void bump() noexcept
-    {
-        ++_cur;
-    }
-
-    iterator position() const noexcept
-    {
-        return _cur;
-    }
-
-    void set_position(iterator new_pos) noexcept
-    {
-        _cur = new_pos;
-    }
-
-private:
-    iterator _cur;
-};
-
 template <typename Encoding>
 struct swar_disabled_input
 {

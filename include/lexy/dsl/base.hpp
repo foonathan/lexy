@@ -237,7 +237,7 @@ LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
     if constexpr (std::is_same_v<try_parse_result, std::true_type>)
     {
         parser.try_parse(reader);
-        reader.set_position(parser.end);
+        reader.reset(parser.end);
         return std::true_type{};
     }
     else if constexpr (std::is_same_v<try_parse_result, std::false_type>)
@@ -250,7 +250,7 @@ LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
         if (!parser.try_parse(reader))
             return false;
 
-        reader.set_position(parser.end);
+        reader.reset(parser.end);
         return true;
     }
 }

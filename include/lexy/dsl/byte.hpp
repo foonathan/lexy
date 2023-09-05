@@ -40,9 +40,9 @@ struct _b : token_base<_b<N, Predicate>>
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -51,7 +51,7 @@ struct _b : token_base<_b<N, Predicate>>
             // Bump N times.
             auto result
                 = ((_match(reader.peek()) ? (reader.bump(), true) : ((void)Idx, false)) && ...);
-            end = reader.position();
+            end = reader.current();
             return result;
         }
 
@@ -60,7 +60,7 @@ struct _b : token_base<_b<N, Predicate>>
         {
             constexpr auto name
                 = std::is_void_v<Predicate> ? "byte" : lexy::_detail::type_name<Predicate>();
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, name);
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(), name);
             context.on(_ev::error{}, err);
         }
     };
@@ -167,7 +167,7 @@ struct _pb : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -185,10 +185,10 @@ struct _pb : branch_base
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            context.on(_ev::token{}, lexy::any_token_kind, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::any_token_kind, begin, end.position());
+            reader.reset(end);
 
-            _validate(context, reader, begin, end);
+            _validate(context, reader, begin, end.position());
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -323,7 +323,7 @@ struct _bint : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -341,10 +341,11 @@ struct _bint : branch_base
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            context.on(_ev::token{}, _rule{}, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, _rule{}, begin, end.position());
+            reader.reset(end);
 
-            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
+            return _pc<NextParser>::parse(context, reader, begin, end.position(),
+                                          LEXY_FWD(args)...);
         }
     };
 

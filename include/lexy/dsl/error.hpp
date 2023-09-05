@@ -25,7 +25,7 @@ struct _err : unconditional_branch_base
             {
                 lexy::token_parser_for<decltype(lexyd::token(Rule{})), Reader> parser(reader);
                 parser.try_parse(reader);
-                end = parser.end;
+                end = parser.end.position();
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);

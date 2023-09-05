@@ -222,13 +222,13 @@ public:
     {
         auto ptr = static_cast<Derived&>(*this).position();
         ptr += swar_length<typename Derived::encoding::char_type>;
-        static_cast<Derived&>(*this).set_position(ptr);
+        static_cast<Derived&>(*this).reset({ptr});
     }
     void bump_swar(std::size_t char_count)
     {
         auto ptr = static_cast<Derived&>(*this).position();
         ptr += char_count;
-        static_cast<Derived&>(*this).set_position(ptr);
+        static_cast<Derived&>(*this).reset({ptr});
     }
 };
 

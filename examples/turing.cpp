@@ -31,10 +31,9 @@ namespace dsl_ext
             {
                 template <typename Context, typename Reader, typename... Args>
                 LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader,
-                                                   typename Reader::iterator saved_pos,
-                                                   Args&&... args)
+                                                   typename Reader::marker old, Args&&... args)
                 {
-                    reader.set_position(saved_pos);
+                    reader.reset(old);
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 }
             };
@@ -42,8 +41,8 @@ namespace dsl_ext
             template <typename Context, typename Reader, typename... Args>
             LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
             {
-                auto saved_pos = reader.position();
-                return lexy::parser_for<Rule, continuation>::parse(context, reader, saved_pos,
+                auto cur = reader.current();
+                return lexy::parser_for<Rule, continuation>::parse(context, reader, cur,
                                                                    LEXY_FWD(args)...);
             }
         };

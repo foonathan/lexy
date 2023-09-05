@@ -104,9 +104,9 @@ struct _bits : token_base<_bits<Mask, Value>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -118,14 +118,14 @@ struct _bits : token_base<_bits<Mask, Value>>
                 return false;
 
             reader.bump();
-            end = reader.position();
+            end = reader.current();
             return true;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, "bits");
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(), "bits");
             context.on(_ev::error{}, err);
         }
     };

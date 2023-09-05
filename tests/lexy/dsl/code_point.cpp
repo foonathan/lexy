@@ -36,7 +36,7 @@ constexpr parse_result parse_cp(const typename Encoding::char_type* str)
     }
     else
     {
-        return {std::size_t(result.end - input.data()), result.error, result.cp};
+        return {std::size_t(result.end.position() - input.data()), result.error, result.cp};
     }
 }
 } // namespace

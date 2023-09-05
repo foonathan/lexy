@@ -43,7 +43,7 @@ public:
             if (--handler._depth == 0)
             {
                 auto reader = handler._reader;
-                reader.set_position(pos);
+                // TODO reader.reset(pos);
                 lexy::try_match_token(dsl::any, reader);
                 auto end = reader.position();
 
