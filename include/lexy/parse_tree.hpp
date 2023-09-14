@@ -712,6 +712,12 @@ public:
         }
     }
 
+    //=== accessors ===//
+    std::size_t current_child_count() const noexcept
+    {
+        return _cur.child_count;
+    }
+
 private:
     parse_tree _result;
     marker     _cur;

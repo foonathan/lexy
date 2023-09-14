@@ -65,6 +65,9 @@ public:
             if (--handler._depth == 0)
                 return;
 
+            if (handler._builder->current_child_count() == 0)
+                handler._builder->token(lexy::position_token_kind, _validate.production_begin(),
+                                        _validate.production_begin());
             handler._builder->finish_production(LEXY_MOV(_marker));
         }
 

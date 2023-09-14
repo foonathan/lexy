@@ -148,6 +148,9 @@ public:
 
     //=== token node ===//
     void token(token_kind<TokenKind> kind, _iterator_ begin, _iterator _end);
+
+    //=== accessors ===//
+    std::size_t current_child_count() const noexcept; 
 };
 ----
 
@@ -213,6 +216,9 @@ However, the `marker` object must still be passed to `finish_production` or `can
   The node will have the specified {{% docref "lexy::token_kind" %}} and the lexeme `[begin, end)` of the input.
 +
 If `kind.ignore_if_empty() == true` and `begin == end`, no token node is constructed.
+
+`current_child_count`::
+  Returns the child nodes already added to the node that is currently being built.
 
 === Container interface
 

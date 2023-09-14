@@ -56,6 +56,11 @@ struct child_p
         = lexy::dsl::p<transparent_string_p> | lexy::dsl::parenthesized.try_(lexy::dsl::p<abc_p>);
 };
 
+struct empty_p
+{
+    static constexpr auto rule = lexy::dsl::peek(lexy::dsl::eof);
+};
+
 struct root_p
 {
     static constexpr auto name = "root_p";
@@ -64,17 +69,18 @@ struct root_p
 
     static constexpr auto rule = [] {
         auto digits = lexy::dsl::digits<>.kind<token_kind::a>;
-        return digits + lexy::dsl::p<child_p> + digits;
+        return digits + lexy::dsl::p<child_p>
+               + digits + lexy::dsl::if_(lexy::dsl::lit_c<'-'> >> lexy::dsl::p<empty_p>);
     }();
 };
 } // namespace
 
 template <>
-constexpr auto lexy::token_kind_map_for<
-    token_kind> = lexy::token_kind_map.map<::token_kind::b>(lexy::dsl::parenthesized.open())
-                      .map<::token_kind::b>(lexy::dsl::parenthesized.close())
-                      .map<::token_kind::b>(lexy::dsl::quoted.open())
-                      .map<::token_kind::c>(lexy::dsl::ascii::character);
+constexpr auto lexy::token_kind_map_for<token_kind>
+    = lexy::token_kind_map.map<::token_kind::b>(lexy::dsl::parenthesized.open())
+          .map<::token_kind::b>(lexy::dsl::parenthesized.close())
+          .map<::token_kind::b>(lexy::dsl::quoted.open())
+          .map<::token_kind::c>(lexy::dsl::ascii::character);
 
 TEST_CASE("parse_as_tree")
 {
@@ -172,6 +178,30 @@ TEST_CASE("parse_as_tree")
         CHECK(tree == expected);
         CHECK(tree.remaining_input().begin() == input.data() + 11);
         CHECK(tree.remaining_input().end() == input.data() + 14);
+    }
+    SUBCASE("empty")
+    {
+        auto input  = lexy::zstring_input("123(abc)321-");
+        auto result = lexy::parse_as_tree<root_p>(tree, input, lexy::noop);
+        CHECK(result);
+
+        // clang-format off
+        auto expected = lexy_ext::parse_tree_desc<token_kind>(root_p{})
+            .token(token_kind::a, "123")
+            .production(child_p{})
+                .token(token_kind::b, "(")
+                .production(abc_p{})
+                    .token(token_kind::c, "abc")
+                    .finish()
+                .token(token_kind::b, ")")
+                .finish()
+            .token(token_kind::a, "321")
+            .token(lexy::literal_token_kind, "-")
+            .production(empty_p{})
+                .token(lexy::position_token_kind, "")
+                .finish();
+        // clang-format on
+        CHECK(tree == expected);
     }
     SUBCASE("failure")
     {
