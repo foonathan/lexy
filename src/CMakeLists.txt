@@ -105,6 +105,7 @@ set(header_files
         ${include_dir}/input/buffer.hpp
         ${include_dir}/input/file.hpp
         ${include_dir}/input/lexeme_input.hpp
+        ${include_dir}/input/parse_tree_input.hpp
         ${include_dir}/input/range_input.hpp
         ${include_dir}/input/string_input.hpp
 

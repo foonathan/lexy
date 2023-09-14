@@ -11,6 +11,12 @@
 #include <lexy/grammar.hpp>
 #include <lexy/token.hpp>
 
+namespace lexy
+{
+template <typename Node>
+struct parse_tree_input_traits;
+}
+
 //=== internal: pt_node ===//
 namespace lexy::_detail
 {
@@ -327,9 +333,16 @@ private:
 //=== parse_tree ===//
 namespace lexy
 {
+template <typename Reader, typename TokenKind>
+class _pt_node_kind;
+template <typename Reader, typename TokenKind>
+class _pt_node;
+
 template <typename Reader, typename TokenKind = void, typename MemoryResource = void>
 class parse_tree
 {
+    static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
 public:
     //=== construction ===//
     class builder;
@@ -363,8 +376,8 @@ public:
     }
 
     //=== node access ===//
-    class node;
-    class node_kind;
+    using node_kind = _pt_node_kind<Reader, TokenKind>;
+    using node      = _pt_node<Reader, TokenKind>;
 
     node root() const noexcept
     {
@@ -743,8 +756,8 @@ private:
     marker     _cur;
 };
 
-template <typename Reader, typename TokenKind, typename MemoryResource>
-class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
+template <typename Reader, typename TokenKind>
+class _pt_node_kind
 {
 public:
     bool is_token() const noexcept
@@ -781,65 +794,65 @@ public:
         }
     }
 
-    friend bool operator==(node_kind lhs, node_kind rhs)
+    friend bool operator==(_pt_node_kind lhs, _pt_node_kind rhs)
     {
         if (lhs.is_token() && rhs.is_token())
             return lhs._ptr->as_token()->kind == rhs._ptr->as_token()->kind;
         else
             return lhs._ptr->as_production()->id == rhs._ptr->as_production()->id;
     }
-    friend bool operator!=(node_kind lhs, node_kind rhs)
+    friend bool operator!=(_pt_node_kind lhs, _pt_node_kind rhs)
     {
         return !(lhs == rhs);
     }
 
-    friend bool operator==(node_kind nk, token_kind<TokenKind> tk)
+    friend bool operator==(_pt_node_kind nk, token_kind<TokenKind> tk)
     {
         if (auto token = nk._ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind) == tk;
         else
             return false;
     }
-    friend bool operator==(token_kind<TokenKind> tk, node_kind nk)
+    friend bool operator==(token_kind<TokenKind> tk, _pt_node_kind nk)
     {
         return nk == tk;
     }
-    friend bool operator!=(node_kind nk, token_kind<TokenKind> tk)
+    friend bool operator!=(_pt_node_kind nk, token_kind<TokenKind> tk)
     {
         return !(nk == tk);
     }
-    friend bool operator!=(token_kind<TokenKind> tk, node_kind nk)
+    friend bool operator!=(token_kind<TokenKind> tk, _pt_node_kind nk)
     {
         return !(nk == tk);
     }
 
-    friend bool operator==(node_kind nk, production_info info)
+    friend bool operator==(_pt_node_kind nk, production_info info)
     {
         return nk.is_production() && nk._ptr->as_production()->id == info.id;
     }
-    friend bool operator==(production_info info, node_kind nk)
+    friend bool operator==(production_info info, _pt_node_kind nk)
     {
         return nk == info;
     }
-    friend bool operator!=(node_kind nk, production_info info)
+    friend bool operator!=(_pt_node_kind nk, production_info info)
     {
         return !(nk == info);
     }
-    friend bool operator!=(production_info info, node_kind nk)
+    friend bool operator!=(production_info info, _pt_node_kind nk)
     {
         return !(nk == info);
     }
 
 private:
-    explicit node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
+    explicit _pt_node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
 
     _detail::pt_node<Reader>* _ptr;
 
-    friend parse_tree::node;
+    friend _pt_node<Reader, TokenKind>;
 };
 
-template <typename Reader, typename TokenKind, typename MemoryResource>
-class parse_tree<Reader, TokenKind, MemoryResource>::node
+template <typename Reader, typename TokenKind>
+class _pt_node
 {
 public:
     void* address() const noexcept
@@ -849,7 +862,7 @@ public:
 
     auto kind() const noexcept
     {
-        return node_kind(_ptr);
+        return _pt_node_kind<Reader, TokenKind>(_ptr);
     }
 
     auto parent() const noexcept
@@ -862,20 +875,20 @@ public:
         auto cur = _ptr;
         while (cur->next_role() == _detail::pt_node<Reader>::role_sibling)
             cur = cur->next_node();
-        return node(cur->next_node());
+        return _pt_node(cur->next_node());
     }
 
     class children_range
     {
     public:
-        class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
+        class iterator : public _detail::forward_iterator_base<iterator, _pt_node, _pt_node, void>
         {
         public:
             iterator() noexcept : _cur(nullptr) {}
 
-            node deref() const noexcept
+            auto deref() const noexcept
             {
-                return node(_cur);
+                return _pt_node(_cur);
             }
 
             void increment() noexcept
@@ -931,7 +944,7 @@ public:
 
         _detail::pt_node<Reader>* _node;
 
-        friend node;
+        friend _pt_node;
     };
 
     auto children() const noexcept
@@ -942,14 +955,14 @@ public:
     class sibling_range
     {
     public:
-        class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
+        class iterator : public _detail::forward_iterator_base<iterator, _pt_node, _pt_node, void>
         {
         public:
             iterator() noexcept : _cur() {}
 
-            node deref() const noexcept
+            auto deref() const noexcept
             {
-                return node(_cur);
+                return _pt_node(_cur);
             }
 
             void increment() noexcept
@@ -997,7 +1010,7 @@ public:
 
         _detail::pt_node<Reader>* _node;
 
-        friend node;
+        friend _pt_node;
     };
 
     auto siblings() const noexcept
@@ -1048,7 +1061,7 @@ public:
             if (next_role == _detail::pt_node<Reader>::role_sibling)
                 break;
         }
-        auto end = node(sibling).position();
+        auto end = _pt_node(sibling).position();
 
         LEXY_PRECONDITION(begin == end || end != typename Reader::iterator());
         return lexy::lexeme<Reader>(begin, end);
@@ -1063,24 +1076,22 @@ public:
         return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
     }
 
-    friend bool operator==(node lhs, node rhs) noexcept
+    friend bool operator==(_pt_node lhs, _pt_node rhs) noexcept
     {
         return lhs._ptr == rhs._ptr;
     }
-    friend bool operator!=(node lhs, node rhs) noexcept
+    friend bool operator!=(_pt_node lhs, _pt_node rhs) noexcept
     {
         return lhs._ptr != rhs._ptr;
     }
 
 private:
-    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr)
-    {
-        LEXY_PRECONDITION(ptr);
-    }
+    explicit _pt_node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
 
     _detail::pt_node<Reader>* _ptr;
 
-    friend parse_tree;
+    friend parse_tree<Reader, TokenKind>;
+    friend parse_tree_input_traits<_pt_node<Reader, TokenKind>>;
 };
 
 enum class traverse_event
@@ -1206,6 +1217,63 @@ private:
     iterator _begin, _end;
 
     friend parse_tree;
+};
+} // namespace lexy
+
+namespace lexy
+{
+template <typename Reader, typename TokenKind>
+struct parse_tree_input_traits<_pt_node<Reader, TokenKind>>
+{
+    using _node = _pt_node<Reader, TokenKind>;
+
+    using char_encoding = typename Reader::encoding;
+
+    static bool is_null(_node cur) noexcept
+    {
+        return cur._ptr == nullptr;
+    }
+
+    static _node null() noexcept
+    {
+        return _node(nullptr);
+    }
+
+    static _node first_child(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        if (auto prod = cur._ptr->as_production())
+            return _node(prod->first_child());
+        else
+            return _node(nullptr);
+    }
+
+    static _node sibling(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur._ptr->next_role() == _detail::pt_node<Reader>::role_sibling
+                   ? _node(cur._ptr->next_node())
+                   : _node(nullptr);
+    }
+
+    template <typename Kind>
+    static bool has_kind(_node cur, const Kind& kind) noexcept
+    {
+        return !is_null(cur) && cur.kind() == kind;
+    }
+
+    using iterator = typename Reader::iterator;
+
+    static iterator position_begin(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.position();
+    }
+    static iterator position_end(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.covering_lexeme().end();
+    }
 };
 } // namespace lexy
 

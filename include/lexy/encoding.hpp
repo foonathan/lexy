@@ -271,6 +271,9 @@ constexpr auto is_byte_encoding = std::is_same_v<Encoding, byte_encoding>;
 
 template <typename Encoding>
 constexpr auto is_char_encoding = is_text_encoding<Encoding> || is_byte_encoding<Encoding>;
+
+template <typename Encoding>
+constexpr auto is_node_encoding = false;
 } // namespace lexy
 
 //=== impls ===//
