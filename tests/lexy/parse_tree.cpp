@@ -59,7 +59,7 @@ TEST_CASE("parse_tree::builder")
 
     SUBCASE("empty root")
     {
-        auto tree = parse_tree::builder(root_p{}).finish();
+        auto tree = parse_tree::builder(root_p{}).finish(nullptr);
         CHECK(!tree.empty());
         CHECK(tree.size() == 1);
         CHECK(tree.depth() == 0);
@@ -78,7 +78,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::b, input.data() + 1, input.data() + 2);
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
@@ -122,7 +122,7 @@ TEST_CASE("parse_tree::builder")
             auto child = builder.start_production(child_p{});
             builder.finish_production(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(nullptr);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 2);
@@ -145,7 +145,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_production(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -176,7 +176,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_production(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
@@ -209,7 +209,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_production(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -241,7 +241,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_production(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
@@ -267,7 +267,7 @@ TEST_CASE("parse_tree::builder")
             auto child = builder.start_container();
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(nullptr);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 1);
@@ -289,7 +289,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
@@ -318,7 +318,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -349,7 +349,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 4);
@@ -379,7 +379,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -404,7 +404,7 @@ TEST_CASE("parse_tree::builder")
             builder.set_container_production(child_p{});
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(nullptr);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 2);
@@ -428,7 +428,7 @@ TEST_CASE("parse_tree::builder")
             builder.set_container_production(child_p{});
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -460,7 +460,7 @@ TEST_CASE("parse_tree::builder")
             builder.set_container_production(child_p{});
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
@@ -494,7 +494,7 @@ TEST_CASE("parse_tree::builder")
             builder.set_container_production(child_p{});
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -527,7 +527,7 @@ TEST_CASE("parse_tree::builder")
             builder.set_container_production(child_p{});
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 6);
@@ -558,7 +558,7 @@ TEST_CASE("parse_tree::builder")
             builder.token(token_kind::c, input.data() + 2, input.data() + 3);
             builder.finish_container(LEXY_MOV(child));
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + 3);
         }();
         CHECK(!tree.empty());
         CHECK(tree.size() == 5);
@@ -609,7 +609,7 @@ TEST_CASE("parse_tree::builder")
                 }
             }
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + input.size());
         }(); // root -> (p_1 -> token), ..., (p_many_count -> token)
         CHECK(!tree.empty());
         CHECK(tree.size() == 2 * many_count + 1);
@@ -648,7 +648,7 @@ TEST_CASE("parse_tree::builder")
                 markers.pop_back();
             }
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + input.size());
         }(); // root -> p_1 -> ... p_many_count -> token
         CHECK(!tree.empty());
         CHECK(tree.size() == many_count + 2);
@@ -689,7 +689,7 @@ TEST_CASE("parse_tree::builder")
                 markers.pop_back();
             }
 
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + input.size());
         }();
         //  root
         // child_p
@@ -731,7 +731,7 @@ TEST_CASE("parse_tree::builder")
             }
 
             builder.finish_container(LEXY_MOV(m));
-            return LEXY_MOV(builder).finish();
+            return LEXY_MOV(builder).finish(input.data() + input.size());
         }();
         //      root
         //     child_p
@@ -937,7 +937,7 @@ TEST_CASE("parse_tree::node::sibling_range")
 
         builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -1048,7 +1048,7 @@ TEST_CASE("parse_tree::traverse_range")
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 

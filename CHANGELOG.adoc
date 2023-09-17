@@ -8,6 +8,7 @@
   That way, no production node will be empty, unless the builder API is used directly.
 * Change `lexy::dsl::try_()` error recovery behavior:
   It will now skip whitespace after the (optional) error recovery rule.
+* Deprecate the `lexy::parse_tree::builder::finish()` overload that does not take a `remaining_input`.
 
 === New Features
 

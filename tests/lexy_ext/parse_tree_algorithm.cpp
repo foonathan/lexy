@@ -46,7 +46,7 @@ TEST_CASE("tokens()")
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -115,7 +115,7 @@ TEST_CASE("find_covering_node()")
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -149,7 +149,7 @@ TEST_CASE("children()")
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -220,7 +220,7 @@ TEST_CASE("child()")
         child = builder.start_production(child_p{});
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -280,7 +280,7 @@ TEST_CASE("node_position()")
         builder.finish_production(LEXY_MOV(child2));
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 

@@ -205,7 +205,7 @@ TEST_CASE("parse_as_tree")
     }
     SUBCASE("failure")
     {
-        tree = parse_tree::builder(root_p{}).finish();
+        tree = parse_tree::builder(root_p{}).finish(nullptr);
         CHECK(!tree.empty());
         CHECK(tree.remaining_input().empty());
 
@@ -217,7 +217,7 @@ TEST_CASE("parse_as_tree")
     }
     SUBCASE("recovered")
     {
-        tree = parse_tree::builder(root_p{}).finish();
+        tree = parse_tree::builder(root_p{}).finish(nullptr);
         CHECK(!tree.empty());
         CHECK(tree.remaining_input().empty());
 

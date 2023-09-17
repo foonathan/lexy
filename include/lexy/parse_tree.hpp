@@ -545,7 +545,16 @@ public:
     }
     explicit builder(production_info production) : builder(parse_tree(), production) {}
 
-    parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
+    [[deprecated("Pass the remaining input, or `input.end()` if there is none.")]] parse_tree&&
+        finish() &&
+    {
+        return LEXY_MOV(*this).finish(lexy::lexeme<Reader>());
+    }
+    parse_tree&& finish(typename Reader::iterator end) &&
+    {
+        return LEXY_MOV(*this).finish({end, end});
+    }
+    parse_tree&& finish(lexy::lexeme<Reader> remaining_input) &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
 

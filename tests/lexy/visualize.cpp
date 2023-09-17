@@ -207,7 +207,7 @@ TEST_CASE("visualize parse_tree")
 
         builder.token(lexy::eof_token_kind, input.data() + 14, input.data() + 14);
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 14);
     }();
     CHECK(!tree.empty());
 

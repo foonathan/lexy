@@ -130,7 +130,8 @@ public:
     : builder(parse_tree{}, root)
     {}
 
-    parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&;
+    parse_tree&& finish(typename Reader::iterator end) && { return finish({end, end}); }
+    parse_tree&& finish(lexy::lexeme<Reader> remaining_input) &&;
 
     //=== production node ===//
     marker start_production(_production_ auto production);
@@ -167,7 +168,7 @@ Then the tree can be built using the following methods:
 `finish`::
   Finishes the construction of the entire tree and returns it.
   The active node must be the root node.
-  It optionally sets the remaining input.
+  It also sets `.remaining_input()`, whose `.begin()` should be the `.end()` of the last token in the tree.
 
 `start_production`::
   Start construction for a new production node for `production` and pushes it to the active node's list of children.
