@@ -1002,12 +1002,47 @@ public:
         return _ptr->next_role() == _detail::pt_node<Reader>::role_parent;
     }
 
+    auto position() const noexcept -> typename Reader::iterator
+    {
+        // Find the first descendant that is a token.
+        auto cur = _ptr;
+        while (cur->type() == _detail::pt_node<Reader>::type_production)
+        {
+            cur = cur->as_production()->first_child();
+            LEXY_PRECONDITION(cur);
+        }
+
+        return cur->as_token()->begin;
+    }
+
     auto lexeme() const noexcept
     {
         if (auto token = _ptr->as_token())
             return lexy::lexeme<Reader>(token->begin, token->end());
         else
             return lexy::lexeme<Reader>();
+    }
+
+    auto covering_lexeme() const noexcept
+    {
+        if (auto token = _ptr->as_token())
+            return lexy::lexeme<Reader>(token->begin, token->end());
+
+        auto begin = position();
+
+        auto sibling = _ptr;
+        while (true)
+        {
+            auto next_role = sibling->next_role();
+            sibling        = sibling->next_node();
+            // If we went to parent, we need to continue finding siblings.
+            if (next_role == _detail::pt_node<Reader>::role_sibling)
+                break;
+        }
+        auto end = node(sibling).position();
+
+        LEXY_PRECONDITION(begin == end || end != typename Reader::iterator());
+        return lexy::lexeme<Reader>(begin, end);
     }
 
     auto token() const noexcept
@@ -1029,7 +1064,10 @@ public:
     }
 
 private:
-    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
+    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr)
+    {
+        LEXY_PRECONDITION(ptr);
+    }
 
     _detail::pt_node<Reader>* _ptr;
 

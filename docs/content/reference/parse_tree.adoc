@@ -150,7 +150,7 @@ public:
     void token(token_kind<TokenKind> kind, _iterator_ begin, _iterator _end);
 
     //=== accessors ===//
-    std::size_t current_child_count() const noexcept; 
+    std::size_t current_child_count() const noexcept;
 };
 ----
 
@@ -316,6 +316,9 @@ public:
     lexy::lexeme<Reader>           lexeme() const noexcept;
     lexy::token<Reader, TokenKind> token()  const noexcept;
 
+    iterator position() const noexcept;
+    lexy::lexeme<Reader> covering_lexeme() const noexcept;
+
     //=== relationships ===//
     node parent() const noexcept;
 
@@ -349,8 +352,16 @@ Internally, this is just a pointer to the node data structure.
   For a production node, returns an empty lexeme.
 `token`::
   Requires that the node is a token node; returns the stored {{% docref "lexy::token" %}} of the node.
+`position`::
+  Equivalent to `covering_lexeme().begin()`.
+`covering_lexeme`::
+  For a token node, returns the {{% docref "lexy::lexeme" %}} of the node.
+  For a production node, returns a lexeme that covers all token descendants of the production node.
 
 Two node references can be compared for equality, which compares their addresses.
+
+CAUTION: `covering_lexeme()` and `position()` require that every production node has at least one child and that `tree.remaining_input().begin()` is `.end()` of the last token descendant of the root node (in particular, it is not `iterator()`).
+All parse trees created by {{% docref "lexy::parse_as_tree" %}} have that property.
 
 ==== Node relationships: Parent
 

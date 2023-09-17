@@ -783,13 +783,14 @@ void check_kind(NodeKind kind, const char* name, bool root = false)
     CHECK_FALSE(Production{} != kind);
 }
 
-template <typename NodeKind>
-void check_kind(NodeKind kind, token_kind tk)
+template <typename NodeKind, typename Kind>
+void check_kind(NodeKind kind, Kind tk)
 {
     CHECK(!kind.is_root());
     CHECK(!kind.is_production());
     CHECK(kind.is_token());
 
+    using lexy::token_kind_name;
     CHECK(kind.name() == token_kind_name(tk));
 
     CHECK(kind == kind);
@@ -801,8 +802,8 @@ void check_kind(NodeKind kind, token_kind tk)
     CHECK_FALSE(tk != kind);
 }
 
-template <typename Node, typename Iter>
-void check_token(Node token, token_kind tk, Iter begin, Iter end)
+template <typename Node, typename Kind, typename Iter>
+void check_token(Node token, Kind tk, Iter begin, Iter end)
 {
     check_kind(token.kind(), tk);
     CHECK(token.lexeme().begin() == begin);
@@ -832,9 +833,10 @@ TEST_CASE("parse_tree::node")
         builder.token(token_kind::a, input.data() + 8, input.data() + 11);
 
         child = builder.start_production(child_p{});
+        builder.token(lexy::eof_token_kind, input.data() + 11, input.data() + 11);
         builder.finish_production(LEXY_MOV(child));
 
-        return LEXY_MOV(builder).finish();
+        return LEXY_MOV(builder).finish(input.data() + 11);
     }();
     CHECK(!tree.empty());
 
@@ -842,6 +844,8 @@ TEST_CASE("parse_tree::node")
     check_kind<root_p>(root.kind(), "root_p", true);
     CHECK(root.parent() == root);
     CHECK(root.lexeme().empty());
+    CHECK(root.covering_lexeme().begin() == input.data());
+    CHECK(root.covering_lexeme().end() == input.data() + 11);
 
     auto children = root.children();
     CHECK(!children.empty());
@@ -859,6 +863,8 @@ TEST_CASE("parse_tree::node")
         check_kind<child_p>(child.kind(), "child_p");
         CHECK(child.parent() == root);
         CHECK(child.lexeme().empty());
+        CHECK(child.covering_lexeme().begin() == input.data() + 3);
+        CHECK(child.covering_lexeme().end() == input.data() + 8);
 
         auto children = child.children();
         CHECK(!children.empty());
@@ -895,11 +901,21 @@ TEST_CASE("parse_tree::node")
         CHECK(child.parent() == root);
         check_kind<child_p>(child.kind(), "child_p");
         CHECK(child.lexeme().empty());
+        CHECK(child.lexeme().begin() == nullptr);
+        CHECK(child.covering_lexeme().begin() == input.data() + 11);
+        CHECK(child.covering_lexeme().end() == input.data() + 11);
 
         auto children = child.children();
-        CHECK(children.empty());
-        CHECK(children.size() == 0);
-        CHECK(children.begin() == children.end());
+        CHECK(!children.empty());
+        CHECK(children.size() == 1);
+
+        auto iter = children.begin();
+        CHECK(iter != children.end());
+        check_token(*iter, lexy::eof_token_kind, input.data() + 11, input.data() + 11);
+        CHECK(iter->parent() == child);
+
+        ++iter;
+        CHECK(iter == children.end());
     }
 
     ++iter;
