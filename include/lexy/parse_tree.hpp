@@ -390,7 +390,11 @@ public:
     //=== remaining input ===//
     lexy::lexeme<Reader> remaining_input() const noexcept
     {
-        return _remaining_input;
+        if (empty())
+            return {};
+
+        auto token = _root->next_node()->as_token();
+        return {token->begin, token->end()};
     }
 
 private:
@@ -398,7 +402,6 @@ private:
     _detail::pt_node_production<Reader>* _root;
     std::size_t                          _size;
     std::size_t                          _depth;
-    lexy::lexeme<Reader>                 _remaining_input;
 };
 
 template <typename Input, typename TokenKind = void, typename MemoryResource = void>
@@ -545,9 +548,17 @@ public:
     parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
+
         _cur.insert_children_into(_cur.prod);
         _cur.update_size_depth(_result._size, _result._depth);
-        _result._remaining_input = remaining_input;
+
+        _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
+        auto node = _result._buffer
+                        .template allocate<_detail::pt_node_token<Reader>>(lexy::eof_token_kind,
+                                                                           remaining_input.begin(),
+                                                                           remaining_input.end());
+        _result._root->set_sibling(node);
+
         return LEXY_MOV(_result);
     }
 
@@ -738,8 +749,10 @@ public:
 
     bool is_root() const noexcept
     {
-        // Root node has no next node.
-        return _ptr->next_node() == nullptr;
+        // Root node has a next node (the remaining input node) which has no next node.
+        // We assume that _ptr is never the remaining input node, so we know that we have a next
+        // node.
+        return _ptr->next_node()->next_node() == nullptr;
     }
     bool is_token_production() const noexcept
     {
