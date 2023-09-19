@@ -476,6 +476,13 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         }
         return out;
     }
+    else if constexpr (lexy::is_node_encoding<encoding>)
+    {
+        // Visualize as an iterator range of characters.
+        lexy::range_input<typename encoding::char_encoding, typename Reader::iterator>
+            input(lexeme.begin(), lexeme.end());
+        return visualize_to(out, lexy::lexeme_for<decltype(input)>(input.begin(), input.end()));
+    }
     else
     {
         static_assert(lexy::_detail::error<encoding>, "unknown encoding");
