@@ -28,6 +28,7 @@ Checks: >
     -readability-redundant-access-specifiers,
     -readability-redundant-declaration,
     -readability-static-accessed-through-instance,
+    -readability-suspicious-call-argument,
     -readability-uppercase-literal-suffix,
 WarningsAsErrors: '*'
 FormatStyle: 'file'

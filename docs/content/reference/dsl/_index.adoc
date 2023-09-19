@@ -313,6 +313,8 @@ the other rule does not have access to context variables, and any context modifi
 ====
 {{% docref "lexy::dsl::argv_separator" %}}::
   match the argument separator of a {{% docref "lexy::argv_input" %}}
+{{% docref "lexy::dsl::tnode" %}} and {{% docref "lexy::dsl::pnode" %}}::
+  match a node of a {{% docref "lexy::parse_tree_input" %}}
 {{% docref "lexy::dsl::debug" %}}::
   generate a debug event that is visualized by {{% docref "lexy::trace" %}}
 ====

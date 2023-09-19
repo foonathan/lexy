@@ -1274,6 +1274,12 @@ struct parse_tree_input_traits<_pt_node<Reader, TokenKind>>
         LEXY_PRECONDITION(!is_null(cur));
         return cur.covering_lexeme().end();
     }
+
+    static auto lexeme(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.lexeme();
+    }
 };
 } // namespace lexy
 

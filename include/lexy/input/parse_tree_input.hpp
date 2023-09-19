@@ -92,6 +92,11 @@ public:
     {
         return _ptr(_cur);
     }
+    constexpr auto lexeme_reader() const& noexcept
+    {
+        auto lexeme = _traits::lexeme(_cur);
+        return _range_reader<typename encoding::char_encoding>(lexeme.begin(), lexeme.end());
+    }
 
     constexpr const Node& peek() const noexcept
     {

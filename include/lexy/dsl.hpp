@@ -40,6 +40,7 @@
 #include <lexy/dsl/operator.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/parse_as.hpp>
+#include <lexy/dsl/parse_tree_node.hpp>
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/production.hpp>

@@ -77,6 +77,7 @@ set(tests
         dsl/operator.cpp
         dsl/option.cpp
         dsl/parse_as.cpp
+        dsl/parse_tree_node.cpp
         dsl/peek.cpp
         dsl/position.cpp
         dsl/production.cpp

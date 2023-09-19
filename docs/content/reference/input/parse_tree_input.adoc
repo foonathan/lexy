@@ -61,6 +61,9 @@ namespace lexy
 The class `parse_tree_input` uses a {{% docref "lexy::parse_tree::node" %}} as an input.
 
 It is a lightweight view and does not own the node.
+It is used in combination with the {{% docref "lexy::dsl::tnode" %}} and {{% docref "lexy::dsl::pnode" %}} rules.
+
+{{% godbolt-example "parse_tree_parsing" "Re-parse a parse tree" %}}
 
 === Constructors
 

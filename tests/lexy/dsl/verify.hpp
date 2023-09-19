@@ -11,7 +11,9 @@
 #include <lexy/callback/fold.hpp>
 #include <lexy/dsl/any.hpp>
 #include <lexy/input/buffer.hpp>
+#include <lexy/input/parse_tree_input.hpp>
 #include <lexy/input/string_input.hpp>
+#include <lexy/parse_tree.hpp>
 #include <lexy/token.hpp>
 #include <lexy/visualize.hpp>
 
@@ -86,8 +88,8 @@ namespace lexy_test
 template <typename RuleA, typename RuleB>
 constexpr bool equivalent_rules(RuleA, RuleB)
 {
-    return std::is_same_v<
-               RuleA, RuleB> || std::is_base_of_v<RuleA, RuleB> || std::is_base_of_v<RuleB, RuleA>;
+    return std::is_same_v<RuleA, RuleB> || std::is_base_of_v<RuleA, RuleB>
+           || std::is_base_of_v<RuleB, RuleA>;
 }
 } // namespace lexy_test
 
@@ -589,7 +591,8 @@ test_result verify(const Input& input, Callback cb)
                                                                             &handler, reader);
     }();
 
-    if constexpr (std::is_pointer_v<decltype(input.reader().position())>)
+    if constexpr (lexy::is_char_encoding<typename lexy::input_reader<Input>::encoding>
+                  && std::is_pointer_v<decltype(input.reader().position())>)
     {
         auto buffer        = lexy::make_buffer_from_input(input);
         auto buffer_result = [&] {
@@ -677,6 +680,11 @@ constexpr auto _get_input(Encoding, CharT... cs)
     };
 
     return input(cs...);
+}
+template <typename Reader, typename TokenKind>
+auto _get_input(const lexy::parse_tree<Reader, TokenKind>& tree)
+{
+    return lexy::parse_tree_input(tree);
 }
 } // namespace lexy_test
 
