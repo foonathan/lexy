@@ -144,8 +144,13 @@ struct _del_chars
                 else
                 {
                     finish(context, sink, reader.position());
-                    _recover(context, reader.position(), result.end);
-                    reader.set_position(result.end);
+
+                    auto recover_begin = reader.position();
+                    if (recover_begin == result.end)
+                        reader.bump();
+                    else
+                        reader.set_position(result.end);
+                    _recover(context, recover_begin, reader.position());
                 }
             }
         }

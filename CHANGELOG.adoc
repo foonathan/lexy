@@ -9,6 +9,7 @@
 * Add default argument to `lexy::dsl::flag()`.
 * Add `lexy::callback_with_state`.
 * Add missing `constexpr` to container callbacks and `lexy::as_string`.
+* Fix infinite loop in `dsl::delimited` when dealing with invalid code points (#173).
 * Fix swallowed errors from case-folding rules (#149).
 * Fix `lexy::production_name` for productions in an anonymous namespace.
 * Fix bugs in `dsl::scan` (#133, #135, #142).
