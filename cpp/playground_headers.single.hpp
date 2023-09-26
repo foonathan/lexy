@@ -17027,6 +17027,11 @@ namespace lexyd
 template <typename Tag, typename Reader>
 using _detect_op_tag_ctor = decltype(Tag(LEXY_DECLVAL(Reader).position()));
 
+template <typename Tag, typename Reader, typename Context>
+using _detect_op_tag_ctor_with_state
+    = decltype(Tag(*LEXY_DECLVAL(Context).control_block->parse_state,
+                   LEXY_DECLVAL(Reader).position()));
+
 template <typename TagType, typename Literal, typename... R>
 struct _op : branch_base
 {
@@ -17044,6 +17049,10 @@ struct _op : branch_base
             = lexy::whitespace_parser<Context, lexy::parser_for<_seq_impl<R...>, NextParser>>;
         if constexpr (std::is_void_v<TagType>)
             return continuation::parse(context, reader, LEXY_FWD(args)...);
+        else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state, op_tag_type,
+                                                      Reader, Context>)
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       op_tag_type(*context.control_block->parse_state, op.pos));
         else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
             return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(op.pos));
         else
@@ -17074,6 +17083,12 @@ struct _op : branch_base
 
             if constexpr (std::is_void_v<TagType>)
                 return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...);
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state,
+                                                          op_tag_type, Reader, Context>)
+                return impl
+                    .template finish<continuation>(context, reader, LEXY_FWD(args)...,
+                                                   op_tag_type(*context.control_block->parse_state,
+                                                               reader.position()));
             else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
                 return impl.template finish<continuation>(context, reader, LEXY_FWD(args)...,
                                                           op_tag_type(reader.position()));
@@ -17095,6 +17110,10 @@ struct _op : branch_base
                 = lexy::parser_for<Literal, lexy::parser_for<_seq_impl<R...>, NextParser>>;
             if constexpr (std::is_void_v<TagType>)
                 return continuation::parse(context, reader, LEXY_FWD(args)...);
+            else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor_with_state,
+                                                          op_tag_type, Reader, Context>)
+                return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                           op_tag_type(*context.control_block->parse_state, pos));
             else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
                 return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(pos));
             else
@@ -17241,7 +17260,6 @@ constexpr auto operator/(_opc<O1...>, _opc<O2...>)
 } // namespace lexyd
 
 #endif // LEXY_DSL_OPERATOR_HPP_INCLUDED
-
 
 // Expression parsing algorithm uses an adapted version of Pratt parsing, as described here:
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
