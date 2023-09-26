@@ -7,18 +7,36 @@
 #include <cstdint>
 #include <lexy/_detail/integer_sequence.hpp>
 #include <lexy/dsl/base.hpp>
+#include <lexy/dsl/char_class.hpp>
 #include <lexy/dsl/token.hpp>
 
 //=== byte ===//
 namespace lexyd
 {
-template <std::size_t N>
-struct _b : token_base<_b<N>>
+template <std::size_t N, typename Predicate>
+struct _b : token_base<_b<N, Predicate>>
 {
     static_assert(N > 0);
 
+    static constexpr bool _match(lexy::byte_encoding::int_type cur)
+    {
+        if (cur == lexy::byte_encoding::eof())
+            return false;
+
+        if constexpr (!std::is_void_v<Predicate>)
+        {
+            constexpr auto predicate = Predicate{};
+            return predicate(static_cast<lexy::byte_encoding::char_type>(cur));
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     template <typename Reader, typename Indices = lexy::_detail::make_index_sequence<N>>
     struct tp;
+
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
@@ -31,34 +49,99 @@ struct _b : token_base<_b<N>>
             static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
 
             // Bump N times.
-            auto result = ((reader.peek() == Reader::encoding::eof() ? ((void)Idx, false)
-                                                                     : (reader.bump(), true))
-                           && ...);
-            end         = reader.position();
+            auto result
+                = ((_match(reader.peek()) ? (reader.bump(), true) : ((void)Idx, false)) && ...);
+            end = reader.position();
             return result;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, "byte");
+            constexpr auto name
+                = std::is_void_v<Predicate> ? "byte" : lexy::_detail::type_name<Predicate>();
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end, name);
             context.on(_ev::error{}, err);
         }
     };
+
+    //=== dsl ===//
+    template <typename P>
+    constexpr auto if_() const
+    {
+        static_assert(std::is_void_v<Predicate>);
+        return _b<N, P>{};
+    }
+
+    template <unsigned char Low, unsigned char High>
+    constexpr auto range() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "byte.range";
+            }
+
+            constexpr bool operator()(unsigned char byte) const
+            {
+                return Low <= byte && byte <= High;
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    template <unsigned char... Bytes>
+    constexpr auto set() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "byte.set";
+            }
+
+            constexpr bool operator()(unsigned char byte) const
+            {
+                return ((byte == Bytes) || ...);
+            }
+        };
+
+        return if_<predicate>();
+    }
+
+    constexpr auto ascii() const
+    {
+        struct predicate
+        {
+            static LEXY_CONSTEVAL auto name()
+            {
+                return "byte.ASCII";
+            }
+
+            constexpr bool operator()(unsigned char byte) const
+            {
+                return byte <= 0x7F;
+            }
+        };
+
+        return if_<predicate>();
+    }
 };
 
 /// Matches an arbitrary byte.
-constexpr auto byte = _b<1>{};
+constexpr auto byte = _b<1, void>{};
 
 /// Matches N arbitrary bytes.
 template <std::size_t N>
-constexpr auto bytes = _b<N>{};
+constexpr auto bytes = _b<N, void>{};
 } // namespace lexyd
 
 namespace lexy
 {
 template <std::size_t N>
-constexpr auto token_kind_of<lexy::dsl::_b<N>> = lexy::any_token_kind;
+constexpr auto token_kind_of<lexy::dsl::_b<N, void>> = lexy::any_token_kind;
 } // namespace lexy
 
 //=== padding bytes ===//
@@ -88,9 +171,9 @@ struct _pb : branch_base
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
-            lexy::token_parser_for<_b<N>, Reader> parser(reader);
-            auto                                  result = parser.try_parse(reader);
-            end                                          = parser.end;
+            lexy::token_parser_for<_b<N, void>, Reader> parser(reader);
+            auto                                        result = parser.try_parse(reader);
+            end                                                = parser.end;
             return result;
         }
 
@@ -118,7 +201,7 @@ struct _pb : branch_base
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            if (!_b<N>::token_parse(context, reader))
+            if (!_b<N, void>::token_parse(context, reader))
                 return false;
             auto end = reader.position();
 
@@ -167,6 +250,7 @@ auto _bint()
         return 0;
     }
 }
+
 template <std::size_t N>
 using bint = decltype(_bint<N>());
 } // namespace lexy::_detail
@@ -187,10 +271,11 @@ namespace lexyd
 template <std::size_t N, int Endianness, typename Rule = void>
 struct _bint : branch_base
 {
-    using _rule = lexy::_detail::type_or<Rule, _b<N>>;
+    using _rule = lexy::_detail::type_or<Rule, _b<N, void>>;
 
     template <typename NextParser, typename Indices = lexy::_detail::make_index_sequence<N>>
     struct _pc;
+
     template <typename NextParser, std::size_t... Idx>
     struct _pc<NextParser, lexy::_detail::index_sequence<Idx...>>
     {
@@ -308,4 +393,3 @@ inline constexpr auto big_bint64    = _bint<8, lexy::_detail::bint_big>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_BYTE_HPP_INCLUDED
-
