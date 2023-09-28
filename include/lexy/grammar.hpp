@@ -340,12 +340,13 @@ public:
     template <typename... Args>
     constexpr return_type operator()(Args&&... args) const
     {
-        if constexpr (lexy::is_callback_for<_type, Args&&...>)
+        if constexpr (lexy::is_callback_with_state_for<_type, ParseState, Args&&...>)
         {
-            if constexpr (!std::is_void_v<ParseState> && lexy::is_callback_state<_type, ParseState>)
-                return _get_value(_state)[*_state](LEXY_FWD(args)...);
-            else
-                return _get_value(_state)(LEXY_FWD(args)...);
+            return _get_value(_state)[*_state](LEXY_FWD(args)...);
+        }
+        else if constexpr (lexy::is_callback_for<_type, Args&&...>)
+        {
+            return _get_value(_state)(LEXY_FWD(args)...);
         }
         else if constexpr ((lexy::is_sink<_type>                                              //
                             || lexy::is_sink<_type, std::add_lvalue_reference_t<ParseState>>) //
@@ -372,4 +373,3 @@ private:
 } // namespace lexy
 
 #endif // LEXY_GRAMMAR_HPP_INCLUDED
-

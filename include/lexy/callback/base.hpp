@@ -27,6 +27,13 @@ template <typename T, typename State>
 constexpr bool is_callback_state
     = _detail::is_detected<_detect_callback_state, T, std::decay_t<State>>;
 
+template <typename T, typename State, typename... Args>
+using _detect_callback_with_state_for
+    = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(State&)](LEXY_DECLVAL(Args)...));
+template <typename T, typename State, typename... Args>
+constexpr bool is_callback_with_state_for
+    = _detail::is_detected<_detect_callback_with_state_for, std::decay_t<T>, State, Args...>;
+
 /// Returns the type of the `.sink()` function.
 template <typename Sink, typename... Args>
 using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
@@ -82,4 +89,3 @@ constexpr auto _make_overloaded(Op&&... op)
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
-

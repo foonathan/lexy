@@ -219,8 +219,7 @@ struct string_pair_p
     static constexpr auto rule
         = dsl::parenthesized(dsl::p<string_p> + dsl::comma + dsl::p<string_p>);
 
-    static constexpr auto value
-        = lexy::bind(lexy::construct<string_pair>, lexy::parse_state, lexy::values);
+    static constexpr auto value = lexy::callback_with_state(lexy::construct<string_pair>);
 };
 
 using prod = string_pair_p;
@@ -250,4 +249,3 @@ TEST_CASE("parse with state")
         CHECK(abc_123.value().b == "123");
     }
 }
-
