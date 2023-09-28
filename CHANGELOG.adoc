@@ -14,7 +14,7 @@
 * Fix infinite loop in `dsl::delimited` when dealing with invalid code points (#173).
 * Fix swallowed errors from case-folding rules (#149).
 * Fix `lexy::production_name` for productions in an anonymous namespace.
-* Fix bugs in `dsl::scan` (#133, #135, #142).
+* Fix bugs in `dsl::scan` (#133, #135, #142, #154).
 * Fix bug with the position passed to the tag constructor of `lexy::dsl::op` (#170).
 * Fix bug where `lexy_ext::report_error` unconditionally wrote to `stderr`, ignoring the output iterator.
 * Workaround compiler bugs and improve documentation.
