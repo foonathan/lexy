@@ -1137,6 +1137,13 @@ template <typename T, typename State>
 constexpr bool is_callback_state
     = _detail::is_detected<_detect_callback_state, T, std::decay_t<State>>;
 
+template <typename T, typename State, typename... Args>
+using _detect_callback_with_state_for
+    = decltype(LEXY_DECLVAL(const T)[LEXY_DECLVAL(State&)](LEXY_DECLVAL(Args)...));
+template <typename T, typename State, typename... Args>
+constexpr bool is_callback_with_state_for
+    = _detail::is_detected<_detect_callback_with_state_for, std::decay_t<T>, State, Args...>;
+
 /// Returns the type of the `.sink()` function.
 template <typename Sink, typename... Args>
 using sink_callback = decltype(LEXY_DECLVAL(Sink).sink(LEXY_DECLVAL(Args)...));
@@ -1192,7 +1199,6 @@ constexpr auto _make_overloaded(Op&&... op)
 } // namespace lexy
 
 #endif // LEXY_CALLBACK_BASE_HPP_INCLUDED
-
 
 namespace lexy
 {
@@ -1570,12 +1576,13 @@ public:
     template <typename... Args>
     constexpr return_type operator()(Args&&... args) const
     {
-        if constexpr (lexy::is_callback_for<_type, Args&&...>)
+        if constexpr (lexy::is_callback_with_state_for<_type, ParseState, Args&&...>)
         {
-            if constexpr (!std::is_void_v<ParseState> && lexy::is_callback_state<_type, ParseState>)
-                return _get_value(_state)[*_state](LEXY_FWD(args)...);
-            else
-                return _get_value(_state)(LEXY_FWD(args)...);
+            return _get_value(_state)[*_state](LEXY_FWD(args)...);
+        }
+        else if constexpr (lexy::is_callback_for<_type, Args&&...>)
+        {
+            return _get_value(_state)(LEXY_FWD(args)...);
         }
         else if constexpr ((lexy::is_sink<_type>                                              //
                             || lexy::is_sink<_type, std::add_lvalue_reference_t<ParseState>>) //
@@ -1602,7 +1609,6 @@ private:
 } // namespace lexy
 
 #endif // LEXY_GRAMMAR_HPP_INCLUDED
-
 // Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
@@ -21265,6 +21271,9 @@ using _subgrammar_for = _subgrammar<Production, typename Action::handler, typena
 #define LEXY_DECLARE_SUBGRAMMAR(Production)                                                        \
     namespace lexy                                                                                 \
     {                                                                                              \
+        template <typename ParseState>                                                             \
+        constexpr auto production_has_value_callback<Production, ParseState> = true;               \
+                                                                                                   \
         template <typename Handler, typename State, typename Reader>                               \
         struct _subgrammar<Production, Handler, State, Reader>                                     \
         {                                                                                          \
@@ -21349,7 +21358,6 @@ constexpr auto subgrammar = _subg<Production, T>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_SUBGRAMMAR_HPP_INCLUDED
-
 
 
 // Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
