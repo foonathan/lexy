@@ -226,19 +226,28 @@ TEST_CASE("child()")
 
     auto token_a = lexy_ext::child(tree, tree.root(), token_kind::a);
     CHECK(token_a);
-    CHECK(token_a->kind() == token_kind::a);
-    CHECK(token_a->lexeme().begin() == input.data());
+    if (token_a)
+    {
+        CHECK(token_a->kind() == token_kind::a);
+        CHECK(token_a->lexeme().begin() == input.data());
+    }
 
     auto child_p = lexy_ext::child(tree, tree.root(), ::child_p{});
     CHECK(child_p);
-    CHECK(child_p->kind() == ::child_p{});
+    if (child_p)
+    {
+        CHECK(child_p->kind() == ::child_p{});
 
-    auto token_c = lexy_ext::child(tree, *child_p, token_kind::c);
-    CHECK(token_c);
-    CHECK(token_c->kind() == token_kind::c);
+        auto token_c = lexy_ext::child(tree, *child_p, token_kind::c);
+        CHECK(token_c);
+        if (token_c)
+        {
+            CHECK(token_c->kind() == token_kind::c);
+        }
 
-    auto empty = lexy_ext::child(tree, *child_p, token_kind::a);
-    CHECK(!empty);
+        auto empty = lexy_ext::child(tree, *child_p, token_kind::a);
+        CHECK(!empty);
+    }
 }
 
 TEST_CASE("node_position()")
