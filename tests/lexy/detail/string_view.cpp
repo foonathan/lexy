@@ -39,7 +39,7 @@ constexpr auto fn()
 
 TEST_CASE("make_cstr")
 {
-    constexpr auto str = lexy::_detail::make_cstr<+fn>;
+    constexpr auto str = lexy::_detail::make_cstr<&fn>;
     REQUIRE(str == lexy::_detail::string_view("ab"));
 }
 
