@@ -13,14 +13,14 @@ std::default_random_engine engine;
 
 char random_ascii()
 {
-    static std::uniform_int_distribution<char> dist(0x00, 0x7F);
-    return dist(engine);
+    static std::uniform_int_distribution<std::uint_least32_t> dist(0x00, 0x7F);
+    return static_cast<char>(dist(engine));
 }
 
 char32_t random_unicode()
 {
-    static std::uniform_int_distribution<char32_t> dist(0x80, 0x10'FFFF);
-    return dist(engine);
+    static std::uniform_int_distribution<std::uint_least32_t> dist(0x80, 0x10'FFFF);
+    return static_cast<char32_t>(dist(engine));
 }
 
 float random01()
